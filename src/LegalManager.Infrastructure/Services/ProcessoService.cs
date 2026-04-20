@@ -60,48 +60,58 @@ public class ProcessoService : IProcessoService
 
     public async Task<ProcessoResponseDto> UpdateAsync(Guid id, UpdateProcessoDto dto, CancellationToken ct = default)
     {
-        var processo = await _context.Processos
-            .Include(p => p.Partes)
-            .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct)
-            ?? throw new KeyNotFoundException("Processo não encontrado.");
-
-        if (processo.NumeroCNJ != dto.NumeroCNJ &&
-            await _context.Processos.AnyAsync(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == dto.NumeroCNJ && p.Id != id, ct))
-            throw new InvalidOperationException($"Número CNJ '{dto.NumeroCNJ}' já pertence a outro processo.");
-
-        processo.NumeroCNJ = dto.NumeroCNJ;
-        processo.Tribunal = dto.Tribunal;
-        processo.Vara = dto.Vara;
-        processo.Comarca = dto.Comarca;
-        processo.AreaDireito = dto.AreaDireito;
-        processo.TipoAcao = dto.TipoAcao;
-        processo.Fase = dto.Fase;
-        processo.Status = dto.Status;
-        processo.ValorCausa = dto.ValorCausa;
-        processo.AdvogadoResponsavelId = dto.AdvogadoResponsavelId;
-        if (dto.Monitorado.HasValue)
-            processo.Monitorado = dto.Monitorado.Value;
-        processo.Observacoes = dto.Observacoes;
-        processo.Decisao = dto.Decisao;
-        processo.Resultado = dto.Resultado;
-        processo.AtualizadoEm = DateTime.UtcNow;
-
-        if (dto.Status == StatusProcesso.Encerrado && processo.EncerradoEm == null)
-            processo.EncerradoEm = DateTime.UtcNow;
-        else if (dto.Status != StatusProcesso.Encerrado)
-            processo.EncerradoEm = null;
-
-        _context.ProcessoPartes.RemoveRange(processo.Partes);
-        processo.Partes = dto.Partes?.Select(p => new ProcessoParte
+        using var tx = await _context.Database.BeginTransactionAsync(ct);
+        try
         {
-            Id = Guid.NewGuid(),
-            ProcessoId = id,
-            ContatoId = p.ContatoId,
-            TipoParte = p.TipoParte
-        }).ToList() ?? [];
+            var processo = await _context.Processos
+                .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct)
+                ?? throw new KeyNotFoundException("Processo não encontrado.");
 
-        await _context.SaveChangesAsync(ct);
-        return await LoadResponseAsync(id, ct) ?? throw new InvalidOperationException();
+            if (processo.NumeroCNJ != dto.NumeroCNJ &&
+                await _context.Processos.AnyAsync(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == dto.NumeroCNJ && p.Id != id, ct))
+                throw new InvalidOperationException($"Número CNJ '{dto.NumeroCNJ}' já pertence a outro processo.");
+
+            processo.NumeroCNJ = dto.NumeroCNJ;
+            processo.Tribunal = dto.Tribunal;
+            processo.Vara = dto.Vara;
+            processo.Comarca = dto.Comarca;
+            processo.AreaDireito = dto.AreaDireito;
+            processo.TipoAcao = dto.TipoAcao;
+            processo.Fase = dto.Fase;
+            processo.Status = dto.Status;
+            processo.ValorCausa = dto.ValorCausa;
+            processo.AdvogadoResponsavelId = dto.AdvogadoResponsavelId;
+            if (dto.Monitorado.HasValue)
+                processo.Monitorado = dto.Monitorado.Value;
+            processo.Observacoes = dto.Observacoes;
+            processo.Decisao = dto.Decisao;
+            processo.Resultado = dto.Resultado;
+            processo.AtualizadoEm = DateTime.UtcNow;
+
+            if (dto.Status == StatusProcesso.Encerrado && processo.EncerradoEm == null)
+                processo.EncerradoEm = DateTime.UtcNow;
+            else if (dto.Status != StatusProcesso.Encerrado)
+                processo.EncerradoEm = null;
+
+            var partesAntigas = await _context.ProcessoPartes.Where(p => p.ProcessoId == id).ToListAsync(ct);
+            _context.ProcessoPartes.RemoveRange(partesAntigas);
+            processo.Partes = dto.Partes?.Select(p => new ProcessoParte
+            {
+                Id = Guid.NewGuid(),
+                ProcessoId = id,
+                ContatoId = p.ContatoId,
+                TipoParte = p.TipoParte
+            }).ToList() ?? [];
+
+            await _context.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+            return await LoadResponseAsync(id, ct) ?? throw new InvalidOperationException();
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            throw;
+        }
     }
 
     public async Task<ProcessoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
