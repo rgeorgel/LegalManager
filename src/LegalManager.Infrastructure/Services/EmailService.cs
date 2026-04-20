@@ -155,6 +155,42 @@ public class EmailService : IEmailService
         await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
     }
 
+    public async Task EnviarAcessoPortalAsync(string email, string nomeCliente, string nomeEscritorio,
+        string senha, string portalUrl, CancellationToken ct = default)
+    {
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ LegalManager</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Portal do Cliente</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeCliente)}</strong>!</p>
+                <p>O escritório <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> liberou seu acesso ao portal de acompanhamento de processos.</p>
+                <p>Você pode acompanhar os andamentos dos seus processos a qualquer momento, direto pelo portal.</p>
+
+                <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0">
+                  <p style="margin:0 0 8px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Suas credenciais de acesso</p>
+                  <p style="margin:4px 0"><strong>E-mail:</strong> {System.Net.WebUtility.HtmlEncode(email)}</p>
+                  <p style="margin:4px 0"><strong>Senha:</strong> {System.Net.WebUtility.HtmlEncode(senha)}</p>
+                </div>
+
+                <p style="text-align:center">
+                  <a href="{portalUrl}" style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Acessar Portal
+                  </a>
+                </p>
+
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Por segurança, recomendamos alterar sua senha no primeiro acesso.<br>
+                  Em caso de dúvidas, entre em contato com o escritório.
+                </p>
+              </div>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Seu acesso ao Portal do Cliente — {nomeEscritorio}", html));
+    }
+
     public async Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario,
         string numeroCNJ, CancellationToken ct = default)
     {

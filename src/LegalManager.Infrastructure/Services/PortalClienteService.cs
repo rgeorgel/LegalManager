@@ -18,15 +18,18 @@ public class PortalClienteService : IPortalClienteService
     private readonly AppDbContext _context;
     private readonly IConfiguration _config;
     private readonly IPasswordHasher<AcessoCliente> _hasher;
+    private readonly IEmailService _email;
 
     public PortalClienteService(
         AppDbContext context,
         IConfiguration config,
-        IPasswordHasher<AcessoCliente> hasher)
+        IPasswordHasher<AcessoCliente> hasher,
+        IEmailService email)
     {
         _context = context;
         _config = config;
         _hasher = hasher;
+        _email = email;
     }
 
     public async Task<PortalAuthResponseDto> LoginAsync(LoginPortalDto dto, CancellationToken ct = default)
@@ -133,20 +136,29 @@ public class PortalClienteService : IPortalClienteService
             .FirstOrDefaultAsync(c => c.Id == contatoId && c.TenantId == tenantId, ct)
             ?? throw new KeyNotFoundException("Contato não encontrado.");
 
+        var nomeEscritorio = await _context.Tenants
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Nome)
+            .FirstOrDefaultAsync(ct) ?? "Escritório";
+
+        var portalUrl = $"{_config["App:FrontendUrl"]}/cliente/";
+        var emailNormalizado = dto.Email.Trim().ToLowerInvariant();
+
         var existente = await _context.AcessosCliente
             .FirstOrDefaultAsync(a => a.ContatoId == contatoId && a.TenantId == tenantId, ct);
 
         if (existente != null)
         {
-            existente.Email = dto.Email.Trim().ToLowerInvariant();
+            existente.Email = emailNormalizado;
             existente.SenhaHash = _hasher.HashPassword(existente, dto.Senha);
             existente.Ativo = true;
             await _context.SaveChangesAsync(ct);
+            _ = _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
             return MapInfo(existente);
         }
 
         if (await _context.AcessosCliente.AnyAsync(
-                a => a.TenantId == tenantId && a.Email == dto.Email.Trim().ToLowerInvariant(), ct))
+                a => a.TenantId == tenantId && a.Email == emailNormalizado, ct))
             throw new InvalidOperationException("Este e-mail já está em uso no portal.");
 
         var acesso = new AcessoCliente
@@ -154,7 +166,7 @@ public class PortalClienteService : IPortalClienteService
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             ContatoId = contatoId,
-            Email = dto.Email.Trim().ToLowerInvariant(),
+            Email = emailNormalizado,
             Ativo = true,
             CriadoEm = DateTime.UtcNow
         };
@@ -162,6 +174,7 @@ public class PortalClienteService : IPortalClienteService
 
         _context.AcessosCliente.Add(acesso);
         await _context.SaveChangesAsync(ct);
+        _ = _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
 
         return MapInfo(acesso);
     }
