@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Detalhe do Processo</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
+    .info-item label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); display:block; margin-bottom:4px; }
+    .info-item span { font-size:14px; }
+    .andamento-item { padding:14px 0; border-bottom:1px solid var(--color-border); display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; }
+    .andamento-item:last-child { border-bottom:none; }
+    .andamento-date { font-size:12px; color:var(--color-text-muted); white-space:nowrap; min-width:80px; }
+    .andamento-tipo { display:inline-flex; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; background:var(--color-primary-light); color:var(--color-primary); margin-bottom:4px; }
+    .andamento-desc { font-size:14px; margin-top:2px; }
+    .andamento-fonte { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .parte-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--color-border); }
+    .parte-item:last-child { border-bottom:none; }
+    .status-ativo    { background:#d1fae5; color:#057a55; }
+    .status-suspenso { background:#fef3c7; color:#c27803; }
+    .status-arquivado{ background:#f3f4f6; color:#6b7280; }
+    .status-encerrado{ background:#fee2e2; color:#e02424; }
+    @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <a href="/pages/processos.html" style="font-size:13px;color:var(--color-text-muted)">← Processos</a>
+        <h1 class="page-title" id="pageTitle">Carregando...</h1>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="btnEditar">Editar</button>
+        <button class="btn btn-danger" id="btnEncerrar" style="display:none">Encerrar</button>
+      </div>
+    </div>
+
+    <div id="alertMsg" class="alert" style="display:none"></div>
+
+    <!-- Status bar -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <span id="badgeStatus" class="badge"></span>
+      <span id="badgeArea" class="badge badge-blue"></span>
+      <span id="badgeFase" class="badge badge-gray"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+      <!-- Left column -->
+      <div>
+        <!-- Informações gerais -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-body">
+            <div class="card-title">Informações do Processo</div>
+            <div class="info-grid" id="infoGrid">
+              <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
+              <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
+              <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
+              <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
+              <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
+              <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
+              <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
+              <div class="info-item" id="infoEncerradoGroup" style="display:none">
+                <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
+              </div>
+            </div>
+            <div id="infoDecisaoGroup" style="display:none;margin-top:12px">
+              <div class="info-item"><label>Decisão</label><span id="infoDecisao">—</span></div>
+              <div class="info-item" style="margin-top:8px"><label>Resultado</label><span id="infoResultado">—</span></div>
+            </div>
+            <div id="infoObsGroup" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--color-border)">
+              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Observações</label>
+              <p id="infoObservacoes" style="margin-top:4px;font-size:14px"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Andamentos -->
+        <div class="card">
+          <div class="card-body">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+              <div class="card-title" style="margin-bottom:0">Andamentos</div>
+              <button class="btn btn-primary btn-sm" id="btnAddAndamento">+ Novo Andamento</button>
+            </div>
+            <div id="andamentosLista">
+              <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando andamentos...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: Partes -->
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Partes do Processo</div>
+          <div id="partesLista">
+            <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Editar Processo -->
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title">Editar Processo</span>
+      <button class="modal-close" id="editarClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="editarAlert" class="alert alert-error" style="display:none"></div>
+      <form id="editarForm">
+        <div class="form-group">
+          <label>Número CNJ *</label>
+          <input type="text" id="eCNJ" class="form-control" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tribunal</label>
+            <input type="text" id="eTribunal" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Vara</label>
+            <input type="text" id="eVara" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Comarca</label>
+            <input type="text" id="eComarca" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Área do Direito *</label>
+            <select id="eAreaDireito" class="form-control" required>
+              <option value="Civil">Civil</option><option value="Trabalhista">Trabalhista</option>
+              <option value="Criminal">Criminal</option><option value="Tributario">Tributário</option>
+              <option value="Previdenciario">Previdenciário</option><option value="Administrativo">Administrativo</option>
+              <option value="Consumidor">Consumidor</option><option value="Familia">Família</option>
+              <option value="Empresarial">Empresarial</option><option value="Ambiental">Ambiental</option>
+              <option value="Imobiliario">Imobiliário</option><option value="Outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Ação</label>
+            <input type="text" id="eTipoAcao" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Fase Processual *</label>
+            <select id="eFase" class="form-control" required>
+              <option value="Conhecimento">Conhecimento</option><option value="Recursal">Recursal</option>
+              <option value="Execucao">Execução</option><option value="Cumprimento">Cumprimento de Sentença</option>
+              <option value="InqueritoPolicial">Inquérito Policial</option>
+              <option value="InvestigacaoDefensiva">Investigação Defensiva</option><option value="Outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="eStatus" class="form-control">
+              <option value="Ativo">Ativo</option><option value="Suspenso">Suspenso</option>
+              <option value="Arquivado">Arquivado</option><option value="Encerrado">Encerrado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor da Causa (R$)</label>
+            <input type="number" id="eValorCausa" class="form-control" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Advogado Responsável</label>
+          <select id="eAdvogado" class="form-control">
+            <option value="">Selecionar...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea id="eObservacoes" class="form-control" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="editarCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="editarSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Encerrar -->
+<div class="modal-overlay" id="modalEncerrar">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title">Encerrar Processo</span>
+      <button class="modal-close" id="encerrarClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="encerrarAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label>Decisão *</label>
+        <input type="text" id="encDecisao" class="form-control" placeholder="Sentença procedente, Acordo...">
+      </div>
+      <div class="form-group">
+        <label>Resultado *</label>
+        <select id="encResultado" class="form-control">
+          <option value="">Selecionar...</option>
+          <option value="Ganho">Ganho</option><option value="Perdido">Perdido</option>
+          <option value="Acordo">Acordo</option><option value="Desistência">Desistência</option>
+          <option value="Arquivado">Arquivado</option><option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="encerrarCancelar">Cancelar</button>
+      <button class="btn btn-danger" id="encerrarConfirmar">Encerrar Processo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Andamento -->
+<div class="modal-overlay" id="modalAndamento">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Novo Andamento</span>
+      <button class="modal-close" id="andamentoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="andamentoAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Data *</label>
+          <input type="date" id="aData" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="aTipo" class="form-control" required>
+            <option value="Despacho">Despacho</option>
+            <option value="Decisao">Decisão</option>
+            <option value="Sentenca">Sentença</option>
+            <option value="Acordao">Acórdão</option>
+            <option value="Audiencia">Audiência</option>
+            <option value="Peticao">Petição</option>
+            <option value="Intimacao">Intimação</option>
+            <option value="Publicacao">Publicação</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descrição *</label>
+        <textarea id="aDescricao" class="form-control" rows="5" required placeholder="Descreva o andamento..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="andamentoCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="andamentoSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initLayout } from '/js/layout.js';
+import { getProcesso, updateProcesso, encerrarProcesso, getAndamentos, addAndamento, deleteAndamento } from '/js/processos.js';
+import { apiFetch } from '/js/api.js';
+
+initLayout();
+
+const processoId = new URLSearchParams(window.location.search).get('id');
+if (!processoId) window.location.href = '/pages/processos.html';
+
+let processo = null;
+let advogados = [];
+
+const alertMsg = document.getElementById('alertMsg');
+function showAlert(msg, type = 'error') {
+  alertMsg.className = `alert alert-${type}`;
+  alertMsg.textContent = msg;
+  alertMsg.style.display = 'block';
+  setTimeout(() => alertMsg.style.display = 'none', 4000);
+}
+
+const areaLabels = { Tributario:'Tributário', Previdenciario:'Previdenciário', Familia:'Família', Imobiliario:'Imobiliário' };
+const faseLabels = { Execucao:'Execução', Cumprimento:'Cumprimento de Sentença', InqueritoPolicial:'Inquérito Policial', InvestigacaoDefensiva:'Investigação Defensiva' };
+const tipoAndLabels = { Decisao:'Decisão', Sentenca:'Sentença', Acordao:'Acórdão', Audiencia:'Audiência', Peticao:'Petição', Intimacao:'Intimação', Publicacao:'Publicação' };
+
+function label(map, val) { return map[val] || val; }
+function fmtDate(s) { return s ? new Date(s).toLocaleDateString('pt-BR') : '—'; }
+function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'; }
+
+function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
+
+async function loadProcesso() {
+  try {
+    processo = await getProcesso(processoId);
+    renderProcesso();
+    await loadAndamentos();
+  } catch { window.location.href = '/pages/processos.html'; }
+}
+
+function renderProcesso() {
+  document.title = `${processo.numeroCNJ} — LegalManager`;
+  document.getElementById('pageTitle').textContent = processo.numeroCNJ;
+
+  document.getElementById('badgeStatus').className = statusCls(processo.status);
+  document.getElementById('badgeStatus').textContent = processo.status;
+  document.getElementById('badgeArea').textContent = label(areaLabels, processo.areaDireito);
+  document.getElementById('badgeFase').textContent = label(faseLabels, processo.fase);
+
+  document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
+  document.getElementById('infoVara').textContent = processo.vara || '—';
+  document.getElementById('infoComarca').textContent = processo.comarca || '—';
+  document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
+  document.getElementById('infoValor').textContent = fmtMoney(processo.valorCausa);
+  document.getElementById('infoAdvogado').textContent = processo.nomeAdvogadoResponsavel || '—';
+  document.getElementById('infoCriadoEm').textContent = fmtDate(processo.criadoEm);
+
+  if (processo.encerradoEm) {
+    document.getElementById('infoEncerradoGroup').style.display = '';
+    document.getElementById('infoEncerradoEm').textContent = fmtDate(processo.encerradoEm);
+  }
+  if (processo.decisao) {
+    document.getElementById('infoDecisaoGroup').style.display = '';
+    document.getElementById('infoDecisao').textContent = processo.decisao;
+    document.getElementById('infoResultado').textContent = processo.resultado || '—';
+  }
+  if (processo.observacoes) {
+    document.getElementById('infoObsGroup').style.display = '';
+    document.getElementById('infoObservacoes').textContent = processo.observacoes;
+  }
+
+  // Partes
+  const partesEl = document.getElementById('partesLista');
+  if (processo.partes?.length) {
+    const tipoLabel = { Reu: 'Réu', Autor: 'Autor', Interessado: 'Interessado', Terceiro: 'Terceiro' };
+    partesEl.innerHTML = processo.partes.map(pt => `
+      <div class="parte-item">
+        <div style="flex:1">
+          <div style="font-weight:500">${pt.nomeContato}</div>
+          <div><span class="badge badge-${pt.tipoParte === 'Autor' ? 'blue' : 'gray'}">${tipoLabel[pt.tipoParte] || pt.tipoParte}</span></div>
+        </div>
+      </div>`).join('');
+  } else {
+    partesEl.innerHTML = '<p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>';
+  }
+
+  // Show/hide encerrar btn
+  document.getElementById('btnEncerrar').style.display = processo.status !== 'Encerrado' ? '' : 'none';
+}
+
+async function loadAndamentos() {
+  const lista = document.getElementById('andamentosLista');
+  try {
+    const items = await getAndamentos(processoId);
+    if (!items.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
+      return;
+    }
+    lista.innerHTML = items.map(a => `
+      <div class="andamento-item">
+        <div class="andamento-date">${fmtDate(a.data)}</div>
+        <div>
+          <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
+          <div class="andamento-desc">${a.descricao}</div>
+          <div class="andamento-fonte">
+            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
+          </div>
+        </div>
+        ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
+      </div>`).join('');
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
+window.removeAndamento = async id => {
+  if (!confirm('Remover este andamento?')) return;
+  try {
+    await deleteAndamento(processoId, id);
+    await loadAndamentos();
+  } catch (err) { showAlert(err.message); }
+};
+
+// Load advogados for edit form
+async function loadAdvogados() {
+  try {
+    const users = await apiFetch('/usuarios');
+    advogados = (users || []).filter(u => u.perfil !== 'Cliente' && u.ativo);
+    const sel = document.getElementById('eAdvogado');
+    advogados.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id; o.textContent = u.nome;
+      sel.appendChild(o);
+    });
+  } catch {}
+}
+
+// Editar
+document.getElementById('btnEditar').addEventListener('click', () => {
+  if (!processo) return;
+  document.getElementById('eCNJ').value = processo.numeroCNJ;
+  document.getElementById('eTribunal').value = processo.tribunal || '';
+  document.getElementById('eVara').value = processo.vara || '';
+  document.getElementById('eComarca').value = processo.comarca || '';
+  document.getElementById('eAreaDireito').value = processo.areaDireito;
+  document.getElementById('eTipoAcao').value = processo.tipoAcao || '';
+  document.getElementById('eFase').value = processo.fase;
+  document.getElementById('eStatus').value = processo.status;
+  document.getElementById('eValorCausa').value = processo.valorCausa || '';
+  document.getElementById('eAdvogado').value = processo.advogadoResponsavelId || '';
+  document.getElementById('eObservacoes').value = processo.observacoes || '';
+  document.getElementById('modalEditar').classList.add('open');
+});
+
+[document.getElementById('editarClose'), document.getElementById('editarCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalEditar').classList.remove('open')));
+
+document.getElementById('editarSalvar').addEventListener('click', async () => {
+  const btn = document.getElementById('editarSalvar');
+  const alertEl = document.getElementById('editarAlert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  alertEl.style.display = 'none';
+  try {
+    await updateProcesso(processoId, {
+      numeroCNJ: document.getElementById('eCNJ').value,
+      tribunal: document.getElementById('eTribunal').value || null,
+      vara: document.getElementById('eVara').value || null,
+      comarca: document.getElementById('eComarca').value || null,
+      areaDireito: document.getElementById('eAreaDireito').value,
+      tipoAcao: document.getElementById('eTipoAcao').value || null,
+      fase: document.getElementById('eFase').value,
+      status: document.getElementById('eStatus').value,
+      valorCausa: document.getElementById('eValorCausa').value ? parseFloat(document.getElementById('eValorCausa').value) : null,
+      advogadoResponsavelId: document.getElementById('eAdvogado').value || null,
+      observacoes: document.getElementById('eObservacoes').value || null,
+      partes: processo.partes?.map(p => ({ contatoId: p.contatoId, tipoParte: p.tipoParte })) ?? []
+    });
+    document.getElementById('modalEditar').classList.remove('open');
+    await loadProcesso();
+    showAlert('Processo atualizado.', 'success');
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+});
+
+// Encerrar
+document.getElementById('btnEncerrar').addEventListener('click', () => {
+  document.getElementById('encDecisao').value = '';
+  document.getElementById('encResultado').value = '';
+  document.getElementById('modalEncerrar').classList.add('open');
+});
+[document.getElementById('encerrarClose'), document.getElementById('encerrarCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalEncerrar').classList.remove('open')));
+
+document.getElementById('encerrarConfirmar').addEventListener('click', async () => {
+  const btn = document.getElementById('encerrarConfirmar');
+  const alertEl = document.getElementById('encerrarAlert');
+  const decisao = document.getElementById('encDecisao').value;
+  const resultado = document.getElementById('encResultado').value;
+  if (!decisao || !resultado) { alertEl.textContent = 'Preencha todos os campos.'; alertEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  alertEl.style.display = 'none';
+  try {
+    await encerrarProcesso(processoId, { decisao, resultado });
+    document.getElementById('modalEncerrar').classList.remove('open');
+    await loadProcesso();
+    showAlert('Processo encerrado.', 'success');
+  } catch (err) {
+    alertEl.textContent = err.message; alertEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Encerrar Processo'; }
+});
+
+// Andamento
+document.getElementById('btnAddAndamento').addEventListener('click', () => {
+  document.getElementById('aData').value = new Date().toISOString().split('T')[0];
+  document.getElementById('aDescricao').value = '';
+  document.getElementById('aTipo').value = 'Despacho';
+  document.getElementById('andamentoAlert').style.display = 'none';
+  document.getElementById('modalAndamento').classList.add('open');
+});
+[document.getElementById('andamentoClose'), document.getElementById('andamentoCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalAndamento').classList.remove('open')));
+
+document.getElementById('andamentoSalvar').addEventListener('click', async () => {
+  const btn = document.getElementById('andamentoSalvar');
+  const alertEl = document.getElementById('andamentoAlert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  alertEl.style.display = 'none';
+  try {
+    await addAndamento(processoId, {
+      data: document.getElementById('aData').value,
+      tipo: document.getElementById('aTipo').value,
+      descricao: document.getElementById('aDescricao').value
+    });
+    document.getElementById('modalAndamento').classList.remove('open');
+    await loadAndamentos();
+    showAlert('Andamento registrado.', 'success');
+  } catch (err) {
+    alertEl.textContent = err.message; alertEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+});
+
+await loadAdvogados();
+await loadProcesso();
+</script>
+</body>
+</html>

@@ -64,6 +64,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
+builder.Services.AddScoped<IProcessoService, ProcessoService>();
 
 builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();

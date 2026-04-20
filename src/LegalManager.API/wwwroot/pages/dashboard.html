@@ -40,6 +40,7 @@
     <nav class="sidebar">
       <ul class="sidebar-nav">
         <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+        <li><a href="/pages/processos.html">⚖️ Processos</a></li>
         <li><a href="/pages/contatos.html">👥 Contatos</a></li>
         <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
       </ul>
@@ -52,8 +53,8 @@
 
       <div class="dashboard-grid">
         <div class="stat-card">
-          <div class="stat-card-label">Usuários ativos</div>
-          <div class="stat-card-value" id="statUsuarios">—</div>
+          <div class="stat-card-label">Processos Ativos</div>
+          <div class="stat-card-value" id="statProcessos">—</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Contatos cadastrados</div>
@@ -64,8 +65,19 @@
           <div class="stat-card-value" style="font-size:18px" id="statPlano">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Status do trial</div>
+          <div class="stat-card-label">Status</div>
           <div class="stat-card-value" style="font-size:16px" id="statTrial">—</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="statsRow2">
+        <div class="stat-card">
+          <div class="stat-card-label">Processos Encerrados</div>
+          <div class="stat-card-value" id="statEncerrados">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Processos Suspensos</div>
+          <div class="stat-card-value" id="statSuspensos">—</div>
         </div>
       </div>
 
@@ -74,7 +86,7 @@
           <div class="card-title">Bem-vindo ao LegalManager!</div>
           <p style="color:var(--color-text-muted)">
             Use o menu lateral para navegar entre os módulos.
-            Comece cadastrando seus contatos e clientes.
+            Comece cadastrando seus contatos e processos.
           </p>
         </div>
       </div>
@@ -90,14 +102,17 @@
 
     async function loadStats() {
       try {
-        const user = getUser();
-
-        const [me, contatos] = await Promise.all([
+        const [me, contatos, processosAtivos, processosEncerrados, processosSuspensos] = await Promise.all([
           apiFetch('/usuarios/me'),
-          apiFetch('/contatos?pageSize=1')
+          apiFetch('/contatos?pageSize=1'),
+          apiFetch('/processos?status=Ativo&pageSize=1'),
+          apiFetch('/processos?status=Encerrado&pageSize=1'),
+          apiFetch('/processos?status=Suspenso&pageSize=1')
         ]);
 
-        document.getElementById('statUsuarios').textContent = '–';
+        document.getElementById('statProcessos').textContent = processosAtivos?.total ?? '0';
+        document.getElementById('statEncerrados').textContent = processosEncerrados?.total ?? '0';
+        document.getElementById('statSuspensos').textContent = processosSuspensos?.total ?? '0';
         document.getElementById('statContatos').textContent = contatos?.total ?? '0';
         document.getElementById('statPlano').textContent = me?.tenant?.plano ?? '–';
 

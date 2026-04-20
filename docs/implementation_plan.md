@@ -214,7 +214,7 @@ Atendimento { id, tenantId, contatoId, usuarioId, descricao, data }
 - Atualização diária dos andamentos
 - Suporte a processos em segredo de justiça (com senha)
 - Limite de processos monitorados por plano (Plano Smart: 500)
-- Notificação de novas movimentações por e-mail e push mobile
+- Notificação de novas movimentações por e-mail
 
 #### 3.3 Andamentos Manuais
 - Registro manual de andamentos/movimentações
@@ -483,7 +483,7 @@ TaxaHoraria { id, tenantId, usuarioId, valorHora }
 **Descrição:** Espaço exclusivo de acesso para os clientes do escritório, sem precisar expor o sistema interno.
 
 **Funcionalidades:**
-- Acesso via app mobile dedicado (Portal do Cliente) ou link web
+- Acesso via link web (área separada no mesmo sistema, rota `/cliente/...`)
 - Login do cliente com e-mail e senha (credenciais separadas do escritório)
 - Visualização de processos vinculados ao cliente
 - Visualização de andamentos processuais em linguagem simplificada (com IA, se habilitado)
@@ -508,7 +508,6 @@ AcessoCliente { id, tenantId, contatoId, email, senha (hash), ativo }
 - Alertas de prazos vencendo (configurável: 1, 3, 5 dias antes)
 - Alertas de audiências e eventos próximos
 - Alertas de publicações capturadas
-- Notificações push no aplicativo mobile
 - Notificações por e-mail (template customizável por escritório)
 - Notificações para clientes via Portal do Cliente
 - Central de notificações in-app (sino com histórico)
@@ -898,7 +897,6 @@ BackgroundJob.Enqueue<EmailService>(s =>
 | Módulo 3.2 — Monitoramento automático (robôs tribunais) | 🔴 Crítico |
 | Módulo 3.4 — Captura de publicações DJE | 🔴 Crítico |
 | Módulo 3.5 — Controle de prazos com calculadora | 🟡 Importante |
-| Módulo 9 — Notificações push mobile | 🟡 Importante |
 
 **Entregáveis da Fase 2:**
 - Integração com ao menos 10 tribunais principais (TJSP, TJRJ, TRF1, TRF3, STJ, STF, etc.)
@@ -918,7 +916,7 @@ BackgroundJob.Enqueue<EmailService>(s =>
 | Módulo 7 — Indicadores e Relatórios | 🟡 Importante |
 
 **Entregáveis da Fase 3:**
-- Emissão de boletos com PIX (integração Pagar.me ou Stripe)
+- Emissão de boletos com PIX (integração AbacatePay)
 - Régua de cobrança automática
 - Dashboards financeiros
 - Visualização kanban
@@ -932,12 +930,10 @@ BackgroundJob.Enqueue<EmailService>(s =>
 |--------|-----------|
 | Módulo 8 — Portal do Cliente | 🔴 Crítico |
 | Módulo 11 — Refinamento mobile-responsive (HTML/CSS) | 🟡 Importante |
-| Módulo 9 — Notificações push (Web Push API) | 🟡 Importante |
 
 **Entregáveis da Fase 4:**
 - Portal do Cliente como área separada no mesmo sistema web (rota `/cliente/...`)
 - Todos os módulos validados em viewport mobile (375px, 390px, 414px)
-- Web Push Notifications via Service Worker (opcional)
 
 ---
 
@@ -999,7 +995,6 @@ BackgroundJob.Enqueue<EmailService>(s =>
 | Google Drive API | Integração opcional de documentos | 🟡 Média |
 | Anthropic API (Claude) | IA para tradução de andamentos e geração de peças | 🟡 Média |
 | WhatsApp Business API | Envio de mensagens ao cliente (fase futura) | 🔴 Alta |
-| Web Push API (VAPID) | Notificações push no navegador (sem app nativo) | 🟡 Média |
 
 ### Detalhamento da integração OCI Object Storage
 
