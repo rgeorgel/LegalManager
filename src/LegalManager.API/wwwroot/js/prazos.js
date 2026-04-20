@@ -18,13 +18,12 @@ async function calcular() {
       method: 'POST',
       body: JSON.stringify({ dataInicio: inicio, quantidadeDias: parseInt(dias), tipoCalculo: tipo })
     });
-    document.getElementById('calcDataFinal').textContent = new Date(res.dataFinal).toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('calcDataFinal').textContent =
+      new Date(res.dataFinal).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     const ferEl = document.getElementById('calcFeriados');
-    if (res.feriadosNoIntervalo?.length) {
-      ferEl.textContent = `Feriados no intervalo: ${res.feriadosNoIntervalo.join(', ')}`;
-    } else {
-      ferEl.textContent = 'Nenhum feriado nacional no intervalo.';
-    }
+    ferEl.textContent = res.feriadosNoIntervalo?.length
+      ? `Feriados no intervalo: ${res.feriadosNoIntervalo.join(', ')}`
+      : 'Nenhum feriado nacional no intervalo.';
     document.getElementById('calcResultado').style.display = '';
   } catch (e) {
     console.error(e);
@@ -46,7 +45,7 @@ async function load() {
 
 function render(prazos) {
   const list = document.getElementById('listaPrazos');
-  const sem = document.getElementById('semPrazos');
+  const sem  = document.getElementById('semPrazos');
 
   if (!prazos.length) {
     list.innerHTML = '';
@@ -57,32 +56,38 @@ function render(prazos) {
 
   list.innerHTML = prazos.map(p => {
     const dr = p.diasRestantes;
-    const urgClass = p.status !== 'Pendente' ? 'prazo-vencido' :
-                     dr < 0 ? 'prazo-vencido' :
-                     dr <= 3 ? 'prazo-urgente' :
-                     dr <= 7 ? 'prazo-proximo' : 'prazo-normal';
-    const badgeClass = { Pendente:'badge-pendente', Cumprido:'badge-cumprido', Perdido:'badge-perdido', Suspenso:'badge-suspenso' }[p.status];
+    const vencido = dr < 0 || p.status === 'Perdido';
+    const urgClass = p.status !== 'Pendente' ? 'prazo-vencido'
+                   : vencido                  ? 'prazo-vencido'
+                   : dr <= 3                  ? 'prazo-urgente'
+                   : dr <= 7                  ? 'prazo-proximo'
+                                              : 'prazo-normal';
+    const counterColor = vencido ? '#dc2626' : dr <= 3 ? '#f59e0b' : '#10b981';
     const drLabel = dr < 0 ? `${Math.abs(dr)} dias atrás` : dr === 0 ? 'hoje' : `${dr} dia(s)`;
+    const badgeClass = { Pendente: 'badge-pendente', Cumprido: 'badge-cumprido', Perdido: 'badge-perdido', Suspenso: 'badge-suspenso' }[p.status] ?? '';
 
     return `
     <div class="prazo-card ${urgClass}">
-      <div style="text-align:center;min-width:50px">
-        <div class="prazo-dias" style="color:${dr < 0 || p.status === 'Perdido' ? '#dc2626' : dr <= 3 ? '#f59e0b' : '#10b981'}">${dr < 0 ? '⚠' : dr}</div>
-        <div class="prazo-dias-label">${dr < 0 ? 'vencido' : dr === 0 ? 'hoje' : 'dias'}</div>
+      <div class="prazo-counter">
+        <div class="prazo-counter-num" style="color:${counterColor}">${dr < 0 ? '!' : dr}</div>
+        <div class="prazo-counter-label">${dr < 0 ? 'vencido' : dr === 0 ? 'hoje' : 'dias'}</div>
       </div>
       <div class="prazo-info">
-        <div class="prazo-titulo">${esc(p.descricao)} <span class="prazo-badge ${badgeClass}">${STATUS_LABEL[p.status]}</span></div>
+        <div class="prazo-titulo">
+          ${esc(p.descricao)}
+          <span class="badge ${badgeClass}" style="margin-left:6px">${STATUS_LABEL[p.status] ?? p.status}</span>
+        </div>
         <div class="prazo-meta">
-          Vence em <strong>${new Date(p.dataFinal).toLocaleDateString('pt-BR')}</strong> (${drLabel})
-          ${p.numeroCNJ ? ` · Processo: ${esc(p.numeroCNJ)}` : ''}
-          ${p.nomeResponsavel ? ` · 👤 ${esc(p.nomeResponsavel)}` : ''}
-          · ${p.tipoCalculo === 'DiasUteis' ? 'Dias úteis' : 'Dias corridos'}
+          Vence em <strong>${new Date(p.dataFinal).toLocaleDateString('pt-BR')}</strong> &mdash; ${drLabel}
+          ${p.numeroCNJ     ? ` &nbsp;·&nbsp; Processo: <strong>${esc(p.numeroCNJ)}</strong>` : ''}
+          ${p.nomeResponsavel ? ` &nbsp;·&nbsp; 👤 ${esc(p.nomeResponsavel)}` : ''}
+          &nbsp;·&nbsp; ${p.tipoCalculo === 'DiasUteis' ? 'Dias úteis' : 'Dias corridos'}
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        ${p.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" data-action="cumprir" data-id="${p.id}">Cumprir</button>` : ''}
-        <button class="btn btn-secondary btn-sm" data-action="editar" data-id="${p.id}">✏️</button>
-        <button class="btn btn-danger btn-sm" data-action="excluir" data-id="${p.id}">🗑</button>
+      <div class="prazo-actions">
+        ${p.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" data-action="cumprir" data-id="${p.id}">✔ Cumprir</button>` : ''}
+        <button class="btn btn-secondary btn-sm" data-action="editar"  data-id="${p.id}">✏️</button>
+        <button class="btn btn-danger    btn-sm" data-action="excluir" data-id="${p.id}">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -97,10 +102,7 @@ function render(prazos) {
 
 async function marcarStatus(id, status) {
   const p = await apiFetch(`/prazos/${id}`);
-  await apiFetch(`/prazos/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...p, status })
-  });
+  await apiFetch(`/prazos/${id}`, { method: 'PUT', body: JSON.stringify({ ...p, status }) });
   load();
 }
 
@@ -125,12 +127,12 @@ function openEditModal(id, prazos) {
   if (!p) return;
   editingId = id;
   document.getElementById('modalPrazoTitulo').textContent = 'Editar Prazo';
-  document.getElementById('pDescricao').value = p.descricao;
-  document.getElementById('pDataInicio').value = p.dataInicio.substring(0, 10);
+  document.getElementById('pDescricao').value      = p.descricao;
+  document.getElementById('pDataInicio').value     = p.dataInicio.substring(0, 10);
   document.getElementById('pQuantidadeDias').value = p.quantidadeDias;
-  document.getElementById('pTipoCalculo').value = p.tipoCalculo;
-  document.getElementById('pObservacoes').value = p.observacoes ?? '';
-  document.getElementById('pDataFinalCalc').value = new Date(p.dataFinal).toLocaleDateString('pt-BR');
+  document.getElementById('pTipoCalculo').value    = p.tipoCalculo;
+  document.getElementById('pObservacoes').value    = p.observacoes ?? '';
+  document.getElementById('pDataFinalCalc').value  = new Date(p.dataFinal).toLocaleDateString('pt-BR');
   document.getElementById('pMsgErro').style.display = 'none';
   document.getElementById('modalPrazo').style.display = 'flex';
 }
@@ -144,15 +146,15 @@ document.getElementById('modalPrazo').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
 
-// Auto-calculate on input change
+// Auto-calculate data final on input change
 ['pDataInicio', 'pQuantidadeDias', 'pTipoCalculo'].forEach(id => {
   document.getElementById(id).addEventListener('change', autoCalc);
 });
 
 async function autoCalc() {
   const inicio = document.getElementById('pDataInicio').value;
-  const dias = parseInt(document.getElementById('pQuantidadeDias').value);
-  const tipo = document.getElementById('pTipoCalculo').value;
+  const dias   = parseInt(document.getElementById('pQuantidadeDias').value);
+  const tipo   = document.getElementById('pTipoCalculo').value;
   if (!inicio || !dias) return;
   try {
     const res = await apiFetch('/prazos/calcular', {
@@ -169,11 +171,11 @@ document.getElementById('formPrazo').addEventListener('submit', async e => {
   errEl.style.display = 'none';
 
   const dto = {
-    descricao: document.getElementById('pDescricao').value.trim(),
-    dataInicio: document.getElementById('pDataInicio').value,
-    quantidadeDias: parseInt(document.getElementById('pQuantidadeDias').value),
-    tipoCalculo: document.getElementById('pTipoCalculo').value,
-    observacoes: document.getElementById('pObservacoes').value.trim() || null,
+    descricao:       document.getElementById('pDescricao').value.trim(),
+    dataInicio:      document.getElementById('pDataInicio').value,
+    quantidadeDias:  parseInt(document.getElementById('pQuantidadeDias').value),
+    tipoCalculo:     document.getElementById('pTipoCalculo').value,
+    observacoes:     document.getElementById('pObservacoes').value.trim() || null,
   };
 
   try {
@@ -193,11 +195,11 @@ document.getElementById('formPrazo').addEventListener('submit', async e => {
 
 document.getElementById('btnFiltrar').addEventListener('click', load);
 
-// ─── Init calculadora com data de hoje ───────────────────────
+// Init calculadora with today
 document.getElementById('calcInicio').value = new Date().toISOString().substring(0, 10);
 
 function esc(s) {
-  return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 load();

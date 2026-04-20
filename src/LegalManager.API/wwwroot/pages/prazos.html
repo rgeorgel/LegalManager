@@ -6,23 +6,94 @@
   <title>LegalManager — Prazos</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .prazo-urgente { border-left:4px solid #dc2626 !important; }
-    .prazo-proximo { border-left:4px solid #f59e0b !important; }
-    .prazo-normal { border-left:4px solid #10b981 !important; }
-    .prazo-vencido { border-left:4px solid #6b7280 !important; opacity:.7; }
-    .prazo-dias { font-weight:700; font-size:20px; line-height:1; }
-    .prazo-dias-label { font-size:11px; color:var(--color-text-muted); }
-    .prazo-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:14px 16px; margin-bottom:10px; display:flex; gap:16px; align-items:center; }
-    .prazo-info { flex:1; }
-    .prazo-titulo { font-weight:600; font-size:14px; }
-    .prazo-meta { font-size:12px; color:var(--color-text-muted); margin-top:3px; }
-    .prazo-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; margin-left:6px; }
-    .badge-pendente { background:#fef3c7; color:#92400e; }
-    .badge-cumprido { background:#d1fae5; color:#065f46; }
-    .badge-perdido { background:#fee2e2; color:#991b1b; }
-    .badge-suspenso { background:#e0e7ff; color:#3730a3; }
-    .calculadora { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px; margin-bottom:24px; }
-    .calc-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+    /* ── Prazo cards ── */
+    .prazo-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-left: 4px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: var(--shadow);
+    }
+    .prazo-urgente  { border-left-color: #dc2626 !important; }
+    .prazo-proximo  { border-left-color: #f59e0b !important; }
+    .prazo-normal   { border-left-color: #10b981 !important; }
+    .prazo-vencido  { border-left-color: #9ca3af !important; opacity: .75; }
+
+    .prazo-counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+    .prazo-counter-num  { font-weight: 700; font-size: 22px; line-height: 1; }
+    .prazo-counter-label { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+
+    .prazo-info { flex: 1; min-width: 0; }
+    .prazo-titulo { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .prazo-meta   { font-size: 12px; color: var(--color-text-muted); }
+
+    .prazo-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── Calculadora ── */
+    .calculadora {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .calculadora h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .calc-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .calc-row .form-group { margin-bottom: 0; }
+    .calc-resultado {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: var(--color-primary-light);
+      border-radius: var(--radius);
+      display: none;
+    }
+    .calc-resultado-data {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .calc-resultado-feriados {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Status badges ── */
+    .badge-pendente { background: #fef3c7; color: #92400e; }
+    .badge-cumprido { background: #d1fae5; color: #065f46; }
+    .badge-perdido  { background: #fee2e2; color: #991b1b; }
+    .badge-suspenso { background: #e0e7ff; color: #3730a3; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--color-text-muted);
+    }
+    .empty-state-icon { font-size: 40px; margin-bottom: 8px; }
+    .empty-state-text { font-size: 14px; }
   </style>
 </head>
 <body>
@@ -61,37 +132,38 @@
 
     <!-- Calculadora rápida -->
     <div class="calculadora">
-      <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:600">Calculadora de Prazos</h3>
+      <h3>Calculadora de Prazos</h3>
       <div class="calc-row">
-        <div>
-          <label class="label">Data de início</label>
-          <input type="date" id="calcInicio" class="input">
+        <div class="form-group">
+          <label>Data de início</label>
+          <input type="date" id="calcInicio" class="form-control" style="width:160px">
         </div>
-        <div>
-          <label class="label">Quantidade de dias</label>
-          <input type="number" id="calcDias" class="input" min="1" max="3650" value="15" style="width:100px">
+        <div class="form-group">
+          <label>Quantidade de dias</label>
+          <input type="number" id="calcDias" class="form-control" min="1" max="3650" value="15" style="width:110px">
         </div>
-        <div>
-          <label class="label">Tipo de contagem</label>
-          <select id="calcTipo" class="input" style="width:auto">
+        <div class="form-group">
+          <label>Tipo de contagem</label>
+          <select id="calcTipo" class="form-control" style="width:auto">
             <option value="DiasUteis">Dias Úteis</option>
             <option value="DiasCorridos">Dias Corridos</option>
           </select>
         </div>
-        <button class="btn btn-secondary" id="btnCalcular">Calcular</button>
-      </div>
-      <div id="calcResultado" style="margin-top:12px;display:none">
-        <div style="font-size:15px;font-weight:600">
-          Prazo final: <span id="calcDataFinal" style="color:var(--color-primary)"></span>
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <button class="btn btn-secondary" id="btnCalcular">Calcular</button>
         </div>
-        <div id="calcFeriados" style="font-size:12px;color:var(--color-text-muted);margin-top:4px"></div>
+      </div>
+      <div id="calcResultado" class="calc-resultado">
+        <div class="calc-resultado-data">Prazo final: <span id="calcDataFinal"></span></div>
+        <div id="calcFeriados" class="calc-resultado-feriados"></div>
       </div>
     </div>
 
     <!-- Filtros -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <select id="filtroStatus" class="input" style="width:auto">
-        <option value="">Todos</option>
+    <div class="filter-bar" style="margin-bottom:16px">
+      <select id="filtroStatus" class="form-control" style="width:auto;flex:0 0 auto">
+        <option value="">Todos os prazos</option>
         <option value="30">Próximos 30 dias</option>
         <option value="7">Próximos 7 dias</option>
         <option value="3">Próximos 3 dias</option>
@@ -100,55 +172,59 @@
     </div>
 
     <div id="listaPrazos"></div>
-    <div id="semPrazos" style="display:none;color:var(--color-text-muted);padding:32px;text-align:center">
-      Nenhum prazo encontrado.
+    <div id="semPrazos" class="empty-state" style="display:none">
+      <div class="empty-state-icon">⏰</div>
+      <div class="empty-state-text">Nenhum prazo encontrado.</div>
     </div>
   </main>
 </div>
 
 <!-- Modal novo/editar prazo -->
 <div id="modalPrazo" style="display:none" class="modal-overlay">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:520px">
     <div class="modal-header">
       <h2 class="modal-title" id="modalPrazoTitulo">Novo Prazo</h2>
       <button class="modal-close" id="modalPrazoClose">×</button>
     </div>
-    <form id="formPrazo">
-      <div class="form-group">
-        <label class="label">Descrição *</label>
-        <input type="text" id="pDescricao" class="input" required maxlength="500">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="modal-body">
+      <form id="formPrazo">
         <div class="form-group">
-          <label class="label">Data de início *</label>
-          <input type="date" id="pDataInicio" class="input" required>
+          <label>Descrição *</label>
+          <input type="text" id="pDescricao" class="form-control" required maxlength="500" placeholder="Ex: Contestação, Recurso de Apelação…">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data de início *</label>
+            <input type="date" id="pDataInicio" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Qtd. de dias *</label>
+            <input type="number" id="pQuantidadeDias" class="form-control" required min="1" max="3650">
+          </div>
         </div>
         <div class="form-group">
-          <label class="label">Qtd. de dias *</label>
-          <input type="number" id="pQuantidadeDias" class="input" required min="1" max="3650">
+          <label>Tipo de contagem *</label>
+          <select id="pTipoCalculo" class="form-control">
+            <option value="DiasUteis">Dias Úteis (exclui fins de semana e feriados)</option>
+            <option value="DiasCorridos">Dias Corridos</option>
+          </select>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="label">Tipo de contagem *</label>
-        <select id="pTipoCalculo" class="input">
-          <option value="DiasUteis">Dias Úteis (exclui fins de semana e feriados nacionais)</option>
-          <option value="DiasCorridos">Dias Corridos</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="label">Prazo final calculado</label>
-        <input type="text" id="pDataFinalCalc" class="input" readonly style="background:#f9fafb">
-      </div>
-      <div class="form-group">
-        <label class="label">Observações</label>
-        <textarea id="pObservacoes" class="input" rows="2" maxlength="2000"></textarea>
-      </div>
-      <div id="pMsgErro" class="alert alert-error" style="display:none"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="btnCancelarPrazo">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Salvar</button>
-      </div>
-    </form>
+        <div class="form-group">
+          <label>Prazo final calculado</label>
+          <input type="text" id="pDataFinalCalc" class="form-control" readonly
+            style="background:var(--color-bg);cursor:default" placeholder="Será calculado automaticamente">
+        </div>
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea id="pObservacoes" class="form-control" rows="2" maxlength="2000" placeholder="Informações adicionais…"></textarea>
+        </div>
+        <div id="pMsgErro" class="alert alert-error" style="display:none"></div>
+        <div class="modal-footer" style="padding:0;border:none;margin-top:8px">
+          <button type="button" class="btn btn-secondary" id="btnCancelarPrazo">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 

@@ -61,17 +61,17 @@ function render() {
     return `
     <div class="pub-card" data-id="${p.id}">
       <div class="pub-card-header">
-        <div>
+        <div class="pub-card-tipo">
           <span class="pub-tipo">${TIPO_LABEL[p.tipo] ?? p.tipo}</span>
-          <span class="pub-badge ${statusClass}" style="margin-left:6px">${STATUS_LABEL[p.status]}</span>
-          ${p.numeroCNJ ? `<span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">${esc(p.numeroCNJ)}</span>` : ''}
+          <span class="pub-badge ${statusClass}">${STATUS_LABEL[p.status]}</span>
+          ${p.numeroCNJ ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.numeroCNJ)}</span>` : ''}
         </div>
-        <span style="font-size:12px;color:var(--color-text-muted)">${new Date(p.dataPublicacao).toLocaleDateString('pt-BR')} — ${esc(p.diario)}</span>
+        <span class="pub-card-meta">${new Date(p.dataPublicacao).toLocaleDateString('pt-BR')} — ${esc(p.diario)}</span>
       </div>
       <div class="pub-card-conteudo" id="conteudo-${p.id}">${esc(p.conteudo)}</div>
       <div class="pub-card-actions">
         ${p.conteudo.length > 300 ? `<button class="btn btn-secondary btn-sm" data-action="expandir" data-id="${p.id}">Ver mais</button>` : ''}
-        ${p.status === 'Nova' ? `<button class="btn btn-secondary btn-sm" data-action="lida" data-id="${p.id}">Marcar como lida</button>` : ''}
+        ${p.status === 'Nova' ? `<button class="btn btn-primary btn-sm" data-action="lida" data-id="${p.id}">Marcar como lida</button>` : ''}
         ${p.status !== 'Arquivada' ? `<button class="btn btn-secondary btn-sm" data-action="arquivar" data-id="${p.id}">Arquivar</button>` : ''}
       </div>
     </div>`;

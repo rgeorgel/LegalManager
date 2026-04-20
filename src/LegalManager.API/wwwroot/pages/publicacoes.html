@@ -6,19 +6,23 @@
   <title>LegalManager — Publicações</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .pub-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+    .pub-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
     .pub-badge-nova { background:#fef3c7; color:#92400e; }
     .pub-badge-lida { background:#f3f4f6; color:#6b7280; }
     .pub-badge-arquivada { background:#e5e7eb; color:#9ca3af; }
-    .pub-tipo { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; background:#eff6ff; color:#1d4ed8; }
-    .pub-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:16px; margin-bottom:12px; }
-    .pub-card:hover { border-color:var(--color-primary); }
-    .pub-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; }
-    .pub-card-meta { font-size:12px; color:var(--color-text-muted); margin-bottom:6px; }
-    .pub-card-conteudo { font-size:13px; color:var(--color-text); line-height:1.5; max-height:80px; overflow:hidden; position:relative; }
+    .pub-tipo { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:600; background:#eff6ff; color:#1d4ed8; }
+    .pub-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:16px; margin-bottom:12px; transition:border-color 0.15s,box-shadow 0.15s; }
+    .pub-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow); }
+    .pub-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+    .pub-card-tipo { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pub-card-meta { font-size:12px; color:var(--color-text-muted); }
+    .pub-card-conteudo { font-size:14px; color:var(--color-text); line-height:1.6; max-height:90px; overflow:hidden; position:relative; }
     .pub-card-conteudo.expanded { max-height:none; }
-    .pub-card-actions { display:flex; gap:6px; margin-top:10px; }
-    .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .pub-card-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+    .badge-count { background:var(--color-danger); color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; }
+    .view-btn { padding:6px 14px; border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius); cursor:pointer; font-size:13px; }
+    .view-btn:hover { background:var(--color-bg); }
+    .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
   </style>
 </head>
 <body>
@@ -52,17 +56,20 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Publicações</h1>
-      <span id="countNaoLidas" style="display:none" class="badge-count"></span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="countNaoLidas" style="display:none" class="badge-count"></span>
+        <button class="btn btn-secondary" id="btnMarcarTodasLidas">Marcar todas como lidas</button>
+      </div>
     </div>
 
-    <div class="filtros">
-      <select id="filtroStatus" class="input" style="width:auto">
+    <div class="filter-bar">
+      <select id="filtroStatus" class="form-control" style="width:auto">
         <option value="">Todos os status</option>
         <option value="Nova">Novas</option>
         <option value="Lida">Lidas</option>
         <option value="Arquivada">Arquivadas</option>
       </select>
-      <select id="filtroTipo" class="input" style="width:auto">
+      <select id="filtroTipo" class="form-control" style="width:auto">
         <option value="">Todos os tipos</option>
         <option value="Prazo">Prazo</option>
         <option value="Audiencia">Audiência</option>
@@ -71,10 +78,9 @@
         <option value="Intimacao">Intimação</option>
         <option value="Outro">Outro</option>
       </select>
-      <input type="date" id="filtroDe" class="input" style="width:auto" placeholder="De">
-      <input type="date" id="filtroAte" class="input" style="width:auto" placeholder="Até">
-      <button class="btn btn-secondary" id="btnFiltrar">Filtrar</button>
-      <button class="btn btn-secondary" id="btnMarcarTodasLidas">Marcar todas como lidas</button>
+      <input type="date" id="filtroDe" class="form-control" style="width:auto" placeholder="De">
+      <input type="date" id="filtroAte" class="form-control" style="width:auto" placeholder="Até">
+      <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
     </div>
 
     <div id="listaPubs"></div>
