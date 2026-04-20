@@ -21,4 +21,33 @@
     <ProjectReference Include="..\LegalManager.Infrastructure\LegalManager.Infrastructure.csproj" />
   </ItemGroup>
 
+  <UsingTask TaskName="InjectCacheBust" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <PublishDir ParameterType="System.String" Required="true" />
+      <Version ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        var wwwroot = Path.Combine(PublishDir, "wwwroot");
+        foreach (var file in Directory.GetFiles(wwwroot, "*.html", SearchOption.AllDirectories))
+        {
+            var content = File.ReadAllText(file);
+            content = Regex.Replace(content, @"(href=""[^""]+\.css)""", m => m.Groups[1].Value + "?v=" + Version + "\"");
+            content = Regex.Replace(content, @"(src=""[^""]+\.js)""", m => m.Groups[1].Value + "?v=" + Version + "\"");
+            File.WriteAllText(file, content);
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="InjectCacheBust" AfterTargets="Publish">
+    <PropertyGroup>
+      <_CacheBustVer>$([System.DateTime]::Now.ToString('yyyyMMddHHmm'))</_CacheBustVer>
+    </PropertyGroup>
+    <InjectCacheBust PublishDir="$(PublishDir)" Version="$(_CacheBustVer)" />
+    <Message Text="[CacheBust] Versão aplicada: $(_CacheBustVer)" Importance="high" />
+  </Target>
+
 </Project>
