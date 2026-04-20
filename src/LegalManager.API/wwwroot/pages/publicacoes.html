@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Publicações</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .pub-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; }
+    .pub-badge-nova { background:#fef3c7; color:#92400e; }
+    .pub-badge-lida { background:#f3f4f6; color:#6b7280; }
+    .pub-badge-arquivada { background:#e5e7eb; color:#9ca3af; }
+    .pub-tipo { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; background:#eff6ff; color:#1d4ed8; }
+    .pub-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:16px; margin-bottom:12px; }
+    .pub-card:hover { border-color:var(--color-primary); }
+    .pub-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; }
+    .pub-card-meta { font-size:12px; color:var(--color-text-muted); margin-bottom:6px; }
+    .pub-card-conteudo { font-size:13px; color:var(--color-text); line-height:1.5; max-height:80px; overflow:hidden; position:relative; }
+    .pub-card-conteudo.expanded { max-height:none; }
+    .pub-card-actions { display:flex; gap:6px; margin-top:10px; }
+    .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
+      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
+      <li><a href="/pages/publicacoes.html" class="active">📰 Publicações</a></li>
+      <li><a href="/pages/prazos.html">⏰ Prazos</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Publicações</h1>
+      <span id="countNaoLidas" style="display:none" class="badge-count"></span>
+    </div>
+
+    <div class="filtros">
+      <select id="filtroStatus" class="input" style="width:auto">
+        <option value="">Todos os status</option>
+        <option value="Nova">Novas</option>
+        <option value="Lida">Lidas</option>
+        <option value="Arquivada">Arquivadas</option>
+      </select>
+      <select id="filtroTipo" class="input" style="width:auto">
+        <option value="">Todos os tipos</option>
+        <option value="Prazo">Prazo</option>
+        <option value="Audiencia">Audiência</option>
+        <option value="Decisao">Decisão</option>
+        <option value="Despacho">Despacho</option>
+        <option value="Intimacao">Intimação</option>
+        <option value="Outro">Outro</option>
+      </select>
+      <input type="date" id="filtroDe" class="input" style="width:auto" placeholder="De">
+      <input type="date" id="filtroAte" class="input" style="width:auto" placeholder="Até">
+      <button class="btn btn-secondary" id="btnFiltrar">Filtrar</button>
+      <button class="btn btn-secondary" id="btnMarcarTodasLidas">Marcar todas como lidas</button>
+    </div>
+
+    <div id="listaPubs"></div>
+    <div id="semPubs" style="display:none;color:var(--color-text-muted);padding:32px;text-align:center">
+      Nenhuma publicação encontrada.
+    </div>
+  </main>
+</div>
+<script type="module" src="/js/publicacoes.js"></script>
+</body>
+</html>

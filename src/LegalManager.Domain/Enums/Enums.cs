@@ -41,4 +41,12 @@ public enum PrioridadeTarefa { Baixa, Media, Alta, Urgente }
 
 public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }
 
-public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral }
+public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento }
+
+public enum TipoPublicacao { Prazo, Audiencia, Decisao, Despacho, Intimacao, Outro }
+
+public enum StatusPublicacao { Nova, Lida, Arquivada }
+
+public enum StatusPrazo { Pendente, Cumprido, Perdido, Suspenso }
+
+public enum TipoCalculo { DiasUteis, DiasCorridos }

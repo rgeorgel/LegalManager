@@ -114,4 +114,44 @@ public class EmailService : IEmailService
             """;
         await _resend.EmailSendAsync(CriarMensagem(email, $"Evento amanhã: {tituloEvento}", html));
     }
+
+    public async Task EnviarNovoAndamentoAsync(string email, string nomeUsuario,
+        string numeroCNJ, string descricaoAndamento, CancellationToken ct = default)
+    {
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <h2 style="color:#1a56db">⚖️ Novo andamento processual</h2>
+              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
+              <p>O processo <strong>{numeroCNJ}</strong> recebeu um novo andamento:</p>
+              <blockquote style="border-left:4px solid #1a56db;padding:8px 16px;margin:16px 0;color:#374151">
+                {System.Net.WebUtility.HtmlEncode(descricaoAndamento)}
+              </blockquote>
+              <p><a href="{_config["App:FrontendUrl"]}/pages/processos.html"
+                    style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                Ver processo
+              </a></p>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Novo andamento — {numeroCNJ}", html));
+    }
+
+    public async Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario,
+        string numeroCNJ, string descricaoPrazo, DateTime dataFinal, int diasRestantes,
+        CancellationToken ct = default)
+    {
+        var urgencia = diasRestantes == 0 ? "hoje" : $"em {diasRestantes} dia(s)";
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <h2 style="color:#dc2626">⏰ Prazo processual vencendo {urgencia}</h2>
+              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
+              <p>Processo: <strong>{numeroCNJ}</strong></p>
+              <p>Prazo: <strong>{descricaoPrazo}</strong> — vence em <strong>{dataFinal:dd/MM/yyyy}</strong>.</p>
+              <p><a href="{_config["App:FrontendUrl"]}/pages/prazos.html"
+                    style="background:#dc2626;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                Ver prazos
+              </a></p>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
+    }
 }

@@ -8,6 +8,7 @@ using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
+using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -74,7 +75,19 @@ builder.Services.AddScoped<IProcessoService, ProcessoService>();
 builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
+builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
+builder.Services.AddScoped<IPrazoService, PrazoService>();
+builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
 builder.Services.AddScoped<AlertasJob>();
+builder.Services.AddScoped<MonitoramentoJob>();
+
+builder.Services.AddHttpClient<DataJudAdapter>(client =>
+{
+    client.BaseAddress = new Uri("https://api.datajud.cnj.jus.br");
+    var apiKey = builder.Configuration["DataJud:ApiKey"] ?? "cDZHYzlZa0JadVREZDJCendOM3Yw";
+    client.DefaultRequestHeaders.Add("Authorization", $"APIKey {apiKey}");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();
@@ -136,6 +149,11 @@ RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
     "0 8 * * *"); // daily at 08:00 UTC
+
+RecurringJob.AddOrUpdate<MonitoramentoJob>(
+    "monitoramento-processos",
+    job => job.ExecutarAsync(),
+    "0 6 * * *"); // daily at 06:00 UTC (03:00 Brasília)
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

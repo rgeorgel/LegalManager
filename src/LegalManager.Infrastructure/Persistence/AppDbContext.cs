@@ -30,6 +30,8 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<TarefaTag> TarefaTags => Set<TarefaTag>();
     public DbSet<Evento> Eventos => Set<Evento>();
     public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
+    public DbSet<Publicacao> Publicacoes => Set<Publicacao>();
+    public DbSet<Prazo> Prazos => Set<Prazo>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

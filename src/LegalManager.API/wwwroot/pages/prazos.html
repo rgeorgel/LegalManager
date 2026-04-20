@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Prazos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .prazo-urgente { border-left:4px solid #dc2626 !important; }
+    .prazo-proximo { border-left:4px solid #f59e0b !important; }
+    .prazo-normal { border-left:4px solid #10b981 !important; }
+    .prazo-vencido { border-left:4px solid #6b7280 !important; opacity:.7; }
+    .prazo-dias { font-weight:700; font-size:20px; line-height:1; }
+    .prazo-dias-label { font-size:11px; color:var(--color-text-muted); }
+    .prazo-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:14px 16px; margin-bottom:10px; display:flex; gap:16px; align-items:center; }
+    .prazo-info { flex:1; }
+    .prazo-titulo { font-weight:600; font-size:14px; }
+    .prazo-meta { font-size:12px; color:var(--color-text-muted); margin-top:3px; }
+    .prazo-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; margin-left:6px; }
+    .badge-pendente { background:#fef3c7; color:#92400e; }
+    .badge-cumprido { background:#d1fae5; color:#065f46; }
+    .badge-perdido { background:#fee2e2; color:#991b1b; }
+    .badge-suspenso { background:#e0e7ff; color:#3730a3; }
+    .calculadora { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px; margin-bottom:24px; }
+    .calc-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
+      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
+      <li><a href="/pages/publicacoes.html">📰 Publicações</a></li>
+      <li><a href="/pages/prazos.html" class="active">⏰ Prazos</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Prazos Processuais</h1>
+      <button class="btn btn-primary" id="btnNovoPrazo">+ Novo Prazo</button>
+    </div>
+
+    <!-- Calculadora rápida -->
+    <div class="calculadora">
+      <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:600">Calculadora de Prazos</h3>
+      <div class="calc-row">
+        <div>
+          <label class="label">Data de início</label>
+          <input type="date" id="calcInicio" class="input">
+        </div>
+        <div>
+          <label class="label">Quantidade de dias</label>
+          <input type="number" id="calcDias" class="input" min="1" max="3650" value="15" style="width:100px">
+        </div>
+        <div>
+          <label class="label">Tipo de contagem</label>
+          <select id="calcTipo" class="input" style="width:auto">
+            <option value="DiasUteis">Dias Úteis</option>
+            <option value="DiasCorridos">Dias Corridos</option>
+          </select>
+        </div>
+        <button class="btn btn-secondary" id="btnCalcular">Calcular</button>
+      </div>
+      <div id="calcResultado" style="margin-top:12px;display:none">
+        <div style="font-size:15px;font-weight:600">
+          Prazo final: <span id="calcDataFinal" style="color:var(--color-primary)"></span>
+        </div>
+        <div id="calcFeriados" style="font-size:12px;color:var(--color-text-muted);margin-top:4px"></div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <select id="filtroStatus" class="input" style="width:auto">
+        <option value="">Todos</option>
+        <option value="30">Próximos 30 dias</option>
+        <option value="7">Próximos 7 dias</option>
+        <option value="3">Próximos 3 dias</option>
+      </select>
+      <button class="btn btn-secondary" id="btnFiltrar">Filtrar</button>
+    </div>
+
+    <div id="listaPrazos"></div>
+    <div id="semPrazos" style="display:none;color:var(--color-text-muted);padding:32px;text-align:center">
+      Nenhum prazo encontrado.
+    </div>
+  </main>
+</div>
+
+<!-- Modal novo/editar prazo -->
+<div id="modalPrazo" style="display:none" class="modal-overlay">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalPrazoTitulo">Novo Prazo</h2>
+      <button class="modal-close" id="modalPrazoClose">×</button>
+    </div>
+    <form id="formPrazo">
+      <div class="form-group">
+        <label class="label">Descrição *</label>
+        <input type="text" id="pDescricao" class="input" required maxlength="500">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="label">Data de início *</label>
+          <input type="date" id="pDataInicio" class="input" required>
+        </div>
+        <div class="form-group">
+          <label class="label">Qtd. de dias *</label>
+          <input type="number" id="pQuantidadeDias" class="input" required min="1" max="3650">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="label">Tipo de contagem *</label>
+        <select id="pTipoCalculo" class="input">
+          <option value="DiasUteis">Dias Úteis (exclui fins de semana e feriados nacionais)</option>
+          <option value="DiasCorridos">Dias Corridos</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="label">Prazo final calculado</label>
+        <input type="text" id="pDataFinalCalc" class="input" readonly style="background:#f9fafb">
+      </div>
+      <div class="form-group">
+        <label class="label">Observações</label>
+        <textarea id="pObservacoes" class="input" rows="2" maxlength="2000"></textarea>
+      </div>
+      <div id="pMsgErro" class="alert alert-error" style="display:none"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelarPrazo">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/js/prazos.js"></script>
+</body>
+</html>

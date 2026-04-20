@@ -25,6 +25,7 @@ public class AlertasJob
         await AlertarTarefasAsync(now);
         await AlertarEventosAsync(now);
         await AlertarTrialExpirandoAsync(now);
+        await AlertarPrazosProcessuaisAsync(now);
     }
 
     private async Task AlertarTarefasAsync(DateTime hoje)
@@ -197,6 +198,50 @@ public class AlertasJob
                     {
                         _logger.LogError(ex, "Erro ao alertar trial tenant {TenantId}", tenant.Id);
                     }
+                }
+            }
+        }
+    }
+
+    private async Task AlertarPrazosProcessuaisAsync(DateTime hoje)
+    {
+        var limites = new[] { 1, 3, 5 };
+        foreach (var dias in limites)
+        {
+            var dataAlvo = hoje.AddDays(dias).Date;
+            var prazos = await _context.Set<Domain.Entities.Prazo>()
+                .Where(p => p.Status == Domain.Enums.StatusPrazo.Pendente &&
+                            p.DataFinal.Date == dataAlvo &&
+                            p.ResponsavelId.HasValue)
+                .Select(p => new
+                {
+                    p.TenantId, p.Descricao, p.DataFinal, p.ResponsavelId,
+                    NumeroCNJ = p.Processo != null ? p.Processo.NumeroCNJ : null,
+                    ResponsavelNome = p.Responsavel!.Nome,
+                    ResponsavelEmail = p.Responsavel!.Email
+                })
+                .ToListAsync();
+
+            foreach (var prazo in prazos)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(prazo.ResponsavelEmail))
+                        await _emailService.EnviarAlertaPrazoProcessualAsync(
+                            prazo.ResponsavelEmail, prazo.ResponsavelNome,
+                            prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
+                            prazo.DataFinal, dias);
+
+                    await CriarNotificacaoAsync(
+                        prazo.TenantId, prazo.ResponsavelId!.Value,
+                        TipoNotificacao.PrazoTarefa,
+                        $"Prazo processual em {dias} dia(s)",
+                        $"O prazo \"{prazo.Descricao}\" vence em {dias} dia(s).",
+                        "/pages/prazos.html");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Erro ao alertar prazo processual {Descricao}", prazo.Descricao);
                 }
             }
         }

@@ -5,6 +5,8 @@ using LegalManager.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+// ReSharper disable RouteTemplates.ActionRoutePrefixCanBeExtractedToControllerRoute
+
 namespace LegalManager.API.Controllers;
 
 [ApiController]
@@ -13,10 +15,12 @@ namespace LegalManager.API.Controllers;
 public class ProcessosController : ControllerBase
 {
     private readonly IProcessoService _service;
+    private readonly IMonitoramentoService _monitoramento;
 
-    public ProcessosController(IProcessoService service)
+    public ProcessosController(IProcessoService service, IMonitoramentoService monitoramento)
     {
         _service = service;
+        _monitoramento = monitoramento;
     }
 
     [HttpGet]
@@ -88,4 +92,16 @@ public class ProcessosController : ControllerBase
         await _service.DeleteAndamentoAsync(id, andamentoId, ct);
         return NoContent();
     }
+
+    [HttpPost("{id:guid}/monitoramento/alternar")]
+    public async Task<IActionResult> AlternarMonitoramento(Guid id, CancellationToken ct)
+    {
+        var ativo = await _monitoramento.AlternarMonitoramentoAsync(id, ct);
+        return Ok(new { monitorado = ativo });
+    }
+
+    [HttpPost("{id:guid}/monitoramento/executar")]
+    [Authorize(Roles = "Admin,Advogado")]
+    public async Task<IActionResult> ExecutarMonitoramento(Guid id, CancellationToken ct)
+        => Ok(await _monitoramento.MonitorarProcessoAsync(id, ct));
 }

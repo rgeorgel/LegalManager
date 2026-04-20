@@ -20,7 +20,11 @@
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(dotnet package *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(dotnet publish *)",
+      "Bash(python3 *)",
+      "Bash(powershell *)",
+      "Bash(node *)"
     ]
   }
 }

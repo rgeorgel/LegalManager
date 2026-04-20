@@ -23,6 +23,7 @@ public class Processo
     public DateTime CriadoEm { get; set; }
     public DateTime? AtualizadoEm { get; set; }
     public DateTime? EncerradoEm { get; set; }
+    public DateTime? UltimoMonitoramento { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }
