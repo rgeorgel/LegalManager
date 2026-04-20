@@ -61,6 +61,12 @@ function advance(view, date, dir) {
   return d;
 }
 
+// --- Helpers ---
+function toLocalISO(date) {
+  const p = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}:${p(date.getSeconds())}`;
+}
+
 // --- Load ---
 async function load() {
   const start = startOf(currentView, currentDate);
@@ -70,8 +76,8 @@ async function load() {
 
   try {
     const params = new URLSearchParams({
-      de: start.toISOString(),
-      ate: end.toISOString()
+      de: toLocalISO(start),
+      ate: toLocalISO(end)
     });
     agendaItems = await apiFetch(`/agenda?${params}`);
     render(start, end);
@@ -124,40 +130,63 @@ function renderListaView() {
 
 // --- Week View ---
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 07..20
+const SLOT_PX = 48;
 
 function renderSemanaView(start) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start); d.setDate(d.getDate() + i); return d;
   });
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  const totalH = HOURS.length * SLOT_PX;
 
   const headerCells = days.map(d => {
     const isHoje = d.getTime() === today.getTime();
     const label = d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' });
     return `<div class="semana-header${isHoje ? ' hoje' : ''}">${label}</div>`;
-  });
+  }).join('');
 
-  const rows = HOURS.map(h => {
-    const cells = days.map(d => {
-      const items = agendaItems.filter(it => {
-        const dt = new Date(it.dataHora);
-        return dt.getFullYear() === d.getFullYear() &&
-               dt.getMonth() === d.getMonth() &&
-               dt.getDate() === d.getDate() &&
-               dt.getHours() === h;
-      });
-      return `<div class="hora-cell">${items.map(it =>
-        `<div class="evento-chip" style="background:${it.cor}" data-id="${it.id}" data-tipo="${it.tipo}" title="${esc(it.titulo)}">${esc(it.titulo)}</div>`
-      ).join('')}</div>`;
+  const timeLabels = HOURS.map((h, i) =>
+    `<div style="position:absolute;top:${i*SLOT_PX+2}px;right:4px;font-size:11px;color:var(--color-text-muted)">${String(h).padStart(2,'0')}h</div>`
+  ).join('');
+
+  const dayCols = days.map(d => {
+    const dayItems = agendaItems.filter(it => {
+      const dt = new Date(it.dataHora);
+      return dt.getFullYear() === d.getFullYear() &&
+             dt.getMonth() === d.getMonth() &&
+             dt.getDate() === d.getDate();
     });
-    return `<div class="hora-label">${String(h).padStart(2,'0')}h</div>${cells.join('')}`;
-  });
+
+    const hLines = HOURS.map((_, i) =>
+      `<div style="position:absolute;top:${i*SLOT_PX}px;left:0;right:0;border-top:1px solid var(--color-border-light,#f3f4f6);pointer-events:none"></div>`
+    ).join('');
+
+    const chips = dayItems.map(it => {
+      const dtStart = new Date(it.dataHora);
+      const startH = dtStart.getHours() + dtStart.getMinutes() / 60;
+      const top = (startH - HOURS[0]) * SLOT_PX;
+      if (top < 0 || top >= totalH) return '';
+      let height = SLOT_PX - 4;
+      if (it.dataHoraFim) {
+        const dur = (new Date(it.dataHoraFim) - dtStart) / 3600000;
+        height = Math.max(20, dur * SLOT_PX - 4);
+      }
+      return `<div class="evento-chip" style="position:absolute;top:${top}px;left:2px;right:2px;height:${height}px;background:${it.cor};white-space:normal;line-height:1.3;overflow:hidden" data-id="${it.id}" data-tipo="${it.tipo}" title="${esc(it.titulo)}">${esc(it.titulo)}</div>`;
+    }).join('');
+
+    return `<div style="position:relative;height:${totalH}px;border-right:1px solid var(--color-border-light,#f3f4f6)">${hLines}${chips}</div>`;
+  }).join('');
 
   return `
-  <div class="semana-grid" style="grid-template-rows:auto ${HOURS.map(() => '48px').join(' ')}">
-    <div class="semana-header"></div>
-    ${headerCells.join('')}
-    ${rows.join('')}
+  <div style="border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden;background:var(--color-surface)">
+    <div style="display:grid;grid-template-columns:60px repeat(7,1fr)">
+      <div class="semana-header"></div>
+      ${headerCells}
+    </div>
+    <div style="display:grid;grid-template-columns:60px repeat(7,1fr);overflow-y:auto;max-height:620px">
+      <div style="position:relative;height:${totalH}px;border-right:1px solid var(--color-border)">${timeLabels}</div>
+      ${dayCols}
+    </div>
   </div>`;
 }
 
@@ -332,8 +361,8 @@ document.getElementById('formEvento').addEventListener('submit', async e => {
   const dto = {
     titulo,
     tipo: document.getElementById('eTipo').value,
-    dataHora: new Date(dataHora).toISOString(),
-    dataHoraFim: document.getElementById('eDataHoraFim').value ? new Date(document.getElementById('eDataHoraFim').value).toISOString() : null,
+    dataHora: dataHora,
+    dataHoraFim: document.getElementById('eDataHoraFim').value || null,
     local: document.getElementById('eLocal').value.trim() || null,
     observacoes: document.getElementById('eObservacoes').value.trim() || null,
   };
