@@ -29,7 +29,7 @@ public record UpdateProcessoDto(
     [Required] StatusProcesso Status,
     decimal? ValorCausa,
     Guid? AdvogadoResponsavelId,
-    bool Monitorado,
+    bool? Monitorado,
     string? Observacoes,
     string? Decisao,
     string? Resultado,

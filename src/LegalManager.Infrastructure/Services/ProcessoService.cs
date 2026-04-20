@@ -79,7 +79,8 @@ public class ProcessoService : IProcessoService
         processo.Status = dto.Status;
         processo.ValorCausa = dto.ValorCausa;
         processo.AdvogadoResponsavelId = dto.AdvogadoResponsavelId;
-        processo.Monitorado = dto.Monitorado;
+        if (dto.Monitorado.HasValue)
+            processo.Monitorado = dto.Monitorado.Value;
         processo.Observacoes = dto.Observacoes;
         processo.Decisao = dto.Decisao;
         processo.Resultado = dto.Resultado;
