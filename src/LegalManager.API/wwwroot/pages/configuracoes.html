@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Configurações</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .config-section { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; }
+    .config-section-title { font-weight:700; font-size:15px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--color-border); }
+    .uso-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+    .uso-card { background:#f9fafb; border:1px solid var(--color-border); border-radius:8px; padding:14px; }
+    .uso-card-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
+    .uso-card-value { font-size:24px; font-weight:700; color:var(--color-primary); margin-top:4px; }
+    .uso-card-limit { font-size:11px; color:var(--color-text-muted); margin-top:2px; }
+    .progress-bar { height:6px; background:#e5e7eb; border-radius:3px; margin-top:8px; overflow:hidden; }
+    .progress-bar-fill { height:100%; background:var(--color-primary); border-radius:3px; transition:.3s; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
+      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Configurações</h1>
+    </div>
+
+    <!-- Plano e uso -->
+    <div class="config-section">
+      <div class="config-section-title">Plano e Uso de Recursos</div>
+      <div id="planoInfo" style="margin-bottom:16px;font-size:14px;color:var(--color-text-muted)">Carregando...</div>
+      <div class="uso-grid" id="usoGrid"></div>
+    </div>
+
+    <!-- Perfil do escritório -->
+    <div class="config-section" id="perfilSection" style="display:none">
+      <div class="config-section-title">Perfil do Escritório</div>
+      <form id="formPerfil" novalidate>
+        <div class="form-group">
+          <label class="form-label">Nome do escritório *</label>
+          <input type="text" id="cNome" class="form-control" maxlength="200" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ</label>
+          <input type="text" id="cCnpj" class="form-control" maxlength="18" placeholder="00.000.000/0001-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Endereço</label>
+          <input type="text" id="cEndereco" class="form-control" maxlength="500">
+        </div>
+        <div id="perfilMsg" class="alert" style="display:none"></div>
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      </form>
+    </div>
+
+    <!-- Alterar senha -->
+    <div class="config-section">
+      <div class="config-section-title">Alterar Senha</div>
+      <form id="formSenha" novalidate style="max-width:400px">
+        <div class="form-group">
+          <label class="form-label">Senha atual *</label>
+          <input type="password" id="sSenhaAtual" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nova senha *</label>
+          <input type="password" id="sNovaSenha" class="form-control" minlength="8" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar nova senha *</label>
+          <input type="password" id="sConfirmar" class="form-control" required>
+        </div>
+        <div id="senhaMsg" class="alert" style="display:none"></div>
+        <button type="submit" class="btn btn-primary">Alterar senha</button>
+      </form>
+    </div>
+
+    <!-- Usuários atalho -->
+    <div class="config-section">
+      <div class="config-section-title">Gestão de Usuários</div>
+      <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:12px">
+        Convide e gerencie os usuários do seu escritório.
+      </p>
+      <a href="/pages/usuarios.html" class="btn btn-secondary">Gerenciar usuários →</a>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { getUser } from '/js/auth.js';
+
+  initLayout();
+
+  const user = getUser();
+  const isAdmin = user?.perfil === 'Admin';
+
+  async function load() {
+    try {
+      const [config, uso] = await Promise.all([
+        apiFetch('/api/configuracoes'),
+        apiFetch('/api/configuracoes/uso')
+      ]);
+
+      // Plano info
+      const dias = config.trialExpiraEm
+        ? Math.max(0, Math.ceil((new Date(config.trialExpiraEm) - Date.now()) / 86400000))
+        : null;
+      document.getElementById('planoInfo').innerHTML =
+        `Plano: <strong>${config.plano}</strong> &nbsp;|&nbsp; Status: <strong>${config.status}</strong>` +
+        (dias !== null ? ` &nbsp;|&nbsp; Trial: <strong>${dias} dia(s) restantes</strong>` : '');
+
+      // Uso grid
+      const usoCols = [
+        { label: 'Processos', val: uso.processos, limite: uso.processosLimite },
+        { label: 'Usuários', val: uso.usuarios, limite: uso.usuariosLimite },
+        { label: 'Tarefas abertas', val: uso.tarefasAbertas, limite: null },
+        { label: 'Contatos', val: uso.contatos, limite: null },
+        { label: 'Armazenamento', val: Math.round(uso.armazenamentoUsadoMB / 1024 * 10) / 10 + ' GB', limite: uso.armazenamentoLimiteMB / 1024 + ' GB' },
+      ];
+      document.getElementById('usoGrid').innerHTML = usoCols.map(c => {
+        const pct = c.limite && typeof c.val === 'number' ? Math.min(100, Math.round(c.val / c.limite * 100)) : null;
+        return `
+        <div class="uso-card">
+          <div class="uso-card-label">${c.label}</div>
+          <div class="uso-card-value">${c.val}</div>
+          ${c.limite ? `<div class="uso-card-limit">de ${c.limite}</div>` : ''}
+          ${pct !== null ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>` : ''}
+        </div>`;
+      }).join('');
+
+      // Perfil do escritório (admin only)
+      if (isAdmin) {
+        document.getElementById('perfilSection').style.display = '';
+        document.getElementById('cNome').value = config.nome;
+        document.getElementById('cCnpj').value = config.cnpj ?? '';
+        document.getElementById('cEndereco').value = config.endereco ?? '';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Perfil form
+  document.getElementById('formPerfil').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('perfilMsg');
+    msg.style.display = 'none';
+    try {
+      await apiFetch('/api/configuracoes', {
+        method: 'PUT',
+        body: JSON.stringify({
+          nome: document.getElementById('cNome').value.trim(),
+          cnpj: document.getElementById('cCnpj').value.trim() || null,
+          endereco: document.getElementById('cEndereco').value.trim() || null,
+        })
+      });
+      msg.className = 'alert alert-success';
+      msg.textContent = 'Perfil atualizado com sucesso!';
+      msg.style.display = '';
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao salvar.';
+      msg.style.display = '';
+    }
+  });
+
+  // Senha form
+  document.getElementById('formSenha').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('senhaMsg');
+    msg.style.display = 'none';
+    const nova = document.getElementById('sNovaSenha').value;
+    const confirm = document.getElementById('sConfirmar').value;
+    if (nova !== confirm) {
+      msg.className = 'alert alert-error';
+      msg.textContent = 'As senhas não coincidem.';
+      msg.style.display = '';
+      return;
+    }
+    try {
+      await apiFetch('/api/configuracoes/senha', {
+        method: 'PUT',
+        body: JSON.stringify({
+          senhaAtual: document.getElementById('sSenhaAtual').value,
+          novaSenha: nova
+        })
+      });
+      msg.className = 'alert alert-success';
+      msg.textContent = 'Senha alterada com sucesso!';
+      msg.style.display = '';
+      document.getElementById('formSenha').reset();
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao alterar senha.';
+      msg.style.display = '';
+    }
+  });
+
+  load();
+</script>
+</body>
+</html>

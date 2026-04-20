@@ -76,4 +76,42 @@ public class EmailService : IEmailService
             """;
         await _resend.EmailSendAsync(CriarMensagem(email, $"Seu período de teste termina em {diasRestantes} dia(s)", html));
     }
+
+    public async Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa,
+        DateTime prazo, int diasRestantes, CancellationToken ct = default)
+    {
+        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        var urgencia = diasRestantes == 0 ? "HOJE" : $"em {diasRestantes} dia(s)";
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <h2 style="color:#d97706">⏰ Prazo de tarefa vencendo {urgencia}</h2>
+              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
+              <p>A tarefa <strong>"{tituloTarefa}"</strong> vence <strong>{urgencia}</strong> ({prazoStr}).</p>
+              <p><a href="{_config["App:FrontendUrl"]}/pages/tarefas.html"
+                    style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                Ver tarefas
+              </a></p>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {tituloTarefa}", html));
+    }
+
+    public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
+        DateTime dataHora, string? local, CancellationToken ct = default)
+    {
+        var dtStr = dataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        var localStr = local != null ? $" — {local}" : "";
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <h2 style="color:#dc2626">📅 Evento amanhã</h2>
+              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
+              <p>Você tem o evento <strong>"{tituloEvento}"</strong> amanhã às <strong>{dtStr}</strong>{localStr}.</p>
+              <p><a href="{_config["App:FrontendUrl"]}/pages/agenda.html"
+                    style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                Ver agenda
+              </a></p>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Evento amanhã: {tituloEvento}", html));
+    }
 }

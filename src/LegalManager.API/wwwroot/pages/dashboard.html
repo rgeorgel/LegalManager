@@ -45,6 +45,7 @@
         <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
         <li><a href="/pages/agenda.html">📅 Agenda</a></li>
         <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+        <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
       </ul>
     </nav>
 
@@ -59,38 +60,40 @@
           <div class="stat-card-value" id="statProcessos">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Contatos cadastrados</div>
+          <div class="stat-card-label">Contatos</div>
           <div class="stat-card-value" id="statContatos">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Plano</div>
-          <div class="stat-card-value" style="font-size:18px" id="statPlano">—</div>
+          <div class="stat-card-label">Tarefas Abertas</div>
+          <div class="stat-card-value" id="statTarefas">—</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Status</div>
-          <div class="stat-card-value" style="font-size:16px" id="statTrial">—</div>
+        <div class="stat-card" style="border-color:#fca5a5">
+          <div class="stat-card-label" style="color:#dc2626">Tarefas Atrasadas</div>
+          <div class="stat-card-value" style="color:#dc2626" id="statAtrasadas">—</div>
         </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="statsRow2">
         <div class="stat-card">
           <div class="stat-card-label">Processos Encerrados</div>
-          <div class="stat-card-value" id="statEncerrados">—</div>
+          <div class="stat-card-value" style="font-size:24px" id="statEncerrados">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Processos Suspensos</div>
-          <div class="stat-card-value" id="statSuspensos">—</div>
+          <div class="stat-card-label">Plano / Status</div>
+          <div class="stat-card-value" style="font-size:16px" id="statPlano">—</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-body">
-          <div class="card-title">Bem-vindo ao LegalManager!</div>
-          <p style="color:var(--color-text-muted)">
-            Use o menu lateral para navegar entre os módulos.
-            Comece cadastrando seus contatos e processos.
-          </p>
+      <!-- Próximos eventos (hoje + 7 dias) -->
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:12px">📅 Próximos Eventos (7 dias)</div>
+        <div id="proximosEventos"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
+      </div>
+
+      <!-- Tarefas urgentes abertas -->
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:700;font-size:15px">✅ Tarefas Urgentes / Alta Prioridade</div>
+          <a href="/pages/tarefas.html" style="font-size:13px;color:#1a56db">Ver todas →</a>
         </div>
+        <div id="tarefasUrgentes"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
       </div>
     </main>
   </div>
@@ -98,36 +101,81 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
-    import { getUser } from '/js/auth.js';
 
     initLayout();
 
     async function loadStats() {
       try {
-        const [me, contatos, processosAtivos, processosEncerrados, processosSuspensos] = await Promise.all([
-          apiFetch('/usuarios/me'),
-          apiFetch('/contatos?pageSize=1'),
-          apiFetch('/processos?status=Ativo&pageSize=1'),
-          apiFetch('/processos?status=Encerrado&pageSize=1'),
-          apiFetch('/processos?status=Suspenso&pageSize=1')
+        const now = new Date();
+        const em7dias = new Date(now.getTime() + 7 * 86400000);
+
+        const [me, contatos, processosAtivos, processosEncerrados, tarefas, tarefasAtrasadas, tarefasUrgentes, eventos] = await Promise.all([
+          apiFetch('/api/usuarios/me'),
+          apiFetch('/api/contatos?pageSize=1'),
+          apiFetch('/api/processos?status=Ativo&pageSize=1'),
+          apiFetch('/api/processos?status=Encerrado&pageSize=1'),
+          apiFetch('/api/tarefas?status=Pendente&pageSize=1'),
+          apiFetch('/api/tarefas?atrasada=true&pageSize=1'),
+          apiFetch('/api/tarefas?prioridade=Urgente&pageSize=5'),
+          apiFetch(`/api/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`)
         ]);
 
         document.getElementById('statProcessos').textContent = processosAtivos?.total ?? '0';
         document.getElementById('statEncerrados').textContent = processosEncerrados?.total ?? '0';
-        document.getElementById('statSuspensos').textContent = processosSuspensos?.total ?? '0';
         document.getElementById('statContatos').textContent = contatos?.total ?? '0';
-        document.getElementById('statPlano').textContent = me?.tenant?.plano ?? '–';
+        document.getElementById('statTarefas').textContent = tarefas?.total ?? '0';
+        document.getElementById('statAtrasadas').textContent = tarefasAtrasadas?.total ?? '0';
 
-        const trial = me?.tenant;
-        if (trial?.status === 'Trial' && trial?.trialExpiraEm) {
-          const dias = Math.max(0, Math.ceil((new Date(trial.trialExpiraEm) - new Date()) / 86400000));
-          document.getElementById('statTrial').textContent = `${dias} dia(s) restantes`;
+        const tenant = me?.tenant;
+        const planoLabel = tenant?.plano ?? '–';
+        const statusLabel = tenant?.status === 'Trial' && tenant?.trialExpiraEm
+          ? `${Math.max(0, Math.ceil((new Date(tenant.trialExpiraEm) - now) / 86400000))}d trial`
+          : tenant?.status ?? '–';
+        document.getElementById('statPlano').textContent = `${planoLabel} · ${statusLabel}`;
+
+        // Próximos eventos
+        const evEl = document.getElementById('proximosEventos');
+        const evList = (eventos ?? []).filter(e => e.tipo !== 'Tarefa').slice(0, 5);
+        if (!evList.length) {
+          evEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum evento nos próximos 7 dias.</span>';
         } else {
-          document.getElementById('statTrial').textContent = me?.tenant?.status ?? '–';
+          evEl.innerHTML = evList.map(ev => {
+            const dt = new Date(ev.dataHora);
+            return `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f3f4f6;align-items:center">
+              <div style="width:10px;height:10px;border-radius:50%;background:${ev.cor};flex-shrink:0"></div>
+              <div>
+                <div style="font-weight:600;font-size:13px">${esc(ev.titulo)}</div>
+                <div style="font-size:12px;color:#6b7280">${ev.tipo} · ${dt.toLocaleDateString('pt-BR', {weekday:'short',day:'numeric',month:'short'})} ${dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}${ev.local ? ` · 📍${esc(ev.local)}` : ''}</div>
+              </div>
+            </div>`;
+          }).join('');
+        }
+
+        // Tarefas urgentes
+        const tuEl = document.getElementById('tarefasUrgentes');
+        const tuList = tarefasUrgentes?.items ?? [];
+        if (!tuList.length) {
+          tuEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhuma tarefa urgente no momento.</span>';
+        } else {
+          tuEl.innerHTML = tuList.map(t => {
+            const prazo = t.prazo ? new Date(t.prazo).toLocaleDateString('pt-BR') : '–';
+            const atrasada = t.atrasada ? '<span style="background:#fef2f2;color:#dc2626;font-size:11px;padding:2px 6px;border-radius:4px;margin-left:6px">Atrasada</span>' : '';
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px">
+              <div>
+                <span style="font-weight:600;font-size:13px">${esc(t.titulo)}</span>${atrasada}
+                ${t.nomeResponsavel ? `<span style="font-size:12px;color:#6b7280;margin-left:8px">👤${esc(t.nomeResponsavel)}</span>` : ''}
+              </div>
+              <span style="font-size:12px;color:#6b7280">📅 ${prazo}</span>
+            </div>`;
+          }).join('');
         }
       } catch (err) {
         console.error(err);
       }
+    }
+
+    function esc(str) {
+      return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
     loadStats();

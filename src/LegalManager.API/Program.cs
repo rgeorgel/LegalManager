@@ -5,6 +5,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Identity;
+using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -67,6 +68,8 @@ builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
 builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
+builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
+builder.Services.AddScoped<AlertasJob>();
 
 builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();
@@ -118,6 +121,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire");
+
+RecurringJob.AddOrUpdate<AlertasJob>(
+    "alertas-diarios",
+    job => job.ExecutarAsync(),
+    "0 8 * * *"); // daily at 08:00 UTC
+
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 
