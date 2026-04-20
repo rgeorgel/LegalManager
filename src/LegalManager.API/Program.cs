@@ -79,6 +79,9 @@ builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
 builder.Services.AddScoped<IPrazoService, PrazoService>();
 builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
 builder.Services.AddScoped<INomeCapturaService, NomeCapturaService>();
+builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();
+builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
+    PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<CapturaPublicacaoJob>();
@@ -172,6 +175,7 @@ RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
     "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
 
 app.MapControllers();
+app.MapFallbackToFile("/cliente/{**path}", "cliente/index.html");
 app.MapFallbackToFile("index.html");
 
 app.Run();

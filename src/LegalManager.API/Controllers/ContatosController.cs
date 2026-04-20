@@ -1,5 +1,7 @@
 using LegalManager.Application.DTOs.Contatos;
+using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +13,14 @@ namespace LegalManager.API.Controllers;
 public class ContatosController : ControllerBase
 {
     private readonly IContatoService _service;
+    private readonly IPortalClienteService _portalService;
+    private readonly ITenantContext _tenantContext;
 
-    public ContatosController(IContatoService service)
+    public ContatosController(IContatoService service, IPortalClienteService portalService, ITenantContext tenantContext)
     {
         _service = service;
+        _portalService = portalService;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
@@ -78,5 +84,26 @@ public class ContatosController : ControllerBase
     {
         var result = await _service.AddAtendimentoAsync(id, dto, ct);
         return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/portal-acesso")]
+    public async Task<ActionResult<AcessoPortalInfoDto>> CriarPortalAcesso(Guid id, [FromBody] CriarAcessoPortalDto dto, CancellationToken ct)
+    {
+        var result = await _portalService.CriarAcessoAsync(id, dto, _tenantContext.TenantId, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/portal-acesso")]
+    public async Task<ActionResult<AcessoPortalInfoDto>> GetPortalAcesso(Guid id, CancellationToken ct)
+    {
+        var result = await _portalService.GetAcessoAsync(id, _tenantContext.TenantId, ct);
+        return result == null ? NotFound() : Ok(result);
+    }
+
+    [HttpDelete("{id:guid}/portal-acesso")]
+    public async Task<IActionResult> RevogarPortalAcesso(Guid id, CancellationToken ct)
+    {
+        await _portalService.RevogarAcessoAsync(id, _tenantContext.TenantId, ct);
+        return NoContent();
     }
 }

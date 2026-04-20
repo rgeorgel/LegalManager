@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Início — Portal do Cliente</title>
+  <link rel="stylesheet" href="/cliente/css/portal.css">
+</head>
+<body>
+  <header class="portal-nav" id="portalNav"></header>
+
+  <main class="portal-page">
+    <div class="page-header">
+      <h1 class="page-title" id="welcomeTitle">Olá!</h1>
+      <p class="page-subtitle">Acompanhe seus processos em andamento</p>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-number" id="statTotal">—</div>
+        <div class="stat-label">Processos Ativos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statAndamentos">—</div>
+        <div class="stat-label">Andamentos Totais</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Processos Recentes</span>
+        <a href="/cliente/processos.html" class="btn btn-secondary btn-sm" style="margin-left:auto">Ver todos</a>
+      </div>
+      <div id="processosList">
+        <div class="loading"><span class="spinner spinner-dark"></span></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initLayout, formatDate, statusBadge, faseBadge, tipoParteLabel } from '/cliente/js/clienteLayout.js';
+    import { portalApi } from '/cliente/js/clienteApi.js';
+
+    const user = initLayout('dashboard');
+    if (!user) throw new Error('not authenticated');
+
+    document.getElementById('welcomeTitle').textContent = `Olá, ${user.nome.split(' ')[0]}!`;
+
+    const processosList = document.getElementById('processosList');
+
+    try {
+      const processos = await portalApi.getMeusProcessos();
+      const arr = [...processos];
+
+      document.getElementById('statTotal').textContent = arr.length;
+      document.getElementById('statAndamentos').textContent = arr.reduce((s, p) => s + p.totalAndamentos, 0);
+
+      if (arr.length === 0) {
+        processosList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📂</div>
+            <div class="empty-state-title">Nenhum processo encontrado</div>
+            <div class="empty-state-desc">Seus processos aparecerão aqui quando forem cadastrados.</div>
+          </div>`;
+        return;
+      }
+
+      const recent = arr.slice(0, 5);
+      processosList.innerHTML = recent.map(p => `
+        <a class="processo-card" href="/cliente/processo-detalhe.html?id=${p.id}" style="margin:0; border-radius:0; border:none; border-bottom:1px solid var(--color-border)">
+          <div class="processo-cnj">${p.numeroCNJ}</div>
+          <div class="processo-meta">
+            ${p.tribunal ? `<span>${p.tribunal}</span>` : ''}
+            ${p.comarca ? `<span>${p.comarca}</span>` : ''}
+            <span>${tipoParteLabel(p.tipoParte)}</span>
+          </div>
+          <div class="processo-tags">
+            ${statusBadge(p.status)}
+            ${faseBadge(p.fase)}
+            ${p.totalAndamentos > 0 ? `<span class="badge badge-gray">${p.totalAndamentos} andamento${p.totalAndamentos !== 1 ? 's' : ''}</span>` : ''}
+          </div>
+        </a>`).join('');
+    } catch (err) {
+      processosList.innerHTML = `<div class="alert alert-error" style="margin:16px">${err.message}</div>`;
+    }
+  </script>
+</body>
+</html>
