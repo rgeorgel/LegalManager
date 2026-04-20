@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Criar Escritório</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">⚖️ LegalManager</div>
+      <div class="auth-subtitle">Crie sua conta — 10 dias grátis, sem cartão</div>
+
+      <div id="alert" class="alert alert-error" style="display:none"></div>
+
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="nomeEscritorio">Nome do Escritório</label>
+          <input type="text" id="nomeEscritorio" class="form-control" placeholder="Silva & Associados Advogados" required>
+        </div>
+        <div class="form-group">
+          <label for="cnpj">CNPJ <span style="color:var(--color-text-muted)">(opcional)</span></label>
+          <input type="text" id="cnpj" class="form-control" placeholder="00.000.000/0001-00">
+        </div>
+        <div class="form-group">
+          <label for="nomeAdmin">Seu Nome</label>
+          <input type="text" id="nomeAdmin" class="form-control" placeholder="Dr. João Silva" required>
+        </div>
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" class="form-control" placeholder="joao@escritorio.com.br" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="senha">Senha <span style="color:var(--color-text-muted)">(mín. 8 caracteres)</span></label>
+          <input type="password" id="senha" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">
+          Criar escritório
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Já tem conta? <a href="/index.html">Entrar</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { register } from '/js/auth.js';
+
+    const form = document.getElementById('registerForm');
+    const alertEl = document.getElementById('alert');
+    const btn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertEl.style.display = 'none';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Criando...';
+
+      try {
+        await register({
+          nomeEscritorio: document.getElementById('nomeEscritorio').value,
+          cnpj: document.getElementById('cnpj').value || null,
+          nomeAdmin: document.getElementById('nomeAdmin').value,
+          email: document.getElementById('email').value,
+          senha: document.getElementById('senha').value
+        });
+        window.location.href = '/pages/dashboard.html';
+      } catch (err) {
+        alertEl.textContent = err.message;
+        alertEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Criar escritório';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+# dotnet publish
+publish/
+artifacts/
+
+# User secrets / sensitive configs
+appsettings.*.local.json
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+coverage/

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Usuários</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ LegalManager</div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+
+    <nav class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+        <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+        <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Usuários do Escritório</h1>
+        <button class="btn btn-primary" id="btnConvidar">+ Convidar Usuário</button>
+      </div>
+
+      <div id="alertMsg" class="alert" style="display:none"></div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Membro desde</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="6" style="text-align:center;padding:32px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Convidar -->
+  <div class="modal-overlay" id="modalConvite">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <span class="modal-title">Convidar Usuário</span>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalAlert" class="alert alert-error" style="display:none"></div>
+        <div class="form-group">
+          <label>E-mail *</label>
+          <input type="email" id="cEmail" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Perfil *</label>
+          <select id="cPerfil" class="form-control">
+            <option value="Advogado">Advogado</option>
+            <option value="Colaborador">Colaborador</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+        <button class="btn btn-primary" id="btnEnviar">Enviar convite</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
+
+    initLayout();
+
+    const alertMsg = document.getElementById('alertMsg');
+    const modal = document.getElementById('modalConvite');
+
+    function showAlert(msg, type = 'error') {
+      alertMsg.className = `alert alert-${type}`;
+      alertMsg.textContent = msg;
+      alertMsg.style.display = 'block';
+      setTimeout(() => alertMsg.style.display = 'none', 4000);
+    }
+
+    async function loadUsuarios() {
+      try {
+        const users = await apiFetch('/usuarios');
+        const tbody = document.getElementById('tableBody');
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Nenhum usuário</td></tr>';
+          return;
+        }
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td data-label="Nome">${u.nome}</td>
+            <td data-label="E-mail">${u.email}</td>
+            <td data-label="Perfil"><span class="badge badge-blue">${u.perfil}</span></td>
+            <td data-label="Status"><span class="badge badge-${u.ativo ? 'green' : 'red'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
+            <td data-label="Membro desde">${new Date(u.criadoEm).toLocaleDateString('pt-BR')}</td>
+            <td data-label="Ações">
+              ${u.ativo ? `<button class="btn btn-danger btn-sm" onclick="desativar('${u.id}','${u.nome}')">Desativar</button>` : ''}
+            </td>
+          </tr>`).join('');
+      } catch (err) {
+        showAlert(err.message);
+      }
+    }
+
+    window.desativar = async (id, nome) => {
+      if (!confirm(`Desativar o usuário "${nome}"?`)) return;
+      try {
+        await apiFetch(`/usuarios/${id}/desativar`, { method: 'PUT' });
+        showAlert('Usuário desativado.', 'success');
+        loadUsuarios();
+      } catch (err) { showAlert(err.message); }
+    };
+
+    document.getElementById('btnConvidar').addEventListener('click', () => modal.classList.add('open'));
+    [document.getElementById('modalClose'), document.getElementById('btnCancelar')].forEach(el =>
+      el.addEventListener('click', () => modal.classList.remove('open')));
+
+    document.getElementById('btnEnviar').addEventListener('click', async () => {
+      const btn = document.getElementById('btnEnviar');
+      const modalAlert = document.getElementById('modalAlert');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      modalAlert.style.display = 'none';
+      try {
+        await apiFetch('/auth/convidar', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('cEmail').value,
+            perfil: document.getElementById('cPerfil').value
+          })
+        });
+        modal.classList.remove('open');
+        showAlert('Convite enviado por e-mail.', 'success');
+      } catch (err) {
+        modalAlert.textContent = err.message;
+        modalAlert.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar convite';
+      }
+    });
+
+    loadUsuarios();
+  </script>
+</body>
+</html>

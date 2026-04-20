@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .stat-card-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+    .stat-card-value { font-size: 32px; font-weight: 700; margin-top: 8px; color: var(--color-primary); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ LegalManager</div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+
+    <nav class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+        <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+        <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">Usuários ativos</div>
+          <div class="stat-card-value" id="statUsuarios">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Contatos cadastrados</div>
+          <div class="stat-card-value" id="statContatos">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Plano</div>
+          <div class="stat-card-value" style="font-size:18px" id="statPlano">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Status do trial</div>
+          <div class="stat-card-value" style="font-size:16px" id="statTrial">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Bem-vindo ao LegalManager!</div>
+          <p style="color:var(--color-text-muted)">
+            Use o menu lateral para navegar entre os módulos.
+            Comece cadastrando seus contatos e clientes.
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
+    import { getUser } from '/js/auth.js';
+
+    initLayout();
+
+    async function loadStats() {
+      try {
+        const user = getUser();
+
+        const [me, contatos] = await Promise.all([
+          apiFetch('/usuarios/me'),
+          apiFetch('/contatos?pageSize=1')
+        ]);
+
+        document.getElementById('statUsuarios').textContent = '–';
+        document.getElementById('statContatos').textContent = contatos?.total ?? '0';
+        document.getElementById('statPlano').textContent = me?.tenant?.plano ?? '–';
+
+        const trial = me?.tenant;
+        if (trial?.status === 'Trial' && trial?.trialExpiraEm) {
+          const dias = Math.max(0, Math.ceil((new Date(trial.trialExpiraEm) - new Date()) / 86400000));
+          document.getElementById('statTrial').textContent = `${dias} dia(s) restantes`;
+        } else {
+          document.getElementById('statTrial').textContent = me?.tenant?.status ?? '–';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LegalManager.API/LegalManager.API.csproj" />
+    <Project Path="src/LegalManager.Application/LegalManager.Application.csproj" />
+    <Project Path="src/LegalManager.Domain/LegalManager.Domain.csproj" />
+    <Project Path="src/LegalManager.Infrastructure/LegalManager.Infrastructure.csproj" />
+    <Project Path="src/LegalManager.Web/LegalManager.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LegalManager.IntegrationTests/LegalManager.IntegrationTests.csproj" />
+    <Project Path="tests/LegalManager.UnitTests/LegalManager.UnitTests.csproj" />
+  </Folder>
+</Solution>
