@@ -26,6 +26,9 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Processo> Processos => Set<Processo>();
     public DbSet<ProcessoParte> ProcessoPartes => Set<ProcessoParte>();
     public DbSet<Andamento> Andamentos => Set<Andamento>();
+    public DbSet<Tarefa> Tarefas => Set<Tarefa>();
+    public DbSet<TarefaTag> TarefaTags => Set<TarefaTag>();
+    public DbSet<Evento> Eventos => Set<Evento>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -34,3 +34,9 @@ public enum TipoAndamento
     Despacho, Decisao, Sentenca, Acordao, Audiencia,
     Peticao, Intimacao, Publicacao, Outro
 }
+
+public enum StatusTarefa { Pendente, EmAndamento, Concluida, Cancelada }
+
+public enum PrioridadeTarefa { Baixa, Media, Alta, Urgente }
+
+public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }

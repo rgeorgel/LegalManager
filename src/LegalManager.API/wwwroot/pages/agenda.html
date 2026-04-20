@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Agenda</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .agenda-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+    .agenda-nav { display:flex; gap:4px; align-items:center; }
+    .agenda-period { font-weight:600; font-size:16px; min-width:200px; text-align:center; }
+    .view-btn { padding:6px 14px; border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius); cursor:pointer; font-size:13px; }
+    .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+
+    /* Week / day grid */
+    .semana-grid { display:grid; grid-template-columns:60px repeat(7,1fr); border:1px solid var(--color-border); border-radius:var(--radius); overflow:hidden; background:var(--color-surface); }
+    .semana-header { background:#f9fafb; border-bottom:1px solid var(--color-border); padding:8px 4px; text-align:center; font-size:12px; font-weight:600; }
+    .semana-header.hoje { background:var(--color-primary); color:#fff; }
+    .hora-label { font-size:11px; color:var(--color-text-muted); padding:4px; text-align:right; border-right:1px solid var(--color-border); vertical-align:top; }
+    .hora-cell { border-right:1px solid var(--color-border-light,#f3f4f6); border-bottom:1px solid var(--color-border-light,#f3f4f6); min-height:48px; position:relative; }
+    .evento-chip { border-radius:4px; padding:2px 6px; font-size:11px; font-weight:600; color:#fff; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:2px; }
+
+    /* List view */
+    .agenda-list { display:flex; flex-direction:column; gap:8px; }
+    .agenda-group-title { font-weight:700; font-size:13px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:16px; margin-bottom:4px; }
+    .agenda-item { display:flex; gap:12px; padding:12px 14px; border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); }
+    .agenda-item-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .agenda-item-body { flex:1; }
+    .agenda-item-titulo { font-weight:600; font-size:14px; }
+    .agenda-item-meta { font-size:12px; color:var(--color-text-muted); margin-top:4px; }
+
+    @media(max-width:640px) {
+      .semana-grid { grid-template-columns:40px repeat(7,1fr); }
+      .semana-header { font-size:10px; padding:4px 2px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
+      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Agenda</h1>
+      <button class="btn btn-primary" id="btnNovoEvento">+ Novo Evento</button>
+    </div>
+
+    <div class="agenda-controls">
+      <div class="agenda-nav">
+        <button class="btn btn-secondary btn-sm" id="btnAnterior">‹</button>
+        <span class="agenda-period" id="periodoLabel"></span>
+        <button class="btn btn-secondary btn-sm" id="btnProximo">›</button>
+        <button class="btn btn-secondary btn-sm" id="btnHoje">Hoje</button>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="view-btn" id="viewDia">Dia</button>
+        <button class="view-btn active" id="viewSemana">Semana</button>
+        <button class="view-btn" id="viewMes">Mês</button>
+        <button class="view-btn" id="viewLista">Lista</button>
+      </div>
+    </div>
+
+    <div id="calendarContainer"></div>
+  </main>
+</div>
+
+<!-- Modal Novo/Editar Evento -->
+<div class="modal-overlay" id="modalEvento" style="display:none">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalEventoTitulo">Novo Evento</h2>
+      <button class="modal-close" id="modalEventoClose">&times;</button>
+    </div>
+    <form id="formEvento" novalidate>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Título *</label>
+          <input type="text" id="eTitulo" class="form-control" maxlength="300" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select id="eTipo" class="form-control" required>
+            <option value="Audiencia">Audiência</option>
+            <option value="Reuniao">Reunião</option>
+            <option value="Pericia">Perícia</option>
+            <option value="Prazo">Prazo</option>
+            <option value="Despacho">Despacho</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Data/Hora início *</label>
+            <input type="datetime-local" id="eDataHora" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data/Hora fim</label>
+            <input type="datetime-local" id="eDataHoraFim" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Local</label>
+          <input type="text" id="eLocal" class="form-control" maxlength="300">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="eObservacoes" class="form-control" rows="3" maxlength="4000"></textarea>
+        </div>
+        <div id="eMsgErro" class="alert alert-error" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelarEvento">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tooltip de detalhe -->
+<div id="eventoTooltip" style="display:none;position:fixed;z-index:9999;background:#fff;border:1px solid var(--color-border);border-radius:8px;padding:14px;max-width:280px;box-shadow:0 8px 24px rgba(0,0,0,.12)">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <strong id="ttTitulo" style="font-size:14px"></strong>
+    <button id="ttClose" style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;color:#6b7280">&times;</button>
+  </div>
+  <div id="ttMeta" style="font-size:12px;color:#6b7280;margin-top:6px"></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn btn-secondary btn-sm" id="ttEdit">Editar</button>
+    <button class="btn btn-danger btn-sm" id="ttDelete">Excluir</button>
+  </div>
+</div>
+
+<script type="module" src="/js/agenda.js"></script>
+</body>
+</html>
