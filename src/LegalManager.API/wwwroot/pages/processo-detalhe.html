@@ -59,6 +59,7 @@
         <h1 class="page-title" id="pageTitle">Carregando...</h1>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
         <button class="btn btn-secondary" id="btnEditar">Editar</button>
         <button class="btn btn-danger" id="btnEncerrar" style="display:none">Encerrar</button>
       </div>
@@ -71,6 +72,7 @@
       <span id="badgeStatus" class="badge"></span>
       <span id="badgeArea" class="badge badge-blue"></span>
       <span id="badgeFase" class="badge badge-gray"></span>
+      <span id="badgeMonitorado" class="badge" style="display:none"></span>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
@@ -346,6 +348,15 @@ function renderProcesso() {
   document.getElementById('badgeArea').textContent = label(areaLabels, processo.areaDireito);
   document.getElementById('badgeFase').textContent = label(faseLabels, processo.fase);
 
+  const badgeMon = document.getElementById('badgeMonitorado');
+  if (processo.monitorado) {
+    badgeMon.className = 'badge badge-green';
+    badgeMon.textContent = '🔄 Monitorado';
+    badgeMon.style.display = '';
+  } else {
+    badgeMon.style.display = 'none';
+  }
+
   document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
   document.getElementById('infoVara').textContent = processo.vara || '—';
   document.getElementById('infoComarca').textContent = processo.comarca || '—';
@@ -540,6 +551,25 @@ document.getElementById('andamentoSalvar').addEventListener('click', async () =>
   } catch (err) {
     alertEl.textContent = err.message; alertEl.style.display = 'block';
   } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+});
+
+// Monitorar / Consultar DataJud
+document.getElementById('btnMonitorar').addEventListener('click', async () => {
+  const btn = document.getElementById('btnMonitorar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  try {
+    const res = await apiFetch(`/processos/${processoId}/monitoramento/executar`, { method: 'POST' });
+    showAlert(res && res.novosAndamentos > 0 
+      ? `${res.novosAndamentos} novo(s) andamento(s) encontrado(s).` 
+      : 'Nenhum novo andamento encontrado.', 'success');
+    await loadAndamentos();
+  } catch (err) {
+    showAlert(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Consultar';
+  }
 });
 
 await loadAdvogados();
