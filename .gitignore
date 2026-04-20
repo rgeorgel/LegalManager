@@ -24,6 +24,7 @@ artifacts/
 # User secrets / sensitive configs
 appsettings.*.local.json
 secrets.json
+.env
 
 # Logs
 *.log

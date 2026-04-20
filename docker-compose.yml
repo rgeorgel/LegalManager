@@ -1,22 +1,29 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: legalmanager
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-legalmanager}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-6632}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-legalmanager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   seq:
     image: datalust/seq:latest
+    restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
     ports:
-      - "5341:5341"
-      - "8081:80"
+      - "${SEQ_PORT_API:-6641}:5341"
+      - "${SEQ_PORT_UI:-6681}:80"
     volumes:
       - seq_data:/data
 
@@ -24,20 +31,39 @@ services:
     build:
       context: .
       dockerfile: src/LegalManager.API/Dockerfile
+    restart: unless-stopped
     ports:
-      - "5000:8080"
+      - "${API_PORT:-6600}:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=legalmanager;Username=postgres;Password=postgres"
-      Jwt__Key: "CHANGE_THIS_SECRET_KEY_IN_PRODUCTION_MIN_32_CHARS"
-      Jwt__Issuer: LegalManager
-      Jwt__Audience: LegalManagerUsers
-      App__FrontendUrl: "http://localhost:5000"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;Port=5432;
+        Database=${POSTGRES_DB:-legalmanager};
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      Jwt__Key: ${JWT_KEY:?JWT_KEY is required}
+      Jwt__Issuer: ${JWT_ISSUER:-LegalManager}
+      Jwt__Audience: ${JWT_AUDIENCE:-LegalManagerUsers}
+      App__FrontendUrl: ${APP_FRONTEND_URL:-http://localhost:6600}
+      Resend__ApiToken: ${RESEND_API_TOKEN:-}
+      Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@legalmanager.com.br}
+      Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}
+      Hangfire__DashboardUser: ${HANGFIRE_DASHBOARD_USER:-admin}
+      Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:-admin}
+      OciStorage__Namespace: ${OCI_NAMESPACE:-}
+      OciStorage__Region: ${OCI_REGION:-sa-saopaulo-1}
+      OciStorage__BucketName: ${OCI_BUCKET_NAME:-legal-manager-docs}
+      OciStorage__AccessKey: ${OCI_ACCESS_KEY:-}
+      OciStorage__SecretKey: ${OCI_SECRET_KEY:-}
+      AbacatePay__ApiKey: ${ABACATEPAY_API_KEY:-}
+      AbacatePay__WebhookSecret: ${ABACATEPAY_WEBHOOK_SECRET:-}
       Serilog__WriteTo__0__Name: Seq
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
     depends_on:
-      - postgres
-      - seq
+      postgres:
+        condition: service_healthy
+      seq:
+        condition: service_started
 
 volumes:
   postgres_data:
