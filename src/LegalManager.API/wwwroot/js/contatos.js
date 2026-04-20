@@ -40,12 +40,13 @@ export async function addAtendimento(contatoId, data) {
 }
 
 export async function getPortalAcesso(contatoId) {
-  try {
-    return await apiFetch(`/contatos/${contatoId}/portal-acesso`);
-  } catch (err) {
-    if (err.message.startsWith('HTTP 404')) return null;
-    throw err;
-  }
+  const token = sessionStorage.getItem('access_token');
+  const res = await fetch(`/api/contatos/${contatoId}/portal-acesso`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
 export async function criarPortalAcesso(contatoId, data) {
