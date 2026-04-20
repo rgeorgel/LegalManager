@@ -20,8 +20,15 @@ public class PortalClienteController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<PortalAuthResponseDto>> Login([FromBody] LoginPortalDto dto, CancellationToken ct)
     {
-        var result = await _service.LoginAsync(dto, ct);
-        return Ok(result);
+        try
+        {
+            var result = await _service.LoginAsync(dto, ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
     }
 
     [HttpGet("me")]
