@@ -10,4 +10,5 @@ public interface IEmailService
     Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento, DateTime dataHora, string? local, CancellationToken ct = default);
     Task EnviarNovoAndamentoAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoAndamento, CancellationToken ct = default);
     Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoPrazo, DateTime dataFinal, int diasRestantes, CancellationToken ct = default);
+    Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario, string numeroCNJ, CancellationToken ct = default);
 }

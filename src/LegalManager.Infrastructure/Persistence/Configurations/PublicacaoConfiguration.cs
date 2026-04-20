@@ -4,6 +4,24 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LegalManager.Infrastructure.Persistence.Configurations;
 
+public class NomeCapturaConfiguration : IEntityTypeConfiguration<NomeCaptura>
+{
+    public void Configure(EntityTypeBuilder<NomeCaptura> builder)
+    {
+        builder.HasKey(n => n.Id);
+        builder.Property(n => n.Nome).HasMaxLength(200).IsRequired();
+
+        builder.HasOne(n => n.Tenant)
+            .WithMany()
+            .HasForeignKey(n => n.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(n => new { n.TenantId, n.Nome }).IsUnique();
+        builder.HasIndex(n => new { n.TenantId, n.Ativo });
+    }
+}
+
+
 public class PublicacaoConfiguration : IEntityTypeConfiguration<Publicacao>
 {
     public void Configure(EntityTypeBuilder<Publicacao> builder)
@@ -12,6 +30,7 @@ public class PublicacaoConfiguration : IEntityTypeConfiguration<Publicacao>
         builder.Property(p => p.Diario).HasMaxLength(100).IsRequired();
         builder.Property(p => p.NumeroCNJ).HasMaxLength(50);
         builder.Property(p => p.Conteudo).IsRequired();
+        builder.Property(p => p.ClassificacaoIA).HasMaxLength(500);
 
         builder.HasOne(p => p.Tenant)
             .WithMany()

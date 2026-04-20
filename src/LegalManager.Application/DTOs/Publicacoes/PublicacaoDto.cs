@@ -12,6 +12,8 @@ public record PublicacaoResponseDto(
     string Conteudo,
     TipoPublicacao Tipo,
     StatusPublicacao Status,
+    bool Urgente,
+    string? ClassificacaoIA,
     DateTime CapturaEm
 );
 

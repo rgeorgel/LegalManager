@@ -59,15 +59,17 @@ function render() {
   list.innerHTML = pubs.map(p => {
     const statusClass = { Nova: 'pub-badge-nova', Lida: 'pub-badge-lida', Arquivada: 'pub-badge-arquivada' }[p.status];
     return `
-    <div class="pub-card" data-id="${p.id}">
+    <div class="pub-card${p.urgente ? ' pub-card-urgente' : ''}" data-id="${p.id}">
       <div class="pub-card-header">
         <div class="pub-card-tipo">
+          ${p.urgente ? '<span class="pub-badge-urgente">🔴 URGENTE</span>' : ''}
           <span class="pub-tipo">${TIPO_LABEL[p.tipo] ?? p.tipo}</span>
           <span class="pub-badge ${statusClass}">${STATUS_LABEL[p.status]}</span>
           ${p.numeroCNJ ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.numeroCNJ)}</span>` : ''}
         </div>
         <span class="pub-card-meta">${new Date(p.dataPublicacao).toLocaleDateString('pt-BR')} — ${esc(p.diario)}</span>
       </div>
+      ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}
       <div class="pub-card-conteudo" id="conteudo-${p.id}">${esc(p.conteudo)}</div>
       <div class="pub-card-actions">
         ${p.conteudo.length > 300 ? `<button class="btn btn-secondary btn-sm" data-action="expandir" data-id="${p.id}">Ver mais</button>` : ''}

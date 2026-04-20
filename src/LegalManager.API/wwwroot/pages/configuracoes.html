@@ -99,6 +99,23 @@
       </form>
     </div>
 
+    <!-- Nomes de captura de publicações -->
+    <div class="config-section">
+      <div class="config-section-title">Nomes para Captura de Publicações</div>
+      <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+        Configure até <strong>3 nomes</strong> (advogados ou partes) para monitoramento automático nos Diários Oficiais.
+        Publicações encontradas aparecerão em <a href="/pages/publicacoes.html">Publicações</a>.
+      </p>
+      <div id="listaNomes" style="margin-bottom:16px"></div>
+      <div id="formNomeWrapper">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="inputNome" class="form-control" placeholder="Nome completo ou parcial" maxlength="200" style="flex:1;min-width:200px">
+          <button class="btn btn-primary" id="btnAdicionarNome">Adicionar nome</button>
+        </div>
+        <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
+
     <!-- Usuários atalho -->
     <div class="config-section">
       <div class="config-section-title">Gestão de Usuários</div>
@@ -222,7 +239,61 @@
     }
   });
 
+  // Nomes de captura
+  async function loadNomes() {
+    try {
+      const nomes = await apiFetch('/api/nomes-captura');
+      const lista = document.getElementById('listaNomes');
+      if (!nomes.length) {
+        lista.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhum nome cadastrado.</p>';
+        return;
+      }
+      lista.innerHTML = nomes.map(n => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px">
+          <span style="flex:1;font-weight:500">${esc(n.nome)}</span>
+          <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${n.ativo ? '#dcfce7' : '#f3f4f6'};color:${n.ativo ? '#166534' : '#6b7280'}">${n.ativo ? 'Ativo' : 'Pausado'}</span>
+          <button class="btn btn-secondary btn-sm" data-id="${n.id}" data-action="toggle">${n.ativo ? 'Pausar' : 'Ativar'}</button>
+          <button class="btn btn-danger btn-sm" data-id="${n.id}" data-action="remover">Remover</button>
+        </div>`).join('');
+
+      lista.querySelectorAll('[data-action="toggle"]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          await apiFetch(`/api/nomes-captura/${btn.dataset.id}/toggle`, { method: 'PATCH' });
+          loadNomes();
+        }));
+
+      lista.querySelectorAll('[data-action="remover"]').forEach(btn =>
+        btn.addEventListener('click', async () => {
+          if (!confirm('Remover este nome de captura?')) return;
+          await apiFetch(`/api/nomes-captura/${btn.dataset.id}`, { method: 'DELETE' });
+          loadNomes();
+        }));
+    } catch (e) { console.error(e); }
+  }
+
+  document.getElementById('btnAdicionarNome').addEventListener('click', async () => {
+    const input = document.getElementById('inputNome');
+    const msg = document.getElementById('nomeMsg');
+    msg.style.display = 'none';
+    const nome = input.value.trim();
+    if (!nome) return;
+    try {
+      await apiFetch('/api/nomes-captura', { method: 'POST', body: JSON.stringify({ nome }) });
+      input.value = '';
+      loadNomes();
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao adicionar nome.';
+      msg.style.display = '';
+    }
+  });
+
+  function esc(str) {
+    return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
   load();
+  loadNomes();
 </script>
 </body>
 </html>

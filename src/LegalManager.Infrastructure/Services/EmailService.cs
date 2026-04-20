@@ -154,4 +154,22 @@ public class EmailService : IEmailService
             """;
         await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
     }
+
+    public async Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario,
+        string numeroCNJ, CancellationToken ct = default)
+    {
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <h2 style="color:#7c3aed">📰 Nova publicação capturada</h2>
+              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
+              <p>Uma nova publicação foi capturada para o processo <strong>{numeroCNJ}</strong>.</p>
+              <p>Acesse o sistema para verificar o conteúdo e tomar as providências necessárias.</p>
+              <p><a href="{_config["App:FrontendUrl"]}/pages/publicacoes.html"
+                    style="background:#7c3aed;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                Ver publicações
+              </a></p>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Nova publicação — {numeroCNJ}", html));
+    }
 }

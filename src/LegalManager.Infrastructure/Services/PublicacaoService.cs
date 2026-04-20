@@ -44,7 +44,7 @@ public class PublicacaoService : IPublicacaoService
                 p.Id, p.ProcessoId, p.NumeroCNJ,
                 p.Processo != null ? p.Processo.NumeroCNJ : p.NumeroCNJ,
                 p.Diario, p.DataPublicacao, p.Conteudo,
-                p.Tipo, p.Status, p.CapturaEm))
+                p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm))
             .ToListAsync(ct);
     }
 
@@ -56,7 +56,7 @@ public class PublicacaoService : IPublicacaoService
         if (p == null) return null;
         return new PublicacaoResponseDto(p.Id, p.ProcessoId, p.NumeroCNJ,
             p.Processo?.NumeroCNJ ?? p.NumeroCNJ, p.Diario,
-            p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.CapturaEm);
+            p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm);
     }
 
     public async Task MarcarLidaAsync(Guid id, CancellationToken ct = default)

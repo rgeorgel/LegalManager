@@ -13,6 +13,8 @@ public class Publicacao
     public string Conteudo { get; set; } = string.Empty;
     public TipoPublicacao Tipo { get; set; }
     public StatusPublicacao Status { get; set; }
+    public bool Urgente { get; set; }
+    public string? ClassificacaoIA { get; set; }
     public DateTime CapturaEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;

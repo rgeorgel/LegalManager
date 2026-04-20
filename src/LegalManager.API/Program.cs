@@ -78,8 +78,10 @@ builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
 builder.Services.AddScoped<IPrazoService, PrazoService>();
 builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
+builder.Services.AddScoped<INomeCapturaService, NomeCapturaService>();
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
+builder.Services.AddScoped<CapturaPublicacaoJob>();
 
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {
@@ -95,6 +97,15 @@ builder.Services.Configure<ResendClientOptions>(o =>
     o.ApiToken = builder.Configuration["Resend:ApiToken"] ?? "");
 builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<IEmailService, EmailService>();
+
+builder.Services.AddHttpClient("Anthropic", client =>
+{
+    client.BaseAddress = new Uri("https://api.anthropic.com");
+    var apiKey = builder.Configuration["Anthropic:ApiKey"] ?? "";
+    client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+    client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
@@ -154,6 +165,11 @@ RecurringJob.AddOrUpdate<MonitoramentoJob>(
     "monitoramento-processos",
     job => job.ExecutarAsync(),
     "0 6 * * *"); // daily at 06:00 UTC (03:00 Brasília)
+
+RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
+    "captura-publicacoes",
+    job => job.ExecutarAsync(),
+    "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
