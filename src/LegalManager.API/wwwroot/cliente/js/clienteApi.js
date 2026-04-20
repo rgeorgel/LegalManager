@@ -37,7 +37,7 @@ export async function clienteApiFetch(path, options = {}) {
 
   if (res.status === 401) {
     clearSession();
-    window.location.href = '/cliente/';
+    window.location.href = '/cliente/index.html';
     return;
   }
 

@@ -175,7 +175,6 @@ RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
     "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
 
 app.MapControllers();
-app.MapFallbackToFile("/cliente/{**path}", "cliente/index.html");
 app.MapFallbackToFile("index.html");
 
 app.Run();

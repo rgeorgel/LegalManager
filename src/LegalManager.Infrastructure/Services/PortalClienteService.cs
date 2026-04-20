@@ -141,7 +141,7 @@ public class PortalClienteService : IPortalClienteService
             .Select(t => t.Nome)
             .FirstOrDefaultAsync(ct) ?? "Escritório";
 
-        var portalUrl = $"{_config["App:FrontendUrl"]}/cliente/";
+        var portalUrl = $"{_config["App:FrontendUrl"]}/cliente/index.html";
         var emailNormalizado = dto.Email.Trim().ToLowerInvariant();
 
         var existente = await _context.AcessosCliente

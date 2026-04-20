@@ -2,7 +2,7 @@ import { getUser, logout, isLoggedIn } from './clienteApi.js';
 
 export function requireAuth() {
   if (!isLoggedIn()) {
-    window.location.href = '/cliente/';
+    window.location.href = '/cliente/index.html';
     return null;
   }
   return getUser();
