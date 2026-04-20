@@ -40,7 +40,7 @@ public class ProcessoService : IProcessoService
             ValorCausa = dto.ValorCausa,
             AdvogadoResponsavelId = dto.AdvogadoResponsavelId,
             Observacoes = dto.Observacoes,
-            Monitorado = false,
+            Monitorado = dto.Monitorado,
             CriadoEm = DateTime.UtcNow
         };
 
@@ -79,6 +79,7 @@ public class ProcessoService : IProcessoService
         processo.Status = dto.Status;
         processo.ValorCausa = dto.ValorCausa;
         processo.AdvogadoResponsavelId = dto.AdvogadoResponsavelId;
+        processo.Monitorado = dto.Monitorado;
         processo.Observacoes = dto.Observacoes;
         processo.Decisao = dto.Decisao;
         processo.Resultado = dto.Resultado;

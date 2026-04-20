@@ -199,11 +199,20 @@
             <input type="number" id="eValorCausa" class="form-control" min="0" step="0.01">
           </div>
         </div>
-        <div class="form-group">
-          <label>Advogado Responsável</label>
-          <select id="eAdvogado" class="form-control">
-            <option value="">Selecionar...</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Advogado Responsável</label>
+            <select id="eAdvogado" class="form-control">
+              <option value="">Selecionar...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Monitorar Andamentos</label>
+            <select id="eMonitorado" class="form-control">
+              <option value="false">Não</option>
+              <option value="true">Sim</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label>Observações</label>
@@ -438,6 +447,7 @@ document.getElementById('btnEditar').addEventListener('click', () => {
   document.getElementById('eStatus').value = processo.status;
   document.getElementById('eValorCausa').value = processo.valorCausa || '';
   document.getElementById('eAdvogado').value = processo.advogadoResponsavelId || '';
+  document.getElementById('eMonitorado').value = String(processo.monitorado);
   document.getElementById('eObservacoes').value = processo.observacoes || '';
   document.getElementById('modalEditar').classList.add('open');
 });
@@ -462,6 +472,7 @@ document.getElementById('editarSalvar').addEventListener('click', async () => {
       status: document.getElementById('eStatus').value,
       valorCausa: document.getElementById('eValorCausa').value ? parseFloat(document.getElementById('eValorCausa').value) : null,
       advogadoResponsavelId: document.getElementById('eAdvogado').value || null,
+      monitorado: document.getElementById('eMonitorado').value === 'true',
       observacoes: document.getElementById('eObservacoes').value || null,
       partes: processo.partes?.map(p => ({ contatoId: p.contatoId, tipoParte: p.tipoParte })) ?? []
     });

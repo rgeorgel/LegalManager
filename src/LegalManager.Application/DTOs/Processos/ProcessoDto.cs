@@ -13,8 +13,9 @@ public record CreateProcessoDto(
     [Required] FaseProcessual Fase,
     decimal? ValorCausa,
     Guid? AdvogadoResponsavelId,
-    string? Observacoes,
-    List<ProcessoParteDto>? Partes
+    string? Observacoes = null,
+    bool Monitorado = false,
+    List<ProcessoParteDto>? Partes = null
 );
 
 public record UpdateProcessoDto(
@@ -28,6 +29,7 @@ public record UpdateProcessoDto(
     [Required] StatusProcesso Status,
     decimal? ValorCausa,
     Guid? AdvogadoResponsavelId,
+    bool Monitorado,
     string? Observacoes,
     string? Decisao,
     string? Resultado,
