@@ -73,7 +73,7 @@ function injectNotificationBell() {
 
 async function loadNotifCount() {
   try {
-    const count = await apiFetch('/api/notificacoes/count');
+    const count = await apiFetch('/notificacoes/count');
     const badge = document.getElementById('notifBadge');
     if (!badge) return;
     if (count > 0) {
@@ -91,7 +91,7 @@ async function loadNotificacoes() {
   dd.innerHTML = '<div style="padding:12px;text-align:center;color:#6b7280;font-size:13px">Carregando...</div>';
 
   try {
-    const items = await apiFetch('/api/notificacoes');
+    const items = await apiFetch('/notificacoes');
     if (!items.length) {
       dd.innerHTML = '<div style="padding:16px;text-align:center;color:#6b7280;font-size:13px">Nenhuma notificação</div>';
       return;
@@ -115,7 +115,7 @@ async function loadNotificacoes() {
 
     dd.querySelector('#notifMarcarTodas')?.addEventListener('click', async e => {
       e.stopPropagation();
-      await apiFetch('/api/notificacoes/marcar-todas-lidas', { method: 'POST' });
+      await apiFetch('/notificacoes/marcar-todas-lidas', { method: 'POST' });
       await loadNotifCount();
       dd.style.display = 'none';
     });
@@ -125,7 +125,7 @@ async function loadNotificacoes() {
         e.stopPropagation();
         const id = item.dataset.id;
         const url = item.dataset.url;
-        await apiFetch(`/api/notificacoes/${id}/lida`, { method: 'POST' });
+        await apiFetch(`/notificacoes/${id}/lida`, { method: 'POST' });
         await loadNotifCount();
         dd.style.display = 'none';
         if (url) window.location.href = url;

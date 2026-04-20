@@ -46,7 +46,7 @@ public class ContatosController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ContatoResponseDto>> Create(CreateContatoDto dto, CancellationToken ct)
+    public async Task<ActionResult<ContatoResponseDto>> Create([FromBody] CreateContatoDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);

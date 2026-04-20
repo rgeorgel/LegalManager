@@ -32,7 +32,7 @@ async function loadTarefas(page = 1) {
   if (f.atrasada) params.set('atrasada', 'true');
 
   try {
-    const data = await apiFetch(`/api/tarefas?${params}`);
+    const data = await apiFetch(`/tarefas?${params}`);
     allItems = data.items ?? [];
     if (currentView === 'lista') renderLista(allItems, data);
     else renderKanban(allItems);
@@ -147,13 +147,13 @@ function bindCardActions() {
 // --- CRUD ---
 async function concluir(id) {
   if (!confirm('Marcar tarefa como concluída?')) return;
-  await apiFetch(`/api/tarefas/${id}/concluir`, { method: 'POST' });
+  await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
   await loadTarefas(currentPage);
 }
 
 async function deleteTarefa(id) {
   if (!confirm('Excluir esta tarefa?')) return;
-  await apiFetch(`/api/tarefas/${id}`, { method: 'DELETE' });
+  await apiFetch(`/tarefas/${id}`, { method: 'DELETE' });
   await loadTarefas(currentPage);
 }
 
@@ -173,7 +173,7 @@ async function openEditModal(id) {
   document.getElementById('fmsgErro').style.display = 'none';
   document.getElementById('fStatusGroup').style.display = '';
 
-  const t = await apiFetch(`/api/tarefas/${id}`);
+  const t = await apiFetch(`/tarefas/${id}`);
   document.getElementById('fTitulo').value = t.titulo;
   document.getElementById('fDescricao').value = t.descricao ?? '';
   document.getElementById('fPrioridade').value = t.prioridade;
@@ -216,7 +216,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prazo: prazoVal || null,
         tags
       };
-      await apiFetch(`/api/tarefas/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
+      await apiFetch(`/tarefas/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
     } else {
       const dto = {
         titulo,
@@ -225,7 +225,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prazo: prazoVal || null,
         tags
       };
-      await apiFetch('/api/tarefas', { method: 'POST', body: JSON.stringify(dto) });
+      await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify(dto) });
     }
     closeModal();
     await loadTarefas(currentPage);

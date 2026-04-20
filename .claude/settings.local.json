@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new sln *)",
+      "Bash(mkdir -p src tests)",
+      "Bash(dotnet new *)",
+      "Bash(dotnet sln add *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet list *)",
+      "Bash(dotnet remove *)",
+      "Bash(dotnet restore *)",
+      "Bash(dotnet tool *)",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet test *)",
+      "Read(//c/Users/ricky/.claude/projects/C--code-personal-LegalManager/memory//**)",
+      "Read(//c/Users/ricky/.claude/projects/C--code-personal-LegalManager/memory/**)",
+      "Bash(git add *)",
+      "Bash(git reset *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(dotnet package *)",
+      "Bash(grep -v \"^$\")"
+    ]
+  }
+}

@@ -73,7 +73,7 @@ async function load() {
       de: start.toISOString(),
       ate: end.toISOString()
     });
-    agendaItems = await apiFetch(`/api/agenda?${params}`);
+    agendaItems = await apiFetch(`/agenda?${params}`);
     render(start, end);
   } catch (e) {
     console.error(e);
@@ -285,7 +285,7 @@ document.addEventListener('click', e => {
 // --- CRUD Evento ---
 async function deleteEvento(id) {
   if (!confirm('Excluir este evento?')) return;
-  await apiFetch(`/api/eventos/${id}`, { method: 'DELETE' });
+  await apiFetch(`/eventos/${id}`, { method: 'DELETE' });
   await load();
 }
 
@@ -301,7 +301,7 @@ async function openEditModal(id) {
   editingId = id;
   document.getElementById('modalEventoTitulo').textContent = 'Editar Evento';
   document.getElementById('eMsgErro').style.display = 'none';
-  const ev = await apiFetch(`/api/eventos/${id}`);
+  const ev = await apiFetch(`/eventos/${id}`);
   document.getElementById('eTitulo').value = ev.titulo;
   document.getElementById('eTipo').value = ev.tipo;
   document.getElementById('eDataHora').value = ev.dataHora.substring(0, 16);
@@ -340,9 +340,9 @@ document.getElementById('formEvento').addEventListener('submit', async e => {
 
   try {
     if (editingId) {
-      await apiFetch(`/api/eventos/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
+      await apiFetch(`/eventos/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
     } else {
-      await apiFetch('/api/eventos', { method: 'POST', body: JSON.stringify(dto) });
+      await apiFetch('/eventos', { method: 'POST', body: JSON.stringify(dto) });
     }
     closeModal();
     await load();
