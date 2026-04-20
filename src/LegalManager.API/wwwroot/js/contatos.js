@@ -38,3 +38,23 @@ export async function addAtendimento(contatoId, data) {
     body: JSON.stringify(data)
   });
 }
+
+export async function getPortalAcesso(contatoId) {
+  try {
+    return await apiFetch(`/contatos/${contatoId}/portal-acesso`);
+  } catch (err) {
+    if (err.message.startsWith('HTTP 404')) return null;
+    throw err;
+  }
+}
+
+export async function criarPortalAcesso(contatoId, data) {
+  return apiFetch(`/contatos/${contatoId}/portal-acesso`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function revogarPortalAcesso(contatoId) {
+  return apiFetch(`/contatos/${contatoId}/portal-acesso`, { method: 'DELETE' });
+}

@@ -211,9 +211,65 @@
     </div>
   </div>
 
+  <!-- Modal Portal do Cliente -->
+  <div class="modal-overlay" id="modalPortal">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <span class="modal-title">Portal do Cliente</span>
+        <button class="modal-close" id="portalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="portalContatoNome" style="font-weight:600;margin-bottom:16px"></p>
+        <div id="portalAlert" class="alert" style="display:none"></div>
+
+        <!-- estado: carregando -->
+        <div id="portalLoading" style="text-align:center;padding:24px;color:var(--color-text-muted)">Carregando...</div>
+
+        <!-- estado: sem acesso -->
+        <div id="portalSemAcesso" style="display:none">
+          <p style="color:var(--color-text-muted);margin-bottom:16px;font-size:13px">
+            Este contato não possui acesso ao portal. Defina as credenciais abaixo — o cliente receberá um e-mail automático com os dados de login.
+          </p>
+          <div class="form-group">
+            <label>E-mail de acesso</label>
+            <input type="email" id="pEmail" class="form-control" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Senha inicial</label>
+            <input type="password" id="pSenha" class="form-control" placeholder="Mínimo 8 caracteres">
+          </div>
+        </div>
+
+        <!-- estado: com acesso -->
+        <div id="portalComAcesso" style="display:none">
+          <div style="background:var(--color-bg);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">E-mail</div><span id="pAcessoEmail"></span></div>
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Situação</div><span id="pAcessoAtivo"></span></div>
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Criado em</div><span id="pAcessoCriado"></span></div>
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Último acesso</div><span id="pAcessoUltimo"></span></div>
+            </div>
+          </div>
+          <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:12px">
+            Para redefinir a senha, libere um novo acesso abaixo — um novo e-mail será enviado ao cliente.
+          </p>
+          <div class="form-group">
+            <label>Nova senha</label>
+            <input type="password" id="pNovaSenha" class="form-control" placeholder="Mínimo 8 caracteres (opcional)">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="portalFooter" style="display:none">
+        <button class="btn btn-secondary" id="portalCancelar">Cancelar</button>
+        <button class="btn btn-danger btn-sm" id="btnRevogar" style="display:none">Revogar Acesso</button>
+        <button class="btn btn-primary" id="btnLiberarAcesso">Liberar Acesso</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initLayout } from '/js/layout.js';
-    import { getContatos, createContato, updateContato, deleteContato, addAtendimento } from '/js/contatos.js';
+    import { getContatos, createContato, updateContato, deleteContato, addAtendimento, getPortalAcesso, criarPortalAcesso, revogarPortalAcesso } from '/js/contatos.js';
 
     initLayout();
 
@@ -269,6 +325,7 @@
           <td data-label="Ações" style="white-space:nowrap">
             <button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button>
             <button class="btn btn-secondary btn-sm" onclick="openAtendimento('${c.id}')">Atendimento</button>
+            <button class="btn btn-secondary btn-sm" onclick="openPortal('${c.id}','${c.nome}','${c.email||''}')">Portal</button>
             <button class="btn btn-danger btn-sm" onclick="removeContato('${c.id}','${c.nome}')">Excluir</button>
           </td>
         </tr>`).join('');
@@ -434,6 +491,117 @@
         }, 300);
       });
     });
+
+    // ── Portal do Cliente ─────────────────────────────────
+    const modalPortal = document.getElementById('modalPortal');
+    let portalContatoId = null;
+    let portalTemAcesso = false;
+
+    function portalShowAlert(msg, type = 'error') {
+      const el = document.getElementById('portalAlert');
+      el.className = `alert alert-${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function formatDateBr(dt) {
+      if (!dt) return '—';
+      return new Date(dt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    window.openPortal = async (id, nome, emailContato) => {
+      portalContatoId = id;
+      portalTemAcesso = false;
+      document.getElementById('portalContatoNome').textContent = nome;
+      document.getElementById('portalAlert').style.display = 'none';
+      document.getElementById('portalLoading').style.display = 'block';
+      document.getElementById('portalSemAcesso').style.display = 'none';
+      document.getElementById('portalComAcesso').style.display = 'none';
+      document.getElementById('portalFooter').style.display = 'none';
+      document.getElementById('pEmail').value = emailContato || '';
+      document.getElementById('pSenha').value = '';
+      document.getElementById('pNovaSenha').value = '';
+      modalPortal.classList.add('open');
+
+      try {
+        const acesso = await getPortalAcesso(id);
+        document.getElementById('portalLoading').style.display = 'none';
+        document.getElementById('portalFooter').style.display = 'flex';
+
+        if (acesso) {
+          portalTemAcesso = true;
+          document.getElementById('pAcessoEmail').textContent = acesso.email;
+          document.getElementById('pAcessoAtivo').innerHTML = acesso.ativo
+            ? '<span class="badge badge-green">Ativo</span>'
+            : '<span class="badge badge-gray">Inativo</span>';
+          document.getElementById('pAcessoCriado').textContent = formatDateBr(acesso.criadoEm);
+          document.getElementById('pAcessoUltimo').textContent = formatDateBr(acesso.ultimoAcessoEm);
+          document.getElementById('portalComAcesso').style.display = 'block';
+          document.getElementById('btnRevogar').style.display = 'inline-flex';
+          document.getElementById('btnLiberarAcesso').textContent = 'Redefinir Senha';
+        } else {
+          document.getElementById('portalSemAcesso').style.display = 'block';
+          document.getElementById('btnRevogar').style.display = 'none';
+          document.getElementById('btnLiberarAcesso').textContent = 'Liberar Acesso';
+        }
+      } catch (err) {
+        document.getElementById('portalLoading').style.display = 'none';
+        portalShowAlert(err.message);
+      }
+    };
+
+    document.getElementById('btnLiberarAcesso').addEventListener('click', async () => {
+      const btn = document.getElementById('btnLiberarAcesso');
+      const email = document.getElementById('pEmail').value.trim();
+      const senha = portalTemAcesso
+        ? document.getElementById('pNovaSenha').value
+        : document.getElementById('pSenha').value;
+
+      if (!portalTemAcesso && (!email || !senha)) {
+        portalShowAlert('Preencha o e-mail e a senha.');
+        return;
+      }
+      if (portalTemAcesso && senha && senha.length < 8) {
+        portalShowAlert('A senha deve ter ao menos 8 caracteres.');
+        return;
+      }
+      if (portalTemAcesso && !senha) {
+        modalPortal.classList.remove('open');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+      document.getElementById('portalAlert').style.display = 'none';
+
+      try {
+        await criarPortalAcesso(portalContatoId, {
+          email: portalTemAcesso ? document.getElementById('pAcessoEmail').textContent : email,
+          senha
+        });
+        modalPortal.classList.remove('open');
+        showAlert(portalTemAcesso ? 'Senha redefinida. E-mail enviado ao cliente.' : 'Acesso criado. E-mail enviado ao cliente.', 'success');
+      } catch (err) {
+        portalShowAlert(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = portalTemAcesso ? 'Redefinir Senha' : 'Liberar Acesso';
+      }
+    });
+
+    document.getElementById('btnRevogar').addEventListener('click', async () => {
+      if (!confirm('Revogar o acesso ao portal deste cliente?')) return;
+      try {
+        await revogarPortalAcesso(portalContatoId);
+        modalPortal.classList.remove('open');
+        showAlert('Acesso ao portal revogado.', 'success');
+      } catch (err) {
+        portalShowAlert(err.message);
+      }
+    });
+
+    [document.getElementById('portalClose'), document.getElementById('portalCancelar')].forEach(el =>
+      el.addEventListener('click', () => modalPortal.classList.remove('open')));
 
     loadContatos();
   </script>
