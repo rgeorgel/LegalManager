@@ -67,10 +67,16 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     let errorMsg = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      errorMsg = body.message || body.title || errorMsg;
-    } catch {}
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const body = await res.json();
+        errorMsg = body.message || body.title || errorMsg;
+      } catch {}
+    } else {
+      const text = await res.text();
+      errorMsg = text.substring(0, 200);
+    }
     throw new Error(errorMsg);
   }
 

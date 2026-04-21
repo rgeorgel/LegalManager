@@ -106,7 +106,7 @@
 
     if (!initLayout()) {
       // initLayout returns false when not logged in (redirects to login)
-      throw new Error('not authenticated');
+      return;
     }
 
     loadStats();
