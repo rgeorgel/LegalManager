@@ -81,6 +81,7 @@ builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
 builder.Services.AddScoped<INomeCapturaService, NomeCapturaService>();
 builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();
 builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
+builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
 builder.Services.AddScoped<ITimesheetService, TimesheetService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();

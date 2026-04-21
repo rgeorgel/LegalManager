@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Indicadores</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .ind-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:8px; }
+    .ind-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
+    .ind-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
+    .ind-value { font-size:26px; font-weight:700; margin-top:6px; color:var(--color-primary); }
+    .ind-value.green { color:#15803d; }
+    .ind-value.red   { color:#dc2626; }
+    .ind-value.amber { color:#ca8a04; }
+    .section { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
+    .section-title { font-weight:700; font-size:15px; margin-bottom:16px; }
+    .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .bar-label { font-size:13px; min-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bar-track { flex:1; background:#f3f4f6; border-radius:4px; height:12px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:4px; transition:width .4s; }
+    .bar-count { font-size:12px; color:var(--color-text-muted); min-width:30px; text-align:right; }
+    .trend-row { display:flex; align-items:flex-end; gap:8px; height:80px; }
+    .trend-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .trend-bars { display:flex; align-items:flex-end; gap:2px; height:60px; width:100%; }
+    .trend-bar-r { background:#10b981; border-radius:2px 2px 0 0; flex:1; min-height:2px; }
+    .trend-bar-d { background:#f87171; border-radius:2px 2px 0 0; flex:1; min-height:2px; }
+    .trend-label { font-size:10px; color:var(--color-text-muted); white-space:nowrap; }
+    .kpi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    @media(max-width:480px) { .kpi-row { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ LegalManager</div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">📈 Indicadores</h1>
+      </div>
+      <div id="loading" style="color:var(--color-text-muted);padding:20px">Carregando indicadores...</div>
+      <div id="content" style="display:none">
+
+        <!-- Processos -->
+        <div class="section">
+          <div class="section-title">⚖️ Processos</div>
+          <div class="ind-grid">
+            <div class="ind-card"><div class="ind-label">Total</div><div class="ind-value" id="pTotal">—</div></div>
+            <div class="ind-card"><div class="ind-label">Ativos</div><div class="ind-value" id="pAtivos">—</div></div>
+            <div class="ind-card"><div class="ind-label">Encerrados</div><div class="ind-value" id="pEncerrados">—</div></div>
+            <div class="ind-card"><div class="ind-label">Suspensos</div><div class="ind-value amber" id="pSuspensos">—</div></div>
+            <div class="ind-card"><div class="ind-label">Novos este mês</div><div class="ind-value green" id="pNovos">—</div></div>
+          </div>
+          <div class="kpi-row" style="margin-top:16px">
+            <div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR ÁREA</div>
+              <div id="barArea"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR FASE (ativos)</div>
+              <div id="barFase"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarefas -->
+        <div class="section">
+          <div class="section-title">✅ Tarefas</div>
+          <div class="ind-grid">
+            <div class="ind-card"><div class="ind-label">Pendentes</div><div class="ind-value" id="tPendentes">—</div></div>
+            <div class="ind-card"><div class="ind-label">Em Andamento</div><div class="ind-value" style="color:#1d4ed8" id="tEmAndamento">—</div></div>
+            <div class="ind-card"><div class="ind-label">Concluídas</div><div class="ind-value green" id="tConcluidas">—</div></div>
+            <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Atrasadas</div><div class="ind-value red" id="tAtrasadas">—</div></div>
+            <div class="ind-card"><div class="ind-label">Concluídas este mês</div><div class="ind-value green" id="tConcluidasMes">—</div></div>
+          </div>
+          <div style="margin-top:16px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">ABERTAS POR PRIORIDADE</div>
+            <div id="barPrioridade"></div>
+          </div>
+        </div>
+
+        <!-- Financeiro -->
+        <div class="section">
+          <div class="section-title">💰 Financeiro (mês atual)</div>
+          <div class="ind-grid">
+            <div class="ind-card"><div class="ind-label">Receitas pagas</div><div class="ind-value green" id="fReceitas">—</div></div>
+            <div class="ind-card"><div class="ind-label">Despesas pagas</div><div class="ind-value red" id="fDespesas">—</div></div>
+            <div class="ind-card"><div class="ind-label">Saldo do mês</div><div class="ind-value" id="fSaldo">—</div></div>
+            <div class="ind-card"><div class="ind-label">A receber</div><div class="ind-value amber" id="fAReceber">—</div></div>
+            <div class="ind-card"><div class="ind-label">A pagar</div><div class="ind-value amber" id="fAPagar">—</div></div>
+            <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos</div><div class="ind-value red" style="font-size:18px" id="fVencidos">—</div></div>
+          </div>
+          <div style="margin-top:20px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--color-text-muted)">EVOLUÇÃO — ÚLTIMOS 6 MESES</div>
+            <div class="trend-row" id="trendMeses"></div>
+            <div style="display:flex;gap:16px;margin-top:8px;font-size:12px">
+              <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px"></span>Receitas</span>
+              <span><span style="display:inline-block;width:10px;height:10px;background:#f87171;border-radius:2px;margin-right:4px"></span>Despesas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timesheet -->
+        <div class="section">
+          <div class="section-title">⏱️ Timesheet (mês atual)</div>
+          <div class="ind-grid">
+            <div class="ind-card"><div class="ind-label">Horas este mês</div><div class="ind-value" id="tsEsteMes">—</div></div>
+            <div class="ind-card"><div class="ind-label">Horas mês anterior</div><div class="ind-value" style="font-size:20px;color:#6b7280" id="tsMesAnterior">—</div></div>
+            <div class="ind-card"><div class="ind-label">Registros este mês</div><div class="ind-value" id="tsRegistros">—</div></div>
+          </div>
+          <div style="margin-top:16px" id="tsTopWrap">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">TOP PROCESSOS (horas)</div>
+            <div id="barTopProcessos"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
+
+    initLayout();
+
+    async function load() {
+      try {
+        const d = await apiFetch('/indicadores');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = '';
+        renderProcessos(d.processos);
+        renderTarefas(d.tarefas);
+        renderFinanceiro(d.financeiro);
+        renderTimesheet(d.timesheet);
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Erro ao carregar indicadores: ' + e.message;
+      }
+    }
+
+    function renderProcessos(p) {
+      document.getElementById('pTotal').textContent = p.total;
+      document.getElementById('pAtivos').textContent = p.ativos;
+      document.getElementById('pEncerrados').textContent = p.encerrados;
+      document.getElementById('pSuspensos').textContent = p.suspensos;
+      document.getElementById('pNovos').textContent = p.novosEsteMes;
+      renderBars('barArea', p.porArea, '#3b82f6');
+      renderBars('barFase', p.porFase, '#8b5cf6');
+    }
+
+    function renderTarefas(t) {
+      document.getElementById('tPendentes').textContent = t.pendentes;
+      document.getElementById('tEmAndamento').textContent = t.emAndamento;
+      document.getElementById('tConcluidas').textContent = t.concluidas;
+      document.getElementById('tAtrasadas').textContent = t.atrasadas;
+      document.getElementById('tConcluidasMes').textContent = t.concluidasEsteMes;
+
+      const PRIO_COLOR = { Urgente:'#dc2626', Alta:'#ea580c', Media:'#ca8a04', Baixa:'#16a34a' };
+      renderBars('barPrioridade', t.porPrioridade, null, PRIO_COLOR);
+    }
+
+    function renderFinanceiro(f) {
+      const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+      document.getElementById('fReceitas').textContent = fmt(f.totalReceitasMes);
+      document.getElementById('fDespesas').textContent = fmt(f.totalDespesasMes);
+      const saldoEl = document.getElementById('fSaldo');
+      saldoEl.textContent = fmt(f.saldoMes);
+      saldoEl.className = 'ind-value ' + (f.saldoMes >= 0 ? 'green' : 'red');
+      document.getElementById('fAReceber').textContent = fmt(f.receitasPendentes);
+      document.getElementById('fAPagar').textContent = fmt(f.despesasPendentes);
+      document.getElementById('fVencidos').textContent = fmt(f.receitasVencidas);
+
+      // Trend chart
+      const meses = f.ultimosSeisMeses ?? [];
+      const maxVal = Math.max(...meses.flatMap(m => [m.receitas, m.despesas]), 1);
+      document.getElementById('trendMeses').innerHTML = meses.map(m => {
+        const hR = Math.max(4, Math.round((m.receitas / maxVal) * 60));
+        const hD = Math.max(4, Math.round((m.despesas / maxVal) * 60));
+        return `<div class="trend-col">
+          <div class="trend-bars">
+            <div class="trend-bar-r" style="height:${hR}px" title="Receitas: ${fmt(m.receitas)}"></div>
+            <div class="trend-bar-d" style="height:${hD}px" title="Despesas: ${fmt(m.despesas)}"></div>
+          </div>
+          <div class="trend-label">${esc(m.mes)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderTimesheet(ts) {
+      document.getElementById('tsEsteMes').textContent = formatDur(ts.minutosEsteMes);
+      document.getElementById('tsMesAnterior').textContent = formatDur(ts.minutosMesAnterior);
+      document.getElementById('tsRegistros').textContent = ts.totalRegistrosEsteMes;
+
+      if (ts.topProcessos?.length) {
+        renderBars('barTopProcessos', ts.topProcessos.map(x => ({ label: x.label, count: x.count })), '#0ea5e9', null, min => formatDur(min));
+      } else {
+        document.getElementById('tsTopWrap').style.display = 'none';
+      }
+    }
+
+    function renderBars(elId, items, defaultColor, colorMap, fmtFn) {
+      const el = document.getElementById(elId);
+      if (!items?.length) { el.innerHTML = '<span style="color:var(--color-text-muted);font-size:13px">Sem dados</span>'; return; }
+      const max = Math.max(...items.map(x => x.count), 1);
+      el.innerHTML = items.slice(0, 8).map(x => {
+        const pct = Math.max(4, Math.round((x.count / max) * 100));
+        const color = colorMap?.[x.label] ?? defaultColor ?? '#3b82f6';
+        const displayVal = fmtFn ? fmtFn(x.count) : x.count;
+        return `<div class="bar-row">
+          <div class="bar-label" title="${esc(x.label)}">${esc(LABEL_MAP[x.label] ?? x.label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <div class="bar-count">${displayVal}</div>
+        </div>`;
+      }).join('');
+    }
+
+    const LABEL_MAP = {
+      Civil:'Civil', Trabalhista:'Trabalhista', Criminal:'Criminal', Tributario:'Tributário',
+      Previdenciario:'Previdenciário', Administrativo:'Administrativo', Consumidor:'Consumidor',
+      Familia:'Família', Empresarial:'Empresarial', Ambiental:'Ambiental', Imobiliario:'Imobiliário',
+      Conhecimento:'Conhecimento', Recursal:'Recursal', Execucao:'Execução', Cumprimento:'Cumprimento',
+      InqueritoPolicial:'Inquérito Policial', InvestigacaoDefensiva:'Invest. Defensiva',
+      Urgente:'Urgente', Alta:'Alta', Media:'Média', Baixa:'Baixa', Outro:'Outro'
+    };
+
+    function formatDur(min) {
+      if (!min) return '0min';
+      const h = Math.floor(min / 60), m = min % 60;
+      return h > 0 ? `${h}h ${m}min` : `${m}min`;
+    }
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    load();
+  </script>
+</body>
+</html>
