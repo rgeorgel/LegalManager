@@ -103,7 +103,6 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { apiFetch, isLoggedIn } from '/js/api.js';
-    import { initLayout } from '/js/layout.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/index.html';
@@ -120,14 +119,14 @@
         const em7dias = new Date(now.getTime() + 7 * 86400000);
 
         const [me, contatos, processosAtivos, processosEncerrados, tarefas, tarefasAtrasadas, tarefasUrgentes, eventos] = await Promise.all([
-          apiFetch('/api/usuarios/me'),
-          apiFetch('/api/contatos?pageSize=1'),
-          apiFetch('/api/processos?status=Ativo&pageSize=1'),
-          apiFetch('/api/processos?status=Encerrado&pageSize=1'),
-          apiFetch('/api/tarefas?status=Pendente&pageSize=1'),
-          apiFetch('/api/tarefas?atrasada=true&pageSize=1'),
-          apiFetch('/api/tarefas?prioridade=Urgente&pageSize=5'),
-          apiFetch(`/api/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`)
+          apiFetch('/api/usuarios/me').catch(e => { console.error('/api/usuarios/me:', e); throw e; }),
+          apiFetch('/api/contatos?pageSize=1').catch(e => { console.error('/api/contatos:', e); throw e; }),
+          apiFetch('/api/processos?status=Ativo&pageSize=1').catch(e => { console.error('/api/processos:', e); throw e; }),
+          apiFetch('/api/processos?status=Encerrado&pageSize=1').catch(e => { console.error('/api/processos:', e); throw e; }),
+          apiFetch('/api/tarefas?status=Pendente&pageSize=1').catch(e => { console.error('/api/tarefas:', e); throw e; }),
+          apiFetch('/api/tarefas?atrasada=true&pageSize=1').catch(e => { console.error('/api/tarefas:', e); throw e; }),
+          apiFetch('/api/tarefas?prioridade=Urgente&pageSize=5').catch(e => { console.error('/api/tarefas:', e); throw e; }),
+          apiFetch(`/api/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`).catch(e => { console.error('/api/agenda:', e); throw e; })
         ]);
 
         document.getElementById('statProcessos').textContent = processosAtivos?.total ?? '0';

@@ -61,7 +61,7 @@ export async function apiFetch(path, options = {}) {
     } else {
       clearSession();
       window.location.href = '/index.html';
-      return;
+      throw new Error('Unauthorized');
     }
   }
 
