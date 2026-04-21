@@ -104,7 +104,12 @@
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
 
-    initLayout();
+    if (!initLayout()) {
+      // initLayout returns false when not logged in (redirects to login)
+      throw new Error('not authenticated');
+    }
+
+    loadStats();
 
     async function loadStats() {
       try {
