@@ -46,3 +46,5 @@ public record ResumoFinanceiroDto(
 );
 
 public record LancamentosPagedDto(IEnumerable<LancamentoDto> Items, int Total);
+
+public record ResumoFinanceiroCompletoDto(ResumoFinanceiroDto Mes, ResumoFinanceiroDto Ano);

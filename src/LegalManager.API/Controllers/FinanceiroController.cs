@@ -20,19 +20,26 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
         [FromQuery] Guid? contatoId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] int? mes = null,
+        [FromQuery] int? ano = null,
         CancellationToken ct = default)
     {
-        var result = await service.GetAllAsync(tenantContext.TenantId, tipo, status, processoId, contatoId, page, pageSize, ct);
+        var result = await service.GetAllAsync(tenantContext.TenantId, tipo, status, processoId, contatoId, page, pageSize, mes, ano, ct);
         return Ok(result);
     }
 
     [HttpGet("resumo")]
-    public async Task<ActionResult<ResumoFinanceiroDto>> GetResumo(
+    public async Task<ActionResult<ResumoFinanceiroCompletoDto>> GetResumo(
         [FromQuery] int? ano,
         [FromQuery] int? mes,
         CancellationToken ct = default)
     {
-        var result = await service.GetResumoAsync(tenantContext.TenantId, ano, mes, ct);
+        var now = DateTime.UtcNow;
+        var result = await service.GetResumoCompletoAsync(
+            tenantContext.TenantId,
+            ano ?? now.Year,
+            mes ?? now.Month,
+            ct);
         return Ok(result);
     }
 

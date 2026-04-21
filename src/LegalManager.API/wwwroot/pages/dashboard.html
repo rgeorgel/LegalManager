@@ -170,15 +170,16 @@
 
         // Financeiro
         const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-        if (financeiro) {
-          document.getElementById('finReceitas').textContent = fmt(financeiro.totalReceitas);
-          document.getElementById('finDespesas').textContent = fmt(financeiro.totalDespesas);
+        const f = financeiro?.mes;
+        if (f) {
+          document.getElementById('finReceitas').textContent = fmt(f.totalReceitas);
+          document.getElementById('finDespesas').textContent = fmt(f.totalDespesas);
           const saldoEl = document.getElementById('finSaldo');
-          saldoEl.textContent = fmt(financeiro.saldo);
-          saldoEl.style.color = financeiro.saldo >= 0 ? '#15803d' : '#dc2626';
-          document.getElementById('finAReceber').textContent = fmt(financeiro.receitasPendentes);
-          document.getElementById('finAPagar').textContent = fmt(financeiro.despesasPendentes);
-          document.getElementById('finVencidos').textContent = fmt(financeiro.receitasVencidas);
+          saldoEl.textContent = fmt(f.saldo);
+          saldoEl.style.color = f.saldo >= 0 ? '#15803d' : '#dc2626';
+          document.getElementById('finAReceber').textContent = fmt(f.receitasPendentes);
+          document.getElementById('finAPagar').textContent = fmt(f.despesasPendentes);
+          document.getElementById('finVencidos').textContent = fmt(f.receitasVencidas);
         }
 
         // Próximos eventos

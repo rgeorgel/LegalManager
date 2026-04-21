@@ -6,22 +6,32 @@
   <title>LegalManager — Financeiro</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .resumo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
-    .resumo-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
-    .resumo-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
-    .resumo-value { font-size:22px; font-weight:700; margin-top:6px; }
     .tipo-receita { background:#e5f7ee; color:#15803d; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
     .tipo-despesa { background:#fee2e2; color:#dc2626; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
-    .status-pago    { background:#d1fae5; color:#057a55; font-size:11px; padding:2px 8px; border-radius:4px; }
-    .status-pendente{ background:#fef3c7; color:#92400e; font-size:11px; padding:2px 8px; border-radius:4px; }
-    .status-vencido { background:#fee2e2; color:#b91c1c; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-pago     { background:#d1fae5; color:#057a55; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-pendente { background:#fef3c7; color:#92400e; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-vencido  { background:#fee2e2; color:#b91c1c; font-size:11px; padding:2px 8px; border-radius:4px; }
     .status-cancelado{ background:#f3f4f6; color:#6b7280; font-size:11px; padding:2px 8px; border-radius:4px; }
     .lancamento-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--color-border); flex-wrap:wrap; gap:8px; }
     .lancamento-info { display:flex; flex-direction:column; gap:4px; }
-    .lancamento-valor { font-size:16px; font-weight:700; }
-    .lancamento-actions { display:flex; gap:8px; }
-    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
-    .filter-bar select, .filter-bar input { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); font-size:13px; background:var(--color-surface); }
+    .lancamento-actions { display:flex; gap:8px; flex-shrink:0; }
+    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+    .filter-bar select { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); font-size:13px; background:var(--color-surface); }
+
+    /* Month navigator */
+    .mes-nav { display:flex; align-items:center; gap:12px; }
+    .mes-nav button { background:none; border:1px solid var(--color-border); border-radius:var(--radius); width:32px; height:32px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+    .mes-nav button:hover { background:var(--color-border); }
+    .mes-nav-label { font-size:17px; font-weight:700; min-width:140px; text-align:center; }
+
+    /* KPI grid */
+    .kpi-section { margin-bottom:20px; }
+    .kpi-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--color-text-muted); margin-bottom:8px; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+    .kpi-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+    .kpi-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
+    .kpi-value { font-size:20px; font-weight:700; margin-top:5px; }
+    .kpi-value.sm { font-size:15px; }
   </style>
 </head>
 <body>
@@ -39,34 +49,64 @@
     </header>
     <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
     <main class="main-content">
+
       <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <h1 class="page-title">💰 Financeiro</h1>
         <button class="btn btn-primary" id="btnNovo">+ Novo Lançamento</button>
       </div>
 
-      <div class="resumo-grid" id="resumoGrid">
-        <div class="resumo-card"><div class="resumo-label">Receitas (Pagas)</div><div class="resumo-value" style="color:#15803d" id="rReceitas">—</div></div>
-        <div class="resumo-card"><div class="resumo-label">Despesas (Pagas)</div><div class="resumo-value" style="color:#dc2626" id="rDespesas">—</div></div>
-        <div class="resumo-card"><div class="resumo-label">Saldo</div><div class="resumo-value" id="rSaldo">—</div></div>
-        <div class="resumo-card"><div class="resumo-label">A Receber</div><div class="resumo-value" style="color:#ca8a04" id="rAReceber">—</div></div>
-        <div class="resumo-card"><div class="resumo-label">A Pagar</div><div class="resumo-value" style="color:#ea580c" id="rAPagar">—</div></div>
-        <div class="resumo-card" style="border-color:#fca5a5"><div class="resumo-label" style="color:#dc2626">Receitas Vencidas</div><div class="resumo-value" style="color:#dc2626;font-size:16px" id="rRecVenc">—</div></div>
+      <!-- Month navigator -->
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div class="mes-nav">
+          <button id="btnPrevMes" title="Mês anterior">‹</button>
+          <div class="mes-nav-label" id="mesLabel">—</div>
+          <button id="btnNextMes" title="Próximo mês">›</button>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-muted)" id="mesHint"></div>
       </div>
 
+      <!-- KPI: Mês -->
+      <div class="kpi-section">
+        <div class="kpi-section-title" id="kpiMesTitle">Mês</div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Receitas pagas</div><div class="kpi-value" style="color:#15803d" id="mReceitas">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Despesas pagas</div><div class="kpi-value" style="color:#dc2626" id="mDespesas">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Saldo</div><div class="kpi-value" id="mSaldo">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">A receber</div><div class="kpi-value sm" style="color:#ca8a04" id="mAReceber">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">A pagar</div><div class="kpi-value sm" style="color:#ea580c" id="mAPagar">—</div></div>
+          <div class="kpi-card" style="border-color:#fca5a5"><div class="kpi-label" style="color:#dc2626">Rec. vencidas</div><div class="kpi-value sm" style="color:#dc2626" id="mVencidas">—</div></div>
+        </div>
+      </div>
+
+      <!-- KPI: Ano -->
+      <div class="kpi-section">
+        <div class="kpi-section-title" id="kpiAnoTitle">Ano</div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Receitas pagas</div><div class="kpi-value sm" style="color:#15803d" id="aReceitas">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Despesas pagas</div><div class="kpi-value sm" style="color:#dc2626" id="aDespesas">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Saldo</div><div class="kpi-value sm" id="aSaldo">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">A receber</div><div class="kpi-value sm" style="color:#ca8a04" id="aAReceber">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">A pagar</div><div class="kpi-value sm" style="color:#ea580c" id="aAPagar">—</div></div>
+          <div class="kpi-card" style="border-color:#fca5a5"><div class="kpi-label" style="color:#dc2626">Rec. vencidas</div><div class="kpi-value sm" style="color:#dc2626" id="aVencidas">—</div></div>
+        </div>
+      </div>
+
+      <!-- Lista de lançamentos -->
       <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px">
         <div class="filter-bar">
           <select id="filtroTipo"><option value="">Todos</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select>
           <select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option><option value="Vencido">Vencido</option><option value="Cancelado">Cancelado</option></select>
-          <button class="btn btn-secondary btn-sm" onclick="loadLancamentos()">Filtrar</button>
+          <button class="btn btn-secondary btn-sm" id="btnFiltrar">Filtrar</button>
         </div>
         <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
         <div id="paginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
       </div>
+
     </main>
   </div>
 
   <!-- Modal -->
-  <div id="modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center">
+  <div class="modal-overlay" id="modal">
     <div style="background:#fff;border-radius:var(--radius);padding:28px;width:min(520px,95vw);max-height:90vh;overflow-y:auto">
       <h2 id="modalTitle" style="margin:0 0 20px">Novo Lançamento</h2>
       <form id="form">
@@ -99,7 +139,7 @@
           <input id="fDescricao" type="text" maxlength="500" class="form-control">
         </div>
         <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+          <button type="button" class="btn btn-secondary" id="btnCancelarModal">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar</button>
         </div>
       </form>
@@ -112,6 +152,8 @@
 
     initLayout();
 
+    const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
     const CATEGORIAS = {
       Receita: ['Honorario','Custas','Pericia','Deposito','Reembolso','Outro'],
       Despesa: ['Salario','AluguelEscritorio','Software','Marketing','Custas','Multa','Outro']
@@ -122,39 +164,89 @@
       Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
     };
 
+    // Restore month/year from URL or default to current
+    const _p = new URLSearchParams(location.search);
+    const now = new Date();
+    let currentMes = parseInt(_p.get('mes')) || (now.getMonth() + 1);
+    let currentAno = parseInt(_p.get('ano')) || now.getFullYear();
     let currentPage = 1;
     const pageSize = 20;
 
-    window.loadLancamentos = loadLancamentos;
-    window.closeModal = closeModal;
+    // Sync URL without adding to history
+    function syncUrl() {
+      const p = new URLSearchParams({ mes: currentMes, ano: currentAno });
+      history.replaceState(null, '', '?' + p);
+    }
 
-    loadResumo();
-    loadLancamentos();
+    // Nav buttons
+    document.getElementById('btnPrevMes').onclick = () => {
+      currentMes--;
+      if (currentMes < 1) { currentMes = 12; currentAno--; }
+      currentPage = 1;
+      syncUrl();
+      updateNav();
+      loadAll();
+    };
+    document.getElementById('btnNextMes').onclick = () => {
+      currentMes++;
+      if (currentMes > 12) { currentMes = 1; currentAno++; }
+      currentPage = 1;
+      syncUrl();
+      updateNav();
+      loadAll();
+    };
 
+    function updateNav() {
+      document.getElementById('mesLabel').textContent = `${MESES_PT[currentMes - 1]} ${currentAno}`;
+      document.getElementById('kpiMesTitle').textContent = `${MESES_PT[currentMes - 1]} ${currentAno}`;
+      document.getElementById('kpiAnoTitle').textContent = `Acumulado ${currentAno}`;
+      const isCurrentMonth = currentMes === now.getMonth() + 1 && currentAno === now.getFullYear();
+      document.getElementById('mesHint').textContent = isCurrentMonth ? '(mês atual)' : '';
+      document.getElementById('btnNextMes').disabled =
+        currentAno > now.getFullYear() || (currentAno === now.getFullYear() && currentMes >= now.getMonth() + 1);
+    }
+
+    document.getElementById('btnFiltrar').onclick = () => { currentPage = 1; loadLancamentos(); };
     document.getElementById('btnNovo').onclick = () => openModal(null);
     document.getElementById('fTipo').onchange = updateCategorias;
     document.getElementById('form').onsubmit = salvar;
+    document.getElementById('btnCancelarModal').onclick = closeModal;
+    document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+    syncUrl();
+    updateNav();
+    loadAll();
+
+    function loadAll() {
+      loadResumo();
+      loadLancamentos();
+    }
 
     async function loadResumo() {
       try {
-        const r = await apiFetch('/financeiro/resumo');
-        const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-        document.getElementById('rReceitas').textContent = fmt(r.totalReceitas);
-        document.getElementById('rDespesas').textContent = fmt(r.totalDespesas);
-        const saldoEl = document.getElementById('rSaldo');
-        saldoEl.textContent = fmt(r.saldo);
-        saldoEl.style.color = r.saldo >= 0 ? '#15803d' : '#dc2626';
-        document.getElementById('rAReceber').textContent = fmt(r.receitasPendentes);
-        document.getElementById('rAPagar').textContent = fmt(r.despesasPendentes);
-        document.getElementById('rRecVenc').textContent = fmt(r.receitasVencidas);
+        const r = await apiFetch(`/financeiro/resumo?mes=${currentMes}&ano=${currentAno}`);
+        renderKpi(r.mes, 'm');
+        renderKpi(r.ano, 'a');
       } catch (e) { console.error(e); }
     }
 
-    async function loadLancamentos(page = 1) {
+    function renderKpi(r, prefix) {
+      const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+      document.getElementById(prefix + 'Receitas').textContent = fmt(r.totalReceitas);
+      document.getElementById(prefix + 'Despesas').textContent = fmt(r.totalDespesas);
+      const saldoEl = document.getElementById(prefix + 'Saldo');
+      saldoEl.textContent = fmt(r.saldo);
+      saldoEl.style.color = r.saldo >= 0 ? '#15803d' : '#dc2626';
+      document.getElementById(prefix + 'AReceber').textContent = fmt(r.receitasPendentes);
+      document.getElementById(prefix + 'APagar').textContent = fmt(r.despesasPendentes);
+      document.getElementById(prefix + 'Vencidas').textContent = fmt(r.receitasVencidas);
+    }
+
+    async function loadLancamentos(page = currentPage) {
       currentPage = page;
       const tipo = document.getElementById('filtroTipo').value;
       const status = document.getElementById('filtroStatus').value;
-      const qs = new URLSearchParams({ page, pageSize });
+      const qs = new URLSearchParams({ page, pageSize, mes: currentMes, ano: currentAno });
       if (tipo) qs.append('tipo', tipo);
       if (status) qs.append('status', status);
 
@@ -163,35 +255,57 @@
       try {
         const data = await apiFetch(`/financeiro?${qs}`);
         if (!data.items?.length) {
-          lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum lançamento encontrado.</span>';
+          lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum lançamento neste mês.</span>';
           document.getElementById('paginacao').innerHTML = '';
           return;
         }
         lista.innerHTML = data.items.map(l => renderRow(l)).join('');
         renderPaginacao(data.total, page);
+        bindActions();
       } catch (e) { lista.innerHTML = `<span style="color:red">${esc(e.message)}</span>`; }
     }
 
     function renderRow(l) {
       const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2});
-      const dt = new Date(l.dataVencimento).toLocaleDateString('pt-BR');
-      const dtPago = l.dataPagamento ? new Date(l.dataPagamento).toLocaleDateString('pt-BR') : null;
+      const dt = new Date(l.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR');
+      const dtPago = l.dataPagamento ? new Date(l.dataPagamento.endsWith('Z') ? l.dataPagamento : l.dataPagamento + 'Z').toLocaleDateString('pt-BR') : null;
+      const cor = l.tipo === 'Receita' ? '#15803d' : '#dc2626';
       return `<div class="lancamento-row">
         <div class="lancamento-info">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span class="lancamento-valor ${l.tipo === 'Receita' ? 'color:#15803d' : 'color:#dc2626'}" style="color:${l.tipo === 'Receita' ? '#15803d' : '#dc2626'}">${fmt(l.valor)}</span>
+            <span style="font-size:16px;font-weight:700;color:${cor}">${fmt(l.valor)}</span>
             <span class="tipo-${l.tipo.toLowerCase()}">${l.tipo}</span>
             <span class="status-${l.status.toLowerCase()}">${l.status}</span>
+            <span style="font-size:12px;color:var(--color-text-muted)">${esc(CAT_LABELS[l.categoria] ?? l.categoria)}</span>
           </div>
-          <div style="font-size:13px;color:var(--color-text-muted)">${esc(CAT_LABELS[l.categoria] ?? l.categoria)} · Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}${l.numeroProcesso ? ` · ${esc(l.numeroProcesso)}` : ''}${l.nomeContato ? ` · ${esc(l.nomeContato)}` : ''}</div>
+          <div style="font-size:13px;color:var(--color-text-muted)">Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}${l.numeroProcesso ? ` · <span style="font-family:monospace">${esc(l.numeroProcesso)}</span>` : ''}${l.nomeContato ? ` · ${esc(l.nomeContato)}` : ''}</div>
           ${l.descricao ? `<div style="font-size:12px;color:#6b7280">${esc(l.descricao)}</div>` : ''}
         </div>
         <div class="lancamento-actions">
-          ${l.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" onclick="pagar('${l.id}')">✓ Pagar</button>` : ''}
-          ${l.status !== 'Cancelado' && l.status !== 'Pago' ? `<button class="btn btn-secondary btn-sm" onclick="editarLancamento('${l.id}','${l.tipo}','${l.categoria}',${l.valor},'${l.dataVencimento.substring(0,10)}','${esc(l.descricao ?? '')}')">Editar</button>` : ''}
-          ${l.status !== 'Cancelado' ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="cancelar('${l.id}')">Cancelar</button>` : ''}
+          ${l.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" data-action="pagar" data-id="${l.id}">✓ Pagar</button>` : ''}
+          ${l.status !== 'Cancelado' && l.status !== 'Pago' ? `<button class="btn btn-secondary btn-sm" data-action="editar" data-id="${l.id}" data-tipo="${l.tipo}" data-cat="${l.categoria}" data-valor="${l.valor}" data-venc="${l.dataVencimento.substring(0,10)}" data-desc="${esc(l.descricao ?? '')}">Editar</button>` : ''}
+          ${l.status !== 'Cancelado' ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" data-action="cancelar" data-id="${l.id}">Cancelar</button>` : ''}
         </div>
       </div>`;
+    }
+
+    function bindActions() {
+      document.getElementById('lista').querySelectorAll('[data-action]').forEach(btn => {
+        btn.onclick = async () => {
+          const { action, id, tipo, cat, valor, venc, desc } = btn.dataset;
+          if (action === 'pagar') {
+            if (!confirm('Confirmar pagamento?')) return;
+            await apiFetch(`/financeiro/${id}/pagar`, { method: 'POST', body: JSON.stringify({}) });
+            loadAll();
+          } else if (action === 'cancelar') {
+            if (!confirm('Cancelar este lançamento?')) return;
+            await apiFetch(`/financeiro/${id}/cancelar`, { method: 'POST' });
+            loadAll();
+          } else if (action === 'editar') {
+            openModal({ id, tipo, categoria: cat, valor: parseFloat(valor), dataVencimento: venc, descricao: desc });
+          }
+        };
+      });
     }
 
     function renderPaginacao(total, page) {
@@ -199,25 +313,10 @@
       const el = document.getElementById('paginacao');
       if (pages <= 1) { el.innerHTML = ''; return; }
       el.innerHTML = Array.from({length: pages}, (_, i) => i + 1).map(p =>
-        `<button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="loadLancamentos(${p})">${p}</button>`
+        `<button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" data-page="${p}">${p}</button>`
       ).join('');
+      el.querySelectorAll('[data-page]').forEach(b => b.onclick = () => loadLancamentos(parseInt(b.dataset.page)));
     }
-
-    window.pagar = async function(id) {
-      if (!confirm('Confirmar pagamento?')) return;
-      await apiFetch(`/financeiro/${id}/pagar`, { method: 'POST', body: JSON.stringify({}) });
-      loadResumo(); loadLancamentos(currentPage);
-    };
-
-    window.cancelar = async function(id) {
-      if (!confirm('Cancelar este lançamento?')) return;
-      await apiFetch(`/financeiro/${id}/cancelar`, { method: 'POST' });
-      loadResumo(); loadLancamentos(currentPage);
-    };
-
-    window.editarLancamento = function(id, tipo, cat, valor, venc, desc) {
-      openModal({ id, tipo, categoria: cat, valor, dataVencimento: venc, descricao: desc });
-    };
 
     function openModal(item) {
       document.getElementById('editId').value = item?.id ?? '';
@@ -227,13 +326,15 @@
       updateCategorias();
       document.getElementById('fCategoria').value = item?.categoria ?? '';
       document.getElementById('fValor').value = item?.valor ?? '';
-      document.getElementById('fVencimento').value = item?.dataVencimento ?? '';
+      // Default vencimento to 1st of current viewed month
+      document.getElementById('fVencimento').value = item?.dataVencimento
+        ?? `${currentAno}-${String(currentMes).padStart(2,'0')}-01`;
       document.getElementById('fDescricao').value = item?.descricao ?? '';
-      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('modal').classList.add('open');
     }
 
     function closeModal() {
-      document.getElementById('modal').style.display = 'none';
+      document.getElementById('modal').classList.remove('open');
       document.getElementById('fTipo').disabled = false;
     }
 
@@ -262,8 +363,7 @@
           await apiFetch('/financeiro', { method: 'POST', body: JSON.stringify(body) });
         }
         closeModal();
-        loadResumo();
-        loadLancamentos(currentPage);
+        loadAll();
       } catch (ex) { alert('Erro: ' + ex.message); }
       finally { btn.disabled = false; }
     }

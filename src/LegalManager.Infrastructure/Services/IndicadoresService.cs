@@ -79,19 +79,21 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
 
     private async Task<FinanceiroIndicadoresDto> BuildFinanceiroAsync(Guid tenantId, DateTime inicioMes, CancellationToken ct)
     {
+        var fimMes = inicioMes.AddMonths(1);
         var q = db.LancamentosFinanceiros.AsNoTracking()
             .Where(l => l.TenantId == tenantId && l.Status != StatusLancamento.Cancelado);
 
         var now = DateTime.UtcNow.Date;
 
+        // Agrupa por DataVencimento (mês do lançamento), não DataPagamento
         var receitasMes = await q
             .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pago &&
-                        l.DataPagamento >= inicioMes)
+                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var despesasMes = await q
             .Where(l => l.Tipo == TipoLancamento.Despesa && l.Status == StatusLancamento.Pago &&
-                        l.DataPagamento >= inicioMes)
+                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var receitasPendentes = await q
@@ -112,11 +114,12 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
                         l.DataVencimento < now)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
-        // Last 6 months trend
+        // Gráfico: últimos 6 meses agrupados por DataVencimento
         var seisMesesAtras = inicioMes.AddMonths(-5);
         var lancamentos = await q
-            .Where(l => l.Status == StatusLancamento.Pago && l.DataPagamento >= seisMesesAtras)
-            .Select(l => new { l.Tipo, l.Valor, l.DataPagamento })
+            .Where(l => l.Status == StatusLancamento.Pago &&
+                        l.DataVencimento >= seisMesesAtras && l.DataVencimento < fimMes)
+            .Select(l => new { l.Tipo, l.Valor, l.DataVencimento })
             .ToListAsync(ct);
 
         var ultimos6 = Enumerable.Range(0, 6)
@@ -124,13 +127,11 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
             .Select(m => new MesFinanceiroDto(
                 m.ToString("MMM/yy", new System.Globalization.CultureInfo("pt-BR")),
                 lancamentos.Where(l => l.Tipo == TipoLancamento.Receita &&
-                    l.DataPagamento.HasValue &&
-                    l.DataPagamento.Value.Year == m.Year &&
-                    l.DataPagamento.Value.Month == m.Month).Sum(l => l.Valor),
+                    l.DataVencimento.Year == m.Year &&
+                    l.DataVencimento.Month == m.Month).Sum(l => l.Valor),
                 lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa &&
-                    l.DataPagamento.HasValue &&
-                    l.DataPagamento.Value.Year == m.Year &&
-                    l.DataPagamento.Value.Month == m.Month).Sum(l => l.Valor)))
+                    l.DataVencimento.Year == m.Year &&
+                    l.DataVencimento.Month == m.Month).Sum(l => l.Valor)))
             .ToList();
 
         return new FinanceiroIndicadoresDto(

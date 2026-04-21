@@ -10,7 +10,7 @@ namespace LegalManager.Infrastructure.Services;
 public class FinanceiroService(AppDbContext db) : IFinanceiroService
 {
     public async Task<LancamentosPagedDto> GetAllAsync(Guid tenantId, TipoLancamento? tipo, StatusLancamento? status,
-        Guid? processoId, Guid? contatoId, int page, int pageSize, CancellationToken ct = default)
+        Guid? processoId, Guid? contatoId, int page, int pageSize, int? mes = null, int? ano = null, CancellationToken ct = default)
     {
         var q = db.LancamentosFinanceiros
             .AsNoTracking()
@@ -20,6 +20,8 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
         if (status.HasValue) q = q.Where(l => l.Status == status.Value);
         if (processoId.HasValue) q = q.Where(l => l.ProcessoId == processoId.Value);
         if (contatoId.HasValue) q = q.Where(l => l.ContatoId == contatoId.Value);
+        if (ano.HasValue) q = q.Where(l => l.DataVencimento.Year == ano.Value);
+        if (mes.HasValue) q = q.Where(l => l.DataVencimento.Month == mes.Value);
 
         var total = await q.CountAsync(ct);
         var items = await q
@@ -108,19 +110,27 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task<ResumoFinanceiroDto> GetResumoAsync(Guid tenantId, int? ano, int? mes, CancellationToken ct = default)
+    public async Task<ResumoFinanceiroCompletoDto> GetResumoCompletoAsync(Guid tenantId, int ano, int mes, CancellationToken ct = default)
+    {
+        var resumoMes = await CalcResumoAsync(tenantId, ano, mes, ct);
+        var resumoAno = await CalcResumoAsync(tenantId, ano, null, ct);
+        return new ResumoFinanceiroCompletoDto(resumoMes, resumoAno);
+    }
+
+    private async Task<ResumoFinanceiroDto> CalcResumoAsync(Guid tenantId, int ano, int? mes, CancellationToken ct)
     {
         var q = db.LancamentosFinanceiros
             .AsNoTracking()
-            .Where(l => l.TenantId == tenantId && l.Status != StatusLancamento.Cancelado);
+            .Where(l => l.TenantId == tenantId &&
+                        l.Status != StatusLancamento.Cancelado &&
+                        l.DataVencimento.Year == ano);
 
-        if (ano.HasValue) q = q.Where(l => l.DataVencimento.Year == ano.Value);
         if (mes.HasValue) q = q.Where(l => l.DataVencimento.Month == mes.Value);
 
         var now = DateTime.UtcNow.Date;
-
-        var receitas = await q.Where(l => l.Tipo == TipoLancamento.Receita).ToListAsync(ct);
-        var despesas = await q.Where(l => l.Tipo == TipoLancamento.Despesa).ToListAsync(ct);
+        var lancamentos = await q.ToListAsync(ct);
+        var receitas = lancamentos.Where(l => l.Tipo == TipoLancamento.Receita).ToList();
+        var despesas = lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa).ToList();
 
         var totalReceitas = receitas.Where(l => l.Status == StatusLancamento.Pago).Sum(l => l.Valor);
         var totalDespesas = despesas.Where(l => l.Status == StatusLancamento.Pago).Sum(l => l.Valor);
