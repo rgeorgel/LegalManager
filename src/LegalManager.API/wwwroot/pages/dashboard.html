@@ -102,12 +102,15 @@
 
   <script type="module">
     import { initLayout } from '/js/layout.js';
-    import { apiFetch } from '/js/api.js';
+    import { apiFetch, isLoggedIn } from '/js/api.js';
+    import { initLayout } from '/js/layout.js';
 
-    if (!initLayout()) {
-      // initLayout returns false when not logged in (redirects to login)
-      return;
+    if (!isLoggedIn()) {
+      window.location.href = '/index.html';
+      throw new Error('not authenticated');
     }
+
+    initLayout();
 
     loadStats();
 

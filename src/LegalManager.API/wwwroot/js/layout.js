@@ -4,7 +4,7 @@ import { apiFetch } from './api.js';
 export function initLayout() {
   if (!isLoggedIn()) {
     window.location.href = '/index.html';
-    return false;
+    return;
   }
 
   const user = getUser();
@@ -34,8 +34,6 @@ export function initLayout() {
 
 // Inject notification bell into header
   injectNotificationBell();
-
-  return true;
 }
 
 function injectNotificationBell() {
