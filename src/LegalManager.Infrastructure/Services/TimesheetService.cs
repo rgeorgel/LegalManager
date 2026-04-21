@@ -21,13 +21,15 @@ public class TimesheetService(AppDbContext db) : ITimesheetService
         if (ate.HasValue) q = q.Where(r => r.Inicio <= ate.Value);
 
         var total = await q.CountAsync(ct);
+        var totalMinutos = await q.Where(r => !r.EmAndamento && r.DuracaoMinutos != null)
+            .SumAsync(r => (int?)r.DuracaoMinutos ?? 0, ct);
         var items = await q
             .OrderByDescending(r => r.Inicio)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(r => ToDto(r))
             .ToListAsync(ct);
 
-        return new RegistroTempoPagedDto(items, total);
+        return new RegistroTempoPagedDto(items, total, totalMinutos);
     }
 
     public async Task<RegistroTempoDto?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct = default)

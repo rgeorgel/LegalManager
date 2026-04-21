@@ -40,4 +40,4 @@ public record RegistroTempoDto(
     DateTime CriadoEm
 );
 
-public record RegistroTempoPagedDto(IEnumerable<RegistroTempoDto> Items, int Total);
+public record RegistroTempoPagedDto(IEnumerable<RegistroTempoDto> Items, int Total, int TotalMinutos);

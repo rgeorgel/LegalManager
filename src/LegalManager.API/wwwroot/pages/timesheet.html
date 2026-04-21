@@ -10,9 +10,16 @@
     .cronometro-display { font-size:40px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--color-primary); min-width:130px; }
     .cronometro-desc { font-size:13px; color:var(--color-text-muted); margin-top:4px; }
     .registro-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--color-border); flex-wrap:wrap; gap:8px; }
-    .registro-dur { font-size:20px; font-weight:700; color:var(--color-primary); min-width:64px; }
-    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+    .registro-dur { font-size:18px; font-weight:700; color:var(--color-primary); min-width:70px; }
+    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center; }
     .filter-bar input[type=date] { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); font-size:13px; background:var(--color-surface); }
+    .total-bar { display:flex; align-items:center; gap:16px; padding:10px 14px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:var(--radius); margin-bottom:16px; font-size:14px; }
+    .total-bar strong { color:var(--color-primary); font-size:16px; }
+
+    /* Modal overlay */
+    .modal-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.5); align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-card { background:#fff; border-radius:var(--radius); padding:28px; width:min(480px,95vw); max-height:90vh; overflow-y:auto; }
   </style>
 </head>
 <body>
@@ -36,7 +43,7 @@
       </div>
 
       <!-- Cronômetro -->
-      <div class="cronometro-box" id="cronometroBox">
+      <div class="cronometro-box">
         <div>
           <div class="cronometro-display" id="cronDisplay">00:00:00</div>
           <div class="cronometro-desc" id="cronDesc">Nenhum cronômetro ativo</div>
@@ -50,11 +57,15 @@
         </div>
       </div>
 
+      <!-- Lista -->
       <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px">
         <div class="filter-bar">
           <label style="font-size:13px">De: <input type="date" id="filtroDE"></label>
           <label style="font-size:13px">Até: <input type="date" id="filtroATE"></label>
           <button class="btn btn-secondary btn-sm" onclick="loadRegistros()">Filtrar</button>
+        </div>
+        <div id="totalBar" class="total-bar" style="display:none">
+          Total no período: <strong id="totalMin">—</strong>
         </div>
         <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
         <div id="paginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
@@ -62,9 +73,9 @@
     </main>
   </div>
 
-  <!-- Modal manual -->
-  <div id="modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:var(--radius);padding:28px;width:min(480px,95vw)">
+  <!-- Modal lançamento manual — fora do app-layout mas dentro do body -->
+  <div id="modalManual" class="modal-overlay">
+    <div class="modal-card">
       <h2 style="margin:0 0 20px">Lançamento Manual</h2>
       <form id="formManual">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -79,10 +90,10 @@
         </div>
         <div class="form-group">
           <label class="form-label">Descrição</label>
-          <input id="mDesc" type="text" class="form-control">
+          <input id="mDesc" type="text" maxlength="500" class="form-control">
         </div>
         <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal').style.display='none'">Cancelar</button>
+          <button type="button" class="btn btn-secondary" id="btnCancelarManual">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="btnSalvarManual">Salvar</button>
         </div>
       </form>
@@ -96,7 +107,7 @@
     initLayout();
 
     let timerInterval = null;
-    let ativoInicio = null;
+    let ativoInicio = null; // always a JS Date in local time
     let currentPage = 1;
     const pageSize = 20;
 
@@ -107,14 +118,36 @@
 
     document.getElementById('btnIniciar').onclick = iniciar;
     document.getElementById('btnParar').onclick = parar;
-    document.getElementById('btnManual').onclick = () => { document.getElementById('modal').style.display = 'flex'; };
+    document.getElementById('btnManual').onclick = () => document.getElementById('modalManual').classList.add('open');
+    document.getElementById('btnCancelarManual').onclick = fecharModal;
+    document.getElementById('modalManual').addEventListener('click', e => { if (e.target === e.currentTarget) fecharModal(); });
     document.getElementById('formManual').onsubmit = salvarManual;
+
+    function fecharModal() {
+      document.getElementById('modalManual').classList.remove('open');
+      document.getElementById('formManual').reset();
+    }
+
+    // Parse a datetime string from the server (stored as UTC without 'Z') as UTC
+    function parseUtc(str) {
+      if (!str) return null;
+      return new Date(str.endsWith('Z') ? str : str + 'Z');
+    }
+
+    // Format a local Date to datetime-local input value (YYYY-MM-DDTHH:MM)
+    function toLocalInputValue(date) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    // ── Cronômetro ──
 
     async function initCronometro() {
       try {
         const ativo = await apiFetch('/timesheet/ativo');
         if (ativo) {
-          ativoInicio = new Date(ativo.inicio);
+          // Server returns UTC without 'Z' — parse correctly
+          ativoInicio = parseUtc(ativo.inicio);
           setCronometroAtivo(ativo.descricao);
         }
       } catch {}
@@ -132,7 +165,7 @@
 
     function updateDisplay() {
       if (!ativoInicio) return;
-      const elapsed = Math.floor((Date.now() - ativoInicio.getTime()) / 1000);
+      const elapsed = Math.max(0, Math.floor((Date.now() - ativoInicio.getTime()) / 1000));
       const h = Math.floor(elapsed / 3600);
       const m = Math.floor((elapsed % 3600) / 60);
       const s = elapsed % 60;
@@ -141,11 +174,12 @@
     }
 
     async function iniciar() {
-      const desc = document.getElementById('cronDescInput').value || null;
+      const desc = document.getElementById('cronDescInput').value.trim() || null;
       try {
-        const r = await apiFetch('/timesheet/iniciar', { method: 'POST', body: JSON.stringify({ descricao: desc }) });
-        ativoInicio = new Date(r.inicio);
-        setCronometroAtivo(r.descricao);
+        await apiFetch('/timesheet/iniciar', { method: 'POST', body: JSON.stringify({ descricao: desc }) });
+        // Use client time for the display — avoids any server/timezone parsing issues
+        ativoInicio = new Date();
+        setCronometroAtivo(desc);
       } catch (e) { alert(e.message); }
     }
 
@@ -165,18 +199,30 @@
       } catch (e) { alert(e.message); }
     }
 
+    // ── Lista ──
+
     async function loadRegistros(page = 1) {
       currentPage = page;
-      const de = document.getElementById('filtroDE').value;
-      const ate = document.getElementById('filtroATE').value;
+      const deVal = document.getElementById('filtroDE').value;
+      const ateVal = document.getElementById('filtroATE').value;
       const qs = new URLSearchParams({ page, pageSize });
-      if (de) qs.append('de', new Date(de).toISOString());
-      if (ate) { const d = new Date(ate); d.setHours(23,59,59); qs.append('ate', d.toISOString()); }
+
+      if (deVal) {
+        // Start of day in local time → UTC
+        const d = new Date(deVal + 'T00:00:00');
+        qs.append('de', d.toISOString());
+      }
+      if (ateVal) {
+        // End of day in local time → UTC
+        const d = new Date(ateVal + 'T23:59:59');
+        qs.append('ate', d.toISOString());
+      }
 
       const lista = document.getElementById('lista');
       lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Carregando...</span>';
       try {
         const data = await apiFetch(`/timesheet?${qs}`);
+        renderTotal(data.totalMinutos, data.total);
         if (!data.items?.length) {
           lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum registro encontrado.</span>';
           document.getElementById('paginacao').innerHTML = '';
@@ -187,10 +233,21 @@
       } catch (e) { lista.innerHTML = `<span style="color:red">${esc(e.message)}</span>`; }
     }
 
+    function renderTotal(totalMin, totalRegistros) {
+      const bar = document.getElementById('totalBar');
+      const el = document.getElementById('totalMin');
+      if (!totalRegistros) { bar.style.display = 'none'; return; }
+      bar.style.display = 'flex';
+      el.textContent = `${formatDur(totalMin)} (${totalRegistros} registro${totalRegistros !== 1 ? 's' : ''})`;
+    }
+
     function renderRow(r) {
       const dur = r.duracaoMinutos != null ? formatDur(r.duracaoMinutos) : (r.emAndamento ? '▶ Ativo' : '—');
-      const dtI = new Date(r.inicio).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-      const dtF = r.fim ? new Date(r.fim).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
+      // Server stores UTC without 'Z' — parse as UTC so toLocaleString shows local Brazil time
+      const inicio = parseUtc(r.inicio);
+      const fim = r.fim ? parseUtc(r.fim) : null;
+      const dtI = inicio.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      const dtF = fim ? fim.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
       return `<div class="registro-row">
         <div style="display:flex;gap:16px;align-items:center">
           <div class="registro-dur">${dur}</div>
@@ -224,18 +281,28 @@
       loadRegistros(currentPage);
     };
 
+    // ── Manual entry ──
+
     async function salvarManual(e) {
       e.preventDefault();
+      const inicioLocal = document.getElementById('mInicio').value; // "YYYY-MM-DDTHH:MM"
+      const fimLocal = document.getElementById('mFim').value;
+
+      if (!inicioLocal || !fimLocal) return;
+
+      // Convert local datetime-local value to UTC ISO string for consistent storage
+      const inicioUtc = new Date(inicioLocal).toISOString();
+      const fimUtc = new Date(fimLocal).toISOString();
+
       const btn = document.getElementById('btnSalvarManual');
       btn.disabled = true;
       try {
         await apiFetch('/timesheet/manual', { method: 'POST', body: JSON.stringify({
-          inicio: document.getElementById('mInicio').value,
-          fim: document.getElementById('mFim').value,
-          descricao: document.getElementById('mDesc').value || null
+          inicio: inicioUtc,
+          fim: fimUtc,
+          descricao: document.getElementById('mDesc').value.trim() || null
         })});
-        document.getElementById('modal').style.display = 'none';
-        document.getElementById('formManual').reset();
+        fecharModal();
         loadRegistros(currentPage);
       } catch (ex) { alert('Erro: ' + ex.message); }
       finally { btn.disabled = false; }
