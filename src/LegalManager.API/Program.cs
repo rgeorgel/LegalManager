@@ -159,6 +159,16 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire");
 
+app.Use(async (ctx, next) =>
+{
+    if (ctx.Request.Path == "/cliente" || ctx.Request.Path == "/cliente/")
+    {
+        ctx.Response.Redirect("/cliente/index.html");
+        return;
+    }
+    await next();
+});
+
 RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
@@ -173,9 +183,6 @@ RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
     "captura-publicacoes",
     job => job.ExecutarAsync(),
     "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
-
-app.MapGet("/cliente", () => Results.Redirect("/cliente/index.html"));
-app.MapGet("/cliente/", () => Results.Redirect("/cliente/index.html"));
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
