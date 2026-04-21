@@ -8,8 +8,9 @@ const TIPO_LABEL = {
   Prazo: 'Prazo', Despacho: 'Despacho', Outro: 'Outro', Tarefa: 'Tarefa'
 };
 
-let currentView = 'semana';
-let currentDate = new Date();
+const _params = new URLSearchParams(location.search);
+let currentView = ['dia','semana','mes','lista'].includes(_params.get('view')) ? _params.get('view') : 'semana';
+let currentDate = _params.get('date') ? new Date(_params.get('date') + 'T00:00:00') : new Date();
 currentDate.setHours(0, 0, 0, 0);
 
 let agendaItems = [];
@@ -68,10 +69,20 @@ function toLocalISO(date) {
 }
 
 // --- Load ---
+function syncUrl() {
+  const p = new URLSearchParams(location.search);
+  p.set('view', currentView);
+  const d = currentDate;
+  const pad = n => String(n).padStart(2, '0');
+  p.set('date', `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+  history.replaceState(null, '', `${location.pathname}?${p}`);
+}
+
 async function load() {
   const start = startOf(currentView, currentDate);
   const end = endOf(currentView, start);
 
+  syncUrl();
   document.getElementById('periodoLabel').textContent = formatPeriod(currentView, start, end);
 
   try {
@@ -410,4 +421,10 @@ function esc(str) {
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
 // --- Init ---
+// Reflect the initial view in the button state
+const _initViewBtn = document.getElementById(`view${currentView.charAt(0).toUpperCase() + currentView.slice(1)}`);
+if (_initViewBtn) {
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  _initViewBtn.classList.add('active');
+}
 load();
