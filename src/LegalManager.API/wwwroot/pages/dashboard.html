@@ -119,14 +119,14 @@
         const em7dias = new Date(now.getTime() + 7 * 86400000);
 
         const [me, contatos, processosAtivos, processosEncerrados, tarefas, tarefasAtrasadas, tarefasUrgentes, eventos] = await Promise.all([
-          apiFetch('/api/usuarios/me').catch(e => { console.error('/api/usuarios/me:', e); throw e; }),
-          apiFetch('/api/contatos?pageSize=1').catch(e => { console.error('/api/contatos:', e); throw e; }),
-          apiFetch('/api/processos?status=Ativo&pageSize=1').catch(e => { console.error('/api/processos:', e); throw e; }),
-          apiFetch('/api/processos?status=Encerrado&pageSize=1').catch(e => { console.error('/api/processos:', e); throw e; }),
-          apiFetch('/api/tarefas?status=Pendente&pageSize=1').catch(e => { console.error('/api/tarefas:', e); throw e; }),
-          apiFetch('/api/tarefas?atrasada=true&pageSize=1').catch(e => { console.error('/api/tarefas:', e); throw e; }),
-          apiFetch('/api/tarefas?prioridade=Urgente&pageSize=5').catch(e => { console.error('/api/tarefas:', e); throw e; }),
-          apiFetch(`/api/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`).catch(e => { console.error('/api/agenda:', e); throw e; })
+          apiFetch('/usuarios/me').catch(e => { console.error('/usuarios/me:', e); throw e; }),
+          apiFetch('/contatos?pageSize=1').catch(e => { console.error('/contatos:', e); throw e; }),
+          apiFetch('/processos?status=Ativo&pageSize=1').catch(e => { console.error('/processos:', e); throw e; }),
+          apiFetch('/processos?status=Encerrado&pageSize=1').catch(e => { console.error('/processos:', e); throw e; }),
+          apiFetch('/tarefas?status=Pendente&pageSize=1').catch(e => { console.error('/tarefas:', e); throw e; }),
+          apiFetch('/tarefas?atrasada=true&pageSize=1').catch(e => { console.error('/tarefas:', e); throw e; }),
+          apiFetch('/tarefas?prioridade=Urgente&pageSize=5').catch(e => { console.error('/tarefas:', e); throw e; }),
+          apiFetch(`/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`).catch(e => { console.error('/agenda:', e); throw e; })
         ]);
 
         document.getElementById('statProcessos').textContent = processosAtivos?.total ?? '0';
