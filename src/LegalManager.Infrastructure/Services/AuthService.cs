@@ -168,7 +168,7 @@ public class AuthService : IAuthService
         _context.ConvitesUsuario.Add(convite);
         await _context.SaveChangesAsync(ct);
 
-        var link = $"{_config["App:FrontendUrl"]}/aceitar-convite?token={convite.Token}";
+        var link = $"{_config["App:FrontendUrl"]}/aceitar-convite.html?token={convite.Token}";
         await _emailService.EnviarConviteUsuarioAsync(dto.Email, tenant.Nome, link, ct);
     }
 
