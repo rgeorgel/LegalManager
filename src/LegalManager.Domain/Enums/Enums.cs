@@ -50,3 +50,13 @@ public enum StatusPublicacao { Nova, Lida, Arquivada }
 public enum StatusPrazo { Pendente, Cumprido, Perdido, Suspenso }
 
 public enum TipoCalculo { DiasUteis, DiasCorridos }
+
+public enum TipoLancamento { Receita, Despesa }
+
+public enum StatusLancamento { Pendente, Pago, Vencido, Cancelado }
+
+public enum CategoriaLancamento
+{
+    Honorario, Custas, Pericia, Deposito, Multa, Reembolso,
+    Salario, AluguelEscritorio, Software, Marketing, Outro
+}

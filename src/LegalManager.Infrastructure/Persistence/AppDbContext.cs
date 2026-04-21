@@ -34,6 +34,8 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<NomeCaptura> NomesCaptura => Set<NomeCaptura>();
     public DbSet<Prazo> Prazos => Set<Prazo>();
     public DbSet<AcessoCliente> AcessosCliente => Set<AcessoCliente>();
+    public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();
+    public DbSet<RegistroTempo> RegistrosTempo => Set<RegistroTempo>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

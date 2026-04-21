@@ -1,6 +1,21 @@
 import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch } from './api.js';
 
+const NAV_ITEMS = [
+  { href: '/pages/dashboard.html',   label: '📊 Dashboard' },
+  { href: '/pages/processos.html',   label: '⚖️ Processos' },
+  { href: '/pages/contatos.html',    label: '👥 Contatos' },
+  { href: '/pages/tarefas.html',     label: '✅ Tarefas' },
+  { href: '/pages/kanban.html',      label: '🗂️ Kanban' },
+  { href: '/pages/agenda.html',      label: '📅 Agenda' },
+  { href: '/pages/financeiro.html',  label: '💰 Financeiro' },
+  { href: '/pages/timesheet.html',   label: '⏱️ Timesheet' },
+  { href: '/pages/publicacoes.html', label: '📰 Publicações' },
+  { href: '/pages/prazos.html',      label: '⏰ Prazos' },
+  { href: '/pages/usuarios.html',    label: '🔑 Usuários' },
+  { href: '/pages/configuracoes.html', label: '⚙️ Configurações' },
+];
+
 export function initLayout() {
   if (!isLoggedIn()) {
     window.location.href = '/index.html';
@@ -14,25 +29,22 @@ export function initLayout() {
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
 
+  // Inject full nav
+  const navEl = document.querySelector('.sidebar-nav');
+  if (navEl) {
+    const current = window.location.pathname;
+    navEl.innerHTML = NAV_ITEMS.map(item =>
+      `<li><a href="${item.href}"${item.href === current ? ' class="active"' : ''}>${item.label}</a></li>`
+    ).join('');
+    navEl.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => document.querySelector('.sidebar')?.classList.remove('open'));
+    });
+  }
+
   const hamburger = document.getElementById('hamburger');
   const sidebar = document.querySelector('.sidebar');
+  hamburger?.addEventListener('click', () => sidebar?.classList.toggle('open'));
 
-  hamburger?.addEventListener('click', () => {
-    sidebar?.classList.toggle('open');
-  });
-
-  // Close sidebar on nav link click (mobile)
-  document.querySelectorAll('.sidebar-nav a').forEach(link => {
-    link.addEventListener('click', () => sidebar?.classList.remove('open'));
-  });
-
-  // Mark active nav
-  const current = window.location.pathname;
-  document.querySelectorAll('.sidebar-nav a').forEach(link => {
-    if (link.getAttribute('href') === current) link.classList.add('active');
-  });
-
-// Inject notification bell into header
   injectNotificationBell();
 }
 

@@ -2,6 +2,7 @@ using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
+using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +14,12 @@ namespace LegalManager.API.Controllers;
 public class TarefasController : ControllerBase
 {
     private readonly ITarefaService _service;
+    private readonly ITenantContext _tenantContext;
 
-    public TarefasController(ITarefaService service)
+    public TarefasController(ITarefaService service, ITenantContext tenantContext)
     {
         _service = service;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
@@ -95,4 +98,17 @@ public class TarefasController : ControllerBase
             return NotFound();
         }
     }
+
+    [HttpPatch("{id:guid}/mover")]
+    public async Task<IActionResult> MoverKanban(Guid id, [FromBody] MoverKanbanDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _service.MoverKanbanAsync(id, _tenantContext.TenantId, dto.Status, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
 }
+
+public record MoverKanbanDto(StatusTarefa Status);

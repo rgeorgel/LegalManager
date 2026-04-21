@@ -1,4 +1,4 @@
-# Módulo 04 — Gestão de Atividades (Tarefas, Eventos e Agenda)
+# Módulo 04 — Gestão de Atividades (Tarefas, Eventos, Agenda e Kanban)
 
 ## Status: ✅ Completo
 
@@ -117,3 +117,18 @@ Evento {
 | `/js/agenda.js` | Navegação mensal, renderização de calendário e CRUD de eventos |
 
 **Calendário:** grade de 7 colunas (Seg–Dom) com células clicáveis para adicionar eventos. Eventos do dia exibidos como chips coloridos por tipo.
+
+---
+
+### 4.4 Kanban
+
+- Visualização de tarefas em 3 colunas: **Pendente**, **Em Andamento**, **Concluída**
+- Drag-and-drop via HTML5 Drag API — arrastar card entre colunas move a tarefa
+- Atualização otimista (UI atualiza imediatamente, reverte em caso de erro)
+- Cards coloridos por prioridade (borda lateral: vermelho urgente → verde baixa)
+- Exibe prazo, responsável e badge de atrasada
+- Novo endpoint: `PATCH /api/tarefas/{id}/mover` com body `{ "status": "EmAndamento" }`
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `/pages/kanban.html` | Quadro Kanban com drag-and-drop |

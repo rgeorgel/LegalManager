@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Timesheet</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .cronometro-box { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:24px; margin-bottom:24px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; box-shadow:var(--shadow); }
+    .cronometro-display { font-size:40px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--color-primary); min-width:130px; }
+    .cronometro-desc { font-size:13px; color:var(--color-text-muted); margin-top:4px; }
+    .registro-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--color-border); flex-wrap:wrap; gap:8px; }
+    .registro-dur { font-size:20px; font-weight:700; color:var(--color-primary); min-width:64px; }
+    .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+    .filter-bar input[type=date] { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); font-size:13px; background:var(--color-surface); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ LegalManager</div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">⏱️ Timesheet</h1>
+        <button class="btn btn-secondary" id="btnManual">+ Lançamento Manual</button>
+      </div>
+
+      <!-- Cronômetro -->
+      <div class="cronometro-box" id="cronometroBox">
+        <div>
+          <div class="cronometro-display" id="cronDisplay">00:00:00</div>
+          <div class="cronometro-desc" id="cronDesc">Nenhum cronômetro ativo</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;flex:1;max-width:260px" id="cronForm">
+          <input id="cronDescInput" type="text" class="form-control" placeholder="Descrição (opcional)">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" id="btnIniciar">▶ Iniciar</button>
+          <button class="btn btn-secondary" id="btnParar" style="display:none">⏹ Parar</button>
+        </div>
+      </div>
+
+      <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px">
+        <div class="filter-bar">
+          <label style="font-size:13px">De: <input type="date" id="filtroDE"></label>
+          <label style="font-size:13px">Até: <input type="date" id="filtroATE"></label>
+          <button class="btn btn-secondary btn-sm" onclick="loadRegistros()">Filtrar</button>
+        </div>
+        <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
+        <div id="paginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal manual -->
+  <div id="modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:var(--radius);padding:28px;width:min(480px,95vw)">
+      <h2 style="margin:0 0 20px">Lançamento Manual</h2>
+      <form id="formManual">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Início *</label>
+            <input id="mInicio" type="datetime-local" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fim *</label>
+            <input id="mFim" type="datetime-local" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <input id="mDesc" type="text" class="form-control">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal').style.display='none'">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSalvarManual">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
+
+    initLayout();
+
+    let timerInterval = null;
+    let ativoInicio = null;
+    let currentPage = 1;
+    const pageSize = 20;
+
+    window.loadRegistros = loadRegistros;
+
+    initCronometro();
+    loadRegistros();
+
+    document.getElementById('btnIniciar').onclick = iniciar;
+    document.getElementById('btnParar').onclick = parar;
+    document.getElementById('btnManual').onclick = () => { document.getElementById('modal').style.display = 'flex'; };
+    document.getElementById('formManual').onsubmit = salvarManual;
+
+    async function initCronometro() {
+      try {
+        const ativo = await apiFetch('/timesheet/ativo');
+        if (ativo) {
+          ativoInicio = new Date(ativo.inicio);
+          setCronometroAtivo(ativo.descricao);
+        }
+      } catch {}
+    }
+
+    function setCronometroAtivo(desc) {
+      document.getElementById('btnIniciar').style.display = 'none';
+      document.getElementById('btnParar').style.display = '';
+      document.getElementById('cronForm').style.display = 'none';
+      document.getElementById('cronDesc').textContent = desc ? `▶ ${desc}` : '▶ Em andamento...';
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateDisplay, 1000);
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      if (!ativoInicio) return;
+      const elapsed = Math.floor((Date.now() - ativoInicio.getTime()) / 1000);
+      const h = Math.floor(elapsed / 3600);
+      const m = Math.floor((elapsed % 3600) / 60);
+      const s = elapsed % 60;
+      document.getElementById('cronDisplay').textContent =
+        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    async function iniciar() {
+      const desc = document.getElementById('cronDescInput').value || null;
+      try {
+        const r = await apiFetch('/timesheet/iniciar', { method: 'POST', body: JSON.stringify({ descricao: desc }) });
+        ativoInicio = new Date(r.inicio);
+        setCronometroAtivo(r.descricao);
+      } catch (e) { alert(e.message); }
+    }
+
+    async function parar() {
+      try {
+        await apiFetch('/timesheet/parar', { method: 'POST', body: JSON.stringify({}) });
+        clearInterval(timerInterval);
+        timerInterval = null;
+        ativoInicio = null;
+        document.getElementById('cronDisplay').textContent = '00:00:00';
+        document.getElementById('cronDesc').textContent = 'Nenhum cronômetro ativo';
+        document.getElementById('btnIniciar').style.display = '';
+        document.getElementById('btnParar').style.display = 'none';
+        document.getElementById('cronForm').style.display = '';
+        document.getElementById('cronDescInput').value = '';
+        loadRegistros(currentPage);
+      } catch (e) { alert(e.message); }
+    }
+
+    async function loadRegistros(page = 1) {
+      currentPage = page;
+      const de = document.getElementById('filtroDE').value;
+      const ate = document.getElementById('filtroATE').value;
+      const qs = new URLSearchParams({ page, pageSize });
+      if (de) qs.append('de', new Date(de).toISOString());
+      if (ate) { const d = new Date(ate); d.setHours(23,59,59); qs.append('ate', d.toISOString()); }
+
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Carregando...</span>';
+      try {
+        const data = await apiFetch(`/timesheet?${qs}`);
+        if (!data.items?.length) {
+          lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum registro encontrado.</span>';
+          document.getElementById('paginacao').innerHTML = '';
+          return;
+        }
+        lista.innerHTML = data.items.map(r => renderRow(r)).join('');
+        renderPaginacao(data.total, page);
+      } catch (e) { lista.innerHTML = `<span style="color:red">${esc(e.message)}</span>`; }
+    }
+
+    function renderRow(r) {
+      const dur = r.duracaoMinutos != null ? formatDur(r.duracaoMinutos) : (r.emAndamento ? '▶ Ativo' : '—');
+      const dtI = new Date(r.inicio).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      const dtF = r.fim ? new Date(r.fim).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
+      return `<div class="registro-row">
+        <div style="display:flex;gap:16px;align-items:center">
+          <div class="registro-dur">${dur}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600">${dtI} → ${dtF}</div>
+            <div style="font-size:12px;color:#6b7280">${esc(r.nomeUsuario)}${r.descricao ? ` · ${esc(r.descricao)}` : ''}${r.numeroProcesso ? ` · ${esc(r.numeroProcesso)}` : ''}</div>
+          </div>
+        </div>
+        ${!r.emAndamento ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletar('${r.id}')">Excluir</button>` : ''}
+      </div>`;
+    }
+
+    function formatDur(min) {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return h > 0 ? `${h}h ${m}min` : `${m}min`;
+    }
+
+    function renderPaginacao(total, page) {
+      const pages = Math.ceil(total / pageSize);
+      const el = document.getElementById('paginacao');
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML = Array.from({length: pages}, (_, i) => i + 1).map(p =>
+        `<button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="loadRegistros(${p})">${p}</button>`
+      ).join('');
+    }
+
+    window.deletar = async function(id) {
+      if (!confirm('Excluir este registro?')) return;
+      await apiFetch(`/timesheet/${id}`, { method: 'DELETE' });
+      loadRegistros(currentPage);
+    };
+
+    async function salvarManual(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvarManual');
+      btn.disabled = true;
+      try {
+        await apiFetch('/timesheet/manual', { method: 'POST', body: JSON.stringify({
+          inicio: document.getElementById('mInicio').value,
+          fim: document.getElementById('mFim').value,
+          descricao: document.getElementById('mDesc').value || null
+        })});
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('formManual').reset();
+        loadRegistros(currentPage);
+      } catch (ex) { alert('Erro: ' + ex.message); }
+      finally { btn.disabled = false; }
+    }
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

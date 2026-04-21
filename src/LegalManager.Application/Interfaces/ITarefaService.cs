@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Contatos;
+using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.Interfaces;
 
@@ -11,4 +12,5 @@ public interface ITarefaService
     Task<PagedResultDto<TarefaListItemDto>> GetAllAsync(TarefaFiltroDto filtro, CancellationToken ct = default);
     Task ConcluirAsync(Guid id, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default);
 }

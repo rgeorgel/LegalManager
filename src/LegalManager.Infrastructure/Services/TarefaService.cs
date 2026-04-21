@@ -191,4 +191,17 @@ public class TarefaService : ITarefaService
                 t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada
             ))
             .FirstOrDefaultAsync(ct);
+
+    public async Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default)
+    {
+        var tarefa = await _context.Tarefas
+            .FirstOrDefaultAsync(t => t.Id == id && t.TenantId == tenantId, ct)
+            ?? throw new KeyNotFoundException("Tarefa não encontrada.");
+
+        tarefa.Status = novoStatus;
+        if (novoStatus == StatusTarefa.Concluida)
+            tarefa.ConcluidaEm = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(ct);
+    }
 }

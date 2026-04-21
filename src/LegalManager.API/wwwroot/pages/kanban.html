@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Kanban</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .kanban-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; align-items:start; }
+    .kanban-col { background:#f9fafb; border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; min-height:300px; }
+    .kanban-col-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .kanban-col-title { font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em; }
+    .kanban-col-count { background:#e5e7eb; color:#374151; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+    .kanban-items { display:flex; flex-direction:column; gap:8px; min-height:100px; }
+    .kanban-card { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; cursor:grab; user-select:none; transition:box-shadow .15s; }
+    .kanban-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    .kanban-card.dragging { opacity:.5; cursor:grabbing; }
+    .kanban-col.drag-over { background:#eff6ff; border-color:#60a5fa; }
+    .kanban-card-title { font-weight:600; font-size:13px; margin-bottom:6px; }
+    .kanban-card-meta { font-size:11px; color:var(--color-text-muted); display:flex; flex-wrap:wrap; gap:6px; }
+    .prioridade-urgente { border-left:3px solid #dc2626; }
+    .prioridade-alta    { border-left:3px solid #ea580c; }
+    .prioridade-media   { border-left:3px solid #ca8a04; }
+    .prioridade-baixa   { border-left:3px solid #16a34a; }
+    .badge-atrasada { background:#fee2e2; color:#dc2626; font-size:10px; padding:1px 5px; border-radius:3px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ LegalManager</div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">🗂️ Kanban</h1>
+        <a href="/pages/tarefas.html" class="btn btn-secondary btn-sm">Ver lista →</a>
+      </div>
+
+      <div class="kanban-board" id="board">
+        <div class="kanban-col" data-status="Pendente">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title" style="color:#374151">⏳ Pendente</span>
+            <span class="kanban-col-count" id="count-Pendente">0</span>
+          </div>
+          <div class="kanban-items" id="col-Pendente"></div>
+        </div>
+        <div class="kanban-col" data-status="EmAndamento">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title" style="color:#1d4ed8">🔄 Em Andamento</span>
+            <span class="kanban-col-count" id="count-EmAndamento">0</span>
+          </div>
+          <div class="kanban-items" id="col-EmAndamento"></div>
+        </div>
+        <div class="kanban-col" data-status="Concluida">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title" style="color:#057a55">✅ Concluída</span>
+            <span class="kanban-col-count" id="count-Concluida">0</span>
+          </div>
+          <div class="kanban-items" id="col-Concluida"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
+
+    initLayout();
+
+    const STATUSES = ['Pendente', 'EmAndamento', 'Concluida'];
+    let allTasks = [];
+
+    loadBoard();
+
+    async function loadBoard() {
+      try {
+        const [p, ea, c] = await Promise.all([
+          apiFetch('/tarefas?status=Pendente&pageSize=100'),
+          apiFetch('/tarefas?status=EmAndamento&pageSize=100'),
+          apiFetch('/tarefas?status=Concluida&pageSize=100')
+        ]);
+        allTasks = [
+          ...(p.items ?? []).map(t => ({...t, status: 'Pendente'})),
+          ...(ea.items ?? []).map(t => ({...t, status: 'EmAndamento'})),
+          ...(c.items ?? []).map(t => ({...t, status: 'Concluida'}))
+        ];
+        renderBoard();
+      } catch (e) { console.error(e); }
+    }
+
+    function renderBoard() {
+      for (const s of STATUSES) {
+        const tasks = allTasks.filter(t => t.status === s);
+        const col = document.getElementById(`col-${s}`);
+        document.getElementById(`count-${s}`).textContent = tasks.length;
+        col.innerHTML = tasks.length ? tasks.map(renderCard).join('') : '<div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px 0">Vazio</div>';
+
+        col.querySelectorAll('.kanban-card').forEach(card => {
+          card.addEventListener('dragstart', onDragStart);
+          card.addEventListener('dragend', onDragEnd);
+        });
+      }
+
+      document.querySelectorAll('.kanban-col').forEach(col => {
+        col.addEventListener('dragover', onDragOver);
+        col.addEventListener('dragleave', onDragLeave);
+        col.addEventListener('drop', onDrop);
+      });
+    }
+
+    function renderCard(t) {
+      const prazo = t.prazo ? new Date(t.prazo).toLocaleDateString('pt-BR') : null;
+      const atrasada = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
+      return `<div class="kanban-card prioridade-${t.prioridade?.toLowerCase()}" draggable="true" data-id="${t.id}" data-status="${t.status}">
+        <div class="kanban-card-title">${esc(t.titulo)}</div>
+        <div class="kanban-card-meta">
+          <span style="background:#e5e7eb;padding:1px 6px;border-radius:3px">${t.prioridade}</span>
+          ${prazo ? `<span>📅 ${prazo}</span>` : ''}
+          ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
+          ${atrasada}
+        </div>
+      </div>`;
+    }
+
+    let draggedId = null;
+    let draggedStatus = null;
+
+    function onDragStart(e) {
+      draggedId = e.currentTarget.dataset.id;
+      draggedStatus = e.currentTarget.dataset.status;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onDragEnd(e) {
+      e.currentTarget.classList.remove('dragging');
+      document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const col = e.currentTarget.closest('.kanban-col');
+      if (col) col.classList.add('drag-over');
+    }
+
+    function onDragLeave(e) {
+      const col = e.currentTarget.closest('.kanban-col');
+      if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    }
+
+    async function onDrop(e) {
+      e.preventDefault();
+      const col = e.currentTarget.closest('.kanban-col');
+      if (!col) return;
+      col.classList.remove('drag-over');
+      const newStatus = col.dataset.status;
+      if (!draggedId || newStatus === draggedStatus) return;
+
+      // Optimistic update
+      const task = allTasks.find(t => t.id === draggedId);
+      if (task) { task.status = newStatus; renderBoard(); }
+
+      try {
+        await apiFetch(`/tarefas/${draggedId}/mover`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+      } catch (err) {
+        // Revert on failure
+        if (task) { task.status = draggedStatus; renderBoard(); }
+        alert('Erro ao mover: ' + err.message);
+      }
+    }
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

@@ -24,7 +24,12 @@
       "Bash(dotnet publish *)",
       "Bash(python3 *)",
       "Bash(powershell *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(grep -E \"^\\\\d{14}_.*\\\\.cs$\")",
+      "Bash(psql -U postgres -c \"\\\\l\")",
+      "Bash(PGPASSWORD=legalmanager dotnet ef database update --project src/LegalManager.Infrastructure --startup-project src/LegalManager.API -- --environment Development)",
+      "Bash(dotnet user-secrets *)",
+      "Bash(PGPASSWORD=postgres psql -U postgres -h localhost -c \"SELECT 1\")"
     ]
   }
 }
