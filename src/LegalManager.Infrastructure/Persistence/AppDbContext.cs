@@ -36,6 +36,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<AcessoCliente> AcessosCliente => Set<AcessoCliente>();
     public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();
     public DbSet<RegistroTempo> RegistrosTempo => Set<RegistroTempo>();
+    public DbSet<PreferenciasNotificacao> PreferenciasNotificacoes => Set<PreferenciasNotificacao>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

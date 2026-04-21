@@ -10,12 +10,15 @@ public class AlertasJob
 {
     private readonly AppDbContext _context;
     private readonly IEmailService _emailService;
+    private readonly IPreferenciasNotificacaoService _prefs;
     private readonly ILogger<AlertasJob> _logger;
 
-    public AlertasJob(AppDbContext context, IEmailService emailService, ILogger<AlertasJob> logger)
+    public AlertasJob(AppDbContext context, IEmailService emailService,
+        IPreferenciasNotificacaoService prefs, ILogger<AlertasJob> logger)
     {
         _context = context;
         _emailService = emailService;
+        _prefs = prefs;
         _logger = logger;
     }
 
@@ -30,7 +33,7 @@ public class AlertasJob
 
     private async Task AlertarTarefasAsync(DateTime hoje)
     {
-        var limites = new[] { 1, 3, 5 };
+        var limites = new[] { 0, 1, 3, 5 };
 
         foreach (var dias in limites)
         {
@@ -44,6 +47,7 @@ public class AlertasJob
                             t.ResponsavelId.HasValue)
                 .Select(t => new
                 {
+                    t.Id,
                     t.TenantId,
                     t.Titulo,
                     t.Prazo,
@@ -57,62 +61,31 @@ public class AlertasJob
             {
                 try
                 {
-                    if (!string.IsNullOrEmpty(tarefa.ResponsavelEmail))
+                    var chave = $"tarefa-{tarefa.Id}-{dias}d-{hoje:yyyyMMdd}";
+                    var permiteEmail = await _prefs.PermiteEmailAsync(tarefa.TenantId, tarefa.ResponsavelId!.Value, "PrazoTarefa");
+                    var permiteInApp = await _prefs.PermiteInAppAsync(tarefa.TenantId, tarefa.ResponsavelId!.Value, "PrazoTarefa");
+
+                    if (permiteEmail && !string.IsNullOrEmpty(tarefa.ResponsavelEmail))
                         await _emailService.EnviarAlertaPrazoTarefaAsync(
                             tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
                             tarefa.Titulo, tarefa.Prazo!.Value, dias);
 
-                    await CriarNotificacaoAsync(
-                        tarefa.TenantId, tarefa.ResponsavelId!.Value,
-                        TipoNotificacao.PrazoTarefa,
-                        $"Prazo vencendo em {dias} dia(s)",
-                        $"A tarefa \"{tarefa.Titulo}\" vence em {dias} dia(s).",
-                        "/pages/tarefas.html");
+                    if (permiteInApp)
+                    {
+                        var titulo = dias == 0 ? "Prazo vencendo hoje!" : $"Prazo vencendo em {dias} dia(s)";
+                        var msg = dias == 0
+                            ? $"A tarefa \"{tarefa.Titulo}\" vence hoje."
+                            : $"A tarefa \"{tarefa.Titulo}\" vence em {dias} dia(s).";
+                        await CriarNotificacaoAsync(
+                            tarefa.TenantId, tarefa.ResponsavelId!.Value,
+                            TipoNotificacao.PrazoTarefa, titulo, msg,
+                            "/pages/tarefas.html", chave);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Erro ao alertar tarefa {Titulo}", tarefa.Titulo);
                 }
-            }
-        }
-
-        // Also: tarefas vencendo hoje
-        var tarefasHoje = await _context.Tarefas
-            .Where(t => t.Prazo.HasValue &&
-                        t.Prazo.Value.Date == hoje &&
-                        t.Status != StatusTarefa.Concluida &&
-                        t.Status != StatusTarefa.Cancelada &&
-                        t.ResponsavelId.HasValue)
-            .Select(t => new
-            {
-                t.TenantId,
-                t.Titulo,
-                t.Prazo,
-                t.ResponsavelId,
-                ResponsavelNome = t.Responsavel!.Nome,
-                ResponsavelEmail = t.Responsavel!.Email
-            })
-            .ToListAsync();
-
-        foreach (var tarefa in tarefasHoje)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(tarefa.ResponsavelEmail))
-                    await _emailService.EnviarAlertaPrazoTarefaAsync(
-                        tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
-                        tarefa.Titulo, tarefa.Prazo!.Value, 0);
-
-                await CriarNotificacaoAsync(
-                    tarefa.TenantId, tarefa.ResponsavelId!.Value,
-                    TipoNotificacao.PrazoTarefa,
-                    "Prazo vencendo hoje!",
-                    $"A tarefa \"{tarefa.Titulo}\" vence hoje.",
-                    "/pages/tarefas.html");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao alertar tarefa hoje {Titulo}", tarefa.Titulo);
             }
         }
     }
@@ -125,6 +98,7 @@ public class AlertasJob
             .Where(e => e.DataHora.Date == amanha && e.ResponsavelId.HasValue)
             .Select(e => new
             {
+                e.Id,
                 e.TenantId,
                 e.Titulo,
                 e.DataHora,
@@ -139,17 +113,22 @@ public class AlertasJob
         {
             try
             {
-                if (!string.IsNullOrEmpty(evento.ResponsavelEmail))
+                var chave = $"evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
+                var permiteEmail = await _prefs.PermiteEmailAsync(evento.TenantId, evento.ResponsavelId!.Value, "PrazoEvento");
+                var permiteInApp = await _prefs.PermiteInAppAsync(evento.TenantId, evento.ResponsavelId!.Value, "PrazoEvento");
+
+                if (permiteEmail && !string.IsNullOrEmpty(evento.ResponsavelEmail))
                     await _emailService.EnviarAlertaEventoAsync(
                         evento.ResponsavelEmail, evento.ResponsavelNome,
                         evento.Titulo, evento.DataHora, evento.Local);
 
-                await CriarNotificacaoAsync(
-                    evento.TenantId, evento.ResponsavelId!.Value,
-                    TipoNotificacao.PrazoEvento,
-                    "Evento amanhã",
-                    $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToLocalTime():HH:mm}.",
-                    "/pages/agenda.html");
+                if (permiteInApp)
+                    await CriarNotificacaoAsync(
+                        evento.TenantId, evento.ResponsavelId!.Value,
+                        TipoNotificacao.PrazoEvento,
+                        "Evento amanhã",
+                        $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToLocalTime():HH:mm}.",
+                        "/pages/agenda.html", chave);
             }
             catch (Exception ex)
             {
@@ -184,15 +163,19 @@ public class AlertasJob
                 {
                     try
                     {
+                        var chave = $"trial-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
+                        var permiteInApp = await _prefs.PermiteInAppAsync(tenant.Id, admin.Id, "TrialExpirando");
+
                         if (!string.IsNullOrEmpty(admin.Email))
                             await _emailService.EnviarTrialExpirandoAsync(admin.Email, tenant.Nome, dias);
 
-                        await CriarNotificacaoAsync(
-                            tenant.Id, admin.Id,
-                            TipoNotificacao.TrialExpirando,
-                            $"Trial expira em {dias} dia(s)",
-                            $"Seu período de trial expira em {dias} dia(s). Assine para continuar.",
-                            "/pages/configuracoes.html");
+                        if (permiteInApp)
+                            await CriarNotificacaoAsync(
+                                tenant.Id, admin.Id,
+                                TipoNotificacao.TrialExpirando,
+                                $"Trial expira em {dias} dia(s)",
+                                $"Seu período de trial expira em {dias} dia(s). Assine para continuar.",
+                                "/pages/configuracoes.html", chave);
                     }
                     catch (Exception ex)
                     {
@@ -215,6 +198,7 @@ public class AlertasJob
                             p.ResponsavelId.HasValue)
                 .Select(p => new
                 {
+                    p.Id,
                     p.TenantId, p.Descricao, p.DataFinal, p.ResponsavelId,
                     NumeroCNJ = p.Processo != null ? p.Processo.NumeroCNJ : null,
                     ResponsavelNome = p.Responsavel!.Nome,
@@ -226,18 +210,23 @@ public class AlertasJob
             {
                 try
                 {
-                    if (!string.IsNullOrEmpty(prazo.ResponsavelEmail))
+                    var chave = $"prazo-{prazo.Id}-{dias}d-{hoje:yyyyMMdd}";
+                    var permiteEmail = await _prefs.PermiteEmailAsync(prazo.TenantId, prazo.ResponsavelId!.Value, "Prazos");
+                    var permiteInApp = await _prefs.PermiteInAppAsync(prazo.TenantId, prazo.ResponsavelId!.Value, "Prazos");
+
+                    if (permiteEmail && !string.IsNullOrEmpty(prazo.ResponsavelEmail))
                         await _emailService.EnviarAlertaPrazoProcessualAsync(
                             prazo.ResponsavelEmail, prazo.ResponsavelNome,
                             prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
                             prazo.DataFinal, dias);
 
-                    await CriarNotificacaoAsync(
-                        prazo.TenantId, prazo.ResponsavelId!.Value,
-                        TipoNotificacao.PrazoTarefa,
-                        $"Prazo processual em {dias} dia(s)",
-                        $"O prazo \"{prazo.Descricao}\" vence em {dias} dia(s).",
-                        "/pages/prazos.html");
+                    if (permiteInApp)
+                        await CriarNotificacaoAsync(
+                            prazo.TenantId, prazo.ResponsavelId!.Value,
+                            TipoNotificacao.PrazoTarefa,
+                            $"Prazo processual em {dias} dia(s)",
+                            $"O prazo \"{prazo.Descricao}\" vence em {dias} dia(s).",
+                            "/pages/prazos.html", chave);
                 }
                 catch (Exception ex)
                 {
@@ -248,8 +237,13 @@ public class AlertasJob
     }
 
     private async Task CriarNotificacaoAsync(Guid tenantId, Guid usuarioId, TipoNotificacao tipo,
-        string titulo, string mensagem, string? url)
+        string titulo, string mensagem, string? url, string chaveDedup)
     {
+        var jaExiste = await _context.Notificacoes
+            .AnyAsync(n => n.ChaveDedup == chaveDedup);
+
+        if (jaExiste) return;
+
         _context.Notificacoes.Add(new Domain.Entities.Notificacao
         {
             Id = Guid.NewGuid(),
@@ -260,7 +254,8 @@ public class AlertasJob
             Mensagem = mensagem,
             Url = url,
             Lida = false,
-            CriadaEm = DateTime.UtcNow
+            CriadaEm = DateTime.UtcNow,
+            ChaveDedup = chaveDedup
         });
         await _context.SaveChangesAsync();
     }

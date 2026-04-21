@@ -13,6 +13,7 @@ public class Notificacao
     public bool Lida { get; set; }
     public string? Url { get; set; }
     public DateTime CriadaEm { get; set; }
+    public string? ChaveDedup { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario Usuario { get; set; } = null!;

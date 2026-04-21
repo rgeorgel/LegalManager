@@ -83,6 +83,7 @@ builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();
 builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
 builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
 builder.Services.AddScoped<ITimesheetService, TimesheetService>();
+builder.Services.AddScoped<IPreferenciasNotificacaoService, PreferenciasNotificacaoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
@@ -175,7 +176,7 @@ app.Use(async (ctx, next) =>
 RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
-    "0 8 * * *"); // daily at 08:00 UTC
+    "0 */3 * * *"); // every 3 hours
 
 RecurringJob.AddOrUpdate<MonitoramentoJob>(
     "monitoramento-processos",

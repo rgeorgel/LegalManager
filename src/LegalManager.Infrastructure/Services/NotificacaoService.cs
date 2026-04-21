@@ -72,4 +72,20 @@ public class NotificacaoService : INotificacaoService
         });
         await _context.SaveChangesAsync(ct);
     }
+
+    public async Task<(IEnumerable<NotificacaoDto> Items, int Total)> GetHistoricoAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var q = _context.Notificacoes
+            .Where(n => n.TenantId == _tenantContext.TenantId && n.UsuarioId == _tenantContext.UserId)
+            .OrderByDescending(n => n.CriadaEm);
+
+        var total = await q.CountAsync(ct);
+        var items = await q
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(n => new NotificacaoDto(n.Id, n.Tipo, n.Titulo, n.Mensagem, n.Lida, n.Url, n.CriadaEm))
+            .ToListAsync(ct);
+
+        return (items, total);
+    }
 }

@@ -31,19 +31,7 @@
     </div>
   </header>
 
-  <nav class="sidebar">
-    <ul class="sidebar-nav">
-      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
-      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
-      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
-      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
-      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
-      <li><a href="/pages/publicacoes.html">📰 Publicações</a></li>
-      <li><a href="/pages/prazos.html">⏰ Prazos</a></li>
-      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
-      <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
-    </ul>
-  </nav>
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
 
   <main class="main-content">
     <div class="page-header">
@@ -113,6 +101,29 @@
           <button class="btn btn-primary" id="btnAdicionarNome">Adicionar nome</button>
         </div>
         <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Preferências de notificações -->
+    <div class="config-section">
+      <div class="config-section-title">Preferências de Notificações</div>
+      <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+        Escolha quais alertas deseja receber dentro do sistema e por e-mail.
+      </p>
+      <div id="prefsLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
+      <div id="prefsContent" style="display:none">
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Tipo de alerta</th>
+              <th style="text-align:center;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">No sistema</th>
+              <th style="text-align:center;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Por e-mail</th>
+            </tr>
+          </thead>
+          <tbody id="prefsTable"></tbody>
+        </table>
+        <div id="prefsMsg" class="alert" style="display:none;margin-top:12px"></div>
+        <button class="btn btn-primary" id="btnSalvarPrefs" style="margin-top:16px">Salvar preferências</button>
       </div>
     </div>
 
@@ -292,8 +303,77 @@
     return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  // Notification preferences
+  const PREF_ROWS = [
+    { label: 'Tarefas (prazos)', inApp: 'tarefasInApp', email: 'tarefasEmail' },
+    { label: 'Eventos (agenda)',  inApp: 'eventosInApp', email: 'eventosEmail' },
+    { label: 'Prazos processuais', inApp: 'prazosInApp', email: 'prazosEmail' },
+    { label: 'Publicações / andamentos', inApp: 'publicacoesInApp', email: 'publicacoesEmail' },
+    { label: 'Aviso de trial', inApp: 'trialInApp', email: null },
+    { label: 'Notificações gerais', inApp: 'geralInApp', email: null },
+  ];
+
+  let currentPrefs = null;
+
+  async function loadPrefs() {
+    try {
+      currentPrefs = await apiFetch('/notificacoes/preferencias');
+      document.getElementById('prefsLoading').style.display = 'none';
+      document.getElementById('prefsContent').style.display = '';
+      renderPrefsTable();
+    } catch (e) {
+      document.getElementById('prefsLoading').textContent = 'Erro ao carregar preferências.';
+    }
+  }
+
+  function renderPrefsTable() {
+    const tbody = document.getElementById('prefsTable');
+    tbody.innerHTML = PREF_ROWS.map(row => {
+      const inAppChecked = currentPrefs[row.inApp] ? 'checked' : '';
+      const emailCell = row.email
+        ? `<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">
+             <input type="checkbox" id="pref_${row.email}" ${currentPrefs[row.email] ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
+           </td>`
+        : `<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#d1d5db;font-size:12px">—</td>`;
+      return `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;font-weight:500">${row.label}</td>
+        <td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">
+          <input type="checkbox" id="pref_${row.inApp}" ${inAppChecked} style="width:16px;height:16px;cursor:pointer">
+        </td>
+        ${emailCell}
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('btnSalvarPrefs').addEventListener('click', async () => {
+    const msg = document.getElementById('prefsMsg');
+    msg.style.display = 'none';
+    const val = id => document.getElementById('pref_' + id)?.checked ?? false;
+    try {
+      await apiFetch('/notificacoes/preferencias', {
+        method: 'PUT',
+        body: JSON.stringify({
+          tarefasInApp: val('tarefasInApp'), tarefasEmail: val('tarefasEmail'),
+          eventosInApp: val('eventosInApp'), eventosEmail: val('eventosEmail'),
+          prazosInApp:  val('prazosInApp'),  prazosEmail:  val('prazosEmail'),
+          publicacoesInApp: val('publicacoesInApp'), publicacoesEmail: val('publicacoesEmail'),
+          trialInApp:  val('trialInApp'),
+          geralInApp:  val('geralInApp'),
+        })
+      });
+      msg.className = 'alert alert-success';
+      msg.textContent = 'Preferências salvas!';
+      msg.style.display = '';
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao salvar preferências.';
+      msg.style.display = '';
+    }
+  });
+
   load();
   loadNomes();
+  loadPrefs();
 </script>
 </body>
 </html>

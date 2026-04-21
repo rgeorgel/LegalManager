@@ -12,6 +12,8 @@ public class NotificacaoConfiguration : IEntityTypeConfiguration<Notificacao>
         builder.Property(n => n.Titulo).HasMaxLength(300).IsRequired();
         builder.Property(n => n.Mensagem).HasMaxLength(1000).IsRequired();
         builder.Property(n => n.Url).HasMaxLength(500);
+        builder.Property(n => n.ChaveDedup).HasMaxLength(200);
+        builder.HasIndex(n => n.ChaveDedup).IsUnique().HasFilter("\"ChaveDedup\" IS NOT NULL");
 
         builder.HasOne(n => n.Tenant)
             .WithMany()
