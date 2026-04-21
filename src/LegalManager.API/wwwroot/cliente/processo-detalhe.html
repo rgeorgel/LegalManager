@@ -31,79 +31,88 @@
     import { initLayout, formatDate, formatDateTime, statusBadge, faseBadge, tipoParteLabel } from '/cliente/js/clienteLayout.js';
     import { portalApi } from '/cliente/js/clienteApi.js';
 
-    initLayout('processos');
+    loadProcesso();
 
-    const params = new URLSearchParams(location.search);
-    const processoId = params.get('id');
-
-    if (!processoId) {
-      window.location.href = '/cliente/processos.html';
-      throw new Error('no id');
-    }
-
-    const headerEl = document.getElementById('processoHeader');
-    const andamentosCard = document.getElementById('andamentosCard');
-    const andamentosListEl = document.getElementById('andamentosList');
-    const countEl = document.getElementById('andamentosCount');
-
-    try {
-      const p = await portalApi.getProcesso(processoId);
-      if (!p) {
-        headerEl.innerHTML = `<div class="alert alert-error">Processo não encontrado.</div>`;
+    async function loadProcesso() {
+      const user = initLayout('processos');
+      if (!user) {
+        window.location.href = '/cliente/index.html';
         return;
       }
 
-      document.title = `${p.numeroCNJ} — Portal do Cliente`;
+      const params = new URLSearchParams(location.search);
+      const processoId = params.get('id');
 
-      headerEl.innerHTML = `
-        <div class="detail-header">
-          <div class="detail-cnj">${p.numeroCNJ}</div>
-          <div class="processo-tags" style="margin-bottom:16px">
-            ${statusBadge(p.status)}
-            ${faseBadge(p.fase)}
-            <span class="badge badge-gray">${tipoParteLabel(p.tipoParte)}</span>
-          </div>
-          <div class="detail-grid">
-            ${p.tribunal ? `<div class="detail-field"><label>Tribunal</label><span>${p.tribunal}</span></div>` : ''}
-            ${p.comarca ? `<div class="detail-field"><label>Comarca</label><span>${p.comarca}</span></div>` : ''}
-            <div class="detail-field"><label>Área</label><span>${p.areaDireito}</span></div>
-            <div class="detail-field"><label>Cadastrado em</label><span>${formatDate(p.criadoEm)}</span></div>
-          </div>
-        </div>`;
+      if (!processoId) {
+        window.location.href = '/cliente/processos.html';
+        return;
+      }
 
-      andamentosCard.style.display = '';
-    } catch (err) {
-      headerEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
-      return;
-    }
+      const headerEl = document.getElementById('processoHeader');
+      const andamentosCard = document.getElementById('andamentosCard');
+      const andamentosListEl = document.getElementById('andamentosList');
+      const countEl = document.getElementById('andamentosCount');
 
-    try {
-      const andamentos = await portalApi.getAndamentos(processoId);
-      const arr = [...andamentos];
+      try {
+        const p = await portalApi.getProcesso(processoId);
+        if (!p) {
+          headerEl.innerHTML = `<div class="alert alert-error">Processo não encontrado.</div>`;
+          return;
+        }
 
-      countEl.textContent = `${arr.length} andamento${arr.length !== 1 ? 's' : ''}`;
+        document.title = `${p.numeroCNJ} — Portal do Cliente`;
 
-      if (arr.length === 0) {
-        andamentosListEl.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <div class="empty-state-title">Nenhum andamento registrado</div>
-            <div class="empty-state-desc">Os andamentos do processo aparecerão aqui.</div>
+        headerEl.innerHTML = `
+          <div class="detail-header">
+            <div class="detail-cnj">${p.numeroCNJ}</div>
+            <div class="processo-tags" style="margin-bottom:16px">
+              ${statusBadge(p.status)}
+              ${faseBadge(p.fase)}
+              <span class="badge badge-gray">${tipoParteLabel(p.tipoParte)}</span>
+            </div>
+            <div class="detail-grid">
+              ${p.tribunal ? `<div class="detail-field"><label>Tribunal</label><span>${p.tribunal}</span></div>` : ''}
+              ${p.comarca ? `<div class="detail-field"><label>Comarca</label><span>${p.comarca}</span></div>` : ''}
+              <div class="detail-field"><label>Área</label><span>${p.areaDireito}</span></div>
+              <div class="detail-field"><label>Cadastrado em</label><span>${formatDate(p.criadoEm)}</span></div>
+            </div>
           </div>`;
+
+        andamentosCard.style.display = '';
+      } catch (err) {
+        headerEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
         return;
       }
 
-      andamentosListEl.innerHTML = `<div class="andamento-list">${arr.map(a => `
-        <div class="andamento-item">
-          <div class="andamento-date">${formatDateTime(a.data)} · <span class="badge badge-gray" style="font-size:11px">${a.tipo}</span></div>
-          <div class="andamento-desc">${escapeHtml(a.descricao)}</div>
-          ${a.descricaoTraduzidaIA ? `<div class="andamento-ia">${escapeHtml(a.descricaoTraduzidaIA)}</div>` : ''}
-        </div>`).join('')}</div>`;
-    } catch (err) {
-      andamentosListEl.innerHTML = `<div class="alert alert-error" style="margin:16px">${err.message}</div>`;
+      try {
+        const andamentos = await portalApi.getAndamentos(processoId);
+        const arr = andamentos || [];
+
+        countEl.textContent = `${arr.length} andamento${arr.length !== 1 ? 's' : ''}`;
+
+        if (arr.length === 0) {
+          andamentosListEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <div class="empty-state-title">Nenhum andamento registrado</div>
+              <div class="empty-state-desc">Os andamentos do processo aparecerão aqui.</div>
+            </div>`;
+          return;
+        }
+
+        andamentosListEl.innerHTML = `<div class="andamento-list">${arr.map(a => `
+          <div class="andamento-item">
+            <div class="andamento-date">${formatDateTime(a.data)} · <span class="badge badge-gray" style="font-size:11px">${a.tipo}</span></div>
+            <div class="andamento-desc">${escapeHtml(a.descricao)}</div>
+            ${a.descricaoTraduzidaIA ? `<div class="andamento-ia">${escapeHtml(a.descricaoTraduzidaIA)}</div>` : ''}
+          </div>`).join('')}</div>`;
+      } catch (err) {
+        andamentosListEl.innerHTML = `<div class="alert alert-error" style="margin:16px">${err.message}</div>`;
+      }
     }
 
     function escapeHtml(str) {
+      if (!str) return '';
       return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
   </script>

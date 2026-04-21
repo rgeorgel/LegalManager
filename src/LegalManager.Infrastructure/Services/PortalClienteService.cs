@@ -68,7 +68,7 @@ public class PortalClienteService : IPortalClienteService
     public async Task<IEnumerable<MeuProcessoDto>> GetMeusProcessosAsync(
         Guid contatoId, Guid tenantId, CancellationToken ct = default)
     {
-        return await _context.Processos
+        var processos = await _context.Processos
             .Where(p => p.TenantId == tenantId &&
                         p.Partes.Any(pt => pt.ContatoId == contatoId) &&
                         p.Status != StatusProcesso.Arquivado)
@@ -82,10 +82,11 @@ public class PortalClienteService : IPortalClienteService
                     .FirstOrDefault(),
                 TotalAndamentos = p.Andamentos.Count
             })
-            .ToListAsync(ct)
-            .ContinueWith(t => t.Result.Select(p => new MeuProcessoDto(
-                p.Id, p.NumeroCNJ, p.Tribunal, p.Comarca, p.AreaDireito,
-                p.Fase, p.Status, p.TipoParte, p.TotalAndamentos, p.CriadoEm)));
+            .ToListAsync(ct);
+
+        return processos.Select(p => new MeuProcessoDto(
+            p.Id, p.NumeroCNJ, p.Tribunal, p.Comarca, p.AreaDireito,
+            p.Fase, p.Status, p.TipoParte, p.TotalAndamentos, p.CriadoEm));
     }
 
     public async Task<MeuProcessoDto?> GetProcessoAsync(
