@@ -135,6 +135,9 @@
 
   <script type="module">
     import { register } from '/js/auth.js';
+    import { mascaraCpfCnpj } from '/js/mascaras.js';
+
+    document.getElementById('cnpj').addEventListener('input', (e) => mascaraCpfCnpj(e.target));
 
     // Plan selector visual
     const radios = document.querySelectorAll('input[name="plano"]');

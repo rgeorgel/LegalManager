@@ -249,8 +249,11 @@
 import { initLayout } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
+import { mascaraCnj } from '/js/mascaras.js';
 
 initLayout();
+
+document.getElementById('fNumeroCNJ').addEventListener('input', (e) => mascaraCnj(e.target));
 
 let currentPage = 1;
 let currentFilters = {};

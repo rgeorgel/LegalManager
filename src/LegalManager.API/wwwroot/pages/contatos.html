@@ -270,8 +270,14 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { getContatos, createContato, updateContato, deleteContato, addAtendimento, getPortalAcesso, criarPortalAcesso, revogarPortalAcesso } from '/js/contatos.js';
+    import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
 
     initLayout();
+
+    document.getElementById('fCpfCnpj').addEventListener('input', (e) => mascaraCpfCnpj(e.target));
+    document.getElementById('fTelefone').addEventListener('input', (e) => mascaraTelefone(e.target));
+    document.getElementById('fCep').addEventListener('input', (e) => mascaraCep(e.target));
+    document.getElementById('fOab').addEventListener('input', (e) => mascaraOab(e.target));
 
     let currentPage = 1;
     let currentFilters = {};

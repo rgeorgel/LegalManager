@@ -149,8 +149,11 @@
   import { initLayout, isPlanoFree } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
   import { getUser } from '/js/auth.js';
+  import { mascaraCpfCnpj } from '/js/mascaras.js';
 
   initLayout();
+
+  document.getElementById('cCnpj').addEventListener('input', (e) => mascaraCpfCnpj(e.target));
 
   const user = getUser();
   const isAdmin = user?.perfil === 'Admin';
