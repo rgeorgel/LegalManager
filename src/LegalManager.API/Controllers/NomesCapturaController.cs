@@ -28,7 +28,7 @@ public class NomesCapturaController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { error = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
     }
 

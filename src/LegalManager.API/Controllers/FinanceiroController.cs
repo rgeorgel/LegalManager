@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Financeiro;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +13,11 @@ namespace LegalManager.API.Controllers;
 [Authorize]
 public class FinanceiroController(IFinanceiroService service, ITenantContext tenantContext) : ControllerBase
 {
+    private ActionResult? CheckPlano() =>
+        !PlanoRestricoes.PermiteFinanceiro(tenantContext.Plano)
+            ? StatusCode(402, new { message = "Controle financeiro disponível apenas no plano Pro." })
+            : null;
+
     [HttpGet]
     public async Task<ActionResult<LancamentosPagedDto>> GetAll(
         [FromQuery] TipoLancamento? tipo,
@@ -24,6 +30,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
         [FromQuery] int? ano = null,
         CancellationToken ct = default)
     {
+        if (CheckPlano() is { } err) return err;
         var result = await service.GetAllAsync(tenantContext.TenantId, tipo, status, processoId, contatoId, page, pageSize, mes, ano, ct);
         return Ok(result);
     }
@@ -34,6 +41,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
         [FromQuery] int? mes,
         CancellationToken ct = default)
     {
+        if (CheckPlano() is { } err) return err;
         var now = DateTime.UtcNow;
         var result = await service.GetResumoCompletoAsync(
             tenantContext.TenantId,
@@ -46,6 +54,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<LancamentoDto>> GetById(Guid id, CancellationToken ct)
     {
+        if (CheckPlano() is { } err) return err;
         var item = await service.GetByIdAsync(id, tenantContext.TenantId, ct);
         return item == null ? NotFound() : Ok(item);
     }
@@ -53,6 +62,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
     [HttpPost]
     public async Task<ActionResult<LancamentoDto>> Criar([FromBody] CriarLancamentoDto dto, CancellationToken ct)
     {
+        if (CheckPlano() is { } err) return err;
         var result = await service.CriarAsync(tenantContext.TenantId, dto, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
@@ -60,6 +70,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<LancamentoDto>> Atualizar(Guid id, [FromBody] AtualizarLancamentoDto dto, CancellationToken ct)
     {
+        if (CheckPlano() is { } err) return err;
         try
         {
             var result = await service.AtualizarAsync(id, tenantContext.TenantId, dto, ct);
@@ -71,6 +82,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
     [HttpPost("{id:guid}/pagar")]
     public async Task<IActionResult> Pagar(Guid id, [FromBody] PagarDto? dto, CancellationToken ct)
     {
+        if (CheckPlano() is { } err) return err;
         try
         {
             await service.PagarAsync(id, tenantContext.TenantId, dto?.DataPagamento, ct);
@@ -82,6 +94,7 @@ public class FinanceiroController(IFinanceiroService service, ITenantContext ten
     [HttpPost("{id:guid}/cancelar")]
     public async Task<IActionResult> Cancelar(Guid id, CancellationToken ct)
     {
+        if (CheckPlano() is { } err) return err;
         try
         {
             await service.CancelarAsync(id, tenantContext.TenantId, ct);

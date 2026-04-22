@@ -20,7 +20,8 @@ public record UsuarioInfoDto(
     string Email,
     string Perfil,
     Guid TenantId,
-    string NomeEscritorio
+    string NomeEscritorio,
+    string Plano
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

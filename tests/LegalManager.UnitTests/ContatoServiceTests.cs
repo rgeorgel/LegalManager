@@ -34,7 +34,7 @@ public class ContatoServiceTests
         {
             Id = Guid.NewGuid(),
             Nome = "Escritório Teste",
-            Plano = PlanoTipo.Smart,
+            Plano = PlanoTipo.Free,
             Status = StatusTenant.Trial,
             CriadoEm = DateTime.UtcNow
         };
@@ -80,7 +80,7 @@ public class ContatoServiceTests
     {
         var (ctx, tenant, _) = await SeedTenantAsync();
 
-        var outroTenant = new Tenant { Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var outroTenant = new Tenant { Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(outroTenant);
 
         ctx.Contatos.AddRange(
@@ -102,7 +102,7 @@ public class ContatoServiceTests
     public async Task UpdateAsync_DeveLancarExcecao_QuandoContatoNaoPertenceAoTenant()
     {
         var (ctx, tenant, _) = await SeedTenantAsync();
-        var outroTenant = new Tenant { Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var outroTenant = new Tenant { Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(outroTenant);
 
         var contato = new Contato

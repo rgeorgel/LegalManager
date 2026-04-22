@@ -33,7 +33,7 @@ public class TarefaServiceTests
         var tenant = new Tenant
         {
             Id = Guid.NewGuid(), Nome = "Escritório Teste",
-            Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+            Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
         };
         ctx.Tenants.Add(tenant);
 

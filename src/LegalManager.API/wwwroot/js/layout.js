@@ -2,24 +2,29 @@ import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch } from './api.js';
 
 const NAV_ITEMS = [
-  { href: '/pages/dashboard.html',   label: '📊 Dashboard' },
-  { href: '/pages/processos.html',   label: '⚖️ Processos' },
-  { href: '/pages/contatos.html',    label: '👥 Contatos' },
-  { href: '/pages/tarefas.html',     label: '✅ Tarefas' },
-  { href: '/pages/kanban.html',      label: '🗂️ Kanban' },
-  { href: '/pages/agenda.html',      label: '📅 Agenda' },
-  { href: '/pages/financeiro.html',   label: '💰 Financeiro' },
-  { href: '/pages/timesheet.html',   label: '⏱️ Timesheet' },
-  { href: '/pages/indicadores.html', label: '📈 Indicadores' },
-  { href: '/pages/publicacoes.html', label: '📰 Publicações' },
-  { href: '/pages/prazos.html',      label: '⏰ Prazos' },
-  { href: '/pages/usuarios.html',    label: '🔑 Usuários' },
+  { href: '/pages/dashboard.html',     label: '📊 Dashboard' },
+  { href: '/pages/processos.html',     label: '⚖️ Processos' },
+  { href: '/pages/contatos.html',      label: '👥 Contatos' },
+  { href: '/pages/tarefas.html',       label: '✅ Tarefas' },
+  { href: '/pages/kanban.html',        label: '🗂️ Kanban',       pro: true },
+  { href: '/pages/agenda.html',        label: '📅 Agenda' },
+  { href: '/pages/financeiro.html',    label: '💰 Financeiro',   pro: true },
+  { href: '/pages/timesheet.html',     label: '⏱️ Timesheet' },
+  { href: '/pages/indicadores.html',   label: '📈 Indicadores',  pro: true },
+  { href: '/pages/publicacoes.html',   label: '📰 Publicações',  pro: true },
+  { href: '/pages/prazos.html',        label: '⏰ Prazos' },
+  { href: '/pages/usuarios.html',      label: '🔑 Usuários' },
   { href: '/pages/configuracoes.html', label: '⚙️ Configurações' },
+  { href: '/pages/assinatura.html',    label: '💳 Assinatura' },
 ];
+
+export function isPlanoFree() {
+  return (getUser()?.plano ?? 'Free') === 'Free';
+}
 
 export function initLayout() {
   if (!isLoggedIn()) {
-    window.location.href = '/index.html';
+    window.location.href = '/login.html';
     return;
   }
 
@@ -34,11 +39,26 @@ export function initLayout() {
   const navEl = document.querySelector('.sidebar-nav');
   if (navEl) {
     const current = window.location.pathname;
-    navEl.innerHTML = NAV_ITEMS.map(item =>
-      `<li><a href="${item.href}"${item.href === current ? ' class="active"' : ''}>${item.label}</a></li>`
-    ).join('');
+    const free = isPlanoFree();
+    navEl.innerHTML = NAV_ITEMS.map(item => {
+      const locked = item.pro && free;
+      const activeClass = item.href === current ? ' class="active"' : '';
+      const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
+      if (locked) {
+        return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
+      }
+      return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
+    }).join('');
+
     navEl.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => document.querySelector('.sidebar')?.classList.remove('open'));
+      if (link.dataset.locked) {
+        link.addEventListener('click', e => {
+          e.preventDefault();
+          showUpgradeToast();
+        });
+      } else {
+        link.addEventListener('click', () => document.querySelector('.sidebar')?.classList.remove('open'));
+      }
     });
   }
 
@@ -159,4 +179,37 @@ function timeAgo(isoStr) {
 
 function esc(str) {
   return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+export function showUpgradeToast(msg) {
+  let toast = document.getElementById('upgradeToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'upgradeToast';
+    toast.style.cssText = [
+      'position:fixed;bottom:24px;right:24px;z-index:9999',
+      'background:#0f172a;border:1px solid #f59e0b;color:#e2e8f0',
+      'border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.4)',
+      'display:flex;align-items:center;gap:12px;max-width:340px',
+      'animation:slideInToast .25s ease',
+    ].join(';');
+    document.body.appendChild(toast);
+    if (!document.getElementById('toastKeyframes')) {
+      const s = document.createElement('style');
+      s.id = 'toastKeyframes';
+      s.textContent = '@keyframes slideInToast{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}';
+      document.head.appendChild(s);
+    }
+  }
+  toast.innerHTML = `
+    <span style="font-size:20px">⭐</span>
+    <div>
+      <div style="font-weight:700;font-size:13px;color:#f59e0b">Funcionalidade Pro</div>
+      <div style="font-size:12px;margin-top:2px">${msg ?? 'Esta funcionalidade está disponível no plano Pro.'}</div>
+    </div>
+    <a href="/pages/assinatura.html" style="margin-left:auto;background:#f59e0b;color:#0f172a;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;text-decoration:none;white-space:nowrap">Ver Pro</a>
+  `;
+  toast.style.display = 'flex';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => { toast.style.display = 'none'; }, 4000);
 }

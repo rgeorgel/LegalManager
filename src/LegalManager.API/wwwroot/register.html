@@ -5,16 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LegalManager — Criar Escritório</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .plan-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .plan-option {
+      border: 2px solid var(--color-border, #334155);
+      border-radius: 10px;
+      padding: 1rem 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      background: var(--color-surface, #1e293b);
+    }
+    .plan-option:hover {
+      border-color: #f59e0b;
+    }
+    .plan-option.selected {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .plan-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .plan-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.2rem;
+    }
+    .plan-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #f59e0b;
+    }
+    .plan-desc {
+      font-size: 0.75rem;
+      color: var(--color-text-muted, #94a3b8);
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+    .plan-badge {
+      position: absolute;
+      top: -8px;
+      right: 8px;
+      background: #f59e0b;
+      color: #0f172a;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.1rem 0.5rem;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .plan-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--color-text-muted, #94a3b8);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+  </style>
 </head>
 <body>
   <div class="auth-container">
     <div class="auth-card">
       <div class="auth-logo">⚖️ LegalManager</div>
-      <div class="auth-subtitle">Crie sua conta — 10 dias grátis, sem cartão</div>
+      <div class="auth-subtitle">Crie sua conta e comece agora</div>
 
       <div id="alert" class="alert alert-error" style="display:none"></div>
 
       <form id="registerForm">
+        <div class="form-group">
+          <div class="plan-label">Escolha seu plano</div>
+          <div class="plan-selector">
+            <label class="plan-option selected" id="planFreeLabel">
+              <input type="radio" name="plano" value="0" checked>
+              <div class="plan-name">Free</div>
+              <div class="plan-price">R$ 0</div>
+              <div class="plan-desc">1 usuário · 40 processos monitorados · Para sempre</div>
+            </label>
+            <label class="plan-option" id="planProLabel">
+              <div class="plan-badge">Popular</div>
+              <input type="radio" name="plano" value="1">
+              <div class="plan-name">Pro</div>
+              <div class="plan-price">R$ 249<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              <div class="plan-desc">5 usuários · 500 processos · Financeiro · Relatórios</div>
+            </label>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="nomeEscritorio">Nome do Escritório</label>
           <input type="text" id="nomeEscritorio" class="form-control" placeholder="Silva & Associados Advogados" required>
@@ -41,13 +126,25 @@
       </form>
 
       <div class="auth-footer">
-        Já tem conta? <a href="/index.html">Entrar</a>
+        Já tem conta? <a href="/login.html">Entrar</a>
+        &nbsp;·&nbsp;
+        <a href="/index.html">Ver planos</a>
       </div>
     </div>
   </div>
 
   <script type="module">
     import { register } from '/js/auth.js';
+
+    // Plan selector visual
+    const radios = document.querySelectorAll('input[name="plano"]');
+    const labels = { 0: document.getElementById('planFreeLabel'), 1: document.getElementById('planProLabel') };
+    radios.forEach(r => {
+      r.addEventListener('change', () => {
+        Object.values(labels).forEach(l => l.classList.remove('selected'));
+        labels[r.value].classList.add('selected');
+      });
+    });
 
     const form = document.getElementById('registerForm');
     const alertEl = document.getElementById('alert');
@@ -59,13 +156,16 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Criando...';
 
+      const planoSelecionado = parseInt(document.querySelector('input[name="plano"]:checked').value);
+
       try {
         await register({
           nomeEscritorio: document.getElementById('nomeEscritorio').value,
           cnpj: document.getElementById('cnpj').value || null,
           nomeAdmin: document.getElementById('nomeAdmin').value,
           email: document.getElementById('email').value,
-          senha: document.getElementById('senha').value
+          senha: document.getElementById('senha').value,
+          plano: planoSelecionado
         });
         window.location.href = '/pages/dashboard.html';
       } catch (err) {

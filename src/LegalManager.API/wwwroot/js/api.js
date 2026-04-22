@@ -60,7 +60,7 @@ export async function apiFetch(path, options = {}) {
       res = await fetch(`${API_BASE}${path}`, { ...options, headers });
     } else {
       clearSession();
-      window.location.href = '/index.html';
+      window.location.href = '/login.html';
       throw new Error('Unauthorized');
     }
   }

@@ -14,6 +14,10 @@ public class Tenant
     public DateTime CriadoEm { get; set; }
     public DateTime? TrialExpiraEm { get; set; }
 
+    public string? AbacatePayBillingId { get; set; }
+    public string? PeriodoBilling { get; set; }  // "Mensal" | "Anual"
+    public DateTime? PlanoExpiraEm { get; set; }
+
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     public ICollection<Contato> Contatos { get; set; } = new List<Contato>();
 }

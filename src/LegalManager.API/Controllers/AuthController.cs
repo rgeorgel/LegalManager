@@ -20,15 +20,24 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register(RegisterTenantDto dto, CancellationToken ct)
     {
-        var result = await _authService.RegisterTenantAsync(dto, ct);
-        return Ok(result);
+        try
+        {
+            var result = await _authService.RegisterTenantAsync(dto, ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, CancellationToken ct)
     {
-        var result = await _authService.LoginAsync(dto, ct);
-        return Ok(result);
+        try
+        {
+            var result = await _authService.LoginAsync(dto, ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpPost("refresh")]
@@ -64,8 +73,12 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Convidar(ConvidarUsuarioDto dto, [FromServices] ITenantContext tenantContext, CancellationToken ct)
     {
-        await _authService.ConvidarUsuarioAsync(dto, tenantContext.TenantId, ct);
-        return Ok(new { message = "Convite enviado." });
+        try
+        {
+            await _authService.ConvidarUsuarioAsync(dto, tenantContext.TenantId, ct);
+            return Ok(new { message = "Convite enviado." });
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpPost("aceitar-convite")]

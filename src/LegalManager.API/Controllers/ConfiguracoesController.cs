@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Domain.Enums;
@@ -72,17 +73,52 @@ public class ConfiguracoesController : ControllerBase
         var tarefas = await _context.Tarefas.CountAsync(t => t.TenantId == tenantId &&
             t.Status != Domain.Enums.StatusTarefa.Concluida && t.Status != Domain.Enums.StatusTarefa.Cancelada, ct);
 
+        var plano = _tenantContext.Plano;
         return Ok(new
         {
             Processos = processos,
-            ProcessosLimite = 500,
+            ProcessosMonitoradosLimite = PlanoRestricoes.MaxProcessosMonitorados(plano),
             Contatos = contatos,
             Usuarios = usuarios,
-            UsuariosLimite = 5,
+            UsuariosLimite = PlanoRestricoes.MaxUsuarios(plano),
             TarefasAbertas = tarefas,
             ArmazenamentoUsadoMB = 0,
-            ArmazenamentoLimiteMB = 20 * 1024
+            ArmazenamentoLimiteMB = PlanoRestricoes.ArmazenamentoLimiteMB(plano),
+            Plano = plano.ToString()
         });
+    }
+
+    [HttpPost("upgrade")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Upgrade([FromBody] UpgradePlanoDto dto, CancellationToken ct)
+    {
+        var tenant = await _context.Tenants.FindAsync([_tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        if (!Enum.TryParse<PlanoTipo>(dto.Plano, true, out var novoPlano))
+            return BadRequest(new { message = "Plano inválido." });
+
+        tenant.Plano = novoPlano;
+        tenant.Status = StatusTenant.Ativo;
+        tenant.TrialExpiraEm = null;
+
+        await _context.SaveChangesAsync(ct);
+        return Ok(new { message = "Plano atualizado com sucesso." });
+    }
+
+    [HttpPost("cancelar")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Cancelar(CancellationToken ct)
+    {
+        var tenant = await _context.Tenants.FindAsync([_tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        tenant.Plano = PlanoTipo.Free;
+        tenant.Status = StatusTenant.Ativo;
+        tenant.TrialExpiraEm = null;
+
+        await _context.SaveChangesAsync(ct);
+        return Ok(new { message = "Assinatura cancelada. Você foi movido para o plano Free." });
     }
 
     [HttpPut("senha")]
@@ -109,3 +145,5 @@ public record AlterarSenhaDto(
     [Required] string SenhaAtual,
     [Required, MinLength(8)] string NovaSenha
 );
+
+public record UpgradePlanoDto([Required] string Plano);

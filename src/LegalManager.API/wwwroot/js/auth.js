@@ -27,7 +27,7 @@ export async function logout() {
     });
   } catch {}
   clearSession();
-  window.location.href = '/index.html';
+  window.location.href = '/login.html';
 }
 
 export async function forgotPassword(email) {

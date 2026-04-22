@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using LegalManager.Application.DTOs.Auth;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
@@ -40,10 +41,10 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(),
             Nome = dto.NomeEscritorio,
             Cnpj = dto.Cnpj,
-            Plano = PlanoTipo.Smart,
-            Status = StatusTenant.Trial,
+            Plano = dto.Plano,
+            Status = dto.Plano == PlanoTipo.Free ? StatusTenant.Ativo : StatusTenant.Trial,
             CriadoEm = DateTime.UtcNow,
-            TrialExpiraEm = DateTime.UtcNow.AddDays(10)
+            TrialExpiraEm = dto.Plano == PlanoTipo.Free ? null : DateTime.UtcNow.AddDays(10)
         };
 
         _context.Tenants.Add(tenant);
@@ -86,11 +87,19 @@ public class AuthService : IAuthService
         var tenant = await _context.Tenants.FindAsync([usuario.TenantId], ct)
             ?? throw new InvalidOperationException("Tenant não encontrado.");
 
-        if (tenant.Status == StatusTenant.Cancelado)
-            throw new UnauthorizedAccessException("Assinatura cancelada.");
-
         if (tenant.Status == StatusTenant.Trial && tenant.TrialExpiraEm < DateTime.UtcNow)
             throw new UnauthorizedAccessException("Período de trial expirado.");
+
+        // Downgrade to Free if Pro subscription expired (cancelled and past billing period)
+        if (tenant.PlanoExpiraEm.HasValue && tenant.PlanoExpiraEm.Value < DateTime.UtcNow)
+        {
+            tenant.Plano = PlanoTipo.Free;
+            tenant.Status = StatusTenant.Ativo;
+            tenant.PlanoExpiraEm = null;
+            tenant.AbacatePayBillingId = null;
+            tenant.PeriodoBilling = null;
+            await _context.SaveChangesAsync(ct);
+        }
 
         return await GerarAuthResponseAsync(usuario, tenant, ct);
     }
@@ -148,8 +157,9 @@ public class AuthService : IAuthService
             ?? throw new InvalidOperationException("Tenant não encontrado.");
 
         var usuariosAtivos = await _context.Users.CountAsync(u => u.TenantId == tenantId && u.Ativo, ct);
-        if (usuariosAtivos >= 5)
-            throw new InvalidOperationException("Limite de usuários do plano atingido (máximo 5).");
+        var limiteUsuarios = PlanoRestricoes.MaxUsuarios(tenant.Plano);
+        if (usuariosAtivos >= limiteUsuarios)
+            throw new InvalidOperationException($"Limite de usuários do plano atingido (máximo {limiteUsuarios}).");
 
         if (!Enum.TryParse<PerfilUsuario>(dto.Perfil, true, out var perfil))
             throw new InvalidOperationException("Perfil inválido.");
@@ -212,7 +222,7 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken.Token,
             refreshToken.ExpiresAt,
-            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome)
+            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString())
         );
     }
 
@@ -228,6 +238,7 @@ public class AuthService : IAuthService
             new Claim("tenantId", tenant.Id.ToString()),
             new Claim(ClaimTypes.Role, usuario.Perfil.ToString()),
             new Claim("nome", usuario.Nome),
+            new Claim("plano", tenant.Plano.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

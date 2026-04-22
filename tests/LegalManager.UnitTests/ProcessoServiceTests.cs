@@ -33,7 +33,7 @@ public class ProcessoServiceTests
         var tenant = new Tenant
         {
             Id = Guid.NewGuid(), Nome = "Escritório Teste",
-            Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+            Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
         };
         ctx.Tenants.Add(tenant);
 
@@ -98,7 +98,7 @@ public class ProcessoServiceTests
 
         var outroTenant = new Tenant
         {
-            Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Smart,
+            Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Free,
             Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
         };
         ctx.Tenants.Add(outroTenant);

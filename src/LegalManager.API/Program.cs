@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -112,6 +113,15 @@ builder.Services.AddHttpClient("Anthropic", client =>
     client.DefaultRequestHeaders.Add("x-api-key", apiKey);
     client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
     client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient<IAbacatePayService, AbacatePayService>(client =>
+{
+    var baseUrl = builder.Configuration["AbacatePay:BaseUrl"] ?? "https://api.abacatepay.com/v1";
+    if (!baseUrl.EndsWith('/')) baseUrl += '/';
+    client.BaseAddress = new Uri(baseUrl);
+    var apiKey = builder.Configuration["AbacatePay:ApiKey"] ?? "";
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 });
 
 builder.Services.AddHangfire(config =>

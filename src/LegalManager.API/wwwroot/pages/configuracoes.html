@@ -88,7 +88,7 @@
     </div>
 
     <!-- Nomes de captura de publicações -->
-    <div class="config-section">
+    <div class="config-section" style="position:relative;overflow:hidden">
       <div class="config-section-title">Nomes para Captura de Publicações</div>
       <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
         Configure até <strong>3 nomes</strong> (advogados ou partes) para monitoramento automático nos Diários Oficiais.
@@ -101,6 +101,13 @@
           <button class="btn btn-primary" id="btnAdicionarNome">Adicionar nome</button>
         </div>
         <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
+      </div>
+      <!-- Pro overlay -->
+      <div id="nomeCapturaProOverlay" style="display:none;position:absolute;inset:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(15,23,42,.55);border-radius:var(--radius);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px">
+        <div style="font-size:28px">📰</div>
+        <div style="font-weight:700;font-size:16px;color:#f8fafc">Captura de Publicações</div>
+        <div style="font-size:13px;color:#cbd5e1;max-width:280px">Monitore automaticamente os Diários Oficiais com nomes de advogados e partes. Disponível no plano <strong style="color:#f59e0b">Pro</strong>.</div>
+        <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Pro</a>
       </div>
     </div>
 
@@ -139,7 +146,7 @@
 </div>
 
 <script type="module">
-  import { initLayout } from '/js/layout.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
   import { getUser } from '/js/auth.js';
 
@@ -147,6 +154,11 @@
 
   const user = getUser();
   const isAdmin = user?.perfil === 'Admin';
+
+  if (isPlanoFree()) {
+    const overlay = document.getElementById('nomeCapturaProOverlay');
+    if (overlay) overlay.style.display = 'flex';
+  }
 
   async function load() {
     try {

@@ -57,6 +57,7 @@ services:
       OciStorage__SecretKey: ${OCI_SECRET_KEY:-}
       AbacatePay__ApiKey: ${ABACATEPAY_API_KEY:-}
       AbacatePay__WebhookSecret: ${ABACATEPAY_WEBHOOK_SECRET:-}
+      AbacatePay__BaseUrl: ${ABACATEPAY_BASE_URL:-https://api.abacatepay.com/v2}
       Serilog__WriteTo__0__Name: Seq
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
     depends_on:

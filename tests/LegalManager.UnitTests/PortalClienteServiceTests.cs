@@ -43,7 +43,7 @@ public class PortalClienteServiceTests
         {
             Id = Guid.NewGuid(),
             Nome = "Escritório Teste",
-            Plano = PlanoTipo.Smart,
+            Plano = PlanoTipo.Free,
             Status = StatusTenant.Trial,
             CriadoEm = DateTime.UtcNow
         };
@@ -144,7 +144,7 @@ public class PortalClienteServiceTests
     public async Task CriarAcessoAsync_CriaAcesso_QuandoContatoSemAcesso()
     {
         var ctx = CreateContext();
-        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
         var contato = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Novo Cliente", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         ctx.Contatos.Add(contato);
@@ -164,7 +164,7 @@ public class PortalClienteServiceTests
     public async Task CriarAcessoAsync_EnviaEmail_QuandoAcessoCriado()
     {
         var ctx = CreateContext();
-        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Smart, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
         var contato = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Novo Cliente", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         ctx.Contatos.Add(contato);

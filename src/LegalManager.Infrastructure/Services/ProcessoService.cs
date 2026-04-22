@@ -1,6 +1,7 @@
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Processos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -24,6 +25,16 @@ public class ProcessoService : IProcessoService
     {
         if (await _context.Processos.AnyAsync(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == dto.NumeroCNJ, ct))
             throw new InvalidOperationException($"Processo com número CNJ '{dto.NumeroCNJ}' já cadastrado.");
+
+        if (dto.Monitorado)
+        {
+            var totalMonitorados = await _context.Processos.CountAsync(
+                p => p.TenantId == _tenantContext.TenantId && p.Monitorado, ct);
+            var limite = PlanoRestricoes.MaxProcessosMonitorados(_tenantContext.Plano);
+            if (totalMonitorados >= limite)
+                throw new InvalidOperationException(
+                    $"Limite de {limite} processos monitorados atingido no plano {_tenantContext.Plano}.");
+        }
 
         var processo = new Processo
         {
@@ -84,7 +95,18 @@ public class ProcessoService : IProcessoService
         processo.AtualizadoEm = DateTime.UtcNow;
 
         if (dto.Monitorado.HasValue)
+        {
+            if (dto.Monitorado.Value && !processo.Monitorado)
+            {
+                var totalMonitorados = await _context.Processos.CountAsync(
+                    p => p.TenantId == _tenantContext.TenantId && p.Monitorado, ct);
+                var limite = PlanoRestricoes.MaxProcessosMonitorados(_tenantContext.Plano);
+                if (totalMonitorados >= limite)
+                    throw new InvalidOperationException(
+                        $"Limite de {limite} processos monitorados atingido no plano {_tenantContext.Plano}.");
+            }
             processo.Monitorado = dto.Monitorado.Value;
+        }
 
         if (dto.Status == StatusProcesso.Encerrado && processo.EncerradoEm == null)
             processo.EncerradoEm = DateTime.UtcNow;

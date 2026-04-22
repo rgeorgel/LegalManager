@@ -1,5 +1,7 @@
 using LegalManager.Application.DTOs.Prazos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
+using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,11 +10,9 @@ namespace LegalManager.API.Controllers;
 [ApiController]
 [Route("api/prazos")]
 [Authorize]
-public class PrazosController : ControllerBase
+public class PrazosController(IPrazoService service, ITenantContext tenantContext) : ControllerBase
 {
-    private readonly IPrazoService _service;
-
-    public PrazosController(IPrazoService service) => _service = service;
+    private readonly IPrazoService _service = service;
 
     [HttpGet]
     public async Task<IActionResult> GetPendentes(
@@ -52,6 +52,9 @@ public class PrazosController : ControllerBase
     [HttpPost("calcular")]
     public IActionResult Calcular([FromBody] CalcularPrazoDto dto)
     {
+        if (!PlanoRestricoes.PermiteCalculadoraPrazos(tenantContext.Plano))
+            return StatusCode(402, new { message = "Calculadora de prazos disponível apenas no plano Pro." });
+
         var dataFinal = _service.CalcularDataFinal(dto.DataInicio, dto.QuantidadeDias,
             dto.TipoCalculo == Domain.Enums.TipoCalculo.DiasUteis);
         var feriados = Infrastructure.Services.FeriadosService.ListarFeriadosNoIntervalo(dto.DataInicio, dataFinal);

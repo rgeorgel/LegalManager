@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Publicacoes;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
@@ -9,7 +10,6 @@ namespace LegalManager.Infrastructure.Services;
 
 public class NomeCapturaService : INomeCapturaService
 {
-    private const int LimiteNomes = 3;
 
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenant;
@@ -29,9 +29,13 @@ public class NomeCapturaService : INomeCapturaService
 
     public async Task<NomeCapturaResponseDto> CreateAsync(CreateNomeCapturaDto dto, CancellationToken ct = default)
     {
+        var limiteNomes = PlanoRestricoes.MaxNomesCaptura(_tenant.Plano);
+        if (limiteNomes == 0)
+            throw new InvalidOperationException("Captura de publicações não está disponível no plano Free.");
+
         var count = await _context.NomesCaptura.CountAsync(n => n.TenantId == _tenant.TenantId, ct);
-        if (count >= LimiteNomes)
-            throw new InvalidOperationException($"Limite de {LimiteNomes} nomes de captura atingido no plano atual.");
+        if (count >= limiteNomes)
+            throw new InvalidOperationException($"Limite de {limiteNomes} nomes de captura atingido no plano atual.");
 
         var nome = dto.Nome.Trim();
         if (await _context.NomesCaptura.AnyAsync(
