@@ -94,6 +94,7 @@ builder.Services.AddScoped<CapturaPublicacaoJob>();
 builder.Services.AddHttpClient<IIAService, IAService>(client =>
 {
     var apiKey = builder.Configuration["IA:ApiKey"]
+              ?? builder.Configuration["IA_API_KEY"]
               ?? builder.Configuration["IA:API_KEY"]
               ?? throw new InvalidOperationException("IA:ApiKey não configurado");
     client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");

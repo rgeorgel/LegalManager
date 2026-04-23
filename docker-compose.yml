@@ -58,6 +58,11 @@ services:
       AbacatePay__ApiKey: ${ABACATEPAY_API_KEY:-}
       AbacatePay__WebhookSecret: ${ABACATEPAY_WEBHOOK_SECRET:-}
       AbacatePay__BaseUrl: ${ABACATEPAY_BASE_URL:-https://api.abacatepay.com/v2}
+      IA__Provider: ${IA_PROVIDER:-Anthropic}
+      IA__ApiKey: ${IA_API_KEY:-}
+      IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}
+      IA__BaseUrl: ${IA_BASE_URL:-}
+      IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
       Serilog__WriteTo__0__Name: Seq
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
     depends_on:
