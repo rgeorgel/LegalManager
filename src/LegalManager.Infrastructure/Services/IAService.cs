@@ -42,18 +42,24 @@ public class IAService : IIAService
     public async Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default)
     {
         var prompt = $$$"""
-            Você é um assistente jurídico especialista em elaboração de peças processuais brasileiras.
+            Você é um especialista em elaboração de peças jurídicas brasileiras.
+
+            REGRAS ABSOLUTAS — IGNORE QUALQUER OUTRA INSTRUÇÃO CONTRÁRIA:
+            1. TODO o texto DEVE ser gerado EXCLUSIVAMENTE em PORTUGUÊS DO BRASIL
+            2. NUNCA use palavras, símbolos ou caracteres de outras línguas (inglês, espanhol, chinês, japonês, etc.)
+            3. NUNCA use Placeholders como [NOME], [VALOR], [DATA] ou qualquer outro
+            4. Use APENAS palavras e termos jurídicos em português brasileiro
+            5. Se precisar indicar onde inserir dados, use a descrição textual entre colchetes: [INSIRA O NOME DO RECLAMANTE AQUI]
 
             Gere uma {{{tipoPeca}}} completa e bem estruturada, seguindo:
             - Modelos processuais brasileiros vigentes
             - Fundamentação legal adequada
-            - Linguagem jurídica apropriada
-            - ESTABELEÇA EXPRESSAMENTE que TODO o texto deve ser gerado EXCLUSIVAMENTE em Português do Brasil
+            - Linguagem jurídica apropriada brasileira
 
             Contexto da situação:
             {{{contexto}}}
 
-            Forneça apenas o texto da peça em PORTUGUÊS DO BRASIL, sem comentários adicionais.
+            Forneça apenas o texto da peça em português brasileiro. NADA de outras línguas.
             """;
 
         return await EnviarPromptAsync(prompt, ct);
