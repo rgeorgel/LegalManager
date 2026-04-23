@@ -163,6 +163,7 @@
       Reembolso:'Reembolso', Salario:'Salário', AluguelEscritorio:'Aluguel Escritório',
       Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
     };
+    let customCats = { Receita: [], Despesa: [] };
 
     // Restore month/year from URL or default to current
     const _p = new URLSearchParams(location.search);
@@ -216,6 +217,7 @@
     syncUrl();
     updateNav();
     loadAll();
+    loadCustomCats();
 
     function loadAll() {
       loadResumo();
@@ -267,8 +269,13 @@
 
     function renderRow(l) {
       const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2});
-      const dt = new Date(l.dataVencimento + 'T00:00:00').toLocaleDateString('pt-BR');
-      const dtPago = l.dataPagamento ? new Date(l.dataPagamento.endsWith('Z') ? l.dataPagamento : l.dataPagamento + 'Z').toLocaleDateString('pt-BR') : null;
+      const dVenc = new Date(l.dataVencimento);
+      const dt = !isNaN(dVenc) ? dVenc.toLocaleDateString('pt-BR') : '–';
+      let dtPago = null;
+      if (l.dataPagamento) {
+        const dPag = new Date(l.dataPagamento.endsWith('Z') ? l.dataPagamento : l.dataPagamento + 'Z');
+        dtPago = !isNaN(dPag) ? dPag.toLocaleDateString('pt-BR') : null;
+      }
       const cor = l.tipo === 'Receita' ? '#15803d' : '#dc2626';
       return `<div class="lancamento-row">
         <div class="lancamento-info">
@@ -341,7 +348,21 @@
     function updateCategorias() {
       const tipo = document.getElementById('fTipo').value;
       const sel = document.getElementById('fCategoria');
-      sel.innerHTML = (CATEGORIAS[tipo] ?? []).map(c => `<option value="${c}">${CAT_LABELS[c] ?? c}</option>`).join('');
+      const fixed = CATEGORIAS[tipo] ?? [];
+      const custom = customCats[tipo] ?? [];
+      const all = [...fixed.map(c => ({ v: c, l: CAT_LABELS[c] ?? c, f: true })), ...custom.map(c => ({ v: c.nome, l: c.nome, f: false }))];
+      sel.innerHTML = all.map(c => `<option value="${c.v}" data-fixed="${c.f}">${c.l}</option>`).join('');
+    }
+
+    async function loadCustomCats() {
+      try {
+        const cats = await apiFetch('/configuracoes/categorias-financeiras');
+        customCats = { Receita: [], Despesa: [] };
+        cats.forEach(c => {
+          if (c.tipo === 'Receita' || c.tipo === 0) customCats.Receita.push(c);
+          else if (c.tipo === 'Despesa' || c.tipo === 1) customCats.Despesa.push(c);
+        });
+      } catch (e) { console.error('Erro ao carregar categorias customizadas', e); }
     }
 
     async function salvar(e) {

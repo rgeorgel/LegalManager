@@ -142,6 +142,51 @@
       </p>
       <a href="/pages/usuarios.html" class="btn btn-secondary">Gerenciar usuários →</a>
     </div>
+
+    <!-- Áreas de atuação -->
+    <div class="config-section">
+      <div class="config-section-title">Áreas de Atuação</div>
+      <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+        Defina as áreas jurídicas do escritório (ex: Direito Trabalhista, Direito Civil, etc.)
+      </p>
+      <div id="areasLista" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="inputAreaNome" class="form-control" placeholder="Nome da área" maxlength="100" style="flex:1;min-width:200px">
+        <input type="text" id="inputAreaDesc" class="form-control" placeholder="Descrição (opcional)" maxlength="500" style="flex:2;min-width:240px">
+        <button class="btn btn-primary" id="btnAdicionarArea">Adicionar</button>
+      </div>
+      <div id="areaMsg" class="alert" style="display:none;margin-top:8px"></div>
+    </div>
+
+    <!-- Categorias financeiras -->
+    <div class="config-section">
+      <div class="config-section-title">Categorias Financeiras</div>
+      <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+        Personalize as categorias de receitas e despesas para organizar lançamentos.
+      </p>
+      <div id="catsLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
+      <div id="catsContent" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted);margin-bottom:8px">Receitas</div>
+            <div id="catsReceita"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted);margin-bottom:8px">Despesas</div>
+            <div id="catsDespesa"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--color-border)">
+          <input type="text" id="inputCatNome" class="form-control" placeholder="Nome da categoria" maxlength="100" style="flex:1;min-width:180px">
+          <select id="selectCatTipo" class="form-control" style="width:140px">
+            <option value="Receita">Receita</option>
+            <option value="Despesa">Despesa</option>
+          </select>
+          <button class="btn btn-primary" id="btnAdicionarCat">Adicionar</button>
+        </div>
+        <div id="catMsg" class="alert" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -171,9 +216,7 @@
       ]);
 
       // Plano info
-      const dias = config.trialExpiraEm
-        ? Math.max(0, Math.ceil((new Date(config.trialExpiraEm) - Date.now()) / 86400000))
-        : null;
+      const dias = config.trialExpiraEm ? (() => { const d = new Date(config.trialExpiraEm); return !isNaN(d) ? Math.max(0, Math.ceil((d - Date.now()) / 86400000)) : null; })() : null;
       document.getElementById('planoInfo').innerHTML =
         `Plano: <strong>${config.plano}</strong> &nbsp;|&nbsp; Status: <strong>${config.status}</strong>` +
         (dias !== null ? ` &nbsp;|&nbsp; Trial: <strong>${dias} dia(s) restantes</strong>` : '');
@@ -389,6 +432,117 @@
   load();
   loadNomes();
   loadPrefs();
+  loadAreas();
+  loadCats();
+
+  // Áreas de atuação
+  async function loadAreas() {
+    try {
+      const areas = await apiFetch('/configuracoes/areas-atuacao');
+      renderAreas(areas);
+    } catch (e) { console.error(e); }
+  }
+
+  function renderAreas(areas) {
+    const el = document.getElementById('areasLista');
+    if (!areas.length) {
+      el.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhuma área cadastrada.</p>';
+      return;
+    }
+    el.innerHTML = areas.map(a => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px">
+        <span style="flex:1">
+          <span style="font-weight:500">${esc(a.nome)}</span>
+          ${a.descricao ? `<span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">— ${esc(a.descricao)}</span>` : ''}
+        </span>
+        <button class="btn btn-danger btn-sm" data-id="${a.id}" data-action="removerArea">Remover</button>
+      </div>`).join('');
+    el.querySelectorAll('[data-action="removerArea"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remover esta área?')) return;
+        await apiFetch(`/configuracoes/areas-atuacao/${btn.dataset.id}`, { method: 'DELETE' });
+        loadAreas();
+      }));
+  }
+
+  document.getElementById('btnAdicionarArea').addEventListener('click', async () => {
+    const nomeEl = document.getElementById('inputAreaNome');
+    const descEl = document.getElementById('inputAreaDesc');
+    const msg = document.getElementById('areaMsg');
+    msg.style.display = 'none';
+    const nome = nomeEl.value.trim();
+    if (!nome) return;
+    try {
+      await apiFetch('/configuracoes/areas-atuacao', {
+        method: 'POST',
+        body: JSON.stringify({ nome, descricao: descEl.value.trim() || null })
+      });
+      nomeEl.value = '';
+      descEl.value = '';
+      loadAreas();
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao adicionar área.';
+      msg.style.display = '';
+    }
+  });
+
+  // Categorias financeiras
+  async function loadCats() {
+    try {
+      const cats = await apiFetch('/configuracoes/categorias-financeiras');
+      document.getElementById('catsLoading').style.display = 'none';
+      document.getElementById('catsContent').style.display = '';
+      renderCats(cats);
+    } catch (e) {
+      document.getElementById('catsLoading').textContent = 'Erro ao carregar categorias.';
+    }
+  }
+
+  function renderCats(cats) {
+    const receita = cats.filter(c => c.tipo === 'Receita');
+    const despesa = cats.filter(c => c.tipo === 'Despesa');
+    document.getElementById('catsReceita').innerHTML = receita.length
+      ? receita.map(c => catItem(c)).join('')
+      : '<p style="font-size:13px;color:var(--color-text-muted)">Nenhuma categoria de receita.</p>';
+    document.getElementById('catsDespesa').innerHTML = despesa.length
+      ? despesa.map(c => catItem(c)).join('')
+      : '<p style="font-size:13px;color:var(--color-text-muted)">Nenhuma categoria de despesa.</p>';
+    document.querySelectorAll('[data-action="removerCat"]').forEach(btn =>
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remover esta categoria?')) return;
+        await apiFetch(`/configuracoes/categorias-financeiras/${btn.dataset.id}`, { method: 'DELETE' });
+        loadCats();
+      }));
+  }
+
+  function catItem(c) {
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:6px">
+      <span style="flex:1;font-weight:500;font-size:13px">${esc(c.nome)}</span>
+      <button class="btn btn-danger btn-sm" data-id="${c.id}" data-action="removerCat">✕</button>
+    </div>`;
+  }
+
+  document.getElementById('btnAdicionarCat').addEventListener('click', async () => {
+    const nomeEl = document.getElementById('inputCatNome');
+    const tipoEl = document.getElementById('selectCatTipo');
+    const msg = document.getElementById('catMsg');
+    msg.style.display = 'none';
+    const nome = nomeEl.value.trim();
+    if (!nome) return;
+    try {
+      await apiFetch('/configuracoes/categorias-financeiras', {
+        method: 'POST',
+        body: JSON.stringify({ nome, tipo: tipoEl.value })
+      });
+      nomeEl.value = '';
+      loadCats();
+    } catch (err) {
+      msg.className = 'alert alert-error';
+      msg.textContent = err.message ?? 'Erro ao adicionar categoria.';
+      msg.style.display = '';
+    }
+  });
 </script>
 </body>
 </html>

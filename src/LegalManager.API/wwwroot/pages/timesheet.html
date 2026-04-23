@@ -128,10 +128,10 @@
       document.getElementById('formManual').reset();
     }
 
-    // Parse a datetime string from the server (stored as UTC without 'Z') as UTC
+// Parse a datetime string from the server (already has timezone info)
     function parseUtc(str) {
       if (!str) return null;
-      return new Date(str.endsWith('Z') ? str : str + 'Z');
+      return new Date(str);
     }
 
     // Format a local Date to datetime-local input value (YYYY-MM-DDTHH:MM)
@@ -243,11 +243,10 @@
 
     function renderRow(r) {
       const dur = r.duracaoMinutos != null ? formatDur(r.duracaoMinutos) : (r.emAndamento ? '▶ Ativo' : '—');
-      // Server stores UTC without 'Z' — parse as UTC so toLocaleString shows local Brazil time
       const inicio = parseUtc(r.inicio);
       const fim = r.fim ? parseUtc(r.fim) : null;
-      const dtI = inicio.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-      const dtF = fim ? fim.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
+      const dtI = inicio && !isNaN(inicio) ? inicio.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '–';
+      const dtF = fim && !isNaN(fim) ? fim.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
       return `<div class="registro-row">
         <div style="display:flex;gap:16px;align-items:center">
           <div class="registro-dur">${dur}</div>

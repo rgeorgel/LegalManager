@@ -123,7 +123,7 @@
             <td data-label="E-mail">${u.email}</td>
             <td data-label="Perfil"><span class="badge badge-blue">${u.perfil}</span></td>
             <td data-label="Status"><span class="badge badge-${u.ativo ? 'green' : 'red'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
-            <td data-label="Membro desde">${new Date(u.criadoEm).toLocaleDateString('pt-BR')}</td>
+            <td data-label="Membro desde">${(u.criadoEm ? (() => { const d = new Date(u.criadoEm); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '–'; })() : '–')}</td>
             <td data-label="Ações">
               ${u.ativo ? `<button class="btn btn-danger btn-sm" onclick="desativar('${u.id}','${u.nome}')">Desativar</button>` : ''}
             </td>

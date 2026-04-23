@@ -119,7 +119,7 @@
     }
 
     function renderCard(t) {
-      const prazo = t.prazo ? new Date(t.prazo).toLocaleDateString('pt-BR') : null;
+      const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : null; })() : null;
       const atrasada = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
       return `<div class="kanban-card prioridade-${t.prioridade?.toLowerCase()}" draggable="true" data-id="${t.id}" data-status="${t.status}">
         <div class="kanban-card-title">${esc(t.titulo)}</div>

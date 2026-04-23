@@ -144,6 +144,8 @@
     @keyframes fadeInUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
 
     .toggle-wrapper { display: flex; justify-content: center; margin-bottom: 28px; }
+    .config-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px; }
+    .config-section-title { font-weight: 700; font-size: 15px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
   </style>
 </head>
 <body>
@@ -261,6 +263,14 @@
       <button id="btnCancelar" class="btn btn-danger">Cancelar assinatura</button>
     </div>
 
+    <!-- Histórico de pagamentos -->
+    <div style="max-width:680px;margin:40px auto 0">
+      <div class="config-section" id="historicoSection" style="display:none">
+        <div class="config-section-title">Histórico de Pagamentos</div>
+        <div id="historicoLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
+        <div id="historicoTable" style="display:none;overflow-x:auto"></div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -330,11 +340,11 @@
 
       const statusEl = document.getElementById('statusInfo');
       if (data.status === 'Trial' && data.trialExpiraEm) {
-        const dias = Math.max(0, Math.ceil((new Date(data.trialExpiraEm) - Date.now()) / 86400000));
+        const dias = data.trialExpiraEm ? Math.max(0, Math.ceil((new Date(data.trialExpiraEm) - Date.now()) / 86400000)) : 0;
         statusEl.innerHTML = `<span style="color:#1e40af">Trial — ${dias} dia(s) restante(s)</span>`;
         badge.className = 'assin-badge trial';
       } else if (data.status === 'Cancelado' && data.planoExpiraEm) {
-        const expira = new Date(data.planoExpiraEm).toLocaleDateString('pt-BR');
+        const expira = data.planoExpiraEm ? new Date(data.planoExpiraEm).toLocaleDateString('pt-BR') : '–';
         statusEl.innerHTML = `<span style="color:#dc2626">Cancelado — acesso Pro até ${expira}</span>`;
       } else if (data.periodo && currentPlano === 'Pro') {
         statusEl.textContent = `${data.periodo} · Ativo`;
@@ -343,8 +353,8 @@
       }
 
       if (data.criadoEm) {
-        document.getElementById('membroDesde').textContent =
-          new Date(data.criadoEm).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const criado = new Date(data.criadoEm);
+        document.getElementById('membroDesde').textContent = !isNaN(criado) ? criado.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '–';
       }
 
       updateCards(data);
@@ -464,29 +474,48 @@
           showToast(e.message ?? 'Erro ao iniciar checkout.', false);
         }
       }
-    );
+);
   });
 
-  // Cancelar assinatura Pro
-  document.getElementById('btnCancelar').addEventListener('click', () => {
-    openModal(
-      'Cancelar assinatura Pro',
-      'Você continuará com acesso Pro até o fim do período atual. Após isso, o escritório será movido para o plano Free automaticamente.',
-      'Cancelar assinatura',
-      'btn-danger',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/cancelar', { method: 'POST' });
-          showToast(result.message ?? 'Assinatura cancelada com sucesso.');
-          await loadPlano();
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao cancelar assinatura.', false);
-        }
+  async function loadHistorico() {
+    try {
+      const items = await apiFetch('/assinatura/historico');
+      const section = document.getElementById('historicoSection');
+      const loading = document.getElementById('historicoLoading');
+      const table = document.getElementById('historicoTable');
+      if (!items.length) {
+        section.style.display = '';
+        loading.style.display = 'none';
+        table.style.display = '';
+        table.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhum registro de faturamento encontrado.</p>';
+        return;
       }
-    );
-  });
+      section.style.display = '';
+      loading.style.display = 'none';
+      table.style.display = '';
+      table.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Período</th>
+          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Valor</th>
+          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Status</th>
+          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Data pagamento</th>
+        </tr></thead>
+        <tbody>${items.map(f => `<tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;font-weight:500">${esc(f.periodo)}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6">R$ ${f.valor.toFixed(2).replace('.', ',')}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6"><span class="badge badge-${f.status === 'Pago' ? 'green' : 'gray'}">${f.status}</span></td>
+          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;color:var(--color-text-muted)">${f.dataPagamento ? (() => { const d = new Date(f.dataPagamento); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '—'; })() : '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    } catch (e) { console.error(e); }
+  }
+
+  function esc(str) {
+    return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 
   loadPlano();
+  loadHistorico();
 </script>
 </body>
 </html>
