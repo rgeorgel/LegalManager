@@ -64,8 +64,7 @@ function advance(view, date, dir) {
 
 // --- Helpers ---
 function toLocalISO(date) {
-  const p = n => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}:${p(date.getSeconds())}`;
+  return date.toISOString().slice(0, 19) + 'Z';
 }
 
 // --- Load ---
@@ -140,8 +139,8 @@ function renderListaView() {
 }
 
 // --- Week View ---
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 07..20
-const SLOT_PX = 48;
+const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06..24
+const SLOT_PX = 40;
 
 function renderSemanaView(start) {
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -194,7 +193,7 @@ function renderSemanaView(start) {
       <div class="semana-header"></div>
       ${headerCells}
     </div>
-    <div style="display:grid;grid-template-columns:60px repeat(7,1fr);overflow-y:auto;max-height:620px">
+    <div style="display:grid;grid-template-columns:60px repeat(7,1fr);overflow-y:auto;max-height:760px">
       <div style="position:relative;height:${totalH}px;border-right:1px solid var(--color-border)">${timeLabels}</div>
       ${dayCols}
     </div>
