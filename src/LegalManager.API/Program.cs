@@ -91,7 +91,13 @@ builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<CapturaPublicacaoJob>();
 
-builder.Services.AddHttpClient<IIAService, IAService>();
+builder.Services.AddHttpClient<IIAService, IAService>(client =>
+{
+    var apiKey = builder.Configuration["IA:ApiKey"]
+              ?? builder.Configuration["IA:API_KEY"]
+              ?? throw new InvalidOperationException("IA:ApiKey não configurado");
+    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+});
 builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();

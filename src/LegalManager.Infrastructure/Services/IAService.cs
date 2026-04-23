@@ -8,19 +8,19 @@ namespace LegalManager.Infrastructure.Services;
 public class IAService : IIAService
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _config;
     private readonly string _provider;
     private readonly string _apiKey;
     private readonly string _model;
+    private readonly string _baseUrl;
     private readonly int _timeoutSeconds;
 
     public IAService(HttpClient httpClient, IConfiguration config)
     {
         _httpClient = httpClient;
-        _config = config;
         _provider = config["IA:Provider"] ?? "Anthropic";
         _apiKey = config["IA:ApiKey"] ?? throw new InvalidOperationException("IA:ApiKey não configurado");
         _model = config["IA:Model"] ?? "claude-3-5-sonnet-latest";
+        _baseUrl = config["IA:BaseUrl"] ?? "";
         _timeoutSeconds = int.TryParse(config["IA:TimeoutSeconds"], out var t) ? t : 30;
 
         _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
@@ -117,7 +117,9 @@ public class IAService : IIAService
 
     private async Task<string> EnviarAnthropicAsync(string prompt, CancellationToken ct)
     {
-        var baseUrl = _config["IA:BaseUrl"] ?? "https://api.anthropic.com/v1";
+        var baseUrl = string.IsNullOrEmpty(_baseUrl)
+            ? "https://api.anthropic.com/v1"
+            : _baseUrl.TrimEnd('/');
 
         var requestBody = new
         {
@@ -156,7 +158,9 @@ public class IAService : IIAService
 
     private async Task<string> EnviarOpenAIAsync(string prompt, CancellationToken ct)
     {
-        var baseUrl = _config["IA:BaseUrl"] ?? "https://api.openai.com/v1";
+        var baseUrl = string.IsNullOrEmpty(_baseUrl)
+            ? "https://api.openai.com/v1"
+            : _baseUrl.TrimEnd('/');
 
         var requestBody = new
         {
