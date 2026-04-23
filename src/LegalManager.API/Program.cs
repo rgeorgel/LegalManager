@@ -95,6 +95,7 @@ builder.Services.AddHttpClient<IIAService, IAService>();
 builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
+builder.Services.AddScoped<SeedService>();
 
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {

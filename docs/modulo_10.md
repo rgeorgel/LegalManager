@@ -390,6 +390,7 @@ Após a geração, um segundo modal exibe:
 - `Services/CreditoService.cs`
 - `Services/TraducaoService.cs`
 - `Services/PecaJuridicaService.cs`
+- `Services/SeedService.cs`
 - `Persistence/Configurations/CreditoAIConfiguration.cs`
 - `Persistence/Configurations/TraducaoAndamentoConfiguration.cs`
 - `Persistence/Configurations/PecaGeradaConfiguration.cs`
@@ -397,6 +398,7 @@ Após a geração, um segundo modal exibe:
 **API:**
 - `Controllers/IAController.cs`
 - `Controllers/CreditosController.cs`
+- `Controllers/SeedController.cs`
 
 **Frontend:**
 - `wwwroot/js/ia.js` — novo módulo para chamadas à API de IA
@@ -418,7 +420,59 @@ Após a geração, um segundo modal exibe:
 
 ---
 
-## endpoints Resumidos
+## Seed — Dados de Demonstração
+
+Para permitir que o sistema seja apresentado em demos para clientes, existem endpoints para gerar e remover dados de exemplo para um tenant específico.
+
+### Endpoints
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/seed/gerar?tenantId={guid}` | POST | Gera dados demo para o tenant |
+| `/api/seed/desfazer?tenantId={guid}` | DELETE | Remove dados demo do tenant |
+
+### Autorização
+
+Apenas usuários com perfil **Admin** podem acessar estes endpoints.
+
+### Dados Gerados
+
+O endpoint de geração cria dados realistas para todas as entidades:
+
+| Entidade | Quantidade | Descrição |
+|----------|-----------|-----------|
+| **Contatos** | 8 | Clientes e partes contrárias comTags (VIP, Recorrente, Novo) |
+| **Processos** | 12 | Processos em diversos tribunais (TJSP, TJMG, TJRJ, TRF1, TRF3), áreas do direito, status e fases |
+| **Andamentos** | 3-10 por processo | Andamentos manuais com descrições realistas |
+| **Tarefas** | 2-4 por processo | Tarefas em todos os status (Pendente, EmAndamento, Concluida) com prioridades variadas |
+| **Eventos** | 10 | Eventos nos próximos 30 dias (audiências, reuniões, perícias, prazos) |
+| **Lançamentos Financeiros** | ~25 | Receitas (honorários) e despesas (custas, perícias, software) dos últimos 3 meses |
+| **Notificações** | 5 | Notificações de demonstração |
+
+### Validações
+
+- **Gerar**: retorna erro se dados já existirem para o tenant
+- **Desfazer**: remove todos os dados demo sem confirmação (deletar em cascata)
+
+### Exemplo de Uso
+
+```bash
+# Gerar dados demo
+curl -X POST "https://api.seudominio.com/api/seed/gerar?tenantId=3fa85f64-5717-4562-b3fc-2c963f66afa6" \
+  -H "Authorization: Bearer <token_admin>"
+
+# Remover dados demo
+curl -X DELETE "https://api.seudominio.com/api/seed/desfazer?tenantId=3fa85f64-5717-4562-b3fc-2c963f66afa6" \
+  -H "Authorization: Bearer <token_admin>"
+```
+
+### Serviço (Backend)
+
+O `SeedService` (`Infrastructure/Services/SeedService.cs`) é responsável por toda a lógica de geração e remoção de dados, utilizando um `Random` com seed fixo (42) para garantir dados consistentes em todas as execuções.
+
+---
+
+## Endpoints Resumidos
 
 | Endpoint | Método | Descrição |
 |----------|--------|-----------|
@@ -428,6 +482,8 @@ Após a geração, um segundo modal exibe:
 | `/api/ia/pecas-geradas` | GET | Lista peças geradas |
 | `/api/ia/pecas-geradas/{id}` | GET | Detalhe de peça |
 | `/api/creditos` | GET | Lista créditos do tenant |
+| `/api/seed/gerar` | POST | Gera dados demo |
+| `/api/seed/desfazer` | DELETE | Remove dados demo |
 
 ---
 
