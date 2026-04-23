@@ -28,10 +28,12 @@ public class IAService : IIAService
 
     public async Task<string> TraduzirTextoAsync(string texto, CancellationToken ct = default)
     {
-        var prompt = $$$"""
-            Você é um assistente jurídico. Traduza o seguinte andamento processual para uma linguagem clara, simples e não técnica, como se o advogado estivesse explicando diretamente ao cliente. Não use termos jurídicos sem explicação. Inclua o que aconteceu e qual é o próximo passo esperado, se houver.
+        var prompt = $"""
+            Você é um assistente jurídico brasileiro. Traduza o seguinte andamento processual para uma linguagem clara, simples e não técnica, como se o advogado estivesse explicando diretamente ao cliente. Não use termos jurídicos sem explicação. Inclua o que aconteceu e qual é o próximo passo esperado, se houver.
+            
+            A tradução DEVE ser EXCLUSIVAMENTE em Português do Brasil.
 
-            Andamento: {{{texto}}}
+            Andamento: {texto}
             """;
 
         return await EnviarPromptAsync(prompt, ct);
@@ -46,11 +48,12 @@ public class IAService : IIAService
             - Modelos processuais brasileiros vigentes
             - Fundamentação legal adequada
             - Linguagem jurídica apropriada
+            - ESTABELEÇA EXPRESSAMENTE que TODO o texto deve ser gerado EXCLUSIVAMENTE em Português do Brasil
 
             Contexto da situação:
             {{{contexto}}}
 
-            Forneça apenas o texto da peça, sem comentários adicionais.
+            Forneça apenas o texto da peça em PORTUGUÊS DO BRASIL, sem comentários adicionais.
             """;
 
         return await EnviarPromptAsync(prompt, ct);
@@ -60,9 +63,9 @@ public class IAService : IIAService
         string conteudo, string? numeroCNJ = null, CancellationToken ct = default)
     {
         var prompt = $$$"""
-            Você é um assistente jurídico. Classifique a seguinte publicação processual e indique se é urgente.
+            Você é um assistente jurídico brasileiro. Classifique a seguinte publicação processual e indique se é urgente.
 
-            Classificações possíveis:
+            Classificações possíveis (responda apenas com o nome exato):
             - Prazo: publicação que estabelece prazo para alguma parte praticar ato processual
             - Audiencia: publicação de pauta de audiência ou redesignação
             - Decisao: publicação de decisão interlocutória ou sentença
@@ -72,7 +75,7 @@ public class IAService : IIAService
 
             Publicação: {{{conteudo}}}
 
-            Responda SOMENTE em JSON com o formato:
+            Responda SOMENTE em JSON com o formato (EXCLUSIVAMENTE em Português do Brasil):
             {
                 "tipo": "Prazo|Audiencia|Decisao|Despacho|Intimacao|Outro",
                 "classificacao": "breve descrição do conteúdo",
@@ -88,7 +91,7 @@ public class IAService : IIAService
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
     {
         var prompt = $$$"""
-            Você é um assistente jurídico. Forneça um resumo de jurisprudência relevante sobre o tema: {{{tema}}}
+            Você é um assistente jurídico brasileiro. Forneça um resumo de jurisprudência relevante sobre o tema: {{{tema}}}
 
             Inclua:
             - Principio(s) jurídico(s) envolvido(s)
@@ -96,6 +99,7 @@ public class IAService : IIAService
             - Recursos ou mecanismos de impugnação comuns
 
             Seja objetivo e cite fundamentos legais quando aplicável.
+            Responda EXCLUSIVAMENTE em Português do Brasil.
             """;
 
         return await EnviarPromptAsync(prompt, ct);
