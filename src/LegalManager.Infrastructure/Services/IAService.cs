@@ -63,7 +63,30 @@ public class IAService : IIAService
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return SanitizarTextoPortugues(resultado);
+        return await CorrigirIdiomaPortugues(resultado, ct);
+    }
+
+    private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(textoOriginal)) return textoOriginal;
+
+        var promptCorrecao = $$$"""
+            Você é um revisor jurídico brasileiro. O texto abaixo foi gerado por outro sistema de IA e pode conter palavras, frases ou símbolos em idiomas estrangeiros (inglês, espanhol, chinês, japonês, etc.) misturados com português.
+
+            SUA TAREFA:
+            1. Identifique TODAS as palavras, frases ou símbolos que NÃO são português brasileiro
+            2. Substitua cada palavra/frase foreign pela versão correta em português brasileiro
+            3. Se uma palavra não tiver tradução direta adequada, remova-a
+            4. Mantenha toda a estrutura jurídica e formatação intacta
+            5. Retorne EXCLUSIVAMENTE o texto CORRIGIDO em português brasileiro
+
+            Texto original:
+            {{{textoOriginal}}}
+
+            Texto corrigido em português brasileiro:
+            """;
+
+        return await EnviarPromptAsync(promptCorrecao, ct);
     }
 
     public async Task<(LegalManager.Domain.Enums.TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa)> ClassificarPublicacaoAsync(
@@ -231,17 +254,5 @@ public class IAService : IIAService
         {
             return (LegalManager.Domain.Enums.TipoPublicacao.Outro, json, false, null);
         }
-    }
-
-    private static string SanitizarTextoPortugues(string texto)
-    {
-        if (string.IsNullOrEmpty(texto)) return texto;
-        return texto
-            .Replace("many", "muitos")
-            .Replace("many of", "muitos")
-            .Replace("排", "")
-            .Replace("给力", "")
-            .Replace("Deemed", "")
-            .Replace("Deemed/", "");
     }
 }
