@@ -62,7 +62,8 @@ public class IAService : IIAService
             Forneça apenas o texto da peça em português brasileiro. NADA de outras línguas.
             """;
 
-        return await EnviarPromptAsync(prompt, ct);
+        var resultado = await EnviarPromptAsync(prompt, ct);
+        return SanitizarTextoPortugues(resultado);
     }
 
     public async Task<(LegalManager.Domain.Enums.TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa)> ClassificarPublicacaoAsync(
@@ -230,5 +231,17 @@ public class IAService : IIAService
         {
             return (LegalManager.Domain.Enums.TipoPublicacao.Outro, json, false, null);
         }
+    }
+
+    private static string SanitizarTextoPortugues(string texto)
+    {
+        if (string.IsNullOrEmpty(texto)) return texto;
+        return texto
+            .Replace("many", "muitos")
+            .Replace("many of", "muitos")
+            .Replace("排", "")
+            .Replace("给力", "")
+            .Replace("Deemed", "")
+            .Replace("Deemed/", "");
     }
 }
