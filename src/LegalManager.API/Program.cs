@@ -91,6 +91,11 @@ builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<CapturaPublicacaoJob>();
 
+builder.Services.AddHttpClient<IIAService, IAService>();
+builder.Services.AddScoped<ICreditoService, CreditoService>();
+builder.Services.AddScoped<ITraducaoService, TraducaoService>();
+builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
+
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {
     client.BaseAddress = new Uri("https://api.datajud.cnj.jus.br");

@@ -20,6 +20,7 @@ public class Contato
     public DateTime? DataNascimento { get; set; }
     public string? Observacoes { get; set; }
     public bool NotificacaoHabilitada { get; set; }
+    public bool IAHabilitada { get; set; }
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public DateTime? AtualizadoEm { get; set; }

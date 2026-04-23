@@ -208,4 +208,29 @@ public class EmailService : IEmailService
             """;
         await _resend.EmailSendAsync(CriarMensagem(email, $"Nova publicação — {numeroCNJ}", html));
     }
+
+    public async Task EnviarAndamentoTraduzidoAsync(string email, string nomeCliente,
+        string numeroCNJ, string andamentoTraduzido, CancellationToken ct = default)
+    {
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ LegalManager</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Atualização de Processo</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeCliente)}</strong>!</p>
+                <p>O escritório preparou uma atualização sobre o processo <strong>{System.Net.WebUtility.HtmlEncode(numeroCNJ)}</strong>:</p>
+                <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0;font-size:15px;line-height:1.6">
+                  {System.Net.WebUtility.HtmlEncode(andamentoTraduzido)}
+                </div>
+                <p style="color:#6b7280;font-size:13px">
+                  Esta mensagem foi generada automaticamente por IA para facilitar seu entendimento.
+                  Para dúvidas, entre em contato diretamente com o escritório.
+                </p>
+              </div>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Atualização do processo {numeroCNJ}", html));
+    }
 }
