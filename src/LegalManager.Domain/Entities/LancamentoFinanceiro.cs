@@ -9,7 +9,7 @@ public class LancamentoFinanceiro
     public Guid? ProcessoId { get; set; }
     public Guid? ContatoId { get; set; }
     public TipoLancamento Tipo { get; set; }
-    public CategoriaLancamento Categoria { get; set; }
+    public string Categoria { get; set; } = string.Empty;
     public decimal Valor { get; set; }
     public string? Descricao { get; set; }
     public DateTime DataVencimento { get; set; }

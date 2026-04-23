@@ -29,7 +29,13 @@
       "Bash(psql -U postgres -c \"\\\\l\")",
       "Bash(PGPASSWORD=legalmanager dotnet ef database update --project src/LegalManager.Infrastructure --startup-project src/LegalManager.API -- --environment Development)",
       "Bash(dotnet user-secrets *)",
-      "Bash(PGPASSWORD=postgres psql -U postgres -h localhost -c \"SELECT 1\")"
+      "Bash(PGPASSWORD=postgres psql -U postgres -h localhost -c \"SELECT 1\")",
+      "Bash(xargs ls *)",
+      "WebFetch(domain:www.aurum.com.br)",
+      "WebFetch(domain:abacatepay.readme.io)",
+      "WebFetch(domain:docs.abacatepay.com)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

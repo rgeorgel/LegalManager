@@ -4,7 +4,7 @@ namespace LegalManager.Application.DTOs.Financeiro;
 
 public record CriarLancamentoDto(
     TipoLancamento Tipo,
-    CategoriaLancamento Categoria,
+    string Categoria,
     decimal Valor,
     DateTime DataVencimento,
     string? Descricao = null,
@@ -13,7 +13,7 @@ public record CriarLancamentoDto(
 );
 
 public record AtualizarLancamentoDto(
-    CategoriaLancamento? Categoria,
+    string? Categoria,
     decimal? Valor,
     DateTime? DataVencimento,
     string? Descricao
@@ -22,7 +22,7 @@ public record AtualizarLancamentoDto(
 public record LancamentoDto(
     Guid Id,
     TipoLancamento Tipo,
-    CategoriaLancamento Categoria,
+    string Categoria,
     decimal Valor,
     string? Descricao,
     DateTime DataVencimento,

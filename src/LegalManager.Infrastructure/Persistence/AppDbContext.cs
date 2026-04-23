@@ -37,6 +37,9 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();
     public DbSet<RegistroTempo> RegistrosTempo => Set<RegistroTempo>();
     public DbSet<PreferenciasNotificacao> PreferenciasNotificacoes => Set<PreferenciasNotificacao>();
+    public DbSet<AreaAtuacao> AreasAtuacao => Set<AreaAtuacao>();
+    public DbSet<CategoriaFinanceira> CategoriasFinanceiras => Set<CategoriaFinanceira>();
+    public DbSet<Faturamento> Faturamentos => Set<Faturamento>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

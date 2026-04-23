@@ -55,8 +55,17 @@ public enum TipoLancamento { Receita, Despesa }
 
 public enum StatusLancamento { Pendente, Pago, Vencido, Cancelado }
 
-public enum CategoriaLancamento
+public static class CategoriaLancamento
 {
-    Honorario, Custas, Pericia, Deposito, Multa, Reembolso,
-    Salario, AluguelEscritorio, Software, Marketing, Outro
+    public const string Honorario = "Honorario";
+    public const string Custas = "Custas";
+    public const string Pericia = "Pericia";
+    public const string Deposito = "Deposito";
+    public const string Multa = "Multa";
+    public const string Reembolso = "Reembolso";
+    public const string Salario = "Salario";
+    public const string AluguelEscritorio = "AluguelEscritorio";
+    public const string Software = "Software";
+    public const string Marketing = "Marketing";
+    public const string Outro = "Outro";
 }

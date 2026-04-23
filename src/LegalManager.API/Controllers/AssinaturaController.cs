@@ -40,6 +40,26 @@ public class AssinaturaController(
         });
     }
 
+    [HttpGet("historico")]
+    public async Task<IActionResult> GetHistorico(CancellationToken ct)
+    {
+        var historico = await context.Faturamentos
+            .Where(f => f.TenantId == tenantContext.TenantId)
+            .OrderByDescending(f => f.DataCriacao)
+            .Select(f => new {
+                f.Id,
+                f.Periodo,
+                f.Valor,
+                f.Moeda,
+                Status = f.Status.ToString(),
+                f.DataPagamento,
+                f.DataCriacao,
+                f.Descricao
+            })
+            .ToListAsync(ct);
+        return Ok(historico);
+    }
+
     [HttpPost("iniciar")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> IniciarCheckout([FromBody] IniciarCheckoutDto dto, CancellationToken ct)
@@ -205,8 +225,26 @@ public class WebhookController(
         tenant.Plano = PlanoTipo.Pro;
         tenant.Status = StatusTenant.Ativo;
         tenant.TrialExpiraEm = null;
-        tenant.PlanoExpiraEm = null;  // pagamento confirmado, sem expiração agendada
+        tenant.PlanoExpiraEm = null;
         tenant.PeriodoBilling = periodo;
+
+        var valor = ExtrairValor(root);
+        var billingId = ExtrairBillingId(root);
+        if (!string.IsNullOrEmpty(billingId))
+        {
+            context.Faturamentos.Add(new Faturamento
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenant.Id,
+                BillingId = billingId,
+                Periodo = periodo,
+                Valor = valor,
+                Status = StatusFaturamento.Pago,
+                DataPagamento = DateTime.UtcNow,
+                DataCriacao = DateTime.UtcNow,
+                Descricao = $"Assinatura Pro {periodo}"
+            });
+        }
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Plano Pro ativado via webhook para tenant {TenantId}", tenantId);
@@ -252,6 +290,22 @@ public class WebhookController(
             var metadata = root.GetProperty("data").GetProperty("billing").GetProperty("metadata");
             return metadata.TryGetProperty(key, out var val) ? val.GetString() : null;
         }
+        catch { return null; }
+    }
+
+    private static decimal ExtrairValor(JsonElement root)
+    {
+        try
+        {
+            var amount = root.GetProperty("data").GetProperty("billing").GetProperty("amount");
+            return amount.GetInt32() / 100m;
+        }
+        catch { return 0; }
+    }
+
+    private static string? ExtrairBillingId(JsonElement root)
+    {
+        try { return root.GetProperty("data").GetProperty("billing").GetProperty("id").GetString(); }
         catch { return null; }
     }
 }

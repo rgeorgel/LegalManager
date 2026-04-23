@@ -12,6 +12,7 @@ public class LancamentoFinanceiroConfiguration : IEntityTypeConfiguration<Lancam
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Valor).HasPrecision(18, 2);
         builder.Property(x => x.Descricao).HasMaxLength(500);
+        builder.Property(x => x.Categoria).HasMaxLength(100).IsRequired();
 
         builder.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(x => x.Processo).WithMany().HasForeignKey(x => x.ProcessoId).OnDelete(DeleteBehavior.SetNull);

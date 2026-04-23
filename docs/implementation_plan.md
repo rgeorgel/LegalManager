@@ -610,7 +610,6 @@ AcessoCliente { id, tenantId, contatoId, email, senha (hash), ativo }
 - Visualização do consumo de recursos (processos monitorados, usuários, armazenamento)
 - Gestão de nomes para captura de publicações (Plano Smart: 3 nomes)
 - Faturamento e histórico de pagamentos
-- Integração com Google Drive (configuração de OAuth)
 
 ---
 

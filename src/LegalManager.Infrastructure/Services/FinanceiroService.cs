@@ -80,7 +80,7 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
             .FirstOrDefaultAsync(l => l.Id == id && l.TenantId == tenantId, ct)
             ?? throw new KeyNotFoundException("Lançamento não encontrado.");
 
-        if (dto.Categoria.HasValue) lancamento.Categoria = dto.Categoria.Value;
+        if (!string.IsNullOrEmpty(dto.Categoria)) lancamento.Categoria = dto.Categoria;
         if (dto.Valor.HasValue) lancamento.Valor = dto.Valor.Value;
         if (dto.DataVencimento.HasValue) lancamento.DataVencimento = dto.DataVencimento.Value;
         if (dto.Descricao != null) lancamento.Descricao = dto.Descricao;
