@@ -21,6 +21,14 @@
     .status-suspenso { background:#fef3c7; color:#c27803; }
     .status-arquivado{ background:#f3f4f6; color:#6b7280; }
     .status-encerrado{ background:#fee2e2; color:#e02424; }
+    .tabs { display:flex; gap:0; border-bottom:2px solid var(--color-border); margin-bottom:20px; overflow-x:auto; }
+    .tab-btn { padding:10px 20px; border:none; background:none; font-size:14px; font-weight:500; color:var(--color-text-muted); cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
+    .tab-btn:hover { color:var(--color-primary); }
+    .tab-btn.active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
+    .tab-badge.count { background:var(--color-primary); color:#fff; }
     @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} }
   </style>
 </head>
@@ -69,63 +77,106 @@
     <div id="alertMsg" class="alert" style="display:none"></div>
 
     <!-- Status bar -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <span id="badgeStatus" class="badge"></span>
       <span id="badgeArea" class="badge badge-blue"></span>
       <span id="badgeFase" class="badge badge-gray"></span>
       <span id="badgeMonitorado" class="badge" style="display:none"></span>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
-      <!-- Left column -->
-      <div>
-        <!-- Informações gerais -->
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-body">
-            <div class="card-title">Informações do Processo</div>
-            <div class="info-grid" id="infoGrid">
-              <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
-              <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
-              <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
-              <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
-              <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
-              <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
-              <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
-              <div class="info-item" id="infoEncerradoGroup" style="display:none">
-                <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="info" role="tab">Informações</button>
+      <button class="tab-btn" data-tab="andamentos" role="tab">
+        Andamentos<span class="tab-badge count" id="tabCountAndamentos" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" data-tab="documentos" role="tab">
+        Documentos<span class="tab-badge count" id="tabCountDocumentos" style="display:none">0</span>
+      </button>
+    </div>
+
+    <!-- Tab: Informações -->
+    <div class="tab-content active" id="tab-info" role="tabpanel">
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+        <div>
+          <!-- Informações gerais -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-body">
+              <div class="card-title">Informações do Processo</div>
+              <div class="info-grid" id="infoGrid">
+                <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
+                <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
+                <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
+                <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
+                <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
+                <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
+                <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
+                <div class="info-item" id="infoEncerradoGroup" style="display:none">
+                  <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
+                </div>
+              </div>
+              <div id="infoDecisaoGroup" style="display:none;margin-top:12px">
+                <div class="info-item"><label>Decisão</label><span id="infoDecisao">—</span></div>
+                <div class="info-item" style="margin-top:8px"><label>Resultado</label><span id="infoResultado">—</span></div>
+              </div>
+              <div id="infoObsGroup" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--color-border)">
+                <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Observações</label>
+                <p id="infoObservacoes" style="margin-top:4px;font-size:14px"></p>
               </div>
             </div>
-            <div id="infoDecisaoGroup" style="display:none;margin-top:12px">
-              <div class="info-item"><label>Decisão</label><span id="infoDecisao">—</span></div>
-              <div class="info-item" style="margin-top:8px"><label>Resultado</label><span id="infoResultado">—</span></div>
-            </div>
-            <div id="infoObsGroup" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--color-border)">
-              <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Observações</label>
-              <p id="infoObservacoes" style="margin-top:4px;font-size:14px"></p>
+          </div>
+
+          <!-- Últimos andamentos (preview) -->
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div class="card-title" style="margin-bottom:0">Últimos Andamentos</div>
+                <button class="btn btn-secondary btn-sm" id="btnVerTodosAndamentos" style="display:none">Ver todos →</button>
+              </div>
+              <div id="andamentosPreviewLista">
+                <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Andamentos -->
+        <!-- Right: Partes -->
         <div class="card">
           <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-              <div class="card-title" style="margin-bottom:0">Andamentos</div>
-              <button class="btn btn-primary btn-sm" id="btnAddAndamento">+ Novo Andamento</button>
-            </div>
-            <div id="andamentosLista">
-              <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando andamentos...</p>
+            <div class="card-title">Partes do Processo</div>
+            <div id="partesLista">
+              <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Right column: Partes -->
+    <!-- Tab: Andamentos -->
+    <div class="tab-content" id="tab-andamentos" role="tabpanel">
       <div class="card">
         <div class="card-body">
-          <div class="card-title">Partes do Processo</div>
-          <div id="partesLista">
-            <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">Andamentos do Processo</div>
+            <button class="btn btn-primary btn-sm" id="btnAddAndamentoTab">+ Novo Andamento</button>
+          </div>
+          <div id="andamentosLista">
+            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando andamentos...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Documentos -->
+    <div class="tab-content" id="tab-documentos" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">Documentos Anexados</div>
+            <button class="btn btn-primary btn-sm" id="btnAddDocumentoTab">+ Adicionar</button>
+          </div>
+          <div id="documentosLista">
+            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando documentos...</p>
           </div>
         </div>
       </div>
@@ -371,6 +422,51 @@
   </div>
 </div>
 
+<!-- Modal Documento -->
+<div class="modal-overlay" id="modalDocumento">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title">Adicionar Documento</span>
+      <button class="modal-close" id="docClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="docAlert" class="alert" style="display:none"></div>
+      <form id="docForm">
+        <div class="form-group">
+          <label>Arquivo *</label>
+          <input type="file" id="docFile" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" required>
+        </div>
+        <div class="form-group">
+          <label>Nome do Documento</label>
+          <input type="text" id="docNome" class="form-control" placeholder="Ex: Petição Inicial - Réplica">
+          <small style="color:var(--color-text-muted);font-size:12px">Deixe em branco para usar o nome original do arquivo</small>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Documento *</label>
+          <select id="docTipo" class="form-control" required>
+            <option value="Peticao">Petição</option>
+            <option value="Decisao">Decisão</option>
+            <option value="Contrato">Contrato</option>
+            <option value="Prova">Prova</option>
+            <option value="Modelo">Modelo</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </form>
+      <div id="docProgress" style="display:none;margin-top:16px">
+        <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden">
+          <div id="docProgressBar" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.2s"></div>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px;text-align:center" id="docProgressText">Enviando...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="docCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="docEnviar">Enviar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initLayout } from '/js/layout.js';
 import { getProcesso, updateProcesso, encerrarProcesso, getAndamentos, addAndamento, deleteAndamento } from '/js/processos.js';
@@ -470,6 +566,36 @@ function renderProcesso() {
   document.getElementById('btnEncerrar').style.display = processo.status !== 'Encerrado' ? '' : 'none';
 }
 
+async function loadAndamentosPreview() {
+  const lista = document.getElementById('andamentosPreviewLista');
+  const btnVerTodos = document.getElementById('btnVerTodosAndamentos');
+  const tabBadge = document.getElementById('tabCountAndamentos');
+  try {
+    const items = await getAndamentos(processoId);
+    tabBadge.textContent = items.length;
+    tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
+    btnVerTodos.style.display = items.length > 5 ? '' : 'none';
+    if (!items.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
+      return;
+    }
+    const preview = items.slice(0, 5);
+    lista.innerHTML = preview.map(a => `
+      <div class="andamento-item">
+        <div class="andamento-date">${fmtDate(a.data)}</div>
+        <div>
+          <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
+          <div class="andamento-desc">${a.descricao}</div>
+          <div class="andamento-fonte">
+            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
+          </div>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
 async function loadAndamentos() {
   const lista = document.getElementById('andamentosLista');
   try {
@@ -500,8 +626,24 @@ window.removeAndamento = async id => {
   try {
     await deleteAndamento(processoId, id);
     await loadAndamentos();
+    await loadAndamentosPreview();
   } catch (err) { showAlert(err.message); }
 };
+
+window.switchTab = tab => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (tab === 'andamentos') loadAndamentos();
+  if (tab === 'documentos') loadDocumentos();
+};
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+document.getElementById('btnVerTodosAndamentos').addEventListener('click', () => switchTab('andamentos'));
 
 // Load advogados for edit form
 async function loadAdvogados() {
@@ -595,14 +737,7 @@ document.getElementById('encerrarConfirmar').addEventListener('click', async () 
   } finally { btn.disabled = false; btn.textContent = 'Encerrar Processo'; }
 });
 
-// Andamento
-document.getElementById('btnAddAndamento').addEventListener('click', () => {
-  document.getElementById('aData').value = new Date().toISOString().split('T')[0];
-  document.getElementById('aDescricao').value = '';
-  document.getElementById('aTipo').value = 'Despacho';
-  document.getElementById('andamentoAlert').style.display = 'none';
-  document.getElementById('modalAndamento').classList.add('open');
-});
+// Andamento close/cancel
 [document.getElementById('andamentoClose'), document.getElementById('andamentoCancelar')].forEach(el =>
   el.addEventListener('click', () => document.getElementById('modalAndamento').classList.remove('open')));
 
@@ -619,6 +754,7 @@ document.getElementById('andamentoSalvar').addEventListener('click', async () =>
     });
     document.getElementById('modalAndamento').classList.remove('open');
     await loadAndamentos();
+    await loadAndamentosPreview();
     showAlert('Andamento registrado.', 'success');
   } catch (err) {
     alertEl.textContent = err.message; alertEl.style.display = 'block';
@@ -724,8 +860,8 @@ document.getElementById('btnMonitorar').addEventListener('click', async () => {
   btn.innerHTML = '<span class="spinner"></span>';
   try {
     const res = await apiFetch(`/processos/${processoId}/monitoramento/executar`, { method: 'POST' });
-    showAlert(res && res.novosAndamentos > 0 
-      ? `${res.novosAndamentos} novo(s) andamento(s) encontrado(s).` 
+    showAlert(res && res.novosAndamentos > 0
+      ? `${res.novosAndamentos} novo(s) andamento(s) encontrado(s).`
       : 'Nenhum novo andamento encontrado.', 'success');
     await loadAndamentos();
   } catch (err) {
@@ -736,8 +872,133 @@ document.getElementById('btnMonitorar').addEventListener('click', async () => {
   }
 });
 
+// Documentos
+async function loadDocumentos() {
+  const lista = document.getElementById('documentosLista');
+  const tabBadge = document.getElementById('tabCountDocumentos');
+  try {
+    const docs = await apiFetch(`/documentos/processo/${processoId}`);
+    tabBadge.textContent = docs ? docs.length : 0;
+    tabBadge.style.display = docs && docs.length > 0 ? 'inline-flex' : 'none';
+    if (!docs || !docs.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento anexado</div></div>';
+      return;
+    }
+    lista.innerHTML = docs.map(d => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-border);flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div style="font-weight:500;word-break:break-all">${d.nome}</div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">
+            ${d.tamanhoFormatado} &bull; ${d.tipo} &bull; ${fmtDate(d.criadoEm)}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="viewDoc('${d.id}')">Visualizar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">Excluir</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
+window.viewDoc = async id => {
+  try {
+    const { url } = await apiFetch(`/documentos/${id}/download`);
+    window.open(url, '_blank');
+  } catch (err) { showAlert(err.message); }
+};
+
+window.deleteDoc = async id => {
+  if (!confirm('⚠️ Tem certeza?\n\nO documento será excluído permanentemente e não poderá ser recuperado.')) return;
+  try {
+    await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
+    showAlert('Documento excluído.', 'success');
+    await loadDocumentos();
+  } catch (err) { showAlert(err.message); }
+};
+
+// Upload Documento
+function openDocModal() {
+  document.getElementById('docForm').reset();
+  document.getElementById('docAlert').style.display = 'none';
+  document.getElementById('docProgress').style.display = 'none';
+  document.getElementById('modalDocumento').classList.add('open');
+}
+
+document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocModal);
+
+// NovoAndamento buttons (both tabs)
+[document.getElementById('btnAddAndamentoTab')].forEach(btn => {
+  if (btn) btn.addEventListener('click', () => {
+    document.getElementById('aData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('aDescricao').value = '';
+    document.getElementById('aTipo').value = 'Despacho';
+    document.getElementById('andamentoAlert').style.display = 'none';
+    document.getElementById('modalAndamento').classList.add('open');
+  });
+});
+
+[document.getElementById('docClose'), document.getElementById('docCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalDocumento').classList.remove('open')));
+
+document.getElementById('docEnviar').addEventListener('click', async () => {
+  const fileInput = document.getElementById('docFile');
+  const file = fileInput.files[0];
+  if (!file) {
+    const alertEl = document.getElementById('docAlert');
+    alertEl.textContent = 'Selecione um arquivo.';
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('docEnviar');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  document.getElementById('docAlert').style.display = 'none';
+  document.getElementById('docProgress').style.display = 'block';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('tipo', document.getElementById('docTipo').value);
+  formData.append('processoId', processoId);
+  const docNome = document.getElementById('docNome').value.trim();
+  if (docNome) formData.append('nome', docNome);
+
+  const token = sessionStorage.getItem('access_token');
+  try {
+    const res = await fetch('/api/documentos/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!res.ok) {
+      let err = `HTTP ${res.status}`;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const b = await res.json();
+        err = b.message || b.title || err;
+      }
+      throw new Error(err);
+    }
+
+    document.getElementById('modalDocumento').classList.remove('open');
+    showAlert('Documento enviado.', 'success');
+    await loadDocumentos();
+  } catch (err) {
+    const alertEl = document.getElementById('docAlert');
+    alertEl.textContent = err.message;
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar';
+  }
+});
+
 await loadAdvogados();
 await loadProcesso();
+await loadAndamentosPreview();
 </script>
 </body>
 </html>

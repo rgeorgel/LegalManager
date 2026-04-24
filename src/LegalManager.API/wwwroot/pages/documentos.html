@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Documentos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .tipo-peticao { background:#dbeafe; color:#1e40af; }
+    .tipo-decisao { background:#fef3c7; color:#92400e; }
+    .tipo-contrato { background:#d1fae5; color:#065f46; }
+    .tipo-prova { background:#fce7f3; color:#9d174d; }
+    .tipo-modelo { background:#e0e7ff; color:#3730a3; }
+    .tipo-outro { background:#f3f4f6; color:#374151; }
+    .quota-bar { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin-top:8px; }
+    .quota-fill { height:100%; background:var(--color-primary); transition:width 0.3s; }
+    .quota-label { font-size:12px; color:var(--color-text-muted); margin-top:4px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav">
+      <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
+      <li><a href="/pages/processos.html">⚖️ Processos</a></li>
+      <li><a href="/pages/contatos.html">👥 Contatos</a></li>
+      <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
+      <li><a href="/pages/agenda.html">📅 Agenda</a></li>
+      <li><a href="/pages/publicacoes.html">📰 Publicações</a></li>
+      <li><a href="/pages/prazos.html">⏰ Prazos</a></li>
+      <li><a href="/pages/documentos.html">📁 Documentos</a></li>
+      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
+      <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Documentos</h1>
+      <button class="btn btn-primary" id="btnUpload">+ Upload</button>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Armazenamento</strong>
+          <span id="quotaText">0 MB / 20 GB</span>
+        </div>
+        <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+        <div class="quota-label" id="quotaLabel">Carregando...</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome...">
+      <select id="filtTipo" class="form-control" style="width:auto">
+        <option value="">Todos os tipos</option>
+        <option value="Peticao">Petição</option>
+        <option value="Decisao">Decisão</option>
+        <option value="Contrato">Contrato</option>
+        <option value="Prova">Prova</option>
+        <option value="Modelo">Modelo</option>
+        <option value="Outro">Outro</option>
+      </select>
+      <select id="filtOrigem" class="form-control" style="width:auto">
+        <option value="">Todas as origens</option>
+        <option value="processo">Por Processo</option>
+        <option value="cliente">Por Cliente</option>
+        <option value="outros">Outros</option>
+      </select>
+    </div>
+
+    <div id="alertMsg" class="alert" style="display:none"></div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Tamanho</th>
+              <th>Origem</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Upload -->
+<div class="modal-overlay" id="modalUpload">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">Upload de Documento</span>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="uploadAlert" class="alert" style="display:none"></div>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label>Arquivo *</label>
+          <input type="file" id="fileInput" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Documento *</label>
+          <select id="fTipo" class="form-control" required>
+            <option value="Peticao">Petição</option>
+            <option value="Decisao">Decisão</option>
+            <option value="Contrato">Contrato</option>
+            <option value="Prova">Prova</option>
+            <option value="Modelo">Modelo</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vincular a Processo</label>
+          <select id="fProcesso" class="form-control">
+            <option value="">Nenhum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vincular a Cliente</label>
+          <select id="fCliente" class="form-control">
+            <option value="">Nenhum</option>
+          </select>
+        </div>
+      </form>
+      <div id="uploadProgress" style="display:none;margin-top:16px">
+        <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden">
+          <div id="progressBar" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.2s"></div>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px;text-align:center" id="progressText">Enviando...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnEnviar">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initLayout } from '/js/layout.js';
+import { apiFetch } from '/js/api.js';
+
+initLayout();
+
+const modal = document.getElementById('modalUpload');
+const alertMsg = document.getElementById('alertMsg');
+
+let documentos = [];
+let processos = [];
+let clientes = [];
+
+function showAlert(msg, type = 'error') {
+  alertMsg.className = `alert alert-${type}`;
+  alertMsg.textContent = msg;
+  alertMsg.style.display = 'block';
+  setTimeout(() => alertMsg.style.display = 'none', 5000);
+}
+
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function tipoBadge(tipo) {
+  const cls = {
+    Peticao: 'peticao', Decisao: 'decisao', Contrato: 'contrato',
+    Prova: 'prova', Modelo: 'modelo', Outro: 'outro'
+  }[tipo] || 'outro';
+  return `<span class="badge tipo-${cls}">${tipo}</span>`;
+}
+
+function getOrigemLabel(doc) {
+  if (doc.processoId) return `<a href="/pages/processo-detalhe.html?id=${doc.processoId}">${doc.numeroProcesso || 'Processo'}</a>`;
+  if (doc.clienteId) return `<a href="/pages/contatos.html">${doc.nomeCliente || 'Cliente'}</a>`;
+  return '—';
+}
+
+async function loadCota() {
+  try {
+    const res = await apiFetch('/documentos/cota');
+    const usadoMB = res.usadoBytes / (1024 * 1024);
+    const cotaGB = res.cotaBytes / (1024 * 1024 * 1024);
+    const pct = res.porcentagemUsada.toFixed(1);
+    document.getElementById('quotaText').textContent = `${usadoMB.toFixed(1)} MB / ${cotaGB.toFixed(0)} GB`;
+    document.getElementById('quotaFill').style.width = pct + '%';
+    document.getElementById('quotaLabel').textContent = `${pct}% utilizado`;
+  } catch {
+    document.getElementById('quotaLabel').textContent = 'Erro ao carregar cota';
+  }
+}
+
+async function loadDocumentos() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px">Carregando...</td></tr>';
+  try {
+    documentos = await apiFetch('/documentos');
+    renderTable(documentos);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
+  }
+}
+
+async function loadReferenceData() {
+  try {
+    const [procRes, contRes] = await Promise.all([
+      apiFetch('/processos?pageSize=200'),
+      apiFetch('/contatos?pageSize=200')
+    ]);
+    processos = procRes?.items || [];
+    clientes = (contRes?.items || []).filter(c => c.ativo);
+
+    const procSel = document.getElementById('fProcesso');
+    processos.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id; o.textContent = `${p.numeroCNJ} - ${p.nomeCliente || 'Sem cliente'}`;
+      procSel.appendChild(o);
+    });
+
+    const cliSel = document.getElementById('fCliente');
+    clientes.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.nome;
+      cliSel.appendChild(o);
+    });
+  } catch {}
+}
+
+function renderTable(items) {
+  const tbody = document.getElementById('tableBody');
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(d => `
+    <tr>
+      <td data-label="Nome"><strong>${d.nome}</strong></td>
+      <td data-label="Tipo">${tipoBadge(d.tipo)}</td>
+      <td data-label="Tamanho">${d.tamanhoFormatado}</td>
+      <td data-label="Origem">${getOrigemLabel(d)}</td>
+      <td data-label="Data">${new Date(d.criadoEm).toLocaleDateString('pt-BR')}</td>
+      <td data-label="Ações" style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="downloadDoc('${d.id}')">Download</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+}
+
+let currentFilters = {};
+
+function applyFilters() {
+  let filtered = [...documentos];
+  const busca = document.getElementById('filtBusca').value.toLowerCase();
+  const tipo = document.getElementById('filtTipo').value;
+  const origem = document.getElementById('filtOrigem').value;
+
+  if (busca) filtered = filtered.filter(d => d.nome.toLowerCase().includes(busca));
+  if (tipo) filtered = filtered.filter(d => d.tipo === tipo);
+  if (origem === 'processo') filtered = filtered.filter(d => d.processoId);
+  else if (origem === 'cliente') filtered = filtered.filter(d => d.clienteId);
+  else if (origem === 'outros') filtered = filtered.filter(d => !d.processoId && !d.clienteId);
+
+  renderTable(filtered);
+}
+
+['filtBusca', 'filtTipo', 'filtOrigem'].forEach(id => {
+  document.getElementById(id).addEventListener('input', applyFilters);
+});
+
+window.downloadDoc = async id => {
+  try {
+    const { url } = await apiFetch(`/documentos/${id}/download`);
+    window.open(url, '_blank');
+  } catch (err) { showAlert(err.message); }
+};
+
+window.deleteDoc = async id => {
+  if (!confirm('Tem certeza que deseja excluir este documento?')) return;
+  try {
+    await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
+    showAlert('Documento excluído.', 'success');
+    loadDocumentos();
+    loadCota();
+  } catch (err) { showAlert(err.message); }
+};
+
+function resetModal() {
+  document.getElementById('uploadForm').reset();
+  document.getElementById('uploadAlert').style.display = 'none';
+  document.getElementById('uploadProgress').style.display = 'none';
+  document.getElementById('progressBar').style.width = '0%';
+}
+
+document.getElementById('btnUpload').addEventListener('click', () => { resetModal(); modal.classList.add('open'); });
+document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('btnCancelar').addEventListener('click', () => modal.classList.remove('open'));
+
+document.getElementById('btnEnviar').addEventListener('click', async () => {
+  const fileInput = document.getElementById('fileInput');
+  const file = fileInput.files[0];
+  if (!file) { showAlert('Selecione um arquivo.'); return; }
+
+  const btn = document.getElementById('btnEnviar');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  document.getElementById('uploadAlert').style.display = 'none';
+  document.getElementById('uploadProgress').style.display = 'block';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('tipo', document.getElementById('fTipo').value);
+  const processoId = document.getElementById('fProcesso').value;
+  const clienteId = document.getElementById('fCliente').value;
+  if (processoId) formData.append('processoId', processoId);
+  if (clienteId) formData.append('clienteId', clienteId);
+
+  const token = sessionStorage.getItem('access_token');
+  try {
+    const res = await fetch('/api/documentos/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!res.ok) {
+      let err = `HTTP ${res.status}`;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const b = await res.json();
+        err = b.message || b.title || err;
+      }
+      throw new Error(err);
+    }
+
+    modal.classList.remove('open');
+    showAlert('Documento enviado com sucesso.', 'success');
+    loadDocumentos();
+    loadCota();
+  } catch (err) {
+    document.getElementById('uploadAlert').textContent = err.message;
+    document.getElementById('uploadAlert').className = 'alert alert-error';
+    document.getElementById('uploadAlert').style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar';
+  }
+});
+
+await loadReferenceData();
+await loadCota();
+loadDocumentos();
+</script>
+</body>
+</html>

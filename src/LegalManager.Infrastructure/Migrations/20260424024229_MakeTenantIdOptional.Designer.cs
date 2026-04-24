@@ -3,17 +3,20 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LegalManager.Infrastructure.Persistence.Migrations
+namespace LegalManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424024229_MakeTenantIdOptional")]
+    partial class MakeTenantIdOptional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -470,13 +473,13 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<long>("TamanhoBytes")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid>("TenantId")
+                    b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Tipo")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UploadedPorId")
+                    b.Property<Guid?>("UploadedPorId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -1697,8 +1700,7 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("LegalManager.Domain.Entities.Usuario", "UploadedPor")
                         .WithMany()

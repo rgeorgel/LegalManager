@@ -43,6 +43,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<CreditoAI> CreditosAI => Set<CreditoAI>();
     public DbSet<TraducaoAndamento> TraducoesAndamentos => Set<TraducaoAndamento>();
     public DbSet<PecaGerada> PecasGeradas => Set<PecaGerada>();
+    public DbSet<Documento> Documentos => Set<Documento>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

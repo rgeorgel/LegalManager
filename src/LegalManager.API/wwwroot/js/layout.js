@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/pages/indicadores.html',   label: '📈 Indicadores',  pro: true },
   { href: '/pages/publicacoes.html',   label: '📰 Publicações',  pro: true },
   { href: '/pages/prazos.html',        label: '⏰ Prazos' },
+  { href: '/pages/documentos.html',    label: '📁 Documentos' },
   { href: '/pages/usuarios.html',      label: '🔑 Usuários' },
   { href: '/pages/configuracoes.html', label: '⚙️ Configurações' },
   { href: '/pages/assinatura.html',    label: '💳 Assinatura' },

@@ -9,6 +9,7 @@ using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
+using LegalManager.Infrastructure.Storage;
 using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -85,6 +86,8 @@ builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
 builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
 builder.Services.AddScoped<ITimesheetService, TimesheetService>();
 builder.Services.AddScoped<IPreferenciasNotificacaoService, PreferenciasNotificacaoService>();
+builder.Services.AddSingleton<IStorageService, OciStorageService>();
+builder.Services.AddScoped<IDocumentoService, DocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
