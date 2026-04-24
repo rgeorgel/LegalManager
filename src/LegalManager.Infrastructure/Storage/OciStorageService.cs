@@ -122,7 +122,7 @@ public class OciStorageService : IStorageService
         try
         {
             var uri = $"/{_bucketName}/{objectKey}";
-            var script = $"curl -s -X PUT '{_endpoint}{uri}' " +
+            var script = $"curl -s --globoff -X PUT '{_endpoint}{uri}' " +
                 $"-H 'Content-Type: {contentType}' " +
                 $"-H 'Content-Length: {data.Length}' " +
                 $"-H 'Expect:' " +

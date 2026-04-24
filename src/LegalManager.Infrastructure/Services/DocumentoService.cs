@@ -81,17 +81,19 @@ public class DocumentoService : IDocumentoService
         if (usadoBytes + fileStream.Length > COTA_BYTES)
             throw new InvalidOperationException("Cota de armazenamento excedida.");
 
+        var safeFileName = System.Text.RegularExpressions.Regex.Replace(fileName, @"[^A-Za-z0-9._\-]", "_");
+
         string objectKey;
         if (uploadInfo.ProcessoId.HasValue)
-            objectKey = $"{tenantId}/processos/{uploadInfo.ProcessoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{fileName}";
+            objectKey = $"{tenantId}/processos/{uploadInfo.ProcessoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
         else if (uploadInfo.ContratoId.HasValue)
-            objectKey = $"{tenantId}/contratos/{uploadInfo.ContratoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{fileName}";
+            objectKey = $"{tenantId}/contratos/{uploadInfo.ContratoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
         else if (uploadInfo.ClienteId.HasValue)
-            objectKey = $"{tenantId}/clientes/{uploadInfo.ClienteId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{fileName}";
+            objectKey = $"{tenantId}/clientes/{uploadInfo.ClienteId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
         else if (uploadInfo.ModeloId.HasValue)
-            objectKey = $"{tenantId}/modelos/{uploadInfo.ModeloId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{fileName}";
+            objectKey = $"{tenantId}/modelos/{uploadInfo.ModeloId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
         else
-            objectKey = $"{tenantId}/documentos/{DateTime.UtcNow:yyyyMMddHHmmss}_{fileName}";
+            objectKey = $"{tenantId}/documentos/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
 
         await _storageService.UploadAsync(fileStream, objectKey, contentType, ct);
 
