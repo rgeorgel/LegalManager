@@ -30,6 +30,16 @@
     .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
     .tab-badge.count { background:var(--color-primary); color:#fff; }
     @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} }
+    .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+    .pdf-modal-overlay.open { display:flex; }
+    .pdf-modal-content { background:#fff; border-radius:12px; width:95vw; height:92vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); }
+    .pdf-modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--color-border); background:#f9fafb; flex-shrink:0; }
+    .pdf-modal-title { font-weight:600; font-size:15px; color:var(--color-text); }
+    .pdf-modal-actions { display:flex; gap:10px; align-items:center; }
+    .pdf-modal-close { background:none; border:none; font-size:14px; color:var(--color-text-muted); cursor:pointer; padding:4px 8px; border-radius:4px; }
+    .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
+    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; }
+    #pdfFrame { width:100%; height:100%; border:none; }
   </style>
 </head>
 <body>
@@ -467,9 +477,24 @@
   </div>
 </div>
 
+<!-- Modal PDF Viewer -->
+<div class="pdf-modal-overlay" id="pdfModal">
+  <div class="pdf-modal-content">
+    <div class="pdf-modal-header">
+      <span class="pdf-modal-title" id="pdfTitle">Documento</span>
+      <div class="pdf-modal-actions">
+        <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">⬇ Download</button>
+        <button class="pdf-modal-close" id="pdfClose">✕ Fechar</button>
+      </div>
+    </div>
+    <div class="pdf-modal-body">
+      <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initLayout } from '/js/layout.js';
-import { getProcesso, updateProcesso, encerrarProcesso, getAndamentos, addAndamento, deleteAndamento } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos } from '/js/ia.js';
 
@@ -894,6 +919,7 @@ async function loadDocumentos() {
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="viewDoc('${d.id}')">Visualizar</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}')">Download</button>
           <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">Excluir</button>
         </div>
       </div>`).join('');
@@ -903,9 +929,12 @@ async function loadDocumentos() {
 }
 
 window.viewDoc = async id => {
+  const docs = await apiFetch(`/documentos/processo/${processoId}`);
+  const doc = docs?.find(d => d.id === id);
+  if (!doc) return;
   try {
     const { url } = await apiFetch(`/documentos/${id}/download`);
-    window.open(url, '_blank');
+    openPdfModal(url, doc.nome);
   } catch (err) { showAlert(err.message); }
 };
 
@@ -918,6 +947,17 @@ window.deleteDoc = async id => {
   } catch (err) { showAlert(err.message); }
 };
 
+window.downloadDoc = async id => {
+  try {
+    const { url } = await apiFetch(`/documentos/${id}/download`);
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.download = '';
+    a.click();
+  } catch (err) { showAlert(err.message); }
+};
+
 // Upload Documento
 function openDocModal() {
   document.getElementById('docForm').reset();
@@ -927,6 +967,46 @@ function openDocModal() {
 }
 
 document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocModal);
+
+// PDF Modal
+const pdfModal = document.getElementById('pdfModal');
+const pdfFrame = document.getElementById('pdfFrame');
+const pdfTitle = document.getElementById('pdfTitle');
+let currentPdfUrl = '';
+
+function openPdfModal(url, nome) {
+  currentPdfUrl = url;
+  pdfTitle.textContent = nome || 'Documento';
+  pdfFrame.src = url;
+  pdfModal.classList.add('open');
+}
+
+document.getElementById('pdfClose').addEventListener('click', () => {
+  pdfModal.classList.remove('open');
+  pdfFrame.src = '';
+});
+
+document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = currentPdfUrl;
+  a.target = '_blank';
+  a.download = '';
+  a.click();
+});
+
+pdfModal.addEventListener('click', e => {
+  if (e.target === pdfModal) {
+    pdfModal.classList.remove('open');
+    pdfFrame.src = '';
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && pdfModal.classList.contains('open')) {
+    pdfModal.classList.remove('open');
+    pdfFrame.src = '';
+  }
+});
 
 // NovoAndamento buttons (both tabs)
 [document.getElementById('btnAddAndamentoTab')].forEach(btn => {
