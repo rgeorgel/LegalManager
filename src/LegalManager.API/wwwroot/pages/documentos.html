@@ -23,8 +23,8 @@
     .pdf-modal-actions { display:flex; gap:10px; align-items:center; }
     .pdf-modal-close { background:none; border:none; font-size:14px; color:var(--color-text-muted); cursor:pointer; padding:4px 8px; border-radius:4px; }
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
-    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; }
-    #pdfObject { width:100%; height:100%; border:none; }
+    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; }
+    #pdfContainer { position:absolute; inset:0; }
   </style>
 </head>
 <body>
@@ -178,12 +178,11 @@
         <button class="pdf-modal-close" id="pdfClose">✕ Fechar</button>
       </div>
     </div>
-    <div class="pdf-modal-body">
+    <div class="pdf-modal-body" id="pdfContainer">
       <div id="pdfLoading" style="display:none;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
         <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
         <span>Carregando documento...</span>
       </div>
-      <object id="pdfObject" type="application/pdf" style="display:none;width:100%;height:100%;border:none"></object>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     </div>
   </div>
@@ -419,17 +418,20 @@ loadDocumentos();
 
 // PDF Modal
 const pdfModal = document.getElementById('pdfModal');
-const pdfObject = document.getElementById('pdfObject');
 const pdfTitle = document.getElementById('pdfTitle');
 let currentPdfUrl = '';
 
 function openPdfModal(url, nome) {
-  const obj = document.getElementById('pdfObject');
+  const container = document.getElementById('pdfContainer');
+  container.innerHTML = `
+    <div id="pdfLoading" style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
+      <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+      <span>Carregando documento...</span>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  `;
   currentPdfUrl = url;
   pdfTitle.textContent = nome || 'Documento';
-  document.getElementById('pdfLoading').style.display = 'flex';
-  obj.style.display = 'none';
-  obj.data = '';
   pdfModal.classList.add('open');
 
   fetch(url)
@@ -440,24 +442,24 @@ function openPdfModal(url, nome) {
     .then(blob => {
       if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
-      obj.data = blobUrl;
+      const obj = document.createElement('object');
+      obj.id = 'pdfObject';
       obj.type = blob.type || 'application/pdf';
-      obj.style.display = 'block';
-      document.getElementById('pdfLoading').style.display = 'none';
+      obj.data = blobUrl;
+      obj.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+      container.innerHTML = '';
+      container.appendChild(obj);
     })
     .catch(err => {
       console.error('PDF load error:', err);
       showAlert('Erro ao carregar documento: ' + err.message);
       pdfModal.classList.remove('open');
-      document.getElementById('pdfLoading').style.display = 'none';
     });
 }
 
 document.getElementById('pdfClose').addEventListener('click', () => {
   pdfModal.classList.remove('open');
-  const obj = document.getElementById('pdfObject');
-  obj.data = '';
-  obj.type = '';
+  document.getElementById('pdfContainer').innerHTML = '';
 });
 
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
@@ -471,14 +473,14 @@ document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
 pdfModal.addEventListener('click', e => {
   if (e.target === pdfModal) {
     pdfModal.classList.remove('open');
-    pdfObject.data = '';
+    document.getElementById('pdfContainer').innerHTML = '';
   }
 });
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && pdfModal.classList.contains('open')) {
     pdfModal.classList.remove('open');
-    pdfObject.data = '';
+    document.getElementById('pdfContainer').innerHTML = '';
   }
 });
 </script>
