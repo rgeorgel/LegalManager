@@ -442,13 +442,11 @@ function openPdfModal(url, nome) {
     .then(blob => {
       if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
-      const obj = document.createElement('object');
-      obj.id = 'pdfObject';
-      obj.type = blob.type || 'application/pdf';
-      obj.data = blobUrl;
-      obj.style.cssText = 'width:100%;height:100%;border:none;display:block;';
       container.innerHTML = '';
-      container.appendChild(obj);
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+      iframe.src = blobUrl;
+      container.appendChild(iframe);
     })
     .catch(err => {
       console.error('PDF load error:', err);
