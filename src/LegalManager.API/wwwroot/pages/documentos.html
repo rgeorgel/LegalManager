@@ -424,10 +424,14 @@ const pdfTitle = document.getElementById('pdfTitle');
 let currentPdfUrl = '';
 
 function openPdfModal(url, nome) {
+  const obj = document.getElementById('pdfObject');
+  if (obj.data) {
+    try { URL.revokeObjectURL(obj.data); } catch {}
+  }
   currentPdfUrl = url;
   pdfTitle.textContent = nome || 'Documento';
   document.getElementById('pdfLoading').style.display = 'flex';
-  document.getElementById('pdfObject').style.display = 'none';
+  obj.style.display = 'none';
   pdfModal.classList.add('open');
 
   fetch(url)
@@ -438,7 +442,6 @@ function openPdfModal(url, nome) {
     .then(blob => {
       if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
-      const obj = document.getElementById('pdfObject');
       obj.data = blobUrl;
       obj.type = blob.type || 'application/pdf';
       obj.style.display = 'block';
