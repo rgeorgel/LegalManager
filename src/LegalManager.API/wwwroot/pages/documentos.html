@@ -15,16 +15,16 @@
     .quota-bar { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin-top:8px; }
     .quota-fill { height:100%; background:var(--color-primary); transition:width 0.3s; }
     .quota-label { font-size:12px; color:var(--color-text-muted); margin-top:4px; }
-    .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+.pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
     .pdf-modal-overlay.open { display:flex; }
-    .pdf-modal-content { background:#fff; border-radius:12px; width:95vw; height:92vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); }
-    .pdf-modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--color-border); background:#f9fafb; flex-shrink:0; }
+    .pdf-modal-content { background:#fff; border-radius:12px; width:90vw; height:90vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); position:relative; }
+    .pdf-modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--color-border); background:#f9fafb; flex-shrink:0; z-index:10; }
     .pdf-modal-title { font-weight:600; font-size:15px; color:var(--color-text); }
     .pdf-modal-actions { display:flex; gap:10px; align-items:center; }
     .pdf-modal-close { background:none; border:none; font-size:14px; color:var(--color-text-muted); cursor:pointer; padding:4px 8px; border-radius:4px; }
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
-    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; }
-    #pdfContainer { position:absolute; inset:0; }
+    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
+    #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
   </style>
 </head>
 <body>
@@ -422,7 +422,7 @@ let currentPdfUrl = '';
 function openPdfModal(fileUrl, nome, token = '') {
   const container = document.getElementById('pdfContainer');
   container.innerHTML = `
-    <div id="pdfLoading" style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
+    <div id="pdfLoading" style="display:flex;align-items:center;justify-content:center;height:100%;width:100%;flex-direction:column;gap:12px;color:#fff;position:absolute;top:0;left:0;overflow:hidden;z-index:5">
       <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
       <span>Carregando documento...</span>
     </div>
@@ -442,7 +442,7 @@ function openPdfModal(fileUrl, nome, token = '') {
       const blobUrl = URL.createObjectURL(blob);
       container.innerHTML = '';
       const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;background:#fff;';
       iframe.src = blobUrl;
       container.appendChild(iframe);
     })
@@ -459,7 +459,7 @@ document.getElementById('pdfClose').addEventListener('click', () => {
 });
 
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
-  const token = sessionStorage.getItem('token') || '';
+  const token = sessionStorage.getItem('access_token') || '';
   const a = document.createElement('a');
   a.href = currentPdfUrl;
   if (token) a.headers = { 'Authorization': `Bearer ${token}` };
