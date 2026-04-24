@@ -425,13 +425,11 @@ let currentPdfUrl = '';
 
 function openPdfModal(url, nome) {
   const obj = document.getElementById('pdfObject');
-  if (obj.data) {
-    try { URL.revokeObjectURL(obj.data); } catch {}
-  }
   currentPdfUrl = url;
   pdfTitle.textContent = nome || 'Documento';
   document.getElementById('pdfLoading').style.display = 'flex';
   obj.style.display = 'none';
+  obj.data = '';
   pdfModal.classList.add('open');
 
   fetch(url)
