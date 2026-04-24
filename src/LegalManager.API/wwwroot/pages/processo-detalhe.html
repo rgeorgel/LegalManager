@@ -937,7 +937,7 @@ window.viewDoc = async id => {
   const docs = await apiFetch(`/documentos/processo/${processoId}`);
   const doc = docs?.find(d => d.id === id);
   if (!doc) return;
-  const token = sessionStorage.getItem('token');
+  const token = sessionStorage.getItem('access_token');
   openPdfModal(`/api/documentos/${id}/file`, doc.nome, token);
 };
 
