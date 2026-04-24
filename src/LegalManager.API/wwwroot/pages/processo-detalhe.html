@@ -39,7 +39,7 @@
     .pdf-modal-close { background:none; border:none; font-size:14px; color:var(--color-text-muted); cursor:pointer; padding:4px 8px; border-radius:4px; }
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
     .pdf-modal-body { flex:1; overflow:hidden; background:#525658; }
-    #pdfFrame { width:100%; height:100%; border:none; }
+    #pdfObject { width:100%; height:100%; border:none; }
   </style>
 </head>
 <body>
@@ -492,7 +492,7 @@
         <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
         <span>Carregando documento...</span>
       </div>
-      <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-same-origin allow-popups" style="display:none"></iframe>
+      <object id="pdfObject" type="application/pdf" style="display:none;width:100%;height:100%;border:none"></object>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     </div>
   </div>
@@ -989,7 +989,7 @@ document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocM
 
 // PDF Modal
 const pdfModal = document.getElementById('pdfModal');
-const pdfFrame = document.getElementById('pdfFrame');
+const pdfObject = document.getElementById('pdfObject');
 const pdfTitle = document.getElementById('pdfTitle');
 let currentPdfUrl = '';
 
@@ -997,20 +997,21 @@ function openPdfModal(url, nome) {
   currentPdfUrl = url;
   pdfTitle.textContent = nome || 'Documento';
   document.getElementById('pdfLoading').style.display = 'flex';
+  document.getElementById('pdfObject').style.display = 'none';
   pdfModal.classList.add('open');
 
   fetch(url)
     .then(res => {
-      console.log('[PDF] status:', res.status, 'size:', res.headers.get('content-length'));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.blob();
     })
     .then(blob => {
-      console.log('[PDF] blob size:', blob.size);
       if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
-      pdfFrame.src = blobUrl;
-      pdfFrame.style.display = 'block';
+      const obj = document.getElementById('pdfObject');
+      obj.data = blobUrl;
+      obj.type = blob.type || 'application/pdf';
+      obj.style.display = 'block';
       document.getElementById('pdfLoading').style.display = 'none';
     })
     .catch(err => {
@@ -1023,7 +1024,9 @@ function openPdfModal(url, nome) {
 
 document.getElementById('pdfClose').addEventListener('click', () => {
   pdfModal.classList.remove('open');
-  pdfFrame.src = '';
+  const obj = document.getElementById('pdfObject');
+  obj.data = '';
+  obj.type = '';
 });
 
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
@@ -1037,14 +1040,14 @@ document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
 pdfModal.addEventListener('click', e => {
   if (e.target === pdfModal) {
     pdfModal.classList.remove('open');
-    pdfFrame.src = '';
+    pdfObject.data = '';
   }
 });
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && pdfModal.classList.contains('open')) {
     pdfModal.classList.remove('open');
-    pdfFrame.src = '';
+    pdfObject.data = '';
   }
 });
 
