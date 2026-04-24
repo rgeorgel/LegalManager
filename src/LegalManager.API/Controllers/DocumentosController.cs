@@ -93,6 +93,13 @@ public class DocumentosController : ControllerBase
         return Ok(new { url });
     }
 
+    [HttpGet("{id:guid}/file")]
+    public async Task<IActionResult> GetFile(Guid id, CancellationToken ct = default)
+    {
+        var (stream, contentType, fileName) = await _service.GetFileStreamAsync(id, ct);
+        return File(stream, contentType, fileName);
+    }
+
     [HttpGet("cota")]
     public async Task<ActionResult<CotaArmazenamentoDto>> GetCota(CancellationToken ct = default)
     {

@@ -139,6 +139,16 @@ public class DocumentoService : IDocumentoService
         return await _storageService.GetPresignedUrlAsync(documento.ObjectKey, 30, ct);
     }
 
+    public async Task<(Stream stream, string contentType, string fileName)> GetFileStreamAsync(Guid id, CancellationToken ct = default)
+    {
+        var documento = await _context.Documentos
+            .FirstOrDefaultAsync(d => d.Id == id, ct)
+            ?? throw new KeyNotFoundException("Documento não encontrado.");
+
+        var stream = await _storageService.DownloadAsync(documento.ObjectKey, ct);
+        return (stream, documento.ContentType, documento.Nome);
+    }
+
     public async Task<CotaArmazenamentoDto> GetCotaAsync(CancellationToken ct = default)
     {
         var usadoBytes = await _context.Documentos

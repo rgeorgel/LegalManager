@@ -11,5 +11,6 @@ public interface IDocumentoService
     Task<DocumentoDto> UploadAsync(Stream fileStream, string fileName, string contentType, DocumentoUploadDto uploadInfo, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<string> GetDownloadUrlAsync(Guid id, CancellationToken ct = default);
+    Task<(Stream stream, string contentType, string fileName)> GetFileStreamAsync(Guid id, CancellationToken ct = default);
     Task<CotaArmazenamentoDto> GetCotaAsync(CancellationToken ct = default);
 }

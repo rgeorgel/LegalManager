@@ -325,10 +325,8 @@ function applyFilters() {
 window.viewDoc = async id => {
   const doc = documentos.find(d => d.id === id);
   if (!doc) return;
-  try {
-    const { url } = await apiFetch(`/documentos/${id}/download`);
-    openPdfModal(url, doc.nome);
-  } catch (err) { showAlert(err.message); }
+  const token = sessionStorage.getItem('token');
+  openPdfModal(`/api/documentos/${id}/file`, doc.nome, token);
 };
 
 window.downloadDoc = async id => {
@@ -421,7 +419,7 @@ const pdfModal = document.getElementById('pdfModal');
 const pdfTitle = document.getElementById('pdfTitle');
 let currentPdfUrl = '';
 
-function openPdfModal(url, nome) {
+function openPdfModal(fileUrl, nome, token = '') {
   const container = document.getElementById('pdfContainer');
   container.innerHTML = `
     <div id="pdfLoading" style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
@@ -430,11 +428,11 @@ function openPdfModal(url, nome) {
     </div>
     <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
   `;
-  currentPdfUrl = url;
+  currentPdfUrl = fileUrl;
   pdfTitle.textContent = nome || 'Documento';
   pdfModal.classList.add('open');
 
-  fetch(url)
+  fetch(fileUrl, token ? { headers: { 'Authorization': `Bearer ${token}` } } : {})
     .then(res => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.blob();
@@ -461,10 +459,11 @@ document.getElementById('pdfClose').addEventListener('click', () => {
 });
 
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
+  const token = sessionStorage.getItem('token') || '';
   const a = document.createElement('a');
   a.href = currentPdfUrl;
+  if (token) a.headers = { 'Authorization': `Bearer ${token}` };
   a.target = '_blank';
-  a.download = '';
   a.click();
 });
 
