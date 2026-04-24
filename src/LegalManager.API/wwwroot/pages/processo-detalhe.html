@@ -530,11 +530,25 @@ function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-B
 function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
 
 async function loadProcesso() {
+  console.log('[processo-detalhe] loadProcesso called, id:', processoId);
   try {
+    console.log('[processo-detalhe] calling getProcesso...');
     processo = await getProcesso(processoId);
+    console.log('[processo-detalhe] getProcesso returned:', processo);
     renderProcesso();
+    console.log('[processo-detalhe] calling loadAndamentos...');
     await loadAndamentos();
-  } catch { window.location.href = '/pages/processos.html'; }
+    console.log('[processo-detalhe] done loading');
+  } catch (e) {
+    console.error('[processo-detalhe] loadProcesso error:', e);
+    // Don't redirect immediately - show error instead
+    const alertEl = document.getElementById('alertMsg');
+    if (alertEl) {
+      alertEl.className = 'alert alert-error';
+      alertEl.textContent = 'Erro ao carregar processo: ' + e.message;
+      alertEl.style.display = 'block';
+    }
+  }
 }
 
 function renderProcesso() {
@@ -987,16 +1001,21 @@ function openPdfModal(url, nome) {
 
   fetch(url)
     .then(res => {
-      if (!res.ok) throw new Error('Falha ao carregar documento');
+      console.log('[PDF] status:', res.status, 'size:', res.headers.get('content-length'));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.blob();
     })
     .then(blob => {
+      console.log('[PDF] blob size:', blob.size);
+      if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
       pdfFrame.src = blobUrl;
+      pdfFrame.style.display = 'block';
       document.getElementById('pdfLoading').style.display = 'none';
     })
     .catch(err => {
-      showAlert(err.message);
+      console.error('[PDF] error:', err);
+      showAlert('Erro ao carregar documento: ' + err.message);
       pdfModal.classList.remove('open');
       document.getElementById('pdfLoading').style.display = 'none';
     });

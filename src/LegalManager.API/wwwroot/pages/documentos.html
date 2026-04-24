@@ -429,19 +429,23 @@ function openPdfModal(url, nome) {
   document.getElementById('pdfLoading').style.display = 'flex';
   pdfModal.classList.add('open');
 
-  // Fetch PDF as blob and display in iframe (avoids cross-origin block)
   fetch(url)
     .then(res => {
-      if (!res.ok) throw new Error('Falha ao carregar documento');
+      console.log('PDF fetch status:', res.status, res.headers.get('content-type'), 'size:', res.headers.get('content-length'));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.blob();
     })
     .then(blob => {
+      console.log('Blob size:', blob.size, 'type:', blob.type);
+      if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
       pdfFrame.src = blobUrl;
+      pdfFrame.style.display = 'block';
       document.getElementById('pdfLoading').style.display = 'none';
     })
     .catch(err => {
-      showAlert(err.message);
+      console.error('PDF load error:', err);
+      showAlert('Erro ao carregar documento: ' + err.message);
       pdfModal.classList.remove('open');
       document.getElementById('pdfLoading').style.display = 'none';
     });
