@@ -488,7 +488,12 @@
       </div>
     </div>
     <div class="pdf-modal-body">
-      <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+      <div id="pdfLoading" style="display:none;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
+        <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+        <span>Carregando documento...</span>
+      </div>
+      <iframe id="pdfFrame" src="" sandbox="allow-scripts allow-same-origin allow-popups" style="display:none"></iframe>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     </div>
   </div>
 </div>
@@ -977,8 +982,24 @@ let currentPdfUrl = '';
 function openPdfModal(url, nome) {
   currentPdfUrl = url;
   pdfTitle.textContent = nome || 'Documento';
-  pdfFrame.src = url;
+  document.getElementById('pdfLoading').style.display = 'flex';
   pdfModal.classList.add('open');
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error('Falha ao carregar documento');
+      return res.blob();
+    })
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      pdfFrame.src = blobUrl;
+      document.getElementById('pdfLoading').style.display = 'none';
+    })
+    .catch(err => {
+      showAlert(err.message);
+      pdfModal.classList.remove('open');
+      document.getElementById('pdfLoading').style.display = 'none';
+    });
 }
 
 document.getElementById('pdfClose').addEventListener('click', () => {
