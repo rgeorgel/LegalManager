@@ -125,6 +125,7 @@ public class OciStorageService : IStorageService
             var script = $"curl -s -X PUT '{_endpoint}{uri}' " +
                 $"-H 'Content-Type: {contentType}' " +
                 $"-H 'Content-Length: {data.Length}' " +
+                $"-H 'Expect:' " +
                 $"-H 'x-amz-content-sha256: {payloadHash}' " +
                 $"-H 'x-amz-date: {datetimeStr}' " +
                 $"-H 'Authorization: {authHeader}' " +
@@ -133,21 +134,30 @@ public class OciStorageService : IStorageService
             var startInfo = new ProcessStartInfo
             {
                 FileName = "bash",
-                Arguments = $"-c \"{script}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            startInfo.ArgumentList.Add("-c");
+            startInfo.ArgumentList.Add(script);
 
             using var process = new Process { StartInfo = startInfo };
             process.Start();
-            var output = await process.StandardOutput.ReadToEndAsync(ct);
-            var error = await process.StandardError.ReadToEndAsync(ct);
+
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+            var stderrTask = process.StandardError.ReadToEndAsync(ct);
+            await Task.WhenAll(stdoutTask, stderrTask);
             await process.WaitForExitAsync(ct);
 
+            var output = stdoutTask.Result;
+            var error = stderrTask.Result;
+
             if (process.ExitCode != 0)
-                throw new Exception($"Upload failed: {error}");
+                throw new Exception($"Upload failed (exit {process.ExitCode}): {error?.Trim()} | response: {output?.Trim()}");
+
+            if (!string.IsNullOrWhiteSpace(output) && output.Contains("<Error>"))
+                throw new Exception($"OCI upload error: {output.Trim()}");
 
             return objectKey;
         }
@@ -175,21 +185,26 @@ public class OciStorageService : IStorageService
         var startInfo = new ProcessStartInfo
         {
             FileName = "bash",
-            Arguments = $"-c \"{script}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        startInfo.ArgumentList.Add("-c");
+        startInfo.ArgumentList.Add(script);
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();
+
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+        var stderrTask = process.StandardError.ReadToEndAsync(ct);
+        await Task.WhenAll(stdoutTask, stderrTask);
         await process.WaitForExitAsync(ct);
-        await process.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await process.StandardError.ReadToEndAsync(ct);
+
+        var stderr = stderrTask.Result;
 
         if (process.ExitCode != 0)
-            throw new Exception($"Download failed: {stderr}");
+            throw new Exception($"Download failed (exit {process.ExitCode}): {stderr?.Trim()}");
 
         return new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Delete, 4096, FileOptions.DeleteOnClose);
     }
@@ -268,20 +283,26 @@ print(url)
         var startInfo = new ProcessStartInfo
         {
             FileName = "bash",
-            Arguments = $"-c \"{script}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        startInfo.ArgumentList.Add("-c");
+        startInfo.ArgumentList.Add(script);
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();
-        await process.WaitForExitAsync(ct);
-        await process.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await process.StandardError.ReadToEndAsync(ct);
 
-        if (process.ExitCode != 0 && !stderr.Contains("NoContent"))
-            throw new Exception($"Delete failed: {stderr}");
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+        var stderrTask = process.StandardError.ReadToEndAsync(ct);
+        await Task.WhenAll(stdoutTask, stderrTask);
+        await process.WaitForExitAsync(ct);
+
+        var stdout = stdoutTask.Result;
+        var stderr = stderrTask.Result;
+
+        if (process.ExitCode != 0 && !stderr.Contains("NoContent") && !stdout.Contains("NoContent"))
+            throw new Exception($"Delete failed (exit {process.ExitCode}): {stderr?.Trim()} | response: {stdout?.Trim()}");
     }
 }

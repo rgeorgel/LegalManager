@@ -51,6 +51,7 @@ public class DocumentosController : ControllerBase
 
     [HttpPost("upload")]
     [RequestSizeLimit(100_000_000)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 100_000_000)]
     public async Task<ActionResult<DocumentoDto>> Upload(
         IFormFile file,
         [FromForm] Guid? processoId,
