@@ -502,6 +502,7 @@
 import { initLayout } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos } from '/js/ia.js';
+import { getProcesso, getAndamentos } from '/js/processos.js';
 
 initLayout();
 
@@ -530,25 +531,11 @@ function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-B
 function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
 
 async function loadProcesso() {
-  console.log('[processo-detalhe] loadProcesso called, id:', processoId);
   try {
-    console.log('[processo-detalhe] calling getProcesso...');
     processo = await getProcesso(processoId);
-    console.log('[processo-detalhe] getProcesso returned:', processo);
     renderProcesso();
-    console.log('[processo-detalhe] calling loadAndamentos...');
     await loadAndamentos();
-    console.log('[processo-detalhe] done loading');
-  } catch (e) {
-    console.error('[processo-detalhe] loadProcesso error:', e);
-    // Don't redirect immediately - show error instead
-    const alertEl = document.getElementById('alertMsg');
-    if (alertEl) {
-      alertEl.className = 'alert alert-error';
-      alertEl.textContent = 'Erro ao carregar processo: ' + e.message;
-      alertEl.style.display = 'block';
-    }
-  }
+  } catch { window.location.href = '/pages/processos.html'; }
 }
 
 function renderProcesso() {
