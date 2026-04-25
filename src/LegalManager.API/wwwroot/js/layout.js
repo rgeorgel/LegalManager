@@ -19,6 +19,14 @@ const NAV_ITEMS = [
   { href: '/pages/assinatura.html',    label: '💳 Assinatura' },
 ];
 
+const BOTTOM_NAV_ITEMS = [
+  { href: '/pages/dashboard.html', icon: '📊', label: 'Dashboard' },
+  { href: '/pages/processos.html', icon: '⚖️', label: 'Processos' },
+  { href: '/pages/tarefas.html', icon: '✅', label: 'Tarefas' },
+  { href: '/pages/agenda.html', icon: '📅', label: 'Agenda' },
+  { action: 'menu', icon: '☰', label: 'Menu' },
+];
+
 export function isPlanoFree() {
   return (getUser()?.plano ?? 'Free') === 'Free';
 }
@@ -36,38 +44,118 @@ export function initLayout() {
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
 
-  // Inject full nav
-  const navEl = document.querySelector('.sidebar-nav');
-  if (navEl) {
-    const current = window.location.pathname;
-    const free = isPlanoFree();
-    navEl.innerHTML = NAV_ITEMS.map(item => {
-      const locked = item.pro && free;
-      const activeClass = item.href === current ? ' class="active"' : '';
-      const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
-      if (locked) {
-        return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
-      }
-      return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
-    }).join('');
+  injectSidebarNav();
+  injectBottomNav();
+  setupMobileMenu();
+  injectNotificationBell();
+}
 
-    navEl.querySelectorAll('a').forEach(link => {
-      if (link.dataset.locked) {
-        link.addEventListener('click', e => {
-          e.preventDefault();
-          showUpgradeToast();
-        });
-      } else {
-        link.addEventListener('click', () => document.querySelector('.sidebar')?.classList.remove('open'));
+function injectSidebarNav() {
+  const navEl = document.querySelector('.sidebar-nav');
+  if (!navEl) return;
+
+  const current = window.location.pathname;
+  const free = isPlanoFree();
+
+  navEl.innerHTML = NAV_ITEMS.map(item => {
+    const locked = item.pro && free;
+    const activeClass = item.href === current ? ' class="active"' : '';
+    const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
+    if (locked) {
+      return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
+    }
+    return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
+  }).join('');
+
+  navEl.querySelectorAll('a').forEach(link => {
+    if (link.dataset.locked) {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        showUpgradeToast();
+      });
+    } else {
+      link.addEventListener('click', () => closeMobileMenu());
+    }
+  });
+}
+
+function injectBottomNav() {
+  const existing = document.getElementById('bottomNav');
+  if (existing) existing.remove();
+
+  const bottomNav = document.createElement('nav');
+  bottomNav.id = 'bottomNav';
+  bottomNav.className = 'bottom-nav';
+
+  const current = window.location.pathname;
+
+  bottomNav.innerHTML = `
+    <div class="bottom-nav-inner">
+      ${BOTTOM_NAV_ITEMS.map(item => {
+        const isActive = item.href && item.href === current;
+        const activeClass = isActive ? ' active' : '';
+        if (item.action === 'menu') {
+          return `<div class="bottom-nav-item${activeClass}" data-action="menu" title="Menu">
+            <span>${item.icon}</span>
+            <span>${item.label}</span>
+          </div>`;
+        }
+        return `<a href="${item.href}" class="bottom-nav-item${activeClass}">
+          <span>${item.icon}</span>
+          <span>${item.label}</span>
+        </a>`;
+      }).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(bottomNav);
+
+  bottomNav.querySelectorAll('.bottom-nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      if (item.dataset.action === 'menu') {
+        e.preventDefault();
+        toggleMobileMenu();
       }
     });
-  }
+  });
+}
 
+function setupMobileMenu() {
   const hamburger = document.getElementById('hamburger');
   const sidebar = document.querySelector('.sidebar');
-  hamburger?.addEventListener('click', () => sidebar?.classList.toggle('open'));
 
-  injectNotificationBell();
+  hamburger?.addEventListener('click', () => toggleMobileMenu());
+
+  let overlay = document.getElementById('sidebarOverlay');
+
+  function toggleMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    const isOpen = sidebar.classList.contains('open');
+
+    if (!isOpen) {
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'sidebarOverlay';
+        overlay.className = 'sidebar-overlay';
+        overlay.addEventListener('click', closeMobileMenu);
+        document.body.appendChild(overlay);
+      }
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+      sidebar.classList.add('open');
+    } else {
+      closeMobileMenu();
+    }
+  }
+
+  window.closeMobileMenu = closeMobileMenu;
+
+  function closeMobileMenu() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar?.classList.remove('open');
+    overlay?.classList.remove('visible');
+  }
 }
 
 function injectNotificationBell() {
@@ -101,7 +189,6 @@ function injectNotificationBell() {
   });
 
   loadNotifCount();
-  // refresh count every 60s
   setInterval(loadNotifCount, 60000);
 }
 
@@ -188,7 +275,7 @@ export function showUpgradeToast(msg) {
     toast = document.createElement('div');
     toast.id = 'upgradeToast';
     toast.style.cssText = [
-      'position:fixed;bottom:24px;right:24px;z-index:9999',
+      'position:fixed;bottom:80px;right:24px;z-index:9999',
       'background:#0f172a;border:1px solid #f59e0b;color:#e2e8f0',
       'border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.4)',
       'display:flex;align-items:center;gap:12px;max-width:340px',
