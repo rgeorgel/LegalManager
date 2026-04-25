@@ -194,6 +194,7 @@ public class WebhookController(
 
         switch (eventType)
         {
+            case "checkout.completed":
             case "billing.paid":
             case "subscription.completed":
             case "subscription.renewed":
@@ -270,11 +271,22 @@ public class WebhookController(
         logger.LogInformation("Assinatura cancelada via webhook para tenant {TenantId}, expira em {Data}", tenantId, expiraEm);
     }
 
+    private static JsonElement? ExtrairDataObject(JsonElement root)
+    {
+        var data = root.GetProperty("data");
+        foreach (var key in new[] { "checkout", "billing", "subscription" })
+            if (data.TryGetProperty(key, out var obj))
+                return obj;
+        return null;
+    }
+
     private static Guid? ExtrairTenantId(JsonElement root)
     {
         try
         {
-            var metadata = root.GetProperty("data").GetProperty("billing").GetProperty("metadata");
+            var obj = ExtrairDataObject(root);
+            if (obj is null) return null;
+            var metadata = obj.Value.GetProperty("metadata");
             if (metadata.TryGetProperty("tenantId", out var tid) &&
                 Guid.TryParse(tid.GetString(), out var guid))
                 return guid;
@@ -287,7 +299,9 @@ public class WebhookController(
     {
         try
         {
-            var metadata = root.GetProperty("data").GetProperty("billing").GetProperty("metadata");
+            var obj = ExtrairDataObject(root);
+            if (obj is null) return null;
+            var metadata = obj.Value.GetProperty("metadata");
             return metadata.TryGetProperty(key, out var val) ? val.GetString() : null;
         }
         catch { return null; }
@@ -297,15 +311,20 @@ public class WebhookController(
     {
         try
         {
-            var amount = root.GetProperty("data").GetProperty("billing").GetProperty("amount");
-            return amount.GetInt32() / 100m;
+            var obj = ExtrairDataObject(root);
+            if (obj is null) return 0;
+            return obj.Value.GetProperty("amount").GetInt32() / 100m;
         }
         catch { return 0; }
     }
 
     private static string? ExtrairBillingId(JsonElement root)
     {
-        try { return root.GetProperty("data").GetProperty("billing").GetProperty("id").GetString(); }
+        try
+        {
+            var obj = ExtrairDataObject(root);
+            return obj?.GetProperty("id").GetString();
+        }
         catch { return null; }
     }
 }
