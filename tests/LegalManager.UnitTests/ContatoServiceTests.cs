@@ -171,4 +171,183 @@ public class ContatoServiceTests
         Assert.Equal(1, result.Total);
         Assert.Equal("Maria Santos", result.Items.First().Nome);
     }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorTipoContato()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Cliente PF", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow },
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Parte PF", Tipo = TipoPessoa.PF, TipoContato = TipoContato.ParteContraria, Ativo = true, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, TipoContato.Cliente, null, null, null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Cliente PF", result.Items.First().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorTipoPessoa()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Pessoa Física", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow },
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Pessoa Jurídica", Tipo = TipoPessoa.PJ, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, TipoPessoa.PJ, null, null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Pessoa Jurídica", result.Items.First().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorTag()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            new Contato
+            {
+                Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Com Tag VIP", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente,
+                Ativo = true, CriadoEm = DateTime.UtcNow,
+                Tags = [new ContatoTag { Id = Guid.NewGuid(), Tag = "vip" }]
+            },
+            new Contato
+            {
+                Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Sem Tag", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente,
+                Ativo = true, CriadoEm = DateTime.UtcNow,
+                Tags = []
+            }
+        );
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, "vip", null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Com Tag VIP", result.Items.First().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorAtivo()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Ativo", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow },
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Inativo", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = false, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, true));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Ativo", result.Items.First().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveSuportarCombinacaoDeFiltros()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "João PF Cliente", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow },
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Maria PF Cliente", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow },
+            new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Pedro PJ Cliente", Tipo = TipoPessoa.PJ, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var result = await service.GetAllAsync(new ContatoFiltroDto("João", null, TipoPessoa.PF, null, true));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("João PF Cliente", result.Items.First().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DevePaginarCorretamente()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        for (int i = 0; i < 25; i++)
+        {
+            ctx.Contatos.Add(new Contato
+            {
+                Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = $"Contato {i:D2}",
+                Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow
+            });
+        }
+        await ctx.SaveChangesAsync();
+
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var page1 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 10));
+        var page2 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 2, 10));
+        var page3 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 3, 10));
+
+        Assert.Equal(10, page1.Items.Count());
+        Assert.Equal(10, page2.Items.Count());
+        Assert.Equal(5, page3.Items.Count());
+        Assert.Equal(25, page1.Total);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveSetarAtivoTrue_PorPadrao()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var dto = new CreateContatoDto(TipoPessoa.PF, TipoContato.Cliente, "Teste",
+            "000.000.000-00", null, "teste@teste.com", null, null, null, null, null, null, null, false, null);
+
+        var result = await service.CreateAsync(dto);
+
+        Assert.True(result.Ativo);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveSuportarMultiplasTags()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var dto = new CreateContatoDto(TipoPessoa.PF, TipoContato.Cliente, "Teste Tags",
+            "000.000.000-00", null, "tags@teste.com", null, null, null, null, null, null, null, false, ["vip", "priority", "follow-up"]);
+
+        var result = await service.CreateAsync(dto);
+
+        Assert.Equal(3, result.Tags.Count);
+        Assert.Contains("vip", result.Tags);
+        Assert.Contains("priority", result.Tags);
+        Assert.Contains("follow-up", result.Tags);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveLancarKeyNotFoundException_QuandoContatoNaoExiste()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
+        var service = new ContatoService(ctx, tenantCtx);
+
+        var dto = new UpdateContatoDto(TipoPessoa.PF, TipoContato.Cliente, "Teste",
+            null, null, null, null, null, null, null, null, null, null, false, null);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateAsync(Guid.NewGuid(), dto));
+    }
 }

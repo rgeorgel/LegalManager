@@ -211,4 +211,183 @@ public class ProcessoServiceTests
         Assert.Equal(1, result.Total);
         Assert.Equal(StatusProcesso.Ativo, result.Items.First().Status);
     }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorAreaDireito()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        ctx.Processos.AddRange(
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0001",
+                AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow },
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0002",
+                AreaDireito = AreaDireito.Trabalhista, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, AreaDireito.Trabalhista, null, null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal(AreaDireito.Trabalhista, result.Items.First().AreaDireito);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorAdvogadoResponsavel()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var outroAdvogado = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Outro Advogado",
+            Email = "outro@adv.com", UserName = "outro@adv.com",
+            Perfil = PerfilUsuario.Advogado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Users.Add(outroAdvogado);
+        await ctx.SaveChangesAsync();
+
+        ctx.Processos.AddRange(
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0001",
+                AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, AdvogadoResponsavelId = usuario.Id, CriadoEm = DateTime.UtcNow },
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0002",
+                AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, AdvogadoResponsavelId = outroAdvogado.Id, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, usuario.Id, null));
+
+        Assert.Equal(1, result.Total);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorContatoId()
+    {
+        var (ctx, tenant, usuario, contato) = await SeedAsync();
+        var outroContato = new Contato
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Outro Cliente",
+            Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Contatos.Add(outroContato);
+
+        var processo1 = new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow };
+        var processo2 = new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0002",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Processos.AddRange(processo1, processo2);
+
+        ctx.ProcessoPartes.AddRange(
+            new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = processo1.Id, ContatoId = contato.Id, TipoParte = TipoParteProcesso.Autor },
+            new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = processo2.Id, ContatoId = outroContato.Id, TipoParte = TipoParteProcesso.Reu }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, contato.Id));
+
+        Assert.Equal(1, result.Total);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveSuportarCombinacaoDeFiltros()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        ctx.Processos.AddRange(
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0001",
+                AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow },
+            new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0002",
+                AreaDireito = AreaDireito.Trabalhista, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Encerrado, CriadoEm = DateTime.UtcNow }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, StatusProcesso.Encerrado, AreaDireito.Trabalhista, null, null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal(AreaDireito.Trabalhista, result.Items.First().AreaDireito);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DevePaginarCorretamente()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        for (int i = 0; i < 25; i++)
+        {
+            ctx.Processos.Add(new Processo
+            {
+                Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = $"000{i:D2}",
+                AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+                Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+            });
+        }
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var page1 = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, 1, 10));
+        var page3 = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, 3, 10));
+
+        Assert.Equal(10, page1.Items.Count());
+        Assert.Equal(5, page3.Items.Count());
+        Assert.Equal(25, page1.Total);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveAtribuirTenantIdCorretamente()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null);
+
+        var result = await service.CreateAsync(dto);
+
+        var saved = await ctx.Processos.FindAsync(result.Id);
+        Assert.NotNull(saved);
+        Assert.Equal(tenant.Id, saved.TenantId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DeveLancarExcecao_QuandoNumeroCNJDuplicadoNoMesmoTenant()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto1 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null);
+        await service.CreateAsync(dto1);
+
+        var dto2 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
+            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, null, null);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(dto2));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new UpdateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, 10000m, null, null, null, null, null, null);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateAsync(Guid.NewGuid(), dto));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteAsync(Guid.NewGuid()));
+    }
 }
