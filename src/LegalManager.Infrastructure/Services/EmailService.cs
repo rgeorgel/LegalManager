@@ -233,4 +233,48 @@ public class EmailService : IEmailService
             """;
         await _resend.EmailSendAsync(CriarMensagem(email, $"Atualização do processo {numeroCNJ}", html));
     }
+
+    public async Task EnviarCobrancaAsync(string email, string nomeCliente, string nomeEscritorio,
+        decimal valor, DateTime vencimento, string? pixQrCodeBase64, string? pixBrCode, CancellationToken ct = default)
+    {
+        string imgTag = "";
+        if (!string.IsNullOrEmpty(pixQrCodeBase64))
+        {
+            imgTag = $"<div style=\"text-align:center;margin:20px 0\"><img src=\"data:image/png;base64,{pixQrCodeBase64}\" alt=\"QR Code PIX\" style=\"width:180px;height:180px;border:1px solid #e5e7eb;border-radius:8px\" /></div>";
+        }
+
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ LegalManager</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Cobrança de Honorários</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeCliente)}</strong>!</p>
+                <p>O escritório <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> registrou uma cobrança de honorários.</p>
+
+                <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0">
+                  <p style="margin:0 0 8px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Detalhes da cobrança</p>
+                  <p style="margin:4px 0;font-size:18px"><strong>Valor:</strong> {valor:C2}</p>
+                  <p style="margin:4px 0"><strong>Vencimento:</strong> {vencimento:dd/MM/yyyy}</p>
+                </div>
+
+                {imgTag}
+
+                <p style="text-align:center">
+                  <a href="{_config["App:FrontendUrl"]}/pages/financeiro.html"
+                     style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
+                    Ver detalhes
+                  </a>
+                </p>
+
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Em caso de dúvidas, entre em contato com o escritório.<br>
+                  Não responda este e-mail.
+                </p>
+              </div>
+            </div>
+            """;
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Cobrança de honorários — vencimento {vencimento:dd/MM/yyyy}", html));
+    }
 }

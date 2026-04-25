@@ -13,4 +13,5 @@ public interface IEmailService
     Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario, string numeroCNJ, CancellationToken ct = default);
     Task EnviarAcessoPortalAsync(string email, string nomeCliente, string nomeEscritorio, string senha, string portalUrl, CancellationToken ct = default);
     Task EnviarAndamentoTraduzidoAsync(string email, string nomeCliente, string numeroCNJ, string andamentoTraduzido, CancellationToken ct = default);
+    Task EnviarCobrancaAsync(string email, string nomeCliente, string nomeEscritorio, decimal valor, DateTime vencimento, string? pixQrCodeBase64, string? pixBrCode, CancellationToken ct = default);
 }
