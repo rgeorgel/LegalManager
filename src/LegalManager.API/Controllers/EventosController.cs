@@ -2,6 +2,8 @@ using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
+using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +15,14 @@ namespace LegalManager.API.Controllers;
 public class EventosController : ControllerBase
 {
     private readonly IEventoService _service;
+    private readonly IAuditService _audit;
+    private readonly ITenantContext _tenantContext;
 
-    public EventosController(IEventoService service)
+    public EventosController(IEventoService service, IAuditService audit, ITenantContext tenantContext)
     {
         _service = service;
+        _audit = audit;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
@@ -49,6 +55,7 @@ public class EventosController : ControllerBase
     public async Task<ActionResult<EventoResponseDto>> Create([FromBody] CreateEventoDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Evento, result.Id, null, dto), ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -57,7 +64,10 @@ public class EventosController : ControllerBase
     {
         try
         {
-            return Ok(await _service.UpdateAsync(id, dto, ct));
+            var existing = await _service.GetByIdAsync(id, ct);
+            var result = await _service.UpdateAsync(id, dto, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Evento, id, existing, result, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
         }
         catch (KeyNotFoundException)
         {
@@ -70,7 +80,9 @@ public class EventosController : ControllerBase
     {
         try
         {
+            var existing = await _service.GetByIdAsync(id, ct);
             await _service.DeleteAsync(id, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Delete, AuditEntities.Evento, id, existing, null, HttpContext.GetClientIpAddress()), ct);
             return NoContent();
         }
         catch (KeyNotFoundException)

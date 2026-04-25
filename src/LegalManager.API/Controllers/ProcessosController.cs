@@ -2,6 +2,8 @@ using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Processos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
+using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,11 +18,15 @@ public class ProcessosController : ControllerBase
 {
     private readonly IProcessoService _service;
     private readonly IMonitoramentoService _monitoramento;
+    private readonly IAuditService _audit;
+    private readonly ITenantContext _tenantContext;
 
-    public ProcessosController(IProcessoService service, IMonitoramentoService monitoramento)
+    public ProcessosController(IProcessoService service, IMonitoramentoService monitoramento, IAuditService audit, ITenantContext tenantContext)
     {
         _service = service;
         _monitoramento = monitoramento;
+        _audit = audit;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
@@ -52,21 +58,29 @@ public class ProcessosController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
-    [HttpPost]
+[HttpPost]
     public async Task<ActionResult<ProcessoResponseDto>> Create(CreateProcessoDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Processo, result.Id, null, dto), ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProcessoResponseDto>> Update(Guid id, UpdateProcessoDto dto, CancellationToken ct)
-        => Ok(await _service.UpdateAsync(id, dto, ct));
+    {
+        var existing = await _service.GetByIdAsync(id, ct);
+        var result = await _service.UpdateAsync(id, dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, id, existing, result, HttpContext.GetClientIpAddress()), ct);
+        return Ok(result);
+    }
 
     [HttpPost("{id:guid}/encerrar")]
     public async Task<IActionResult> Encerrar(Guid id, EncerrarProcessoDto dto, CancellationToken ct)
     {
+        var existing = await _service.GetByIdAsync(id, ct);
         await _service.EncerrarAsync(id, dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, id, existing, dto, HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 
@@ -74,17 +88,19 @@ public class ProcessosController : ControllerBase
     [Authorize(Roles = "Admin,Advogado")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
+        var existing = await _service.GetByIdAsync(id, ct);
         await _service.DeleteAsync(id, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Delete, AuditEntities.Processo, id, existing, null, HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 
-    [HttpGet("{id:guid}/andamentos")]
-    public async Task<ActionResult<IEnumerable<AndamentoResponseDto>>> GetAndamentos(Guid id, CancellationToken ct)
-        => Ok(await _service.GetAndamentosAsync(id, ct));
-
     [HttpPost("{id:guid}/andamentos")]
     public async Task<ActionResult<AndamentoResponseDto>> AddAndamento(Guid id, CreateAndamentoDto dto, CancellationToken ct)
-        => Ok(await _service.AddAndamentoAsync(id, dto, ct));
+    {
+        var result = await _service.AddAndamentoAsync(id, dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Processo + ".Andamento", result.Id, null, dto), ct);
+        return Ok(result);
+    }
 
     [HttpDelete("{id:guid}/andamentos/{andamentoId:guid}")]
     public async Task<IActionResult> DeleteAndamento(Guid id, Guid andamentoId, CancellationToken ct)

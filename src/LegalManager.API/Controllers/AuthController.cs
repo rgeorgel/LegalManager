@@ -1,4 +1,5 @@
 using LegalManager.Application.DTOs.Auth;
+using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,10 +12,12 @@ namespace LegalManager.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly IAuditService _audit;
 
-    public AuthController(AuthService authService)
+    public AuthController(AuthService authService, IAuditService audit)
     {
         _authService = authService;
+        _audit = audit;
     }
 
     [HttpPost("register")]
@@ -23,6 +26,9 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.RegisterTenantAsync(dto, ct);
+            await _audit.LogAsync(new AuditLogEntry(
+                result.Usuario.TenantId, null, AuditActions.Create, "Tenant",
+                result.Usuario.TenantId.ToString(), new { dto.NomeEscritorio, dto.Email }, null, HttpContext.GetClientIpAddress()), ct);
             return Ok(result);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
@@ -34,6 +40,9 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.LoginAsync(dto, ct);
+            await _audit.LogAsync(new AuditLogEntry(
+                result.Usuario.TenantId, null, AuditActions.Login, "Auth",
+                null, new { Email = dto.Email }, null, HttpContext.GetClientIpAddress()), ct);
             return Ok(result);
         }
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
@@ -49,9 +58,12 @@ public class AuthController : ControllerBase
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout(RefreshTokenDto dto, CancellationToken ct)
+    public async Task<IActionResult> Logout(RefreshTokenDto dto, [FromServices] ITenantContext tenantContext, CancellationToken ct)
     {
         await _authService.LogoutAsync(dto.RefreshToken, ct);
+        await _audit.LogAsync(new AuditLogEntry(
+            tenantContext.TenantId, tenantContext.UserId, AuditActions.Logout, "Auth",
+            null, null, null, HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 
@@ -76,6 +88,9 @@ public class AuthController : ControllerBase
         try
         {
             await _authService.ConvidarUsuarioAsync(dto, tenantContext.TenantId, ct);
+            await _audit.LogAsync(new AuditLogEntry(
+                tenantContext.TenantId, tenantContext.UserId, AuditActions.Create, "Usuario",
+                null, new { dto.Email, dto.Perfil }, null, HttpContext.GetClientIpAddress()), ct);
             return Ok(new { message = "Convite enviado." });
         }
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }

@@ -3,6 +3,7 @@ using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +16,13 @@ public class TarefasController : ControllerBase
 {
     private readonly ITarefaService _service;
     private readonly ITenantContext _tenantContext;
+    private readonly IAuditService _audit;
 
-    public TarefasController(ITarefaService service, ITenantContext tenantContext)
+    public TarefasController(ITarefaService service, ITenantContext tenantContext, IAuditService audit)
     {
         _service = service;
         _tenantContext = tenantContext;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -55,6 +58,7 @@ public class TarefasController : ControllerBase
     public async Task<ActionResult<TarefaResponseDto>> Create([FromBody] CreateTarefaDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Tarefa, result.Id, null, dto), ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -63,7 +67,10 @@ public class TarefasController : ControllerBase
     {
         try
         {
-            return Ok(await _service.UpdateAsync(id, dto, ct));
+            var existing = await _service.GetByIdAsync(id, ct);
+            var result = await _service.UpdateAsync(id, dto, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Tarefa, id, existing, result, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
         }
         catch (KeyNotFoundException)
         {
@@ -76,7 +83,9 @@ public class TarefasController : ControllerBase
     {
         try
         {
+            var existing = await _service.GetByIdAsync(id, ct);
             await _service.ConcluirAsync(id, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Tarefa, id, existing, new { Status = "Concluida" }, HttpContext.GetClientIpAddress()), ct);
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -90,7 +99,9 @@ public class TarefasController : ControllerBase
     {
         try
         {
+            var existing = await _service.GetByIdAsync(id, ct);
             await _service.DeleteAsync(id, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Delete, AuditEntities.Tarefa, id, existing, null, HttpContext.GetClientIpAddress()), ct);
             return NoContent();
         }
         catch (KeyNotFoundException)
@@ -104,7 +115,9 @@ public class TarefasController : ControllerBase
     {
         try
         {
+            var existing = await _service.GetByIdAsync(id, ct);
             await _service.MoverKanbanAsync(id, _tenantContext.TenantId, dto.Status, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Tarefa, id, existing, dto, HttpContext.GetClientIpAddress()), ct);
             return NoContent();
         }
         catch (KeyNotFoundException) { return NotFound(); }

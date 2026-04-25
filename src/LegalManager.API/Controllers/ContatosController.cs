@@ -2,6 +2,7 @@ using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,12 +16,14 @@ public class ContatosController : ControllerBase
     private readonly IContatoService _service;
     private readonly IPortalClienteService _portalService;
     private readonly ITenantContext _tenantContext;
+    private readonly IAuditService _audit;
 
-    public ContatosController(IContatoService service, IPortalClienteService portalService, ITenantContext tenantContext)
+    public ContatosController(IContatoService service, IPortalClienteService portalService, ITenantContext tenantContext, IAuditService audit)
     {
         _service = service;
         _portalService = portalService;
         _tenantContext = tenantContext;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -55,20 +58,25 @@ public class ContatosController : ControllerBase
     public async Task<ActionResult<ContatoResponseDto>> Create([FromBody] CreateContatoDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Contato, result.Id, null, dto), ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<ContatoResponseDto>> Update(Guid id, UpdateContatoDto dto, CancellationToken ct)
+    public async Task<ActionResult<ContatoResponseDto>> Update(Guid id, [FromBody] UpdateContatoDto dto, CancellationToken ct)
     {
+        var existing = await _service.GetByIdAsync(id, ct);
         var result = await _service.UpdateAsync(id, dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Contato, id, existing, result, HttpContext.GetClientIpAddress()), ct);
         return Ok(result);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
+        var existing = await _service.GetByIdAsync(id, ct);
         await _service.DeleteAsync(id, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Delete, AuditEntities.Contato, id, existing, null, HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 

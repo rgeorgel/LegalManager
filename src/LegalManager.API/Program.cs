@@ -86,6 +86,7 @@ builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
 builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
 builder.Services.AddScoped<ITimesheetService, TimesheetService>();
 builder.Services.AddScoped<IPreferenciasNotificacaoService, PreferenciasNotificacaoService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<IStorageService, OciStorageService>();
 builder.Services.AddScoped<IDocumentoService, DocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
