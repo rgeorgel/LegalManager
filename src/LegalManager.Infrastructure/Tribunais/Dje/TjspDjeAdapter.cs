@@ -77,15 +77,38 @@ public class TjspDjeAdapter : IDjeAdapter
 
             var todasPublicacoes = new List<DjePublicacao>();
             int diasProcessados = 0;
+            var datasJaProcessadas = new HashSet<DateTime>();
 
             for (var data = inicio.Date; data <= fim.Date; data = data.AddDays(1))
             {
                 ct.ThrowIfCancellationRequested();
 
-                if (data.DayOfWeek == DayOfWeek.Saturday || data.DayOfWeek == DayOfWeek.Sunday)
+                var dataParaConsulta = data;
+
+                if (data.DayOfWeek == DayOfWeek.Saturday)
+                    dataParaConsulta = data.AddDays(-1);
+                else if (data.DayOfWeek == DayOfWeek.Sunday)
+                    dataParaConsulta = data.AddDays(-2);
+
+                if (!datasJaProcessadas.Add(dataParaConsulta.Date))
                     continue;
 
-                var cadernos = await ListarCadernosAsync(data, ct);
+                var cadernos = await ListarCadernosAsync(dataParaConsulta, ct);
+
+                if (cadernos.Count == 0 && dataParaConsulta.DayOfWeek != DayOfWeek.Friday)
+                {
+                    var diaAnterior = dataParaConsulta.AddDays(-1);
+                    while (diaAnterior.DayOfWeek == DayOfWeek.Saturday || diaAnterior.DayOfWeek == DayOfWeek.Sunday)
+                        diaAnterior = diaAnterior.AddDays(-1);
+                    if (datasJaProcessadas.Add(diaAnterior.Date))
+                    {
+                        cadernos = await ListarCadernosAsync(diaAnterior, ct);
+                    }
+                    else
+                    {
+                        cadernos = [];
+                    }
+                }
 
                 foreach (var caderno in cadernos)
                 {
