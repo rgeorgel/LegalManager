@@ -58,6 +58,13 @@ public class ProcessosController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
+    [HttpGet("{id:guid}/andamentos")]
+    public async Task<ActionResult<IEnumerable<AndamentoResponseDto>>> GetAndamentos(Guid id, CancellationToken ct)
+    {
+        var result = await _service.GetAndamentosAsync(id, ct);
+        return Ok(result);
+    }
+
 [HttpPost]
     public async Task<ActionResult<ProcessoResponseDto>> Create(CreateProcessoDto dto, CancellationToken ct)
     {
