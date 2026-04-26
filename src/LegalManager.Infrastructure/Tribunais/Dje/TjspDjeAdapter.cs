@@ -111,19 +111,25 @@ public class TjspDjeAdapter : IDjeAdapter
                     }
                 }
 
-                foreach (var caderno in cadernos)
+                if (cadernos.Count > 0)
                 {
-                    var pubs = await BaixarCadernoAsync(caderno, nome, ct);
-                    todasPublicacoes.AddRange(pubs);
-                    await Task.Delay(1500, ct);
+                    foreach (var caderno in cadernos)
+                    {
+                        var pubs = await BaixarCadernoAsync(caderno, nome, ct);
+                        todasPublicacoes.AddRange(pubs);
+                        await Task.Delay(1500, ct);
+                    }
                 }
 
                 diasProcessados++;
+
                 if (diasProcessados % 10 == 0)
                 {
                     _logger.LogInformation("[TJSP] Processados {Dias} dias para '{Nome}'",
                         diasProcessados, nome);
                 }
+
+                await Task.Delay(5000, ct);
             }
 
             _logger.LogInformation("[TJSP] {Count} publicações encontradas para '{Nome}' em {Dias} dias",
@@ -174,9 +180,10 @@ public class TjspDjeAdapter : IDjeAdapter
 
                 if (response.StatusCode == HttpStatusCode.BadRequest)
                 {
-                    _logger.LogWarning("[TJSP] BadRequest para {Data} (tentativa {N})",
-                        data.ToString("dd/MM/yyyy"), tentativa + 1);
-                    ultimaEx = new HttpRequestException($"BadRequest for {data:dd/MM/yyyy}");
+                    var body = await response.Content.ReadAsStringAsync(ct);
+                    _logger.LogWarning("[TJSP] BadRequest para {Data} (tentativa {N}): {Body}",
+                        data.ToString("dd/MM/yyyy"), tentativa + 1, body);
+                    ultimaEx = new HttpRequestException($"BadRequest: {body}");
                     continue;
                 }
 
