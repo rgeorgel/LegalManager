@@ -92,27 +92,23 @@ public class TjspDjeAdapter : IDjeAdapter
                     dataParaConsulta = data.AddDays(-2);
 
                 if (!datasJaProcessadas.Add(dataParaConsulta.Date))
+                {
+                    _logger.LogDebug("[TJSP] Data {Data} ja processada, pulando",
+                        dataParaConsulta.ToString("dd/MM/yyyy"));
                     continue;
+                }
 
                 var cadernos = await ListarCadernosAsync(dataParaConsulta, ct);
 
-                if (cadernos.Count == 0 && dataParaConsulta.DayOfWeek != DayOfWeek.Friday)
+                if (cadernos.Count == 0)
                 {
-                    var diaAnterior = dataParaConsulta.AddDays(-1);
-                    while (diaAnterior.DayOfWeek == DayOfWeek.Saturday || diaAnterior.DayOfWeek == DayOfWeek.Sunday)
-                        diaAnterior = diaAnterior.AddDays(-1);
-                    if (datasJaProcessadas.Add(diaAnterior.Date))
-                    {
-                        cadernos = await ListarCadernosAsync(diaAnterior, ct);
-                    }
-                    else
-                    {
-                        cadernos = [];
-                    }
+                    cadernos = await TentarDiasAnterioresAsync(dataParaConsulta, datasJaProcessadas, ct);
                 }
 
                 if (cadernos.Count > 0)
                 {
+                    _logger.LogInformation("[TJSP] {Count} cadernos para {Data}",
+                        cadernos.Count, dataParaConsulta.ToString("dd/MM/yyyy"));
                     foreach (var caderno in cadernos)
                     {
                         var pubs = await BaixarCadernoAsync(caderno, nome, ct);
@@ -120,15 +116,13 @@ public class TjspDjeAdapter : IDjeAdapter
                         await Task.Delay(1500, ct);
                     }
                 }
-
-                diasProcessados++;
-
-                if (diasProcessados % 10 == 0)
+                else
                 {
-                    _logger.LogInformation("[TJSP] Processados {Dias} dias para '{Nome}'",
-                        diasProcessados, nome);
+                    _logger.LogWarning("[TJSP] Nenhum caderno encontrado para {Data} nem dias anteriores",
+                        dataParaConsulta.ToString("dd/MM/yyyy"));
                 }
 
+                diasProcessados++;
                 await Task.Delay(5000, ct);
             }
 
@@ -198,6 +192,36 @@ public class TjspDjeAdapter : IDjeAdapter
         }
 
         _logger.LogWarning("[TJSP] Todas tentativas exauridas para {Data}", data.ToString("dd/MM/yyyy"));
+        return [];
+    }
+
+    private async Task<List<TjspCadernoInfo>> TentarDiasAnterioresAsync(
+        DateTime dataInicial, HashSet<DateTime> jaProcessadas, CancellationToken ct)
+    {
+        var dia = dataInicial.AddDays(-1);
+        while (dia >= dataInicial.AddDays(-5))
+        {
+            if (dia.DayOfWeek == DayOfWeek.Saturday || dia.DayOfWeek == DayOfWeek.Sunday)
+            {
+                dia = dia.AddDays(-1);
+                continue;
+            }
+
+            if (!jaProcessadas.Add(dia.Date))
+            {
+                dia = dia.AddDays(-1);
+                continue;
+            }
+
+            _logger.LogInformation("[TJSP] Tentando dia anterior: {Data}", dia.ToString("dd/MM/yyyy"));
+            var cadernos = await ListarCadernosAsync(dia, ct);
+
+            if (cadernos.Count > 0)
+                return cadernos;
+
+            dia = dia.AddDays(-1);
+        }
+
         return [];
     }
 
