@@ -119,7 +119,7 @@ builder.Services.AddHttpClient<DataJudAdapter>(client =>
 
 builder.Services.AddHttpClient<TjspDjeAdapter>(client =>
 {
-    client.BaseAddress = new Uri("https://dje.tjsp.jus.br");
+    client.BaseAddress = new Uri("https://esaj.tjsp.jus.br");
     client.Timeout = TimeSpan.FromSeconds(60);
 });
 builder.Services.AddHttpClient<TjrjDjeAdapter>(client =>

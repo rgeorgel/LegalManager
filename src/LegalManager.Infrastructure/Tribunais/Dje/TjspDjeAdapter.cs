@@ -2,8 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Web;
-using HtmlAgilityPack;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -15,7 +13,7 @@ public class TjspDjeAdapter : IDjeAdapter
 {
     private readonly HttpClient _http;
     private readonly ILogger<TjspDjeAdapter> _logger;
-    private readonly string _baseUrl = "https://dje.tjsp.jus.br";
+    private readonly string _baseUrl = "https://esaj.tjsp.jus.br";
 
     private static readonly Regex RegexProcesso = new(
         @"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}",
@@ -48,12 +46,12 @@ public class TjspDjeAdapter : IDjeAdapter
     {
         try
         {
-            var diarios = await ListarDiariosAsync(data, data, ct);
+            var cadernos = await ListarCadernosAsync(data, ct);
             var todasPublicacoes = new List<DjePublicacao>();
 
-            foreach (var diario in diarios)
+            foreach (var caderno in cadernos)
             {
-                var pubs = await BaixarEProcessarPdfAsync(diario, null, ct);
+                var pubs = await BaixarCadernoAsync(caderno, null, ct);
                 todasPublicacoes.AddRange(pubs);
             }
 
@@ -77,22 +75,35 @@ public class TjspDjeAdapter : IDjeAdapter
             var inicio = dataInicio ?? DateTime.UtcNow.AddDays(-7);
             var fim = dataFim ?? DateTime.UtcNow;
 
-            var diarios = await ListarDiariosAsync(inicio, fim, ct);
-            _logger.LogInformation("[TJSP] {Count} edições encontradas para {Nome} entre {Ini} e {Fim}",
-                diarios.Count, nome, inicio.ToString("dd/MM/yyyy"), fim.ToString("dd/MM/yyyy"));
-
             var todasPublicacoes = new List<DjePublicacao>();
+            int diasProcessados = 0;
 
-            foreach (var diario in diarios)
+            for (var data = inicio.Date; data <= fim.Date; data = data.AddDays(1))
             {
-                var pubs = await BaixarEProcessarPdfAsync(diario, nome, ct);
-                todasPublicacoes.AddRange(pubs);
+                ct.ThrowIfCancellationRequested();
 
-                await Task.Delay(2500, ct);
+                if (data.DayOfWeek == DayOfWeek.Saturday || data.DayOfWeek == DayOfWeek.Sunday)
+                    continue;
+
+                var cadernos = await ListarCadernosAsync(data, ct);
+
+                foreach (var caderno in cadernos)
+                {
+                    var pubs = await BaixarCadernoAsync(caderno, nome, ct);
+                    todasPublicacoes.AddRange(pubs);
+                    await Task.Delay(1500, ct);
+                }
+
+                diasProcessados++;
+                if (diasProcessados % 10 == 0)
+                {
+                    _logger.LogInformation("[TJSP] Processados {Dias} dias para '{Nome}'",
+                        diasProcessados, nome);
+                }
             }
 
-            _logger.LogInformation("[TJSP] {Count} publicações encontradas para '{Nome}'",
-                todasPublicacoes.Count, nome);
+            _logger.LogInformation("[TJSP] {Count} publicações encontradas para '{Nome}' em {Dias} dias",
+                todasPublicacoes.Count, nome, diasProcessados);
 
             return new DjeConsultaResult(true, null, todasPublicacoes);
         }
@@ -112,84 +123,112 @@ public class TjspDjeAdapter : IDjeAdapter
         return Task.FromResult(new DjeDetalheResult(true, null, null, idPublicacao));
     }
 
-    private async Task<List<TjspDiarioInfo>> ListarDiariosAsync(
-        DateTime dataInicio, DateTime dataFim, CancellationToken ct)
+    private async Task<List<TjspCadernoInfo>> ListarCadernosAsync(DateTime data, CancellationToken ct)
     {
-        var url = $"{_baseUrl}/cdje/consultaDiarioDigital";
+        var url = $"{_baseUrl}/cdje/getListaDeCadernos.do?dtDiario={data:dd/MM/yyyy}";
+        using var response = await _http.GetAsync(url, ct);
 
-        var form = new Dictionary<string, string>
+        if (!response.IsSuccessStatusCode)
         {
-            ["dataIni"] = dataInicio.ToString("dd/MM/yyyy"),
-            ["dataFim"] = dataFim.ToString("dd/MM/yyyy"),
-            ["submit"] = "Pesquisar"
-        };
-
-        using var content = new FormUrlEncodedContent(form);
-        using var response = await _http.PostAsync(url, content, ct);
-        response.EnsureSuccessStatusCode();
-
-        var html = await response.Content.ReadAsStringAsync(ct);
-        return ParseDiarios(html);
-    }
-
-    private static List<TjspDiarioInfo> ParseDiarios(string html)
-    {
-        var diarios = new List<TjspDiarioInfo>();
-        var doc = new HtmlDocument();
-        doc.LoadHtml(html);
-
-        var links = doc.DocumentNode.SelectNodes("//a[contains(@href,'downloadDiarioDigital')]");
-        if (links == null) return diarios;
-
-        foreach (var link in links)
-        {
-            var href = link.GetAttributeValue("href", "");
-            var idMatch = Regex.Match(href, @"id=(\d+)");
-            if (!idMatch.Success) continue;
-
-            var parentRow = link.ParentNode?.ParentNode;
-            var cells = parentRow?.SelectNodes(".//td");
-            if (cells == null || cells.Count < 2) continue;
-
-            var dataTexto = cells[0].InnerText.Trim();
-            if (!DateTime.TryParse(dataTexto, out var data)) continue;
-
-            diarios.Add(new TjspDiarioInfo(
-                Id: idMatch.Groups[1].Value,
-                Data: data,
-                PdfUrl: $"{link.GetAttributeValue("href", "")}"));
+            _logger.LogWarning("[TJSP] Falha ao listar cadernos para {Data}: {Status}",
+                data.ToString("dd/MM/yyyy"), response.StatusCode);
+            return [];
         }
 
-        return diarios;
+        var json = await response.Content.ReadAsStringAsync(ct);
+        return ParseCadernos(json, data);
     }
 
-    private async Task<List<DjePublicacao>> BaixarEProcessarPdfAsync(
-        TjspDiarioInfo diario, string? nomeFiltro, CancellationToken ct)
+    private static List<TjspCadernoInfo> ParseCadernos(string json, DateTime data)
+    {
+        var cadernos = new List<TjspCadernoInfo>();
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            foreach (var elem in doc.RootElement.EnumerateArray())
+            {
+                cadernos.Add(new TjspCadernoInfo(
+                    CdVolume: elem.GetProperty("cdVolume").GetInt32(),
+                    NuDiario: elem.GetProperty("nuDiario").GetInt32(),
+                    CdCaderno: elem.GetProperty("cdCaderno").GetInt32(),
+                    NmCaderno: elem.GetProperty("nmCaderno").GetString() ?? "",
+                    Data: data));
+            }
+        }
+        catch
+        {
+        }
+        return cadernos;
+    }
+
+    private async Task<int> ObterTotalPaginasAsync(TjspCadernoInfo caderno, CancellationToken ct)
+    {
+        var url = $"{_baseUrl}/cdje/getListaDeSecoes.do?cdVolume={caderno.CdVolume}&nuDiario={caderno.NuDiario}&cdCaderno={caderno.CdCaderno}";
+        using var response = await _http.GetAsync(url, ct);
+
+        if (!response.IsSuccessStatusCode) return 0;
+
+        var json = await response.Content.ReadAsStringAsync(ct);
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement[0].GetInt32();
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private async Task<List<DjePublicacao>> BaixarCadernoAsync(
+        TjspCadernoInfo caderno, string? nomeFiltro, CancellationToken ct)
+    {
+        var totalPaginas = await ObterTotalPaginasAsync(caderno, ct);
+        if (totalPaginas == 0)
+        {
+            _logger.LogWarning("[TJSP] Nenhuma página encontrada para caderno {Nm}", caderno.NmCaderno);
+            return [];
+        }
+
+        _logger.LogDebug("[TJSP] Baixando caderno '{Nm}' ({Paginas} páginas)",
+            caderno.NmCaderno, totalPaginas);
+
+        var textoCompleto = new StringBuilder();
+
+        for (var pagina = 1; pagina <= totalPaginas; pagina++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var textoPagina = await BaixarPaginaAsync(caderno, pagina, ct);
+            if (!string.IsNullOrWhiteSpace(textoPagina))
+            {
+                textoCompleto.AppendLine(textoPagina);
+            }
+
+            if (pagina < totalPaginas)
+                await Task.Delay(500, ct);
+        }
+
+        return ExtrairPublicacoes(textoCompleto.ToString(), caderno, nomeFiltro);
+    }
+
+    private async Task<string> BaixarPaginaAsync(TjspCadernoInfo caderno, int pagina, CancellationToken ct)
     {
         try
         {
-            var url = $"{_baseUrl}/cdje/downloadDiarioDigital?id={diario.Id}&tipo=P";
+            var url = $"{_baseUrl}/cdje/getPaginaDoDiario.do?cdVolume={caderno.CdVolume}&nuDiario={caderno.NuDiario}&cdCaderno={caderno.CdCaderno}&nuSeqpagina={pagina}";
             using var response = await _http.GetAsync(url, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("[TJSP] Falha ao baixar PDF {Id}: {Status}",
-                    diario.Id, response.StatusCode);
-                return [];
-            }
+                return "";
 
-            await using var stream = await response.Content.ReadAsStreamAsync(ct);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream, ct);
-            var pdfBytes = memoryStream.ToArray();
-
-            var texto = ExtractTextFromPdf(pdfBytes);
-            return ExtrairPublicacoes(texto, diario, nomeFiltro);
+            var pdfBytes = await response.Content.ReadAsByteArrayAsync(ct);
+            return ExtractTextFromPdf(pdfBytes);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "[TJSP] Erro ao processar PDF {Id}", diario.Id);
-            return [];
+            _logger.LogWarning(ex, "[TJSP] Erro ao baixar página {Pag} do caderno {Nm}", pagina, caderno.NmCaderno);
+            return "";
         }
     }
 
@@ -216,11 +255,12 @@ public class TjspDjeAdapter : IDjeAdapter
         }
     }
 
-    private List<DjePublicacao> ExtrairPublicacoes(string texto, TjspDiarioInfo diario, string? nomeFiltro)
+    private List<DjePublicacao> ExtrairPublicacoes(string texto, TjspCadernoInfo caderno, string? nomeFiltro)
     {
         var publicacoes = new List<DjePublicacao>();
-        var linhas = texto.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (string.IsNullOrWhiteSpace(texto)) return publicacoes;
 
+        var linhas = texto.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         DjePublicacao? publicacaoAtual = null;
 
         foreach (var linha in linhas)
@@ -247,14 +287,14 @@ public class TjspDjeAdapter : IDjeAdapter
                     publicacaoAtual = new DjePublicacao(
                         Id: Guid.NewGuid().ToString(),
                         SiglaTribunal: "TJSP",
-                        DataPublicacao: diario.Data,
-                        Secao: null,
+                        DataPublicacao: caderno.Data,
+                        Secao: caderno.NmCaderno,
                         Pagina: null,
                         Tipo: tipo,
                         Titulo: tipo ?? "Publicação",
                         Conteudo: trimmed,
                         NomesEncontrados: nomesEncontrados,
-                        UrlOriginal: $"{_baseUrl}/cdje/consultaDiarioDigital?id={diario.Id}",
+                        UrlOriginal: $"{_baseUrl}/cdje",
                         PrazoDias: prazo);
                 }
             }
@@ -264,7 +304,7 @@ public class TjspDjeAdapter : IDjeAdapter
                 if (publicacaoAtual.NomesEncontrados.Count == 0 &&
                     trimmed.Contains(nomeFiltro, StringComparison.OrdinalIgnoreCase))
                 {
-                    publicacaoAtual.NomesEncontrados.Add(nomeFiltro);
+                    publicacaoAtual = publicacaoAtual with { NomesEncontrados = new List<string> { nomeFiltro } };
                 }
 
                 if (publicacaoAtual.NomesEncontrados.Contains(nomeFiltro) &&
@@ -275,8 +315,7 @@ public class TjspDjeAdapter : IDjeAdapter
             }
         }
 
-        if (publicacaoAtual != null &&
-            publicacaoAtual.NomesEncontrados.Count > 0)
+        if (publicacaoAtual != null && publicacaoAtual.NomesEncontrados.Count > 0)
         {
             publicacoes.Add(publicacaoAtual);
         }
@@ -310,12 +349,5 @@ public class TjspDjeAdapter : IDjeAdapter
         return dias;
     }
 
-    private static string GerarHashDeduplicacao(DjePublicacao pub)
-    {
-        var input = $"TJSP|{pub.DataPublicacao:yyyyMMdd}|{pub.Tipo}|{pub.Titulo}";
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexString(bytes)[..32];
-    }
-
-    private record TjspDiarioInfo(string Id, DateTime Data, string PdfUrl);
+    private record TjspCadernoInfo(int CdVolume, int NuDiario, int CdCaderno, string NmCaderno, DateTime Data);
 }

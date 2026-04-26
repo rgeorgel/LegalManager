@@ -79,14 +79,14 @@ public class DjeAdapterTests
     [Fact]
     public void TjspDjeAdapter_Nome_DeveRetornarTJSP()
     {
-        var handler = new FakeHttpMessageHandler("<html></html>");
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://dje.tjsp.jus.br") };
+        var handler = new FakeHttpMessageHandler("[]");
+        var http = new HttpClient(handler) { BaseAddress = new Uri("https://esaj.tjsp.jus.br") };
         var logger = Mock.Of<ILogger<TjspDjeAdapter>>();
         var adapter = new TjspDjeAdapter(http, logger);
 
         Assert.Equal("TJSP - Diário da Justiça Eletrônico", adapter.Nome);
         Assert.Equal("TJSP", adapter.Sigla);
-        Assert.Equal("https://dje.tjsp.jus.br", adapter.BaseUrl);
+        Assert.Equal("https://esaj.tjsp.jus.br", adapter.BaseUrl);
     }
 
     [Theory]
@@ -95,7 +95,7 @@ public class DjeAdapterTests
     [InlineData(TipoDje.Dou, false)]
     public void TjspDjeAdapter_SuportaTipo_DeveRetornarCorretamente(TipoDje tipo, bool esperado)
     {
-        var handler = new FakeHttpMessageHandler("<html></html>");
+        var handler = new FakeHttpMessageHandler("[]");
         var adapter = new TjspDjeAdapter(new HttpClient(handler), Mock.Of<ILogger<TjspDjeAdapter>>());
 
         Assert.Equal(esperado, adapter.SuportaTipo(tipo));
@@ -104,9 +104,9 @@ public class DjeAdapterTests
     [Fact]
     public async Task TjspDjeAdapter_ConsultarPorNomeAsync_DeveRetornarVazio_QuandoNenhumaPublicacao()
     {
-        var html = @"<html><body><table><tr><td>22/04/2026</td><td><a href='?id=12345'>Download</a></td></tr></table></body></html>";
-        var handler = new FakeHttpMessageHandler(html);
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://dje.tjsp.jus.br") };
+        var json = @"[]";
+        var handler = new FakeHttpMessageHandler(json);
+        var http = new HttpClient(handler) { BaseAddress = new Uri("https://esaj.tjsp.jus.br") };
         var adapter = new TjspDjeAdapter(http, Mock.Of<ILogger<TjspDjeAdapter>>());
 
         var resultado = await adapter.ConsultarPorNomeAsync("NomeInexistente",
