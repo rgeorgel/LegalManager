@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -149,17 +150,48 @@ public class TjspDjeAdapter : IDjeAdapter
     private async Task<List<TjspCadernoInfo>> ListarCadernosAsync(DateTime data, CancellationToken ct)
     {
         var url = $"{_baseUrl}/cdje/getListaDeCadernos.do?dtDiario={data:dd/MM/yyyy}";
-        using var response = await _http.GetAsync(url, ct);
+        Exception? ultimaEx = null;
 
-        if (!response.IsSuccessStatusCode)
+        for (var tentativa = 0; tentativa < 3; tentativa++)
         {
-            _logger.LogWarning("[TJSP] Falha ao listar cadernos para {Data}: {Status}",
-                data.ToString("dd/MM/yyyy"), response.StatusCode);
-            return [];
+            if (tentativa > 0)
+            {
+                var espera = TimeSpan.FromSeconds(Math.Pow(2, tentativa));
+                _logger.LogInformation("[TJSP] Retry {N} para {Data} após {Wait}s",
+                    tentativa, data.ToString("dd/MM/yyyy"), espera.TotalSeconds);
+                await Task.Delay(espera, ct);
+            }
+
+            try
+            {
+                using var response = await _http.GetAsync(url, ct);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync(ct);
+                    return ParseCadernos(json, data);
+                }
+
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    _logger.LogWarning("[TJSP] BadRequest para {Data} (tentativa {N})",
+                        data.ToString("dd/MM/yyyy"), tentativa + 1);
+                    ultimaEx = new HttpRequestException($"BadRequest for {data:dd/MM/yyyy}");
+                    continue;
+                }
+
+                _logger.LogWarning("[TJSP] Falha ao listar cadernos para {Data}: {Status}",
+                    data.ToString("dd/MM/yyyy"), response.StatusCode);
+                return [];
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                ultimaEx = ex;
+            }
         }
 
-        var json = await response.Content.ReadAsStringAsync(ct);
-        return ParseCadernos(json, data);
+        _logger.LogWarning("[TJSP] Todas tentativas exauridas para {Data}", data.ToString("dd/MM/yyyy"));
+        return [];
     }
 
     private static List<TjspCadernoInfo> ParseCadernos(string json, DateTime data)
