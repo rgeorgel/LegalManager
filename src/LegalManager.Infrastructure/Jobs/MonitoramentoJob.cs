@@ -1,7 +1,6 @@
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
-using LegalManager.Infrastructure.Tribunais;
 using LegalManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,13 +10,13 @@ namespace LegalManager.Infrastructure.Jobs;
 public class MonitoramentoJob
 {
     private readonly AppDbContext _context;
-    private readonly DataJudAdapter _dataJud;
+    private readonly ITribunalAdapter _dataJud;
     private readonly IEmailService _emailService;
     private readonly ILogger<MonitoramentoJob> _logger;
 
     public MonitoramentoJob(
         AppDbContext context,
-        DataJudAdapter dataJud,
+        ITribunalAdapter dataJud,
         IEmailService emailService,
         ILogger<MonitoramentoJob> logger)
     {

@@ -20,4 +20,5 @@ public interface ITribunalAdapter
     string Nome { get; }
     bool SuportaTribunal(string tribunal);
     Task<TribunalConsultaResult> ConsultarAsync(string numeroCNJ, CancellationToken ct = default);
+    Task<TribunalConsultaResult> ConsultarPorTribunalAsync(string numeroCNJ, string tribunal, CancellationToken ct = default);
 }
