@@ -14,15 +14,9 @@ namespace LegalManager.Infrastructure.Jobs;
 public class DjeJob
 {
     private readonly IServiceProvider? _serviceProvider;
-    private readonly AppDbContext? _context;
-    private readonly IEnumerable<IDjeAdapter>? _adapters;
+    private readonly AppDbContext _context;
+    private readonly IEnumerable<IDjeAdapter> _adapters;
     private readonly ILogger<DjeJob> _logger;
-
-    public DjeJob(IServiceProvider serviceProvider, ILogger<DjeJob> logger)
-    {
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-    }
 
     public DjeJob(AppDbContext context, IEnumerable<IDjeAdapter> adapters, ILogger<DjeJob> logger)
     {
@@ -35,20 +29,8 @@ public class DjeJob
     {
         _logger.LogInformation("[DjeJob] Iniciando captura de publicações DJE.");
 
-        AppDbContext context;
-        List<IDjeAdapter> adapters;
-
-        if (_context != null && _adapters != null)
-        {
-            context = _context;
-            adapters = _adapters.ToList();
-        }
-        else
-        {
-            using var scope = _serviceProvider!.CreateScope();
-            context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            adapters = scope.ServiceProvider.GetServices<IDjeAdapter>().ToList();
-        }
+        var context = _context;
+        var adapters = _adapters.ToList();
 
         if (adapters.Count == 0)
         {
