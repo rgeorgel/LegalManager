@@ -66,9 +66,14 @@ public class AlertasJob
                     var permiteInApp = await _prefs.PermiteInAppAsync(tarefa.TenantId, tarefa.ResponsavelId!.Value, "PrazoTarefa");
 
                     if (permiteEmail && !string.IsNullOrEmpty(tarefa.ResponsavelEmail))
-                        await _emailService.EnviarAlertaPrazoTarefaAsync(
-                            tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
-                            tarefa.Titulo, tarefa.Prazo!.Value, dias);
+                    {
+                        var chaveEmail = $"email-tarefa-{tarefa.Id}-{dias}d-{hoje:yyyyMMdd}";
+                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                        if (!emailJaEnviado)
+                            await _emailService.EnviarAlertaPrazoTarefaAsync(
+                                tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
+                                tarefa.Titulo, tarefa.Prazo!.Value, dias);
+                    }
 
                     if (permiteInApp)
                     {
@@ -118,9 +123,14 @@ public class AlertasJob
                 var permiteInApp = await _prefs.PermiteInAppAsync(evento.TenantId, evento.ResponsavelId!.Value, "PrazoEvento");
 
                 if (permiteEmail && !string.IsNullOrEmpty(evento.ResponsavelEmail))
-                    await _emailService.EnviarAlertaEventoAsync(
-                        evento.ResponsavelEmail, evento.ResponsavelNome,
-                        evento.Titulo, evento.DataHora, evento.Local);
+                    {
+                        var chaveEmail = $"email-evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
+                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                        if (!emailJaEnviado)
+                            await _emailService.EnviarAlertaEventoAsync(
+                                evento.ResponsavelEmail, evento.ResponsavelNome,
+                                evento.Titulo, evento.DataHora, evento.Local);
+                    }
 
                 if (permiteInApp)
                     await CriarNotificacaoAsync(
@@ -167,7 +177,12 @@ public class AlertasJob
                         var permiteInApp = await _prefs.PermiteInAppAsync(tenant.Id, admin.Id, "TrialExpirando");
 
                         if (!string.IsNullOrEmpty(admin.Email))
+                    {
+                        var chaveEmail = $"email-trial-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
+                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                        if (!emailJaEnviado)
                             await _emailService.EnviarTrialExpirandoAsync(admin.Email, tenant.Nome, dias);
+                    }
 
                         if (permiteInApp)
                             await CriarNotificacaoAsync(
@@ -215,10 +230,15 @@ public class AlertasJob
                     var permiteInApp = await _prefs.PermiteInAppAsync(prazo.TenantId, prazo.ResponsavelId!.Value, "Prazos");
 
                     if (permiteEmail && !string.IsNullOrEmpty(prazo.ResponsavelEmail))
-                        await _emailService.EnviarAlertaPrazoProcessualAsync(
-                            prazo.ResponsavelEmail, prazo.ResponsavelNome,
-                            prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
-                            prazo.DataFinal, dias);
+                    {
+                        var chaveEmail = $"email-prazo-{prazo.Id}-{dias}d-{hoje:yyyyMMdd}";
+                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                        if (!emailJaEnviado)
+                            await _emailService.EnviarAlertaPrazoProcessualAsync(
+                                prazo.ResponsavelEmail, prazo.ResponsavelNome,
+                                prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
+                                prazo.DataFinal, dias);
+                    }
 
                     if (permiteInApp)
                         await CriarNotificacaoAsync(
