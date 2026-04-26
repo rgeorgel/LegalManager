@@ -70,9 +70,24 @@ public class AlertasJob
                         var chaveEmail = $"email-tarefa-{tarefa.Id}-{dias}d-{hoje:yyyyMMdd}";
                         var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
                         if (!emailJaEnviado)
+                        {
                             await _emailService.EnviarAlertaPrazoTarefaAsync(
                                 tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
                                 tarefa.Titulo, tarefa.Prazo!.Value, dias);
+                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                            {
+                                Id = Guid.NewGuid(),
+                                TenantId = tarefa.TenantId,
+                                UsuarioId = tarefa.ResponsavelId!.Value,
+                                Tipo = TipoNotificacao.PrazoTarefa,
+                                Titulo = $"Email tarefa {tarefa.Titulo}",
+                                Mensagem = $"Email enviado para {tarefa.ResponsavelEmail}",
+                                Lida = false,
+                                CriadaEm = DateTime.UtcNow,
+                                ChaveDedup = chaveEmail
+                            });
+                            await _context.SaveChangesAsync();
+                        }
                     }
 
                     if (permiteInApp)
@@ -127,9 +142,24 @@ public class AlertasJob
                         var chaveEmail = $"email-evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
                         var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
                         if (!emailJaEnviado)
+                        {
                             await _emailService.EnviarAlertaEventoAsync(
                                 evento.ResponsavelEmail, evento.ResponsavelNome,
                                 evento.Titulo, evento.DataHora, evento.Local);
+                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                            {
+                                Id = Guid.NewGuid(),
+                                TenantId = evento.TenantId,
+                                UsuarioId = evento.ResponsavelId!.Value,
+                                Tipo = TipoNotificacao.PrazoEvento,
+                                Titulo = $"Email evento {evento.Titulo}",
+                                Mensagem = $"Email enviado para {evento.ResponsavelEmail}",
+                                Lida = false,
+                                CriadaEm = DateTime.UtcNow,
+                                ChaveDedup = chaveEmail
+                            });
+                            await _context.SaveChangesAsync();
+                        }
                     }
 
                 if (permiteInApp)
@@ -177,12 +207,27 @@ public class AlertasJob
                         var permiteInApp = await _prefs.PermiteInAppAsync(tenant.Id, admin.Id, "TrialExpirando");
 
                         if (!string.IsNullOrEmpty(admin.Email))
-                    {
-                        var chaveEmail = $"email-trial-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
-                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
-                        if (!emailJaEnviado)
-                            await _emailService.EnviarTrialExpirandoAsync(admin.Email, tenant.Nome, dias);
-                    }
+                        {
+                            var chaveEmail = $"email-trial-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
+                            var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                            if (!emailJaEnviado)
+                            {
+                                await _emailService.EnviarTrialExpirandoAsync(admin.Email, tenant.Nome, dias);
+                                _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                                {
+                                    Id = Guid.NewGuid(),
+                                    TenantId = tenant.Id,
+                                    UsuarioId = admin.Id,
+                                    Tipo = TipoNotificacao.TrialExpirando,
+                                    Titulo = $"Email trial {tenant.Nome}",
+                                    Mensagem = $"Email enviado para {admin.Email}",
+                                    Lida = false,
+                                    CriadaEm = DateTime.UtcNow,
+                                    ChaveDedup = chaveEmail
+                                });
+                                await _context.SaveChangesAsync();
+                            }
+                        }
 
                         if (permiteInApp)
                             await CriarNotificacaoAsync(
@@ -234,10 +279,25 @@ public class AlertasJob
                         var chaveEmail = $"email-prazo-{prazo.Id}-{dias}d-{hoje:yyyyMMdd}";
                         var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
                         if (!emailJaEnviado)
+                        {
                             await _emailService.EnviarAlertaPrazoProcessualAsync(
                                 prazo.ResponsavelEmail, prazo.ResponsavelNome,
                                 prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
                                 prazo.DataFinal, dias);
+                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                            {
+                                Id = Guid.NewGuid(),
+                                TenantId = prazo.TenantId,
+                                UsuarioId = prazo.ResponsavelId!.Value,
+                                Tipo = TipoNotificacao.PrazoTarefa,
+                                Titulo = $"Email prazo {prazo.Descricao}",
+                                Mensagem = $"Email enviado para {prazo.ResponsavelEmail}",
+                                Lida = false,
+                                CriadaEm = DateTime.UtcNow,
+                                ChaveDedup = chaveEmail
+                            });
+                            await _context.SaveChangesAsync();
+                        }
                     }
 
                     if (permiteInApp)

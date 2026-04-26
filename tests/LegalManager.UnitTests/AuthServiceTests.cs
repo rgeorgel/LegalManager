@@ -51,6 +51,10 @@ public class AuthServiceTests
             userManagerMock.Setup(u => u.CheckPasswordAsync(user, It.IsAny<string>())).ReturnsAsync(true);
             userManagerMock.Setup(u => u.GeneratePasswordResetTokenAsync(user)).ReturnsAsync("reset-token-123");
         }
+        else
+        {
+            userManagerMock.Setup(u => u.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((Usuario?)null);
+        }
 
         return userManagerMock;
     }
@@ -63,6 +67,14 @@ public class AuthServiceTests
         mock.Setup(e => e.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         mock.Setup(e => e.EnviarConviteUsuarioAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return mock;
+    }
+
+    private Mock<ICreditoService> CreateCreditoServiceMock()
+    {
+        var mock = new Mock<ICreditoService>();
+        mock.Setup(c => c.InicializarCreditosPadraoAsync(It.IsAny<Guid>(), It.IsAny<PlanoTipo>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         return mock;
     }
@@ -82,7 +94,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var dto = new RegisterTenantDto("Escritório Novo", "12.345.678/0001-90", "Admin Nome", "admin@novo.com", "Senha123!", PlanoTipo.Free);
 
@@ -94,6 +107,7 @@ public class AuthServiceTests
         Assert.Equal("Admin Nome", result.Usuario.Nome);
         Assert.Equal("admin@novo.com", result.Usuario.Email);
         Assert.Equal(PerfilUsuario.Admin.ToString(), result.Usuario.Perfil);
+        creditoService.Verify(c => c.InicializarCreditosPadraoAsync(It.IsAny<Guid>(), PlanoTipo.Free, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -103,7 +117,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(result: IdentityResult.Failed(new IdentityError { Description = "Email já existe" }));
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var dto = new RegisterTenantDto("Escritório", null, "Admin", "duplicado@teste.com", "Senha123!", PlanoTipo.Free);
 
@@ -117,7 +132,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var dto = new RegisterTenantDto("Escritório Teste", null, "Admin", "admin@teste.com", "Senha123!", PlanoTipo.Free);
 
@@ -140,23 +156,29 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
-        var result = await service.LoginAsync(new LoginDto("login@teste.com", "Senha123"));
+        var dto = new LoginDto("login@teste.com", "Senha123");
+        var result = await service.LoginAsync(dto);
 
         Assert.NotNull(result);
         Assert.NotNull(result.AccessToken);
-        Assert.NotNull(result.RefreshToken);
+        Assert.Equal("User Teste", result.Usuario.Nome);
     }
 
     [Fact]
-    public async Task LoginAsync_DeveLancarUnauthorizedAccessException_QuandoEmailNaoExiste()
+    public async Task LoginAsync_DeveLancarExcecao_QuandoUsuarioNaoExiste()
     {
         var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+
         var userManager = CreateUserManagerMock(null);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginDto("naoexiste@teste.com", "Senha123")));
@@ -176,7 +198,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginDto("inativo@teste.com", "Senha123")));
@@ -201,7 +224,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginDto("trial@teste.com", "Senha123")));
@@ -226,7 +250,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var result = await service.LoginAsync(new LoginDto("expirado@teste.com", "Senha123"));
 
@@ -255,7 +280,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var result = await service.RefreshTokenAsync("token-valido-123");
 
@@ -270,7 +296,8 @@ public class AuthServiceTests
         var ctx = CreateContext();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(CreateUserManagerMock().Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(CreateUserManagerMock().Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.RefreshTokenAsync("token-invalido"));
@@ -297,7 +324,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.RefreshTokenAsync("token-antigo");
 
@@ -326,7 +354,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.LogoutAsync("token-logout");
 
@@ -341,7 +370,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.LogoutAsync("token-nao-existe");
     }
@@ -360,7 +390,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(user);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.ForgotPasswordAsync(new ForgotPasswordDto("forgot@teste.com"));
 
@@ -374,7 +405,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock(null);
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.ForgotPasswordAsync(new ForgotPasswordDto("naoexiste@teste.com"));
 
@@ -398,7 +430,8 @@ public class AuthServiceTests
 
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.ResetPasswordAsync(new ResetPasswordDto("token-valido", "reset@teste.com", "NovaSenha123!"));
 
@@ -422,7 +455,8 @@ public class AuthServiceTests
 
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ResetPasswordAsync(new ResetPasswordDto("token-invalido", "fail@teste.com", "NovaSenha123!")));
@@ -449,7 +483,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "Advogado"), ConviteTenantId);
 
@@ -479,7 +514,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "Advogado"), ConviteTenantId));
@@ -496,7 +532,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "PerfilInvalido"), ConviteTenantId));
@@ -521,7 +558,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         var result = await service.AceitarConviteAsync(new AceitarConviteDto("token-valido-abc123", "Nome Convidado", "Senha123!"));
 
@@ -537,7 +575,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.AceitarConviteAsync(new AceitarConviteDto("token-invalido", "Nome", "Senha123!")));
@@ -562,7 +601,8 @@ public class AuthServiceTests
         var userManager = CreateUserManagerMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, ctx);
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
         await service.AceitarConviteAsync(new AceitarConviteDto("token-usado-xyz", "Nome", "Senha123!"));
 

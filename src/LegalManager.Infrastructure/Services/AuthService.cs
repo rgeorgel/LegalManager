@@ -20,17 +20,20 @@ public class AuthService : IAuthService
     private readonly UserManager<Usuario> _userManager;
     private readonly IConfiguration _config;
     private readonly IEmailService _emailService;
+    private readonly ICreditoService _creditoService;
     private readonly AppDbContext _context;
 
     public AuthService(
         UserManager<Usuario> userManager,
         IConfiguration config,
         IEmailService emailService,
+        ICreditoService creditoService,
         AppDbContext context)
     {
         _userManager = userManager;
         _config = config;
         _emailService = emailService;
+        _creditoService = creditoService;
         _context = context;
     }
 
@@ -49,6 +52,8 @@ public class AuthService : IAuthService
 
         _context.Tenants.Add(tenant);
         await _context.SaveChangesAsync(ct);
+
+        await _creditoService.InicializarCreditosPadraoAsync(tenant.Id, dto.Plano, ct);
 
         var usuario = new Usuario
         {
