@@ -133,6 +133,16 @@ builder.Services.AddHttpClient<TjmgDjeAdapter>(client =>
     client.Timeout = TimeSpan.FromSeconds(60);
 });
 
+builder.Services.AddScoped<IDjeAdapter>(sp =>
+    new TjspDjeAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TjspDjeAdapter)),
+        sp.GetRequiredService<ILogger<TjspDjeAdapter>>()));
+builder.Services.AddScoped<IDjeAdapter>(sp =>
+    new TjrjDjeAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TjrjDjeAdapter)),
+        sp.GetRequiredService<ILogger<TjrjDjeAdapter>>()));
+builder.Services.AddScoped<IDjeAdapter>(sp =>
+    new TjmgDjeAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TjmgDjeAdapter)),
+        sp.GetRequiredService<ILogger<TjmgDjeAdapter>>()));
+
 builder.Services.AddScoped<DjeJob>();
 
 builder.Services.AddOptions();
