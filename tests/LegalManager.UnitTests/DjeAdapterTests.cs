@@ -175,7 +175,7 @@ public class DjeAdapterTests
         mockAdapter.Setup(d => d.Sigla).Returns("TJSP");
         var job = new DjeJob(ctx, new[] { mockAdapter.Object }, logger);
 
-        await job.ExecutarAsync();
+        await job.ExecutarAsync(CancellationToken.None);
 
         var count = await ctx.Publicacoes.CountAsync();
         Assert.Equal(0, count);
@@ -215,7 +215,7 @@ public class DjeAdapterTests
             .ReturnsAsync(new DjeConsultaResult(false, "Erro de rede", []));
         var job = new DjeJob(ctx, new[] { mockAdapter.Object }, logger);
 
-        await job.ExecutarAsync();
+        await job.ExecutarAsync(CancellationToken.None);
 
         var count = await ctx.Publicacoes.CountAsync();
         Assert.Equal(0, count);
@@ -262,7 +262,7 @@ public class DjeAdapterTests
             .ReturnsAsync(new DjeConsultaResult(true, null, pubs));
         var job = new DjeJob(ctx, new[] { mockAdapter.Object }, logger);
 
-        await job.ExecutarAsync();
+        await job.ExecutarAsync(CancellationToken.None);
 
         var count = await ctx.Publicacoes.CountAsync();
         Assert.Equal(1, count);
@@ -328,7 +328,7 @@ public class DjeAdapterTests
             .ReturnsAsync(new DjeConsultaResult(true, null, pubs));
         var job = new DjeJob(ctx, new[] { mockAdapter.Object }, logger);
 
-        await job.ExecutarAsync();
+        await job.ExecutarAsync(CancellationToken.None);
 
         var count = await ctx.Publicacoes.CountAsync();
         Assert.Equal(1, count);

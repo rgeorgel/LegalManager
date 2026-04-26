@@ -31,7 +31,7 @@ public class DjeJob
         _logger = logger;
     }
 
-    public async Task ExecutarAsync(CancellationToken ct = default)
+    public async Task ExecutarAsync(CancellationToken ct)
     {
         _logger.LogInformation("[DjeJob] Iniciando captura de publicações DJE.");
 

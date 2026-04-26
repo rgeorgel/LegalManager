@@ -236,7 +236,7 @@ RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
 
 RecurringJob.AddOrUpdate<DjeJob>(
     "captura-dje",
-    job => job.ExecutarAsync(),
+    job => job.ExecutarAsync(CancellationToken.None),
     "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
 
 app.MapControllers();
