@@ -17,6 +17,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="OCI.DotNetSDK.Common" Version="64.0.0" />
     <PackageReference Include="OCI.DotNetSDK.Objectstorage" Version="64.0.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.67" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="Resend" Version="0.4.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
@@ -27,5 +29,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LegalManager.UnitTests" />
+  </ItemGroup>
 
 </Project>

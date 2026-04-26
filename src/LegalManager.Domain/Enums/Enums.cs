@@ -47,6 +47,8 @@ public enum TipoPublicacao { Prazo, Audiencia, Decisao, Despacho, Intimacao, Out
 
 public enum StatusPublicacao { Nova, Lida, Arquivada }
 
+public enum TipoDje { Djus, Djen, Dou }
+
 public enum StatusPrazo { Pendente, Cumprido, Perdido, Suspenso }
 
 public enum TipoCalculo { DiasUteis, DiasCorridos }

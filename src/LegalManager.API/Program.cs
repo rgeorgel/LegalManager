@@ -11,6 +11,7 @@ using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.Infrastructure.Storage;
 using LegalManager.Infrastructure.Tribunais;
+using LegalManager.Infrastructure.Tribunais.Dje;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -116,6 +117,24 @@ builder.Services.AddHttpClient<DataJudAdapter>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+builder.Services.AddHttpClient<TjspDjeAdapter>(client =>
+{
+    client.BaseAddress = new Uri("https://dje.tjsp.jus.br");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddHttpClient<TjrjDjeAdapter>(client =>
+{
+    client.BaseAddress = new Uri("https://www.tjrj.jus.br");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddHttpClient<TjmgDjeAdapter>(client =>
+{
+    client.BaseAddress = new Uri("https://www.tjmg.jus.br");
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddScoped<DjeJob>();
+
 builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
@@ -214,6 +233,11 @@ RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
     "captura-publicacoes",
     job => job.ExecutarAsync(),
     "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
+
+RecurringJob.AddOrUpdate<DjeJob>(
+    "captura-dje",
+    job => job.ExecutarAsync(),
+    "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

@@ -15,6 +15,10 @@ public class Publicacao
     public StatusPublicacao Status { get; set; }
     public bool Urgente { get; set; }
     public string? ClassificacaoIA { get; set; }
+    public string? IdExterno { get; set; }
+    public string? HashDje { get; set; }
+    public string? Secao { get; set; }
+    public string? Pagina { get; set; }
     public DateTime CapturaEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
