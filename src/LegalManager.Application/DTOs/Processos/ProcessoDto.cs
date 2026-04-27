@@ -3,6 +3,13 @@ using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.Processos;
 
+public record AndamentoDto(
+    DateTime Data,
+    string Descricao,
+    int? CodigoCNJ,
+    string? OrgaoJulgador
+);
+
 public record CreateProcessoDto(
     [Required, MaxLength(50)] string NumeroCNJ,
     string? Tribunal,
@@ -15,7 +22,8 @@ public record CreateProcessoDto(
     Guid? AdvogadoResponsavelId,
     string? Observacoes = null,
     bool Monitorado = false,
-    List<ProcessoParteDto>? Partes = null
+    List<ProcessoParteDto>? Partes = null,
+    List<AndamentoDto>? Andamentos = null
 );
 
 public record UpdateProcessoDto(

@@ -63,6 +63,18 @@ public class ProcessoService : IProcessoService
                 TipoParte = p.TipoParte
             }).ToList();
 
+        if (dto.Andamentos != null)
+            processo.Andamentos = dto.Andamentos.Select(a => new Andamento
+            {
+                Id = Guid.NewGuid(),
+                Data = a.Data,
+                Descricao = a.Descricao,
+                CodigoCNJ = a.CodigoCNJ,
+                OrgaoJulgador = a.OrgaoJulgador,
+                Fonte = FonteAndamento.DataJud,
+                CriadoEm = DateTime.UtcNow
+            }).ToList();
+
         _context.Processos.Add(processo);
         await _context.SaveChangesAsync(ct);
 

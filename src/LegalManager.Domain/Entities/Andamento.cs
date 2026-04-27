@@ -14,6 +14,8 @@ public class Andamento
     public string? DescricaoTraduzidaIA { get; set; }
     public Guid? RegistradoPorId { get; set; }
     public DateTime CriadoEm { get; set; }
+    public int? CodigoCNJ { get; set; }
+    public string? OrgaoJulgador { get; set; }
 
     public Processo Processo { get; set; } = null!;
     public Usuario? RegistradoPor { get; set; }
