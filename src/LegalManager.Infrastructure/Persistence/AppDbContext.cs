@@ -32,6 +32,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
     public DbSet<Publicacao> Publicacoes => Set<Publicacao>();
     public DbSet<ProcessoMonitorado> ProcessosMonitorados => Set<ProcessoMonitorado>();
+    public DbSet<ProcessoMonitoradoAndamento> ProcessosMonitoradosAndamentos => Set<ProcessoMonitoradoAndamento>();
     public DbSet<Prazo> Prazos => Set<Prazo>();
     public DbSet<AcessoCliente> AcessosCliente => Set<AcessoCliente>();
     public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();

@@ -2,6 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LegalManager.Application.DTOs.Processos;
 
+public record ProcessoMonitoradoAndamentoDto(
+    DateTime Data,
+    string Descricao,
+    int? CodigoCNJ,
+    string? OrgaoJulgador);
+
 public record ProcessoMonitoradoResponseDto(
     Guid Id,
     string NumeroCNJ,
@@ -11,7 +17,8 @@ public record ProcessoMonitoradoResponseDto(
 
 public record CreateProcessoMonitoradoDto(
     [Required][MaxLength(50)] string NumeroCNJ,
-    [MaxLength(200)] string? NomeExibicao);
+    [MaxLength(200)] string? NomeExibicao,
+    List<ProcessoMonitoradoAndamentoDto>? Andamentos = null);
 
 public record ProcessoMonitoradoCreateResultDto(
     Guid Id,

@@ -27,7 +27,7 @@ public enum AreaDireito
 
 public enum TipoParteProcesso { Autor, Reu, Interessado, Terceiro }
 
-public enum FonteAndamento { Manual, Automatico }
+public enum FonteAndamento { Manual, Automatico, DataJud }
 
 public enum TipoAndamento
 {

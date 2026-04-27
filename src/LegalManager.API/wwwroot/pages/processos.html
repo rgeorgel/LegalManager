@@ -183,6 +183,10 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label>Comarca</label>
+            <input type="text" id="fComarca" class="form-control" placeholder="São Paulo">
+          </div>
+          <div class="form-group">
             <label>Área do Direito *</label>
             <select id="fAreaDireito" class="form-control" required>
               <option value="Civil">Civil</option>
@@ -605,6 +609,15 @@ function readForm() {
     tipoParte: row.querySelector('.parte-tipo').value
   })).filter(p => p.contatoId);
 
+  const andamentos = (!editingId && lastSearchResult && lastSearchResult.movimentos)
+    ? lastSearchResult.movimentos.map(m => ({
+        data: m.data,
+        descricao: m.descricao || m.tipoNome,
+        codigoCNJ: m.codigoCNJ,
+        orgaoJulgador: m.orgaoJulgador
+      }))
+    : null;
+
   return {
     numeroCNJ: document.getElementById('fNumeroCNJ').value,
     tribunal: document.getElementById('fTribunal').value || null,
@@ -618,7 +631,8 @@ function readForm() {
     advogadoResponsavelId: document.getElementById('fAdvogado').value || null,
     monitorado: document.getElementById('fMonitorado').value === 'true',
     observacoes: document.getElementById('fObservacoes').value || null,
-    partes
+    partes,
+    andamentos
   };
 }
 

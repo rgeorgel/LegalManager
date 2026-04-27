@@ -10,4 +10,5 @@ public class ProcessoMonitorado
     public DateTime CriadoEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
+    public ICollection<ProcessoMonitoradoAndamento> Andamentos { get; set; } = new List<ProcessoMonitoradoAndamento>();
 }

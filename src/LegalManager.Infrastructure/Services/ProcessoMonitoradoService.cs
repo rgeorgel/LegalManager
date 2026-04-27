@@ -67,6 +67,22 @@ public class ProcessoMonitoradoService : IProcessoMonitoradoService
             processoEncontrado = true;
             mensagem = "Processo encontrado e criado automaticamente.";
 
+            foreach (var m in consulta.Movimentos)
+            {
+                entity.Andamentos.Add(new ProcessoMonitoradoAndamento
+                {
+                    Id = Guid.NewGuid(),
+                    ProcessoMonitoradoId = entity.Id,
+                    TenantId = _tenant.TenantId,
+                    Data = m.Data,
+                    Descricao = m.Descricao,
+                    CodigoCNJ = m.CodigoCNJ,
+                    OrgaoJulgador = m.OrgaoJulgador,
+                    Fonte = FonteAndamento.DataJud,
+                    CriadoEm = DateTime.UtcNow
+                });
+            }
+
             var processoExistente = await _context.Processos
                 .AnyAsync(p => p.TenantId == _tenant.TenantId && p.NumeroCNJ == numeroCNJ, ct);
 
