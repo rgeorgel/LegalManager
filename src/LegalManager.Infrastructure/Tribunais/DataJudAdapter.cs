@@ -197,6 +197,7 @@ public class DataJudAdapter : ITribunalAdapter
 
     private sealed class DataJudHits
     {
+        [System.Text.Json.Serialization.JsonPropertyName("hits")]
         public List<DataJudHit>? HitsData { get; set; }
         public DataJudTotal? Total { get; set; }
     }
