@@ -36,14 +36,18 @@ public class ProcessosMonitoradosController : ControllerBase
         if (string.IsNullOrWhiteSpace(cnj))
             return BadRequest(new { message = "CNJ é obrigatório." });
 
+        var digitsOnly = new string(cnj.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length < 7)
+            return BadRequest(new { message = "CNJ inválido." });
+
         var formatted = FormatCNJ(cnj);
         _logger.LogInformation("Buscando processo CNJ: {CNJ}, Tribunal: {Tribunal}", formatted, tribunal ?? "inferido");
 
         TribunalConsultaResult result;
         if (!string.IsNullOrWhiteSpace(tribunal))
-            result = await _dataJud.ConsultarPorTribunalAsync(formatted, tribunal, ct);
+            result = await _dataJud.ConsultarPorTribunalAsync(digitsOnly, tribunal, ct);
         else
-            result = await _dataJud.ConsultarAsync(formatted, ct);
+            result = await _dataJud.ConsultarAsync(digitsOnly, ct);
 
         _logger.LogInformation(
             "Resultado DataJud para {CNJ}: Encontrado={Encontrado}, Tribunal={Tribunal}, Vara={Vara}, Movimentacoes={Movimentacoes}",
