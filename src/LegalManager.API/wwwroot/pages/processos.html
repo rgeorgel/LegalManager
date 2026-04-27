@@ -167,15 +167,21 @@
             <input type="text" id="fVara" class="form-control" placeholder="1ª Vara Cível">
           </div>
           <div class="form-group">
-            <label>Comarca</label>
-            <input type="text" id="fComarca" class="form-control" placeholder="São Paulo">
+            <label>Classe</label>
+            <input type="text" id="fClasse" class="form-control" placeholder="Execução de Título Extrajudicial" readonly>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Comarca</label>
-            <input type="text" id="fComarca" class="form-control" placeholder="São Paulo">
+            <label>Assuntos</label>
+            <input type="text" id="fAssuntos" class="form-control" placeholder="Seguro, Contratos..." readonly>
           </div>
+          <div class="form-group">
+            <label>Data Ajuizamento</label>
+            <input type="text" id="fDataAjuizamento" class="form-control" placeholder="10/08/2022" readonly>
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Área do Direito *</label>
             <select id="fAreaDireito" class="form-control" required>
@@ -307,6 +313,42 @@ function esc(str) {
   return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// Show movements timeline modal
+let lastSearchResult = null;
+function showMovimentacoes(event, hasMovimentos) {
+  event.preventDefault();
+  if (!lastSearchResult || !lastSearchResult.movimentos || lastSearchResult.movimentos.length === 0) {
+    alert('Nenhum andamento disponível.');
+    return;
+  }
+  const movs = lastSearchResult.movimentos;
+  const movsHtml = movs.map(m => {
+    const data = new Date(m.data).toLocaleString('pt-BR');
+    return `<div style="border-left:3px solid #ddd;padding:8px 12px;margin-bottom:8px;background:#f9fafb">
+      <div style="font-weight:600;color:#374151;font-size:13px">${esc(m.descricao || m.tipoNome)}</div>
+      <div style="color:#6b7280;font-size:12px;margin-top:2px">${data}${m.orgaoJulgador ? ' | ' + esc(m.orgaoJulgador) : ''}</div>
+    </div>`;
+  }).reverse().join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'modalMovimentacoes';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:white;border-radius:8px;max-width:700px;width:90%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:600;font-size:16px">Andamentos do Processo</span>
+      <button onclick="this.closest('#modalMovimentacoes').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;overflow-y:auto;flex:1">
+      <div style="margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;font-size:13px">
+        <strong>${esc(lastSearchResult.numeroCNJ)}</strong> — ${esc(lastSearchResult.classe || 'N/A')}
+      </div>
+      ${movsHtml}
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
 // Tribunal searchable dropdown
 const TRIBUNAIS = [
   'STF','STJ','TST','TSE','STM',
@@ -369,12 +411,19 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
       ? `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}&tribunal=${encodeURIComponent(tribunal)}`
       : `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`;
     const result = await apiFetch(url);
+    lastSearchResult = result;
     if (result.encontrado) {
+      const dataAjuizamento = result.dataAjuizamento ? new Date(result.dataAjuizamento).toLocaleDateString('pt-BR') : null;
+      const assuntosStr = result.assuntos ? result.assuntos.join(', ') : '';
       preview.className = 'process-preview encontrado';
       preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
         <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
-        <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) disponível(is)</span>`;
+        <span class="preview-vara">Classe: ${esc(result.classe ?? 'N/A')} | Data: ${esc(dataAjuizamento ?? 'N/A')}</span><br>
+        <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) | <a href="#" onclick="showMovimentacoes(event)" style="color:#15803d;text-decoration:underline">Ver andamentos</a></span>`;
       if (result.vara) document.getElementById('fVara').value = result.vara;
+      if (result.classe) document.getElementById('fClasse').value = result.classe;
+      if (assuntosStr) document.getElementById('fAssuntos').value = assuntosStr;
+      if (dataAjuizamento) document.getElementById('fDataAjuizamento').value = dataAjuizamento;
     } else {
       preview.className = 'process-preview nao-encontrado';
       preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>

@@ -55,7 +55,7 @@ public class DataJudAdapter : ITribunalAdapter
         // Try all possible matching indices (search uses the numero directly in each)
         var tribKey = InferirTribunal(numeroCNJ);
         if (tribKey == null)
-            return new TribunalConsultaResult(false, null, null, null, []);
+            return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
 
         return await ConsultarTribunalAsync(numeroCNJ, tribKey, ct);
     }
@@ -64,7 +64,7 @@ public class DataJudAdapter : ITribunalAdapter
         string numeroCNJ, string tribunal, CancellationToken ct = default)
     {
         if (!TribunalIndex.TryGetValue(tribunal.Trim(), out var idx))
-            return new TribunalConsultaResult(false, null, null, null, []);
+            return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
 
         return await ConsultarTribunalAsync(numeroCNJ, idx, ct);
     }
@@ -96,7 +96,7 @@ public class DataJudAdapter : ITribunalAdapter
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("DataJud retornou {Status} para {NumCNJ}", response.StatusCode, numeroCNJ);
-                return new TribunalConsultaResult(false, null, null, null, []);
+                return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
             }
 
             var result = await response.Content.ReadFromJsonAsync<DataJudResponse>(
@@ -105,21 +105,24 @@ public class DataJudAdapter : ITribunalAdapter
             if (result?.Hits?.HitsData == null || result.Hits.HitsData.Count == 0)
             {
                 _logger.LogInformation("DataJud: Nenhum resultado para {NumCNJ}", numeroCNJ);
-                return new TribunalConsultaResult(false, null, null, null, []);
+                return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
             }
 
             var source = result.Hits.HitsData[0].Source;
             if (source == null)
-                return new TribunalConsultaResult(false, null, null, null, []);
+                return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
 
             var movimentos = (source.Movimentos ?? [])
                 .Select(m => new TribunalMovimento(
                     Descricao: m.Nome ?? "Movimento sem descrição",
                     Data: m.DataHora,
                     TipoNome: m.Nome ?? "Outro",
-                    CodigoCNJ: m.Codigo))
+                    CodigoCNJ: m.Codigo,
+                    OrgaoJulgador: m.OrgaoJulgador?.Nome))
                 .OrderBy(m => m.Data)
                 .ToList();
+
+            var assuntos = (source.Assuntos ?? []).Select(a => a.Nome ?? "").Where(n => !string.IsNullOrEmpty(n)).ToList();
 
             _logger.LogInformation("DataJud: Encontrado processo {NumCNJ} com {Count} movimentos", numeroCNJ, movimentos.Count);
 
@@ -128,12 +131,18 @@ public class DataJudAdapter : ITribunalAdapter
                 NomeTribunal: source.Tribunal,
                 Vara: source.OrgaoJulgador?.Nome,
                 Comarca: null,
-                Movimentos: movimentos);
+                Movimentos: movimentos,
+                Classe: source.Classe?.Nome,
+                Assuntos: assuntos,
+                DataAjuizamento: !string.IsNullOrEmpty(source.DataAjuizamento)
+                    ? DateTime.TryParseExact(source.DataAjuizamento, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var dt) ? dt : null
+                    : null,
+                Grau: source.Grau);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao consultar DataJud para {NumCNJ}", numeroCNJ);
-            return new TribunalConsultaResult(false, null, null, null, []);
+            return new TribunalConsultaResult(false, null, null, null, [], null, null, null, null);
         }
     }
 
@@ -218,9 +227,23 @@ public class DataJudAdapter : ITribunalAdapter
         public string? Tribunal { get; set; }
         public DataJudOrgao? OrgaoJulgador { get; set; }
         public List<DataJudMovimento>? Movimentos { get; set; }
+        public DataJudClasse? Classe { get; set; }
+        public List<DataJudAssunto>? Assuntos { get; set; }
+        public string? DataAjuizamento { get; set; }
+        public string? Grau { get; set; }
     }
 
     private sealed class DataJudOrgao
+    {
+        public string? Nome { get; set; }
+    }
+
+    private sealed class DataJudClasse
+    {
+        public string? Nome { get; set; }
+    }
+
+    private sealed class DataJudAssunto
     {
         public string? Nome { get; set; }
     }
@@ -230,5 +253,6 @@ public class DataJudAdapter : ITribunalAdapter
         public int? Codigo { get; set; }
         public string? Nome { get; set; }
         public DateTime DataHora { get; set; }
+        public DataJudOrgao? OrgaoJulgador { get; set; }
     }
 }

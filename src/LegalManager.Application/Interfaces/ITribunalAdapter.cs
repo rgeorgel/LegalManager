@@ -4,7 +4,8 @@ public record TribunalMovimento(
     string Descricao,
     DateTime Data,
     string TipoNome,
-    int? CodigoCNJ
+    int? CodigoCNJ,
+    string? OrgaoJulgador = null
 );
 
 public record TribunalConsultaResult(
@@ -12,7 +13,11 @@ public record TribunalConsultaResult(
     string? NomeTribunal,
     string? Vara,
     string? Comarca,
-    IReadOnlyList<TribunalMovimento> Movimentos
+    IReadOnlyList<TribunalMovimento> Movimentos,
+    string? Classe = null,
+    IReadOnlyList<string>? Assuntos = null,
+    DateTime? DataAjuizamento = null,
+    string? Grau = null
 );
 
 public interface ITribunalAdapter

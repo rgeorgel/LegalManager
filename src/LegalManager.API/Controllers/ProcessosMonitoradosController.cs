@@ -59,7 +59,18 @@ public class ProcessosMonitoradosController : ControllerBase
             encontrado = result.Encontrado,
             tribunal = result.NomeTribunal,
             vara = result.Vara,
-            movimentosCount = result.Movimentos?.Count ?? 0
+            movimentosCount = result.Movimentos?.Count ?? 0,
+            classe = result.Classe,
+            assuntos = result.Assuntos,
+            dataAjuizamento = result.DataAjuizamento,
+            grau = result.Grau,
+            movimentos = result.Movimentos?.Select(m => new {
+                descricao = m.Descricao,
+                data = m.Data,
+                tipoNome = m.TipoNome,
+                codigoCNJ = m.CodigoCNJ,
+                orgaoJulgador = m.OrgaoJulgador
+            })
         });
     }
 
