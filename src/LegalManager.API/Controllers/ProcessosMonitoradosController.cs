@@ -31,15 +31,19 @@ public class ProcessosMonitoradosController : ControllerBase
         => Ok(await _service.GetAllAsync(ct));
 
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string cnj, CancellationToken ct)
+    public async Task<IActionResult> Search([FromQuery] string cnj, [FromQuery] string? tribunal, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(cnj))
             return BadRequest(new { message = "CNJ é obrigatório." });
 
         var formatted = FormatCNJ(cnj);
-        _logger.LogInformation("Buscando processo CNJ: {CNJ}", formatted);
+        _logger.LogInformation("Buscando processo CNJ: {CNJ}, Tribunal: {Tribunal}", formatted, tribunal ?? "inferido");
 
-        var result = await _dataJud.ConsultarAsync(formatted, ct);
+        TribunalConsultaResult result;
+        if (!string.IsNullOrWhiteSpace(tribunal))
+            result = await _dataJud.ConsultarPorTribunalAsync(formatted, tribunal, ct);
+        else
+            result = await _dataJud.ConsultarAsync(formatted, ct);
 
         _logger.LogInformation(
             "Resultado DataJud para {CNJ}: Encontrado={Encontrado}, Tribunal={Tribunal}, Vara={Vara}, Movimentacoes={Movimentacoes}",

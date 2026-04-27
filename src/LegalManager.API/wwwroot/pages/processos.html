@@ -30,6 +30,19 @@
     .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
     .process-preview .preview-tribunal { font-weight:600; }
     .process-preview .preview-vara { margin-top:4px; }
+    .cnj-row { display:flex; gap:8px; align-items:flex-start; }
+    .cnj-row .cnj-input-wrap { flex:1; }
+    .cnj-row .tribunal-wrap { width:160px; }
+    .tribunal-select { width:100%; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); background:white; padding:0 10px; font-size:14px; cursor:pointer; }
+    .tribunal-select:focus { outline:2px solid var(--color-primary); border-color:var(--color-primary); }
+    .searchable-select-wrap { position:relative; }
+    .searchable-select-wrap input { width:100%; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); padding:0 10px; font-size:14px; }
+    .searchable-select-wrap input:focus { outline:2px solid var(--color-primary); border-color:var(--color-primary); }
+    .searchable-select-list { position:absolute; top:100%; left:0; right:0; background:white; border:1px solid var(--color-border); border-radius:var(--radius); max-height:200px; overflow-y:auto; z-index:100; display:none; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    .searchable-select-list.open { display:block; }
+    .searchable-select-list li { padding:8px 12px; cursor:pointer; font-size:13px; }
+    .searchable-select-list li:hover { background:#f3f4f6; }
+    .searchable-select-list li.selected { background:#e0e7ff; font-weight:500; }
   </style>
 </head>
 <body>
@@ -131,20 +144,31 @@
       <form id="processoForm">
         <div class="form-group">
           <label>Número CNJ *</label>
-          <div class="input-with-search">
-            <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
-            <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+          <div class="cnj-row">
+            <div class="cnj-input-wrap">
+              <div class="input-with-search">
+                <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
+                <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+              </div>
+            </div>
+            <div class="tribunal-wrap">
+              <label style="font-size:11px;color:#6b7280;margin-bottom:4px;display:block;">Tribunal</label>
+              <div class="searchable-select-wrap">
+                <input type="text" id="fTribunal" placeholder="Ex: TJSP" autocomplete="off">
+                <ul class="searchable-select-list" id="tribunalList"></ul>
+              </div>
+            </div>
           </div>
           <div id="processPreview" class="process-preview"></div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tribunal</label>
-            <input type="text" id="fTribunal" class="form-control" placeholder="TJSP, TRF3, STJ...">
-          </div>
-          <div class="form-group">
             <label>Vara</label>
             <input type="text" id="fVara" class="form-control" placeholder="1ª Vara Cível">
+          </div>
+          <div class="form-group">
+            <label>Comarca</label>
+            <input type="text" id="fComarca" class="form-control" placeholder="São Paulo">
           </div>
         </div>
         <div class="form-row">
@@ -283,6 +307,43 @@ function esc(str) {
   return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// Tribunal searchable dropdown
+const TRIBUNAIS = [
+  'STF','STJ','TST','TSE','STM',
+  'TRF1','TRF2','TRF3','TRF4','TRF5','TRF6',
+  'TRT1','TRT2','TRT3','TRT4','TRT5','TRT6','TRT7','TRT8','TRT9','TRT10',
+  'TRT11','TRT12','TRT13','TRT14','TRT15','TRT16','TRT17','TRT18','TRT19','TRT20',
+  'TRT21','TRT22','TRT23','TRT24',
+  'TJAC','TJAL','TJAM','TJAP','TJBA','TJCE','TJDF','TJES','TJGO',
+  'TJMA','TJMG','TJMS','TJMT','TJPA','TJPB','TJPE','TJPI','TJPR',
+  'TJRJ','TJRN','TJRO','TJRR','TJRS','TJSC','TJSE','TJSP','TJTO'
+];
+
+const tribunalInput = document.getElementById('fTribunal');
+const tribunalList = document.getElementById('tribunalList');
+
+function renderTribunalList(filter = '') {
+  const filtered = TRIBUNAIS.filter(t => t.toLowerCase().includes(filter.toLowerCase()));
+  tribunalList.innerHTML = filtered.map(t => `<li data-value="${t}">${t}</li>`).join('');
+  tribunalList.classList.add('open');
+}
+
+tribunalInput.addEventListener('focus', () => renderTribunalList(tribunalInput.value));
+tribunalInput.addEventListener('input', () => renderTribunalList(tribunalInput.value));
+
+tribunalList.addEventListener('click', (e) => {
+  if (e.target.tagName === 'LI') {
+    tribunalInput.value = e.target.dataset.value;
+    tribunalList.classList.remove('open');
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.searchable-select-wrap')) {
+    tribunalList.classList.remove('open');
+  }
+});
+
 // Buscar dados do processo (preview)
 document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
   const input = document.getElementById('fNumeroCNJ');
@@ -303,14 +364,16 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
   btn.disabled = true;
 
   try {
-    const result = await apiFetch(`/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`);
+    const tribunal = tribunalInput.value.trim();
+    const url = tribunal
+      ? `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}&tribunal=${encodeURIComponent(tribunal)}`
+      : `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`;
+    const result = await apiFetch(url);
     if (result.encontrado) {
       preview.className = 'process-preview encontrado';
       preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
         <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
         <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) disponível(is)</span>`;
-      // Auto-fill tribunal and vara fields
-      if (result.tribunal) document.getElementById('fTribunal').value = result.tribunal;
       if (result.vara) document.getElementById('fVara').value = result.vara;
     } else {
       preview.className = 'process-preview nao-encontrado';
