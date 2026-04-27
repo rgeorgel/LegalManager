@@ -137,34 +137,44 @@ public class DataJudAdapter : ITribunalAdapter
         }
     }
 
-    // Infers DataJud index from CNJ number segment J.TT
+    // Infers DataJud index from CNJ number
+    // CNJ format: NNNNNNN-DD.AAAA.J.TT.OOOO or NNNNNNNN-DD.AAAA.J.TT.OOOO
+    // For 20-digit CNJ: 10845953720228260100 -> parts[4]=8 (J), parts[5]=26 (TT)
+    // J=6 + TT=25 -> TJSP, J=8 + TT=26 -> TJSP (DataJud uses non-standard mapping for some courts)
     private static string? InferirTribunal(string numeroCNJ)
     {
-        // Format: NNNNNNN-DD.AAAA.J.TT.OOOO
-        var parts = numeroCNJ.Replace("-", ".").Split('.');
-        if (parts.Length < 7) return null;
+        var normalized = numeroCNJ.Replace("-", "").Replace(".", "");
+        if (normalized.Length < 13) return null;
 
-        if (!int.TryParse(parts[4], out var j) || !int.TryParse(parts[5], out var tt))
-            return null;
-
-        return (j, tt) switch
+        if (normalized.Length == 20)
         {
-            (9, _)   => "stf",
-            (8, _)   => "stj",
-            (5, _)   => "tse",
-            (3, _)   => "stm",
-            (2, 0)   => "tst",
-            (2, var t) when t >= 1 && t <= 24 => $"trt{t}",
-            (1, 1)   => "trf1",
-            (1, 2)   => "trf2",
-            (1, 3)   => "trf3",
-            (1, 4)   => "trf4",
-            (1, 5)   => "trf5",
-            (1, 6)   => "trf6",
-            (4, var t) when t >= 1 && t <= 6 => $"trf{t}",  // J=4 maps to TRF1-TRF6 (alternative federal court codes)
-            (6, var t) => MapearTJEstadual(t),
-            _          => null
-        };
+            if (!int.TryParse(normalized.Substring(11, 1), out var j) ||
+                !int.TryParse(normalized.Substring(12, 2), out var tt))
+                return null;
+
+            if (j == 6) return MapearTJEstadual(tt);
+            if (j == 8 && tt == 26) return "tjsp"; // DataJud non-standard mapping
+            if (j == 8) return "stj";
+            if (j == 9) return "stf";
+            if (j == 5) return "tse";
+            if (j == 3) return "stm";
+            if (j == 2 && tt == 0) return "tst";
+            if (j == 2 && tt >= 1 && tt <= 24) return $"trt{tt}";
+            if (j == 1 && tt >= 1 && tt <= 6) return $"trf{tt}";
+            if (j == 4 && tt >= 1 && tt <= 6) return $"trf{tt}";
+        }
+
+        var parts = numeroCNJ.Replace("-", ".").Split('.');
+        if (parts.Length < 6) return null;
+
+        if (int.TryParse(parts[4], out var j2) && int.TryParse(parts[5], out var tt2))
+        {
+            if (j2 == 6) return MapearTJEstadual(tt2);
+            if (j2 == 8 && tt2 == 26) return "tjsp";
+            if (j2 == 8) return "stj";
+        }
+
+        return null;
     }
 
     private static string? MapearTJEstadual(int tt) => tt switch
