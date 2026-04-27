@@ -63,6 +63,8 @@ services:
       IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}
       IA__BaseUrl: ${IA_BASE_URL:-}
       IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
+      DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
+      DataJud__ApiKey: ${DATAJUD_API_KEY:-}
       Serilog__WriteTo__0__Name: Seq
       Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
     depends_on:

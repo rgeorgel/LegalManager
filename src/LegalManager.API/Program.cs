@@ -111,9 +111,11 @@ builder.Services.AddScoped<SeedService>();
 
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {
-    client.BaseAddress = new Uri("https://api.datajud.cnj.jus.br");
-    var apiKey = builder.Configuration["DataJud:ApiKey"] ?? "cDZHYzlZa0JadVREZDJCendOM3Yw";
-    client.DefaultRequestHeaders.Add("Authorization", $"APIKey {apiKey}");
+    var baseUrl = builder.Configuration["DataJud:BaseUrl"] ?? "https://api-publica.datajud.cnj.jus.br";
+    client.BaseAddress = new Uri(baseUrl);
+    var apiKey = builder.Configuration["DataJud:ApiKey"] ?? "";
+    if (!string.IsNullOrEmpty(apiKey))
+        client.DefaultRequestHeaders.Add("Authorization", $"ApiKey {apiKey}");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
