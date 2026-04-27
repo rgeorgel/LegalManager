@@ -19,6 +19,17 @@
     .status-suspenso { background:#fef3c7; color:#c27803; }
     .status-arquivado{ background:#f3f4f6; color:#6b7280; }
     .status-encerrado{ background:#fee2e2; color:#e02424; }
+    .input-with-search { position:relative; display:flex; gap:8px; align-items:center; }
+    .input-with-search input { flex:1; }
+    .search-btn { flex-shrink:0; width:42px; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:.2s; }
+    .search-btn:hover { background:#e5e7eb; }
+    .search-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .process-preview { margin-top:8px; padding:10px 12px; border-radius:6px; font-size:13px; display:none; }
+    .process-preview.encontrado { background:#dcfce7; border:1px solid #86efac; color:#166534; }
+    .process-preview.nao-encontrado { background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
+    .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
+    .process-preview .preview-tribunal { font-weight:600; }
+    .process-preview .preview-vara { margin-top:4px; }
   </style>
 </head>
 <body>
@@ -120,7 +131,11 @@
       <form id="processoForm">
         <div class="form-group">
           <label>Número CNJ *</label>
-          <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
+          <div class="input-with-search">
+            <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
+            <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+          </div>
+          <div id="processPreview" class="process-preview"></div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -263,6 +278,60 @@ import { mascaraCnj } from '/js/mascaras.js';
 initLayout();
 
 document.getElementById('fNumeroCNJ').addEventListener('input', (e) => mascaraCnj(e.target));
+
+function esc(str) {
+  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Buscar dados do processo (preview)
+document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
+  const input = document.getElementById('fNumeroCNJ');
+  const preview = document.getElementById('processPreview');
+  const btn = document.getElementById('btnBuscarProcesso');
+  const cnj = input.value.trim();
+
+  if (!cnj) {
+    preview.className = 'process-preview nao-encontrado';
+    preview.innerHTML = 'Digite um número de processo.';
+    preview.style.display = 'block';
+    return;
+  }
+
+  preview.className = 'process-preview loading';
+  preview.innerHTML = 'Buscando...';
+  preview.style.display = 'block';
+  btn.disabled = true;
+
+  try {
+    const result = await apiFetch(`/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`);
+    if (result.encontrado) {
+      preview.className = 'process-preview encontrado';
+      preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
+        <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
+        <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) disponível(is)</span>`;
+      // Auto-fill tribunal and vara fields
+      if (result.tribunal) document.getElementById('fTribunal').value = result.tribunal;
+      if (result.vara) document.getElementById('fVara').value = result.vara;
+    } else {
+      preview.className = 'process-preview nao-encontrado';
+      preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>
+        <span class="preview-vara">Preencha os dados manualmente.</span>`;
+    }
+  } catch (err) {
+    preview.className = 'process-preview nao-encontrado';
+    preview.innerHTML = 'Erro ao buscar processo. Tente novamente.';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Permitir buscar com Enter no campo CNJ
+document.getElementById('fNumeroCNJ').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('btnBuscarProcesso').click();
+  }
+});
 
 let currentPage = 1;
 let currentFilters = {};
@@ -449,6 +518,7 @@ function resetModal() {
   document.getElementById('fMonitorado').value = 'false';
   document.getElementById('partesContainer').innerHTML = '';
   document.getElementById('modalAlert').style.display = 'none';
+  document.getElementById('processPreview').style.display = 'none';
 }
 
 document.getElementById('btnNovo').addEventListener('click', () => { resetModal(); modal.classList.add('open'); });

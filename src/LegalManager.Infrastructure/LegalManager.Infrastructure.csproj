@@ -14,6 +14,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.4" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.17.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.52.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="OCI.DotNetSDK.Common" Version="64.0.0" />
     <PackageReference Include="OCI.DotNetSDK.Objectstorage" Version="64.0.0" />

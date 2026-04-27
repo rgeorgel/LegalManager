@@ -6,7 +6,6 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Jobs;
@@ -32,62 +31,27 @@ public class CapturaPublicacaoJob
 
     public async Task ExecutarAsync()
     {
-        _logger.LogInformation("[CapturaPublicacaoJob] Iniciando captura de publicações por nome.");
+        _logger.LogInformation("[CapturaPublicacaoJob] Iniciando monitoramento de publicações.");
         var agora = DateTime.UtcNow;
 
-        // Load all active NomesCaptura grouped by tenant
-        var nomesCaptura = await _context.NomesCaptura
-            .Where(n => n.Ativo)
-            .Select(n => new { n.Id, n.TenantId, n.Nome })
+        var processosMonitorados = await _context.ProcessosMonitorados
+            .Where(p => p.Ativo)
+            .Select(p => new { p.Id, p.TenantId, p.NumeroCNJ })
             .ToListAsync();
 
-        if (!nomesCaptura.Any())
+        if (!processosMonitorados.Any())
         {
-            _logger.LogInformation("[CapturaPublicacaoJob] Nenhum nome de captura configurado.");
+            _logger.LogInformation("[CapturaPublicacaoJob] Nenhum processo monitorado configurado.");
             return;
         }
 
-        var tenantIds = nomesCaptura.Select(n => n.TenantId).Distinct().ToList();
+        var tenantIds = processosMonitorados.Select(p => p.TenantId).Distinct().ToList();
         int totalNovas = 0;
 
         foreach (var tenantId in tenantIds)
         {
-            var nomesTenant = nomesCaptura.Where(n => n.TenantId == tenantId).ToList();
+            var processosTenant = processosMonitorados.Where(p => p.TenantId == tenantId).ToList();
 
-            // Find processes in this tenant that have parties matching configured names
-            var processosDoTenant = await _context.Processos
-                .Include(p => p.Partes).ThenInclude(pt => pt.Contato)
-                .Where(p => p.TenantId == tenantId && p.Status == StatusProcesso.Ativo)
-                .ToListAsync();
-
-            // Collect distinct process IDs that match at least one monitored name
-            var processosCandidatos = new HashSet<Processo>();
-            foreach (var processo in processosDoTenant)
-            {
-                foreach (var nome in nomesTenant)
-                {
-                    var matchaNome = processo.Partes.Any(pt =>
-                        pt.Contato.Nome.Contains(nome.Nome, StringComparison.OrdinalIgnoreCase));
-
-                    if (matchaNome)
-                    {
-                        processosCandidatos.Add(processo);
-                        break;
-                    }
-                }
-            }
-
-            // Get existing publication dates per process to avoid duplicates
-            var publicacoesExistentes = await _context.Publicacoes
-                .Where(p => p.TenantId == tenantId)
-                .Select(p => new { p.ProcessoId, p.DataPublicacao, p.Conteudo })
-                .ToListAsync();
-
-            var existingKeys = publicacoesExistentes
-                .Select(p => (p.ProcessoId, p.DataPublicacao.Date))
-                .ToHashSet();
-
-            // Search DataJud andamentos for publication-type movements in candidate processes
             var andamentosPublicacao = await _context.Andamentos
                 .Where(a => a.TenantId == tenantId &&
                             a.Fonte == FonteAndamento.Automatico &&
@@ -100,13 +64,26 @@ public class CapturaPublicacaoJob
 
             foreach (var andamento in andamentosPublicacao)
             {
-                if (!processosCandidatos.Any(p => p.Id == andamento.ProcessoId))
-                    continue;
+                var processo = await _context.Processos
+                    .FirstOrDefaultAsync(p => p.Id == andamento.ProcessoId && p.TenantId == tenantId);
 
-                if (existingKeys.Contains((andamento.ProcessoId, andamento.Data.Date)))
-                    continue;
+                if (processo == null) continue;
 
-                var processo = processosCandidatos.First(p => p.Id == andamento.ProcessoId);
+                var matchedProcesso = processosTenant.FirstOrDefault(pm =>
+                {
+                    var numeroLimpo = new string(pm.NumeroCNJ.Where(char.IsDigit).ToArray());
+                    var processoLimpo = new string(processo.NumeroCNJ.Where(char.IsDigit).ToArray());
+                    return numeroLimpo.Length >= 7 && processoLimpo.Length >= 7 &&
+                           numeroLimpo[..7] == processoLimpo[..7];
+                });
+
+                if (matchedProcesso == null) continue;
+
+                var exists = await _context.Publicacoes.AnyAsync(p =>
+                    p.ProcessoId == andamento.ProcessoId &&
+                    p.DataPublicacao.Date == andamento.Data.Date);
+
+                if (exists) continue;
 
                 var (tipo, urgente, classificacaoIA) = await ClassificarComIAAsync(andamento.Descricao);
 
@@ -180,7 +157,6 @@ public class CapturaPublicacaoJob
                 .GetProperty("text")
                 .GetString() ?? "";
 
-            // Extract JSON from response
             var startIdx = text.IndexOf('{');
             var endIdx = text.LastIndexOf('}');
             if (startIdx < 0 || endIdx < 0)
@@ -223,7 +199,6 @@ public class CapturaPublicacaoJob
 
     private async Task NotificarTenantAsync(Guid tenantId, List<Publicacao> novas, DateTime agora)
     {
-        // Notify each responsible lawyer for the processes
         var processoIds = novas.Select(p => p.ProcessoId).Where(p => p.HasValue).Select(p => p!.Value).Distinct();
 
         var responsaveis = await _context.Processos

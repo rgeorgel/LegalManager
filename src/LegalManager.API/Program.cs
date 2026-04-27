@@ -81,7 +81,7 @@ builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
 builder.Services.AddScoped<IPrazoService, PrazoService>();
 builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
-builder.Services.AddScoped<INomeCapturaService, NomeCapturaService>();
+builder.Services.AddScoped<IProcessoMonitoradoService, ProcessoMonitoradoService>();
 builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();
 builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
 builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
@@ -133,6 +133,9 @@ builder.Services.AddHttpClient<TjmgDjeAdapter>(client =>
     client.Timeout = TimeSpan.FromSeconds(60);
 });
 
+builder.Services.AddScoped<IDjeAdapter>(sp =>
+    new JusBrasilDjeAdapter(
+        sp.GetRequiredService<ILogger<JusBrasilDjeAdapter>>()));
 builder.Services.AddScoped<IDjeAdapter>(sp =>
     new TjspDjeAdapter(sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(TjspDjeAdapter)),
         sp.GetRequiredService<ILogger<TjspDjeAdapter>>()));

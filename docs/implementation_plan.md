@@ -222,10 +222,11 @@ Atendimento { id, tenantId, contatoId, usuarioId, descricao, data }
 
 #### 3.4 Captura de Publicações e Intimações
 - Captura automática de publicações dos Diários Oficiais (DJE, DJSP, DOU, etc.)
-- Filtro por nome do advogado/parte (nomes cadastrados no plano)
+- Monitoramento por número CNJ de processos (ProcessosMonitorados)
 - Classificação automática por tipo: prazo, audiência, decisão, despacho
-- Plano Smart: 3 nomes para captura de publicações
+- Plano Free: 40 processos monitorados | Plano Pro/Enterprise: 500 processos
 - Tratamento de publicações com IA (identificação automática de tipo e urgência)
+- **Em desenvolvimento:** Integração JusBrasil API (requer assinatura paga) para DJE completo
 
 #### 3.5 Controle de Prazos Processuais
 - Calculadora de prazos processuais integrada (dias úteis, suspensões, feriados)

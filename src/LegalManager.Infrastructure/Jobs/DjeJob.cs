@@ -1,19 +1,16 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Jobs;
 
 public class DjeJob
 {
-    private readonly IServiceProvider? _serviceProvider;
     private readonly AppDbContext _context;
     private readonly IEnumerable<IDjeAdapter> _adapters;
     private readonly ILogger<DjeJob> _logger;
@@ -27,43 +24,41 @@ public class DjeJob
 
     public async Task ExecutarAsync(CancellationToken ct)
     {
-        _logger.LogInformation("[DjeJob] Iniciando captura de publicações DJE.");
+        _logger.LogInformation("[DjeJob] Iniciando monitoramento de publicações.");
 
-        var context = _context;
         var adapters = _adapters.ToList();
-
         if (adapters.Count == 0)
         {
             _logger.LogWarning("[DjeJob] Nenhum adapter DJE registrado.");
             return;
         }
 
-        var nomesCaptura = await context.NomesCaptura
-            .Where(n => n.Ativo)
-            .Select(n => new { n.Id, n.TenantId, n.Nome })
+        var processos = await _context.ProcessosMonitorados
+            .Where(p => p.Ativo)
+            .Select(p => new { p.Id, p.TenantId, p.NumeroCNJ })
             .ToListAsync(ct);
 
-        if (!nomesCaptura.Any())
+        if (!processos.Any())
         {
-            _logger.LogInformation("[DjeJob] Nenhum nome de captura configurado.");
+            _logger.LogInformation("[DjeJob] Nenhum processo monitorado configurado.");
             return;
         }
 
-        var tenantIds = nomesCaptura.Select(n => n.TenantId).Distinct().ToList();
+        var tenantIds = processos.Select(p => p.TenantId).Distinct().ToList();
         int totalNovas = 0;
 
         foreach (var tenantId in tenantIds)
         {
-            var nomesTenant = nomesCaptura.Where(n => n.TenantId == tenantId).ToList();
+            var processosTenant = processos.Where(p => p.TenantId == tenantId).ToList();
 
-            foreach (var nome in nomesTenant)
+            foreach (var processo in processosTenant)
             {
                 foreach (var adapter in adapters)
                 {
                     try
                     {
                         var resultado = await adapter.ConsultarPorNomeAsync(
-                            nome.Nome,
+                            processo.NumeroCNJ,
                             dataInicio: DateTime.UtcNow.AddDays(-7),
                             dataFim: DateTime.UtcNow,
                             ct);
@@ -72,14 +67,14 @@ public class DjeJob
                             continue;
 
                         var novas = await ProcessarPublicacoesAsync(
-                            context, tenantId, nome.Nome, adapter.Sigla, resultado.Publicacoes, ct);
+                            _context, tenantId, processo.NumeroCNJ, adapter.Sigla, resultado.Publicacoes, ct);
 
                         totalNovas += novas;
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "[DjeJob] Erro ao consultar {Adapter} para '{Nome}'",
-                            adapter.Sigla, nome.Nome);
+                        _logger.LogError(ex, "[DjeJob] Erro ao consultar {Adapter} para '{Processo}'",
+                            adapter.Sigla, processo.NumeroCNJ);
                     }
                 }
             }
@@ -91,7 +86,7 @@ public class DjeJob
     private async Task<int> ProcessarPublicacoesAsync(
         AppDbContext context,
         Guid tenantId,
-        string nome,
+        string numeroCNJ,
         string siglaTribunal,
         List<DjePublicacao> publicacoes,
         CancellationToken ct)

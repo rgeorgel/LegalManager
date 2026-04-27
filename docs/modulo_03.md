@@ -170,23 +170,24 @@ Capturar automaticamente publicações de processos nos Diários Oficiais/DJe, c
 
 ### Componentes
 
-#### 1. NomeCaptura (`Domain/Entities/NomeCaptura.cs`)
+#### 1. ProcessoMonitorado (`Domain/Entities/ProcessoMonitorado.cs`)
 
-Armazena os nomes que o tenant configura para monitoramento de publicações.
+Armazena os números CNJ dos processos que o tenant configura para monitoramento.
 
 ```csharp
-public class NomeCaptura
+public class ProcessoMonitorado
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
-    public string Nome { get; set; }   // ex: "João Silva", "SILVA ADVOGADOS"
+    public string NumeroCNJ { get; set; }  // formato: 0000000-00.0000.0.00.0000
+    public string? NomeExibicao { get; set; }  // apelido opcional
     public bool Ativo { get; set; }
     public DateTime CriadoEm { get; set; }
     public Tenant Tenant { get; set; }
 }
 ```
 
-**Limite:** 3 nomes por tenant (Plano Smart). Validado em `NomeCapturaService`.
+**Limite por plano:** Free=40, Pro/Enterprise=500. Validado em `ProcessoMonitoradoService`.
 
 #### 2. Publicacao (atualizada)
 
@@ -201,44 +202,46 @@ public class Publicacao
 }
 ```
 
-#### 3. NomeCapturaService (`Services/NomeCapturaService.cs`)
+#### 3. ProcessoMonitoradoService (`Services/ProcessoMonitoradoService.cs`)
 
-CRUD para gerenciamento de nomes de captura com validação de limite.
+CRUD para gerenciamento de processos monitorados com validação de limite.
 
 ```csharp
-public interface INomeCapturaService
+public interface IProcessoMonitoradoService
 {
-    Task<IEnumerable<NomeCapturaResponseDto>> GetAllAsync(CancellationToken ct);
-    Task<NomeCapturaResponseDto> CreateAsync(CreateNomeCapturaDto dto, CancellationToken ct);
+    Task<IEnumerable<ProcessoMonitoradoResponseDto>> GetAllAsync(CancellationToken ct);
+    Task<ProcessoMonitoradoResponseDto> CreateAsync(CreateProcessoMonitoradoDto dto, CancellationToken ct);
     Task ToggleAtivoAsync(Guid id, CancellationToken ct);
     Task DeleteAsync(Guid id, CancellationToken ct);
 }
 ```
 
 **Regras:**
-- Limite de 3 nomes por tenant — lança `InvalidOperationException` se excedido
-- Nome duplicado (mesmo tenant) não é permitido — índice único `(TenantId, Nome)`
-- `ToggleAtivoAsync` pausa/reativa um nome sem removê-lo
+- Limite de processos por tenant conforme plano — lança `InvalidOperationException` se excedido
+- Número CNJ duplicado (mesmo tenant) não é permitido — índice único `(TenantId, NumeroCNJ)`
+- `ToggleAtivoAsync` pausa/reativa um monitoramento sem removê-lo
 
 #### 4. CapturaPublicacaoJob (`Jobs/CapturaPublicacaoJob.cs`)
 
 Job Hangfire que executa diariamente às **07:00 UTC** (após o MonitoramentoJob).
 
-**Fluxo:**
+**Fluxo atual (2026 — monitoramento por número de processo):**
 
 ```
-1. Carregar todos os NomesCaptura ativos (todos os tenants)
+1. Carregar todos os ProcessosMonitorados ativos (todos os tenants)
 2. Para cada tenant:
-   a. Buscar processos do tenant com partes que correspondem aos nomes configurados
-      (match por Contato.Nome contendo o NomeCaptura.Nome, case-insensitive)
-   b. Buscar andamentos dos últimos 7 dias, tipo Publicacao ou Intimacao,
-      Fonte = Automatico, nos processos candidatos
+   a. Buscar andamentos dos últimos 7 dias, tipo Publicacao ou Intimacao,
+      Fonte = Automatico (DataJud/CNJ)
+   b. Para cada andamento, verificar se o processo está em ProcessosMonitorados
+      (match por número CNJ — 7 primeiros dígitos)
    c. Para cada andamento novo (não presente em Publicacoes):
       - Chamar Anthropic API (Claude Haiku) para classificar
       - Criar registro em Publicacoes com Tipo, Urgente, ClassificacaoIA
    d. Notificar advogado responsável (Notificacao + e-mail)
 3. Salvar tudo
 ```
+
+> **Nota:** Este job mudou do antigo fluxo de "match por nome de parte" para "match por número CNJ". O antigo fluxo usava `NomeCaptura` para buscar processos via части contidos, agora usa `ProcessoMonitorado` para match direto.
 
 **Fallback local** (quando a API do Claude não responde):
 
@@ -255,10 +258,10 @@ Job Hangfire que executa diariamente às **07:00 UTC** (após o MonitoramentoJob
 
 | Endpoint | Método | Descrição |
 |---------|--------|----------|
-| `/api/nomes-captura` | GET | Listar nomes do tenant |
-| `/api/nomes-captura` | POST | Adicionar nome (máx 3) |
-| `/api/nomes-captura/{id}/toggle` | PATCH | Ativar/pausar nome |
-| `/api/nomes-captura/{id}` | DELETE | Remover nome |
+| `/api/processos-monitorados` | GET | Listar processos do tenant |
+| `/api/processos-monitorados` | POST | Adicionar processo (máx conforme plano) |
+| `/api/processos-monitorados/{id}/toggle` | PATCH | Ativar/pausar monitoramento |
+| `/api/processos-monitorados/{id}` | DELETE | Remover monitoramento |
 
 #### 6. PublicacoesController (`Controllers/PublicacoesController.cs`)
 
@@ -382,16 +385,10 @@ Cálculo automático de prazos processuais considerando dias úteis, feriados na
 | Arquivo | Descrição |
 |---------|----------|
 | `src/.../Controllers/PublicacoesController.cs` | Endpoints de publicações |
-| `src/.../Controllers/NomesCapturaController.cs` | Endpoints de nomes de captura |
-| `src/.../Services/PublicacaoService.cs` | Lógica de publicações |
-| `src/.../Services/NomeCapturaService.cs` | Lógica de nomes de captura |
-| `src/.../Jobs/MonitoramentoJob.cs` | Job de monitoramento de processos |
-| `src/.../Jobs/CapturaPublicacaoJob.cs` | Job de captura de publicações + IA |
-| `src/.../Tribunais/DataJudAdapter.cs` | Integração DataJud CNJ |
-| `src/.../Entities/NomeCaptura.cs` | Entidade NomeCaptura |
-| `src/.../Entities/Publicacao.cs` | Entidade Publicacao (com Urgente e ClassificacaoIA) |
-| `src/.../wwwroot/pages/publicacoes.html` | Frontend — lista de publicações |
-| `src/.../wwwroot/pages/configuracoes.html` | Frontend — gestão de nomes de captura |
+| `src/.../Controllers/ProcessosMonitoradosController.cs` | Endpoints de processos monitorados |
+| `src/.../Services/ProcessoMonitoradoService.cs` | Lógica de processos monitorados |
+| `src/.../Entities/ProcessoMonitorado.cs` | Entidade ProcessoMonitorado |
+| `src/.../wwwroot/pages/configuracoes.html` | Frontend — gestão de processos monitorados |
 
 ## Referências Externas
 

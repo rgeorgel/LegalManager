@@ -14,7 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LegalManager — Configurações</title>
   <link rel="stylesheet" href="/css/styles.css">
-  <style>
+    <style>
     .config-section { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; }
     .config-section-title { font-weight:700; font-size:15px; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--color-border); }
     .uso-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
@@ -24,6 +24,17 @@
     .uso-card-limit { font-size:11px; color:var(--color-text-muted); margin-top:2px; }
     .progress-bar { height:6px; background:#e5e7eb; border-radius:3px; margin-top:8px; overflow:hidden; }
     .progress-bar-fill { height:100%; background:var(--color-primary); border-radius:3px; transition:.3s; }
+    .input-with-search { position:relative; display:flex; gap:8px; align-items:center; }
+    .input-with-search input { flex:1; min-width:200px; }
+    .search-btn { flex-shrink:0; width:42px; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:.2s; }
+    .search-btn:hover { background:#e5e7eb; }
+    .search-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .process-preview { margin-top:8px; padding:10px 12px; border-radius:6px; font-size:13px; display:none; }
+    .process-preview.encontrado { background:#dcfce7; border:1px solid #86efac; color:#166534; }
+    .process-preview.nao-encontrado { background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
+    .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
+    .process-preview .preview-tribunal { font-weight:600; }
+    .process-preview .preview-vara { margin-top:4px; }
   </style>
 </head>
 <body>
@@ -96,27 +107,25 @@
       </form>
     </div>
 
-    <!-- Nomes de captura de publicações -->
+    <!-- Processos Monitorados -->
     <div class="config-section" style="position:relative;overflow:hidden">
-      <div class="config-section-title">Nomes para Captura de Publicações</div>
+      <div class="config-section-title">Processos Monitorados</div>
       <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-        Configure até <strong>3 nomes</strong> (advogados ou partes) para monitoramento automático nos Diários Oficiais.
-        Publicações encontradas aparecerão em <a href="/pages/publicacoes.html">Publicações</a>.
+        Monitore publicações de processos específicos nos Diários Oficiais. Cadastre o número CNJ dos processos que deseja acompanhar.
       </p>
       <div id="listaNomes" style="margin-bottom:16px"></div>
       <div id="formNomeWrapper">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="inputNome" class="form-control" placeholder="Nome completo ou parcial" maxlength="200" style="flex:1;min-width:200px">
-          <button class="btn btn-primary" id="btnAdicionarNome">Adicionar nome</button>
+        <div class="input-with-search">
+          <input type="text" id="inputNome" class="form-control" placeholder="Número do processo (ex: 0000000-00.0000.0.00.0000)" maxlength="50">
+          <button class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+          <button class="btn btn-primary" id="btnAdicionarNome">Adicionar</button>
         </div>
+        <div id="processPreview" class="process-preview"></div>
         <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
       </div>
-      <!-- Pro overlay -->
-      <div id="nomeCapturaProOverlay" style="display:none;position:absolute;inset:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(15,23,42,.55);border-radius:var(--radius);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px">
-        <div style="font-size:28px">📰</div>
-        <div style="font-weight:700;font-size:16px;color:#f8fafc">Captura de Publicações</div>
-        <div style="font-size:13px;color:#cbd5e1;max-width:280px">Monitore automaticamente os Diários Oficiais com nomes de advogados e partes. Disponível no plano <strong style="color:#f59e0b">Pro</strong>.</div>
-        <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Pro</a>
+      <div style="margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:13px;color:#92400e">
+        <strong>📰 Integração DJE em desenvolvimento</strong><br>
+        A captura automática de publicações por nome de advogado ainda não está disponível. Cadastre os números dos processos que deseja monitorar — quando a integração JusBrasil estiver ativa, seus processos serão acompanhados automaticamente.
       </div>
     </div>
 
@@ -317,51 +326,110 @@
     }
   });
 
-  // Nomes de captura
+  // Processos monitorados
   async function loadNomes() {
     try {
-      const nomes = await apiFetch('/nomes-captura');
+      const processos = await apiFetch('/processos-monitorados');
       const lista = document.getElementById('listaNomes');
-      if (!nomes.length) {
-        lista.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhum nome cadastrado.</p>';
+      if (!processos.length) {
+        lista.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhum processo monitorado.</p>';
         return;
       }
-      lista.innerHTML = nomes.map(n => `
+      lista.innerHTML = processos.map(p => `
         <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px">
-          <span style="flex:1;font-weight:500">${esc(n.nome)}</span>
-          <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${n.ativo ? '#dcfce7' : '#f3f4f6'};color:${n.ativo ? '#166534' : '#6b7280'}">${n.ativo ? 'Ativo' : 'Pausado'}</span>
-          <button class="btn btn-secondary btn-sm" data-id="${n.id}" data-action="toggle">${n.ativo ? 'Pausar' : 'Ativar'}</button>
-          <button class="btn btn-danger btn-sm" data-id="${n.id}" data-action="remover">Remover</button>
+          <span style="flex:1;font-weight:500;font-family:monospace;font-size:13px">${esc(p.numeroCNJ)}</span>
+          ${p.nomeExibicao ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.nomeExibicao)}</span>` : ''}
+          <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${p.ativo ? '#dcfce7' : '#f3f4f6'};color:${p.ativo ? '#166534' : '#6b7280'}">${p.ativo ? 'Ativo' : 'Pausado'}</span>
+          <button class="btn btn-secondary btn-sm" data-id="${p.id}" data-action="toggle">${p.ativo ? 'Pausar' : 'Ativar'}</button>
+          <button class="btn btn-danger btn-sm" data-id="${p.id}" data-action="remover">Remover</button>
         </div>`).join('');
 
       lista.querySelectorAll('[data-action="toggle"]').forEach(btn =>
         btn.addEventListener('click', async () => {
-          await apiFetch(`/nomes-captura/${btn.dataset.id}/toggle`, { method: 'PATCH' });
+          await apiFetch(`/processos-monitorados/${btn.dataset.id}/toggle`, { method: 'PATCH' });
           loadNomes();
         }));
 
       lista.querySelectorAll('[data-action="remover"]').forEach(btn =>
         btn.addEventListener('click', async () => {
-          if (!confirm('Remover este nome de captura?')) return;
-          await apiFetch(`/nomes-captura/${btn.dataset.id}`, { method: 'DELETE' });
+          if (!confirm('Remover este processo monitorado?')) return;
+          await apiFetch(`/processos-monitorados/${btn.dataset.id}`, { method: 'DELETE' });
           loadNomes();
         }));
     } catch (e) { console.error(e); }
   }
 
+  // Buscar dados do processo (preview)
+  document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
+    const input = document.getElementById('inputNome');
+    const preview = document.getElementById('processPreview');
+    const btn = document.getElementById('btnBuscarProcesso');
+    const cnj = input.value.trim();
+
+    if (!cnj) {
+      preview.className = 'process-preview nao-encontrado';
+      preview.innerHTML = 'Digite um número de processo.';
+      preview.style.display = 'block';
+      return;
+    }
+
+    preview.className = 'process-preview loading';
+    preview.innerHTML = 'Buscando...';
+    preview.style.display = 'block';
+    btn.disabled = true;
+
+    try {
+      const result = await apiFetch(`/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`);
+      if (result.encontrado) {
+        preview.className = 'process-preview encontrado';
+        preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
+          <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
+          <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) disponível(is)</span>`;
+      } else {
+        preview.className = 'process-preview nao-encontrado';
+        preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>
+          <span class="preview-vara">Os dados serão preenchidos quando houver movimentação.</span>`;
+      }
+    } catch (err) {
+      preview.className = 'process-preview nao-encontrado';
+      preview.innerHTML = 'Erro ao buscar processo. Tente novamente.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // Permitir buscar com Enter
+  document.getElementById('inputNome').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('btnBuscarProcesso').click();
+    }
+  });
+
   document.getElementById('btnAdicionarNome').addEventListener('click', async () => {
     const input = document.getElementById('inputNome');
     const msg = document.getElementById('nomeMsg');
+    const preview = document.getElementById('processPreview');
     msg.style.display = 'none';
-    const nome = input.value.trim();
-    if (!nome) return;
+    preview.style.display = 'none';
+    const numeroCNJ = input.value.trim();
+    if (!numeroCNJ) return;
     try {
-      await apiFetch('/nomes-captura', { method: 'POST', body: JSON.stringify({ nome }) });
+      const result = await apiFetch('/processos-monitorados', { method: 'POST', body: JSON.stringify({ numeroCNJ }) });
       input.value = '';
       loadNomes();
+      // Show success with tribunal info if found
+      if (result.processoEncontrado) {
+        msg.className = 'alert alert-success';
+        msg.textContent = `Processo adicionado! Tribunal: ${result.tribunal ?? 'N/A'}, Vara: ${result.vara ?? 'N/A'}`;
+      } else {
+        msg.className = 'alert alert-success';
+        msg.textContent = result.mensagem || 'Processo adicionado com sucesso!';
+      }
+      msg.style.display = '';
     } catch (err) {
       msg.className = 'alert alert-error';
-      msg.textContent = err.message ?? 'Erro ao adicionar nome.';
+      msg.textContent = err.message ?? 'Erro ao adicionar processo.';
       msg.style.display = '';
     }
   });

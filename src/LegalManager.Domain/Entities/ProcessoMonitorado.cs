@@ -1,10 +1,11 @@
 namespace LegalManager.Domain.Entities;
 
-public class NomeCaptura
+public class ProcessoMonitorado
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
-    public string Nome { get; set; } = string.Empty;
+    public string NumeroCNJ { get; set; } = string.Empty;
+    public string? NomeExibicao { get; set; }
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
 

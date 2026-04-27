@@ -73,6 +73,8 @@ public class DataJudAdapter : ITribunalAdapter
         string numeroCNJ, string indexSuffix, CancellationToken ct)
     {
         var endpoint = $"/api_publica_{indexSuffix}/_search";
+        _logger.LogInformation("DataJud: Consultando {Endpoint} para CNJ {NumCNJ}", endpoint, numeroCNJ);
+
         var body = new
         {
             query = new { match = new { numeroProcesso = numeroCNJ } },
@@ -87,7 +89,10 @@ public class DataJudAdapter : ITribunalAdapter
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
 
+            _logger.LogInformation("DataJud: Enviando request para {Endpoint}", endpoint);
             var response = await _http.SendAsync(request, ct);
+            _logger.LogInformation("DataJud: Resposta status {Status}", response.StatusCode);
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("DataJud retornou {Status} para {NumCNJ}", response.StatusCode, numeroCNJ);
@@ -98,7 +103,10 @@ public class DataJudAdapter : ITribunalAdapter
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
 
             if (result?.Hits?.HitsData == null || result.Hits.HitsData.Count == 0)
+            {
+                _logger.LogInformation("DataJud: Nenhum resultado para {NumCNJ}", numeroCNJ);
                 return new TribunalConsultaResult(false, null, null, null, []);
+            }
 
             var source = result.Hits.HitsData[0].Source;
             if (source == null)
@@ -112,6 +120,8 @@ public class DataJudAdapter : ITribunalAdapter
                     CodigoCNJ: m.Codigo))
                 .OrderBy(m => m.Data)
                 .ToList();
+
+            _logger.LogInformation("DataJud: Encontrado processo {NumCNJ} com {Count} movimentos", numeroCNJ, movimentos.Count);
 
             return new TribunalConsultaResult(
                 Encontrado: true,
@@ -151,6 +161,7 @@ public class DataJudAdapter : ITribunalAdapter
             (1, 4)   => "trf4",
             (1, 5)   => "trf5",
             (1, 6)   => "trf6",
+            (4, var t) when t >= 1 && t <= 6 => $"trf{t}",  // J=4 maps to TRF1-TRF6 (alternative federal court codes)
             (6, var t) => MapearTJEstadual(t),
             _          => null
         };

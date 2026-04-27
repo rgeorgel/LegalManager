@@ -15,6 +15,7 @@ public class TjspDjeAdapter : IDjeAdapter
     private readonly HttpClient _http;
     private readonly ILogger<TjspDjeAdapter> _logger;
     private readonly string _baseUrl = "https://esaj.tjsp.jus.br";
+    private const int MaxDiasLookback = 270;
 
     private static readonly Regex RegexProcesso = new(
         @"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}",
@@ -73,8 +74,20 @@ public class TjspDjeAdapter : IDjeAdapter
     {
         try
         {
-            var inicio = dataInicio ?? DateTime.UtcNow.AddDays(-7);
-            var fim = dataFim ?? DateTime.UtcNow;
+            var agora = DateTime.UtcNow;
+            var maxInicio = agora.AddDays(-MaxDiasLookback);
+            var inicio = (dataInicio ?? agora.AddDays(-7)) > maxInicio
+                ? (dataInicio ?? agora.AddDays(-7))
+                : maxInicio;
+            var fim = dataFim ?? agora;
+
+            if (inicio > maxInicio)
+            {
+                _logger.LogInformation("[TJSP] Data inicio {Input} anterior ao limite de {Limite}, usando {Limite}",
+                    dataInicio?.ToString("dd/MM/yyyy") ?? "7 dias atr\u00e1s",
+                    maxInicio.ToString("dd/MM/yyyy"),
+                    maxInicio.ToString("dd/MM/yyyy"));
+            }
 
             var todasPublicacoes = new List<DjePublicacao>();
             int diasProcessados = 0;
