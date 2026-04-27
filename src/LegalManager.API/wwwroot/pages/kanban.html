@@ -60,7 +60,10 @@
     <main class="main-content">
       <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <h1 class="page-title">🗂️ Kanban</h1>
-        <a href="/pages/tarefas.html" class="btn btn-secondary btn-sm">Ver lista →</a>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" id="btnNova">+ Nova Tarefa</button>
+          <a href="/pages/tarefas.html" class="btn btn-secondary btn-sm">Ver lista →</a>
+        </div>
       </div>
 
       <div class="kanban-board" id="board">
@@ -87,6 +90,52 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Modal Nova Tarefa -->
+  <div class="modal-overlay" id="modalTarefa" style="display:none">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTarefaTitulo">Nova Tarefa</h2>
+        <button class="modal-close" id="modalTarefaClose">&times;</button>
+      </div>
+      <form id="formTarefa" novalidate>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Título *</label>
+            <input type="text" id="fTitulo" class="form-control" maxlength="300" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descrição</label>
+            <textarea id="fDescricao" class="form-control" rows="3" maxlength="4000"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label">Prioridade *</label>
+              <select id="fPrioridade" class="form-control" required>
+                <option value="Baixa">Baixa</option>
+                <option value="Media" selected>Média</option>
+                <option value="Alta">Alta</option>
+                <option value="Urgente">Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prazo</label>
+            <input type="datetime-local" id="fPrazo" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags (separadas por vírgula)</label>
+            <input type="text" id="fTags" class="form-control" placeholder="ex: urgente, revisão, cliente-x">
+          </div>
+          <div id="fmsgErro" class="alert alert-error" style="display:none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelarTarefa">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSalvarTarefa">Salvar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Modal Detalhes da Tarefa -->
@@ -255,6 +304,54 @@
     document.getElementById('modalDetalhe').addEventListener('click', e => {
       if (e.target === e.currentTarget) document.getElementById('modalDetalhe').style.display = 'none';
     });
+
+    function openCreateModal() {
+      document.getElementById('modalTarefaTitulo').textContent = 'Nova Tarefa';
+      document.getElementById('formTarefa').reset();
+      document.getElementById('fmsgErro').style.display = 'none';
+      document.getElementById('modalTarefa').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalTarefa').style.display = 'none';
+    }
+
+    document.getElementById('btnNova').addEventListener('click', openCreateModal);
+    document.getElementById('modalTarefaClose').addEventListener('click', closeModal);
+    document.getElementById('btnCancelarTarefa').addEventListener('click', closeModal);
+    document.getElementById('modalTarefa').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('formTarefa').addEventListener('submit', async e => {
+      e.preventDefault();
+      const errEl = document.getElementById('fmsgErro');
+      errEl.style.display = 'none';
+
+      const titulo = document.getElementById('fTitulo').value.trim();
+      if (!titulo) { showErr(errEl, 'Título é obrigatório.'); return; }
+
+      const tagsRaw = document.getElementById('fTags').value.trim();
+      const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const prazoVal = document.getElementById('fPrazo').value;
+
+      try {
+        const dto = {
+          titulo,
+          descricao: document.getElementById('fDescricao').value.trim() || null,
+          prioridade: document.getElementById('fPrioridade').value,
+          prazo: prazoVal || null,
+          tags
+        };
+        await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify(dto) });
+        closeModal();
+        await loadBoard();
+      } catch (err) {
+        showErr(errEl, err.message ?? 'Erro ao criar tarefa.');
+      }
+    });
+
+    function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
   </script>
 </body>
 </html>
