@@ -62,10 +62,10 @@ public class CapturaPublicacaoJobTests
             Id = Guid.NewGuid(), ProcessoId = processoId, ContatoId = contatoId,
             TipoParte = TipoParteProcesso.Reu
         });
-        ctx.NomesCaptura.Add(new NomeCaptura
+        ctx.ProcessosMonitorados.Add(new LegalManager.Domain.Entities.ProcessoMonitorado
         {
-            Id = nomeCapturaId, TenantId = tenantId, Nome = "Empresa ABC",
-            Ativo = true, CriadoEm = DateTime.UtcNow
+            Id = nomeCapturaId, TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
+            NomeExibicao = "Empresa ABC", Ativo = true, CriadoEm = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
         return (ctx, tenantId, responsavelId, processoId, nomeCapturaId);

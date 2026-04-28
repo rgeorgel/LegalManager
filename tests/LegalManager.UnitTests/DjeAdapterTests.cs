@@ -60,10 +60,10 @@ public class DjeAdapterTests
             Id = tenantId, Nome = "Teste DJE", Plano = PlanoTipo.Pro,
             Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.NomesCaptura.Add(new LegalManager.Domain.Entities.NomeCaptura
+        ctx.ProcessosMonitorados.Add(new LegalManager.Domain.Entities.ProcessoMonitorado
         {
-            Id = nomeCapturaId, TenantId = tenantId, Nome = "João Silva",
-            Ativo = true, CriadoEm = DateTime.UtcNow
+            Id = nomeCapturaId, TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
+            NomeExibicao = "João Silva", Ativo = true, CriadoEm = DateTime.UtcNow
         });
         ctx.Processos.Add(new LegalManager.Domain.Entities.Processo
         {
@@ -193,10 +193,10 @@ public class DjeAdapterTests
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro,
             Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.NomesCaptura.Add(new LegalManager.Domain.Entities.NomeCaptura
+        ctx.ProcessosMonitorados.Add(new LegalManager.Domain.Entities.ProcessoMonitorado
         {
-            Id = Guid.NewGuid(), TenantId = tenantId, Nome = "João Silva",
-            Ativo = true, CriadoEm = DateTime.UtcNow
+            Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
+            NomeExibicao = "João Silva", Ativo = true, CriadoEm = DateTime.UtcNow
         });
         ctx.Processos.Add(new LegalManager.Domain.Entities.Processo
         {
@@ -233,10 +233,10 @@ public class DjeAdapterTests
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro,
             Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.NomesCaptura.Add(new LegalManager.Domain.Entities.NomeCaptura
+        ctx.ProcessosMonitorados.Add(new LegalManager.Domain.Entities.ProcessoMonitorado
         {
-            Id = Guid.NewGuid(), TenantId = tenantId, Nome = "João Silva",
-            Ativo = true, CriadoEm = DateTime.UtcNow
+            Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
+            NomeExibicao = "João Silva", Ativo = true, CriadoEm = DateTime.UtcNow
         });
         ctx.Processos.Add(new LegalManager.Domain.Entities.Processo
         {
@@ -287,10 +287,10 @@ public class DjeAdapterTests
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro,
             Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.NomesCaptura.Add(new LegalManager.Domain.Entities.NomeCaptura
+        ctx.ProcessosMonitorados.Add(new LegalManager.Domain.Entities.ProcessoMonitorado
         {
-            Id = Guid.NewGuid(), TenantId = tenantId, Nome = "João Silva",
-            Ativo = true, CriadoEm = DateTime.UtcNow
+            Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
+            NomeExibicao = "João Silva", Ativo = true, CriadoEm = DateTime.UtcNow
         });
         ctx.Processos.Add(new LegalManager.Domain.Entities.Processo
         {

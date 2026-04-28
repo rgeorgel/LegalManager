@@ -38,6 +38,12 @@
     .tab-content.active { display:block; }
     .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
     .tab-badge.count { background:var(--color-primary); color:#fff; }
+    .tipo-receita { background:#e5f7ee; color:#15803d; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
+    .tipo-despesa { background:#fee2e2; color:#dc2626; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
+    .status-pago     { background:#d1fae5; color:#057a55; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-pendente { background:#fef3c7; color:#92400e; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-vencido  { background:#fee2e2; color:#b91c1c; font-size:11px; padding:2px 8px; border-radius:4px; }
+    .status-cancelado{ background:#f3f4f6; color:#6b7280; font-size:11px; padding:2px 8px; border-radius:4px; }
     @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} }
     .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
     .pdf-modal-overlay.open { display:flex; }
@@ -512,6 +518,50 @@
   </div>
 </div>
 
+<!-- Modal Lançamento Financeiro -->
+<div class="modal-overlay" id="modalFinanceiro">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">Novo Lançamento</span>
+      <button class="modal-close" id="financeiroClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="financeiroAlert" class="alert" style="display:none"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="finTipo" class="form-control" required>
+            <option value="Receita">Receita</option>
+            <option value="Despesa">Despesa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoria *</label>
+          <select id="finCategoria" class="form-control" required></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Valor (R$) *</label>
+          <input id="finValor" type="number" step="0.01" min="0.01" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Vencimento *</label>
+          <input id="finVencimento" type="date" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <input id="finDescricao" type="text" maxlength="500" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="financeiroCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="financeiroSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal PDF Viewer -->
 <div class="pdf-modal-overlay" id="pdfModal">
   <div class="pdf-modal-content">
@@ -703,14 +753,18 @@ window.removeAndamento = async id => {
   } catch (err) { showAlert(err.message); }
 };
 
+let andamentosLoaded = false;
+let documentosLoaded = false;
+let financeiroLoaded = false;
+
 window.switchTab = tab => {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
-  if (tab === 'andamentos') loadAndamentos();
-  if (tab === 'documentos') loadDocumentos();
-  if (tab === 'financeiro') loadFinanceiro();
+  if (tab === 'andamentos') { loadAndamentos(); andamentosLoaded = true; }
+  if (tab === 'documentos') { if (!documentosLoaded) { loadDocumentos(); documentosLoaded = true; } }
+  if (tab === 'financeiro') { if (!financeiroLoaded) { loadFinanceiro(); financeiroLoaded = true; } }
 };
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -949,11 +1003,8 @@ document.getElementById('btnMonitorar').addEventListener('click', async () => {
 // Documentos
 async function loadDocumentos() {
   const lista = document.getElementById('documentosLista');
-  const tabBadge = document.getElementById('tabCountDocumentos');
   try {
     const docs = await apiFetch(`/documentos/processo/${processoId}`);
-    tabBadge.textContent = docs ? docs.length : 0;
-    tabBadge.style.display = docs && docs.length > 0 ? 'inline-flex' : 'none';
     if (!docs || !docs.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento anexado</div></div>';
       return;
@@ -1026,13 +1077,10 @@ const CAT_LABELS_FIN = {
 async function loadFinanceiro(page = 1) {
   const lista = document.getElementById('financeiroLista');
   const pagEl = document.getElementById('financeiroPaginacao');
-  const tabBadge = document.getElementById('tabCountFinanceiro');
   lista.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>';
   try {
     const qs = new URLSearchParams({ page, pageSize: 20, processoId });
     const data = await apiFetch(`/financeiro?${qs}`);
-    tabBadge.textContent = data?.total ?? 0;
-    tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
     if (!data?.items?.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-text">Nenhum lançamento financeiro</div></div>';
       pagEl.innerHTML = '';
@@ -1092,8 +1140,77 @@ window.cancelarLancamento = async id => {
   } catch (err) { showAlert(err.message); }
 };
 
-document.getElementById('btnAddFinanceiroTab').addEventListener('click', () => {
-  window.location.href = `/pages/financeiro.html?processo=${processoId}`;
+const CATEGORIAS_FIN = {
+  Receita: ['Honorario','Custas','Pericia','Deposito','Reembolso','Outro'],
+  Despesa: ['Salario','AluguelEscritorio','Software','Marketing','Custas','Multa','Outro']
+};
+const CAT_LABELS_FIN2 = {
+  Honorario:'Honorário', Custas:'Custas', Pericia:'Perícia', Deposito:'Depósito',
+  Reembolso:'Reembolso', Salario:'Salário', AluguelEscritorio:'Aluguel Escritório',
+  Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
+};
+let customCatsFin = { Receita: [], Despesa: [] };
+
+function openFinanceiroModal() {
+  document.getElementById('finTipo').value = 'Receita';
+  updateFinCategorias();
+  document.getElementById('finValor').value = '';
+  document.getElementById('finVencimento').value = new Date().toISOString().split('T')[0];
+  document.getElementById('finDescricao').value = '';
+  document.getElementById('financeiroAlert').style.display = 'none';
+  document.getElementById('modalFinanceiro').classList.add('open');
+}
+
+function updateFinCategorias() {
+  const tipo = document.getElementById('finTipo').value;
+  const sel = document.getElementById('finCategoria');
+  const fixed = CATEGORIAS_FIN[tipo] ?? [];
+  const custom = customCatsFin[tipo] ?? [];
+  const all = [...fixed.map(c => ({ v: c, l: CAT_LABELS_FIN2[c] ?? c })), ...custom.map(c => ({ v: c.nome, l: c.nome }))];
+  sel.innerHTML = all.map(c => `<option value="${c.v}">${c.l}</option>`).join('');
+}
+
+async function loadCustomCatsFin() {
+  try {
+    const cats = await apiFetch('/configuracoes/categorias-financeiras');
+    customCatsFin = { Receita: [], Despesa: [] };
+    cats.forEach(c => {
+      if (c.tipo === 'Receita' || c.tipo === 0) customCatsFin.Receita.push(c);
+      else if (c.tipo === 'Despesa' || c.tipo === 1) customCatsFin.Despesa.push(c);
+    });
+  } catch (e) { console.error('Erro ao carregar categorias customizadas', e); }
+}
+
+document.getElementById('btnAddFinanceiroTab').addEventListener('click', openFinanceiroModal);
+document.getElementById('finTipo').addEventListener('change', updateFinCategorias);
+[document.getElementById('financeiroClose'), document.getElementById('financeiroCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalFinanceiro').classList.remove('open')));
+
+document.getElementById('financeiroSalvar').addEventListener('click', async () => {
+  const btn = document.getElementById('financeiroSalvar');
+  const alertEl = document.getElementById('financeiroAlert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  alertEl.style.display = 'none';
+  try {
+    await apiFetch('/financeiro', {
+      method: 'POST',
+      body: JSON.stringify({
+        tipo: document.getElementById('finTipo').value,
+        categoria: document.getElementById('finCategoria').value,
+        valor: parseFloat(document.getElementById('finValor').value),
+        dataVencimento: document.getElementById('finVencimento').value,
+        descricao: document.getElementById('finDescricao').value || null,
+        processoId
+      })
+    });
+    document.getElementById('modalFinanceiro').classList.remove('open');
+    await loadFinanceiro();
+    showAlert('Lançamento criado.', 'success');
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
 });
 
 // PDF Modal
@@ -1230,9 +1347,29 @@ document.getElementById('docEnviar').addEventListener('click', async () => {
   }
 });
 
+async function loadDocumentosBadge() {
+  const tabBadge = document.getElementById('tabCountDocumentos');
+  try {
+    const docs = await apiFetch(`/documentos/processo/${processoId}`);
+    tabBadge.textContent = docs ? docs.length : 0;
+    tabBadge.style.display = docs && docs.length > 0 ? 'inline-flex' : 'none';
+  } catch {}
+}
+
+async function loadFinanceiroBadge() {
+  const tabBadge = document.getElementById('tabCountFinanceiro');
+  try {
+    const qs = new URLSearchParams({ page: 1, pageSize: 1, processoId });
+    const data = await apiFetch(`/financeiro?${qs}`);
+    tabBadge.textContent = data?.total ?? 0;
+    tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
+  } catch {}
+}
+
 await loadAdvogados();
+await loadCustomCatsFin();
 await loadProcesso();
-await loadAndamentosPreview();
+await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge()]);
 </script>
 </body>
 </html>
