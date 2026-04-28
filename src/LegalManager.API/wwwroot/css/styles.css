@@ -155,6 +155,40 @@ a:active { opacity: 0.7; }
   background: rgba(255,255,255,0.15);
 }
 
+.nav-group {
+  margin-bottom: 4px;
+}
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.45);
+  user-select: none;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, color 0.15s;
+  min-height: 36px;
+}
+.nav-group-header:hover {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+}
+.nav-group-toggle {
+  font-size: 9px;
+  flex-shrink: 0;
+  width: 14px;
+}
+.nav-group-label { flex: 1; }
+.nav-group-items { list-style: none; }
+.nav-group-items li a {
+  padding-left: 32px;
+}
+
 /* ── Sidebar Overlay (mobile) ─────────────────────────── */
 .sidebar-overlay {
   display: none;

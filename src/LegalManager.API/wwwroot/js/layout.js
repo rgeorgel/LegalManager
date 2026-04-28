@@ -1,22 +1,47 @@
 import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch } from './api.js';
 
-const NAV_ITEMS = [
-  { href: '/pages/dashboard.html',     label: '📊 Dashboard' },
-  { href: '/pages/processos.html',     label: '⚖️ Processos' },
-  { href: '/pages/contatos.html',      label: '👥 Contatos' },
-  { href: '/pages/tarefas.html',       label: '✅ Tarefas' },
-  { href: '/pages/kanban.html',        label: '🗂️ Kanban',       pro: true },
-  { href: '/pages/agenda.html',        label: '📅 Agenda' },
-  { href: '/pages/financeiro.html',    label: '💰 Financeiro',   pro: true },
-  { href: '/pages/timesheet.html',     label: '⏱️ Timesheet' },
-  { href: '/pages/indicadores.html',   label: '📈 Indicadores',  pro: true },
-  { href: '/pages/publicacoes.html',   label: '📰 Publicações',  pro: true },
-  { href: '/pages/prazos.html',        label: '⏰ Prazos' },
-  { href: '/pages/documentos.html',    label: '📁 Documentos' },
-  { href: '/pages/usuarios.html',      label: '🔑 Usuários' },
-  { href: '/pages/configuracoes.html', label: '⚙️ Configurações' },
-  { href: '/pages/assinatura.html',    label: '💳 Assinatura' },
+const NAV_GROUPS = [
+  {
+    label: 'Visão Geral',
+    items: [
+      { href: '/pages/dashboard.html',   label: '📊 Dashboard' },
+      { href: '/pages/indicadores.html',  label: '📈 Indicadores', pro: true },
+    ],
+  },
+  {
+    label: 'Gestão',
+    items: [
+      { href: '/pages/processos.html',    label: '⚖️ Processos' },
+      { href: '/pages/contatos.html',     label: '👥 Contatos' },
+      { href: '/pages/prazos.html',       label: '⏰ Prazos' },
+      { href: '/pages/documentos.html',   label: '📁 Documentos' },
+      { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },
+    ],
+  },
+  {
+    label: 'Produtividade',
+    items: [
+      { href: '/pages/tarefas.html',      label: '✅ Tarefas' },
+      { href: '/pages/kanban.html',        label: '🗂 Kanban',   pro: true },
+      { href: '/pages/agenda.html',        label: '📅 Agenda' },
+      { href: '/pages/timesheet.html',     label: '⏱️ Timesheet' },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { href: '/pages/financeiro.html',    label: '💰 Financeiro', pro: true },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { href: '/pages/usuarios.html',       label: '🔑 Usuários' },
+      { href: '/pages/configuracoes.html',  label: '⚙️ Configurações' },
+      { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
+    ],
+  },
 ];
 
 const BOTTOM_NAV_ITEMS = [
@@ -57,14 +82,36 @@ function injectSidebarNav() {
   const current = window.location.pathname;
   const free = isPlanoFree();
 
-  navEl.innerHTML = NAV_ITEMS.map(item => {
-    const locked = item.pro && free;
-    const activeClass = item.href === current ? ' class="active"' : '';
-    const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
-    if (locked) {
-      return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
-    }
-    return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
+  let collapsedGroups = {};
+  try {
+    collapsedGroups = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
+  } catch {}
+
+  navEl.innerHTML = NAV_GROUPS.map(group => {
+    const isCollapsed = collapsedGroups[group.label] === true;
+    const groupId = 'grp-' + group.label.toLowerCase().replace(/\s+/g, '-');
+
+    const itemsHtml = group.items.map(item => {
+      const locked = item.pro && free;
+      const activeClass = item.href === current ? ' class="active"' : '';
+      const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
+      if (locked) {
+        return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
+      }
+      return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
+    }).join('');
+
+    return `
+      <li class="nav-group" data-group="${groupId}">
+        <div class="nav-group-header" title="Clique para ${isCollapsed ? 'expandir' : 'recolher'}">
+          <span class="nav-group-toggle">${isCollapsed ? '▶' : '▼'}</span>
+          <span class="nav-group-label">${group.label}</span>
+        </div>
+        <ul class="nav-group-items" style="${isCollapsed ? 'display:none' : ''}">
+          ${itemsHtml}
+        </ul>
+      </li>
+    `;
   }).join('');
 
   navEl.querySelectorAll('a').forEach(link => {
@@ -76,6 +123,27 @@ function injectSidebarNav() {
     } else {
       link.addEventListener('click', () => closeMobileMenu());
     }
+  });
+
+  navEl.querySelectorAll('.nav-group-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const groupEl = header.parentElement;
+      const groupLabel = groupEl.dataset.group;
+      const itemsEl = groupEl.querySelector('.nav-group-items');
+      const toggleEl = header.querySelector('.nav-group-toggle');
+      const isCollapsed = itemsEl.style.display === 'none';
+
+      if (isCollapsed) {
+        itemsEl.style.display = '';
+        toggleEl.textContent = '▼';
+        delete collapsedGroups[groupLabel];
+      } else {
+        itemsEl.style.display = 'none';
+        toggleEl.textContent = '▶';
+        collapsedGroups[groupLabel] = true;
+      }
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsedGroups));
+    });
   });
 }
 
