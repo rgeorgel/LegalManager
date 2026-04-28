@@ -45,6 +45,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<TraducaoAndamento> TraducoesAndamentos => Set<TraducaoAndamento>();
     public DbSet<PecaGerada> PecasGeradas => Set<PecaGerada>();
     public DbSet<Documento> Documentos => Set<Documento>();
+    public DbSet<ModeloDocumento> ModelosDocumento => Set<ModeloDocumento>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

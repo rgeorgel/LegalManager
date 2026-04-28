@@ -14,9 +14,20 @@ public class ProcessoConfiguration : IEntityTypeConfiguration<Processo>
         builder.Property(p => p.Vara).HasMaxLength(200);
         builder.Property(p => p.Comarca).HasMaxLength(150);
         builder.Property(p => p.TipoAcao).HasMaxLength(200);
+        builder.Property(p => p.Classe).HasMaxLength(200);
+        builder.Property(p => p.Assuntos).HasMaxLength(1000);
+        builder.Property(p => p.Grau).HasMaxLength(20);
+        builder.Property(p => p.SiglaTribunal).HasMaxLength(20);
+        builder.Property(p => p.Segmento).HasMaxLength(20);
         builder.Property(p => p.ValorCausa).HasColumnType("decimal(18,2)");
         builder.Property(p => p.Decisao).HasMaxLength(2000);
         builder.Property(p => p.Resultado).HasMaxLength(500);
+        builder.Property(p => p.Ementa).HasColumnType("text");
+        builder.Property(p => p.Observacao).HasColumnType("text");
+        builder.Property(p => p.Relator).HasMaxLength(200);
+        builder.Property(p => p.TipoDecisao).HasMaxLength(100);
+        builder.Property(p => p.ResultadoJulgamento).HasMaxLength(500);
+        builder.Property(p => p.Instancia).HasMaxLength(20);
 
         builder.HasOne(p => p.Tenant)
             .WithMany()
@@ -74,5 +85,6 @@ public class AndamentoConfiguration : IEntityTypeConfiguration<Andamento>
 
         builder.HasIndex(a => new { a.ProcessoId, a.Data });
         builder.HasIndex(a => a.TenantId);
+        builder.Property(a => a.DadosExtras).HasColumnType("text");
     }
 }

@@ -281,7 +281,10 @@ public class ProcessoService : IProcessoService
                 a.Id, a.Data, a.Tipo, a.Descricao, a.Fonte, a.DescricaoTraduzidaIA,
                 a.RegistradoPorId,
                 a.RegistradoPor != null ? a.RegistradoPor.Nome : null,
-                a.CriadoEm))
+                a.CriadoEm,
+                a.CodigoCNJ,
+                a.OrgaoJulgador,
+                a.DadosExtras))
             .ToListAsync(ct);
     }
 
@@ -293,6 +296,38 @@ public class ProcessoService : IProcessoService
             ?? throw new KeyNotFoundException("Andamento não encontrado ou não pode ser removido.");
 
         _context.Andamentos.Remove(andamento);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task AdicionarParteAsync(Guid processoId, Guid contatoId, string tipoParte, CancellationToken ct = default)
+    {
+        var processo = await _context.Processos
+            .FirstOrDefaultAsync(p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Processo não encontrado.");
+
+        var tipoParteEnum = Enum.TryParse<TipoParteProcesso>(tipoParte, true, out var t) ? t : TipoParteProcesso.Interessado;
+
+        var jaExiste = await _context.ProcessoPartes
+            .AnyAsync(pt => pt.ProcessoId == processoId && pt.ContatoId == contatoId, ct);
+        if (jaExiste) throw new InvalidOperationException("Esta parte já está vinculada ao processo.");
+
+        _context.ProcessoPartes.Add(new ProcessoParte
+        {
+            Id = Guid.NewGuid(),
+            ProcessoId = processoId,
+            ContatoId = contatoId,
+            TipoParte = tipoParteEnum
+        });
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task RemoverParteAsync(Guid processoId, Guid contatoId, CancellationToken ct = default)
+    {
+        var parte = await _context.ProcessoPartes
+            .FirstOrDefaultAsync(pt => pt.ProcessoId == processoId && pt.ContatoId == contatoId, ct)
+            ?? throw new KeyNotFoundException("Parte não encontrada.");
+
+        _context.ProcessoPartes.Remove(parte);
         await _context.SaveChangesAsync(ct);
     }
 
@@ -317,10 +352,13 @@ public class ProcessoService : IProcessoService
             p.Partes.Select(pt => new ProcessoParteResponseDto(
                 pt.Id, pt.ContatoId, pt.Contato.Nome, pt.TipoParte)).ToList(),
             totalAndamentos,
-            p.Classe, p.Assuntos, p.DataAjuizamento, p.Grau, p.Sistema, p.Formato, p.NivelSigilo, p.UltimaAtualizacaoDataJud);
+            p.Classe, p.Assuntos, p.DataAjuizamento, p.Grau, p.Sistema, p.Formato, p.NivelSigilo, p.UltimaAtualizacaoDataJud,
+            p.Ementa, p.DecisaoDataJud, p.Observacao, p.Relator, p.TipoDecisao, p.ResultadoJulgamento,
+            p.CodigoClasse, p.Instancia, p.DataJulgamento, p.DataPublicacao,
+            p.SiglaTribunal, p.Segmento, p.DataDistribuicao);
     }
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>
         new(a.Id, a.Data, a.Tipo, a.Descricao, a.Fonte, a.DescricaoTraduzidaIA,
-            a.RegistradoPorId, nomeUsuario, a.CriadoEm);
+            a.RegistradoPorId, nomeUsuario, a.CriadoEm, a.CodigoCNJ, a.OrgaoJulgador, a.DadosExtras);
 }

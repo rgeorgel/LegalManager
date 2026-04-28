@@ -16,6 +16,7 @@ public class Andamento
     public DateTime CriadoEm { get; set; }
     public int? CodigoCNJ { get; set; }
     public string? OrgaoJulgador { get; set; }
+    public string? DadosExtras { get; set; }
 
     public Processo Processo { get; set; } = null!;
     public Usuario? RegistradoPor { get; set; }

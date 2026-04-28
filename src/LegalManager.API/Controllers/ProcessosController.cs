@@ -127,4 +127,18 @@ public class ProcessosController : ControllerBase
     [Authorize(Roles = "Admin,Advogado")]
     public async Task<IActionResult> ExecutarMonitoramento(Guid id, CancellationToken ct)
         => Ok(await _monitoramento.MonitorarProcessoAsync(id, ct));
+
+    [HttpPost("{id:guid}/partes")]
+    public async Task<IActionResult> AdicionarParte(Guid id, [FromBody] AdicionarParteDto dto, CancellationToken ct)
+    {
+        await _service.AdicionarParteAsync(id, dto.ContatoId, dto.TipoParte, ct);
+        return Ok(new { message = "Parte adicionada." });
+    }
+
+    [HttpDelete("{id:guid}/partes/{contatoId:guid}")]
+    public async Task<IActionResult> RemoverParte(Guid id, Guid contatoId, CancellationToken ct)
+    {
+        await _service.RemoverParteAsync(id, contatoId, ct);
+        return NoContent();
+    }
 }

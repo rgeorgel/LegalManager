@@ -16,6 +16,7 @@ const NAV_GROUPS = [
       { href: '/pages/contatos.html',     label: '👥 Contatos' },
       { href: '/pages/prazos.html',       label: '⏰ Prazos' },
       { href: '/pages/documentos.html',   label: '📁 Documentos' },
+      { href: '/pages/modelos.html',      label: '📋 Modelos' },
       { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },
     ],
   },

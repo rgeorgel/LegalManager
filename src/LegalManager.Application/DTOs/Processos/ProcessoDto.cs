@@ -85,7 +85,20 @@ public record ProcessoResponseDto(
     string? Sistema,
     string? Formato,
     int? NivelSigilo,
-    DateTime? UltimaAtualizacaoDataJud
+    DateTime? UltimaAtualizacaoDataJud,
+    string? Ementa,
+    string? DecisaoDataJud,
+    string? Observacao,
+    string? Relator,
+    string? TipoDecisao,
+    string? ResultadoJulgamento,
+    int? CodigoClasse,
+    string? Instancia,
+    DateTime? DataJulgamento,
+    DateTime? DataPublicacao,
+    string? SiglaTribunal,
+    string? Segmento,
+    DateTime? DataDistribuicao
 );
 
 public record ProcessoParteResponseDto(
@@ -135,7 +148,10 @@ public record AndamentoResponseDto(
     string? DescricaoTraduzidaIA,
     Guid? RegistradoPorId,
     string? NomeRegistradoPor,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    int? CodigoCNJ,
+    string? OrgaoJulgador,
+    string? DadosExtras
 );
 
 public record EncerrarProcessoDto(

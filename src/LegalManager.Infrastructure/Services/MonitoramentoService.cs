@@ -1,3 +1,4 @@
+using System.Text.Json;
 using LegalManager.Application.DTOs.Monitoramento;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
@@ -103,6 +104,16 @@ public class MonitoramentoService : IMonitoramentoService
         {
             if (datasExistentes.Contains(mov.Data)) continue;
 
+            var dadosExtras = new
+            {
+                Complementos = mov.Complementos,
+                ComplementosNaoEstruturados = mov.ComplementosNaoEstruturados,
+                CamposNaoEstruturados = mov.CamposNaoEstruturados
+            };
+            var dadosExtrasJson = mov.Complementos?.Count > 0 || mov.ComplementosNaoEstruturados?.Count > 0 || mov.CamposNaoEstruturados?.Count > 0
+                ? JsonSerializer.Serialize(dadosExtras)
+                : null;
+
             novosAndamentos.Add(new Andamento
             {
                 Id = Guid.NewGuid(),
@@ -112,7 +123,10 @@ public class MonitoramentoService : IMonitoramentoService
                 Tipo = MapearTipo(mov.TipoNome),
                 Descricao = mov.Descricao,
                 Fonte = FonteAndamento.Automatico,
-                CriadoEm = agora
+                CriadoEm = agora,
+                CodigoCNJ = mov.CodigoCNJ,
+                OrgaoJulgador = mov.OrgaoJulgador,
+                DadosExtras = dadosExtrasJson
             });
         }
 
@@ -137,6 +151,36 @@ public class MonitoramentoService : IMonitoramentoService
             processo.DataAjuizamento = consulta.DataAjuizamento;
         if (!string.IsNullOrWhiteSpace(consulta.Grau) && string.IsNullOrWhiteSpace(processo.Grau))
             processo.Grau = consulta.Grau;
+        if (!string.IsNullOrWhiteSpace(consulta.SiglaTribunal) && string.IsNullOrWhiteSpace(processo.SiglaTribunal))
+            processo.SiglaTribunal = consulta.SiglaTribunal;
+        if (!string.IsNullOrWhiteSpace(consulta.Segmento) && string.IsNullOrWhiteSpace(processo.Segmento))
+            processo.Segmento = consulta.Segmento;
+        if (consulta.ValorCaixa.HasValue && processo.ValorCausa == 0)
+            processo.ValorCausa = consulta.ValorCaixa;
+        if (consulta.DataDistribuicao.HasValue && !processo.DataDistribuicao.HasValue)
+            processo.DataDistribuicao = consulta.DataDistribuicao;
+        if (!string.IsNullOrWhiteSpace(consulta.Ementa) && string.IsNullOrWhiteSpace(processo.Ementa))
+            processo.Ementa = consulta.Ementa;
+        if (!string.IsNullOrWhiteSpace(consulta.Decisao) && string.IsNullOrWhiteSpace(processo.DecisaoDataJud))
+            processo.DecisaoDataJud = consulta.Decisao;
+        if (!string.IsNullOrWhiteSpace(consulta.Observacao) && string.IsNullOrWhiteSpace(processo.Observacao))
+            processo.Observacao = consulta.Observacao;
+        if (!string.IsNullOrWhiteSpace(consulta.Relator) && string.IsNullOrWhiteSpace(processo.Relator))
+            processo.Relator = consulta.Relator;
+        if (!string.IsNullOrWhiteSpace(consulta.TipoDecisao) && string.IsNullOrWhiteSpace(processo.TipoDecisao))
+            processo.TipoDecisao = consulta.TipoDecisao;
+        if (!string.IsNullOrWhiteSpace(consulta.ResultadoJulgamento) && string.IsNullOrWhiteSpace(processo.ResultadoJulgamento))
+            processo.ResultadoJulgamento = consulta.ResultadoJulgamento;
+        if (consulta.CodigoClasse.HasValue && !processo.CodigoClasse.HasValue)
+            processo.CodigoClasse = consulta.CodigoClasse;
+        if (consulta.NivelSigilo.HasValue && !processo.NivelSigilo.HasValue)
+            processo.NivelSigilo = consulta.NivelSigilo;
+        if (!string.IsNullOrWhiteSpace(consulta.Instancia) && string.IsNullOrWhiteSpace(processo.Instancia))
+            processo.Instancia = consulta.Instancia;
+        if (consulta.DataJulgamento.HasValue && !processo.DataJulgamento.HasValue)
+            processo.DataJulgamento = consulta.DataJulgamento;
+        if (consulta.DataPublicacao.HasValue && !processo.DataPublicacao.HasValue)
+            processo.DataPublicacao = consulta.DataPublicacao;
 
         processo.UltimaAtualizacaoDataJud = DateTime.UtcNow;
         processo.UltimoMonitoramento = agora;

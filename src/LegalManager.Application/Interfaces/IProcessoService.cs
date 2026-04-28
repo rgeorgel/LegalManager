@@ -15,4 +15,7 @@ public interface IProcessoService
     Task<AndamentoResponseDto> AddAndamentoAsync(Guid processoId, CreateAndamentoDto dto, CancellationToken ct = default);
     Task<IEnumerable<AndamentoResponseDto>> GetAndamentosAsync(Guid processoId, CancellationToken ct = default);
     Task DeleteAndamentoAsync(Guid processoId, Guid andamentoId, CancellationToken ct = default);
+
+    Task AdicionarParteAsync(Guid processoId, Guid contatoId, string tipoParte, CancellationToken ct = default);
+    Task RemoverParteAsync(Guid processoId, Guid contatoId, CancellationToken ct = default);
 }

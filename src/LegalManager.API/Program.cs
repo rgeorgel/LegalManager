@@ -90,6 +90,7 @@ builder.Services.AddScoped<IPreferenciasNotificacaoService, PreferenciasNotifica
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<IStorageService, OciStorageService>();
 builder.Services.AddScoped<IDocumentoService, DocumentoService>();
+builder.Services.AddScoped<IModeloDocumentoService, ModeloDocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();

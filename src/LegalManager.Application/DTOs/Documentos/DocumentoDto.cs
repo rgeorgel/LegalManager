@@ -9,6 +9,8 @@ public class DocumentoDto
     public string? NumeroProcesso { get; set; }
     public Guid? ClienteId { get; set; }
     public string? NomeCliente { get; set; }
+    public Guid? ModeloId { get; set; }
+    public string? NomeModelo { get; set; }
     public string Nome { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long TamanhoBytes { get; set; }

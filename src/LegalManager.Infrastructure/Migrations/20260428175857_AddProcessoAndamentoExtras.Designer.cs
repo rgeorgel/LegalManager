@@ -3,17 +3,20 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LegalManager.Infrastructure.Persistence.Migrations
+namespace LegalManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260428175857_AddProcessoAndamentoExtras")]
+    partial class AddProcessoAndamentoExtras
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -460,9 +463,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("ModeloDocumentoId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("ModeloId")
                         .HasColumnType("uuid");
 
@@ -494,8 +494,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
-
-                    b.HasIndex("ModeloDocumentoId");
 
                     b.HasIndex("ProcessoId");
 
@@ -674,45 +672,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "Status");
 
                     b.ToTable("LancamentosFinanceiros", (string)null);
-                });
-
-            modelBuilder.Entity("LegalManager.Domain.Entities.ModeloDocumento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Conteudo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CriadoPorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Descricao")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Variaveis")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CriadoPorId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("ModelosDocumento");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Notificacao", b =>
@@ -1863,10 +1822,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("LegalManager.Domain.Entities.ModeloDocumento", null)
-                        .WithMany("Documentos")
-                        .HasForeignKey("ModeloDocumentoId");
-
                     b.HasOne("LegalManager.Domain.Entities.Processo", "Processo")
                         .WithMany()
                         .HasForeignKey("ProcessoId")
@@ -1949,25 +1904,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Contato");
 
                     b.Navigation("Processo");
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("LegalManager.Domain.Entities.ModeloDocumento", b =>
-                {
-                    b.HasOne("LegalManager.Domain.Entities.Usuario", "CriadoPor")
-                        .WithMany()
-                        .HasForeignKey("CriadoPorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CriadoPor");
 
                     b.Navigation("Tenant");
                 });
@@ -2324,11 +2260,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Atendimentos");
 
                     b.Navigation("Tags");
-                });
-
-            modelBuilder.Entity("LegalManager.Domain.Entities.ModeloDocumento", b =>
-                {
-                    b.Navigation("Documentos");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Processo", b =>

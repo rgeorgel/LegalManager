@@ -29,11 +29,24 @@ public class Processo
     public string? Classe { get; set; }
     public string? Assuntos { get; set; }
     public DateTime? DataAjuizamento { get; set; }
+    public DateTime? DataDistribuicao { get; set; }
     public string? Grau { get; set; }
+    public string? SiglaTribunal { get; set; }
+    public string? Segmento { get; set; }
     public string? Sistema { get; set; }
     public string? Formato { get; set; }
     public int? NivelSigilo { get; set; }
     public DateTime? UltimaAtualizacaoDataJud { get; set; }
+    public string? Ementa { get; set; }
+    public string? DecisaoDataJud { get; set; }
+    public string? Observacao { get; set; }
+    public string? Relator { get; set; }
+    public string? TipoDecisao { get; set; }
+    public string? ResultadoJulgamento { get; set; }
+    public int? CodigoClasse { get; set; }
+    public string? Instancia { get; set; }
+    public DateTime? DataJulgamento { get; set; }
+    public DateTime? DataPublicacao { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }

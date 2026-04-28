@@ -171,6 +171,7 @@ public class DocumentoService : IDocumentoService
         NumeroProcesso = d.Processo?.NumeroCNJ,
         ClienteId = d.ClienteId,
         NomeCliente = d.Cliente?.Nome,
+        ModeloId = d.ModeloId,
         Nome = d.Nome,
         ContentType = d.ContentType,
         TamanhoBytes = d.TamanhoBytes,

@@ -56,9 +56,9 @@ public class MonitoramentoJobTests
         mock.Setup(d => d.Nome).Returns("DataJud (CNJ)");
         mock.Setup(d => d.SuportaTribunal(It.IsAny<string>())).Returns(supportsTribunal);
         mock.Setup(d => d.ConsultarAsync(It.IsAny<string>(), default))
-            .ReturnsAsync(result ?? new TribunalConsultaResult(false, null, null, null, []));
+            .ReturnsAsync(result ?? new TribunalConsultaResult(false, null, null, null, [], null, null, null, null, null, null, null, null, null, null));
         mock.Setup(d => d.ConsultarPorTribunalAsync(It.IsAny<string>(), It.IsAny<string>(), default))
-            .ReturnsAsync(result ?? new TribunalConsultaResult(false, null, null, null, []));
+            .ReturnsAsync(result ?? new TribunalConsultaResult(false, null, null, null, [], null, null, null, null, null, null, null, null, null, null));
         return mock.Object;
     }
 
@@ -82,7 +82,7 @@ public class MonitoramentoJobTests
         var (ctx, tenantId, _, processoId) = await SeedAsync();
         var dataJudMock = new Mock<ITribunalAdapter>();
         dataJudMock.Setup(d => d.ConsultarAsync(It.IsAny<string>(), default))
-            .ReturnsAsync(new TribunalConsultaResult(false, null, null, null, []));
+            .ReturnsAsync(new TribunalConsultaResult(false, null, null, null, [], null, null, null, null, null, null, null, null, null, null));
 
         var job = new MonitoramentoJob(ctx, dataJudMock.Object, Mock.Of<IEmailService>(),
             Mock.Of<ILogger<MonitoramentoJob>>());
@@ -100,7 +100,7 @@ public class MonitoramentoJobTests
         {
             new("Distribuição", new DateTime(2024, 1, 15), "Petição", null)
         };
-        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos);
+        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
         var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),
@@ -131,7 +131,7 @@ public class MonitoramentoJobTests
         {
             new("Distribuição", new DateTime(2024, 1, 15), "Petição", null)
         };
-        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos);
+        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
         var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),
@@ -151,7 +151,7 @@ public class MonitoramentoJobTests
         {
             new("Sentença", new DateTime(2024, 2, 1), "Sentença", null)
         };
-        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos);
+        var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
         var mockEmail = new Mock<IEmailService>();
 
@@ -175,7 +175,7 @@ public class MonitoramentoJobTests
         {
             new("Despacho", new DateTime(2024, 1, 20), "Despacho", null)
         };
-        var consultaResult = new TribunalConsultaResult(true, "TJSP", "3ª Vara Cível", "Campinas", movimentos);
+        var consultaResult = new TribunalConsultaResult(true, "TJSP", "3ª Vara Cível", "Campinas", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
         var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),

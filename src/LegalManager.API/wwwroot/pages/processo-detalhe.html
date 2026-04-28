@@ -133,14 +133,23 @@
               <div class="card-title">Informações do Processo</div>
               <div class="info-grid" id="infoGrid">
                 <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
+                <div class="info-item"><label>Sigla</label><span id="infoSiglaTribunal">—</span></div>
                 <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
                 <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
                 <div class="info-item"><label>Classe</label><span id="infoClasse">—</span></div>
+                <div class="info-item"><label>Código Classe</label><span id="infoCodigoClasse">—</span></div>
                 <div class="info-item"><label>Assuntos</label><span id="infoAssuntos">—</span></div>
                 <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
+                <div class="info-item"><label>Data Distribuição</label><span id="infoDataDistribuicao">—</span></div>
                 <div class="info-item"><label>Grau</label><span id="infoGrau">—</span></div>
+                <div class="info-item"><label>Instância</label><span id="infoInstancia">—</span></div>
+                <div class="info-item"><label>Segmento</label><span id="infoSegmento">—</span></div>
                 <div class="info-item"><label>Sistema</label><span id="infoSistema">—</span></div>
                 <div class="info-item"><label>Formato</label><span id="infoFormato">—</span></div>
+                <div class="info-item"><label>Relator</label><span id="infoRelator">—</span></div>
+                <div class="info-item"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
+                <div class="info-item"><label>Data Julgamento</label><span id="infoDataJulgamento">—</span></div>
+                <div class="info-item"><label>Data Publicação</label><span id="infoDataPublicacao">—</span></div>
                 <div class="info-item"><label>Última Atualização</label><span id="infoUltimaAtualizacao">—</span></div>
                 <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
                 <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
@@ -149,6 +158,20 @@
                 <div class="info-item" id="infoEncerradoGroup" style="display:none">
                   <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
                 </div>
+              </div>
+              <div id="infoDataJudExtras" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+                <div class="card-title" style="margin-bottom:12px;font-size:13px">Dados DataJud</div>
+                <div id="infoRelatorGroup" class="info-item" style="display:none"><label>Relator</label><span id="infoRelator">—</span></div>
+                <div id="infoTipoDecisaoGroup" class="info-item" style="display:none"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
+                <div id="infoResultadoJulgamentoGroup" class="info-item" style="display:none"><label>Resultado Julgamento</label><span id="infoResultadoJulgamento">—</span></div>
+              </div>
+              <div id="infoEmentaGroup" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+                <div class="card-title" style="margin-bottom:12px;font-size:13px">Ementa</div>
+                <p id="infoEmenta" style="font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:6px;max-height:300px;overflow-y:auto"></p>
+              </div>
+              <div id="infoDecisaoGroup" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+                <div class="card-title" style="margin-bottom:12px;font-size:13px">Decisão (DataJud)</div>
+                <p id="infoDecisaoDataJud" style="font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:6px;max-height:300px;overflow-y:auto"></p>
               </div>
               <div id="infoDecisaoGroup" style="display:none;margin-top:12px">
                 <div class="info-item"><label>Decisão</label><span id="infoDecisao">—</span></div>
@@ -178,7 +201,10 @@
         <!-- Right: Partes -->
         <div class="card">
           <div class="card-body">
-            <div class="card-title">Partes do Processo</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div class="card-title" style="margin-bottom:0">Partes do Processo</div>
+              <button class="btn btn-primary btn-sm" id="btnAddParte">+ Adicionar</button>
+            </div>
             <div id="partesLista">
               <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
             </div>
@@ -208,7 +234,10 @@
         <div class="card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div class="card-title" style="margin-bottom:0">Documentos Anexados</div>
-            <button class="btn btn-primary btn-sm" id="btnAddDocumentoTab">+ Adicionar</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" id="btnGerarModeloDoc">📋 Gerar com Modelo</button>
+              <button class="btn btn-primary btn-sm" id="btnAddDocumentoTab">+ Adicionar</button>
+            </div>
           </div>
           <div id="documentosLista">
             <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando documentos...</p>
@@ -358,6 +387,40 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="encerrarCancelar">Cancelar</button>
       <button class="btn btn-danger" id="encerrarConfirmar">Encerrar Processo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar Parte -->
+<div class="modal-overlay" id="modalParte">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">Adicionar Parte</span>
+      <button class="modal-close" id="parteClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="parteAlert" class="alert" style="display:none"></div>
+      <div class="form-group">
+        <label>Tipo de Parte *</label>
+        <select id="pTipo" class="form-control" required>
+          <option value="">Selecione...</option>
+          <option value="Autor">Autor</option>
+          <option value="Reu">Réu</option>
+          <option value="Interessado">Interessado</option>
+          <option value="Terceiro">Terceiro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Contato *</label>
+        <select id="pContato" class="form-control" required>
+          <option value="">Carregando...</option>
+        </select>
+        <small style="color:var(--color-text-muted);font-size:12px">Não encontrou? <a href="/pages/contatos.html" target="_blank">Cadastre um novo contato</a></small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="parteCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="parteSalvar">Adicionar</button>
     </div>
   </div>
 </div>
@@ -518,6 +581,35 @@
   </div>
 </div>
 
+<!-- Modal Gerar Documento com Modelo -->
+<div class="modal-overlay" id="modalGerarModelo">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">Gerar Documento com Modelo</span>
+      <button class="modal-close" id="gerarModeloClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="gerarModeloAlert" class="alert" style="display:none"></div>
+      <div class="form-group">
+        <label>Selecione o Modelo *</label>
+        <select id="gmModelo" class="form-control" required>
+          <option value="">Carregando...</option>
+        </select>
+      </div>
+      <div id="gmVariaveis"></div>
+      <div class="form-group" style="margin-top:16px">
+        <label>Resultado</label>
+        <textarea id="gmResultado" class="form-control" rows="10" readonly style="background:#f9fafb"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="gmCopiar">Copiar Texto</button>
+      <button class="btn btn-primary" id="gmGerarPdf">📄 Gerar PDF</button>
+      <button class="btn btn-primary" id="gmSalvar">Salvar Documento</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Lançamento Financeiro -->
 <div class="modal-overlay" id="modalFinanceiro">
   <div class="modal" style="max-width:520px">
@@ -586,7 +678,7 @@
 import { initLayout } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos } from '/js/ia.js';
-import { getProcesso, getAndamentos } from '/js/processos.js';
+import { getProcesso, getAndamentos, updateProcesso } from '/js/processos.js';
 
 initLayout();
 
@@ -642,14 +734,23 @@ function renderProcesso() {
   }
 
   document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
+  document.getElementById('infoSiglaTribunal').textContent = processo.siglaTribunal || '—';
   document.getElementById('infoVara').textContent = processo.vara || '—';
   document.getElementById('infoComarca').textContent = processo.comarca || '—';
   document.getElementById('infoClasse').textContent = processo.classe || '—';
+  document.getElementById('infoCodigoClasse').textContent = processo.codigoClasse || '—';
   document.getElementById('infoAssuntos').textContent = processo.assuntos || '—';
   document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : '—';
+  document.getElementById('infoDataDistribuicao').textContent = processo.dataDistribuicao ? fmtDate(processo.dataDistribuicao) : '—';
   document.getElementById('infoGrau').textContent = processo.grau || '—';
+  document.getElementById('infoInstancia').textContent = processo.instancia || '—';
+  document.getElementById('infoSegmento').textContent = processo.segmento || '—';
   document.getElementById('infoSistema').textContent = processo.sistema || '—';
   document.getElementById('infoFormato').textContent = processo.formato || '—';
+  document.getElementById('infoRelator').textContent = processo.relator || '—';
+  document.getElementById('infoTipoDecisao').textContent = processo.tipoDecisao || '—';
+  document.getElementById('infoDataJulgamento').textContent = processo.dataJulgamento ? fmtDate(processo.dataJulgamento) : '—';
+  document.getElementById('infoDataPublicacao').textContent = processo.dataPublicacao ? fmtDate(processo.dataPublicacao) : '—';
   document.getElementById('infoUltimaAtualizacao').textContent = processo.ultimaAtualizacaoDataJud ? fmtDateTime(processo.ultimaAtualizacaoDataJud) : '—';
   document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
   document.getElementById('infoValor').textContent = fmtMoney(processo.valorCausa);
@@ -670,6 +771,32 @@ function renderProcesso() {
     document.getElementById('infoObservacoes').textContent = processo.observacoes;
   }
 
+  // DataJud extras
+  const dataJudExtras = document.getElementById('infoDataJudExtras');
+  const hasDataJudExtras = processo.relator || processo.tipoDecisao || processo.resultadoJulgamento;
+  if (hasDataJudExtras) {
+    dataJudExtras.style.display = '';
+    if (processo.relator) { document.getElementById('infoRelatorGroup').style.display = ''; document.getElementById('infoRelator').textContent = processo.relator; }
+    if (processo.tipoDecisao) { document.getElementById('infoTipoDecisaoGroup').style.display = ''; document.getElementById('infoTipoDecisao').textContent = processo.tipoDecisao; }
+    if (processo.resultadoJulgamento) { document.getElementById('infoResultadoJulgamentoGroup').style.display = ''; document.getElementById('infoResultadoJulgamento').textContent = processo.resultadoJulgamento; }
+  } else {
+    dataJudExtras.style.display = 'none';
+  }
+
+  // Ementa
+  if (processo.ementa) {
+    document.getElementById('infoEmentaGroup').style.display = '';
+    document.getElementById('infoEmenta').textContent = processo.ementa;
+  } else {
+    document.getElementById('infoEmentaGroup').style.display = 'none';
+  }
+
+  // DecisaoDataJud
+  if (processo.decisaoDataJud) {
+    document.getElementById('infoDecisaoGroup').style.display = '';
+    document.getElementById('infoDecisaoDataJud').textContent = processo.decisaoDataJud;
+  }
+
   // Partes
   const partesEl = document.getElementById('partesLista');
   if (processo.partes?.length) {
@@ -680,6 +807,7 @@ function renderProcesso() {
           <div style="font-weight:500">${pt.nomeContato}</div>
           <div><span class="badge badge-${pt.tipoParte === 'Autor' ? 'blue' : 'gray'}">${tipoLabel[pt.tipoParte] || pt.tipoParte}</span></div>
         </div>
+        <button class="btn btn-danger btn-sm" onclick="removerParte('${pt.contatoId}')" title="Remover">✕</button>
       </div>`).join('');
   } else {
     partesEl.innerHTML = '<p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>';
@@ -1065,6 +1193,182 @@ function openDocModal() {
 }
 
 document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocModal);
+
+// Gerar Documento com Modelo
+let gmModelos = [];
+let currentGmModelo = null;
+
+document.getElementById('btnGerarModeloDoc').addEventListener('click', async () => {
+  const modal = document.getElementById('modalGerarModelo');
+  document.getElementById('gerarModeloAlert').style.display = 'none';
+  document.getElementById('gmVariaveis').innerHTML = '<p style="color:var(--color-text-muted)">Selecione um modelo...</p>';
+  document.getElementById('gmResultado').value = '';
+  try {
+    gmModelos = await apiFetch('/modelos');
+    const sel = document.getElementById('gmModelo');
+    sel.innerHTML = '<option value="">Selecione um modelo...</option>';
+    gmModelos.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.id; o.textContent = m.nome;
+      sel.appendChild(o);
+    });
+    modal.classList.add('open');
+  } catch (err) {
+    showAlert(err.message);
+  }
+});
+
+[document.getElementById('gerarModeloClose')].forEach(el =>
+  el?.addEventListener('click', () => document.getElementById('modalGerarModelo').classList.remove('open')));
+
+document.getElementById('gmModelo').addEventListener('change', () => {
+  const id = document.getElementById('gmModelo').value;
+  const m = gmModelos.find(x => x.id === id);
+  currentGmModelo = m || null;
+  const container = document.getElementById('gmVariaveis');
+  if (!m) {
+    container.innerHTML = '<p style="color:var(--color-text-muted)">Selecione um modelo...</p>';
+    document.getElementById('gmResultado').value = '';
+    return;
+  }
+  if (!m.variaveis || !m.variaveis.length) {
+    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo não possui variáveis.</p>';
+  } else {
+    container.innerHTML = m.variaveis.map(v => {
+      let preValue = '';
+      if (processo) {
+        const vl = v.toLowerCase();
+        if (vl.includes('cliente') && processo.nomeCliente) preValue = processo.nomeCliente;
+        else if (vl.includes('processo') && processo.numeroCNJ) preValue = processo.numeroCNJ;
+        else if (vl.includes('tribunal') && processo.tribunal) preValue = processo.tribunal;
+        else if (vl.includes('vara') && processo.vara) preValue = processo.vara;
+        else if (vl.includes('comarca') && processo.comarca) preValue = processo.comarca;
+        else if (vl.includes('area') && processo.areaDireito) preValue = processo.areaDireito;
+        else if (vl.includes('valor') && processo.valorCausa) preValue = processo.valorCausa;
+        else if (vl.includes('parte') && processo.nomeCliente) preValue = processo.nomeCliente;
+      }
+      return `<div class="form-group"><label style="text-transform:uppercase;font-size:12px">${v}</label><input type="text" class="form-control gm-var" data-var="${v}" value="${preValue}" placeholder="Valor para ${v}"></div>`;
+    }).join('');
+  }
+  atualizarGmResultado();
+});
+
+document.getElementById('gmVariaveis').addEventListener('input', e => {
+  if (e.target.classList.contains('gm-var')) atualizarGmResultado();
+});
+
+function atualizarGmResultado() {
+  if (!currentGmModelo) return;
+  const inputs = document.querySelectorAll('.gm-var');
+  const vars = {};
+  inputs.forEach(input => vars[input.dataset.var] = input.value);
+  let resultado = currentGmModelo.conteudo;
+  Object.entries(vars).forEach(([chave, valor]) => {
+    resultado = resultado.replace(new RegExp(`\\{\\{${chave}\\}\\}`, 'gi'), valor || `{{${chave}}}`);
+  });
+  document.getElementById('gmResultado').value = resultado;
+}
+
+document.getElementById('gmCopiar').addEventListener('click', () => {
+  const texto = document.getElementById('gmResultado').value;
+  navigator.clipboard.writeText(texto).then(() => showAlert('Conteúdo copiado!', 'success')).catch(() => showAlert('Erro ao copiar.'));
+});
+
+document.getElementById('gmGerarPdf').addEventListener('click', () => {
+  const texto = document.getElementById('gmResultado').value;
+  if (!texto) return;
+  const Win = window.open('', '_blank', 'width=700,height=900');
+  Win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Documento</title><style>
+    body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.6; margin: 40px; max-width: 800px; }
+    h1 { font-size: 14pt; text-align: center; margin-bottom: 24px; }
+    pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; }
+    @media print { body { margin: 20px; } }
+  </style></head><body><pre>${texto.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+  <script>window.onload = function() { window.print(); }<\/script></body></html>`);
+  Win.document.close();
+});
+
+document.getElementById('gmSalvar').addEventListener('click', async () => {
+  const resultado = document.getElementById('gmResultado').value;
+  if (!resultado) { showAlert('Gere o conteúdo primeiro.', 'error', 'gerarModeloAlert'); return; }
+  const nome = prompt('Nome do documento:', currentGmModelo?.nome || 'Documento Gerado');
+  if (!nome) return;
+  try {
+    const blob = new Blob([resultado], { type: 'text/plain' });
+    const file = new File([blob], nome + '.txt', { type: 'text/plain' });
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tipo', 'Peticao');
+    formData.append('processoId', processoId);
+    formData.append('nome', nome);
+    const token = sessionStorage.getItem('access_token');
+    const res = await fetch('/api/documentos/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    document.getElementById('modalGerarModelo').classList.remove('open');
+    showAlert('Documento salvo com sucesso.', 'success');
+    await loadDocumentos();
+  } catch (err) {
+    showAlert(err.message, 'error', 'gerarModeloAlert');
+  }
+});
+
+// Partes do Processo
+let contatosList = [];
+
+document.getElementById('btnAddParte').addEventListener('click', async () => {
+  document.getElementById('parteAlert').style.display = 'none';
+  document.getElementById('pTipo').value = '';
+  document.getElementById('pContato').value = '';
+  try {
+    const data = await apiFetch('/contatos?pageSize=500');
+    contatosList = (data?.items || []).filter(c => c.ativo);
+    const sel = document.getElementById('pContato');
+    sel.innerHTML = '<option value="">Selecione um contato...</option>';
+    contatosList.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = `${c.nome} ${c.cpfCnpj ? '(' + c.cpfCnpj + ')' : ''}`;
+      sel.appendChild(o);
+    });
+    document.getElementById('modalParte').classList.add('open');
+  } catch (err) {
+    showAlert(err.message);
+  }
+});
+
+[document.getElementById('parteClose'), document.getElementById('parteCancelar')].forEach(el =>
+  el?.addEventListener('click', () => document.getElementById('modalParte').classList.remove('open')));
+
+document.getElementById('parteSalvar').addEventListener('click', async () => {
+  const tipo = document.getElementById('pTipo').value;
+  const contatoId = document.getElementById('pContato').value;
+  if (!tipo || !contatoId) { showAlert('Preencha todos os campos.', 'error', 'parteAlert'); return; }
+  try {
+    await apiFetch(`/processos/${processoId}/partes`, {
+      method: 'POST',
+      body: JSON.stringify({ contatoId, tipoParte: tipo })
+    });
+    document.getElementById('modalParte').classList.remove('open');
+    showAlert('Parte adicionada.', 'success');
+    await loadProcesso();
+  } catch (err) {
+    showAlert(err.message, 'error', 'parteAlert');
+  }
+});
+
+window.removerParte = async (contatoId) => {
+  if (!confirm('Remover esta parte do processo?')) return;
+  try {
+    await apiFetch(`/processos/${processoId}/partes/${contatoId}`, { method: 'DELETE' });
+    showAlert('Parte removida.', 'success');
+    await loadProcesso();
+  } catch (err) {
+    showAlert(err.message);
+  }
+};
 
 // Financeiro
 function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
