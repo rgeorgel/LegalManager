@@ -112,6 +112,9 @@
       <button class="tab-btn" data-tab="documentos" role="tab">
         Documentos<span class="tab-badge count" id="tabCountDocumentos" style="display:none">0</span>
       </button>
+      <button class="tab-btn" data-tab="financeiro" role="tab">
+        Financeiro<span class="tab-badge count" id="tabCountFinanceiro" style="display:none">0</span>
+      </button>
     </div>
 
     <!-- Tab: Informações -->
@@ -204,6 +207,22 @@
           <div id="documentosLista">
             <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando documentos...</p>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Financeiro -->
+    <div class="tab-content" id="tab-financeiro" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">Lançamentos Financeiros</div>
+            <button class="btn btn-primary btn-sm" id="btnAddFinanceiroTab">+ Novo Lançamento</button>
+          </div>
+          <div id="financeiroLista">
+            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando lançamentos...</p>
+          </div>
+          <div id="financeiroPaginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
         </div>
       </div>
     </div>
@@ -691,6 +710,7 @@ window.switchTab = tab => {
   document.getElementById(`tab-${tab}`).classList.add('active');
   if (tab === 'andamentos') loadAndamentos();
   if (tab === 'documentos') loadDocumentos();
+  if (tab === 'financeiro') loadFinanceiro();
 };
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -994,6 +1014,87 @@ function openDocModal() {
 }
 
 document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocModal);
+
+// Financeiro
+function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+const CAT_LABELS_FIN = {
+  Honorario:'Honorário', Custas:'Custas', Pericia:'Perícia', Deposito:'Depósito',
+  Reembolso:'Reembolso', Salario:'Salário', AluguelEscritorio:'Aluguel Escritório',
+  Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
+};
+
+async function loadFinanceiro(page = 1) {
+  const lista = document.getElementById('financeiroLista');
+  const pagEl = document.getElementById('financeiroPaginacao');
+  const tabBadge = document.getElementById('tabCountFinanceiro');
+  lista.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>';
+  try {
+    const qs = new URLSearchParams({ page, pageSize: 20, processoId });
+    const data = await apiFetch(`/financeiro?${qs}`);
+    tabBadge.textContent = data?.total ?? 0;
+    tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
+    if (!data?.items?.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-text">Nenhum lançamento financeiro</div></div>';
+      pagEl.innerHTML = '';
+      return;
+    }
+    lista.innerHTML = data.items.map(l => {
+      const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2});
+      const dVenc = new Date(l.dataVencimento);
+      const dt = !isNaN(dVenc) ? dVenc.toLocaleDateString('pt-BR') : '–';
+      let dtPago = null;
+      if (l.dataPagamento) {
+        const dPag = new Date(l.dataPagamento.endsWith('Z') ? l.dataPagamento : l.dataPagamento + 'Z');
+        dtPago = !isNaN(dPag) ? dPag.toLocaleDateString('pt-BR') : null;
+      }
+      const cor = l.tipo === 'Receita' ? '#15803d' : '#dc2626';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border);flex-wrap:wrap;gap:8px">
+        <div>
+          <span style="font-weight:700;color:${cor}">${fmt(l.valor)}</span>
+          <span class="tipo-${l.tipo.toLowerCase()}" style="margin-left:6px">${l.tipo}</span>
+          <span class="status-${l.status.toLowerCase()}" style="margin-left:6px">${l.status}</span>
+          <span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">${CAT_LABELS_FIN[l.categoria] ?? l.categoria}</span>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}</div>
+          ${l.descricao ? `<div style="font-size:12px;color:#6b7280">${esc(l.descricao)}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px">
+          ${l.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" onclick="pagarLancamento('${l.id}')">✓ Pagar</button>` : ''}
+          ${l.status !== 'Cancelado' && l.status !== 'Pago' ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="cancelarLancamento('${l.id}')">Cancelar</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    const pages = Math.ceil(data.total / 20);
+    if (pages <= 1) { pagEl.innerHTML = ''; return; }
+    pagEl.innerHTML = Array.from({length: pages}, (_, i) => i + 1).map(p =>
+      `<button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="loadFinanceiro(${p})">${p}</button>`
+    ).join('');
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+    pagEl.innerHTML = '';
+  }
+}
+
+window.pagarLancamento = async id => {
+  if (!confirm('Confirmar pagamento?')) return;
+  try {
+    await apiFetch(`/financeiro/${id}/pagar`, { method: 'POST', body: JSON.stringify({}) });
+    showAlert('Pagamento registrado.', 'success');
+    await loadFinanceiro();
+  } catch (err) { showAlert(err.message); }
+};
+
+window.cancelarLancamento = async id => {
+  if (!confirm('Cancelar este lançamento?')) return;
+  try {
+    await apiFetch(`/financeiro/${id}/cancelar`, { method: 'POST' });
+    showAlert('Lançamento cancelado.', 'success');
+    await loadFinanceiro();
+  } catch (err) { showAlert(err.message); }
+};
+
+document.getElementById('btnAddFinanceiroTab').addEventListener('click', () => {
+  window.location.href = `/pages/financeiro.html?processo=${processoId}`;
+});
 
 // PDF Modal
 const pdfModal = document.getElementById('pdfModal');

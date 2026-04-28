@@ -105,6 +105,7 @@
         <div class="filter-bar">
           <select id="filtroTipo"><option value="">Todos</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select>
           <select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option><option value="Vencido">Vencido</option><option value="Cancelado">Cancelado</option></select>
+          <select id="filtroProcesso"><option value="">Todos os processos</option></select>
           <button class="btn btn-secondary btn-sm" id="btnFiltrar">Filtrar</button>
         </div>
         <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
@@ -146,6 +147,12 @@
         <div class="form-group">
           <label class="form-label">Descrição</label>
           <input id="fDescricao" type="text" maxlength="500" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Processo (opcional)</label>
+          <select id="fProcesso" class="form-control">
+            <option value="">Nenhum</option>
+          </select>
         </div>
         <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
           <button type="button" class="btn btn-secondary" id="btnCancelarModal">Cancelar</button>
@@ -227,10 +234,34 @@
     updateNav();
     loadAll();
     loadCustomCats();
+    loadProcessos();
 
     function loadAll() {
       loadResumo();
       loadLancamentos();
+    }
+
+    async function loadProcessos() {
+      try {
+        const data = await apiFetch('/processos?pageSize=100');
+        const selFilter = document.getElementById('filtroProcesso');
+        const selModal = document.getElementById('fProcesso');
+        if (data?.items?.length) {
+          data.items.forEach(p => {
+            const o1 = document.createElement('option');
+            o1.value = p.id;
+            o1.textContent = p.numeroCNJ;
+            selFilter.appendChild(o1);
+
+            const o2 = document.createElement('option');
+            o2.value = p.id;
+            o2.textContent = p.numeroCNJ;
+            selModal.appendChild(o2);
+          });
+        }
+        const procParam = new URLSearchParams(location.search).get('processo');
+        if (procParam) selFilter.value = procParam;
+      } catch (e) { console.error(e); }
     }
 
     async function loadResumo() {
@@ -257,9 +288,11 @@
       currentPage = page;
       const tipo = document.getElementById('filtroTipo').value;
       const status = document.getElementById('filtroStatus').value;
+      const processoId = document.getElementById('filtroProcesso').value;
       const qs = new URLSearchParams({ page, pageSize, mes: currentMes, ano: currentAno });
       if (tipo) qs.append('tipo', tipo);
       if (status) qs.append('status', status);
+      if (processoId) qs.append('processoId', processoId);
 
       const lista = document.getElementById('lista');
       lista.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Carregando...</span>';
@@ -377,12 +410,14 @@
     async function salvar(e) {
       e.preventDefault();
       const id = document.getElementById('editId').value;
+      const processoId = document.getElementById('fProcesso').value || null;
       const body = {
         tipo: document.getElementById('fTipo').value,
         categoria: document.getElementById('fCategoria').value,
         valor: parseFloat(document.getElementById('fValor').value),
         dataVencimento: document.getElementById('fVencimento').value,
-        descricao: document.getElementById('fDescricao').value || null
+        descricao: document.getElementById('fDescricao').value || null,
+        processoId
       };
       const btn = document.getElementById('btnSalvar');
       btn.disabled = true;
