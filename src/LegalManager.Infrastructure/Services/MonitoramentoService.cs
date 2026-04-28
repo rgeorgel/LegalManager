@@ -77,12 +77,13 @@ public class MonitoramentoService : IMonitoramentoService
     private async Task<MonitoramentoResultDto> ExecutarMonitoramentoAsync(Processo processo, CancellationToken ct)
     {
         var agora = DateTime.Now;
+        var numeroCNJDigits = new string(processo.NumeroCNJ.Where(char.IsDigit).ToArray());
 
         TribunalConsultaResult consulta;
         if (!string.IsNullOrWhiteSpace(processo.Tribunal))
-            consulta = await _dataJud.ConsultarPorTribunalAsync(processo.NumeroCNJ, processo.Tribunal, ct);
+            consulta = await _dataJud.ConsultarPorTribunalAsync(numeroCNJDigits, processo.Tribunal, ct);
         else
-            consulta = await _dataJud.ConsultarAsync(processo.NumeroCNJ, ct);
+            consulta = await _dataJud.ConsultarAsync(numeroCNJDigits, ct);
 
         if (!consulta.Encontrado)
         {
