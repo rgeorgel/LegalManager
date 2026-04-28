@@ -102,12 +102,12 @@
         <div class="section">
           <div class="section-title">💰 Financeiro (mês atual)</div>
           <div class="ind-grid">
-            <div class="ind-card"><div class="ind-label">Receitas pagas</div><div class="ind-value green" id="fReceitas">—</div></div>
-            <div class="ind-card"><div class="ind-label">Despesas pagas</div><div class="ind-value red" id="fDespesas">—</div></div>
-            <div class="ind-card"><div class="ind-label">Saldo do mês</div><div class="ind-value" id="fSaldo">—</div></div>
-            <div class="ind-card"><div class="ind-label">A receber</div><div class="ind-value amber" id="fAReceber">—</div></div>
-            <div class="ind-card"><div class="ind-label">A pagar</div><div class="ind-value amber" id="fAPagar">—</div></div>
-            <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos</div><div class="ind-value red" style="font-size:18px" id="fVencidos">—</div></div>
+            <div class="ind-card"><div class="ind-label">Receitas pagas (R$)</div><div class="ind-value green" id="fReceitas">—</div></div>
+            <div class="ind-card"><div class="ind-label">Despesas pagas (R$)</div><div class="ind-value red" id="fDespesas">—</div></div>
+            <div class="ind-card"><div class="ind-label">Saldo do mês (R$)</div><div class="ind-value" id="fSaldo">—</div></div>
+            <div class="ind-card"><div class="ind-label">A receber (R$)</div><div class="ind-value amber" id="fAReceber">—</div></div>
+            <div class="ind-card"><div class="ind-label">A pagar (R$)</div><div class="ind-value amber" id="fAPagar">—</div></div>
+            <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos (R$)</div><div class="ind-value red" style="font-size:18px" id="fVencidos">—</div></div>
           </div>
           <div style="margin-top:20px">
             <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--color-text-muted)">EVOLUÇÃO — ÚLTIMOS 6 MESES</div>
@@ -179,7 +179,7 @@
     }
 
     function renderFinanceiro(f) {
-      const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+      const fmt = v => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
       document.getElementById('fReceitas').textContent = fmt(f.totalReceitasMes);
       document.getElementById('fDespesas').textContent = fmt(f.totalDespesasMes);
       const saldoEl = document.getElementById('fSaldo');
