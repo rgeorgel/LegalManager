@@ -83,7 +83,7 @@
     </div>
 
     <div class="filter-bar">
-      <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome...">
+      <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
       <select id="filtTipo" class="form-control" style="width:auto">
         <option value="">Todos os tipos</option>
         <option value="Peticao">Petição</option>
@@ -318,7 +318,11 @@ function applyFilters() {
   const tipo = document.getElementById('filtTipo').value;
   const origem = document.getElementById('filtOrigem').value;
 
-  if (busca) filtered = filtered.filter(d => d.nome.toLowerCase().includes(busca));
+  if (busca) filtered = filtered.filter(d =>
+    d.nome.toLowerCase().includes(busca) ||
+    (d.numeroProcesso && d.numeroProcesso.toLowerCase().includes(busca)) ||
+    (d.nomeCliente && d.nomeCliente.toLowerCase().includes(busca))
+  );
   if (tipo) filtered = filtered.filter(d => d.tipo === tipo);
   if (origem === 'processo') filtered = filtered.filter(d => d.processoId);
   else if (origem === 'cliente') filtered = filtered.filter(d => d.clienteId);
