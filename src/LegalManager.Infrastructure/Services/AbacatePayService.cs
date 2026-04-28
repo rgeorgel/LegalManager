@@ -68,6 +68,79 @@ public class AbacatePayService : IAbacatePayService
         }
     }
 
+    public async Task<AbacatePayBillingResult> CriarCheckoutUnicoAsync(CriarCheckoutUnicoInput input, CancellationToken ct = default)
+    {
+        var customerId = await CriarOuObterClienteAsync(new CriarBillingInput(
+            input.TenantId, "", input.Email, input.NomeAdmin, input.Cnpj, "", "", ""), ct);
+
+        var productId = await ObterOuCriarProdutoUnicoAsync(input.PacoteId, input.PacoteNome, input.ValorCentavos, ct);
+
+        var payload = new
+        {
+            customerId,
+            items = new[] { new { id = productId, quantity = 1 } },
+            methods = new[] { "CARD", "PIX" },
+            returnUrl = input.ReturnUrl,
+            completionUrl = input.CompletionUrl,
+            metadata = new Dictionary<string, string>
+            {
+                ["tenantId"] = input.TenantId,
+                ["tipo"] = "creditos_ia",
+                ["pacoteId"] = input.PacoteId
+            }
+        };
+
+        var body = await PostAsync("checkouts/create", payload, ct);
+
+        using var doc = JsonDocument.Parse(body);
+        var data = doc.RootElement.GetProperty("data");
+        var checkoutId = data.GetProperty("id").GetString()
+            ?? throw new InvalidOperationException("AbacatePay não retornou o ID do checkout.");
+        var checkoutUrl = data.GetProperty("url").GetString()
+            ?? throw new InvalidOperationException("AbacatePay não retornou a URL de checkout.");
+
+        _logger.LogInformation("Checkout único AbacatePay criado: {Id} para tenant {TenantId}, pacote {PacoteId}",
+            checkoutId, input.TenantId, input.PacoteId);
+        return new AbacatePayBillingResult(checkoutId, checkoutUrl);
+    }
+
+    private async Task<string> ObterOuCriarProdutoUnicoAsync(string pacoteId, string pacoteNome, int valorCentavos, CancellationToken ct)
+    {
+        var externalId = $"lm-creditos-{pacoteId}";
+
+        var listResp = await _http.GetAsync($"products/list?externalId={externalId}", ct);
+        if (listResp.IsSuccessStatusCode)
+        {
+            var listBody = await listResp.Content.ReadAsStringAsync(ct);
+            using var listDoc = JsonDocument.Parse(listBody);
+            var dataEl = listDoc.RootElement.GetProperty("data");
+            if (dataEl.ValueKind == JsonValueKind.Array && dataEl.GetArrayLength() > 0)
+            {
+                var existingId = dataEl[0].GetProperty("id").GetString();
+                if (!string.IsNullOrEmpty(existingId))
+                    return existingId;
+            }
+        }
+
+        var payload = new
+        {
+            externalId,
+            name = $"LegalManager — Créditos IA {pacoteNome}",
+            description = $"Pacote de créditos de IA — {pacoteNome}",
+            price = valorCentavos,
+            currency = "BRL"
+        };
+
+        var body = await PostAsync("products/create", payload, ct);
+
+        using var doc = JsonDocument.Parse(body);
+        var productId = doc.RootElement.GetProperty("data").GetProperty("id").GetString()
+            ?? throw new InvalidOperationException("AbacatePay não retornou o ID do produto.");
+
+        _logger.LogInformation("Produto único AbacatePay criado: {Id} ({ExternalId})", productId, externalId);
+        return productId;
+    }
+
     private async Task<string> CriarOuObterClienteAsync(CriarBillingInput input, CancellationToken ct)
     {
         var payload = new

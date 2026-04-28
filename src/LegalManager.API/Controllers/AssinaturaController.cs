@@ -12,6 +12,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.API.Controllers;
 
+public record PacoteCreditosDto(
+    string Id,
+    string Nome,
+    string Descricao,
+    int CreditosTraducao,
+    int CreditosPeca,
+    decimal Valor,
+    string? DestaqueBadge
+);
+
 [ApiController]
 [Route("api/assinatura")]
 [Authorize]
@@ -22,6 +32,8 @@ public class AssinaturaController(
     UserManager<Usuario> userManager,
     IConfiguration config) : ControllerBase
 {
+    private static List<PacoteCreditosDto> _pacotes => PacotesCreditos.Todos;
+
     [HttpGet]
     public async Task<IActionResult> GetStatus(CancellationToken ct)
     {
@@ -145,6 +157,50 @@ public class AssinaturaController(
             expiraEm
         });
     }
+
+    [HttpGet("creditos/pacotes")]
+    public IActionResult GetPacotes() => Ok(_pacotes);
+
+    [HttpPost("creditos/comprar")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ComprarCreditos([FromBody] ComprarCreditosDto dto, CancellationToken ct)
+    {
+        var pacote = _pacotes.FirstOrDefault(p => p.Id == dto.PacoteId);
+        if (pacote is null)
+            return BadRequest(new { message = "Pacote inválido." });
+
+        var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        var admin = await userManager.GetUserAsync(User);
+        if (admin is null) return Unauthorized();
+
+        var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:6600";
+        var returnUrl = $"{frontendUrl}/pages/assinatura.html?creditos=pendente";
+        var completionUrl = $"{frontendUrl}/pages/assinatura.html?creditos=processando";
+
+        AbacatePayBillingResult result;
+        try
+        {
+            result = await abacatePay.CriarCheckoutUnicoAsync(new CriarCheckoutUnicoInput(
+                TenantId: tenant.Id.ToString(),
+                Email: admin.Email!,
+                NomeAdmin: admin.Nome,
+                Cnpj: tenant.Cnpj,
+                PacoteId: pacote.Id,
+                PacoteNome: pacote.Nome,
+                ValorCentavos: (int)(pacote.Valor * 100),
+                ReturnUrl: returnUrl,
+                CompletionUrl: completionUrl
+            ), ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        return Ok(new { checkoutUrl = result.CheckoutUrl });
+    }
 }
 
 // Webhook — sem autenticação JWT
@@ -153,6 +209,7 @@ public class AssinaturaController(
 public class WebhookController(
     AppDbContext context,
     IConfiguration config,
+    ICreditoService creditoService,
     ILogger<WebhookController> logger) : ControllerBase
 {
     [HttpPost("abacatepay")]
@@ -218,6 +275,13 @@ public class WebhookController(
         var tenantId = ExtrairTenantId(root);
         if (tenantId == null) return;
 
+        var tipo = ExtrairMetadata(root, "tipo");
+        if (tipo == "creditos_ia")
+        {
+            await HandleCreditosComprados(root, tenantId.Value, ct);
+            return;
+        }
+
         var tenant = await context.Tenants.FindAsync([tenantId.Value], ct);
         if (tenant is null) return;
 
@@ -249,6 +313,40 @@ public class WebhookController(
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Plano Pro ativado via webhook para tenant {TenantId}", tenantId);
+    }
+
+    private async Task HandleCreditosComprados(JsonElement root, Guid tenantId, CancellationToken ct)
+    {
+        var pacoteId = ExtrairMetadata(root, "pacoteId");
+        var pacote = PacotesCreditos.Todos.FirstOrDefault(p => p.Id == pacoteId);
+        if (pacote is null)
+        {
+            logger.LogWarning("Pacote de créditos desconhecido: {PacoteId}", pacoteId);
+            return;
+        }
+
+        await creditoService.AdicionarCreditosCompradosAsync(tenantId, pacote.CreditosTraducao, pacote.CreditosPeca, ct);
+
+        var valor = ExtrairValor(root);
+        var billingId = ExtrairBillingId(root);
+        if (!string.IsNullOrEmpty(billingId))
+        {
+            context.Faturamentos.Add(new Faturamento
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                BillingId = billingId,
+                Periodo = $"Pacote {pacote.Nome}",
+                Valor = valor > 0 ? valor : pacote.Valor,
+                Status = StatusFaturamento.Pago,
+                DataPagamento = DateTime.UtcNow,
+                DataCriacao = DateTime.UtcNow,
+                Descricao = $"Créditos IA — {pacote.Nome} ({pacote.CreditosTraducao + pacote.CreditosPeca} créditos)"
+            });
+            await context.SaveChangesAsync(ct);
+        }
+
+        logger.LogInformation("Créditos IA adicionados via webhook para tenant {TenantId}, pacote {Pacote}", tenantId, pacote.Nome);
     }
 
     private async Task HandleSubscriptionCancelada(JsonElement root, CancellationToken ct)
@@ -330,3 +428,15 @@ public class WebhookController(
 }
 
 public record IniciarCheckoutDto(string Periodo);
+public record ComprarCreditosDto(string PacoteId);
+
+public static class PacotesCreditos
+{
+    public static readonly List<PacoteCreditosDto> Todos =
+    [
+        new("basico",   "Básico",    "Para começar com IA",          60,  30,  29.90m, null),
+        new("padrao",   "Padrão",    "Para uso moderado",            200, 100, 89.90m, "Mais popular"),
+        new("avancado", "Avançado",  "Para escritórios ativos",      400, 200, 159.90m, null),
+        new("master",   "Master",    "Para alto volume de trabalho", 800, 400, 289.90m, "Melhor custo-benefício"),
+    ];
+}

@@ -9,4 +9,5 @@ public interface ICreditoService
     Task<bool> ConsumirCreditoAsync(TipoCreditoAI tipo, int quantidade = 1, CancellationToken ct = default);
     Task<bool> TemCreditoDisponivelAsync(TipoCreditoAI tipo, int quantidade = 1, CancellationToken ct = default);
     Task InicializarCreditosPadraoAsync(Guid tenantId, PlanoTipo plano, CancellationToken ct = default);
+    Task AdicionarCreditosCompradosAsync(Guid tenantId, int creditosTraducao, int creditosPeca, CancellationToken ct = default);
 }

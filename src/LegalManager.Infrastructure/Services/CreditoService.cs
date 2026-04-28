@@ -93,4 +93,39 @@ public class CreditoService : ICreditoService
         await _context.CreditosAI.AddRangeAsync(creditos, ct);
         await _context.SaveChangesAsync(ct);
     }
+
+    public async Task AdicionarCreditosCompradosAsync(Guid tenantId, int creditosTraducao, int creditosPeca, CancellationToken ct = default)
+    {
+        var adicionais = new Dictionary<TipoCreditoAI, int>
+        {
+            { TipoCreditoAI.TraducaoAndamento, creditosTraducao },
+            { TipoCreditoAI.GeracaoPeca, creditosPeca }
+        };
+
+        foreach (var (tipo, quantidade) in adicionais)
+        {
+            var credito = await _context.CreditosAI
+                .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.Tipo == tipo, ct);
+
+            if (credito is not null)
+            {
+                credito.QuantidadeTotal += quantidade;
+            }
+            else
+            {
+                _context.CreditosAI.Add(new CreditoAI
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    Tipo = tipo,
+                    QuantidadeTotal = quantidade,
+                    QuantidadeUsada = 0,
+                    Origem = OrigemCreditoAI.Turbo,
+                    CriadoEm = DateTime.UtcNow
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync(ct);
+    }
 }

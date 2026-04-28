@@ -41,6 +41,34 @@
     .assin-badge.pro    { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
     .assin-badge.trial  { background: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; }
 
+    /* Tab navigation */
+    .tab-nav {
+      display: flex;
+      border-bottom: 2px solid var(--color-border);
+      margin-bottom: 28px;
+      gap: 0;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all .15s;
+      user-select: none;
+    }
+    .tab-btn.active {
+      color: var(--color-primary, #1a56db);
+      border-bottom-color: var(--color-primary, #1a56db);
+    }
+    .tab-btn:hover:not(.active) { color: var(--color-text); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     .billing-toggle {
       display: inline-flex;
       background: var(--color-bg, #f9fafb);
@@ -139,6 +167,88 @@
     .danger-title { font-weight: 700; font-size: 14px; color: #dc2626; margin-bottom: 8px; }
     .danger-desc { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; }
 
+    /* Credits tab styles */
+    .credits-summary {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .credits-stat { display: flex; flex-direction: column; gap: 2px; }
+    .credits-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--color-text-muted); }
+    .credits-stat-value { font-size: 22px; font-weight: 800; }
+    .credits-stat-value.green { color: #16a34a; }
+
+    .credits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto 32px;
+    }
+    .credit-card {
+      border: 2px solid var(--color-border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      background: var(--color-surface);
+      position: relative;
+      transition: border-color .15s, box-shadow .15s;
+      display: flex;
+      flex-direction: column;
+    }
+    .credit-card:hover { border-color: var(--color-primary, #1a56db); box-shadow: 0 4px 20px rgba(26,86,219,.08); }
+    .credit-card.featured-credit {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 1px #f59e0b, 0 8px 32px rgba(245,158,11,.1);
+    }
+    .credit-badge {
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 12px;
+      border-radius: 100px;
+      letter-spacing: .04em;
+    }
+    .credit-badge.popular { background: #f59e0b; color: #0f172a; }
+    .credit-badge.best-value { background: #16a34a; color: #fff; }
+
+    .credit-name { font-size: 12px; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+    .credit-total { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 2px; }
+    .credit-total-label { font-size: 12px; color: var(--color-text-muted); margin-bottom: 14px; }
+    .credit-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+      flex: 1;
+    }
+    .credit-line { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .credit-icon { font-size: 14px; }
+    .credit-price {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+    .credit-price-currency { font-size: 14px; font-weight: 700; color: var(--color-text-muted); padding-bottom: 4px; }
+    .credit-price-value { font-size: 28px; font-weight: 800; line-height: 1; }
+    .credit-price-cents { font-size: 14px; font-weight: 700; padding-bottom: 4px; color: var(--color-text-muted); }
+    .credit-desc { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
+
     #toast {
       display: none;
       position: fixed;
@@ -193,93 +303,131 @@
       </div>
     </div>
 
-    <!-- Toggle mensal/anual -->
-    <div class="toggle-wrapper">
-      <div class="billing-toggle" id="billingToggle">
-        <div class="billing-opt active" data-period="mensal">Mensal</div>
-        <div class="billing-opt" data-period="anual">Anual <span class="save-badge">-20%</span></div>
-      </div>
+    <!-- Tab navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="planos">Planos</button>
+      <button class="tab-btn" data-tab="creditos">Créditos IA</button>
     </div>
 
-    <!-- Planos -->
-    <div class="plans-grid" id="plansGrid">
+    <!-- Tab: Planos -->
+    <div class="tab-panel active" id="tab-planos">
 
-      <!-- Free -->
-      <div class="plan-card" id="cardFree">
-        <div class="plan-name">Free</div>
-        <div class="plan-price">
-          <span class="plan-currency">R$</span>
-          <span class="plan-value">0</span>
-          <span class="plan-period">/mês</span>
+      <!-- Toggle mensal/anual -->
+      <div class="toggle-wrapper">
+        <div class="billing-toggle" id="billingToggle">
+          <div class="billing-opt active" data-period="mensal">Mensal</div>
+          <div class="billing-opt" data-period="anual">Anual <span class="save-badge">-20%</span></div>
         </div>
-        <div class="plan-note">&nbsp;</div>
-        <div class="plan-desc">Para advogados autônomos que querem começar a organizar o escritório.</div>
-        <ul class="plan-features">
-          <li class="feat-section">Processos</li>
-          <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
-          <li><span class="feat-check">✓</span> 40 processos monitorados</li>
-          <li><span class="feat-cross">✗</span> Captura de publicações</li>
-          <li><span class="feat-check">✓</span> 1 GB de armazenamento</li>
-          <li class="feat-section">Usuários e Clientes</li>
-          <li><span class="feat-check">✓</span> 1 usuário</li>
-          <li><span class="feat-cross">✗</span> Acesso personalizado ao cliente</li>
-          <li class="feat-section">Produtividade e Financeiro</li>
-          <li><span class="feat-check">✓</span> Tarefas, agenda e timesheet</li>
-          <li><span class="feat-cross">✗</span> Controle financeiro</li>
-          <li><span class="feat-cross">✗</span> Indicadores e relatórios</li>
-        </ul>
-        <button id="btnFree" class="btn btn-secondary" style="width:100%">Plano atual</button>
       </div>
 
-      <!-- Pro -->
-      <div class="plan-card featured" id="cardPro">
-        <div class="plan-top-badge popular-badge">Recomendado</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">
-          <span class="plan-currency">R$</span>
-          <span class="plan-value" id="proValue">249</span>
-          <span class="plan-period">/mês</span>
+      <!-- Planos -->
+      <div class="plans-grid" id="plansGrid">
+
+        <!-- Free -->
+        <div class="plan-card" id="cardFree">
+          <div class="plan-name">Free</div>
+          <div class="plan-price">
+            <span class="plan-currency">R$</span>
+            <span class="plan-value">0</span>
+            <span class="plan-period">/mês</span>
+          </div>
+          <div class="plan-note">&nbsp;</div>
+          <div class="plan-desc">Para advogados autônomos que querem começar a organizar o escritório.</div>
+          <ul class="plan-features">
+            <li class="feat-section">Processos</li>
+            <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
+            <li><span class="feat-check">✓</span> 40 processos monitorados</li>
+            <li><span class="feat-cross">✗</span> Captura de publicações</li>
+            <li><span class="feat-check">✓</span> 1 GB de armazenamento</li>
+            <li class="feat-section">Usuários e Clientes</li>
+            <li><span class="feat-check">✓</span> 1 usuário</li>
+            <li><span class="feat-cross">✗</span> Acesso personalizado ao cliente</li>
+            <li class="feat-section">Produtividade e Financeiro</li>
+            <li><span class="feat-check">✓</span> Tarefas, agenda e timesheet</li>
+            <li><span class="feat-cross">✗</span> Controle financeiro</li>
+            <li><span class="feat-cross">✗</span> Indicadores e relatórios</li>
+          </ul>
+          <button id="btnFree" class="btn btn-secondary" style="width:100%">Plano atual</button>
         </div>
-        <div class="plan-note" id="proNote">&nbsp;</div>
-        <div class="plan-desc">Para escritórios que precisam de controle completo, financeiro e equipe.</div>
-        <ul class="plan-features">
-          <li class="feat-section">Processos</li>
-          <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
-          <li><span class="feat-check">✓</span> 500 processos monitorados</li>
-          <li><span class="feat-check">✓</span> Monitoramento de processos por número CNJ</li>
-          <li><span class="feat-check">✓</span> 20 GB de armazenamento</li>
-          <li class="feat-section">Usuários e Clientes</li>
-          <li><span class="feat-check">✓</span> Até 5 usuários</li>
-          <li><span class="feat-check">✓</span> Acesso personalizado ao cliente</li>
-          <li class="feat-section">Produtividade e Financeiro</li>
-          <li><span class="feat-check">✓</span> Tarefas, agenda e timesheet</li>
-          <li><span class="feat-check">✓</span> Controle financeiro por processo</li>
-          <li><span class="feat-check">✓</span> Indicadores e relatórios completos</li>
-          <li><span class="feat-check">✓</span> Kanban e calculadora de prazos</li>
-          <li><span class="feat-check">✓</span> Templates de documentos</li>
-        </ul>
-        <button id="btnPro" class="btn btn-primary" style="width:100%">Assinar Pro</button>
+
+        <!-- Pro -->
+        <div class="plan-card featured" id="cardPro">
+          <div class="plan-top-badge popular-badge">Recomendado</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">
+            <span class="plan-currency">R$</span>
+            <span class="plan-value" id="proValue">249</span>
+            <span class="plan-period">/mês</span>
+          </div>
+          <div class="plan-note" id="proNote">&nbsp;</div>
+          <div class="plan-desc">Para escritórios que precisam de controle completo, financeiro e equipe.</div>
+          <ul class="plan-features">
+            <li class="feat-section">Processos</li>
+            <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
+            <li><span class="feat-check">✓</span> 500 processos monitorados</li>
+            <li><span class="feat-check">✓</span> Monitoramento de processos por número CNJ</li>
+            <li><span class="feat-check">✓</span> 20 GB de armazenamento</li>
+            <li class="feat-section">Usuários e Clientes</li>
+            <li><span class="feat-check">✓</span> Até 5 usuários</li>
+            <li><span class="feat-check">✓</span> Acesso personalizado ao cliente</li>
+            <li class="feat-section">Produtividade e Financeiro</li>
+            <li><span class="feat-check">✓</span> Tarefas, agenda e timesheet</li>
+            <li><span class="feat-check">✓</span> Controle financeiro por processo</li>
+            <li><span class="feat-check">✓</span> Indicadores e relatórios completos</li>
+            <li><span class="feat-check">✓</span> Kanban e calculadora de prazos</li>
+            <li><span class="feat-check">✓</span> Templates de documentos</li>
+          </ul>
+          <button id="btnPro" class="btn btn-primary" style="width:100%">Assinar Pro</button>
+        </div>
+
       </div>
 
-    </div>
-
-    <!-- Zona de cancelamento (só para Pro) -->
-    <div class="danger-zone" id="dangerZone" style="display:none">
-      <div class="danger-title">Cancelar assinatura</div>
-      <div class="danger-desc" id="dangerDesc">
-        Ao cancelar, você continuará com acesso Pro até o fim do período atual. Após isso, o escritório será movido para o plano Free automaticamente.
+      <!-- Zona de cancelamento (só para Pro) -->
+      <div class="danger-zone" id="dangerZone" style="display:none">
+        <div class="danger-title">Cancelar assinatura</div>
+        <div class="danger-desc" id="dangerDesc">
+          Ao cancelar, você continuará com acesso Pro até o fim do período atual. Após isso, o escritório será movido para o plano Free automaticamente.
+        </div>
+        <button id="btnCancelar" class="btn btn-danger">Cancelar assinatura</button>
       </div>
-      <button id="btnCancelar" class="btn btn-danger">Cancelar assinatura</button>
-    </div>
 
-    <!-- Histórico de pagamentos -->
-    <div style="max-width:680px;margin:40px auto 0">
-      <div class="config-section" id="historicoSection" style="display:none">
-        <div class="config-section-title">Histórico de Pagamentos</div>
-        <div id="historicoLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
-        <div id="historicoTable" style="display:none;overflow-x:auto"></div>
+      <!-- Histórico de pagamentos -->
+      <div style="max-width:680px;margin:40px auto 0">
+        <div class="config-section" id="historicoSection" style="display:none">
+          <div class="config-section-title">Histórico de Pagamentos</div>
+          <div id="historicoLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
+          <div id="historicoTable" style="display:none;overflow-x:auto"></div>
+        </div>
       </div>
-    </div>
+
+    </div><!-- /tab-planos -->
+
+    <!-- Tab: Créditos IA -->
+    <div class="tab-panel" id="tab-creditos">
+
+      <!-- Resumo de créditos disponíveis -->
+      <div class="credits-summary" id="creditsSummary">
+        <div class="credits-stat">
+          <span class="credits-stat-label">Traduções disponíveis</span>
+          <span class="credits-stat-value green" id="creditTraducao">—</span>
+        </div>
+        <div style="width:1px;background:var(--color-border);align-self:stretch"></div>
+        <div class="credits-stat">
+          <span class="credits-stat-label">Peças disponíveis</span>
+          <span class="credits-stat-value green" id="creditPeca">—</span>
+        </div>
+        <div style="margin-left:auto;font-size:13px;color:var(--color-text-muted);max-width:280px">
+          Créditos são usados ao traduzir andamentos e gerar peças jurídicas com IA. Não expiram e acumulam com futuras compras.
+        </div>
+      </div>
+
+      <!-- Grid de pacotes -->
+      <div class="credits-grid" id="creditsGrid">
+        <div style="color:var(--color-text-muted);font-size:14px;grid-column:1/-1;text-align:center;padding:20px">Carregando pacotes...</div>
+      </div>
+
+    </div><!-- /tab-creditos -->
+
   </main>
 </div>
 
@@ -313,10 +461,27 @@
   // Handle return from AbacatePay checkout
   const params = new URLSearchParams(location.search);
   const checkoutState = params.get('checkout');
+  const creditosState = params.get('creditos');
   if (checkoutState === 'pendente') {
     showToast('Aguardando confirmação do pagamento. Isso pode levar alguns instantes.', true);
   } else if (checkoutState === 'processando') {
     showToast('Pagamento em processamento! Seu plano Pro será ativado em breve.', true);
+  } else if (creditosState === 'pendente') {
+    switchTab('creditos');
+    showToast('Aguardando confirmação do pagamento. Os créditos serão adicionados em breve.', true);
+  } else if (creditosState === 'processando') {
+    switchTab('creditos');
+    showToast('Pagamento confirmado! Seus créditos de IA serão adicionados em instantes.', true);
+  }
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
   }
 
   // Billing toggle
@@ -504,13 +669,13 @@
       table.style.display = '';
       table.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr>
-          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Período</th>
+          <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Período / Pacote</th>
           <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Valor</th>
           <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Status</th>
           <th style="text-align:left;padding:8px 12px;border-bottom:2px solid var(--color-border);color:var(--color-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">Data pagamento</th>
         </tr></thead>
         <tbody>${items.map(f => `<tr>
-          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;font-weight:500">${esc(f.periodo)}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;font-weight:500">${esc(f.descricao || f.periodo)}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6">R$ ${f.valor.toFixed(2).replace('.', ',')}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6"><span class="badge badge-${f.status === 'Pago' ? 'green' : 'gray'}">${f.status}</span></td>
           <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;color:var(--color-text-muted)">${f.dataPagamento ? (() => { const d = new Date(f.dataPagamento); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '—'; })() : '—'}</td>
@@ -519,12 +684,104 @@
     } catch (e) { console.error(e); }
   }
 
+  // --- Créditos IA tab ---
+
+  async function loadCreditos() {
+    try {
+      const data = await apiFetch('/creditos');
+      const traducao = data.creditos?.find(c => c.tipo === 'TraducaoAndamento');
+      const peca = data.creditos?.find(c => c.tipo === 'GeracaoPeca');
+      document.getElementById('creditTraducao').textContent = traducao?.quantidadeDisponivel ?? 0;
+      document.getElementById('creditPeca').textContent = peca?.quantidadeDisponivel ?? 0;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadPacotes() {
+    try {
+      const pacotes = await apiFetch('/assinatura/creditos/pacotes');
+      const grid = document.getElementById('creditsGrid');
+      grid.innerHTML = '';
+
+      pacotes.forEach(p => {
+        const valStr = p.valor.toFixed(2);
+        const [reais, centavos] = valStr.split('.');
+        const isFeatured = p.destaqueBadge === 'Mais popular';
+        const isBestValue = p.destaqueBadge === 'Melhor custo-benefício';
+
+        const card = document.createElement('div');
+        card.className = 'credit-card' + (isFeatured || isBestValue ? ' featured-credit' : '');
+
+        if (p.destaqueBadge) {
+          const badge = document.createElement('div');
+          badge.className = 'credit-badge ' + (isFeatured ? 'popular' : 'best-value');
+          badge.textContent = p.destaqueBadge;
+          card.appendChild(badge);
+        }
+
+        card.innerHTML += `
+          <div class="credit-name">${esc(p.nome)}</div>
+          <div class="credit-total">${p.creditosTraducao + p.creditosPeca}</div>
+          <div class="credit-total-label">créditos totais</div>
+          <div class="credit-breakdown">
+            <div class="credit-line"><span class="credit-icon">🔤</span> ${p.creditosTraducao} traduções de andamento</div>
+            <div class="credit-line"><span class="credit-icon">📝</span> ${p.creditosPeca} peças jurídicas</div>
+          </div>
+          <div class="credit-desc">${esc(p.descricao)}</div>
+          <div class="credit-price">
+            <span class="credit-price-currency">R$</span>
+            <span class="credit-price-value">${reais}</span>
+            <span class="credit-price-cents">,${centavos}</span>
+          </div>
+          <button class="btn btn-primary btn-comprar" data-id="${esc(p.id)}" data-nome="${esc(p.nome)}" data-valor="${valStr}" style="width:100%"
+            ${isAdmin ? '' : 'disabled title="Apenas o administrador pode comprar"'}>
+            Comprar
+          </button>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      // Attach buy handlers
+      grid.querySelectorAll('.btn-comprar').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const { id, nome, valor } = btn.dataset;
+          openModal(
+            `Comprar pacote ${nome}`,
+            `Você será redirecionado para o checkout seguro. Valor: R$ ${valor}. Esta é uma compra avulsa — os créditos serão adicionados ao seu escritório após confirmação.`,
+            'Ir para o checkout',
+            'btn-primary',
+            async () => {
+              try {
+                const result = await apiFetch('/assinatura/creditos/comprar', {
+                  method: 'POST',
+                  body: JSON.stringify({ pacoteId: id })
+                });
+                window.location.href = result.checkoutUrl;
+              } catch (e) {
+                showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+              }
+            }
+          );
+        });
+      });
+
+    } catch (e) {
+      console.error(e);
+      document.getElementById('creditsGrid').innerHTML =
+        '<div style="color:var(--color-text-muted);font-size:14px;grid-column:1/-1;text-align:center;padding:20px">Erro ao carregar pacotes.</div>';
+    }
+  }
+
   function esc(str) {
     return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   loadPlano();
   loadHistorico();
+  loadCreditos();
+  loadPacotes();
 </script>
 </body>
 </html>
