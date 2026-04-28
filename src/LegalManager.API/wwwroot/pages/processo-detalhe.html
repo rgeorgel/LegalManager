@@ -703,14 +703,18 @@ window.removeAndamento = async id => {
   } catch (err) { showAlert(err.message); }
 };
 
+let andamentosLoaded = false;
+let documentosLoaded = false;
+let financeiroLoaded = false;
+
 window.switchTab = tab => {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
   document.getElementById(`tab-${tab}`).classList.add('active');
-  if (tab === 'andamentos') loadAndamentos();
-  if (tab === 'documentos') loadDocumentos();
-  if (tab === 'financeiro') loadFinanceiro();
+  if (tab === 'andamentos') { loadAndamentos(); andamentosLoaded = true; }
+  if (tab === 'documentos') { if (!documentosLoaded) { loadDocumentos(); documentosLoaded = true; } }
+  if (tab === 'financeiro') { if (!financeiroLoaded) { loadFinanceiro(); financeiroLoaded = true; } }
 };
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -949,11 +953,8 @@ document.getElementById('btnMonitorar').addEventListener('click', async () => {
 // Documentos
 async function loadDocumentos() {
   const lista = document.getElementById('documentosLista');
-  const tabBadge = document.getElementById('tabCountDocumentos');
   try {
     const docs = await apiFetch(`/documentos/processo/${processoId}`);
-    tabBadge.textContent = docs ? docs.length : 0;
-    tabBadge.style.display = docs && docs.length > 0 ? 'inline-flex' : 'none';
     if (!docs || !docs.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento anexado</div></div>';
       return;
@@ -1026,13 +1027,10 @@ const CAT_LABELS_FIN = {
 async function loadFinanceiro(page = 1) {
   const lista = document.getElementById('financeiroLista');
   const pagEl = document.getElementById('financeiroPaginacao');
-  const tabBadge = document.getElementById('tabCountFinanceiro');
   lista.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>';
   try {
     const qs = new URLSearchParams({ page, pageSize: 20, processoId });
     const data = await apiFetch(`/financeiro?${qs}`);
-    tabBadge.textContent = data?.total ?? 0;
-    tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
     if (!data?.items?.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-text">Nenhum lançamento financeiro</div></div>';
       pagEl.innerHTML = '';
@@ -1230,9 +1228,28 @@ document.getElementById('docEnviar').addEventListener('click', async () => {
   }
 });
 
+async function loadDocumentosBadge() {
+  const tabBadge = document.getElementById('tabCountDocumentos');
+  try {
+    const docs = await apiFetch(`/documentos/processo/${processoId}`);
+    tabBadge.textContent = docs ? docs.length : 0;
+    tabBadge.style.display = docs && docs.length > 0 ? 'inline-flex' : 'none';
+  } catch {}
+}
+
+async function loadFinanceiroBadge() {
+  const tabBadge = document.getElementById('tabCountFinanceiro');
+  try {
+    const qs = new URLSearchParams({ page: 1, pageSize: 1, processoId });
+    const data = await apiFetch(`/financeiro?${qs}`);
+    tabBadge.textContent = data?.total ?? 0;
+    tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
+  } catch {}
+}
+
 await loadAdvogados();
 await loadProcesso();
-await loadAndamentosPreview();
+await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge()]);
 </script>
 </body>
 </html>
