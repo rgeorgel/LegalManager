@@ -618,6 +618,15 @@ function readForm() {
       }))
     : null;
 
+  const dataJudData = (!editingId && lastSearchResult)
+    ? {
+        classe: lastSearchResult.classe || null,
+        assuntos: lastSearchResult.assuntos ? lastSearchResult.assuntos.join(', ') : null,
+        dataAjuizamento: lastSearchResult.dataAjuizamento || null,
+        grau: lastSearchResult.grau || null
+      }
+    : {};
+
   return {
     numeroCNJ: document.getElementById('fNumeroCNJ').value,
     tribunal: document.getElementById('fTribunal').value || null,
@@ -632,7 +641,8 @@ function readForm() {
     monitorado: document.getElementById('fMonitorado').value === 'true',
     observacoes: document.getElementById('fObservacoes').value || null,
     partes,
-    andamentos
+    andamentos,
+    ...dataJudData
   };
 }
 

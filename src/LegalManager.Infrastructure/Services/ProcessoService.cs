@@ -52,7 +52,15 @@ public class ProcessoService : IProcessoService
             AdvogadoResponsavelId = dto.AdvogadoResponsavelId,
             Observacoes = dto.Observacoes,
             Monitorado = dto.Monitorado,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            Classe = dto.Classe,
+            Assuntos = dto.Assuntos,
+            DataAjuizamento = dto.DataAjuizamento,
+            Grau = dto.Grau,
+            Sistema = dto.Sistema,
+            Formato = dto.Formato,
+            NivelSigilo = dto.NivelSigilo,
+            UltimaAtualizacaoDataJud = dto.UltimaAtualizacaoDataJud
         };
 
         if (dto.Partes != null)
@@ -308,7 +316,8 @@ public class ProcessoService : IProcessoService
             p.CriadoEm, p.EncerradoEm,
             p.Partes.Select(pt => new ProcessoParteResponseDto(
                 pt.Id, pt.ContatoId, pt.Contato.Nome, pt.TipoParte)).ToList(),
-            totalAndamentos);
+            totalAndamentos,
+            p.Classe, p.Assuntos, p.DataAjuizamento, p.Grau, p.Sistema, p.Formato, p.NivelSigilo, p.UltimaAtualizacaoDataJud);
     }
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>

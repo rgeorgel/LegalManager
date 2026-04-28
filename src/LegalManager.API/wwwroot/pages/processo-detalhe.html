@@ -126,6 +126,13 @@
                 <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
                 <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
                 <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
+                <div class="info-item"><label>Classe</label><span id="infoClasse">—</span></div>
+                <div class="info-item"><label>Assuntos</label><span id="infoAssuntos">—</span></div>
+                <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
+                <div class="info-item"><label>Grau</label><span id="infoGrau">—</span></div>
+                <div class="info-item"><label>Sistema</label><span id="infoSistema">—</span></div>
+                <div class="info-item"><label>Formato</label><span id="infoFormato">—</span></div>
+                <div class="info-item"><label>Última Atualização</label><span id="infoUltimaAtualizacao">—</span></div>
                 <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
                 <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
                 <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
@@ -534,6 +541,7 @@ const tipoAndLabels = { Decisao:'Decisão', Sentenca:'Sentença', Acordao:'Acór
 
 function label(map, val) { return map[val] || val; }
 function fmtDate(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '—'; }
+function fmtDateTime(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleString('pt-BR') : '—'; }
 function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'; }
 
 function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
@@ -567,6 +575,13 @@ function renderProcesso() {
   document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
   document.getElementById('infoVara').textContent = processo.vara || '—';
   document.getElementById('infoComarca').textContent = processo.comarca || '—';
+  document.getElementById('infoClasse').textContent = processo.classe || '—';
+  document.getElementById('infoAssuntos').textContent = processo.assuntos || '—';
+  document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : '—';
+  document.getElementById('infoGrau').textContent = processo.grau || '—';
+  document.getElementById('infoSistema').textContent = processo.sistema || '—';
+  document.getElementById('infoFormato').textContent = processo.formato || '—';
+  document.getElementById('infoUltimaAtualizacao').textContent = processo.ultimaAtualizacaoDataJud ? fmtDateTime(processo.ultimaAtualizacaoDataJud) : '—';
   document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
   document.getElementById('infoValor').textContent = fmtMoney(processo.valorCausa);
   document.getElementById('infoAdvogado').textContent = processo.nomeAdvogadoResponsavel || '—';

@@ -25,6 +25,16 @@ public class Processo
     public DateTime? EncerradoEm { get; set; }
     public DateTime? UltimoMonitoramento { get; set; }
 
+    // DataJud fields
+    public string? Classe { get; set; }
+    public string? Assuntos { get; set; }
+    public DateTime? DataAjuizamento { get; set; }
+    public string? Grau { get; set; }
+    public string? Sistema { get; set; }
+    public string? Formato { get; set; }
+    public int? NivelSigilo { get; set; }
+    public DateTime? UltimaAtualizacaoDataJud { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }
     public ICollection<ProcessoParte> Partes { get; set; } = new List<ProcessoParte>();

@@ -23,7 +23,15 @@ public record CreateProcessoDto(
     string? Observacoes = null,
     bool Monitorado = false,
     List<ProcessoParteDto>? Partes = null,
-    List<AndamentoDto>? Andamentos = null
+    List<AndamentoDto>? Andamentos = null,
+    string? Classe = null,
+    string? Assuntos = null,
+    DateTime? DataAjuizamento = null,
+    string? Grau = null,
+    string? Sistema = null,
+    string? Formato = null,
+    int? NivelSigilo = null,
+    DateTime? UltimaAtualizacaoDataJud = null
 );
 
 public record UpdateProcessoDto(
@@ -69,7 +77,15 @@ public record ProcessoResponseDto(
     DateTime CriadoEm,
     DateTime? EncerradoEm,
     List<ProcessoParteResponseDto> Partes,
-    int TotalAndamentos
+    int TotalAndamentos,
+    string? Classe,
+    string? Assuntos,
+    DateTime? DataAjuizamento,
+    string? Grau,
+    string? Sistema,
+    string? Formato,
+    int? NivelSigilo,
+    DateTime? UltimaAtualizacaoDataJud
 );
 
 public record ProcessoParteResponseDto(

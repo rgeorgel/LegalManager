@@ -127,6 +127,17 @@ public class MonitoramentoService : IMonitoramentoService
         if (string.IsNullOrWhiteSpace(processo.Vara) && !string.IsNullOrWhiteSpace(consulta.Vara))
             processo.Vara = consulta.Vara;
 
+        // Update DataJud fields
+        if (!string.IsNullOrWhiteSpace(consulta.Classe) && string.IsNullOrWhiteSpace(processo.Classe))
+            processo.Classe = consulta.Classe;
+        if (consulta.Assuntos != null && consulta.Assuntos.Count > 0 && string.IsNullOrWhiteSpace(processo.Assuntos))
+            processo.Assuntos = string.Join(", ", consulta.Assuntos);
+        if (consulta.DataAjuizamento.HasValue && !processo.DataAjuizamento.HasValue)
+            processo.DataAjuizamento = consulta.DataAjuizamento;
+        if (!string.IsNullOrWhiteSpace(consulta.Grau) && string.IsNullOrWhiteSpace(processo.Grau))
+            processo.Grau = consulta.Grau;
+
+        processo.UltimaAtualizacaoDataJud = DateTime.UtcNow;
         processo.UltimoMonitoramento = agora;
         await _context.SaveChangesAsync(ct);
 
