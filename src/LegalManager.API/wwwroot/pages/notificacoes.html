@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalManager — Notificações</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .filter-tabs { display:flex; gap:4px; margin-bottom:16px; flex-wrap:wrap }
+    .filter-tab { padding:7px 16px; border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius); cursor:pointer; font-size:13px; transition:.15s }
+    .filter-tab.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary) }
+    .notif-list { display:flex; flex-direction:column; gap:8px }
+    .notif-card { border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; background:var(--color-surface); display:flex; gap:12px; cursor:pointer; transition:.15s }
+    .notif-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow) }
+    .notif-card.unread { background:var(--color-primary-light); border-left:3px solid var(--color-primary) }
+    .notif-card.unread .notif-icon-wrap { background:var(--color-primary); color:#fff }
+    .notif-icon-wrap { width:40px; height:40px; border-radius:50%; background:var(--color-bg); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0 }
+    .notif-body { flex:1; min-width:0 }
+    .notif-titulo { font-weight:600; font-size:14px; margin-bottom:4px }
+    .notif-mensagem { font-size:13px; color:var(--color-text-muted); margin-bottom:6px; line-height:1.4 }
+    .notif-meta { display:flex; gap:12px; font-size:12px; color:#9ca3af; flex-wrap:wrap }
+    .notif-meta span { display:flex; align-items:center; gap:4px }
+    .notif-type-badge { font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600 }
+    .type-prazotarefa { background:#fefce8; color:#ca8a04 }
+    .type-prazoevento { background:#f0fdf4; color:#16a34a }
+    .type-trialexpirando { background:#fef3c7; color:#92400e }
+    .type-geral { background:#f3f4f6; color:#374151 }
+    .type-novoandamento { background:#dbeafe; color:#1d4ed8 }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--color-text-muted) }
+    .empty-state-icon { font-size:48px; margin-bottom:16px }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:20px }
+    .page-btn { min-width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); cursor:pointer; font-size:13px }
+    .page-btn:hover { background:var(--color-bg) }
+    .page-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary) }
+    .page-btn:disabled { opacity:.4; cursor:not-allowed }
+    .mark-all-btn { font-size:13px; color:var(--color-primary); background:none; border:none; cursor:pointer; padding:4px 8px }
+    .mark-all-btn:hover { text-decoration:underline }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ LegalManager</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Notificações</h1>
+      <button class="mark-all-btn" id="btnMarkAll">Marcar todas como lidas</button>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="todos">Todas</button>
+      <button class="filter-tab" data-filter="nao-lidas">Não lidas</button>
+      <button class="filter-tab" data-filter="prazotarefa">Tarefas</button>
+      <button class="filter-tab" data-filter="prazoevento">Eventos</button>
+      <button class="filter-tab" data-filter="novoandamento">Andamentos</button>
+      <button class="filter-tab" data-filter="trialexpirando">Trial</button>
+      <button class="filter-tab" data-filter="geral">Geral</button>
+    </div>
+
+    <div id="notifLoading" style="text-align:center;padding:40px;color:var(--color-text-muted)">Carregando...</div>
+    <div id="notifEmpty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">🔔</div>
+      <div>Nenhuma notificação encontrada</div>
+    </div>
+    <div id="notifList" class="notif-list" style="display:none"></div>
+    <div id="notifPagination" class="pagination" style="display:none"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+
+  initLayout();
+
+  const TIPO_LABELS = {
+    PrazoTarefa: 'Tarefa',
+    PrazoEvento: 'Evento',
+    TrialExpirando: 'Trial',
+    Geral: 'Geral',
+    NovoAndamento: 'Andamento'
+  };
+
+  const TIPO_ICONS = {
+    PrazoTarefa: '✅',
+    PrazoEvento: '📅',
+    TrialExpirando: '⚠️',
+    Geral: '🔔',
+    NovoAndamento: '⚖️'
+  };
+
+  let currentFilter = 'todos';
+  let currentPage = 1;
+  const pageSize = 20;
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      currentPage = 1;
+      loadNotificacoes();
+    });
+  });
+
+  document.getElementById('btnMarkAll').addEventListener('click', async () => {
+    if (!confirm('Marcar todas as notificações como lidas?')) return;
+    try {
+      await apiFetch('/notificacoes/marcar-todas-lidas', { method: 'POST' });
+      loadNotificacoes();
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  async function loadNotificacoes() {
+    const loading = document.getElementById('notifLoading');
+    const empty = document.getElementById('notifEmpty');
+    const list = document.getElementById('notifList');
+    const pagination = document.getElementById('notifPagination');
+
+    loading.style.display = '';
+    empty.style.display = 'none';
+    list.style.display = 'none';
+    pagination.style.display = 'none';
+
+    try {
+      const { items, total } = await apiFetch(`/notificacoes/historico?page=${currentPage}&pageSize=${pageSize}`);
+
+      loading.style.display = 'none';
+
+      let filtered = items;
+      if (currentFilter === 'nao-lidas') {
+        filtered = items.filter(n => !n.lida);
+      } else if (currentFilter !== 'todos') {
+        filtered = items.filter(n => n.tipo.toLowerCase() === currentFilter.toLowerCase());
+      }
+
+      if (!items.length || !filtered.length) {
+        empty.style.display = '';
+        return;
+      }
+
+      list.style.display = '';
+      renderNotifList(filtered);
+      renderPagination(total);
+    } catch (e) {
+      loading.textContent = 'Erro ao carregar notificações.';
+      console.error(e);
+    }
+  }
+
+  function renderNotifList(items) {
+    const list = document.getElementById('notifList');
+    list.innerHTML = items.map(n => {
+      const tipoKey = Object.keys(TIPO_LABELS).find(k => k.toLowerCase() === n.tipo.toLowerCase()) || 'Geral';
+      const unreadClass = n.lida ? '' : 'unread';
+      return `
+        <div class="notif-card ${unreadClass}" data-id="${n.id}" data-url="${n.url ?? ''}">
+          <div class="notif-icon-wrap">${TIPO_ICONS[tipoKey] || '🔔'}</div>
+          <div class="notif-body">
+            <div class="notif-titulo">${esc(n.titulo)}</div>
+            <div class="notif-mensagem">${esc(n.mensagem)}</div>
+            <div class="notif-meta">
+              <span class="notif-type-badge type-${tipoKey.toLowerCase()}">${TIPO_LABELS[tipoKey]}</span>
+              <span>${timeAgo(n.criadaEm)}</span>
+              ${n.url ? '<span>🔗 Tem link</span>' : ''}
+            </div>
+          </div>
+          ${!n.lida ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);flex-shrink:0;margin-top:6px" title="Não lida"></div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.notif-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const id = card.dataset.id;
+        const url = card.dataset.url;
+        await apiFetch(`/notificacoes/${id}/lida`, { method: 'POST' });
+        if (url) window.location.href = url;
+        else loadNotificacoes();
+      });
+    });
+  }
+
+  function renderPagination(total) {
+    const pagination = document.getElementById('notifPagination');
+    const totalPages = Math.ceil(total / pageSize);
+    if (totalPages <= 1) {
+      pagination.style.display = 'none';
+      return;
+    }
+    pagination.style.display = '';
+    let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">‹</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        html += `<span style="padding:0 4px;color:var(--color-text-muted)">…</span>`;
+      }
+    }
+    html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">›</button>`;
+    pagination.innerHTML = html;
+
+    pagination.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        currentPage = parseInt(btn.dataset.page);
+        loadNotificacoes();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  function timeAgo(isoStr) {
+    const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 60000);
+    if (diff < 1) return 'agora';
+    if (diff < 60) return `${diff} min atrás`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h atrás`;
+    return `${Math.floor(diff / 1440)}d atrás`;
+  }
+
+  function esc(str) {
+    return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  loadNotificacoes();
+</script>
+</body>
+</html>

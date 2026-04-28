@@ -38,6 +38,7 @@ const NAV_GROUPS = [
     label: 'Sistema',
     items: [
       { href: '/pages/usuarios.html',       label: '🔑 Usuários' },
+      { href: '/pages/notificacoes.html',    label: '🔔 Notificações' },
       { href: '/pages/configuracoes.html',  label: '⚙️ Configurações' },
       { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
     ],
