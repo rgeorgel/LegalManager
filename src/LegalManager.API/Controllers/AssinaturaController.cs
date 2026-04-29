@@ -437,6 +437,5 @@ public static class PacotesCreditos
         new("basico",   "Básico",    "Para começar com IA",          40,  20,  29.90m, null),
         new("padrao",   "Padrão",    "Para uso moderado",            135,  65, 89.90m, "Mais popular"),
         new("avancado", "Avançado",  "Para escritórios ativos",      265, 135, 159.90m, null),
-        new("master",   "Master",    "Para alto volume de trabalho", 535, 265, 289.90m, "Melhor custo-benefício"),
     ];
 }
