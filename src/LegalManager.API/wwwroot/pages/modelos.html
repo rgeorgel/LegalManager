@@ -45,7 +45,10 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Modelos de Documentos</h1>
-      <button class="btn btn-primary" id="btnNovo">+ Novo Modelo</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" id="btnGerarIA">🤖 Gerar com IA</button>
+        <button class="btn btn-primary" id="btnNovo">+ Novo Modelo</button>
+      </div>
     </div>
 
     <div id="alertMsg" class="alert" style="display:none"></div>
@@ -117,6 +120,36 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
       <button class="btn btn-primary" id="btnSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Gerar com IA -->
+<div class="modal-overlay" id="modalGerarIA">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">🤖 Gerar Modelo com IA</span>
+      <button class="modal-close" id="modalGerarIAClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="gerarIAAlert" class="alert" style="display:none"></div>
+      <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
+        Descreva o modelo de documento que deseja criar. A IA irá gerar um modelo completo em português do Brasil, consumindo 1 crédito de peça jurídica.
+      </p>
+      <div class="form-group">
+        <label>Descrição do modelo *</label>
+        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Modelo de petição inicial para ação de danos morais emface de empresa de telefonia, contendo variáveis como nome do autor, CPF, endereço, nome da empresa ré, CNPJ, valor do dano pedido, fundamentos legais..."></textarea>
+      </div>
+      <div id="iaPreview" style="display:none;margin-top:16px">
+        <label>Preview do conteúdo gerado:</label>
+        <textarea id="iaConteudoGerado" class="form-control" rows="12" readonly style="background:#f9fafb"></textarea>
+        <div id="iaVariaveisPreview" style="margin-top:8px;font-size:13px;color:var(--color-text-muted)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnGerarIACancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnGerarIAGerar">Gerar</button>
+      <button class="btn btn-primary" id="btnGerarIASalvar" style="display:none">Salvar Modelo</button>
     </div>
   </div>
 </div>
@@ -339,6 +372,72 @@ document.getElementById('btnCopiar').addEventListener('click', () => {
   navigator.clipboard.writeText(texto).then(() => {
     showAlert('Conteúdo copiado!', 'success');
   }).catch(() => showAlert('Erro ao copiar.'));
+});
+
+// Gerar com IA
+const modalGerarIA = document.getElementById('modalGerarIA');
+let iaConteudoGerado = '';
+let iaVariaveisGerado = [];
+
+document.getElementById('btnGerarIA').addEventListener('click', () => {
+  document.getElementById('gerarIAAlert').style.display = 'none';
+  document.getElementById('iaDescricao').value = '';
+  document.getElementById('iaPreview').style.display = 'none';
+  document.getElementById('btnGerarIASalvar').style.display = 'none';
+  document.getElementById('btnGerarIAGerar').style.display = '';
+  modalGerarIA.classList.add('open');
+});
+
+[document.getElementById('modalGerarIAClose'), document.getElementById('btnGerarIACancelar')].forEach(el =>
+  el?.addEventListener('click', () => modalGerarIA.classList.remove('open')));
+
+document.getElementById('btnGerarIAGerar').addEventListener('click', async () => {
+  const descricao = document.getElementById('iaDescricao').value.trim();
+  if (!descricao) {
+    showAlert('Descreva o modelo que deseja criar.', 'error', 'gerarIAAlert');
+    return;
+  }
+
+  const btn = document.getElementById('btnGerarIAGerar');
+  const alertEl = document.getElementById('gerarIAAlert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Gerando...';
+  alertEl.style.display = 'none';
+
+  try {
+    const result = await apiFetch('/modelos/gerar-com-ia', {
+      method: 'POST',
+      body: JSON.stringify({ descricao })
+    });
+
+    iaConteudoGerado = result.conteudo;
+    iaVariaveisGerado = result.variaveis || [];
+
+    document.getElementById('iaConteudoGerado').value = result.conteudo;
+    document.getElementById('iaVariaveisPreview').innerHTML = result.variaveis?.length
+      ? `Variáveis detectadas: ${result.variaveis.map(v => `<span class="var-badge">${v}</span>`).join(' ')}`
+      : 'Nenhuma variável detectada';
+    document.getElementById('iaPreview').style.display = '';
+    document.getElementById('btnGerarIASalvar').style.display = '';
+    btn.style.display = 'none';
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.innerHTML = 'Gerar';
+  }
+});
+
+document.getElementById('btnGerarIASalvar').addEventListener('click', () => {
+  document.getElementById('fId').value = '';
+  document.getElementById('fNome').value = '';
+  document.getElementById('fDescricao').value = '';
+  document.getElementById('fVariaveis').value = iaVariaveisGerado.join(', ');
+  document.getElementById('fConteudo').value = iaConteudoGerado;
+  document.getElementById('modalTitle').textContent = 'Novo Modelo (via IA)';
+  updateVarPreview();
+  modalGerarIA.classList.remove('open');
+  modal.classList.add('open');
 });
 
 loadModelos();

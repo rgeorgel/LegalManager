@@ -10,4 +10,5 @@ public interface IModeloDocumentoService
     Task<ModeloDocumentoDto> UpdateAsync(Guid id, UpdateModeloDocumentoDto dto, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<string> AplicarVariaveisAsync(Guid id, Dictionary<string, string> variaveis, CancellationToken ct = default);
+    Task<GerarModeloComIAResultDto> GerarComIAAsync(string descricao, CancellationToken ct = default);
 }

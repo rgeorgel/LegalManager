@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using LegalManager.Application.DTOs.Modelos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
+using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,19 @@ public class ModeloDocumentoService : IModeloDocumentoService
 {
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
+    private readonly IIAService _iaService;
+    private readonly ICreditoService _creditoService;
 
-    public ModeloDocumentoService(AppDbContext context, ITenantContext tenantContext)
+    public ModeloDocumentoService(
+        AppDbContext context,
+        ITenantContext tenantContext,
+        IIAService iaService,
+        ICreditoService creditoService)
     {
         _context = context;
         _tenantContext = tenantContext;
+        _iaService = iaService;
+        _creditoService = creditoService;
     }
 
     public async Task<IEnumerable<ModeloDocumentoDto>> GetAllAsync(CancellationToken ct = default)
@@ -104,6 +113,27 @@ public class ModeloDocumentoService : IModeloDocumentoService
         }
 
         return resultado;
+    }
+
+    public async Task<GerarModeloComIAResultDto> GerarComIAAsync(string descricao, CancellationToken ct = default)
+    {
+        if (!await _creditoService.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca, 1, ct))
+            throw new InvalidOperationException("Créditos de peças jurídicas esgotados.");
+
+        var conteudo = await _iaService.GerarModeloDocumentoAsync(descricao, ct);
+
+        await _creditoService.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca, 1, ct);
+
+        var variaveisMatch = Regex.Matches(conteudo, @"\{\{(\w+)\}\}").Cast<Match>()
+            .Select(m => m.Groups[1].Value)
+            .Distinct()
+            .ToList();
+
+        return new GerarModeloComIAResultDto
+        {
+            Conteudo = conteudo,
+            Variaveis = variaveisMatch
+        };
     }
 
     private static ModeloDocumentoDto MapToDto(ModeloDocumento m) => new()

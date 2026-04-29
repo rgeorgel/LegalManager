@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Modelos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,16 @@ public class ModelosController : ControllerBase
 
         var result = await _service.CreateAsync(dto, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    [HttpPost("gerar-com-ia")]
+    public async Task<ActionResult<GerarModeloComIAResultDto>> GerarComIA([FromBody] GerarModeloComIADto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Descricao))
+            return BadRequest("Descrição é obrigatória.");
+
+        var result = await _service.GerarComIAAsync(dto.Descricao, ct);
+        return Ok(result);
     }
 
     [HttpPut("{id:guid}")]

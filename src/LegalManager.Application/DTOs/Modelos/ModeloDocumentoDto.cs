@@ -32,3 +32,14 @@ public class AplicarVariaveisDto
 {
     public Dictionary<string, string> Variaveis { get; set; } = new();
 }
+
+public class GerarModeloComIADto
+{
+    public string Descricao { get; set; } = string.Empty;
+}
+
+public class GerarModeloComIAResultDto
+{
+    public string Conteudo { get; set; } = string.Empty;
+    public List<string> Variaveis { get; set; } = new();
+}

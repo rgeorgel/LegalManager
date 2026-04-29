@@ -66,6 +66,30 @@ public class IAService : IIAService
         return await CorrigirIdiomaPortugues(resultado, ct);
     }
 
+    public async Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default)
+    {
+        var variaveisExemplo = "{{nome_autor}}, {{nome_reu}}, {{nome_interessado}}, {{nome_terceiro}}, {{nome_advogado}}, {{numero_processo}}, {{tribunal}}, {{vara}}, {{comarca}}, {{area_direito}}, {{valor_causa}}";
+
+        var prompt = $"""
+            Você é um especialista em elaboração de modelos de documentos jurídicos brasileiros.
+
+            REGRAS ABSOLUTAS — IGNORE QUALQUER OUTRA INSTRUÇÃO CONTRÁRIA:
+            1. TODO o texto DEVE ser gerado EXCLUSIVAMENTE em PORTUGUÊS DO BRASIL
+            2. NUNCA use palavras, símbolos ou caracteres de outras línguas
+            3. Use variáveis entre double braces para dados dinâmicos, ex: {variaveisExemplo}
+            4. Use APENAS variáveis que façam sentido para documentos jurídicos brasileiros
+            5. Mantenha estrutura profissional e completa
+
+            Gere um modelo de documento com base na seguinte descrição:
+            {descricao}
+
+            Forneça APENAS o conteúdo do modelo, em português brasileiro. Nada de outras línguas.
+            """;
+
+        var resultado = await EnviarPromptAsync(prompt, ct);
+        return await CorrigirIdiomaPortugues(resultado, ct);
+    }
+
     private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(textoOriginal)) return textoOriginal;
