@@ -92,18 +92,23 @@
         </div>
         <div class="form-group">
           <label>Variáveis</label>
-          <input type="text" id="fVariaveis" class="form-control" placeholder="nome_cliente, numero_processo, data_distrito (separadas por vírgula)">
+          <input type="text" id="fVariaveis" class="form-control" placeholder="Detectadas automaticamente do conteúdo (ou digite separadas por vírgula)">
           <div class="var-list" id="varPreview"></div>
         </div>
         <div class="form-group">
           <label>Conteúdo do Modelo *</label>
           <div class="editor-toolbar">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_cliente')">&#123;&#123;nome_cliente&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('numero_processo')">&#123;&#123;numero_processo&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('data_local')">&#123;&#123;data_local&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('valor_causa')">&#123;&#123;valor_causa&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_autor')">&#123;&#123;nome_autor&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_reu')">&#123;&#123;nome_reu&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_interessado')">&#123;&#123;nome_interessado&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_terceiro')">&#123;&#123;nome_terceiro&#125;&#125;</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_advogado')">&#123;&#123;nome_advogado&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('oab')">&#123;&#123;oab&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('numero_processo')">&#123;&#123;numero_processo&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('tribunal')">&#123;&#123;tribunal&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('vara')">&#123;&#123;vara&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('comarca')">&#123;&#123;comarca&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('area_direito')">&#123;&#123;area_direito&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('valor_causa')">&#123;&#123;valor_causa&#125;&#125;</button>
           </div>
           <textarea id="fConteudo" class="form-control" rows="12" required placeholder="Digite o conteúdo do modelo usando &#123;&#123;variavel&#125;&#125; para variáveis dinâmicas"></textarea>
         </div>
