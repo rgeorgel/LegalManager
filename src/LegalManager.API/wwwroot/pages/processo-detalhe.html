@@ -1238,14 +1238,29 @@ document.getElementById('gmModelo').addEventListener('change', () => {
       let preValue = '';
       if (processo) {
         const vl = v.toLowerCase();
-        if (vl.includes('cliente') && processo.nomeCliente) preValue = processo.nomeCliente;
+        if (vl === 'nome_advogado' && processo.nomeAdvogadoResponsavel) preValue = processo.nomeAdvogadoResponsavel;
         else if (vl.includes('processo') && processo.numeroCNJ) preValue = processo.numeroCNJ;
         else if (vl.includes('tribunal') && processo.tribunal) preValue = processo.tribunal;
         else if (vl.includes('vara') && processo.vara) preValue = processo.vara;
         else if (vl.includes('comarca') && processo.comarca) preValue = processo.comarca;
         else if (vl.includes('area') && processo.areaDireito) preValue = processo.areaDireito;
         else if (vl.includes('valor') && processo.valorCausa) preValue = processo.valorCausa;
-        else if (vl.includes('parte') && processo.nomeCliente) preValue = processo.nomeCliente;
+        else if ((vl === 'nome_autor') && processo.partes) {
+          const autor = processo.partes.find(p => p.tipoParte === 'Autor');
+          if (autor) preValue = autor.nomeContato;
+        }
+        else if ((vl === 'nome_reu') && processo.partes) {
+          const reu = processo.partes.find(p => p.tipoParte === 'Reu');
+          if (reu) preValue = reu.nomeContato;
+        }
+        else if ((vl === 'nome_interessado' || vl === 'nome_cliente') && processo.partes) {
+          const interessado = processo.partes.find(p => p.tipoParte === 'Interessado');
+          if (interessado) preValue = interessado.nomeContato;
+        }
+        else if ((vl === 'nome_terceiro') && processo.partes) {
+          const terceiro = processo.partes.find(p => p.tipoParte === 'Terceiro');
+          if (terceiro) preValue = terceiro.nomeContato;
+        }
       }
       return `<div class="form-group"><label style="text-transform:uppercase;font-size:12px">${v}</label><input type="text" class="form-control gm-var" data-var="${v}" value="${preValue}" placeholder="Valor para ${v}"></div>`;
     }).join('');
