@@ -60,7 +60,8 @@ public record TarefaListItemDto(
     Guid? ContatoId,
     string? NomeContato,
     List<string> Tags,
-    bool Atrasada
+    bool Atrasada,
+    DateTime CriadoEm
 );
 
 public record TarefaFiltroDto(

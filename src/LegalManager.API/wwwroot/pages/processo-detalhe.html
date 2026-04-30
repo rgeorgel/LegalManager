@@ -38,6 +38,16 @@
     .tab-content.active { display:block; }
     .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
     .tab-badge.count { background:var(--color-primary); color:#fff; }
+    .tp-baixa   { background:#f0fdf4; color:#16a34a; }
+    .tp-media   { background:#fefce8; color:#ca8a04; }
+    .tp-alta    { background:#fff7ed; color:#ea580c; }
+    .tp-urgente { background:#fef2f2; color:#dc2626; }
+    .ts-pendente    { background:#f3f4f6; color:#374151; }
+    .ts-emandamento { background:#dbeafe; color:#1d4ed8; }
+    .ts-concluida   { background:#d1fae5; color:#057a55; }
+    .ts-cancelada   { background:#fee2e2; color:#e02424; }
+    .t-atrasada     { background:#fef2f2; color:#dc2626; font-size:11px; padding:2px 6px; border-radius:4px; }
+    .t-tag { background:#e5e7eb; color:#374151; font-size:11px; padding:2px 8px; border-radius:999px; }
     .tipo-receita { background:#e5f7ee; color:#15803d; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
     .tipo-despesa { background:#fee2e2; color:#dc2626; font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
     .status-pago     { background:#d1fae5; color:#057a55; font-size:11px; padding:2px 8px; border-radius:4px; }
@@ -121,6 +131,9 @@
       <button class="tab-btn" data-tab="financeiro" role="tab">
         Financeiro<span class="tab-badge count" id="tabCountFinanceiro" style="display:none">0</span>
       </button>
+      <button class="tab-btn" data-tab="tarefas" role="tab">
+        Tarefas<span class="tab-badge count" id="tabCountTarefas" style="display:none">0</span>
+      </button>
     </div>
 
     <!-- Tab: Informações -->
@@ -198,15 +211,28 @@
           </div>
         </div>
 
-        <!-- Right: Partes -->
-        <div class="card">
-          <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-              <div class="card-title" style="margin-bottom:0">Partes do Processo</div>
-              <button class="btn btn-primary btn-sm" id="btnAddParte">+ Adicionar</button>
+        <!-- Right: Partes + Tarefas Recentes -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div class="card-title" style="margin-bottom:0">Partes do Processo</div>
+                <button class="btn btn-primary btn-sm" id="btnAddParte">+ Adicionar</button>
+              </div>
+              <div id="partesLista">
+                <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
+              </div>
             </div>
-            <div id="partesLista">
-              <p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div class="card-title" style="margin-bottom:0">Tarefas Recentes</div>
+                <button class="btn btn-secondary btn-sm" id="btnVerTodasTarefas" style="display:none">Ver todas →</button>
+              </div>
+              <div id="tarefasPreviewLista">
+                <p style="color:var(--color-text-muted);font-size:13px">Carregando...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -261,7 +287,66 @@
         </div>
       </div>
     </div>
+
+    <!-- Tab: Tarefas -->
+    <div class="tab-content" id="tab-tarefas" role="tabpanel">
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="card-title" style="margin-bottom:0">Tarefas do Processo</div>
+            <button class="btn btn-primary btn-sm" id="btnNovaTarefaTab">+ Nova Tarefa</button>
+          </div>
+          <div id="tarefasLista">
+            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando tarefas...</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
+</div>
+
+<!-- Modal Nova Tarefa (processo) -->
+<div class="modal-overlay" id="modalNovaTarefa">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Nova Tarefa</span>
+      <button class="modal-close" id="novaTarefaClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="novaTarefaAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" id="ntTitulo" class="form-control" maxlength="300">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <textarea id="ntDescricao" class="form-control" rows="3" maxlength="4000"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Prioridade *</label>
+          <select id="ntPrioridade" class="form-control">
+            <option value="Baixa">Baixa</option>
+            <option value="Media" selected>Média</option>
+            <option value="Alta">Alta</option>
+            <option value="Urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prazo</label>
+          <input type="datetime-local" id="ntPrazo" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (separadas por vírgula)</label>
+        <input type="text" id="ntTags" class="form-control" placeholder="ex: urgente, revisão">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="novaTarefaCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="novaTarefaSalvar">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Editar Processo -->
@@ -847,6 +932,103 @@ async function loadAndamentosPreview() {
   }
 }
 
+// ── Tarefas ────────────────────────────────────────────────
+const PRIO_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
+const STATUS_TAREFA_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
+
+async function fetchTarefasProcesso() {
+  const data = await apiFetch(`/tarefas?processoId=${processoId}&pageSize=200`);
+  return (data?.items ?? []).sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+}
+
+function tarefaItemHtml(t, showActions) {
+  const prioKey = t.prioridade.toLowerCase();
+  const statusKey = t.status === 'EmAndamento' ? 'emandamento' : t.status.toLowerCase();
+  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '—';
+  const atrasada = t.atrasada ? '<span class="t-atrasada">Atrasada</span>' : '';
+  const tags = (t.tags ?? []).map(tag => `<span class="t-tag">${esc(tag)}</span>`).join('');
+  const actions = showActions ? `
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+      ${t.status !== 'Concluida' && t.status !== 'Cancelada'
+        ? `<button class="btn btn-secondary btn-sm" onclick="concluirTarefa('${t.id}')">✓ Concluir</button>` : ''}
+      <button class="btn btn-danger btn-sm" onclick="excluirTarefa('${t.id}')">Excluir</button>
+    </div>` : '';
+  return `
+    <div style="padding:12px 0;border-bottom:1px solid var(--color-border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div><span style="font-weight:500">${esc(t.titulo)}</span> ${atrasada}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="badge tp-${prioKey}">${PRIO_LABEL[t.prioridade]}</span>
+          <span class="badge ts-${statusKey}">${STATUS_TAREFA_LABEL[t.status]}</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">📅 Prazo: ${prazoStr}</div>
+      ${tags ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div>` : ''}
+      ${actions}
+    </div>`;
+}
+
+async function loadTarefasTab() {
+  const lista = document.getElementById('tarefasLista');
+  const tabBadge = document.getElementById('tabCountTarefas');
+  lista.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>';
+  try {
+    const items = await fetchTarefasProcesso();
+    tabBadge.textContent = items.length;
+    tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
+    if (!items.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Nenhuma tarefa associada</div></div>';
+      return;
+    }
+    lista.innerHTML = items.map(t => tarefaItemHtml(t, true)).join('');
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
+async function loadTarefasPreview() {
+  const lista = document.getElementById('tarefasPreviewLista');
+  const btnVerTodas = document.getElementById('btnVerTodasTarefas');
+  const tabBadge = document.getElementById('tabCountTarefas');
+  try {
+    const items = await fetchTarefasProcesso();
+    tabBadge.textContent = items.length;
+    tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
+    btnVerTodas.style.display = items.length > 0 ? '' : 'none';
+    if (!items.length) {
+      lista.innerHTML = '<p style="color:var(--color-text-muted);font-size:13px">Nenhuma tarefa associada.</p>';
+      return;
+    }
+    lista.innerHTML = items.slice(0, 5).map(t => tarefaItemHtml(t, false)).join('');
+    if (items.length > 5) {
+      lista.innerHTML += `<div style="margin-top:8px;text-align:center"><button class="btn btn-secondary btn-sm" onclick="switchTab('tarefas')">Ver todas ${items.length} tarefas →</button></div>`;
+    }
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
+window.concluirTarefa = async id => {
+  if (!confirm('Marcar tarefa como concluída?')) return;
+  try {
+    await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
+    await loadTarefasTab();
+    await loadTarefasPreview();
+    showAlert('Tarefa concluída.', 'success');
+  } catch (err) { showAlert(err.message); }
+};
+
+window.excluirTarefa = async id => {
+  if (!confirm('Excluir esta tarefa?')) return;
+  try {
+    await apiFetch(`/tarefas/${id}`, { method: 'DELETE' });
+    await loadTarefasTab();
+    await loadTarefasPreview();
+    showAlert('Tarefa excluída.', 'success');
+  } catch (err) { showAlert(err.message); }
+};
+// ─────────────────────────────────────────────────────────
+
 async function loadAndamentos() {
   const lista = document.getElementById('andamentosLista');
   try {
@@ -884,6 +1066,7 @@ window.removeAndamento = async id => {
 let andamentosLoaded = false;
 let documentosLoaded = false;
 let financeiroLoaded = false;
+let tarefasLoaded = false;
 
 window.switchTab = tab => {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -893,6 +1076,7 @@ window.switchTab = tab => {
   if (tab === 'andamentos') { loadAndamentos(); andamentosLoaded = true; }
   if (tab === 'documentos') { if (!documentosLoaded) { loadDocumentos(); documentosLoaded = true; } }
   if (tab === 'financeiro') { if (!financeiroLoaded) { loadFinanceiro(); financeiroLoaded = true; } }
+  if (tab === 'tarefas') { loadTarefasTab(); tarefasLoaded = true; }
 };
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -900,6 +1084,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 document.getElementById('btnVerTodosAndamentos').addEventListener('click', () => switchTab('andamentos'));
+document.getElementById('btnVerTodasTarefas').addEventListener('click', () => switchTab('tarefas'));
 
 // Load advogados for edit form
 async function loadAdvogados() {
@@ -1385,6 +1570,51 @@ window.removerParte = async (contatoId) => {
   }
 };
 
+// Nova Tarefa (processo)
+document.getElementById('btnNovaTarefaTab').addEventListener('click', () => {
+  document.getElementById('ntTitulo').value = '';
+  document.getElementById('ntDescricao').value = '';
+  document.getElementById('ntPrioridade').value = 'Media';
+  document.getElementById('ntPrazo').value = '';
+  document.getElementById('ntTags').value = '';
+  document.getElementById('novaTarefaAlert').style.display = 'none';
+  document.getElementById('modalNovaTarefa').classList.add('open');
+});
+
+[document.getElementById('novaTarefaClose'), document.getElementById('novaTarefaCancelar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalNovaTarefa').classList.remove('open')));
+
+document.getElementById('novaTarefaSalvar').addEventListener('click', async () => {
+  const btn = document.getElementById('novaTarefaSalvar');
+  const alertEl = document.getElementById('novaTarefaAlert');
+  const titulo = document.getElementById('ntTitulo').value.trim();
+  if (!titulo) { alertEl.textContent = 'Título é obrigatório.'; alertEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  alertEl.style.display = 'none';
+  try {
+    const tagsRaw = document.getElementById('ntTags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+    await apiFetch('/tarefas', {
+      method: 'POST',
+      body: JSON.stringify({
+        titulo,
+        descricao: document.getElementById('ntDescricao').value.trim() || null,
+        prioridade: document.getElementById('ntPrioridade').value,
+        prazo: document.getElementById('ntPrazo').value || null,
+        processoId,
+        tags
+      })
+    });
+    document.getElementById('modalNovaTarefa').classList.remove('open');
+    await loadTarefasTab();
+    await loadTarefasPreview();
+    showAlert('Tarefa criada.', 'success');
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.style.display = 'block';
+  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+});
+
 // Financeiro
 function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 const CAT_LABELS_FIN = {
@@ -1688,7 +1918,7 @@ async function loadFinanceiroBadge() {
 await loadAdvogados();
 await loadCustomCatsFin();
 await loadProcesso();
-await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge()]);
+await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge(), loadTarefasPreview()]);
 </script>
 </body>
 </html>

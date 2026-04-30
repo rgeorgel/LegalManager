@@ -306,6 +306,9 @@ function showTooltip(item, tipo, x, y) {
   const isEvento = tipo !== 'Tarefa';
   document.getElementById('ttEdit').style.display = isEvento ? '' : 'none';
   document.getElementById('ttDelete').style.display = isEvento ? '' : 'none';
+  const ttAbrirTarefa = document.getElementById('ttAbrirTarefa');
+  ttAbrirTarefa.style.display = isEvento ? 'none' : '';
+  ttAbrirTarefa.href = `/pages/tarefas.html?abrirId=${item.id}`;
 
   document.getElementById('ttEdit').onclick = () => { hideTooltip(); openEditModal(item.id); };
   document.getElementById('ttDelete').onclick = async () => { hideTooltip(); await deleteEvento(item.id); };

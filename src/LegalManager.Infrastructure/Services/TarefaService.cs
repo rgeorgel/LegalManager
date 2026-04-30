@@ -137,7 +137,8 @@ public class TarefaService : ITarefaService
                 t.ContatoId,
                 t.Contato != null ? t.Contato.Nome : null,
                 t.Tags.Select(tag => tag.Tag).ToList(),
-                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada
+                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
+                t.CriadoEm
             ))
             .ToListAsync(ct);
 

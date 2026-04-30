@@ -271,3 +271,5 @@ function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
 // --- Init ---
 loadTarefas();
+const _abrirId = new URLSearchParams(location.search).get('abrirId');
+if (_abrirId) openEditModal(_abrirId);
