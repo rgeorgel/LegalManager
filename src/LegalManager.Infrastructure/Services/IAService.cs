@@ -94,13 +94,21 @@ public class IAService : IIAService
         return await CorrigirIdiomaPortugues(limpo, ct);
     }
 
-    private string LimparRespostaIA(string texto)
+private string LimparRespostaIA(string texto)
     {
         if (string.IsNullOrWhiteSpace(texto)) return texto;
         texto = texto.Trim();
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?", "");
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?</think>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
+
+        while (texto.Contains(""))
+        {
+            var idxInicio = texto.LastIndexOf("<think>", StringComparison.OrdinalIgnoreCase);
+            if (idxInicio < 0) break;
+            var idxFim = texto.IndexOf("", idxInicio, StringComparison.OrdinalIgnoreCase);
+            if (idxFim < 0) break;
+            texto = texto.Substring(0, idxInicio) + texto.Substring(idxFim + 8);
+        }
+
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\s*\n\s*\n\s*", "\n\n");
         return texto.Trim();
     }
 
