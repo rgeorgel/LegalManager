@@ -100,21 +100,29 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
         texto = texto.Trim();
 
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think[\s\S]*?＞", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think\][\s\S]*?\]\]", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\n{3,}", "\n\n");
-        texto = texto.Trim();
-
-        if (texto.Contains("<think>") || texto.Contains("＜think") || texto.Contains("[[think"))
+        var guard = 0;
+        while (texto.Contains("<think>") && guard < 100)
         {
-            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
-            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
-            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+            var start = texto.IndexOf("<think>");
+            var end = texto.IndexOf("", start);
+            if (end < 0) break;
+            texto = texto.Substring(0, start) + texto.Substring(end + 7);
+            guard++;
         }
 
-        return texto;
+        guard = 0;
+        while (texto.Contains("<think>") && guard < 100)
+        {
+            var start = texto.LastIndexOf("<think>");
+            var end = texto.IndexOf("", start);
+            if (end < 0) break;
+            texto = texto.Substring(0, start) + texto.Substring(end + 7);
+            guard++;
+        }
+
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\n{3,}", "\n\n");
+        return texto.Trim();
     }
 
     private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
