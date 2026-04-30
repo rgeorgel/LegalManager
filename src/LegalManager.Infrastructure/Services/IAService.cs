@@ -66,7 +66,7 @@ public class IAService : IIAService
         return await CorrigirIdiomaPortugues(resultado, ct);
     }
 
-    public async Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default)
+public async Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default)
     {
         var variaveisExemplo = "{{nome_autor}}, {{nome_reu}}, {{nome_interessado}}, {{nome_terceiro}}, {{nome_advogado}}, {{numero_processo}}, {{tribunal}}, {{vara}}, {{comarca}}, {{area_direito}}, {{valor_causa}}";
 
@@ -82,6 +82,7 @@ public class IAService : IIAService
             6. NUNCA inclua tags de raciocínio, pensamento, thinking, <think> ou qualquer meta-informação
             7. NUNCA produza JSON ou qualquer formato estruturado — apenas texto puro do documento
             8. NÃO explique o que está fazendo — forneça apenas o texto final do modelo
+            9. NAO ESCREVA NADA ALÉM DO DOCUMENTO — sem comentarios, sem notas, sem razoes
 
             Gere um modelo de documento com base na seguinte descrição:
             {descricao}
@@ -90,26 +91,30 @@ public class IAService : IIAService
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        var limpo = LimparRespostaIA(resultado);
-        return await CorrigirIdiomaPortugues(limpo, ct);
+        var limpo = LimparETValidarResposta(resultado);
+        return limpo;
     }
 
-private string LimparRespostaIA(string texto)
+    private string LimparETValidarResposta(string texto)
     {
-        if (string.IsNullOrWhiteSpace(texto)) return texto;
+        if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
         texto = texto.Trim();
 
-        while (texto.Contains(""))
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think[\s\S]*?＞", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think\][\s\S]*?\]\]", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\n{3,}", "\n\n");
+        texto = texto.Trim();
+
+        if (texto.Contains("<think>") || texto.Contains("＜think") || texto.Contains("[[think"))
         {
-            var idxInicio = texto.LastIndexOf("<think>", StringComparison.OrdinalIgnoreCase);
-            if (idxInicio < 0) break;
-            var idxFim = texto.IndexOf("", idxInicio, StringComparison.OrdinalIgnoreCase);
-            if (idxFim < 0) break;
-            texto = texto.Substring(0, idxInicio) + texto.Substring(idxFim + 8);
+            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
+            texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
         }
 
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\s*\n\s*\n\s*", "\n\n");
-        return texto.Trim();
+        return texto;
     }
 
     private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
