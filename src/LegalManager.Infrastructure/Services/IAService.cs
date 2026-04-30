@@ -79,15 +79,29 @@ public class IAService : IIAService
             3. Use variáveis entre double braces para dados dinâmicos, ex: {variaveisExemplo}
             4. Use APENAS variáveis que façam sentido para documentos jurídicos brasileiros
             5. Mantenha estrutura profissional e completa
+            6. NUNCA inclua tags de raciocínio, pensamento, thinking, <think> ou qualquer meta-informação
+            7. NUNCA produza JSON ou qualquer formato estruturado — apenas texto puro do documento
+            8. NÃO explique o que está fazendo — forneça apenas o texto final do modelo
 
             Gere um modelo de documento com base na seguinte descrição:
             {descricao}
 
-            Forneça APENAS o conteúdo do modelo, em português brasileiro. Nada de outras línguas.
+            Forneça APENAS o conteúdo do modelo, em português brasileiro. Nada de outras línguas, nada de JSON, nada de tags de pensamento.
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return await CorrigirIdiomaPortugues(resultado, ct);
+        var limpo = LimparRespostaIA(resultado);
+        return await CorrigirIdiomaPortugues(limpo, ct);
+    }
+
+    private string LimparRespostaIA(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return texto;
+        texto = texto.Trim();
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?", "");
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?</think>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
+        return texto.Trim();
     }
 
     private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
