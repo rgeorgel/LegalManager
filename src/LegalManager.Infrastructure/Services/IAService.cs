@@ -100,25 +100,15 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
         texto = texto.Trim();
 
-        var guard = 0;
-        while (texto.Contains("<think>") && guard < 100)
-        {
-            var start = texto.IndexOf("<think>");
-            var end = texto.IndexOf("", start);
-            if (end < 0) break;
-            texto = texto.Substring(0, start) + texto.Substring(end + 7);
-            guard++;
-        }
+        // Remove complete <think>...</think> blocks
+        texto = System.Text.RegularExpressions.Regex.Replace(
+            texto, @"<think>[\s\S]*?</think>", "",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-        guard = 0;
-        while (texto.Contains("<think>") && guard < 100)
-        {
-            var start = texto.LastIndexOf("<think>");
-            var end = texto.IndexOf("", start);
-            if (end < 0) break;
-            texto = texto.Substring(0, start) + texto.Substring(end + 7);
-            guard++;
-        }
+        // Remove unclosed <think> block (no closing tag) — discard everything from <think> onward
+        var thinkIdx = texto.IndexOf("<think>", System.StringComparison.OrdinalIgnoreCase);
+        if (thinkIdx >= 0)
+            texto = texto.Substring(0, thinkIdx);
 
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\n{3,}", "\n\n");
