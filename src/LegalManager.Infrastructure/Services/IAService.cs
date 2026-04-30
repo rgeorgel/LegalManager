@@ -100,26 +100,16 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         if (string.IsNullOrWhiteSpace(texto)) return string.Empty;
         texto = texto.Trim();
 
-        while (texto.Contains("<think>"))
-        {
-            var idxStart = texto.IndexOf("<think>");
-            var idxEnd = texto.IndexOf("", idxStart);
-            if (idxEnd < 0) break;
-            texto = texto.Substring(0, idxStart) + texto.Substring(idxEnd + 7);
-        }
-
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>[\s\S]*?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"[\s\S]*?", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think[\s\S]*?＞", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think\][\s\S]*?\]\]", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"```[\s\S]*?```", "");
         texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\n{3,}", "\n\n");
         texto = texto.Trim();
 
-        if (texto.Contains("<think>") || texto.Contains("") || texto.Contains("＜think") || texto.Contains("[[think"))
+        if (texto.Contains("<think>") || texto.Contains("＜think") || texto.Contains("[[think"))
         {
             texto = System.Text.RegularExpressions.Regex.Replace(texto, @"<think>.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
-            texto = System.Text.RegularExpressions.Regex.Replace(texto, @".*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
             texto = System.Text.RegularExpressions.Regex.Replace(texto, @"＜think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
             texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\[\[think.*$", "", System.Text.RegularExpressions.RegexOptions.Multiline);
         }
