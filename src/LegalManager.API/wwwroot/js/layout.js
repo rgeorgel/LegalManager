@@ -6,7 +6,6 @@ const NAV_GROUPS = [
     label: 'Visão Geral',
     items: [
       { href: '/pages/dashboard.html',   label: '📊 Dashboard' },
-      { href: '/pages/indicadores.html',  label: '📈 Indicadores', pro: true },
     ],
   },
   {
