@@ -434,8 +434,8 @@ public static class PacotesCreditos
 {
     public static readonly List<PacoteCreditosDto> Todos =
     [
-        new("basico",   "Básico",    "Para começar com IA",          40,  20,  29.90m, null),
-        new("padrao",   "Padrão",    "Para uso moderado",            135,  65, 89.90m, "Mais popular"),
-        new("avancado", "Avançado",  "Para escritórios ativos",      265, 135, 159.90m, null),
+        new("basico",   "Básico",    "Para começar com IA",          20,  10,  29.90m, null),
+        new("padrao",   "Padrão",    "Para uso moderado",             65,  35, 89.90m, "Mais popular"),
+        new("avancado", "Avançado",  "Para escritórios ativos",      135,  65, 159.90m, null),
     ];
 }
