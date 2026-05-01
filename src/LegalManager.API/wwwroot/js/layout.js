@@ -29,6 +29,7 @@ const NAV_GROUPS = [
     label: 'Financeiro',
     items: [
       { href: '/pages/financeiro.html',    label: '💰 Financeiro', pro: true },
+      { href: '/pages/honorarios.html',    label: '⚖️ Honorários' },
     ],
   },
   {

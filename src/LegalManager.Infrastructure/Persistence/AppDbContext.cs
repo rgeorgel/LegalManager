@@ -46,6 +46,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<PecaGerada> PecasGeradas => Set<PecaGerada>();
     public DbSet<Documento> Documentos => Set<Documento>();
     public DbSet<ModeloDocumento> ModelosDocumento => Set<ModeloDocumento>();
+    public DbSet<HonorarioCalculo> HonorariosCalculos => Set<HonorarioCalculo>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
