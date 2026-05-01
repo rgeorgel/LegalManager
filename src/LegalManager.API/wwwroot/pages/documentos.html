@@ -7,7 +7,6 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
@@ -24,7 +23,8 @@
     .quota-bar { height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; margin-top:8px; }
     .quota-fill { height:100%; background:var(--color-primary); transition:width 0.3s; }
     .quota-label { font-size:12px; color:var(--color-text-muted); margin-top:4px; }
-.pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
+
+    .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
     .pdf-modal-overlay.open { display:flex; }
     .pdf-modal-content { background:#fff; border-radius:12px; width:90vw; height:90vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); position:relative; }
     .pdf-modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--color-border); background:#f9fafb; flex-shrink:0; z-index:10; }
@@ -34,6 +34,20 @@
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
     .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
     #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
+
+    .var-badge { background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:12px; font-size:12px; margin:2px; display:inline-block; }
+    .var-list { margin-top:8px; }
+    .editor-toolbar { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+    .editor-toolbar button { padding:4px 12px; font-size:13px; }
+
+    .tab-nav { display:flex; border-bottom:2px solid var(--color-border); margin-bottom:20px; }
+    .tab-btn { background:none; border:none; padding:10px 20px; font-size:14px; font-weight:500; color:var(--color-text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
+    .tab-btn:hover { color:var(--color-text); }
+    .tab-btn.active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .tab-actions { display:none; gap:8px; }
+    .tab-actions.active { display:flex; }
   </style>
 </head>
 <body>
@@ -59,7 +73,7 @@
       <li><a href="/pages/agenda.html">📅 Agenda</a></li>
       <li><a href="/pages/publicacoes.html">📰 Publicações</a></li>
       <li><a href="/pages/prazos.html">⏰ Prazos</a></li>
-      <li><a href="/pages/documentos.html">📁 Documentos</a></li>
+      <li><a href="/pages/documentos.html" class="active">📁 Documentos</a></li>
       <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
       <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
     </ul>
@@ -68,69 +82,109 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Documentos</h1>
-      <button class="btn btn-primary" id="btnUpload">+ Upload</button>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="padding:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Armazenamento</strong>
-          <span id="quotaText">0 MB / 20 GB</span>
+      <div style="display:flex;gap:8px">
+        <div class="tab-actions active" id="actionsDocumentos">
+          <button class="btn btn-primary" id="btnUpload">+ Upload</button>
         </div>
-        <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
-        <div class="quota-label" id="quotaLabel">Carregando...</div>
+        <div class="tab-actions" id="actionsModelos">
+          <button class="btn btn-secondary" id="btnGerarIA">🤖 Gerar com IA</button>
+          <button class="btn btn-primary" id="btnNovoModelo">+ Novo Modelo</button>
+        </div>
       </div>
     </div>
 
-    <div class="filter-bar">
-      <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
-      <select id="filtTipo" class="form-control" style="width:auto">
-        <option value="">Todos os tipos</option>
-        <option value="Peticao">Petição</option>
-        <option value="Decisao">Decisão</option>
-        <option value="Contrato">Contrato</option>
-        <option value="Prova">Prova</option>
-        <option value="Modelo">Modelo</option>
-        <option value="Outro">Outro</option>
-      </select>
-      <select id="filtOrigem" class="form-control" style="width:auto">
-        <option value="">Todas as origens</option>
-        <option value="processo">Por Processo</option>
-        <option value="cliente">Por Cliente</option>
-        <option value="outros">Outros</option>
-      </select>
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="documentos">📁 Documentos</button>
+      <button class="tab-btn" data-tab="modelos">📋 Modelos</button>
     </div>
 
-    <div id="alertMsg" class="alert" style="display:none"></div>
+    <!-- ===== TAB: DOCUMENTOS ===== -->
+    <div class="tab-content active" id="tab-documentos">
+      <div class="card" style="margin-bottom:16px">
+        <div style="padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Armazenamento</strong>
+            <span id="quotaText">0 MB / 20 GB</span>
+          </div>
+          <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+          <div class="quota-label" id="quotaLabel">Carregando...</div>
+        </div>
+      </div>
 
-    <div class="card">
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Tipo</th>
-              <th>Tamanho</th>
-              <th>Origem</th>
-              <th>Data</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
-          </tbody>
-        </table>
+      <div class="filter-bar">
+        <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
+        <select id="filtTipo" class="form-control" style="width:auto">
+          <option value="">Todos os tipos</option>
+          <option value="Peticao">Petição</option>
+          <option value="Decisao">Decisão</option>
+          <option value="Contrato">Contrato</option>
+          <option value="Prova">Prova</option>
+          <option value="Modelo">Modelo</option>
+          <option value="Outro">Outro</option>
+        </select>
+        <select id="filtOrigem" class="form-control" style="width:auto">
+          <option value="">Todas as origens</option>
+          <option value="processo">Por Processo</option>
+          <option value="cliente">Por Cliente</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+
+      <div id="docAlertMsg" class="alert" style="display:none"></div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Tamanho</th>
+                <th>Origem</th>
+                <th>Data</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="docTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: MODELOS ===== -->
+    <div class="tab-content" id="tab-modelos">
+      <div id="modAlertMsg" class="alert" style="display:none"></div>
+
+      <div class="card">
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Variáveis</th>
+                <th>Criado em</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="modTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </main>
 </div>
 
-<!-- Modal Upload -->
+<!-- ===== MODAL: Upload de Documento ===== -->
 <div class="modal-overlay" id="modalUpload">
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
       <span class="modal-title">Upload de Documento</span>
-      <button class="modal-close" id="modalClose">✕</button>
+      <button class="modal-close" id="modalUploadClose">✕</button>
     </div>
     <div class="modal-body">
       <div id="uploadAlert" class="alert" style="display:none"></div>
@@ -171,13 +225,13 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      <button class="btn btn-secondary" id="btnUploadCancelar">Cancelar</button>
       <button class="btn btn-primary" id="btnEnviar">Enviar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal PDF Viewer -->
+<!-- ===== MODAL: Visualizador PDF ===== -->
 <div class="pdf-modal-overlay" id="pdfModal">
   <div class="pdf-modal-content">
     <div class="pdf-modal-header">
@@ -188,11 +242,109 @@
       </div>
     </div>
     <div class="pdf-modal-body" id="pdfContainer">
-      <div id="pdfLoading" style="display:none;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#fff">
-        <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
-        <span>Carregando documento...</span>
-      </div>
       <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Criar / Editar Modelo ===== -->
+<div class="modal-overlay" id="modalModeloForm">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalModeloTitle">Novo Modelo</span>
+      <button class="modal-close" id="modalModeloClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modFormAlert" class="alert" style="display:none"></div>
+      <form id="modeloForm">
+        <input type="hidden" id="fModeloId">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="fModeloNome" class="form-control" required placeholder="Ex: Petição Inicial Cível">
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <input type="text" id="fModeloDescricao" class="form-control" placeholder="Breve descrição do modelo">
+        </div>
+        <div class="form-group">
+          <label>Variáveis</label>
+          <input type="text" id="fModeloVariaveis" class="form-control" placeholder="Detectadas automaticamente do conteúdo (ou digite separadas por vírgula)">
+          <div class="var-list" id="varPreview"></div>
+        </div>
+        <div class="form-group">
+          <label>Conteúdo do Modelo *</label>
+          <div class="editor-toolbar">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_autor')">&#123;&#123;nome_autor&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_reu')">&#123;&#123;nome_reu&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_interessado')">&#123;&#123;nome_interessado&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_terceiro')">&#123;&#123;nome_terceiro&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_advogado')">&#123;&#123;nome_advogado&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('numero_processo')">&#123;&#123;numero_processo&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('tribunal')">&#123;&#123;tribunal&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('vara')">&#123;&#123;vara&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('comarca')">&#123;&#123;comarca&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('area_direito')">&#123;&#123;area_direito&#125;&#125;</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('valor_causa')">&#123;&#123;valor_causa&#125;&#125;</button>
+          </div>
+          <textarea id="fModeloConteudo" class="form-control" rows="12" required placeholder="Digite o conteúdo do modelo usando &#123;&#123;variavel&#125;&#125; para variáveis dinâmicas"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnModeloCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnModeloSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Gerar com IA ===== -->
+<div class="modal-overlay" id="modalGerarIA">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">🤖 Gerar Modelo com IA</span>
+      <button class="modal-close" id="modalGerarIAClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="gerarIAAlert" class="alert" style="display:none"></div>
+      <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
+        Descreva o modelo de documento que deseja criar. A IA irá gerar um modelo completo em português do Brasil, consumindo 1 crédito de peça jurídica.
+      </p>
+      <div class="form-group">
+        <label>Descrição do modelo *</label>
+        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Modelo de petição inicial para ação de danos morais em face de empresa de telefonia, contendo variáveis como nome do autor, CPF, endereço, nome da empresa ré, CNPJ, valor do dano pedido, fundamentos legais..."></textarea>
+      </div>
+      <div id="iaPreview" style="display:none;margin-top:16px">
+        <label>Preview do conteúdo gerado:</label>
+        <textarea id="iaConteudoGerado" class="form-control" rows="12" readonly style="background:#f9fafb"></textarea>
+        <div id="iaVariaveisPreview" style="margin-top:8px;font-size:13px;color:var(--color-text-muted)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnGerarIACancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnGerarIAGerar">Gerar</button>
+      <button class="btn btn-primary" id="btnGerarIASalvar" style="display:none">Salvar Modelo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Aplicar Variáveis ===== -->
+<div class="modal-overlay" id="modalAplicar">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">Aplicar Variáveis</span>
+      <button class="modal-close" id="modalAplicarClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="aplicarModeloNome" style="margin-bottom:16px;font-weight:600"></p>
+      <div id="varInputs"></div>
+      <div class="form-group" style="margin-top:16px">
+        <label>Resultado</label>
+        <textarea id="resultadoConteudo" class="form-control" rows="10" readonly style="background:#f9fafb"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnFecharAplicar">Fechar</button>
+      <button class="btn btn-primary" id="btnCopiar">Copiar Conteúdo</button>
     </div>
   </div>
 </div>
@@ -203,18 +355,43 @@ import { apiFetch } from '/js/api.js';
 
 initLayout();
 
-const modal = document.getElementById('modalUpload');
-const alertMsg = document.getElementById('alertMsg');
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+let modelosLoaded = false;
 
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
+  const actionId = 'actions' + name.charAt(0).toUpperCase() + name.slice(1);
+  document.querySelectorAll('.tab-actions').forEach(el => el.classList.toggle('active', el.id === actionId));
+
+  if (name === 'modelos' && !modelosLoaded) {
+    loadModelos();
+    modelosLoaded = true;
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn =>
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+);
+
+const initialTab = new URLSearchParams(window.location.search).get('tab');
+if (initialTab === 'modelos') switchTab('modelos');
+
+// ============================================================
+// DOCUMENTOS
+// ============================================================
 let documentos = [];
 let processos = [];
 let clientes = [];
 
-function showAlert(msg, type = 'error') {
-  alertMsg.className = `alert alert-${type}`;
-  alertMsg.textContent = msg;
-  alertMsg.style.display = 'block';
-  setTimeout(() => alertMsg.style.display = 'none', 5000);
+function showDocAlert(msg, type = 'error') {
+  const el = document.getElementById('docAlertMsg');
+  el.className = `alert alert-${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
 }
 
 function formatBytes(bytes) {
@@ -226,10 +403,7 @@ function formatBytes(bytes) {
 }
 
 function tipoBadge(tipo) {
-  const cls = {
-    Peticao: 'peticao', Decisao: 'decisao', Contrato: 'contrato',
-    Prova: 'prova', Modelo: 'modelo', Outro: 'outro'
-  }[tipo] || 'outro';
+  const cls = { Peticao:'peticao', Decisao:'decisao', Contrato:'contrato', Prova:'prova', Modelo:'modelo', Outro:'outro' }[tipo] || 'outro';
   return `<span class="badge tipo-${cls}">${tipo}</span>`;
 }
 
@@ -254,11 +428,11 @@ async function loadCota() {
 }
 
 async function loadDocumentos() {
-  const tbody = document.getElementById('tableBody');
+  const tbody = document.getElementById('docTableBody');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px">Carregando...</td></tr>';
   try {
     documentos = await apiFetch('/documentos');
-    renderTable(documentos);
+    renderDocsTable(documentos);
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
   }
@@ -289,8 +463,8 @@ async function loadReferenceData() {
   } catch {}
 }
 
-function renderTable(items) {
-  const tbody = document.getElementById('tableBody');
+function renderDocsTable(items) {
+  const tbody = document.getElementById('docTableBody');
   if (!items.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
     return;
@@ -310,14 +484,11 @@ function renderTable(items) {
     </tr>`).join('');
 }
 
-let currentFilters = {};
-
 function applyFilters() {
   let filtered = [...documentos];
   const busca = document.getElementById('filtBusca').value.toLowerCase();
   const tipo = document.getElementById('filtTipo').value;
   const origem = document.getElementById('filtOrigem').value;
-
   if (busca) filtered = filtered.filter(d =>
     d.nome.toLowerCase().includes(busca) ||
     (d.numeroProcesso && d.numeroProcesso.toLowerCase().includes(busca)) ||
@@ -327,15 +498,14 @@ function applyFilters() {
   if (origem === 'processo') filtered = filtered.filter(d => d.processoId);
   else if (origem === 'cliente') filtered = filtered.filter(d => d.clienteId);
   else if (origem === 'outros') filtered = filtered.filter(d => !d.processoId && !d.clienteId);
-
-  renderTable(filtered);
+  renderDocsTable(filtered);
 }
 
-['filtBusca', 'filtTipo', 'filtOrigem'].forEach(id => {
-  document.getElementById(id).addEventListener('input', applyFilters);
-});
+['filtBusca', 'filtTipo', 'filtOrigem'].forEach(id =>
+  document.getElementById(id).addEventListener('input', applyFilters)
+);
 
-window.viewDoc = async id => {
+window.viewDoc = id => {
   const doc = documentos.find(d => d.id === id);
   if (!doc) return;
   const token = sessionStorage.getItem('access_token');
@@ -346,38 +516,38 @@ window.downloadDoc = async id => {
   try {
     const { url } = await apiFetch(`/documentos/${id}/download`);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = '';
-    a.target = '_blank';
-    a.click();
-  } catch (err) { showAlert(err.message); }
+    a.href = url; a.download = ''; a.target = '_blank'; a.click();
+  } catch (err) { showDocAlert(err.message); }
 };
 
 window.deleteDoc = async id => {
   if (!confirm('Tem certeza que deseja excluir este documento?')) return;
   try {
     await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
-    showAlert('Documento excluído.', 'success');
+    showDocAlert('Documento excluído.', 'success');
     loadDocumentos();
     loadCota();
-  } catch (err) { showAlert(err.message); }
+  } catch (err) { showDocAlert(err.message); }
 };
 
-function resetModal() {
+// Upload modal
+const modalUpload = document.getElementById('modalUpload');
+
+function resetUploadModal() {
   document.getElementById('uploadForm').reset();
   document.getElementById('uploadAlert').style.display = 'none';
   document.getElementById('uploadProgress').style.display = 'none';
   document.getElementById('progressBar').style.width = '0%';
 }
 
-document.getElementById('btnUpload').addEventListener('click', () => { resetModal(); modal.classList.add('open'); });
-document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('open'));
-document.getElementById('btnCancelar').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('btnUpload').addEventListener('click', () => { resetUploadModal(); modalUpload.classList.add('open'); });
+document.getElementById('modalUploadClose').addEventListener('click', () => modalUpload.classList.remove('open'));
+document.getElementById('btnUploadCancelar').addEventListener('click', () => modalUpload.classList.remove('open'));
 
 document.getElementById('btnEnviar').addEventListener('click', async () => {
   const fileInput = document.getElementById('fileInput');
   const file = fileInput.files[0];
-  if (!file) { showAlert('Selecione um arquivo.'); return; }
+  if (!file) { showDocAlert('Selecione um arquivo.'); return; }
 
   const btn = document.getElementById('btnEnviar');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -399,19 +569,14 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
     });
-
     if (!res.ok) {
       let err = `HTTP ${res.status}`;
       const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        const b = await res.json();
-        err = b.message || b.title || err;
-      }
+      if (ct.includes('application/json')) { const b = await res.json(); err = b.message || b.title || err; }
       throw new Error(err);
     }
-
-    modal.classList.remove('open');
-    showAlert('Documento enviado com sucesso.', 'success');
+    modalUpload.classList.remove('open');
+    showDocAlert('Documento enviado com sucesso.', 'success');
     loadDocumentos();
     loadCota();
   } catch (err) {
@@ -423,33 +588,24 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
   }
 });
 
-await loadReferenceData();
-await loadCota();
-loadDocumentos();
-
-// PDF Modal
+// PDF modal
 const pdfModal = document.getElementById('pdfModal');
-const pdfTitle = document.getElementById('pdfTitle');
 let currentPdfUrl = '';
 
 function openPdfModal(fileUrl, nome, token = '') {
   const container = document.getElementById('pdfContainer');
   container.innerHTML = `
-    <div id="pdfLoading" style="display:flex;align-items:center;justify-content:center;height:100%;width:100%;flex-direction:column;gap:12px;color:#fff;position:absolute;top:0;left:0;overflow:hidden;z-index:5">
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;width:100%;flex-direction:column;gap:12px;color:#fff;position:absolute;top:0;left:0;z-index:5">
       <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
       <span>Carregando documento...</span>
     </div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-  `;
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
   currentPdfUrl = fileUrl;
-  pdfTitle.textContent = nome || 'Documento';
+  document.getElementById('pdfTitle').textContent = nome || 'Documento';
   pdfModal.classList.add('open');
 
   fetch(fileUrl, token ? { headers: { 'Authorization': `Bearer ${token}` } } : {})
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.blob();
-    })
+    .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
     .then(blob => {
       if (blob.size === 0) throw new Error('Documento vazio');
       const blobUrl = URL.createObjectURL(blob);
@@ -460,8 +616,7 @@ function openPdfModal(fileUrl, nome, token = '') {
       container.appendChild(iframe);
     })
     .catch(err => {
-      console.error('PDF load error:', err);
-      showAlert('Erro ao carregar documento: ' + err.message);
+      showDocAlert('Erro ao carregar documento: ' + err.message);
       pdfModal.classList.remove('open');
     });
 }
@@ -472,27 +627,277 @@ document.getElementById('pdfClose').addEventListener('click', () => {
 });
 
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
-  const token = sessionStorage.getItem('access_token') || '';
   const a = document.createElement('a');
-  a.href = currentPdfUrl;
-  if (token) a.headers = { 'Authorization': `Bearer ${token}` };
-  a.target = '_blank';
-  a.click();
+  a.href = currentPdfUrl; a.target = '_blank'; a.click();
 });
 
 pdfModal.addEventListener('click', e => {
-  if (e.target === pdfModal) {
-    pdfModal.classList.remove('open');
-    document.getElementById('pdfContainer').innerHTML = '';
-  }
+  if (e.target === pdfModal) { pdfModal.classList.remove('open'); document.getElementById('pdfContainer').innerHTML = ''; }
 });
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && pdfModal.classList.contains('open')) {
-    pdfModal.classList.remove('open');
-    document.getElementById('pdfContainer').innerHTML = '';
+    pdfModal.classList.remove('open'); document.getElementById('pdfContainer').innerHTML = '';
   }
 });
+
+// ============================================================
+// MODELOS
+// ============================================================
+let modelos = [];
+let currentModeloId = null;
+
+function showModAlert(msg, type = 'error') {
+  const el = document.getElementById('modAlertMsg');
+  el.className = `alert alert-${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+async function loadModelos() {
+  const tbody = document.getElementById('modTableBody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px">Carregando...</td></tr>';
+  try {
+    modelos = await apiFetch('/modelos');
+    renderModelosTable(modelos);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
+  }
+}
+
+function renderModelosTable(items) {
+  const tbody = document.getElementById('modTableBody');
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum modelo encontrado</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(m => {
+    const vars = m.variaveis && m.variaveis.length
+      ? m.variaveis.map(v => `<span class="var-badge">${v}</span>`).join('')
+      : '<span style="color:var(--color-text-muted);font-size:13px">Nenhuma</span>';
+    return `
+    <tr>
+      <td data-label="Nome"><strong>${m.nome}</strong></td>
+      <td data-label="Descrição">${m.descricao || '—'}</td>
+      <td data-label="Variáveis">${vars}</td>
+      <td data-label="Criado em">${new Date(m.criadoEm).toLocaleDateString('pt-BR')}</td>
+      <td data-label="Ações" style="white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="editarModelo('${m.id}')">Editar</button>
+        <button class="btn btn-primary btn-sm" onclick="aplicarModelo('${m.id}')">Usar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirModelo('${m.id}')">Excluir</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+const modalModeloForm = document.getElementById('modalModeloForm');
+
+function resetModeloModal() {
+  document.getElementById('modeloForm').reset();
+  document.getElementById('fModeloId').value = '';
+  document.getElementById('modFormAlert').style.display = 'none';
+  currentModeloId = null;
+  document.getElementById('modalModeloTitle').textContent = 'Novo Modelo';
+  document.getElementById('varPreview').innerHTML = '';
+}
+
+function updateVarPreview() {
+  const vars = document.getElementById('fModeloVariaveis').value.split(',').map(v => v.trim()).filter(v => v);
+  document.getElementById('varPreview').innerHTML = vars.map(v => `<span class="var-badge">${v}</span>`).join('');
+}
+
+document.getElementById('fModeloVariaveis').addEventListener('input', updateVarPreview);
+
+window.insertVar = name => {
+  const ta = document.getElementById('fModeloConteudo');
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const insert = `{{${name}}}`;
+  ta.value = ta.value.substring(0, start) + insert + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + insert.length;
+  ta.focus();
+};
+
+window.editarModelo = id => {
+  const m = modelos.find(x => x.id === id);
+  if (!m) return;
+  currentModeloId = id;
+  document.getElementById('fModeloId').value = id;
+  document.getElementById('fModeloNome').value = m.nome;
+  document.getElementById('fModeloDescricao').value = m.descricao || '';
+  document.getElementById('fModeloVariaveis').value = (m.variaveis || []).join(', ');
+  document.getElementById('fModeloConteudo').value = m.conteudo;
+  document.getElementById('modalModeloTitle').textContent = 'Editar Modelo';
+  updateVarPreview();
+  modalModeloForm.classList.add('open');
+};
+
+window.excluirModelo = async id => {
+  if (!confirm('Tem certeza que deseja excluir este modelo?')) return;
+  try {
+    await apiFetch(`/modelos/${id}`, { method: 'DELETE' });
+    showModAlert('Modelo excluído.', 'success');
+    loadModelos();
+  } catch (err) { showModAlert(err.message); }
+};
+
+document.getElementById('btnNovoModelo').addEventListener('click', () => { resetModeloModal(); modalModeloForm.classList.add('open'); });
+document.getElementById('modalModeloClose').addEventListener('click', () => modalModeloForm.classList.remove('open'));
+document.getElementById('btnModeloCancelar').addEventListener('click', () => modalModeloForm.classList.remove('open'));
+
+document.getElementById('btnModeloSalvar').addEventListener('click', async () => {
+  const nome = document.getElementById('fModeloNome').value.trim();
+  const descricao = document.getElementById('fModeloDescricao').value.trim();
+  const conteudo = document.getElementById('fModeloConteudo').value;
+
+  if (!nome) { showModAlert('Nome é obrigatório.'); return; }
+  if (!conteudo) { showModAlert('Conteúdo é obrigatório.'); return; }
+
+  const variaveisMatch = conteudo.match(/\{\{([^}]+)\}\}/g) || [];
+  const variaveis = [...new Set(variaveisMatch.map(v => v.replace(/\{\{|\}\}/g, '').trim()))].filter(v => v);
+  document.getElementById('fModeloVariaveis').value = variaveis.join(', ');
+  updateVarPreview();
+
+  const btn = document.getElementById('btnModeloSalvar');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  const id = document.getElementById('fModeloId').value;
+  try {
+    if (id) {
+      await apiFetch(`/modelos/${id}`, { method: 'PUT', body: JSON.stringify({ nome, descricao, conteudo, variaveis }) });
+      showModAlert('Modelo atualizado.', 'success');
+    } else {
+      await apiFetch('/modelos', { method: 'POST', body: JSON.stringify({ nome, descricao, conteudo, variaveis }) });
+      showModAlert('Modelo criado.', 'success');
+    }
+    modalModeloForm.classList.remove('open');
+    loadModelos();
+  } catch (err) {
+    showModAlert(err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar';
+  }
+});
+
+// Aplicar variáveis
+const modalAplicar = document.getElementById('modalAplicar');
+
+window.aplicarModelo = id => {
+  const m = modelos.find(x => x.id === id);
+  if (!m) return;
+  currentModeloId = id;
+  document.getElementById('aplicarModeloNome').textContent = m.nome;
+
+  const container = document.getElementById('varInputs');
+  container.innerHTML = '';
+  if (!m.variaveis || !m.variaveis.length) {
+    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo não possui variáveis definidas.</p>';
+  } else {
+    m.variaveis.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'form-group';
+      div.innerHTML = `<label style="text-transform:uppercase;font-size:12px">${v}</label><input type="text" class="form-control var-input" data-var="${v}" placeholder="Valor para ${v}">`;
+      container.appendChild(div);
+    });
+  }
+  document.getElementById('resultadoConteudo').value = m.conteudo;
+  modalAplicar.classList.add('open');
+};
+
+document.getElementById('btnFecharAplicar').addEventListener('click', () => modalAplicar.classList.remove('open'));
+document.getElementById('modalAplicarClose').addEventListener('click', () => modalAplicar.classList.remove('open'));
+
+document.getElementById('varInputs').addEventListener('input', e => {
+  if (e.target.classList.contains('var-input')) atualizarResultado();
+});
+
+function atualizarResultado() {
+  const m = modelos.find(x => x.id === currentModeloId);
+  if (!m) return;
+  const vars = {};
+  document.querySelectorAll('.var-input').forEach(input => vars[input.dataset.var] = input.value);
+  let resultado = m.conteudo;
+  Object.entries(vars).forEach(([chave, valor]) => {
+    resultado = resultado.replace(new RegExp(`\\{\\{${chave}\\}\\}`, 'gi'), valor || `{{${chave}}}`);
+  });
+  document.getElementById('resultadoConteudo').value = resultado;
+}
+
+document.getElementById('btnCopiar').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('resultadoConteudo').value)
+    .then(() => showModAlert('Conteúdo copiado!', 'success'))
+    .catch(() => showModAlert('Erro ao copiar.'));
+});
+
+// Gerar com IA
+const modalGerarIA = document.getElementById('modalGerarIA');
+let iaConteudoGerado = '';
+let iaVariaveisGerado = [];
+
+document.getElementById('btnGerarIA').addEventListener('click', () => {
+  document.getElementById('gerarIAAlert').style.display = 'none';
+  document.getElementById('iaDescricao').value = '';
+  document.getElementById('iaPreview').style.display = 'none';
+  document.getElementById('btnGerarIASalvar').style.display = 'none';
+  document.getElementById('btnGerarIAGerar').style.display = '';
+  modalGerarIA.classList.add('open');
+});
+
+[document.getElementById('modalGerarIAClose'), document.getElementById('btnGerarIACancelar')].forEach(el =>
+  el?.addEventListener('click', () => modalGerarIA.classList.remove('open'))
+);
+
+document.getElementById('btnGerarIAGerar').addEventListener('click', async () => {
+  const descricao = document.getElementById('iaDescricao').value.trim();
+  if (!descricao) {
+    const alertEl = document.getElementById('gerarIAAlert');
+    alertEl.textContent = 'Descreva o modelo que deseja criar.';
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('btnGerarIAGerar');
+  const alertEl = document.getElementById('gerarIAAlert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Gerando...';
+  alertEl.style.display = 'none';
+
+  try {
+    const result = await apiFetch('/modelos/gerar-com-ia', { method: 'POST', body: JSON.stringify({ descricao }) });
+    iaConteudoGerado = result.conteudo;
+    iaVariaveisGerado = result.variaveis || [];
+    document.getElementById('iaConteudoGerado').value = result.conteudo;
+    document.getElementById('iaVariaveisPreview').innerHTML = result.variaveis?.length
+      ? `Variáveis detectadas: ${result.variaveis.map(v => `<span class="var-badge">${v}</span>`).join(' ')}`
+      : 'Nenhuma variável detectada';
+    document.getElementById('iaPreview').style.display = '';
+    document.getElementById('btnGerarIASalvar').style.display = '';
+    btn.style.display = 'none';
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.innerHTML = 'Gerar';
+  }
+});
+
+document.getElementById('btnGerarIASalvar').addEventListener('click', () => {
+  resetModeloModal();
+  document.getElementById('fModeloVariaveis').value = iaVariaveisGerado.join(', ');
+  document.getElementById('fModeloConteudo').value = iaConteudoGerado;
+  document.getElementById('modalModeloTitle').textContent = 'Novo Modelo (via IA)';
+  updateVarPreview();
+  modalGerarIA.classList.remove('open');
+  modalModeloForm.classList.add('open');
+});
+
+// ============================================================
+// INIT
+// ============================================================
+await loadReferenceData();
+await loadCota();
+loadDocumentos();
 </script>
 </body>
 </html>
