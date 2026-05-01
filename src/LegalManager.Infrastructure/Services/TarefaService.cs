@@ -145,7 +145,8 @@ public class TarefaService : ITarefaService
                 t.Tags.Select(tag => tag.Tag).ToList(),
                 t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
                 t.CriadoEm,
-                t.Tipo
+                t.Tipo,
+                t.AndamentoId
             ))
             .ToListAsync(ct);
 

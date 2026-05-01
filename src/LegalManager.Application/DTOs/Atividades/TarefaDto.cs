@@ -67,7 +67,8 @@ public record TarefaListItemDto(
     List<string> Tags,
     bool Atrasada,
     DateTime CriadoEm,
-    TipoTarefa Tipo = TipoTarefa.Tarefa
+    TipoTarefa Tipo = TipoTarefa.Tarefa,
+    Guid? AndamentoId = null
 );
 
 public record TarefaFiltroDto(

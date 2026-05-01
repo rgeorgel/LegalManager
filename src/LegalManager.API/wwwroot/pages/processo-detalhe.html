@@ -24,6 +24,11 @@
     .andamento-tipo { display:inline-flex; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; background:var(--color-primary-light); color:var(--color-primary); margin-bottom:4px; }
     .andamento-desc { font-size:14px; margin-top:2px; }
     .andamento-fonte { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .prazo-info { margin-top:8px; padding:8px 10px; background:#f5f3ff; border-radius:6px; border-left:3px solid #7c3aed; }
+    .prazo-info-titulo { font-size:12px; font-weight:600; color:#4c1d95; }
+    .prazo-info-meta { font-size:11px; color:#6b7280; margin-top:2px; }
+    .prazo-concluido { opacity:.65; }
+    .prazo-concluido .prazo-info-titulo { text-decoration:line-through; }
     .parte-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--color-border); }
     .parte-item:last-child { border-bottom:none; }
     .status-ativo    { background:#d1fae5; color:#057a55; }
@@ -795,6 +800,10 @@
           <option value="Urgente">Urgente</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <textarea id="cpDescricao" class="form-control" rows="3" maxlength="4000" placeholder="Detalhes adicionais sobre o prazo..."></textarea>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="criarPrazoCancelar">Cancelar</button>
@@ -951,6 +960,7 @@ async function loadAndamentosPreview() {
   const btnVerTodos = document.getElementById('btnVerTodosAndamentos');
   const tabBadge = document.getElementById('tabCountAndamentos');
   try {
+    await carregarPrazosProcesso();
     const items = await getAndamentos(processoId);
     tabBadge.textContent = items.length;
     tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
@@ -969,6 +979,7 @@ async function loadAndamentosPreview() {
           <div class="andamento-fonte">
             ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
           </div>
+          ${renderPrazosDoAndamento(a.id)}
         </div>
         <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
       </div>`).join('');
@@ -1078,6 +1089,7 @@ window.excluirTarefa = async id => {
 async function loadAndamentos() {
   const lista = document.getElementById('andamentosLista');
   try {
+    await carregarPrazosProcesso();
     const items = await getAndamentos(processoId);
     if (!items.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
@@ -1092,6 +1104,7 @@ async function loadAndamentos() {
           <div class="andamento-fonte">
             ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
           </div>
+          ${renderPrazosDoAndamento(a.id)}
         </div>
         <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
@@ -1112,6 +1125,50 @@ window.removeAndamento = async id => {
   } catch (err) { showAlert(err.message); }
 };
 
+// ── Prazos de andamento ────────────────────────────────────────
+let _prazosCache = [];
+
+async function carregarPrazosProcesso() {
+  try {
+    const data = await apiFetch(`/tarefas?tipo=Prazo&processoId=${processoId}&pageSize=200`);
+    _prazosCache = data.items ?? [];
+  } catch { _prazosCache = []; }
+}
+
+function prazosDoAndamento(andamentoId) {
+  return _prazosCache.filter(p => p.andamentoId === andamentoId);
+}
+
+function renderPrazosDoAndamento(andamentoId) {
+  const prazos = prazosDoAndamento(andamentoId);
+  if (!prazos.length) return '';
+  const STATUS_COLOR = { Pendente: '#374151', EmAndamento: '#1d4ed8', Concluida: '#057a55', Cancelada: '#e02424' };
+  const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
+  return prazos.map(p => {
+    const concluida = p.status === 'Concluida' || p.status === 'Cancelada';
+    const prazoStr = p.prazo ? new Date(p.prazo).toLocaleString('pt-BR') : '—';
+    const statusColor = STATUS_COLOR[p.status] ?? '#374151';
+    return `<div class="prazo-info${concluida ? ' prazo-concluido' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div class="prazo-info-titulo">⏰ ${esc(p.titulo)}</div>
+          <div class="prazo-info-meta">📅 ${prazoStr} · <span style="color:${statusColor};font-weight:600">${STATUS_LABEL[p.status] ?? p.status}</span></div>
+          ${p.descricao ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${esc(p.descricao)}</div>` : ''}
+        </div>
+        ${!concluida ? `<button class="btn btn-secondary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="concluirPrazoAndamento('${p.id}')">✓ Concluir</button>` : '<span style="font-size:11px;color:#057a55;font-weight:600;white-space:nowrap">✓ Concluído</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.concluirPrazoAndamento = async (id) => {
+  if (!confirm('Marcar este prazo como concluído?')) return;
+  try {
+    await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
+    await Promise.all([loadAndamentos(), loadAndamentosPreview(), loadTarefasTab()]);
+  } catch (err) { showAlert(err.message ?? 'Erro ao concluir prazo.'); }
+};
+
 // ── Criar Prazo (a partir de andamento) ────────────────────────
 let _cpAndamentoId = null;
 
@@ -1120,6 +1177,7 @@ window.abrirModalCriarPrazo = (andamentoId) => {
   document.getElementById('cpTitulo').value = '';
   document.getElementById('cpPrazo').value = '';
   document.getElementById('cpPrioridade').value = 'Media';
+  document.getElementById('cpDescricao').value = '';
   document.getElementById('criarPrazoAlert').style.display = 'none';
   document.getElementById('modalCriarPrazo').style.display = 'flex';
 };
@@ -1149,6 +1207,7 @@ document.getElementById('criarPrazoSalvar').addEventListener('click', async () =
       method: 'POST',
       body: JSON.stringify({
         titulo,
+        descricao: document.getElementById('cpDescricao').value.trim() || null,
         prazo,
         prioridade: document.getElementById('cpPrioridade').value,
         processoId,
@@ -1158,7 +1217,7 @@ document.getElementById('criarPrazoSalvar').addEventListener('click', async () =
       })
     });
     fecharModalCriarPrazo();
-    await loadTarefasTab();
+    await Promise.all([loadAndamentos(), loadAndamentosPreview(), loadTarefasTab()]);
   } catch (err) {
     alertEl.textContent = err.message ?? 'Erro ao criar prazo.';
     alertEl.style.display = '';
