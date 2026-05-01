@@ -970,7 +970,7 @@ async function loadAndamentosPreview() {
             ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}', ${JSON.stringify(esc(a.descricao)).replace(/'/g,"&#39;")})">⏰ Criar Prazo</button>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
       </div>`).join('');
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
@@ -1094,7 +1094,7 @@ async function loadAndamentos() {
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}', ${JSON.stringify(esc(a.descricao)).replace(/'/g,"&#39;")})">⏰ Criar Prazo</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
           ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
         </div>
       </div>`).join('');
@@ -1115,7 +1115,7 @@ window.removeAndamento = async id => {
 // ── Criar Prazo (a partir de andamento) ────────────────────────
 let _cpAndamentoId = null;
 
-window.abrirModalCriarPrazo = (andamentoId, desc) => {
+window.abrirModalCriarPrazo = (andamentoId) => {
   _cpAndamentoId = andamentoId;
   document.getElementById('cpTitulo').value = '';
   document.getElementById('cpPrazo').value = '';
