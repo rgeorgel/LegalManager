@@ -770,7 +770,7 @@
 </div>
 
 <script type="module">
-import { initLayout } from '/js/layout.js';
+import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso } from '/js/processos.js';
@@ -1395,6 +1395,7 @@ let gmModelos = [];
 let currentGmModelo = null;
 
 document.getElementById('btnGerarModeloDoc').addEventListener('click', async () => {
+  if (isPlanoFree()) { showUpgradeToast(); return; }
   const modal = document.getElementById('modalGerarModelo');
   document.getElementById('gerarModeloAlert').style.display = 'none';
   document.getElementById('gmVariaveis').innerHTML = '<p style="color:var(--color-text-muted)">Selecione um modelo...</p>';
