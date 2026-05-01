@@ -10,6 +10,7 @@ let currentPage = 1;
 let currentView = 'lista';
 let editingId = null;
 let allItems = [];
+let processosCached = null;
 
 // --- State ---
 function getFilters() {
@@ -76,7 +77,7 @@ function tarefaCard(t) {
     <div class="tarefa-card-meta">
       <span>📅 Prazo: ${prazoStr}</span>
       ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
-      ${t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
+      ${t.numeroCNJProcesso && t.processoId ? `<span>⚖️ <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link" onclick="event.stopPropagation()">${esc(t.numeroCNJProcesso)}</a></span>` : t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
     </div>
     ${tags ? `<div class="tags-list">${tags}</div>` : ''}
     <div class="tarefa-card-actions">
@@ -157,6 +158,34 @@ async function deleteTarefa(id) {
   await loadTarefas(currentPage);
 }
 
+// --- Processos helpers ---
+async function loadProcessosSelect(selectedId = null) {
+  const sel = document.getElementById('fProcesso');
+  sel.innerHTML = '<option value="">Nenhum processo vinculado</option>';
+
+  try {
+    if (!processosCached) {
+      const data = await apiFetch('/processos?pageSize=200');
+      processosCached = data.items ?? [];
+    }
+    processosCached.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.numeroCNJ + (p.comarca ? ` — ${p.comarca}` : '');
+      sel.appendChild(opt);
+    });
+  } catch {}
+
+  sel.value = selectedId ?? '';
+  updateProcessoLink();
+}
+
+function updateProcessoLink() {
+  const sel = document.getElementById('fProcesso');
+  const btn = document.getElementById('fProcessoLink');
+  btn.style.display = sel.value ? '' : 'none';
+}
+
 // --- Modal ---
 function openCreateModal() {
   editingId = null;
@@ -164,6 +193,7 @@ function openCreateModal() {
   document.getElementById('formTarefa').reset();
   document.getElementById('fStatusGroup').style.display = 'none';
   document.getElementById('fmsgErro').style.display = 'none';
+  loadProcessosSelect(null);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
 
@@ -180,6 +210,7 @@ async function openEditModal(id) {
   document.getElementById('fStatus').value = t.status;
   document.getElementById('fPrazo').value = t.prazo ? t.prazo.substring(0, 16) : '';
   document.getElementById('fTags').value = (t.tags ?? []).join(', ');
+  await loadProcessosSelect(t.processoId ?? null);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
 
@@ -187,6 +218,11 @@ function closeModal() {
   document.getElementById('modalTarefa').style.display = 'none';
 }
 
+document.getElementById('fProcesso').addEventListener('change', updateProcessoLink);
+document.getElementById('fProcessoLink').addEventListener('click', () => {
+  const processoId = document.getElementById('fProcesso').value;
+  if (processoId) window.location.href = `/pages/processo-detalhe.html?id=${processoId}`;
+});
 document.getElementById('btnNova').addEventListener('click', openCreateModal);
 document.getElementById('modalTarefaClose').addEventListener('click', closeModal);
 document.getElementById('btnCancelarTarefa').addEventListener('click', closeModal);
@@ -205,6 +241,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
   const tagsRaw = document.getElementById('fTags').value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const prazoVal = document.getElementById('fPrazo').value;
+  const processoVal = document.getElementById('fProcesso').value || null;
 
   try {
     if (editingId) {
@@ -214,6 +251,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prioridade: document.getElementById('fPrioridade').value,
         status: document.getElementById('fStatus').value,
         prazo: prazoVal || null,
+        processoId: processoVal,
         tags
       };
       await apiFetch(`/tarefas/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
@@ -223,6 +261,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         descricao: document.getElementById('fDescricao').value.trim() || null,
         prioridade: document.getElementById('fPrioridade').value,
         prazo: prazoVal || null,
+        processoId: processoVal,
         tags
       };
       await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify(dto) });

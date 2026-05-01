@@ -11,7 +11,7 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
     public async Task<IndicadoresDto> GetIndicadoresAsync(Guid tenantId, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        var inicioMes = new DateTime(now.Year, now.Month, 1);
+        var inicioMes = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var inicioMesAnterior = inicioMes.AddMonths(-1);
 
         var processos = await BuildProcessosAsync(tenantId, inicioMes, ct);
@@ -143,26 +143,41 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
 
     private async Task<TimesheetIndicadoresDto> BuildTimesheetAsync(Guid tenantId, DateTime inicioMes, DateTime inicioMesAnterior, CancellationToken ct)
     {
-        var q = db.RegistrosTempo.AsNoTracking()
-            .Where(r => r.TenantId == tenantId && !r.EmAndamento && r.DuracaoMinutos != null);
+        var all = await db.RegistrosTempo
+            .AsNoTracking()
+            .Where(r => r.TenantId == tenantId && r.EmAndamento == false && r.DuracaoMinutos.HasValue)
+            .Select(r => new { r.Inicio, r.DuracaoMinutos, r.ProcessoId })
+            .ToListAsync(ct);
 
-        var minutosEsteMes = await q
-            .Where(r => r.Inicio >= inicioMes)
-            .SumAsync(r => (int?)r.DuracaoMinutos ?? 0, ct);
+        var esteMes = all.Where(r => r.Inicio >= inicioMes).ToList();
+        var mesAnterior = all.Where(r => r.Inicio >= inicioMesAnterior && r.Inicio < inicioMes).ToList();
 
-        var minutosMesAnterior = await q
-            .Where(r => r.Inicio >= inicioMesAnterior && r.Inicio < inicioMes)
-            .SumAsync(r => (int?)r.DuracaoMinutos ?? 0, ct);
+        var minutosEsteMes = esteMes.Sum(r => r.DuracaoMinutos ?? 0);
+        var minutosMesAnterior = mesAnterior.Sum(r => r.DuracaoMinutos ?? 0);
+        var totalRegistros = esteMes.Count;
 
-        var totalRegistros = await q.CountAsync(r => r.Inicio >= inicioMes, ct);
+        var processoIds = esteMes
+            .Where(r => r.ProcessoId != null)
+            .Select(r => r.ProcessoId!.Value)
+            .Distinct()
+            .ToList();
 
-        var topProcessos = await q
-            .Where(r => r.Inicio >= inicioMes && r.ProcessoId != null)
-            .GroupBy(r => r.Processo!.NumeroCNJ)
-            .Select(g => new { Label = g.Key ?? "—", Count = g.Sum(r => r.DuracaoMinutos ?? 0) })
+        Dictionary<Guid, string?> processoNomes = new();
+        if (processoIds.Count > 0)
+        {
+            processoNomes = await db.Processos.AsNoTracking()
+                .Where(p => processoIds.Contains(p.Id))
+                .Select(p => new { p.Id, p.NumeroCNJ })
+                .ToDictionaryAsync(p => p.Id, p => p.NumeroCNJ, ct);
+        }
+
+        var topProcessos = esteMes
+            .Where(r => r.ProcessoId != null)
+            .GroupBy(r => processoNomes.GetValueOrDefault(r.ProcessoId!.Value) ?? "—")
+            .Select(g => new { Label = g.Key, Count = g.Sum(r => r.DuracaoMinutos ?? 0) })
             .OrderByDescending(x => x.Count)
             .Take(5)
-            .ToListAsync(ct);
+            .ToList();
 
         return new TimesheetIndicadoresDto(
             minutosEsteMes, minutosMesAnterior, totalRegistros,

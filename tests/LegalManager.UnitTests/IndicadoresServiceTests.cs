@@ -122,10 +122,13 @@ public class IndicadoresServiceTests
     {
         var (ctx, tenantId) = await SeedAsync();
         var now = DateTime.UtcNow;
+        // Use inicioMes + 12h so this record is always within the current month
+        var inicioMes = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var inicio = inicioMes.AddHours(12);
         ctx.RegistrosTempo.Add(new RegistroTempo
         {
             Id = Guid.NewGuid(), TenantId = tenantId, UsuarioId = Guid.NewGuid(),
-            Inicio = now.AddHours(-2), Fim = now, DuracaoMinutos = 120,
+            Inicio = inicio, Fim = inicio.AddHours(2), DuracaoMinutos = 120,
             Descricao = "Trabalho", EmAndamento = false, CriadoEm = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();

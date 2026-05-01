@@ -202,6 +202,15 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
 
+    await db.Database.ExecuteSqlRawAsync("""
+        UPDATE "Notificacoes"
+        SET "Url" = '/pages/tarefas.html?abrirId=' || SUBSTRING("ChaveDedup" FROM 8 FOR 36)
+        WHERE "Tipo" = 0
+          AND "Url" = '/pages/tarefas.html'
+          AND "ChaveDedup" LIKE 'tarefa-%'
+          AND LENGTH("ChaveDedup") >= 43
+        """);
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     foreach (var role in new[] { "Admin", "Advogado", "Colaborador", "Cliente" })
     {

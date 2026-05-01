@@ -6,6 +6,7 @@ using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using LegalManager.Application.DTOs.Contatos;
 
 namespace LegalManager.UnitTests;
 
@@ -173,5 +174,130 @@ public class TarefaServiceTests
         Assert.Equal(StatusTarefa.EmAndamento, updated.Status);
         Assert.Equal(2, updated.Tags.Count);
         Assert.DoesNotContain("tag1", updated.Tags);
+    }
+
+    // --- Testes de vínculo com Processo (regressão) ---
+
+    private Processo SeedProcesso(AppDbContext ctx, Guid tenantId) =>
+        new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId,
+            NumeroCNJ = "0001234-56.2024.8.26.0100",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+
+    [Fact]
+    public async Task CreateAsync_ComProcessoVinculado_DeveRetornarProcessoId()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var processo = SeedProcesso(ctx, tenant.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var dto = new CreateTarefaDto("Tarefa com processo", null, null, null,
+            PrioridadeTarefa.Alta, processo.Id, null, null);
+
+        var result = await svc.CreateAsync(dto);
+
+        Assert.Equal(processo.Id, result.ProcessoId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveAtualizarProcessoVinculado()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var processo = SeedProcesso(ctx, tenant.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var created = await svc.CreateAsync(new CreateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Media, null, null, null));
+
+        Assert.Null(created.ProcessoId);
+
+        var updateDto = new UpdateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Media, StatusTarefa.Pendente, processo.Id, null, null);
+        var updated = await svc.UpdateAsync(created.Id, updateDto);
+
+        Assert.Equal(processo.Id, updated.ProcessoId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DeveRemoverProcessoVinculado_QuandoNulo()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var processo = SeedProcesso(ctx, tenant.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var created = await svc.CreateAsync(new CreateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Alta, processo.Id, null, null));
+
+        Assert.Equal(processo.Id, created.ProcessoId);
+
+        var updateDto = new UpdateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Alta, StatusTarefa.Pendente, null, null, null);
+        var updated = await svc.UpdateAsync(created.Id, updateDto);
+
+        Assert.Null(updated.ProcessoId);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveFiltrarPorProcessoId()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var processo = SeedProcesso(ctx, tenant.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        await svc.CreateAsync(new CreateTarefaDto("Sem processo", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.CreateAsync(new CreateTarefaDto("Com processo", null, null, null, PrioridadeTarefa.Alta, processo.Id, null, null));
+
+        var filtro = new TarefaFiltroDto(null, null, null, null, processo.Id, null, null);
+        var result = await svc.GetAllAsync(filtro);
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Com processo", result.Items.Single().Titulo);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DeveRetornarProcessoIdNaListagem()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var processo = SeedProcesso(ctx, tenant.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        await svc.CreateAsync(new CreateTarefaDto("Tarefa vinculada", null, null, null,
+            PrioridadeTarefa.Alta, processo.Id, null, null));
+
+        var result = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null));
+
+        var item = result.Items.Single();
+        Assert.Equal(processo.Id, item.ProcessoId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ComProcessoInexistente_DevePermitirVinculacaoSemValidacao()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var created = await svc.CreateAsync(new CreateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Media, null, null, null));
+
+        var processoIdInexistente = Guid.NewGuid();
+        var updateDto = new UpdateTarefaDto("Tarefa", null, null, null,
+            PrioridadeTarefa.Media, StatusTarefa.Pendente, processoIdInexistente, null, null);
+
+        var updated = await svc.UpdateAsync(created.Id, updateDto);
+
+        Assert.Equal(processoIdInexistente, updated.ProcessoId);
     }
 }

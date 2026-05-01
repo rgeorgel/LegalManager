@@ -99,7 +99,7 @@ public class AlertasJob
                         await CriarNotificacaoAsync(
                             tarefa.TenantId, tarefa.ResponsavelId!.Value,
                             TipoNotificacao.PrazoTarefa, titulo, msg,
-                            "/pages/tarefas.html", chave);
+                            $"/pages/tarefas.html?abrirId={tarefa.Id}", chave);
                     }
                 }
                 catch (Exception ex)

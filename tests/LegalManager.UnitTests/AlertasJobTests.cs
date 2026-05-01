@@ -466,4 +466,94 @@ public class AlertasJobTests
             "resp@test.com", "Responsável", "Tarefa Multi Dia",
             hoje.AddDays(5), 5), Times.Once);
     }
+
+    // --- Testes para URL com abrirId (regressão) ---
+
+    [Fact]
+    public async Task ExecutarAsync_NotificacaoInApp_DeveConterUrlComAbrirIdDaTarefa()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        var tarefaId = Guid.NewGuid();
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = tarefaId, TenantId = tenantId, Titulo = "Tarefa Link",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Alta,
+            Prazo = hoje, ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "PrazoTarefa")).ReturnsAsync(false);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "PrazoTarefa")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, new Mock<IEmailService>().Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n =>
+            n.Tipo == TipoNotificacao.PrazoTarefa && n.UsuarioId == responsavelId);
+
+        Assert.NotNull(notif);
+        Assert.Equal($"/pages/tarefas.html?abrirId={tarefaId}", notif.Url);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public async Task ExecutarAsync_NotificacaoInApp_UrlContemAbrirId_ParaTodosOsLimitesDeDias(int dias)
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        var tarefaId = Guid.NewGuid();
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = tarefaId, TenantId = tenantId, Titulo = $"Tarefa {dias}d",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Media,
+            Prazo = hoje.AddDays(dias), ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "PrazoTarefa")).ReturnsAsync(false);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "PrazoTarefa")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, new Mock<IEmailService>().Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n =>
+            n.Tipo == TipoNotificacao.PrazoTarefa && n.UsuarioId == responsavelId);
+
+        Assert.NotNull(notif);
+        Assert.Contains($"abrirId={tarefaId}", notif.Url);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_NotificacaoInApp_UrlNaoDeveSerApenasListagem()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        var tarefaId = Guid.NewGuid();
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = tarefaId, TenantId = tenantId, Titulo = "Tarefa",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Baixa,
+            Prazo = hoje, ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "PrazoTarefa")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, new Mock<IEmailService>().Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n => n.Tipo == TipoNotificacao.PrazoTarefa);
+        Assert.NotNull(notif);
+        Assert.NotEqual("/pages/tarefas.html", notif.Url);
+    }
 }

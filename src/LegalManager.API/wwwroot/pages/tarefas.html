@@ -28,6 +28,8 @@
     .tarefa-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; }
     .tarefa-card-titulo { font-weight:600; font-size:15px; }
     .tarefa-card-meta   { display:flex; flex-wrap:wrap; gap:8px; font-size:13px; color:var(--color-text-muted); }
+    .processo-link { color:var(--color-primary); text-decoration:none; font-weight:500; }
+    .processo-link:hover { text-decoration:underline; }
     .tarefa-card-actions { display:flex; gap:8px; flex-wrap:wrap; }
     .tags-list { display:flex; flex-wrap:wrap; gap:4px; }
     .tag { background:#e5e7eb; color:#374151; font-size:11px; padding:2px 8px; border-radius:999px; }
@@ -166,6 +168,17 @@
         <div class="form-group">
           <label class="form-label">Prazo</label>
           <input type="datetime-local" id="fPrazo" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Processo vinculado</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="fProcesso" class="form-control" style="flex:1">
+              <option value="">Nenhum processo vinculado</option>
+            </select>
+            <button type="button" id="fProcessoLink"
+               class="btn btn-secondary btn-sm"
+               style="display:none;white-space:nowrap">⚖️ Abrir processo</button>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Tags (separadas por vírgula)</label>
