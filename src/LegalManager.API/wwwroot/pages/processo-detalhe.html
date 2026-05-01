@@ -305,14 +305,15 @@
   </main>
 </div>
 
-<!-- Modal Nova Tarefa (processo) -->
+<!-- Modal Nova / Editar Tarefa (processo) -->
 <div class="modal-overlay" id="modalNovaTarefa">
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
-      <span class="modal-title">Nova Tarefa</span>
+      <span class="modal-title" id="novaTarefaModalTitle">Nova Tarefa</span>
       <button class="modal-close" id="novaTarefaClose">✕</button>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="ntId">
       <div id="novaTarefaAlert" class="alert alert-error" style="display:none"></div>
       <div class="form-group">
         <label class="form-label">Título *</label>
@@ -332,10 +333,19 @@
             <option value="Urgente">Urgente</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Prazo</label>
-          <input type="datetime-local" id="ntPrazo" class="form-control">
+        <div class="form-group" id="ntStatusGroup" style="display:none">
+          <label class="form-label">Status *</label>
+          <select id="ntStatus" class="form-control">
+            <option value="Pendente">Pendente</option>
+            <option value="EmAndamento">Em Andamento</option>
+            <option value="Concluida">Concluída</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input type="datetime-local" id="ntPrazo" class="form-control">
       </div>
       <div class="form-group">
         <label class="form-label">Tags (separadas por vírgula)</label>
@@ -951,6 +961,7 @@ function tarefaItemHtml(t, showActions) {
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
       ${t.status !== 'Concluida' && t.status !== 'Cancelada'
         ? `<button class="btn btn-secondary btn-sm" onclick="concluirTarefa('${t.id}')">✓ Concluir</button>` : ''}
+      <button class="btn btn-secondary btn-sm" onclick="editarTarefa('${t.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirTarefa('${t.id}')">Excluir</button>
     </div>` : '';
   return `
@@ -1570,16 +1581,42 @@ window.removerParte = async (contatoId) => {
   }
 };
 
-// Nova Tarefa (processo)
-document.getElementById('btnNovaTarefaTab').addEventListener('click', () => {
+// Nova / Editar Tarefa (processo)
+function abrirModalNovaTarefa() {
+  document.getElementById('ntId').value = '';
   document.getElementById('ntTitulo').value = '';
   document.getElementById('ntDescricao').value = '';
   document.getElementById('ntPrioridade').value = 'Media';
   document.getElementById('ntPrazo').value = '';
   document.getElementById('ntTags').value = '';
+  document.getElementById('ntStatusGroup').style.display = 'none';
   document.getElementById('novaTarefaAlert').style.display = 'none';
+  document.getElementById('novaTarefaModalTitle').textContent = 'Nova Tarefa';
   document.getElementById('modalNovaTarefa').classList.add('open');
-});
+}
+
+document.getElementById('btnNovaTarefaTab').addEventListener('click', abrirModalNovaTarefa);
+
+window.editarTarefa = async id => {
+  const alertEl = document.getElementById('novaTarefaAlert');
+  alertEl.style.display = 'none';
+  document.getElementById('novaTarefaModalTitle').textContent = 'Editar Tarefa';
+  document.getElementById('ntStatusGroup').style.display = '';
+  document.getElementById('modalNovaTarefa').classList.add('open');
+  try {
+    const t = await apiFetch(`/tarefas/${id}`);
+    document.getElementById('ntId').value = t.id;
+    document.getElementById('ntTitulo').value = t.titulo;
+    document.getElementById('ntDescricao').value = t.descricao ?? '';
+    document.getElementById('ntPrioridade').value = t.prioridade;
+    document.getElementById('ntStatus').value = t.status;
+    document.getElementById('ntPrazo').value = t.prazo ? t.prazo.substring(0, 16) : '';
+    document.getElementById('ntTags').value = (t.tags ?? []).join(', ');
+  } catch (err) {
+    alertEl.textContent = err.message;
+    alertEl.style.display = 'block';
+  }
+};
 
 [document.getElementById('novaTarefaClose'), document.getElementById('novaTarefaCancelar')].forEach(el =>
   el.addEventListener('click', () => document.getElementById('modalNovaTarefa').classList.remove('open')));
@@ -1594,21 +1631,38 @@ document.getElementById('novaTarefaSalvar').addEventListener('click', async () =
   try {
     const tagsRaw = document.getElementById('ntTags').value.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-    await apiFetch('/tarefas', {
-      method: 'POST',
-      body: JSON.stringify({
-        titulo,
-        descricao: document.getElementById('ntDescricao').value.trim() || null,
-        prioridade: document.getElementById('ntPrioridade').value,
-        prazo: document.getElementById('ntPrazo').value || null,
-        processoId,
-        tags
-      })
-    });
+    const editId = document.getElementById('ntId').value;
+    if (editId) {
+      await apiFetch(`/tarefas/${editId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          titulo,
+          descricao: document.getElementById('ntDescricao').value.trim() || null,
+          prioridade: document.getElementById('ntPrioridade').value,
+          status: document.getElementById('ntStatus').value,
+          prazo: document.getElementById('ntPrazo').value || null,
+          processoId,
+          tags
+        })
+      });
+      showAlert('Tarefa atualizada.', 'success');
+    } else {
+      await apiFetch('/tarefas', {
+        method: 'POST',
+        body: JSON.stringify({
+          titulo,
+          descricao: document.getElementById('ntDescricao').value.trim() || null,
+          prioridade: document.getElementById('ntPrioridade').value,
+          prazo: document.getElementById('ntPrazo').value || null,
+          processoId,
+          tags
+        })
+      });
+      showAlert('Tarefa criada.', 'success');
+    }
     document.getElementById('modalNovaTarefa').classList.remove('open');
     await loadTarefasTab();
     await loadTarefasPreview();
-    showAlert('Tarefa criada.', 'success');
   } catch (err) {
     alertEl.textContent = err.message;
     alertEl.style.display = 'block';
