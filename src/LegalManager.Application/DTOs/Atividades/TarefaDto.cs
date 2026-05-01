@@ -11,7 +11,9 @@ public record CreateTarefaDto(
     [Required] PrioridadeTarefa Prioridade,
     Guid? ProcessoId,
     Guid? ContatoId,
-    List<string>? Tags
+    List<string>? Tags,
+    TipoTarefa Tipo = TipoTarefa.Tarefa,
+    Guid? AndamentoId = null
 );
 
 public record UpdateTarefaDto(
@@ -23,7 +25,8 @@ public record UpdateTarefaDto(
     [Required] StatusTarefa Status,
     Guid? ProcessoId,
     Guid? ContatoId,
-    List<string>? Tags
+    List<string>? Tags,
+    TipoTarefa Tipo = TipoTarefa.Tarefa
 );
 
 public record TarefaResponseDto(
@@ -44,7 +47,9 @@ public record TarefaResponseDto(
     List<string> Tags,
     DateTime CriadoEm,
     DateTime? ConcluidaEm,
-    bool Atrasada
+    bool Atrasada,
+    TipoTarefa Tipo = TipoTarefa.Tarefa,
+    Guid? AndamentoId = null
 );
 
 public record TarefaListItemDto(
@@ -61,7 +66,8 @@ public record TarefaListItemDto(
     string? NomeContato,
     List<string> Tags,
     bool Atrasada,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    TipoTarefa Tipo = TipoTarefa.Tarefa
 );
 
 public record TarefaFiltroDto(
@@ -73,5 +79,6 @@ public record TarefaFiltroDto(
     Guid? ContatoId,
     bool? Atrasada,
     int Page = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    TipoTarefa? Tipo = null
 );

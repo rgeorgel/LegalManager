@@ -83,7 +83,7 @@
     </div>
 
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="tarefas">✅ Tarefas</button>
+      <button class="tab-btn active" data-tab="tarefas">✅ Tarefas/Prazos</button>
       <button class="tab-btn" data-tab="kanban" id="tabBtnKanban">
         🗂 Kanban
         <span id="kanbanProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
@@ -107,6 +107,11 @@
           <option value="Media">Média</option>
           <option value="Alta">Alta</option>
           <option value="Urgente">Urgente</option>
+        </select>
+        <select id="filtTipo" class="form-control" style="width:auto">
+          <option value="">Todos os tipos</option>
+          <option value="Tarefa">Tarefas</option>
+          <option value="Prazo">Prazos</option>
         </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
           <input type="checkbox" id="filtAtrasada"> Apenas atrasadas
@@ -274,6 +279,7 @@ function getFilters() {
     busca: document.getElementById('filtBusca').value.trim(),
     status: document.getElementById('filtStatus').value,
     prioridade: document.getElementById('filtPrioridade').value,
+    tipo: document.getElementById('filtTipo').value,
     atrasada: document.getElementById('filtAtrasada').checked ? 'true' : '',
   };
 }
@@ -285,6 +291,7 @@ async function loadTarefas(page = 1) {
   if (f.busca) params.set('busca', f.busca);
   if (f.status) params.set('status', f.status);
   if (f.prioridade) params.set('prioridade', f.prioridade);
+  if (f.tipo) params.set('tipo', f.tipo);
   if (f.atrasada) params.set('atrasada', 'true');
 
   try {
@@ -321,6 +328,7 @@ function tarefaCard(t) {
         ${atrasadaBadge}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${t.tipo === 'Prazo' ? '<span class="badge" style="background:#ede9fe;color:#6d28d9">⏰ Prazo</span>' : ''}
         <span class="badge ${prioClass}">${PRIORIDADE_LABEL[t.prioridade]}</span>
         <span class="badge ${statusClass}">${STATUS_LABEL[t.status]}</span>
       </div>
@@ -490,7 +498,7 @@ document.getElementById('filtBusca').addEventListener('input', () => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => loadTarefas(1), 400);
 });
-['filtStatus', 'filtPrioridade', 'filtAtrasada'].forEach(id =>
+['filtStatus', 'filtPrioridade', 'filtTipo', 'filtAtrasada'].forEach(id =>
   document.getElementById(id).addEventListener('change', () => loadTarefas(1))
 );
 
@@ -637,8 +645,11 @@ document.getElementById('modalDetalhe').addEventListener('click', e => {
 });
 
 // ── Init ───────────────────────────────────────────────────────
+const _urlParams = new URLSearchParams(location.search);
+const _initTipo = _urlParams.get('tipo');
+if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
 loadTarefas();
-const _abrirId = new URLSearchParams(location.search).get('abrirId');
+const _abrirId = _urlParams.get('abrirId');
 if (_abrirId) openEditModal(_abrirId);
 </script>
 </body>

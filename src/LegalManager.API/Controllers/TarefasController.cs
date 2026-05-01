@@ -36,13 +36,15 @@ public class TarefasController : ControllerBase
         [FromQuery] bool? atrasada,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string? tipo = null,
         CancellationToken ct = default)
     {
         var filtro = new TarefaFiltroDto(
             busca,
             status != null && Enum.TryParse<StatusTarefa>(status, true, out var s) ? s : null,
             prioridade != null && Enum.TryParse<PrioridadeTarefa>(prioridade, true, out var p) ? p : null,
-            responsavelId, processoId, contatoId, atrasada, page, pageSize);
+            responsavelId, processoId, contatoId, atrasada, page, pageSize,
+            tipo != null && Enum.TryParse<TipoTarefa>(tipo, true, out var tp) ? tp : null);
 
         return Ok(await _service.GetAllAsync(filtro, ct));
     }

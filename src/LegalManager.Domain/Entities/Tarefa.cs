@@ -15,6 +15,8 @@ public class Tarefa
     public DateTime? Prazo { get; set; }
     public PrioridadeTarefa Prioridade { get; set; }
     public StatusTarefa Status { get; set; }
+    public TipoTarefa Tipo { get; set; }
+    public Guid? AndamentoId { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime? AtualizadoEm { get; set; }
     public DateTime? ConcluidaEm { get; set; }

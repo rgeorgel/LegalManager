@@ -769,6 +769,40 @@
   </div>
 </div>
 
+<!-- Modal Criar Prazo (a partir de andamento) -->
+<div class="modal-overlay" id="modalCriarPrazo" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">⏰ Criar Prazo</span>
+      <button class="modal-close" id="criarPrazoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="criarPrazoAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" id="cpTitulo" class="form-control" maxlength="300" placeholder="Ex: Prazo para contestação">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data do Prazo *</label>
+        <input type="datetime-local" id="cpPrazo" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridade</label>
+        <select id="cpPrioridade" class="form-control">
+          <option value="Baixa">Baixa</option>
+          <option value="Media" selected>Média</option>
+          <option value="Alta">Alta</option>
+          <option value="Urgente">Urgente</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="criarPrazoCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="criarPrazoSalvar">Salvar Prazo</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
@@ -936,6 +970,7 @@ async function loadAndamentosPreview() {
             ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
           </div>
         </div>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}', ${JSON.stringify(esc(a.descricao)).replace(/'/g,"&#39;")})">⏰ Criar Prazo</button>
       </div>`).join('');
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
@@ -1058,7 +1093,10 @@ async function loadAndamentos() {
             ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
           </div>
         </div>
-        ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
+        <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}', ${JSON.stringify(esc(a.descricao)).replace(/'/g,"&#39;")})">⏰ Criar Prazo</button>
+          ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
+        </div>
       </div>`).join('');
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
@@ -1073,6 +1111,59 @@ window.removeAndamento = async id => {
     await loadAndamentosPreview();
   } catch (err) { showAlert(err.message); }
 };
+
+// ── Criar Prazo (a partir de andamento) ────────────────────────
+let _cpAndamentoId = null;
+
+window.abrirModalCriarPrazo = (andamentoId, desc) => {
+  _cpAndamentoId = andamentoId;
+  document.getElementById('cpTitulo').value = '';
+  document.getElementById('cpPrazo').value = '';
+  document.getElementById('cpPrioridade').value = 'Media';
+  document.getElementById('criarPrazoAlert').style.display = 'none';
+  document.getElementById('modalCriarPrazo').style.display = 'flex';
+};
+
+function fecharModalCriarPrazo() {
+  document.getElementById('modalCriarPrazo').style.display = 'none';
+}
+
+document.getElementById('criarPrazoClose').addEventListener('click', fecharModalCriarPrazo);
+document.getElementById('criarPrazoCancelar').addEventListener('click', fecharModalCriarPrazo);
+document.getElementById('modalCriarPrazo').addEventListener('click', e => {
+  if (e.target === e.currentTarget) fecharModalCriarPrazo();
+});
+
+document.getElementById('criarPrazoSalvar').addEventListener('click', async () => {
+  const alertEl = document.getElementById('criarPrazoAlert');
+  alertEl.style.display = 'none';
+
+  const titulo = document.getElementById('cpTitulo').value.trim();
+  const prazo = document.getElementById('cpPrazo').value;
+
+  if (!titulo) { alertEl.textContent = 'Título é obrigatório.'; alertEl.style.display = ''; return; }
+  if (!prazo) { alertEl.textContent = 'Data do prazo é obrigatória.'; alertEl.style.display = ''; return; }
+
+  try {
+    await apiFetch('/tarefas', {
+      method: 'POST',
+      body: JSON.stringify({
+        titulo,
+        prazo,
+        prioridade: document.getElementById('cpPrioridade').value,
+        processoId,
+        andamentoId: _cpAndamentoId,
+        tipo: 'Prazo',
+        tags: []
+      })
+    });
+    fecharModalCriarPrazo();
+    await loadTarefasTab();
+  } catch (err) {
+    alertEl.textContent = err.message ?? 'Erro ao criar prazo.';
+    alertEl.style.display = '';
+  }
+});
 
 let andamentosLoaded = false;
 let documentosLoaded = false;

@@ -13,7 +13,6 @@ const NAV_GROUPS = [
     items: [
       { href: '/pages/processos.html',    label: '⚖️ Processos' },
       { href: '/pages/contatos.html',     label: '👥 Contatos' },
-      { href: '/pages/prazos.html',       label: '⏰ Prazos' },
       { href: '/pages/documentos.html',   label: '📁 Documentos' },
       { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },
     ],
@@ -21,7 +20,7 @@ const NAV_GROUPS = [
   {
     label: 'Produtividade',
     items: [
-      { href: '/pages/tarefas.html',      label: '✅ Tarefas' },
+      { href: '/pages/tarefas.html',      label: '✅ Tarefas/Prazos' },
       { href: '/pages/agenda.html',        label: '📅 Agenda' },
       { href: '/pages/timesheet.html',     label: '⏱️ Timesheet' },
     ],
@@ -45,7 +44,7 @@ const NAV_GROUPS = [
 const BOTTOM_NAV_ITEMS = [
   { href: '/pages/dashboard.html', icon: '📊', label: 'Dashboard' },
   { href: '/pages/processos.html', icon: '⚖️', label: 'Processos' },
-  { href: '/pages/tarefas.html', icon: '✅', label: 'Tarefas' },
+  { href: '/pages/tarefas.html', icon: '✅', label: 'Tarefas/Prazos' },
   { href: '/pages/agenda.html', icon: '📅', label: 'Agenda' },
   { action: 'menu', icon: '☰', label: 'Menu' },
 ];

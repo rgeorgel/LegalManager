@@ -35,6 +35,8 @@ public class TarefaService : ITarefaService
             Status = StatusTarefa.Pendente,
             ProcessoId = dto.ProcessoId,
             ContatoId = dto.ContatoId,
+            Tipo = dto.Tipo,
+            AndamentoId = dto.AndamentoId,
             CriadoEm = DateTime.UtcNow
         };
 
@@ -62,6 +64,7 @@ public class TarefaService : ITarefaService
         tarefa.Prioridade = dto.Prioridade;
         tarefa.ProcessoId = dto.ProcessoId;
         tarefa.ContatoId = dto.ContatoId;
+        tarefa.Tipo = dto.Tipo;
         tarefa.AtualizadoEm = DateTime.UtcNow;
 
         if (dto.Status == StatusTarefa.Concluida && tarefa.Status != StatusTarefa.Concluida)
@@ -116,6 +119,9 @@ public class TarefaService : ITarefaService
         if (filtro.Atrasada == true)
             query = query.Where(t => t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada);
 
+        if (filtro.Tipo.HasValue)
+            query = query.Where(t => t.Tipo == filtro.Tipo.Value);
+
         var total = await query.CountAsync(ct);
 
         var items = await query
@@ -138,7 +144,8 @@ public class TarefaService : ITarefaService
                 t.Contato != null ? t.Contato.Nome : null,
                 t.Tags.Select(tag => tag.Tag).ToList(),
                 t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
-                t.CriadoEm
+                t.CriadoEm,
+                t.Tipo
             ))
             .ToListAsync(ct);
 
@@ -189,7 +196,9 @@ public class TarefaService : ITarefaService
                 t.Tags.Select(tag => tag.Tag).ToList(),
                 t.CriadoEm,
                 t.ConcluidaEm,
-                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada
+                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
+                t.Tipo,
+                t.AndamentoId
             ))
             .FirstOrDefaultAsync(ct);
 
