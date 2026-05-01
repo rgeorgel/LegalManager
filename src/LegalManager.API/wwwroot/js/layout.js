@@ -22,7 +22,6 @@ const NAV_GROUPS = [
     label: 'Produtividade',
     items: [
       { href: '/pages/tarefas.html',      label: '✅ Tarefas' },
-      { href: '/pages/kanban.html',        label: '🗂 Kanban',   pro: true },
       { href: '/pages/agenda.html',        label: '📅 Agenda' },
       { href: '/pages/timesheet.html',     label: '⏱️ Timesheet' },
     ],
