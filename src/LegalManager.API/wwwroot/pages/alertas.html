@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nomus — Alertas</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .notif-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .notif-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .notif-stat {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      text-align: center;
+      min-width: 90px;
+    }
+    .notif-stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+    .notif-stat-label {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .notif-stat.unread .notif-stat-value { color: #dc2626; }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-tab {
+      padding: 7px 16px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: .15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .filter-tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .filter-tab .tab-count {
+      background: rgba(0,0,0,.12);
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 1px 6px;
+      font-weight: 600;
+    }
+    .filter-tab.active .tab-count { background: rgba(255,255,255,.25); }
+
+    .notif-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .notif-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      background: var(--color-surface);
+      display: flex;
+      gap: 14px;
+      cursor: pointer;
+      transition: box-shadow .15s, border-color .15s, transform .1s;
+      position: relative;
+    }
+    .notif-card:hover {
+      border-color: var(--color-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      transform: translateY(-1px);
+    }
+    .notif-card.unread {
+      background: var(--color-primary-light, #eff6ff);
+      border-left: 3px solid var(--color-primary);
+    }
+    .notif-card.unread .notif-icon-wrap { background: var(--color-primary); color: #fff; }
+
+    .notif-icon-wrap {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--color-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      border: 1px solid var(--color-border);
+    }
+
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .notif-titulo { font-weight: 600; font-size: 14px; flex: 1; min-width: 0; }
+    .notif-time { font-size: 12px; color: #9ca3af; white-space: nowrap; flex-shrink: 0; }
+    .notif-mensagem { font-size: 13px; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 8px; }
+    .notif-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .notif-type-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .type-prazotarefa   { background: #fefce8; color: #a16207; }
+    .type-prazoevento   { background: #f0fdf4; color: #15803d; }
+    .type-trialexpirando{ background: #fff7ed; color: #c2410c; }
+    .type-geral         { background: #f3f4f6; color: #374151; }
+    .type-novoandamento { background: #dbeafe; color: #1d4ed8; }
+
+    .notif-link-hint {
+      font-size: 11px;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .unread-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #dc2626;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--color-text-muted);
+    }
+    .empty-state-icon { font-size: 52px; margin-bottom: 16px; line-height: 1; }
+    .empty-state-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .empty-state-sub { font-size: 13px; }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 24px;
+    }
+    .page-btn {
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background: var(--color-surface);
+      cursor: pointer;
+      font-size: 13px;
+      transition: .15s;
+    }
+    .page-btn:hover:not(:disabled) { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .page-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .mark-all-btn {
+      font-size: 13px;
+      color: var(--color-primary);
+      background: none;
+      border: 1px solid var(--color-primary);
+      cursor: pointer;
+      padding: 7px 16px;
+      border-radius: var(--radius);
+      transition: .15s;
+    }
+    .mark-all-btn:hover { background: var(--color-primary); color: #fff; }
+
+    .section-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-muted);
+    }
+    .section-loading .spinner {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo">⚖️ Nomus</div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="notif-header-bar">
+      <div>
+        <h1 class="page-title" style="margin:0">Alertas</h1>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--color-text-muted)">Seus alertas e atualizações recentes</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div class="notif-stats">
+          <div class="notif-stat">
+            <div class="notif-stat-value" id="statTotal">–</div>
+            <div class="notif-stat-label">Total</div>
+          </div>
+          <div class="notif-stat unread">
+            <div class="notif-stat-value" id="statNaoLidas">–</div>
+            <div class="notif-stat-label">Não lidas</div>
+          </div>
+        </div>
+        <button class="mark-all-btn" id="btnMarkAll">✓ Marcar todas como lidas</button>
+      </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="todos">🔔 Todas <span class="tab-count" id="tc-todos">0</span></button>
+      <button class="filter-tab" data-filter="nao-lidas">🔴 Não lidas <span class="tab-count" id="tc-nao-lidas">0</span></button>
+      <button class="filter-tab" data-filter="prazotarefa">✅ Tarefas <span class="tab-count" id="tc-prazotarefa">0</span></button>
+      <button class="filter-tab" data-filter="prazoevento">📅 Eventos <span class="tab-count" id="tc-prazoevento">0</span></button>
+      <button class="filter-tab" data-filter="novoandamento">⚖️ Andamentos <span class="tab-count" id="tc-novoandamento">0</span></button>
+      <button class="filter-tab" data-filter="trialexpirando">⚠️ Trial <span class="tab-count" id="tc-trialexpirando">0</span></button>
+      <button class="filter-tab" data-filter="geral">📋 Geral <span class="tab-count" id="tc-geral">0</span></button>
+    </div>
+
+    <div id="notifLoading" class="section-loading">
+      <div><div class="spinner"></div></div>
+      <div>Carregando alertas...</div>
+    </div>
+    <div id="notifEmpty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">🔔</div>
+      <div class="empty-state-title">Nenhum alerta encontrado</div>
+      <div class="empty-state-sub">Você está em dia com tudo!</div>
+    </div>
+    <div id="notifList" class="notif-list" style="display:none"></div>
+    <div id="notifPagination" class="pagination" style="display:none"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+
+  initLayout();
+
+  const TIPO_LABELS = {
+    PrazoTarefa:    'Tarefa',
+    PrazoEvento:    'Evento',
+    TrialExpirando: 'Trial',
+    Geral:          'Geral',
+    NovoAndamento:  'Andamento'
+  };
+
+  const TIPO_ICONS = {
+    PrazoTarefa:    '✅',
+    PrazoEvento:    '📅',
+    TrialExpirando: '⚠️',
+    Geral:          '🔔',
+    NovoAndamento:  '⚖️'
+  };
+
+  let currentFilter = 'todos';
+  let currentPage = 1;
+  const pageSize = 20;
+  let allLoaded = [];
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      currentPage = 1;
+      renderWithFilter();
+    });
+  });
+
+  document.getElementById('btnMarkAll').addEventListener('click', async () => {
+    if (!confirm('Marcar todos os alertas como lidos?')) return;
+    try {
+      await apiFetch('/notificacoes/marcar-todas-lidas', { method: 'POST' });
+      await loadNotificacoes();
+    } catch (e) {
+      console.error(e);
+    }
+  });
+
+  async function loadNotificacoes() {
+    const loading = document.getElementById('notifLoading');
+    const empty = document.getElementById('notifEmpty');
+    const list = document.getElementById('notifList');
+    const pagination = document.getElementById('notifPagination');
+
+    loading.style.display = '';
+    empty.style.display = 'none';
+    list.style.display = 'none';
+    pagination.style.display = 'none';
+
+    try {
+      const { items, total } = await apiFetch(`/notificacoes/historico?page=1&pageSize=200`);
+      allLoaded = items ?? [];
+
+      updateStats(allLoaded, total);
+      updateTabCounts(allLoaded);
+
+      loading.style.display = 'none';
+      renderWithFilter();
+    } catch (e) {
+      document.getElementById('notifLoading').innerHTML = '<div style="color:#dc2626">Erro ao carregar alertas.</div>';
+      console.error(e);
+    }
+  }
+
+  function updateStats(items, total) {
+    document.getElementById('statTotal').textContent = total ?? items.length;
+    document.getElementById('statNaoLidas').textContent = items.filter(n => !n.lida).length;
+  }
+
+  function updateTabCounts(items) {
+    const counts = {};
+    items.forEach(n => {
+      const k = n.tipo.toLowerCase();
+      counts[k] = (counts[k] || 0) + 1;
+    });
+    counts['todos'] = items.length;
+    counts['nao-lidas'] = items.filter(n => !n.lida).length;
+
+    Object.entries(counts).forEach(([k, v]) => {
+      const el = document.getElementById(`tc-${k}`);
+      if (el) el.textContent = v;
+    });
+  }
+
+  function renderWithFilter() {
+    let filtered = allLoaded;
+    if (currentFilter === 'nao-lidas') {
+      filtered = allLoaded.filter(n => !n.lida);
+    } else if (currentFilter !== 'todos') {
+      filtered = allLoaded.filter(n => n.tipo.toLowerCase() === currentFilter.toLowerCase());
+    }
+
+    const empty = document.getElementById('notifEmpty');
+    const list = document.getElementById('notifList');
+
+    if (!filtered.length) {
+      empty.style.display = '';
+      list.style.display = 'none';
+      document.getElementById('notifPagination').style.display = 'none';
+      return;
+    }
+
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * pageSize;
+    const page = filtered.slice(start, start + pageSize);
+
+    empty.style.display = 'none';
+    list.style.display = '';
+    renderNotifList(page);
+    renderPagination(filtered.length);
+  }
+
+  function renderNotifList(items) {
+    const list = document.getElementById('notifList');
+    list.innerHTML = items.map(n => {
+      const tipoKey = Object.keys(TIPO_LABELS).find(k => k.toLowerCase() === n.tipo.toLowerCase()) || 'Geral';
+      const unreadClass = n.lida ? '' : 'unread';
+      return `
+        <div class="notif-card ${unreadClass}" data-id="${n.id}" data-url="${esc(n.url ?? '')}">
+          <div class="notif-icon-wrap">${TIPO_ICONS[tipoKey] || '🔔'}</div>
+          <div class="notif-body">
+            <div class="notif-top">
+              <span class="notif-titulo">${esc(n.titulo)}</span>
+              <span class="notif-time">${timeAgo(n.criadaEm)}</span>
+            </div>
+            <div class="notif-mensagem">${esc(n.mensagem)}</div>
+            <div class="notif-footer">
+              <span class="notif-type-badge type-${tipoKey.toLowerCase()}">${TIPO_ICONS[tipoKey]} ${TIPO_LABELS[tipoKey]}</span>
+              ${n.url ? '<span class="notif-link-hint">🔗 Ver detalhes</span>' : ''}
+            </div>
+          </div>
+          ${!n.lida ? '<div class="unread-dot" title="Não lida"></div>' : ''}
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.notif-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const id = card.dataset.id;
+        const url = card.dataset.url;
+        try { await apiFetch(`/notificacoes/${id}/lida`, { method: 'POST' }); } catch {}
+        if (url) window.location.href = url;
+        else {
+          card.classList.remove('unread');
+          card.querySelector('.unread-dot')?.remove();
+          const naoLidas = document.getElementById('statNaoLidas');
+          const cur = parseInt(naoLidas.textContent) || 0;
+          if (cur > 0) naoLidas.textContent = cur - 1;
+        }
+      });
+    });
+  }
+
+  function renderPagination(total) {
+    const pagination = document.getElementById('notifPagination');
+    const totalPages = Math.ceil(total / pageSize);
+    if (totalPages <= 1) { pagination.style.display = 'none'; return; }
+    pagination.style.display = '';
+    let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">‹</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        html += `<span style="padding:0 4px;color:var(--color-text-muted)">…</span>`;
+      }
+    }
+    html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">›</button>`;
+    pagination.innerHTML = html;
+
+    pagination.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        currentPage = parseInt(btn.dataset.page);
+        renderWithFilter();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  function timeAgo(isoStr) {
+    const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 60000);
+    if (diff < 1) return 'agora';
+    if (diff < 60) return `${diff}min atrás`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h atrás`;
+    if (diff < 10080) return `${Math.floor(diff / 1440)}d atrás`;
+    return new Date(isoStr).toLocaleDateString('pt-BR');
+  }
+
+  function esc(str) {
+    return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  loadNotificacoes();
+</script>
+</body>
+</html>

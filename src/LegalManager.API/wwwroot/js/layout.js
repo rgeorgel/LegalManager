@@ -38,7 +38,7 @@ const NAV_GROUPS = [
     label: 'Sistema',
     items: [
       { href: '/pages/usuarios.html',       label: '🔑 Usuários' },
-      { href: '/pages/notificacoes.html',    label: '🔔 Notificações' },
+      { href: '/pages/alertas.html',          label: '🔔 Alertas' },
       { href: '/pages/configuracoes.html',  label: '⚙️ Configurações' },
       { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
     ],
@@ -235,7 +235,7 @@ function injectNotificationBell() {
   bell.id = 'notifBell';
   bell.style.cssText = 'position:relative;cursor:pointer;padding:6px;display:flex;align-items:center;user-select:none';
   bell.innerHTML = `
-    <span style="font-size:18px" title="Notificações">🔔</span>
+    <span style="font-size:18px" title="Alertas">🔔</span>
     <span id="notifBadge" style="display:none;position:absolute;top:2px;right:2px;background:#dc2626;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 4px"></span>
     <div id="notifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:9999;width:320px;background:#fff;border:1px solid var(--color-border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:400px;overflow-y:auto"></div>
   `;
@@ -289,7 +289,7 @@ async function loadNotificacoes() {
 
     const header = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f3f4f6">
-        <strong style="font-size:13px">Notificações</strong>
+        <strong style="font-size:13px">Alertas</strong>
         <button id="notifMarcarTodas" style="background:none;border:none;color:#1a56db;font-size:12px;cursor:pointer">Marcar todas como lidas</button>
       </div>`;
 
@@ -322,7 +322,7 @@ async function loadNotificacoes() {
       });
     });
   } catch {
-    dd.innerHTML = '<div style="padding:12px;text-align:center;color:#e02424;font-size:13px">Erro ao carregar notificações.</div>';
+    dd.innerHTML = '<div style="padding:12px;text-align:center;color:#e02424;font-size:13px">Erro ao carregar alertas.</div>';
   }
 }
 
