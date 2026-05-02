@@ -133,6 +133,7 @@ public class TarefaService : ITarefaService
             .Select(t => new TarefaListItemDto(
                 t.Id,
                 t.Titulo,
+                t.Descricao,
                 t.ResponsavelId,
                 t.Responsavel != null ? t.Responsavel.Nome : null,
                 t.Prazo,

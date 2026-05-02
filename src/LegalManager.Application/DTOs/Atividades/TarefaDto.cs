@@ -55,6 +55,7 @@ public record TarefaResponseDto(
 public record TarefaListItemDto(
     Guid Id,
     string Titulo,
+    string? Descricao,
     Guid? ResponsavelId,
     string? NomeResponsavel,
     DateTime? Prazo,

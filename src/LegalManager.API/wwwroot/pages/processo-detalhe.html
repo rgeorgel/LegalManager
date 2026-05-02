@@ -1020,7 +1020,8 @@ function tarefaItemHtml(t, showActions) {
         </div>
       </div>
       <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">📅 Prazo: ${prazoStr}</div>
-      ${tags ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div>` : ''}
+      ${t.descricao ? `<div style="font-size:12px;color:var(--color-text);margin-top:6px;padding:8px;background:var(--color-surface);border-radius:4px;border-left:3px solid var(--color-primary)">${esc(t.descricao)}</div>` : ''}
+      ${tags ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div>` : ''}
       ${actions}
     </div>`;
 }
