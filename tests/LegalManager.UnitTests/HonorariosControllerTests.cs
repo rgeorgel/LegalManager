@@ -358,4 +358,151 @@ public class HonorariosControllerTests
         // Registro do outro tenant permanece intacto
         Assert.Equal(1, await ctx.HonorariosCalculos.CountAsync());
     }
+
+    // ── PDF ──────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GerarPropostaPdf_DeveRetornarFileResult_QuandoDtoValido()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var controller = new HonorariosController(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new PropostaPdfDto
+        {
+            Cliente = "João Silva",
+            ModeLabel = "judicial",
+            Area = "Cível",
+            Tipo = "Procedimento Ordinário",
+            ItemOAB = "4.1",
+            ValorCausa = 50000m,
+            ValorFormatado = "R$ 13.000,00",
+            ValorExtenso = "treze mil reais",
+            HasPerc = true,
+            PercFormatado = "20%",
+            ValorCausaFormatado = "R$ 50.000,00",
+            MinFormatado = "R$ 6.256,51",
+            ExisteExito = true,
+            ExitoValor = 7500m,
+            ExitoPctFormatado = "15%",
+            ExitoValorFormatado = "R$ 7.500,00",
+            FormaPagamentoTexto = "O valor total dos honorários, no montante de R$ 13.000,00, será pago em uma única parcela (à vista).",
+            DataProposta = "03/05/2026"
+        };
+
+        var result = controller.GerarPropostaPdf(dto, default);
+
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", fileResult.ContentType);
+        Assert.NotEmpty(fileResult.FileContents);
+        Assert.Contains("proposta-honorarios-", fileResult.FileDownloadName);
+        Assert.EndsWith(".pdf", fileResult.FileDownloadName);
+    }
+
+    [Fact]
+    public async Task GerarPropostaPdf_DeveGerarPdf_QuandoIsMultiplosComItens()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var controller = new HonorariosController(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new PropostaPdfDto
+        {
+            Cliente = "João Silva",
+            ModeLabel = "múltiplos serviços",
+            Area = "Cível, Trabalhista",
+            Tipo = "Múltiplos tipos",
+            ItemOAB = "VÁRIOS",
+            ValorCausa = null,
+            ValorFormatado = "R$ 26.000,00",
+            ValorExtenso = "vinte e seis mil reais",
+            HasPerc = false,
+            PercFormatado = null,
+            ValorCausaFormatado = null,
+            MinFormatado = null,
+            ExisteExito = false,
+            ExitoValor = 0,
+            ExitoPctFormatado = null,
+            ExitoValorFormatado = null,
+            FormaPagamentoTexto = "O valor total dos honorários será pago em 3 parcelas.",
+            DataProposta = "03/05/2026",
+            IsMultiplos = true,
+            Itens = new List<PropostaPdfItemDto>
+            {
+                new(1, "Procedimento Ordinário", "judicial", "Cível", "R$ 13.000,00"),
+                new(2, "Reclamante (sobre condenação/acordo)", "judicial", "Trabalhista", "R$ 13.000,00")
+            }
+        };
+
+        var result = controller.GerarPropostaPdf(dto, default);
+
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.NotEmpty(fileResult.FileContents);
+    }
+
+    [Fact]
+    public async Task GerarPropostaPdf_DeveUsarNomeDoTenant_QuandoDisponivel()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var controller = new HonorariosController(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new PropostaPdfDto
+        {
+            Cliente = "João Silva",
+            ModeLabel = "judicial",
+            Area = "Cível",
+            Tipo = "Procedimento Ordinário",
+            ItemOAB = "4.1",
+            ValorCausa = 50000m,
+            ValorFormatado = "R$ 13.000,00",
+            ValorExtenso = "treze mil reais",
+            HasPerc = true,
+            PercFormatado = "20%",
+            ValorCausaFormatado = "R$ 50.000,00",
+            MinFormatado = "R$ 6.256,51",
+            ExisteExito = false,
+            ExitoValor = 0,
+            ExitoPctFormatado = null,
+            ExitoValorFormatado = null,
+            FormaPagamentoTexto = "Pagamento à vista.",
+            DataProposta = "03/05/2026"
+        };
+
+        var result = controller.GerarPropostaPdf(dto, default);
+
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.NotEmpty(fileResult.FileContents);
+    }
+
+    [Fact]
+    public async Task GerarPropostaPdf_DeveGerarPdfSemExito_QuandoNaoExisteExito()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var controller = new HonorariosController(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new PropostaPdfDto
+        {
+            Cliente = "João Silva",
+            ModeLabel = "judicial",
+            Area = "Cível",
+            Tipo = "Procedimento Ordinário",
+            ItemOAB = "4.1",
+            ValorCausa = null,
+            ValorFormatado = "R$ 6.256,51",
+            ValorExtenso = "seis mil duzentos e cinquenta e seis reais",
+            HasPerc = false,
+            PercFormatado = null,
+            ValorCausaFormatado = null,
+            MinFormatado = "R$ 6.256,51",
+            ExisteExito = false,
+            ExitoValor = 0,
+            ExitoPctFormatado = null,
+            ExitoValorFormatado = null,
+            FormaPagamentoTexto = "Pagamento à vista.",
+            DataProposta = "03/05/2026"
+        };
+
+        var result = controller.GerarPropostaPdf(dto, default);
+
+        var fileResult = Assert.IsType<FileContentResult>(result);
+        Assert.NotEmpty(fileResult.FileContents);
+    }
 }

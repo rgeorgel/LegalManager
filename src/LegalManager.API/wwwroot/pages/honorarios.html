@@ -1223,38 +1223,132 @@
     el.innerHTML=`<div class="hc-cmp-grid">${side(hcCmpA,"A")}${side(hcCmpB,"B")}</div>${delta}`;
   }
 
-  // ── PRINT (clean window — removes browser header/footer) ──────────────────
-  function hcPrint(){
-    const content=document.getElementById('hc-proposta-out').innerHTML;
-    const styles=`
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;color:#1a1a18;line-height:1.6;padding:1.2cm 1.5cm}
-      h2{font-size:15px;font-weight:700;color:#0f2744}
-      .hc-proposta-wrap{font-family:'Segoe UI',system-ui,sans-serif}
-      .hc-proposta-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #c9a84c}
-      .hc-proposta-firma{text-align:right}
-      .hc-proposta-firma h2{font-size:15px;font-weight:700;color:#0f2744;letter-spacing:.03em}
-      .hc-proposta-firma p{font-size:11px;color:#5f5e5a}
-      .hc-proposta-titulo{font-size:15px;font-weight:700;text-align:center;letter-spacing:.06em;margin:6px 0 3px;text-transform:uppercase;color:#0f2744}
-      .hc-proposta-sub{text-align:center;font-size:12px;color:#5f5e5a;margin-bottom:16px}
-      .p-sec{margin-bottom:10px}
-      .p-sec .p-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#888780;margin-bottom:3px}
-      .p-sec p,.p-sec div{font-size:11.5px;line-height:1.55;color:#1a1a18}
-      .p-sec strong{font-weight:600}
-      table{width:100%;border-collapse:collapse;margin-top:6px}
-      th{text-align:left;font-weight:600;font-size:12px;padding:5px 7px;border-bottom:1px solid #ddd}
-      td{font-size:12px;padding:4px 7px;border-bottom:1px solid #eee}
-      tr:last-child td{border-bottom:none}
-      .p-footer{border-top:1px solid #ddd;padding-top:8px;margin-top:12px;font-size:10px;color:#888780;text-align:center}
-    `;
-    const pw=window.open('','_blank','width=900,height=700');
-    if(!pw){alert('Permita pop-ups para imprimir.');return;}
-    pw.document.write(`<!DOCTYPE html><html><head><title></title><style>${styles}</style></head><body>${content}</body></html>`);
-    pw.document.close();
-    pw.focus();
-    pw.onload=()=>{pw.print();pw.close();};
-    // fallback if onload already fired
-    setTimeout(()=>{if(!pw.closed){pw.print();pw.close();}},400);
+  // ── PDF DOWNLOAD (backend generation) ─────────────────────────────────────
+  async function hcPrint(){
+    if(hcProposalItems.length>0){
+      await hcDownloadPdfMulti();
+      return;
+    }
+    if(!hcLastCalc){alert("Nenhum cálculo disponível.");return;}
+    const r=hcLastCalc;
+    const prs=hcGetParcelas(r.adj);
+    const cr=hcGetCorrRate();
+    const totalCorr=prs.reduce((s,p)=>s+p.v,0);
+    const cliente=document.getElementById("hc-cliente").value.trim()||"[NOME DO CLIENTE]";
+    const modeLabel=hcSt.mode==="j"?"judicial":"extrajudicial / consultivo";
+    const area=hcSt.area||"[ÁREA]";
+
+    let parcTxt="";
+    if(hcSt.par==="v"){
+      parcTxt=`O valor total dos honorários, no montante de ${brl(r.adj)}, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
+    }else if(hcSt.par==="o"){
+      parcTxt=`Os honorários, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga da procuração; (ii) ${brl(prs[1].v)} até a prolação da sentença de primeiro grau; (iii) ${brl(prs[2].v)} ao final, com a entrega do resultado.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
+    }else{
+      const n=prs.length;
+      parcTxt=`Os honorários, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
+    }
+
+    const dto={
+      cliente,
+      modeLabel,
+      area,
+      tipo:r.act.l,
+      itemOAB:r.act.i,
+      valorCausa:hcSt.val>0?hcSt.val:null,
+      valorFormatado:brl(r.adj),
+      valorExtenso:hcValorExtenso(r.adj),
+      hasPerc:!!(r.act.p&&hcSt.val>0),
+      percFormatado:r.act.p?pct(r.act.p):null,
+      valorCausaFormatado:hcSt.val>0?brl(hcSt.val):null,
+      minFormatado:brl(r.act.m),
+      existeExito:r.exVal>0,
+      exitoValor:r.exVal||0,
+      exitoPctFormatado:r.exPct?pct(r.exPct):null,
+      exitoValorFormatado:r.exVal>0?brl(r.exVal):null,
+      formaPagamentoTexto:parcTxt,
+      dataProposta:today()
+    };
+
+    await hcDownloadPdf(dto);
+  }
+
+  async function hcDownloadPdfMulti(){
+    const totalAdj=hcProposalItems.reduce((s,it)=>s+it.adj,0);
+    const prs=hcGetParcelas(totalAdj);
+    const cr=hcGetCorrRate();
+    const totalCorr=prs.reduce((s,p)=>s+p.v,0);
+    const cliente=document.getElementById("hc-cliente").value.trim()||"[NOME DO CLIENTE]";
+
+    let parcTxt="";
+    if(hcSt.par==="v"){
+      parcTxt=`O valor total dos honorários, no montante de ${brl(totalAdj)}, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
+    }else if(hcSt.par==="o"){
+      parcTxt=`Os honorários, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga das procurações; (ii) ${brl(prs[1].v)} conforme cronograma acordado; (iii) ${brl(prs[2].v)} ao final, com a entrega dos resultados.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
+    }else{
+      const n=prs.length;
+      parcTxt=`Os honorários, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
+    }
+
+    const exitos=hcProposalItems.filter(it=>it.exVal>0);
+
+    const dto={
+      cliente,
+      modeLabel:"múltiplos serviços",
+      area:hcProposalItems.map(it=>it.area).filter(Boolean).join(", ")||"[VÁRIAS ÁREAS]",
+      tipo:hcProposalItems.map(it=>it.tipo).join("; ")||"[VÁRIOS TIPOS]",
+      itemOAB:hcProposalItems[0]?.itemOAB||"[VÁRIOS]",
+      valorCausa:null,
+      valorFormatado:brl(totalAdj),
+      valorExtenso:hcValorExtenso(totalAdj),
+      hasPerc:false,
+      percFormatado:null,
+      valorCausaFormatado:null,
+      minFormatado:null,
+      existeExito:exitos.length>0,
+      exitoValor:exitos.reduce((s,it)=>s+(it.exVal||0),0),
+      exitoPctFormatado:exitos.length>0?exitos.map(it=>pct(it.exPct)).join(", "):null,
+      exitoValorFormatado:exitos.length>0?brl(exitos.reduce((s,it)=>s+(it.exVal||0),0)):null,
+      formaPagamentoTexto:parcTxt,
+      dataProposta:today(),
+      isMultiplos:true,
+      itens:hcProposalItems.map((it,i)=>({
+        numero:i+1,
+        tipo:it.tipo,
+        modeLabel:it.modeLabel,
+        area:it.area||"[ÁREA]",
+        valorFormatado:brl(it.adj)
+      }))
+    };
+
+    await hcDownloadPdf(dto);
+  }
+
+  async function hcDownloadPdf(dto){
+    const btn=document.querySelector('[onclick="hcPrint()"]');
+    const origText=btn.textContent;
+    btn.disabled=true;btn.textContent="Gerando PDF…";
+    try{
+      const res=await fetch('/api/honorarios/proposta/pdf',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${hcApiToken()}`},
+        body:JSON.stringify(dto)
+      });
+      if(!res.ok){
+        const text=await res.text();
+        throw new Error(text||res.status);
+      }
+      const arrayBuffer=await res.arrayBuffer();
+      const blob=new Blob([arrayBuffer],{type:'application/pdf'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`proposta-honorarios-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(e){console.error(e);alert('Erro ao gerar PDF: '+(e.message||e));}
+    finally{btn.disabled=false;btn.textContent=origText;}
   }
 
   // ── CLIPBOARD ──────────────────────────────────────────────────────────────
