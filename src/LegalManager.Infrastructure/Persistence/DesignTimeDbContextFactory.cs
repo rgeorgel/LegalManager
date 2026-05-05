@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace LegalManager.Infrastructure.Persistence;
 
+[ExcludeFromCodeCoverage]
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
     public AppDbContext CreateDbContext(string[] args)

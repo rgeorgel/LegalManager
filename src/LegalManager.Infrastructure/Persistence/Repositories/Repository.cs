@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using LegalManager.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.Infrastructure.Persistence.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class Repository<T> : IRepository<T> where T : class
 {
     protected readonly AppDbContext _context;

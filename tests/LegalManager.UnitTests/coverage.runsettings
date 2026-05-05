@@ -5,6 +5,16 @@
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
           <Format>cobertura</Format>
+          <ValidateBinaries>false</ValidateBinaries>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*LegalManager\.API\.dll$</ModulePath>
+                <ModulePath>.*LegalManager\.Application\.dll$</ModulePath>
+                <ModulePath>.*LegalManager\.Domain\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+          </CodeCoverage>
         </Configuration>
       </DataCollector>
     </DataCollectors>

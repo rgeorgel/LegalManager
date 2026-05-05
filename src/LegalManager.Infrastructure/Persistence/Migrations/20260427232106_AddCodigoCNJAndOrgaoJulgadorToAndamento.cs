@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,6 +6,7 @@
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
     public partial class AddCodigoCNJAndOrgaoJulgadorToAndamento : Migration
     {
         /// <inheritdoc />

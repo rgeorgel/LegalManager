@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
+    [ExcludeFromCodeCoverage]
     public partial class RenameNomeCapturaToProcessosMonitorados : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

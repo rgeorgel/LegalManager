@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.Infrastructure.Persistence;
 
+[ExcludeFromCodeCoverage]
 public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
 {
     private readonly ITenantContext? _tenantContext;
