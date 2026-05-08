@@ -38,6 +38,7 @@ Thumbs.db
 TestResults/
 coverage/
 coverage-results*/
+coverage-html/
 
 # Tools
 .opencode/
