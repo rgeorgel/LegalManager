@@ -2,19 +2,16 @@
 <RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="XPlat code coverage">
+      <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <ValidateBinaries>false</ValidateBinaries>
-          <CodeCoverage>
-            <ModulePaths>
-              <Include>
-                <ModulePath>.*LegalManager\.API\.dll$</ModulePath>
-                <ModulePath>.*LegalManager\.Application\.dll$</ModulePath>
-                <ModulePath>.*LegalManager\.Domain\.dll$</ModulePath>
-              </Include>
-            </ModulePaths>
-          </CodeCoverage>
+          <Include>[LegalManager.API]*,[LegalManager.Application]*,[LegalManager.Domain]*,[LegalManager.Infrastructure]*</Include>
+          <Exclude>[LegalManager.Infrastructure]LegalManager.Infrastructure.Migrations.*,[LegalManager.Infrastructure]LegalManager.Infrastructure.Tribunais.Dje.*,[LegalManager.Infrastructure]LegalManager.Infrastructure.Storage.OciStorageService,[LegalManager.API]Program</Exclude>
+          <ExcludeByFile>**/Migrations/*.cs,**/Migrations/*.Designer.cs</ExcludeByFile>
+          <ExcludeByAttribute>ExcludeFromCodeCoverageAttribute,GeneratedCodeAttribute</ExcludeByAttribute>
+          <SingleHit>false</SingleHit>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <SkipAutoProps>true</SkipAutoProps>
         </Configuration>
       </DataCollector>
     </DataCollectors>

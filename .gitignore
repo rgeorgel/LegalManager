@@ -37,3 +37,8 @@ Thumbs.db
 # Test results
 TestResults/
 coverage/
+coverage-results*/
+
+# Tools
+.opencode/
+.claude/settings.local.json

@@ -131,4 +131,59 @@ public class MonitoramentoServiceTests
 
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task MonitorarProcessoAsync_DataJudNaoEncontra_RetornaNaoEncontrado()
+    {
+        var (ctx, tenantId, _) = await SeedAsync();
+        var processoId = Guid.NewGuid();
+        // Short NumeroCNJ (< 13 digits) → InferirTribunal returns null → DataJud returns ResultadoVazio()
+        ctx.Processos.Add(new Processo
+        {
+            Id = processoId, TenantId = tenantId, NumeroCNJ = "12345",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, Monitorado = true, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var dataJud = new DataJudAdapter(
+            new HttpClient { BaseAddress = new Uri("http://localhost") },
+            Mock.Of<ILogger<DataJudAdapter>>());
+        var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
+            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+
+        var result = await service.MonitorarProcessoAsync(processoId);
+
+        Assert.False(result.Sucesso);
+        Assert.Equal(0, result.NovosAndamentos);
+    }
+
+    [Fact]
+    public async Task MonitorarTodosAsync_ComProcessoMonitorado_ExecutaMonitoramento()
+    {
+        var (ctx, tenantId, _) = await SeedAsync();
+        ctx.Processos.Add(new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "11111",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, Monitorado = true, CriadoEm = DateTime.UtcNow
+        });
+        ctx.Processos.Add(new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "22222",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, Monitorado = true, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var dataJud = new DataJudAdapter(
+            new HttpClient { BaseAddress = new Uri("http://localhost") },
+            Mock.Of<ILogger<DataJudAdapter>>());
+        var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
+            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+
+        var result = await service.MonitorarTodosAsync();
+
+        Assert.Equal(0, result); // No new andamentos since DataJud returns empty
+    }
 }
