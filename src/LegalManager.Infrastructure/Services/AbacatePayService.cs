@@ -38,31 +38,17 @@ public class AbacatePayService : IAbacatePayService
             ["plano"] = input.Plano
         };
 
-        var payloadFields = new Dictionary<string, object>
+        var payload = new
         {
-            ["customerId"] = customerId,
-            ["items"] = new[] { new { id = productId, quantity = 1 } },
-            ["methods"] = new[] { "CARD" },
-            ["returnUrl"] = input.ReturnUrl,
-            ["completionUrl"] = input.CompletionUrl,
-            ["metadata"] = metadata
+            customerId,
+            items = new[] { new { id = productId, quantity = 1 } },
+            methods = new[] { "CARD" },
+            returnUrl = input.ReturnUrl,
+            completionUrl = input.CompletionUrl,
+            metadata
         };
 
-        // Apply introductory coupon for Plus plan (80% off, 3 billing cycles, unique per tenant)
-        if (input.Plano == "Plus")
-        {
-            try
-            {
-                var couponId = await ObterOuCriarCupomPlusAsync(input.TenantId, ct);
-                payloadFields["couponId"] = couponId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Não foi possível obter/criar cupom Plus para tenant {TenantId}. Checkout prosseguirá sem desconto.", input.TenantId[..8]);
-            }
-        }
-
-        var body = await PostAsync("checkouts/create", payloadFields, ct);
+        var body = await PostAsync("checkouts/create", payload, ct);
 
         using var doc = JsonDocument.Parse(body);
         var data = doc.RootElement.GetProperty("data");
@@ -180,52 +166,6 @@ public class AbacatePayService : IAbacatePayService
         return customerId;
     }
 
-    private async Task<string> ObterOuCriarCupomPlusAsync(string tenantId, CancellationToken ct)
-    {
-        // Código único por tenant: impossível de compartilhar entre escritórios
-        var code = $"LM-PLUS-{tenantId.Replace("-", "")[..12].ToUpper()}";
-
-        var listResp = await _http.GetAsync($"coupons/list?id={code}", ct);
-        if (listResp.IsSuccessStatusCode)
-        {
-            var listBody = await listResp.Content.ReadAsStringAsync(ct);
-            using var listDoc = JsonDocument.Parse(listBody);
-            var dataEl = listDoc.RootElement.GetProperty("data");
-            if (dataEl.ValueKind == JsonValueKind.Array && dataEl.GetArrayLength() > 0)
-            {
-                var coupon = dataEl[0];
-                var status = coupon.TryGetProperty("status", out var s) ? s.GetString() : null;
-                if (status == "ACTIVE")
-                {
-                    var id = coupon.GetProperty("id").GetString();
-                    if (!string.IsNullOrEmpty(id))
-                    {
-                        _logger.LogInformation("Cupom Plus do tenant {TenantId} encontrado: {Code}", tenantId[..8], id);
-                        return id;
-                    }
-                }
-            }
-        }
-
-        // Cria cupom exclusivo para este tenant, válido para 3 ciclos de cobrança
-        var payload = new
-        {
-            code,
-            discountKind = "PERCENTAGE",
-            discount = 80,
-            maxRedeems = 3,
-            notes = $"80% desconto por 3 meses — plano Plus (tenant {tenantId[..8]})"
-        };
-
-        var body = await PostAsync("coupons/create", payload, ct);
-        using var doc = JsonDocument.Parse(body);
-        var couponId = doc.RootElement.GetProperty("data").GetProperty("id").GetString()
-            ?? throw new InvalidOperationException("AbacatePay não retornou o ID do cupom Plus.");
-
-        _logger.LogInformation("Cupom Plus criado para tenant {TenantId}: {Code}", tenantId[..8], couponId);
-        return couponId;
-    }
-
     private async Task<string> ObterOuCriarProdutoAsync(string plano, bool isAnual, CancellationToken ct)
     {
         var externalId = plano == "Plus" ? "lm-plus-mensal" :
@@ -249,10 +189,10 @@ public class AbacatePayService : IAbacatePayService
         }
 
         var (name, description, price, cycle) = plano == "Plus"
-            ? ("LegalManager Plus — Mensal (R$ 100)", "Assinatura mensal do plano Plus", 10_000, "MONTHLY")
+            ? ("LegalManager Plus — Mensal (R$ 20)", "Assinatura mensal do plano Plus", 2_000, "MONTHLY")
             : isAnual
-                ? ("LegalManager Pro — Anual (R$ 2.400)", "Assinatura anual do plano Pro", 240_000, "ANNUALLY")
-                : ("LegalManager Pro — Mensal (R$ 249)", "Assinatura mensal do plano Pro", 24_900, "MONTHLY");
+                ? ("LegalManager Pro — Anual (R$ 480)", "Assinatura anual do plano Pro", 48_000, "ANNUALLY")
+                : ("LegalManager Pro — Mensal (R$ 50)", "Assinatura mensal do plano Pro", 5_000, "MONTHLY");
 
         var payload = new { externalId, name, description, price, currency = "BRL", cycle };
         var body = await PostAsync("products/create", payload, ct);

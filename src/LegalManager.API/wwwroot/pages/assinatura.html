@@ -359,15 +359,12 @@
         <!-- Plus -->
         <div class="plan-card" id="cardPlus">
           <div class="plan-name">Plus</div>
-          <div style="margin-bottom:4px">
-            <div style="font-size:12px;color:var(--color-text-muted);text-decoration:line-through;margin-bottom:2px">R$ 100/mês</div>
-            <div class="plan-price" style="margin-bottom:0">
-              <span class="plan-currency" style="color:#16a34a">R$</span>
-              <span class="plan-value" style="color:#16a34a">20</span>
-              <span class="plan-period">/mês</span>
-            </div>
+          <div class="plan-price">
+            <span class="plan-currency">R$</span>
+            <span class="plan-value">20</span>
+            <span class="plan-period">/mês</span>
           </div>
-          <div class="plan-note" id="plusNote"><span style="color:#16a34a;font-weight:600;font-size:11px">80% off por 3 meses · depois R$ 100/mês</span></div>
+          <div class="plan-note" id="plusNote">&nbsp;</div>
           <div class="plan-desc">Para advogados que precisam de mais processos e acesso ao portal do cliente.</div>
           <ul class="plan-features">
             <li class="feat-section">Processos</li>
@@ -397,7 +394,7 @@
           <div class="plan-name">Pro</div>
           <div class="plan-price">
             <span class="plan-currency">R$</span>
-            <span class="plan-value" id="proValue">249</span>
+            <span class="plan-value" id="proValue">50</span>
             <span class="plan-period">/mês</span>
           </div>
           <div class="plan-note" id="proNote">&nbsp;</div>
@@ -540,9 +537,9 @@
 
   function updatePricing() {
     const isAnual = billingPeriod === 'anual';
-    document.getElementById('proValue').textContent = isAnual ? '200' : '249';
+    document.getElementById('proValue').textContent = isAnual ? '40' : '50';
     document.getElementById('proNote').innerHTML = isAnual
-      ? '<span style="color:#16a34a;font-weight:600">Você economiza R$ 588/ano</span>'
+      ? '<span style="color:#16a34a;font-weight:600">Você economiza R$ 120/ano</span>'
       : '&nbsp;';
     // Plus não tem toggle anual — note permanece fixo
   }
@@ -714,7 +711,7 @@
     if (currentPlano === 'Plus' && currentStatus !== 'Cancelado') return;
     openModal(
       'Assinar plano Plus',
-      'Você será redirecionado para o checkout seguro. Valor: R$ 100/mês (80% off nos primeiros 3 meses → R$ 20/mês).',
+      'Você será redirecionado para o checkout seguro. Valor: R$ 20/mês.',
       'Ir para o checkout',
       'btn-primary',
       async () => {
@@ -735,7 +732,7 @@
   document.getElementById('btnPro').addEventListener('click', () => {
     if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
     const isAnual = billingPeriod === 'anual';
-    const valorStr = isAnual ? 'R$ 2.400/ano (R$ 200/mês)' : 'R$ 249/mês';
+    const valorStr = isAnual ? 'R$ 480/ano (R$ 40/mês)' : 'R$ 50/mês';
     openModal(
       'Assinar plano Pro',
       `Você será redirecionado para o checkout seguro. O valor cobrado será ${valorStr}.`,

@@ -530,17 +530,13 @@
 
     <!-- PLUS -->
     <div class="plan-card">
-      <div class="plan-badge" style="background:#fcd34d;color:#78350f">Oferta</div>
       <div class="plan-name">Plus</div>
-      <div style="margin-bottom:0.35rem">
-        <div style="font-size:0.82rem;color:var(--text-muted);text-decoration:line-through;margin-bottom:0.15rem">R$ 100/mês</div>
-        <div class="plan-price" style="margin-bottom:0">
-          <span class="price-currency" style="color:#16a34a">R$</span>
-          <span class="price-value" style="color:#16a34a">20</span>
-          <span class="price-period">/mês</span>
-        </div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">20</span>
+        <span class="price-period">/mês</span>
       </div>
-      <div class="price-annual-note" style="color:#16a34a;font-weight:600;font-size:12px">80% off por 3 meses &nbsp;·&nbsp; depois R$ 100/mês</div>
+      <div class="price-annual-note">&nbsp;</div>
       <div class="plan-desc">Para advogados que precisam de mais controle, com portal do cliente e financeiro incluídos.</div>
 
       <ul class="plan-features">
@@ -577,7 +573,7 @@
       <div class="plan-name">Pro</div>
       <div class="plan-price">
         <span class="price-currency">R$</span>
-        <span class="price-value" id="priceValue">249</span>
+        <span class="price-value" id="priceValue">50</span>
         <span class="price-period">/mês</span>
       </div>
       <div class="price-annual-note" id="annualNote">&nbsp;</div>
@@ -676,10 +672,10 @@
       opts.forEach(o => o.classList.remove('active'));
       opt.classList.add('active');
       if (opt.dataset.period === 'anual') {
-        priceEl.textContent = '200';
-        noteEl.innerHTML = '<span class="save">Você economiza R$588/ano</span>';
+        priceEl.textContent = '40';
+        noteEl.innerHTML = '<span class="save">Você economiza R$120/ano</span>';
       } else {
-        priceEl.textContent = '249';
+        priceEl.textContent = '50';
         noteEl.innerHTML = '&nbsp;';
       }
     });
