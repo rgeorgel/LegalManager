@@ -15,7 +15,8 @@ public record CriarBillingInput(
     string? Cnpj,
     string Periodo,
     string ReturnUrl,
-    string CompletionUrl
+    string CompletionUrl,
+    string Plano = "Pro"
 );
 
 public record CriarCheckoutUnicoInput(

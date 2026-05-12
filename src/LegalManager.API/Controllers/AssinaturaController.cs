@@ -76,14 +76,23 @@ public class AssinaturaController(
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> IniciarCheckout([FromBody] IniciarCheckoutDto dto, CancellationToken ct)
     {
-        if (dto.Periodo != "Mensal" && dto.Periodo != "Anual")
+        var planoAlvo = dto.Plano?.ToLowerInvariant() switch
+        {
+            "plus" => PlanoTipo.Plus,
+            _ => PlanoTipo.Pro
+        };
+
+        if (planoAlvo == PlanoTipo.Plus && dto.Periodo != "Mensal")
+            return BadRequest(new { message = "O plano Plus está disponível apenas na modalidade Mensal." });
+
+        if (planoAlvo == PlanoTipo.Pro && dto.Periodo != "Mensal" && dto.Periodo != "Anual")
             return BadRequest(new { message = "Período inválido. Use 'Mensal' ou 'Anual'." });
 
         var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
         if (tenant is null) return NotFound();
 
-        if (tenant.Plano == PlanoTipo.Pro && tenant.Status == StatusTenant.Ativo && tenant.PlanoExpiraEm == null)
-            return BadRequest(new { message = "Você já possui uma assinatura Pro ativa." });
+        if (tenant.Plano == planoAlvo && tenant.Status == StatusTenant.Ativo && tenant.PlanoExpiraEm == null)
+            return BadRequest(new { message = $"Você já possui uma assinatura {planoAlvo} ativa." });
 
         var admin = await userManager.GetUserAsync(User);
         if (admin is null) return Unauthorized();
@@ -103,7 +112,8 @@ public class AssinaturaController(
                 Cnpj: tenant.Cnpj,
                 Periodo: dto.Periodo,
                 ReturnUrl: returnUrl,
-                CompletionUrl: completionUrl
+                CompletionUrl: completionUrl,
+                Plano: planoAlvo.ToString()
             ), ct);
         }
         catch (InvalidOperationException ex)
@@ -111,7 +121,6 @@ public class AssinaturaController(
             return BadRequest(new { message = ex.Message });
         }
 
-        // Salva o billing ID e período para rastrear
         tenant.AbacatePayBillingId = result.BillingId;
         tenant.PeriodoBilling = dto.Periodo;
         await context.SaveChangesAsync(ct);
@@ -146,14 +155,13 @@ public class AssinaturaController(
             }
         }
 
-        // Mantém Pro ativo até o fim do período
         tenant.Status = StatusTenant.Cancelado;
         tenant.PlanoExpiraEm = expiraEm;
         await context.SaveChangesAsync(ct);
 
         return Ok(new
         {
-            message = $"Assinatura cancelada. Você continuará com o plano Pro até {expiraEm:dd/MM/yyyy}.",
+            message = $"Assinatura cancelada. Você continuará com o plano {tenant.Plano} até {expiraEm:dd/MM/yyyy}.",
             expiraEm
         });
     }
@@ -287,7 +295,8 @@ public class WebhookController(
 
         var periodo = ExtrairMetadata(root, "periodo") ?? tenant.PeriodoBilling ?? "Mensal";
 
-        tenant.Plano = PlanoTipo.Pro;
+        var planoStr = ExtrairMetadata(root, "plano");
+        tenant.Plano = planoStr == "Plus" ? PlanoTipo.Plus : PlanoTipo.Pro;
         tenant.Status = StatusTenant.Ativo;
         tenant.TrialExpiraEm = null;
         tenant.PlanoExpiraEm = null;
@@ -307,12 +316,12 @@ public class WebhookController(
                 Status = StatusFaturamento.Pago,
                 DataPagamento = DateTime.UtcNow,
                 DataCriacao = DateTime.UtcNow,
-                Descricao = $"Assinatura Pro {periodo}"
+                Descricao = $"Assinatura {tenant.Plano} {periodo}"
             });
         }
 
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Plano Pro ativado via webhook para tenant {TenantId}", tenantId);
+        logger.LogInformation("Plano {Plano} ativado via webhook para tenant {TenantId}", tenant.Plano, tenantId);
     }
 
     private async Task HandleCreditosComprados(JsonElement root, Guid tenantId, CancellationToken ct)
@@ -427,7 +436,7 @@ public class WebhookController(
     }
 }
 
-public record IniciarCheckoutDto(string Periodo);
+public record IniciarCheckoutDto(string Periodo, string Plano = "Pro");
 public record ComprarCreditosDto(string PacoteId);
 
 public static class PacotesCreditos

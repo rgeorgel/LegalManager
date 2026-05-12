@@ -246,8 +246,11 @@
     }
 
     .plans-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2rem; max-width: 800px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 2rem; max-width: 1100px; margin: 0 auto;
+    }
+    @media (max-width: 860px) {
+      .plans-grid { grid-template-columns: 1fr; }
     }
 
     .plan-card {
@@ -292,7 +295,7 @@
     }
 
     .check { color: var(--green); flex-shrink: 0; margin-top: 0.1rem; }
-    .cross { color: var(--border); flex-shrink: 0; margin-top: 0.1rem; }
+    .cross { color: #dc2626; flex-shrink: 0; margin-top: 0.1rem; }
 
     .plan-features .section-sep {
       font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
@@ -500,7 +503,7 @@
       <ul class="plan-features">
         <li class="section-sep">Processos</li>
         <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
-        <li><span class="check">✓</span> 40 processos monitorados</li>
+        <li><span class="check">✓</span> 40 processos monitorados <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
         <li><span class="cross">✗</span> Captura de publicações</li>
         <li><span class="check">✓</span> 1 GB de armazenamento</li>
 
@@ -513,15 +516,59 @@
         <li><span class="check">✓</span> Controle de tarefas e eventos</li>
         <li><span class="check">✓</span> Timesheet e timer</li>
         <li><span class="cross">✗</span> Gestão Kanban</li>
-        <li><span class="cross">✗</span> Calculadora de prazos</li>
+        <li><span class="cross">✗</span> Calculadora de honorários</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="cross">✗</span> Controle financeiro por processo</li>
-        <li><span class="cross">✗</span> Emissão de cobranças</li>
+
         <li><span class="cross">✗</span> Indicadores e relatórios</li>
+        <li><span class="cross">✗</span> Templates de documentos</li>
       </ul>
 
       <a href="/register.html" class="btn btn-outline" style="width:100%; display:flex;">Começar grátis</a>
+    </div>
+
+    <!-- PLUS -->
+    <div class="plan-card">
+      <div class="plan-badge" style="background:#fcd34d;color:#78350f">Oferta</div>
+      <div class="plan-name">Plus</div>
+      <div style="margin-bottom:0.35rem">
+        <div style="font-size:0.82rem;color:var(--text-muted);text-decoration:line-through;margin-bottom:0.15rem">R$ 100/mês</div>
+        <div class="plan-price" style="margin-bottom:0">
+          <span class="price-currency" style="color:#16a34a">R$</span>
+          <span class="price-value" style="color:#16a34a">20</span>
+          <span class="price-period">/mês</span>
+        </div>
+      </div>
+      <div class="price-annual-note" style="color:#16a34a;font-weight:600;font-size:12px">80% off por 3 meses &nbsp;·&nbsp; depois R$ 100/mês</div>
+      <div class="plan-desc">Para advogados que precisam de mais controle, com portal do cliente e financeiro incluídos.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 100 processos monitorados <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
+        <li><span class="check">✓</span> 1 captura de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
+        <li><span class="check">✓</span> 5 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> 2 usuários</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li><span class="check">✓</span> Gestão Kanban</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li><span class="check">✓</span> Controle financeiro por processo</li>
+
+        <li><span class="check">✓</span> Indicadores e relatórios</li>
+        <li><span class="cross">✗</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html?plano=3" class="btn btn-primary" style="width:100%; display:flex;">Assinar Plus</a>
     </div>
 
     <!-- PRO -->
@@ -539,8 +586,8 @@
       <ul class="plan-features">
         <li class="section-sep">Processos</li>
         <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
-        <li><span class="check">✓</span> 500 processos monitorados</li>
-        <li><span class="check">✓</span> Monitoramento de processos por número CNJ</li>
+        <li><span class="check">✓</span> 500 processos monitorados <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
+        <li><span class="check">✓</span> 3 capturas de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
         <li><span class="check">✓</span> 20 GB de armazenamento</li>
 
         <li class="section-sep">Usuários e Clientes</li>
@@ -552,11 +599,11 @@
         <li><span class="check">✓</span> Controle de tarefas e eventos</li>
         <li><span class="check">✓</span> Timesheet e timer</li>
         <li><span class="check">✓</span> Gestão Kanban</li>
-        <li><span class="check">✓</span> Calculadora de prazos</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
-        <li><span class="check">✓</span> Emissão de cobranças com PIX</li>
+
         <li><span class="check">✓</span> Indicadores e relatórios completos</li>
         <li><span class="check">✓</span> Templates de documentos</li>
       </ul>

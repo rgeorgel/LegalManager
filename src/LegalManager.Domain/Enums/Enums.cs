@@ -1,6 +1,6 @@
 namespace LegalManager.Domain.Enums;
 
-public enum PlanoTipo { Free, Pro, Enterprise }
+public enum PlanoTipo { Free = 0, Pro = 1, Enterprise = 2, Plus = 3 }
 
 public enum StatusTenant { Ativo, Trial, Suspenso, Cancelado }
 

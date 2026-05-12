@@ -14,7 +14,7 @@ const NAV_GROUPS = [
       { href: '/pages/processos.html',    label: '⚖️ Processos' },
       { href: '/pages/contatos.html',     label: '👥 Contatos' },
       { href: '/pages/documentos.html',   label: '📁 Documentos' },
-      { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },
+      { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },  // Pro-only: Plus não tem acesso
     ],
   },
   {
@@ -28,7 +28,7 @@ const NAV_GROUPS = [
   {
     label: 'Financeiro',
     items: [
-      { href: '/pages/financeiro.html',    label: '💰 Financeiro', pro: true },
+      { href: '/pages/financeiro.html',    label: '💰 Financeiro', plus: true },
       { href: '/pages/honorarios.html',    label: '⚖️ Honorários' },
     ],
   },
@@ -50,8 +50,16 @@ const BOTTOM_NAV_ITEMS = [
   { action: 'menu', icon: '☰', label: 'Menu' },
 ];
 
+export function getPlano() {
+  return getUser()?.plano ?? 'Free';
+}
+
 export function isPlanoFree() {
-  return (getUser()?.plano ?? 'Free') === 'Free';
+  return getPlano() === 'Free';
+}
+
+export function isPlanoPlus() {
+  return getPlano() === 'Plus';
 }
 
 export function initLayout() {
@@ -78,7 +86,9 @@ function injectSidebarNav() {
   if (!navEl) return;
 
   const current = window.location.pathname;
-  const free = isPlanoFree();
+  const plano = getPlano();
+  const free = plano === 'Free';
+  const plus = plano === 'Plus';
 
   let collapsedGroups = {};
   try {
@@ -90,11 +100,17 @@ function injectSidebarNav() {
     const groupId = 'grp-' + group.label.toLowerCase().replace(/\s+/g, '-');
 
     const itemsHtml = group.items.map(item => {
-      const locked = item.pro && free;
+      // pro:true = requer Pro (bloqueia Free e Plus)
+      // plus:true = requer Plus (bloqueia apenas Free)
+      const lockedPro = item.pro && (free || plus);
+      const lockedPlus = item.plus && free;
+      const locked = lockedPro || lockedPlus;
+      const badgeText = lockedPro ? 'PRO' : 'PLUS';
+      const upgradeTarget = lockedPro ? 'Pro' : 'Plus';
       const activeClass = item.href === current ? ' class="active"' : '';
-      const badge = locked ? ' <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">PRO</span>' : '';
+      const badge = locked ? ` <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">${badgeText}</span>` : '';
       if (locked) {
-        return `<li><a href="#" data-locked="true"${activeClass} title="Disponível no plano Pro">${item.label}${badge}</a></li>`;
+        return `<li><a href="#" data-locked="true" data-upgrade="${upgradeTarget}"${activeClass} title="Disponível no plano ${upgradeTarget}">${item.label}${badge}</a></li>`;
       }
       return `<li><a href="${item.href}"${activeClass}>${item.label}</a></li>`;
     }).join('');
@@ -116,7 +132,7 @@ function injectSidebarNav() {
     if (link.dataset.locked) {
       link.addEventListener('click', e => {
         e.preventDefault();
-        showUpgradeToast();
+        showUpgradeToast(link.dataset.upgrade ?? 'Pro');
       });
     } else {
       link.addEventListener('click', () => closeMobileMenu());
@@ -335,7 +351,13 @@ function esc(str) {
   return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function showUpgradeToast(msg) {
+export function showUpgradeToast(targetPlano = 'Pro', msg = null) {
+  const defaultMsg = targetPlano === 'Plus'
+    ? 'Esta funcionalidade está disponível a partir do plano Plus.'
+    : 'Esta funcionalidade está disponível no plano Pro.';
+  const label = targetPlano === 'Plus' ? 'Funcionalidade Plus' : 'Funcionalidade Pro';
+  const ctaLabel = targetPlano === 'Plus' ? 'Ver Plus' : 'Ver Pro';
+
   let toast = document.getElementById('upgradeToast');
   if (!toast) {
     toast = document.createElement('div');
@@ -358,10 +380,10 @@ export function showUpgradeToast(msg) {
   toast.innerHTML = `
     <span style="font-size:20px">⭐</span>
     <div>
-      <div style="font-weight:700;font-size:13px;color:#f59e0b">Funcionalidade Pro</div>
-      <div style="font-size:12px;margin-top:2px">${msg ?? 'Esta funcionalidade está disponível no plano Pro.'}</div>
+      <div style="font-weight:700;font-size:13px;color:#f59e0b">${label}</div>
+      <div style="font-size:12px;margin-top:2px">${msg ?? defaultMsg}</div>
     </div>
-    <a href="/pages/assinatura.html" style="margin-left:auto;background:#f59e0b;color:#0f172a;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;text-decoration:none;white-space:nowrap">Ver Pro</a>
+    <a href="/pages/assinatura.html" style="margin-left:auto;background:#f59e0b;color:#0f172a;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;text-decoration:none;white-space:nowrap">${ctaLabel}</a>
   `;
   toast.style.display = 'flex';
   clearTimeout(toast._timeout);

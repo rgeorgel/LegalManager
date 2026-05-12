@@ -83,7 +83,7 @@
         <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
         <button class="tab-btn" data-tab="indicadores" id="tabBtnIndicadores">
           📈 Indicadores
-          <span id="indProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
+          <span id="indProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PLUS</span>
         </button>
       </div>
 
@@ -149,12 +149,12 @@
               <div class="fin-value" style="color:#dc2626;font-size:15px" id="finVencidos">R$ 300,00</div>
             </div>
           </div>
-          <!-- Pro overlay (shown only for Free plan) -->
+          <!-- Plus overlay (shown only for Free plan) -->
           <div id="finProOverlay" style="display:none;position:absolute;inset:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(15,23,42,.55);border-radius:var(--radius);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px">
             <div style="font-size:28px">💰</div>
             <div style="font-weight:800;font-size:16px;color:#f8fafc">Controle Financeiro</div>
-            <div style="font-size:13px;color:#cbd5e1;max-width:260px">Acompanhe receitas, despesas e saldo do escritório. Disponível no plano <strong style="color:#f59e0b">Pro</strong>.</div>
-            <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Pro</a>
+            <div style="font-size:13px;color:#cbd5e1;max-width:260px">Acompanhe receitas, despesas e saldo do escritório. Disponível a partir do plano <strong style="color:#f59e0b">Plus</strong>.</div>
+            <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Plus</a>
           </div>
         </div>
 
@@ -279,7 +279,7 @@
 
     function switchTab(name) {
       if (name === 'indicadores' && free) {
-        showUpgradeToast();
+        showUpgradeToast('Plus');
         return;
       }
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));

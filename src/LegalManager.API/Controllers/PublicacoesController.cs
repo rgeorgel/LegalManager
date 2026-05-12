@@ -1,6 +1,8 @@
 using LegalManager.Application.DTOs.Publicacoes;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Enums;
+using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,8 +14,13 @@ namespace LegalManager.API.Controllers;
 public class PublicacoesController : ControllerBase
 {
     private readonly IPublicacaoService _service;
+    private readonly ITenantContext _tenant;
 
-    public PublicacoesController(IPublicacaoService service) => _service = service;
+    public PublicacoesController(IPublicacaoService service, ITenantContext tenant)
+    {
+        _service = service;
+        _tenant = tenant;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -26,6 +33,8 @@ public class PublicacoesController : ControllerBase
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
+        if (!PlanoRestricoes.PermiteCapturacaoPublicacoes(_tenant.Plano))
+            return StatusCode(402, new { message = "A captura de publicações está disponível a partir do plano Pro." });
         var filtro = new PublicacaoFiltroDto(
             processoId,
             tipo != null && Enum.TryParse<TipoPublicacao>(tipo, true, out var t) ? t : null,

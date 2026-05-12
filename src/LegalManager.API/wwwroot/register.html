@@ -17,9 +17,12 @@
   <style>
     .plan-selector {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 0.75rem;
       margin-bottom: 1.25rem;
+    }
+    @media (max-width: 560px) {
+      .plan-selector { grid-template-columns: 1fr; }
     }
     .plan-option {
       border: 2px solid var(--color-border, #334155);
@@ -99,6 +102,14 @@
               <div class="plan-price">R$ 0</div>
               <div class="plan-desc">1 usuário · 40 processos monitorados · Para sempre</div>
             </label>
+            <label class="plan-option" id="planPlusLabel">
+              <div class="plan-badge">Oferta</div>
+              <input type="radio" name="plano" value="3">
+              <div class="plan-name">Plus</div>
+              <div style="font-size:0.7rem;color:var(--color-text-muted,#94a3b8);text-decoration:line-through;margin-bottom:0.1rem">R$ 100/mês</div>
+              <div class="plan-price" style="color:#16a34a">R$ 20<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              <div class="plan-desc">2 usuários · 100 processos · Portal cliente · 80% off por 3 meses, depois R$ 100/mês</div>
+            </label>
             <label class="plan-option" id="planProLabel">
               <div class="plan-badge">Popular</div>
               <input type="radio" name="plano" value="1">
@@ -150,11 +161,15 @@
 
     // Plan selector visual
     const radios = document.querySelectorAll('input[name="plano"]');
-    const labels = { 0: document.getElementById('planFreeLabel'), 1: document.getElementById('planProLabel') };
+    const labels = {
+      0: document.getElementById('planFreeLabel'),
+      3: document.getElementById('planPlusLabel'),
+      1: document.getElementById('planProLabel')
+    };
     radios.forEach(r => {
       r.addEventListener('change', () => {
-        Object.values(labels).forEach(l => l.classList.remove('selected'));
-        labels[r.value].classList.add('selected');
+        Object.values(labels).forEach(l => l?.classList.remove('selected'));
+        labels[r.value]?.classList.add('selected');
       });
     });
 
