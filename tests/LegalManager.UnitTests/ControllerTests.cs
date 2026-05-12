@@ -390,11 +390,21 @@ public class PublicacoesControllerTests
         return mock;
     }
 
+    private static ITenantContext CreateProTenant()
+    {
+        var mock = new Mock<ITenantContext>();
+        mock.Setup(t => t.Plano).Returns(PlanoTipo.Pro);
+        mock.Setup(t => t.TenantId).Returns(Guid.NewGuid());
+        mock.Setup(t => t.UserId).Returns(Guid.NewGuid());
+        mock.Setup(t => t.UserRole).Returns("Admin");
+        return mock.Object;
+    }
+
     [Fact]
     public async Task GetAll_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object);
+        var controller = new PublicacoesController(service.Object, CreateProTenant());
         var result = await controller.GetAll(null, null, null, null, null, 1, 20, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
@@ -403,7 +413,7 @@ public class PublicacoesControllerTests
     public async Task GetById_ReturnsNotFound_WhenNull()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object);
+        var controller = new PublicacoesController(service.Object, CreateProTenant());
         var result = await controller.GetById(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -414,7 +424,7 @@ public class PublicacoesControllerTests
         var service = CreateServiceMock();
         service.Setup(s => s.MarcarLidaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var controller = new PublicacoesController(service.Object);
+        var controller = new PublicacoesController(service.Object, CreateProTenant());
         var result = await controller.MarcarLida(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NoContentResult>(result);
     }
@@ -425,7 +435,7 @@ public class PublicacoesControllerTests
         var service = CreateServiceMock();
         service.Setup(s => s.ArquivarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var controller = new PublicacoesController(service.Object);
+        var controller = new PublicacoesController(service.Object, CreateProTenant());
         var result = await controller.Arquivar(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NoContentResult>(result);
     }
@@ -434,7 +444,7 @@ public class PublicacoesControllerTests
     public async Task GetNaoLidasCount_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object);
+        var controller = new PublicacoesController(service.Object, CreateProTenant());
         var result = await controller.GetNaoLidasCount(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
