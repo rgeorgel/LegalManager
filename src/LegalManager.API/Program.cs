@@ -116,7 +116,7 @@ builder.Services.AddHttpClient<DataJudAdapter>(client =>
     client.BaseAddress = new Uri(baseUrl);
     var apiKey = builder.Configuration["DataJud:ApiKey"] ?? "";
     if (!string.IsNullOrEmpty(apiKey))
-        client.DefaultRequestHeaders.Add("Authorization", $"ApiKey {apiKey}");
+        client.DefaultRequestHeaders.Add("Authorization", $"APIKey {apiKey}");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
@@ -124,6 +124,14 @@ builder.Services.AddHttpClient<TjspDjeAdapter>(client =>
 {
     client.BaseAddress = new Uri("https://esaj.tjsp.jus.br");
     client.Timeout = TimeSpan.FromSeconds(60);
+});
+
+builder.Services.AddHttpClient<EsajTjspProcessosAdapter>(client =>
+{
+    client.BaseAddress = new Uri("https://esaj.tjsp.jus.br");
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddHttpClient<TjrjDjeAdapter>(client =>
 {

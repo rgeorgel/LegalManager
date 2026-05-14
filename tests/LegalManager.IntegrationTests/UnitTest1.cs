@@ -290,11 +290,11 @@ public class MultiTenantIsolationTests
 
         await service1.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
             "0001234-56.2026.8.26.0001", null, "1ª Vara Cível", "São Paulo",
-            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null));
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null));
 
         await service2.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
             "0009999-11.2026.5.15.0001", null, "1ª Vara do Trabalho", "Campinas",
-            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, null, null));
+            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null));
 
         var t1List = await service1.GetAllAsync(new Application.DTOs.Processos.ProcessoFiltroDto(null, null, null, null, null));
         var t2List = await service2.GetAllAsync(new Application.DTOs.Processos.ProcessoFiltroDto(null, null, null, null, null));
@@ -321,7 +321,7 @@ public class ProcessoTarefaWorkflowTests
 
         var processo = await processoService.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
             "0001234-56.2026.8.26.0001", null, "1ª Vara Cível", null,
-            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null));
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null));
 
         var tarefa1 = await tarefaService.CreateAsync(new CreateTarefaDto(
             "Protocolar petição", null, usuario.Id, DateTime.UtcNow.AddDays(7),
@@ -352,9 +352,9 @@ public class ProcessoTarefaWorkflowTests
         var tarefaService = new TarefaService(ctx, tenantCtx);
 
         var processo1 = await processoService.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
-            "0000001-00.2026.8.26.0001", null, null, null, AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null));
+            "0000001-00.2026.8.26.0001", null, null, null, AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null));
         var processo2 = await processoService.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
-            "0000002-00.2026.8.26.0001", null, null, null, AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, null, null));
+            "0000002-00.2026.8.26.0001", null, null, null, AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null));
 
         await tarefaService.CreateAsync(new CreateTarefaDto("T1-P1", null, null, null, PrioridadeTarefa.Media, processo1.Id, null, null));
         await tarefaService.CreateAsync(new CreateTarefaDto("T2-P1", null, null, null, PrioridadeTarefa.Media, processo1.Id, null, null));

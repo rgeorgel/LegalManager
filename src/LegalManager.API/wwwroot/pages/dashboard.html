@@ -57,8 +57,82 @@
     .kpi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
     @media(max-width:480px) { .kpi-row { grid-template-columns:1fr; } }
   </style>
+  <style>
+    .ob-step { display: none; }
+  </style>
 </head>
 <body>
+
+  <!-- Modal de Onboarding: Importar Processos por OAB -->
+  <div class="modal-overlay" id="onboardingOverlay">
+    <div class="modal" style="max-width:560px;width:100%">
+      <div class="modal-header">
+        <span class="modal-title">Importar seus Processos</span>
+      </div>
+      <div class="modal-body">
+
+        <!-- Step 1: Busca por OAB -->
+        <div class="ob-step" id="obStep1">
+          <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
+            Informe seu número de OAB e o estado de inscrição. Buscaremos seus processos em todos os tribunais da UF (TJ, TRF, TRT) via DataJud (CNJ).
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 100px;gap:12px">
+            <div>
+              <label class="form-label">Número OAB <span style="font-weight:400;color:var(--color-text-muted)">(só dígitos)</span></label>
+              <input id="obOab" class="form-control" type="text" inputmode="numeric" placeholder="Ex: 123456" autocomplete="off">
+            </div>
+            <div>
+              <label class="form-label">UF</label>
+              <select id="obUf" class="form-control">
+                <option value="">UF</option>
+              </select>
+            </div>
+          </div>
+          <div id="obProgresso" style="display:none;margin-top:12px;font-size:13px;color:var(--color-text-muted)">
+            <span id="obProgressoTxt"></span>
+          </div>
+          <div id="obErroBusca" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
+        </div>
+
+        <!-- Step 2: Resultados -->
+        <div class="ob-step" id="obStep2">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <span style="font-size:14px;font-weight:600">Processos encontrados <span id="obContagem" style="font-weight:400;font-size:12px;color:var(--color-text-muted)"></span></span>
+            <button id="obSelecionarTodosBtn" class="btn btn-secondary btn-sm" type="button">Selecionar todos</button>
+          </div>
+          <div id="obSemResultado" style="display:none;text-align:center;padding:24px;color:var(--color-text-muted);font-size:14px">
+            Nenhum processo encontrado para esta OAB nesta UF.
+          </div>
+          <div id="obListaProcessos" style="max-height:320px;overflow-y:auto"></div>
+          <div id="obErroImportar" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
+        </div>
+
+        <!-- Step 3: Concluído -->
+        <div class="ob-step" id="obStep3">
+          <div style="text-align:center;padding:16px 0">
+            <div style="font-size:40px;margin-bottom:12px">✅</div>
+            <div id="obResultadoTexto" style="font-size:16px;font-weight:600;margin-bottom:8px"></div>
+            <pre id="obResultadoDetalhe" style="display:none;font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:4px;text-align:left;white-space:pre-wrap"></pre>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="gap:8px">
+        <div id="obFooterStep1" style="display:flex;gap:8px;width:100%;justify-content:flex-end">
+          <button id="obPularBtn" class="btn btn-secondary" type="button">Pular</button>
+          <button id="obBuscarBtn" class="btn btn-primary" type="button">Buscar Processos</button>
+        </div>
+        <div id="obFooterStep2" style="display:none;gap:8px;width:100%;justify-content:flex-end">
+          <button id="obPularStep2Btn" class="btn btn-secondary" type="button">Pular</button>
+          <button id="obImportarBtn" class="btn btn-primary" type="button">Importar Selecionados</button>
+        </div>
+        <div id="obFooterStep3" style="display:none;width:100%;justify-content:flex-end">
+          <button id="obConcluirBtn" class="btn btn-primary" type="button">Concluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-layout">
     <header class="header">
       <button class="hamburger" id="hamburger">☰</button>
@@ -260,6 +334,7 @@
   <script type="module">
     import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
     import { apiFetch, isLoggedIn } from '/js/api.js';
+    import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -267,6 +342,8 @@
     }
 
     initLayout();
+    initOnboardingModal();
+    initOnboarding();
 
     const free = isPlanoFree();
 

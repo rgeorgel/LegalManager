@@ -55,7 +55,7 @@ public class ProcessoServiceAdditionalTests
 
     private static CreateProcessoDto MakeCreateDto(string cnj = "0000001-11.2024.8.26.0001", bool monitorado = false) =>
         new(cnj, "TJSP", "1ª Vara Cível", "São Paulo", AreaDireito.Civil, "Ação de Cobrança",
-            FaseProcessual.Conhecimento, null, null, null, monitorado);
+            FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null, null, monitorado);
 
     [Fact]
     public async Task GetByIdAsync_RetornaProcesso()

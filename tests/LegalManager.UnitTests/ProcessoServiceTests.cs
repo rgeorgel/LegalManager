@@ -66,7 +66,7 @@ public class ProcessoServiceTests
         var dto = new CreateProcessoDto(
             "0000001-00.2024.8.26.0001", "TJSP", "1ª Vara Cível", "São Paulo",
             AreaDireito.Civil, "Ação de Cobrança", FaseProcessual.Conhecimento,
-            10000m, usuario.Id, "Observação teste", false,
+            StatusProcesso.Ativo, 10000m, usuario.Id, "Observação teste", false,
             new List<ProcessoParteDto> { new(contato.Id, TipoParteProcesso.Autor) });
 
         var result = await service.CreateAsync(dto);
@@ -85,7 +85,7 @@ public class ProcessoServiceTests
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
 
         var dto = new CreateProcessoDto("1111111-11.2024.8.26.0001", null, null, null,
-            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, null, null);
+            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
 
         await service.CreateAsync(dto);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(dto));
@@ -345,7 +345,7 @@ public class ProcessoServiceTests
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
 
         var dto = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
-            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null);
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
 
         var result = await service.CreateAsync(dto);
 
@@ -361,11 +361,11 @@ public class ProcessoServiceTests
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
 
         var dto1 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
-            AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null);
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
         await service.CreateAsync(dto1);
 
         var dto2 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
-            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, null, null);
+            AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(dto2));
     }

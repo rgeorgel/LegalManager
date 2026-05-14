@@ -160,21 +160,25 @@
                 <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
                 <div class="info-item"><label>Data Distribuição</label><span id="infoDataDistribuicao">—</span></div>
                 <div class="info-item"><label>Grau</label><span id="infoGrau">—</span></div>
-                <div class="info-item"><label>Instância</label><span id="infoInstancia">—</span></div>
-                <div class="info-item"><label>Segmento</label><span id="infoSegmento">—</span></div>
-                <div class="info-item"><label>Sistema</label><span id="infoSistema">—</span></div>
-                <div class="info-item"><label>Formato</label><span id="infoFormato">—</span></div>
-                <div class="info-item"><label>Relator</label><span id="infoRelator">—</span></div>
-                <div class="info-item"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
-                <div class="info-item"><label>Data Julgamento</label><span id="infoDataJulgamento">—</span></div>
-                <div class="info-item"><label>Data Publicação</label><span id="infoDataPublicacao">—</span></div>
-                <div class="info-item"><label>Última Atualização</label><span id="infoUltimaAtualizacao">—</span></div>
                 <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
                 <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
                 <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
                 <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
                 <div class="info-item" id="infoEncerradoGroup" style="display:none">
                   <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
+                </div>
+              </div>
+              <div id="infoExtraCollapsible" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+                <div class="info-grid">
+                  <div class="info-item"><label>Instância</label><span id="infoInstancia">—</span></div>
+                  <div class="info-item"><label>Segmento</label><span id="infoSegmento">—</span></div>
+                  <div class="info-item"><label>Sistema</label><span id="infoSistema">—</span></div>
+                  <div class="info-item"><label>Formato</label><span id="infoFormato">—</span></div>
+                  <div class="info-item"><label>Relator</label><span id="infoRelator">—</span></div>
+                  <div class="info-item"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
+                  <div class="info-item"><label>Data Julgamento</label><span id="infoDataJulgamento">—</span></div>
+                  <div class="info-item"><label>Data Publicação</label><span id="infoDataPublicacao">—</span></div>
+                  <div class="info-item"><label>Última Atualização</label><span id="infoUltimaAtualizacao">—</span></div>
                 </div>
               </div>
               <div id="infoDataJudExtras" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
@@ -199,6 +203,7 @@
                 <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Observações</label>
                 <p id="infoObservacoes" style="margin-top:4px;font-size:14px"></p>
               </div>
+              <button id="toggleInfoExtraBtn" style="background:none;border:none;color:var(--color-primary);cursor:pointer;font-size:13px;padding:8px 0 0;display:none" onclick="toggleInfoExtra()">Mostrar mais ↓</button>
             </div>
           </div>
 
@@ -845,6 +850,19 @@ function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-B
 
 function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
 
+function toggleInfoExtra() {
+  window._infoExtraExpanded = !window._infoExtraExpanded;
+  const el = document.getElementById('infoExtraCollapsible');
+  const btn = document.getElementById('toggleInfoExtraBtn');
+  if (window._infoExtraExpanded) {
+    el.style.display = 'block';
+    btn.textContent = 'Mostrar menos ↑';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Mostrar mais ↓';
+  }
+}
+
 async function loadProcesso() {
   try {
     processo = await getProcesso(processoId);
@@ -881,15 +899,6 @@ function renderProcesso() {
   document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : '—';
   document.getElementById('infoDataDistribuicao').textContent = processo.dataDistribuicao ? fmtDate(processo.dataDistribuicao) : '—';
   document.getElementById('infoGrau').textContent = processo.grau || '—';
-  document.getElementById('infoInstancia').textContent = processo.instancia || '—';
-  document.getElementById('infoSegmento').textContent = processo.segmento || '—';
-  document.getElementById('infoSistema').textContent = processo.sistema || '—';
-  document.getElementById('infoFormato').textContent = processo.formato || '—';
-  document.getElementById('infoRelator').textContent = processo.relator || '—';
-  document.getElementById('infoTipoDecisao').textContent = processo.tipoDecisao || '—';
-  document.getElementById('infoDataJulgamento').textContent = processo.dataJulgamento ? fmtDate(processo.dataJulgamento) : '—';
-  document.getElementById('infoDataPublicacao').textContent = processo.dataPublicacao ? fmtDate(processo.dataPublicacao) : '—';
-  document.getElementById('infoUltimaAtualizacao').textContent = processo.ultimaAtualizacaoDataJud ? fmtDateTime(processo.ultimaAtualizacaoDataJud) : '—';
   document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
   document.getElementById('infoValor').textContent = fmtMoney(processo.valorCausa);
   document.getElementById('infoAdvogado').textContent = processo.nomeAdvogadoResponsavel || '—';
@@ -908,6 +917,15 @@ function renderProcesso() {
     document.getElementById('infoObsGroup').style.display = '';
     document.getElementById('infoObservacoes').textContent = processo.observacoes;
   }
+
+  // Extra collapsible section
+  const extraFields = ['instancia','segmento','sistema','formato','relator','tipoDecisao','dataJulgamento','dataPublicacao','ultimaAtualizacaoDataJud'];
+  const hasExtra = extraFields.some(f => processo[f]);
+  document.getElementById('infoExtraCollapsible').style.display = hasExtra ? '' : 'none';
+  document.getElementById('toggleInfoExtraBtn').style.display = hasExtra ? '' : 'none';
+  if (window._infoExtraExpanded === undefined) window._infoExtraExpanded = false;
+  document.getElementById('toggleInfoExtraBtn').textContent = window._infoExtraExpanded ? 'Mostrar menos ↑' : 'Mostrar mais ↓';
+  document.getElementById('infoExtraCollapsible').style.display = window._infoExtraExpanded ? '' : 'none';
 
   // DataJud extras
   const dataJudExtras = document.getElementById('infoDataJudExtras');
