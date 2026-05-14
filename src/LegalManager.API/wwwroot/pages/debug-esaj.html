@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug ESAJ - LegalManager</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #f5f5f5; }
+    h1 { margin-bottom: 20px; }
+    .search-box { display: flex; gap: 8px; margin-bottom: 24px; max-width: 600px; }
+    .search-box input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    .search-box button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; }
+    .search-box button:hover { background: #1d4ed8; }
+    .search-box button:disabled { background: #93c5fd; cursor: not-allowed; }
+    .error { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; display: none; }
+    .section { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .section h2 { margin-top: 0; font-size: 16px; color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 16px; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .info-item label { font-size: 11px; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .info-item span { font-size: 14px; color: #111827; }
+    .json-block { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 11px; overflow-x: auto; max-height: 600px; overflow-y: auto; white-space: pre; word-break: break-all; }
+    .json-block .key { color: #93c5fd; }
+    .json-block .str { color: #86efac; }
+    .json-block .num { color: #fde68a; }
+    .json-block .bool { color: #f9a8d4; }
+    .json-block .null { color: #9ca3af; }
+    .movimentos { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .movimentos th { background: #f3f4f6; text-align: left; padding: 8px 10px; border: 1px solid #e5e7eb; }
+    .movimentos td { padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+    .movimentos tr:nth-child(even) td { background: #fafafa; }
+    .loading { text-align: center; padding: 40px; color: #6b7280; }
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Debug ESAJ Scraper</h1>
+
+  <div class="search-box">
+    <input type="text" id="cnjInput" placeholder="0000000-00.0000.0.00.0000" value="">
+    <select id="grauInput" style="padding:10px;border:1px solid #ccc;border-radius:6px;font-size:15px">
+      <option value="G1">G1</option>
+      <option value="G2">G2</option>
+    </select>
+    <button id="fetchBtn">Buscar</button>
+  </div>
+
+  <div class="error" id="errorMsg"></div>
+
+  <div id="resultado" class="hidden">
+    <div class="section">
+      <h2>Dados Processuais</h2>
+      <div class="info-grid" id="infoGrid"></div>
+    </div>
+
+    <div class="section">
+      <h2>Partes</h2>
+      <div id="partesLista"></div>
+    </div>
+
+    <div class="section">
+      <h2>Movimentos / Andamentos</h2>
+      <table class="movimentos" id="movimentosTable">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Titulo</th>
+            <th>Complemento</th>
+            <th>Descricao Completa</th>
+          </tr>
+        </thead>
+        <tbody id="movimentosBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Raw HTML</h2>
+      <pre class="json-block" id="rawHtml" style="max-height: 600px;"></pre>
+    </div>
+
+    <div class="section">
+      <h2>Parsed DTO (JSON)</h2>
+      <pre class="json-block" id="parsedJson"></pre>
+    </div>
+  </div>
+
+  <div class="loading hidden" id="loading">
+    <span class="spinner"></span> Buscando dados do ESAJ...
+  </div>
+
+  <script>
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      document.body.innerHTML = '<p>Faça login primeiro.</p>';
+    }
+
+    function esc(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function syntaxHighlight(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
+      }
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'num';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'key' : 'str';
+        } else if (/true|false/.test(match)) {
+          cls = 'bool';
+        } else if (/null/.test(match)) {
+          cls = 'null';
+        }
+        return '<span class="' + cls + '">' + esc(match) + '</span>';
+      });
+    }
+
+    function fmtDate(d) {
+      if (!d) return '—';
+      if (typeof d === 'string') {
+        const [dia, mes, ano] = d.split('/');
+        if (dia && mes && ano) return `${dia}/${mes}/${ano}`;
+        return d;
+      }
+      if (d instanceof Date) return d.toLocaleDateString('pt-BR');
+      return String(d);
+    }
+
+    document.getElementById('fetchBtn').addEventListener('click', async () => {
+      const cnj = document.getElementById('cnjInput').value.trim();
+      const grau = document.getElementById('grauInput').value;
+      const errorEl = document.getElementById('errorMsg');
+      const resultado = document.getElementById('resultado');
+      const loading = document.getElementById('loading');
+
+      if (!cnj) {
+        errorEl.textContent = 'Informe o número do processo.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      errorEl.style.display = 'none';
+      resultado.classList.add('hidden');
+      loading.classList.remove('hidden');
+
+      try {
+        const resp = await fetch(`/api/debug/esaj?cnj=${encodeURIComponent(cnj)}&grau=${encodeURIComponent(grau)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          throw new Error(data.error || 'Erro ao buscar dados.');
+        }
+
+        loading.classList.add('hidden');
+        resultado.classList.remove('hidden');
+
+        // Info grid
+        const info = data.detalhe;
+        const infoGrid = document.getElementById('infoGrid');
+        infoGrid.innerHTML = `
+          <div class="info-item"><label>Numero</label><span>${esc(info.numeroProcesso)}</span></div>
+          <div class="info-item"><label>Sigiloso</label><span>${info.sigiloso ? 'SIM' : 'NÃO'}</span></div>
+          <div class="info-item"><label>Classe</label><span>${esc(info.classe)}</span></div>
+          <div class="info-item"><label>Area</label><span>${esc(info.area)}</span></div>
+          <div class="info-item"><label>Foro</label><span>${esc(info.foro)}</span></div>
+          <div class="info-item"><label>Vara</label><span>${esc(info.vara)}</span></div>
+          <div class="info-item"><label>Juiz</label><span>${esc(info.juiz)}</span></div>
+          <div class="info-item"><label>Data Distribuicao</label><span>${esc(info.dataDistribuicao)}</span></div>
+          <div class="info-item"><label>Valor Acao</label><span>${esc(info.valorAcao)}</span></div>
+          <div class="info-item"><label>Situacao</label><span>${esc(info.situacao)}</span></div>
+          <div class="info-item"><label>Assunto</label><span>${esc(info.assunto)}</span></div>
+          <div class="info-item"><label>Grau</label><span>${esc(grau)}</span></div>
+        `;
+
+        // Partes
+        const partesLista = document.getElementById('partesLista');
+        if (!info.partes || info.partes.length === 0) {
+          partesLista.innerHTML = '<p style="color:#6b7280">Nenhuma parte encontrada.</p>';
+        } else {
+          partesLista.innerHTML = info.partes.map(p => `
+            <div style="margin-bottom:12px;padding:8px;background:#f9fafb;border-radius:6px;">
+              <div style="font-weight:600">${esc(p.nome)}</div>
+              <div style="font-size:12px;color:#6b7280">Polo: ${esc(p.polo)} | Advogados: ${p.advogados && p.advogados.length > 0 ? esc(p.advogados.join(', ')) : 'Nenhum'}</div>
+            </div>
+          `).join('');
+        }
+
+        // Movimentos
+        const tbody = document.getElementById('movimentosBody');
+        if (!info.movimentos || info.movimentos.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#6b7280">Nenhum movimento encontrado.</td></tr>';
+        } else {
+          tbody.innerHTML = info.movimentos.map(m => {
+            const descCompleta = m.complemento ? `${m.titulo} — ${m.complemento}` : m.titulo;
+            return `<tr>
+              <td>${fmtDate(m.data)}</td>
+              <td>${esc(m.titulo)}</td>
+              <td>${esc(m.complemento || '')}</td>
+              <td>${esc(descCompleta)}</td>
+            </tr>`;
+          }).join('');
+        }
+
+        // Raw HTML
+        document.getElementById('rawHtml').textContent = data.rawHtml || 'N/A';
+
+        // Parsed JSON
+        document.getElementById('parsedJson').innerHTML = syntaxHighlight(data.detalhe);
+
+      } catch (err) {
+        loading.classList.add('hidden');
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+      }
+    });
+
+    document.getElementById('cnjInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('fetchBtn').click();
+    });
+  </script>
+</body>
+</html>

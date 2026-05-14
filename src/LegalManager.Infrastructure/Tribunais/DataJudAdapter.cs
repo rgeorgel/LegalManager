@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using LegalManager.Application.DTOs.Onboarding;
 using LegalManager.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -139,12 +140,6 @@ public class DataJudAdapter : ITribunalAdapter
 
             _logger.LogInformation("DataJud: Encontrado processo {NumCNJ} com {Count} movimentos, {PartesCount} partes", numeroCNJ, movimentos.Count, partes.Count);
 
-            DateTime? ParseData(string? data)
-            {
-                if (string.IsNullOrEmpty(data)) return null;
-                return DateTime.TryParseExact(data, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var dt) ? dt : null;
-            }
-
             return new TribunalConsultaResult(
                 Encontrado: true,
                 NomeTribunal: source.Tribunal,
@@ -182,6 +177,197 @@ public class DataJudAdapter : ITribunalAdapter
         }
     }
 
+    private static readonly Dictionary<string, string[]> TribunaisPorUF =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["AC"] = ["tjac", "trf1", "trt14"],
+            ["AL"] = ["tjal", "trf5", "trt19"],
+            ["AM"] = ["tjam", "trf1", "trt11"],
+            ["AP"] = ["tjap", "trf1", "trt8"],
+            ["BA"] = ["tjba", "trf1", "trt5"],
+            ["CE"] = ["tjce", "trf5", "trt7"],
+            ["DF"] = ["tjdft", "trf1", "trt10"],
+            ["ES"] = ["tjes", "trf2", "trt17"],
+            ["GO"] = ["tjgo", "trf1", "trt18"],
+            ["MA"] = ["tjma", "trf1", "trt16"],
+            ["MG"] = ["tjmg", "trf1", "trt3"],
+            ["MS"] = ["tjms", "trf3", "trt24"],
+            ["MT"] = ["tjmt", "trf1", "trt23"],
+            ["PA"] = ["tjpa", "trf1", "trt8"],
+            ["PB"] = ["tjpb", "trf5", "trt13"],
+            ["PE"] = ["tjpe", "trf5", "trt6"],
+            ["PI"] = ["tjpi", "trf1", "trt22"],
+            ["PR"] = ["tjpr", "trf4", "trt9"],
+            ["RJ"] = ["tjrj", "trf2", "trt1"],
+            ["RN"] = ["tjrn", "trf5", "trt21"],
+            ["RO"] = ["tjro", "trf1", "trt14"],
+            ["RR"] = ["tjrr", "trf1", "trt11"],
+            ["RS"] = ["tjrs", "trf4", "trt4"],
+            ["SC"] = ["tjsc", "trf4", "trt12"],
+            ["SE"] = ["tjse", "trf5", "trt20"],
+            ["SP"] = ["trf3", "trt2", "trt15"], // TJSP não envia advocacia ao DataJud — usa ESAJ
+            ["TO"] = ["tjto", "trf1", "trt10"],
+        };
+
+    private static readonly string[] TribunaisSuperiores = ["stj", "tst"];
+
+    public async Task<List<ProcessoOabPreviewDto>> BuscarPorOabAsync(
+        string numeroOAB, string uf, CancellationToken ct = default)
+    {
+        if (!TribunaisPorUF.TryGetValue(uf.Trim(), out var tribunais))
+            return [];
+
+        var todos = tribunais.Concat(TribunaisSuperiores).ToArray();
+        var resultados = new System.Collections.Concurrent.ConcurrentBag<ProcessoOabPreviewDto>();
+
+        const int concorrencia = 5;
+        for (var i = 0; i < todos.Length; i += concorrencia)
+        {
+            var lote = todos.Skip(i).Take(concorrencia);
+            var tarefas = lote.Select(idx => BuscarPorOabNoTribunalAsync(numeroOAB, uf, idx, ct));
+            var respostas = await Task.WhenAll(tarefas);
+            foreach (var lista in respostas)
+                foreach (var p in lista)
+                    resultados.Add(p);
+        }
+
+        return resultados
+            .GroupBy(p => p.NumeroCNJ)
+            .Select(g => g.First())
+            .OrderByDescending(p => p.DataAjuizamento)
+            .ToList();
+    }
+
+    private async Task<List<ProcessoOabPreviewDto>> BuscarPorOabNoTribunalAsync(
+        string numeroOAB, string uf, string idx, CancellationToken ct)
+    {
+        var endpoint = $"/api_publica_{idx}/_search";
+        var processos = new List<ProcessoOabPreviewDto>();
+        object[]? searchAfter = null;
+        const int pageSize = 100;
+
+        while (true)
+        {
+            var body = MontarQueryOab(numeroOAB, uf, pageSize, searchAfter);
+            var json = JsonSerializer.Serialize(body);
+
+            DataJudResponse? result = null;
+            for (var tentativa = 0; tentativa < 3; tentativa++)
+            {
+                try
+                {
+                    using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                    {
+                        Content = new StringContent(json, Encoding.UTF8, "application/json")
+                    };
+                    var resp = await _http.SendAsync(req, ct);
+
+                    if (resp.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(tentativa + 1), ct);
+                        continue;
+                    }
+                    if (!resp.IsSuccessStatusCode) return processos;
+
+                    result = await resp.Content.ReadFromJsonAsync<DataJudResponse>(
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "DataJud OAB: erro no tribunal {Idx} tentativa {T}", idx, tentativa);
+                    if (tentativa == 2) return processos;
+                }
+            }
+
+            var hits = result?.Hits?.HitsData;
+            if (hits == null || hits.Count == 0) break;
+
+            foreach (var h in hits.Where(h => h.Source?.Numero != null))
+                processos.Add(new ProcessoOabPreviewDto(
+                    NumeroCNJ: h.Source!.Numero!,
+                    Tribunal: h.Source.SiglaTribunal ?? idx.ToUpperInvariant(),
+                    Vara: h.Source.OrgaoJulgador?.Nome,
+                    Classe: h.Source.Classe?.Nome,
+                    DataAjuizamento: ParseDataIso(h.Source.DataAjuizamento),
+                    Grau: h.Source.Grau
+                ));
+
+            if (hits.Count < pageSize) break;
+
+            var ultimo = hits[^1];
+            if (ultimo.Sort == null || ultimo.Sort.Count == 0) break;
+            searchAfter = ultimo.Sort.Select(e => (object)e.ToString()).ToArray();
+        }
+
+        return processos;
+    }
+
+    private static object MontarQueryOab(string numeroOAB, string uf, int size, object[]? searchAfter)
+    {
+        var queryBase = new
+        {
+            query = new
+            {
+                @bool = new
+                {
+                    must = new object[]
+                    {
+                        new
+                        {
+                            nested = new
+                            {
+                                path = "advocacia",
+                                query = new
+                                {
+                                    @bool = new
+                                    {
+                                        must = new object[]
+                                        {
+                                            new { match = new Dictionary<string, object> { ["advocacia.numeroOAB"] = numeroOAB.Trim() } },
+                                            new { match = new Dictionary<string, object> { ["advocacia.ufOAB"] = uf.Trim().ToUpperInvariant() } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            size,
+            sort = new object[]
+            {
+                new Dictionary<string, object> { ["dataAjuizamento"] = new { order = "desc" } },
+                new Dictionary<string, object> { ["_id"] = new { order = "asc" } }
+            },
+            _source = new[] { "numeroProcesso", "classe", "orgaoJulgador", "dataAjuizamento", "siglaTribunal", "grau" }
+        };
+
+        if (searchAfter == null)
+            return queryBase;
+
+        return new
+        {
+            queryBase.query,
+            queryBase.size,
+            queryBase.sort,
+            queryBase._source,
+            search_after = searchAfter
+        };
+    }
+
+    private static DateTime? ParseData(string? data)
+    {
+        if (string.IsNullOrEmpty(data)) return null;
+        return DateTime.TryParseExact(data, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var dt) ? dt : null;
+    }
+
+    private static DateTime? ParseDataIso(string? data)
+    {
+        if (string.IsNullOrEmpty(data)) return null;
+        return DateTime.TryParse(data, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : null;
+    }
+
     private static string? InferirTribunal(string numeroCNJ)
     {
         var normalized = numeroCNJ.Replace("-", "").Replace(".", "");
@@ -189,8 +375,9 @@ public class DataJudAdapter : ITribunalAdapter
 
         if (normalized.Length == 20)
         {
-            if (!int.TryParse(normalized.Substring(11, 1), out var j) ||
-                !int.TryParse(normalized.Substring(12, 2), out var tt))
+            // CNJ format NNNNNNNDDAAAAJTTOOOO — J at index 13, TT at 14-15
+            if (!int.TryParse(normalized.Substring(13, 1), out var j) ||
+                !int.TryParse(normalized.Substring(14, 2), out var tt))
                 return null;
 
             if (j == 6) return MapearTJEstadual(tt);
@@ -208,11 +395,15 @@ public class DataJudAdapter : ITribunalAdapter
         var parts = numeroCNJ.Replace("-", ".").Split('.');
         if (parts.Length < 6) return null;
 
-        if (int.TryParse(parts[4], out var j2) && int.TryParse(parts[5], out var tt2))
+        // Split format: NNNNNNN.DD.AAAA.J.TT.OOOO — J at parts[3], TT at parts[4]
+        if (int.TryParse(parts[3], out var j2) && int.TryParse(parts[4], out var tt2))
         {
             if (j2 == 6) return MapearTJEstadual(tt2);
             if (j2 == 8 && tt2 == 26) return "tjsp";
             if (j2 == 8) return "stj";
+            if (j2 == 2 && tt2 == 0) return "tst";
+            if (j2 == 2 && tt2 >= 1 && tt2 <= 24) return $"trt{tt2}";
+            if (j2 == 1 && tt2 >= 1 && tt2 <= 6) return $"trf{tt2}";
         }
 
         return null;
@@ -251,6 +442,8 @@ public class DataJudAdapter : ITribunalAdapter
     {
         [System.Text.Json.Serialization.JsonPropertyName("_source")]
         public DataJudSource? Source { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("sort")]
+        public List<System.Text.Json.JsonElement>? Sort { get; set; }
     }
 
     private sealed class DataJudSource

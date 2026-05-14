@@ -1,11 +1,15 @@
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Processos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
+using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 // ReSharper disable RouteTemplates.ActionRoutePrefixCanBeExtractedToControllerRoute
 
@@ -20,13 +24,23 @@ public class ProcessosController : ControllerBase
     private readonly IMonitoramentoService _monitoramento;
     private readonly IAuditService _audit;
     private readonly ITenantContext _tenantContext;
+    private readonly EsajTjspProcessosAdapter _esaj;
+    private readonly AppDbContext _context;
 
-    public ProcessosController(IProcessoService service, IMonitoramentoService monitoramento, IAuditService audit, ITenantContext tenantContext)
+    public ProcessosController(
+        IProcessoService service,
+        IMonitoramentoService monitoramento,
+        IAuditService audit,
+        ITenantContext tenantContext,
+        EsajTjspProcessosAdapter esaj,
+        AppDbContext context)
     {
         _service = service;
         _monitoramento = monitoramento;
         _audit = audit;
         _tenantContext = tenantContext;
+        _esaj = esaj;
+        _context = context;
     }
 
     [HttpGet]
@@ -126,7 +140,66 @@ public class ProcessosController : ControllerBase
     [HttpPost("{id:guid}/monitoramento/executar")]
     [Authorize(Roles = "Admin,Advogado")]
     public async Task<IActionResult> ExecutarMonitoramento(Guid id, CancellationToken ct)
-        => Ok(await _monitoramento.MonitorarProcessoAsync(id, ct));
+    {
+        var processo = await _service.GetByIdAsync(id, ct);
+        if (processo == null) return NotFound("Processo não encontrado.");
+
+        int novos = 0;
+
+        if (processo.Tribunal == "TJSP" || processo.NumeroCNJ.EndsWith("8.26"))
+        {
+            var numeroCNJDigits = new string(processo.NumeroCNJ.Where(char.IsDigit).ToArray());
+            var detalhe = await _esaj.ObterDetalhesAsync(numeroCNJDigits, processo.Grau ?? "G1", ct, null, null);
+            if (detalhe != null && !detalhe.Sigiloso && detalhe.Movimentos.Count > 0)
+            {
+                var processoEntity = await _context.Processos.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct);
+                if (processoEntity != null)
+                {
+                    var existentes = await _context.Andamentos
+                        .Where(a => a.ProcessoId == id)
+                        .Select(a => new { a.Data, a.Descricao })
+                        .ToListAsync(ct);
+
+                    var andamentosImportados = detalhe.Movimentos
+                        .Where(m => m.Data.HasValue)
+                        .Select(m => new
+                        {
+                            Data = m.Data,
+                            Descricao = string.IsNullOrEmpty(m.Complemento) ? m.Titulo : $"{m.Titulo} — {m.Complemento}",
+                            OrgaoJulgador = m.OrgaoJulgador
+                        })
+                        .Where(x => x.Data.HasValue && !existentes.Any(e => e.Data == x.Data.Value && e.Descricao == x.Descricao))
+                        .Select(x => new Andamento
+                        {
+                            Id = Guid.NewGuid(),
+                            ProcessoId = id,
+                            TenantId = _tenantContext.TenantId,
+                            Data = x.Data ?? DateTime.UtcNow,
+                            Tipo = Domain.Enums.TipoAndamento.Outro,
+                            Descricao = x.Descricao,
+                            Fonte = Domain.Enums.FonteAndamento.Automatico,
+                            CriadoEm = DateTime.UtcNow,
+                            OrgaoJulgador = x.OrgaoJulgador
+                        }).ToList();
+
+                    if (andamentosImportados.Count > 0)
+                    {
+                        _context.Andamentos.AddRange(andamentosImportados);
+                        await _context.SaveChangesAsync(ct);
+                    }
+                    novos = andamentosImportados.Count;
+                }
+            }
+        }
+
+        if (novos == 0)
+        {
+            var resultado = await _monitoramento.MonitorarProcessoAsync(id, ct);
+            return Ok(resultado);
+        }
+
+        return Ok(new { Id = id, NumeroCNJ = processo.NumeroCNJ, Sucesso = true, NovosAndamentos = novos, Mensagem = $"{novos} novo(s) andamento(s) importado(s) do ESAJ." });
+    }
 
     [HttpPost("{id:guid}/partes")]
     public async Task<IActionResult> AdicionarParte(Guid id, [FromBody] AdicionarParteDto dto, CancellationToken ct)

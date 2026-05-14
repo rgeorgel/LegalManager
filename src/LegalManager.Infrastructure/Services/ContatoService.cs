@@ -79,11 +79,23 @@ public class ContatoService : IContatoService
         return MapToResponse(contato);
     }
 
-    public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var contato = await _context.Contatos
             .Include(c => c.Tags)
             .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == _tenantContext.TenantId, ct);
+
+        return contato == null ? null : MapToResponse(contato);
+    }
+
+    public async Task<ContatoResponseDto?> GetByNomeAsync(string nome, CancellationToken ct = default)
+    {
+        var contato = await _context.Contatos
+            .Include(c => c.Tags)
+            .FirstOrDefaultAsync(c =>
+                c.TenantId == _tenantContext.TenantId &&
+                c.Nome.ToLower() == nome.ToLower(),
+                ct);
 
         return contato == null ? null : MapToResponse(contato);
     }

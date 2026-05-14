@@ -120,7 +120,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.GetAll(null, null, null, null, null, 1, 20, CancellationToken.None);
 
@@ -134,7 +134,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var advogadoId = Guid.NewGuid();
         var contatoId = Guid.NewGuid();
 
@@ -159,7 +159,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         await controller.GetAll("busca", "InvalidStatus", "InvalidArea", null, null, 1, 20, CancellationToken.None);
 
@@ -175,7 +175,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var processoId = Guid.NewGuid();
         var processo = CreateProcessoResponseDto(processoId);
         service.Setup(s => s.GetByIdAsync(processoId, It.IsAny<CancellationToken>()))
@@ -194,7 +194,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.GetById(Guid.NewGuid(), CancellationToken.None);
 
@@ -208,7 +208,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.GetAndamentos(Guid.NewGuid(), CancellationToken.None);
 
@@ -222,8 +222,8 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
-        var dto = new CreateProcessoDto("1234567-89.2024.1.01.0001", null, null, null, AreaDireito.Civil, null, FaseProcessual.Conhecimento, null, null, null, false, null, null, null, null, null, null, null, null, null, null);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
+        var dto = new CreateProcessoDto("1234567-89.2024.1.01.0001", null, null, null, AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null, null, false, null, null, null, null, null, null, null, null, null, null);
 
         var result = await controller.Create(dto, CancellationToken.None);
 
@@ -238,7 +238,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var processoId = Guid.NewGuid();
         var existing = CreateProcessoResponseDto(processoId);
         service.Setup(s => s.GetByIdAsync(processoId, It.IsAny<CancellationToken>()))
@@ -257,7 +257,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var processoId = Guid.NewGuid();
         var existing = CreateProcessoResponseDto(processoId);
         service.Setup(s => s.GetByIdAsync(processoId, It.IsAny<CancellationToken>()))
@@ -276,7 +276,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var processoId = Guid.NewGuid();
         var existing = CreateProcessoResponseDto(processoId);
         service.Setup(s => s.GetByIdAsync(processoId, It.IsAny<CancellationToken>()))
@@ -294,7 +294,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var dto = new CreateAndamentoDto(DateTime.UtcNow, TipoAndamento.Despacho, "Novo andamento");
 
         var result = await controller.AddAndamento(Guid.NewGuid(), dto, CancellationToken.None);
@@ -309,7 +309,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.DeleteAndamento(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
 
@@ -323,7 +323,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.AlternarMonitoramento(Guid.NewGuid(), CancellationToken.None);
 
@@ -333,13 +333,60 @@ public class ProcessosControllerTests
     [Fact]
     public async Task ExecutarMonitoramento_ReturnsOk()
     {
-        var service = CreateProcessoServiceMock();
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
 
-        var result = await controller.ExecutarMonitoramento(Guid.NewGuid(), CancellationToken.None);
+        var processoId = Guid.NewGuid();
+        var processoMock = new Mock<IProcessoService>();
+        processoMock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessoResponseDto(
+                Id: processoId,
+                NumeroCNJ: "1234567-89.2024.1.01.0001",
+                Tribunal: "TJMG",
+                Vara: null,
+                Comarca: null,
+                AreaDireito: AreaDireito.Civil,
+                TipoAcao: null,
+                Fase: FaseProcessual.Conhecimento,
+                Status: StatusProcesso.Ativo,
+                ValorCausa: 10000m,
+                AdvogadoResponsavelId: null,
+                NomeAdvogadoResponsavel: null,
+                Monitorado: false,
+                Observacoes: null,
+                Decisao: null,
+                Resultado: null,
+                CriadoEm: DateTime.UtcNow,
+                EncerradoEm: null,
+                Partes: new List<ProcessoParteResponseDto>(),
+                TotalAndamentos: 0,
+                Classe: null,
+                Assuntos: null,
+                DataAjuizamento: null,
+                Grau: null,
+                Sistema: null,
+                Formato: null,
+                NivelSigilo: null,
+                UltimaAtualizacaoDataJud: null,
+                Ementa: null,
+                DecisaoDataJud: null,
+                Observacao: null,
+                Relator: null,
+                TipoDecisao: null,
+                ResultadoJulgamento: null,
+                CodigoClasse: null,
+                Instancia: null,
+                DataJulgamento: null,
+                DataPublicacao: null,
+                SiglaTribunal: null,
+                Segmento: null,
+                DataDistribuicao: null
+            ));
+
+        var controller = new ProcessosController(processoMock.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
+
+        var result = await controller.ExecutarMonitoramento(processoId, CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(result);
     }
@@ -351,7 +398,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
         var dto = new AdicionarParteDto { ContatoId = Guid.NewGuid(), TipoParte = "Autor" };
 
         var result = await controller.AdicionarParte(Guid.NewGuid(), dto, CancellationToken.None);
@@ -366,7 +413,7 @@ public class ProcessosControllerTests
         var monitoramento = CreateMonitoramentoServiceMock();
         var audit = CreateAuditServiceMock();
         var tenantContext = CreateTenantContextMock();
-        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object);
+        var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);
 
         var result = await controller.RemoverParte(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
 

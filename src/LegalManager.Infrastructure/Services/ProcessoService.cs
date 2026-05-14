@@ -47,7 +47,7 @@ public class ProcessoService : IProcessoService
             AreaDireito = dto.AreaDireito,
             TipoAcao = dto.TipoAcao,
             Fase = dto.Fase,
-            Status = StatusProcesso.Ativo,
+            Status = dto.Status ?? StatusProcesso.Ativo,
             ValorCausa = dto.ValorCausa,
             AdvogadoResponsavelId = dto.AdvogadoResponsavelId,
             Observacoes = dto.Observacoes,
@@ -190,7 +190,7 @@ public class ProcessoService : IProcessoService
             .Take(filtro.PageSize)
             .Select(p => new
             {
-                p.Id, p.NumeroCNJ, p.Tribunal, p.Comarca, p.AreaDireito, p.Fase,
+                p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
                 p.Status, p.ValorCausa, p.CriadoEm,
                 NomeAdvogado = p.AdvogadoResponsavel != null ? p.AdvogadoResponsavel.Nome : null,
                 NomeCliente = p.Partes
@@ -203,7 +203,7 @@ public class ProcessoService : IProcessoService
 
         return new PagedResultDto<ProcessoListItemDto>(
             items.Select(p => new ProcessoListItemDto(
-                p.Id, p.NumeroCNJ, p.Tribunal, p.Comarca, p.AreaDireito, p.Fase,
+                p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
                 p.Status, p.ValorCausa, p.NomeAdvogado, p.NomeCliente, p.CriadoEm, p.TotalAndamentos)),
             total, filtro.Page, filtro.PageSize,
             (int)Math.Ceiling((double)total / filtro.PageSize));

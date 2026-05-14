@@ -10,6 +10,7 @@ public class Usuario : IdentityUser<Guid>
     public PerfilUsuario Perfil { get; set; }
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
+    public bool OnboardingImportacaoCompleto { get; set; } = false;
 
     public Tenant Tenant { get; set; } = null!;
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

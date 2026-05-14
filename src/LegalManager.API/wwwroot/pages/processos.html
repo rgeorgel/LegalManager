@@ -43,6 +43,163 @@
     .searchable-select-list li { padding:8px 12px; cursor:pointer; font-size:13px; }
     .searchable-select-list li:hover { background:#f3f4f6; }
     .searchable-select-list li.selected { background:#e0e7ff; font-weight:500; }
+
+    /* View toggle */
+    .view-toggle { display:flex; gap:4px; align-items:center; }
+    .view-btn { width:36px; height:36px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:.2s; }
+    .view-btn:hover { background:#e5e7eb; }
+    .view-btn.active { background:var(--color-primary); color:white; border-color:var(--color-primary); }
+
+    /* Card grid layout */
+    .processos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+      padding: 4px 0;
+    }
+    .processos-grid.list-view {
+      grid-template-columns: 1fr;
+    }
+    .processos-grid.list-view .processo-card {
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+    }
+    .processos-grid.list-view .card-divider { display: none; }
+    .processos-grid.list-view .card-header { flex: 0 0 200px; }
+    .processos-grid.list-view .card-badges { flex: 0 0 auto; }
+    .processos-grid.list-view .card-body { flex: 1; display: flex; align-items: center; gap: 24px; }
+    .processos-grid.list-view .card-body > div { margin-top: 0 !important; }
+    .processos-grid.list-view .card-divider { display: none; }
+    .processos-grid.list-view .card-footer { flex: 0 0 auto; flex-direction: row; gap: 8px; }
+    .processos-grid.list-view .card-meta { display: none; }
+    .processos-grid.list-view .card-actions { margin-top: 0; }
+    .processo-card {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      cursor: pointer;
+    }
+    .processo-card:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-cnj {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: 0.02em;
+    }
+    .card-cnj a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .card-cnj a:hover {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+    .card-status {
+      flex-shrink: 0;
+    }
+    .card-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .card-divider {
+      height: 1px;
+      background: var(--color-border);
+      opacity: 0.5;
+    }
+    .card-info-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+    .card-info-row .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9ca3af;
+      min-width: 70px;
+    }
+    .card-info-row .value {
+      color: var(--color-text);
+      font-weight: 500;
+    }
+    .card-info-row .value.empty {
+      color: var(--color-text-muted);
+      font-style: italic;
+    }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .card-andamentos {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .card-andamentos .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .monitoring-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 99px;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .advogado-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 2px 8px;
+      background: #f3f4f6;
+      border-radius: 99px;
+      color: #4b5563;
+    }
+    @media(max-width:768px) {
+      .processos-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -76,7 +233,10 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Processos</h1>
-      <button class="btn btn-primary" id="btnNovo">+ Novo Processo</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" id="btnImportarOab">Importar por OAB</button>
+        <button class="btn btn-primary" id="btnNovo">+ Novo Processo</button>
+      </div>
     </div>
 
     <div class="filter-bar">
@@ -103,31 +263,22 @@
         <option value="Imobiliario">Imobiliário</option>
         <option value="Outro">Outro</option>
       </select>
+      <div class="view-toggle">
+        <button type="button" class="view-btn active" id="viewGrid" title="Visualização em grade">⊞</button>
+        <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
+      </div>
     </div>
 
     <div id="alertMsg" class="alert" style="display:none"></div>
 
-    <div class="card">
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Número CNJ</th>
-              <th>Área</th>
-              <th>Tribunal</th>
-              <th>Cliente (Autor)</th>
-              <th>Advogado</th>
-              <th>Status</th>
-              <th>Andamentos</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div id="processosContainer" class="processos-grid" style="display:none"></div>
+    <div id="processosLoading" style="text-align:center;padding:48px;color:var(--color-text-muted)">Carregando...</div>
+    <div id="processosEmpty" style="display:none;text-align:center;padding:48px">
+      <div style="font-size:48px;margin-bottom:12px">⚖️</div>
+      <div style="font-weight:600;margin-bottom:4px">Nenhum processo encontrado</div>
+      <div style="color:var(--color-text-muted);font-size:13px">Tente ajustar os filtros ou cadastre um novo processo.</div>
     </div>
+    <div id="processosError" style="display:none;text-align:center;padding:48px;color:var(--color-danger)"></div>
     <div class="pagination" id="pagination"></div>
   </main>
 </div>
@@ -303,11 +454,75 @@
   </div>
 </div>
 
+<!-- Modal de Importação por OAB -->
+<div class="modal-overlay" id="onboardingOverlay">
+  <div class="modal" style="max-width:560px;width:100%">
+    <div class="modal-header">
+      <span class="modal-title">Importar Processos por OAB</span>
+    </div>
+    <div class="modal-body">
+      <div class="ob-step" id="obStep1">
+        <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
+          Informe seu número de OAB e o estado de inscrição. Buscaremos seus processos em todos os tribunais da UF (TJ, TRF, TRT) via DataJud (CNJ).
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 100px;gap:12px">
+          <div>
+            <label class="form-label">Número OAB <span style="font-weight:400;color:var(--color-text-muted)">(só dígitos)</span></label>
+            <input id="obOab" class="form-control" type="text" inputmode="numeric" placeholder="Ex: 123456" autocomplete="off">
+          </div>
+          <div>
+            <label class="form-label">UF</label>
+            <select id="obUf" class="form-control">
+              <option value="">UF</option>
+            </select>
+          </div>
+        </div>
+        <div id="obProgresso" style="display:none;margin-top:12px;font-size:13px;color:var(--color-text-muted)">
+          <span id="obProgressoTxt"></span>
+        </div>
+        <div id="obErroBusca" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
+      </div>
+      <div class="ob-step" id="obStep2">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:14px;font-weight:600">Processos encontrados <span id="obContagem" style="font-weight:400;font-size:12px;color:var(--color-text-muted)"></span></span>
+          <button id="obSelecionarTodosBtn" class="btn btn-secondary btn-sm" type="button">Selecionar todos</button>
+        </div>
+        <div id="obSemResultado" style="display:none;text-align:center;padding:24px;color:var(--color-text-muted);font-size:14px">
+          Nenhum processo encontrado para esta OAB nesta UF.
+        </div>
+        <div id="obListaProcessos" style="max-height:320px;overflow-y:auto"></div>
+        <div id="obErroImportar" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
+      </div>
+      <div class="ob-step" id="obStep3">
+        <div style="text-align:center;padding:16px 0">
+          <div style="font-size:40px;margin-bottom:12px">✅</div>
+          <div id="obResultadoTexto" style="font-size:16px;font-weight:600;margin-bottom:8px"></div>
+          <pre id="obResultadoDetalhe" style="display:none;font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:4px;text-align:left;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <div id="obFooterStep1" style="display:flex;gap:8px;width:100%;justify-content:flex-end">
+        <button id="obPularBtn" class="btn btn-secondary" type="button">Cancelar</button>
+        <button id="obBuscarBtn" class="btn btn-primary" type="button">Buscar Processos</button>
+      </div>
+      <div id="obFooterStep2" style="display:none;gap:8px;width:100%;justify-content:flex-end">
+        <button id="obPularStep2Btn" class="btn btn-secondary" type="button">Cancelar</button>
+        <button id="obImportarBtn" class="btn btn-primary" type="button">Importar Selecionados</button>
+      </div>
+      <div id="obFooterStep3" style="display:none;width:100%;justify-content:flex-end">
+        <button id="obConcluirBtn" class="btn btn-primary" type="button">Concluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initLayout } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { mascaraCnj } from '/js/mascaras.js';
+import { initOnboardingModal, openOnboardingModal } from '/js/onboarding.js';
 
 initLayout();
 
@@ -451,6 +666,7 @@ document.getElementById('fNumeroCNJ').addEventListener('keydown', e => {
 
 let currentPage = 1;
 let currentFilters = {};
+let currentView = 'grid';
 let editingId = null;
 let encerrandoId = null;
 let contatos = [];
@@ -485,18 +701,6 @@ async function loadReferenceData() {
   } catch {}
 }
 
-async function loadProcessos() {
-  const tbody = document.getElementById('tableBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px">Carregando...</td></tr>';
-  try {
-    const result = await getProcessos({ ...currentFilters, page: currentPage });
-    renderTable(result.items);
-    renderPagination(result.totalPages, result.page);
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
-  }
-}
-
 function statusBadge(s) {
   const cls = { Ativo: 'ativo', Suspenso: 'suspenso', Arquivado: 'arquivado', Encerrado: 'encerrado' }[s] || 'gray';
   return `<span class="badge status-${cls}">${s}</span>`;
@@ -508,26 +712,106 @@ function areaLabel(a) {
 }
 
 function renderTable(items) {
-  const tbody = document.getElementById('tableBody');
+  const grid = document.getElementById('processosContainer');
+  const loading = document.getElementById('processosLoading');
+  const empty = document.getElementById('processosEmpty');
+  const error = document.getElementById('processosError');
+
+  loading.style.display = 'none';
+  error.style.display = 'none';
+
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">⚖️</div><div class="empty-state-text">Nenhum processo encontrado</div></div></td></tr>`;
+    grid.style.display = 'none';
+    empty.style.display = 'block';
     return;
   }
-  tbody.innerHTML = items.map(p => `
-    <tr>
-      <td data-label="Número CNJ"><strong><a href="/pages/processo-detalhe.html?id=${p.id}">${p.numeroCNJ}</a></strong></td>
-      <td data-label="Área"><span class="badge badge-blue">${areaLabel(p.areaDireito)}</span></td>
-      <td data-label="Tribunal">${p.tribunal || '—'}</td>
-      <td data-label="Cliente">${p.nomeCliente || '—'}</td>
-      <td data-label="Advogado">${p.nomeAdvogadoResponsavel || '—'}</td>
-      <td data-label="Status">${statusBadge(p.status)}</td>
-      <td data-label="Andamentos"><span class="badge badge-gray">${p.totalAndamentos}</span></td>
-      <td data-label="Ações" style="white-space:nowrap">
-        <a href="/pages/processo-detalhe.html?id=${p.id}" class="btn btn-secondary btn-sm">Ver</a>
-        <button class="btn btn-secondary btn-sm" onclick="editProcesso('${p.id}')">Editar</button>
-        ${p.status !== 'Encerrado' ? `<button class="btn btn-danger btn-sm" onclick="openEncerrar('${p.id}')">Encerrar</button>` : ''}
-      </td>
-    </tr>`).join('');
+  empty.style.display = 'none';
+  grid.style.display = '';
+
+  grid.innerHTML = items.map(p => {
+    const areaMap = { Tributario: 'Tributário', Trabalhista: 'Trabalhista', Criminal: 'Criminal',
+      Civil: 'Civil', Consumidor: 'Consumidor', Familia: 'Família', Empresarial: 'Empresarial',
+      Administrativo: 'Administrativo', Ambiental: 'Ambiental', Imobiliário: 'Imobiliário',
+      Previdenciario: 'Previdenciário' };
+    const statusMap = { Ativo: 'ativo', Suspenso: 'suspenso', Arquivado: 'arquivado', Encerrado: 'encerrado' };
+    const statusCls = statusMap[p.status] || 'gray';
+    const area = areaMap[p.areaDireito] || p.areaDireito || '—';
+    const valor = p.valorCausa ? 'R$ ' + Number(p.valorCausa).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : null;
+    const monitoramento = p.monitorado
+      ? '<span class="monitoring-badge">🔄 Monitorado</span>'
+      : '';
+
+    return `<div class="processo-card" onclick="window.location.href='/pages/processo-detalhe.html?id=${p.id}'">
+      <div class="card-header">
+        <div class="card-cnj"><a href="/pages/processo-detalhe.html?id=${p.id}" onclick="event.stopPropagation()">${p.numeroCNJ}</a></div>
+        <div class="card-status"><span class="badge status-${statusCls}">${p.status}</span></div>
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-blue">${area}</span>
+        ${p.grau ? `<span class="badge badge-gray">${p.grau}</span>` : ''}
+        ${monitoramento}
+      </div>
+      <div class="card-body">
+      <div class="card-divider"></div>
+      <div>
+        <div class="card-info-row">
+          <span class="label">Tribunal</span>
+          <span class="value ${p.tribunal ? '' : 'empty'}">${p.tribunal || '—'}</span>
+        </div>
+        <div class="card-info-row" style="margin-top:6px">
+          <span class="label">Vara</span>
+          <span class="value ${p.vara ? '' : 'empty'}">${p.vara || '—'}</span>
+        </div>
+        <div class="card-info-row" style="margin-top:6px">
+          <span class="label">Cliente</span>
+          <span class="value ${p.nomeCliente ? '' : 'empty'}">${p.nomeCliente || '—'}</span>
+        </div>
+        ${valor ? `<div class="card-info-row" style="margin-top:6px">
+          <span class="label">Valor</span>
+          <span class="value">${valor}</span>
+        </div>` : ''}
+      </div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-footer">
+        <div class="card-meta">
+          ${p.nomeAdvogadoResponsavel ? `<span class="advogado-chip">👤 ${p.nomeAdvogadoResponsavel}</span>` : ''}
+          <span class="card-andamentos">
+            <span class="dot"></span>
+            ${p.totalAndamentos} andamento${p.totalAndamentos !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <a href="/pages/processo-detalhe.html?id=${p.id}" class="btn btn-secondary btn-sm">Ver</a>
+          <button class="btn btn-secondary btn-sm" onclick="editProcesso('${p.id}')">Editar</button>
+          ${p.status !== 'Encerrado' ? `<button class="btn btn-danger btn-sm" onclick="openEncerrar('${p.id}')">Encerrar</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadProcessos() {
+  const grid = document.getElementById('processosContainer');
+  const loading = document.getElementById('processosLoading');
+  const empty = document.getElementById('processosEmpty');
+  const error = document.getElementById('processosError');
+
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+  error.style.display = 'none';
+  loading.style.display = 'block';
+
+  try {
+    const result = await getProcessos({ ...currentFilters, page: currentPage });
+    loading.style.display = 'none';
+    renderTable(result.items);
+    renderPagination(result.totalPages, result.page);
+  } catch (err) {
+    loading.style.display = 'none';
+    error.textContent = err.message;
+    error.style.display = 'block';
+  }
 }
 
 function renderPagination(total, current) {
@@ -704,6 +988,21 @@ document.getElementById('encerrarConfirmar').addEventListener('click', async () 
 });
 
 let debounce;
+
+document.getElementById('viewGrid').addEventListener('click', () => {
+  currentView = 'grid';
+  document.getElementById('viewGrid').classList.add('active');
+  document.getElementById('viewList').classList.remove('active');
+  document.getElementById('processosContainer').classList.remove('list-view');
+});
+
+document.getElementById('viewList').addEventListener('click', () => {
+  currentView = 'list';
+  document.getElementById('viewList').classList.add('active');
+  document.getElementById('viewGrid').classList.remove('active');
+  document.getElementById('processosContainer').classList.add('list-view');
+});
+
 ['filtBusca', 'filtStatus', 'filtArea'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     clearTimeout(debounce);
@@ -720,6 +1019,12 @@ let debounce;
 
 await loadReferenceData();
 loadProcessos();
+
+initOnboardingModal({
+  marcarCompleto: false,
+  onImportSuccess: () => loadProcessos()
+});
+document.getElementById('btnImportarOab').addEventListener('click', openOnboardingModal);
 </script>
 </body>
 </html>
