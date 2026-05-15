@@ -16,17 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  seq:
-    image: datalust/seq:latest
-    restart: unless-stopped
-    environment:
-      ACCEPT_EULA: "Y"
-    ports:
-      - "${SEQ_PORT_API:-6641}:5341"
-      - "${SEQ_PORT_UI:-6681}:80"
-    volumes:
-      - seq_data:/data
-
   api:
     build:
       context: .
@@ -65,14 +54,9 @@ services:
       IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
       DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
       DataJud__ApiKey: ${DATAJUD_API_KEY:-}
-      Serilog__WriteTo__0__Name: Seq
-      Serilog__WriteTo__0__Args__serverUrl: "http://seq:5341"
     depends_on:
       postgres:
         condition: service_healthy
-      seq:
-        condition: service_started
 
 volumes:
   postgres_data:
-  seq_data:
