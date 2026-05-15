@@ -40,7 +40,16 @@
       "Bash(grep -E \"\\\\.cs$\")",
       "Bash(grep -v \"^$\\\\|warning\\\\|Warning\")",
       "Bash(git stash *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(xargs -I {} sh -c 'echo \"Found: {}\"')",
+      "Bash(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\" -Depth 2)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(Format-List)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\" -Directory | Where-Object { $_.Name -notin @\\('.git', 'coverage-html', '.idea', '.claude', '.opencode', 'coverage-results'\\) } | Select-Object Name)",
+      "Bash(git *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\" -Recurse -Directory | Select-Object -First 50 | ForEach-Object { $_.FullName } | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\\\\src\" -Recurse -Directory | ForEach-Object { $_.FullName } | Sort-Object)",
+      "Bash(grep -E \"\\\\.\\(sln|csproj|json|yml|yaml\\)$\")"
     ]
   }
 }

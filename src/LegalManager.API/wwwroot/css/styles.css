@@ -61,7 +61,7 @@ a:active { opacity: 0.7; }
 .btn-secondary:active { background: var(--color-border); transform: scale(0.98); }
 .btn-danger { background: var(--color-danger); color: #fff; }
 .btn-danger:active { opacity: 0.85; transform: scale(0.98); }
-.btn-sm { padding: 6px 12px; font-size: 13px; min-height: 36px; }
+.btn-sm { font-size: 13px; min-height: 36px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Forms ───────────────────────────────────────────── */
