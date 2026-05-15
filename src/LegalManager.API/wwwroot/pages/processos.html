@@ -64,22 +64,33 @@
     }
     .processos-grid.list-view {
       grid-template-columns: 1fr;
+      gap: 4px;
     }
     .processos-grid.list-view .processo-card {
       flex-direction: row;
       align-items: center;
-      gap: 16px;
-      padding: 12px 16px;
+      gap: 12px;
+      padding: 10px 16px;
     }
     .processos-grid.list-view .card-divider { display: none; }
-    .processos-grid.list-view .card-header { flex: 0 0 200px; }
+    .processos-grid.list-view .card-header {
+      flex: 0 0 210px;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 5px;
+    }
     .processos-grid.list-view .card-badges { flex: 0 0 auto; }
-    .processos-grid.list-view .card-body { flex: 1; display: flex; align-items: center; gap: 24px; }
-    .processos-grid.list-view .card-body > div { margin-top: 0 !important; }
-    .processos-grid.list-view .card-divider { display: none; }
-    .processos-grid.list-view .card-footer { flex: 0 0 auto; flex-direction: row; gap: 8px; }
-    .processos-grid.list-view .card-meta { display: none; }
-    .processos-grid.list-view .card-actions { margin-top: 0; }
+    .processos-grid.list-view .card-body { flex: 1; display: flex; align-items: center; }
+    .processos-grid.list-view .card-body > div:not(.card-divider) {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px 16px;
+      width: 100%;
+    }
+    .processos-grid.list-view .card-body .card-info-row { margin-top: 0 !important; }
+    .processos-grid.list-view .card-footer { flex: 0 0 auto; }
+    .processos-grid.list-view .card-actions { display: flex; gap: 6px; margin-top: 0; }
     .processo-card {
       background: #fff;
       border: 1px solid var(--color-border);
