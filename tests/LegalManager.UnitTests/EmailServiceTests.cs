@@ -1,4 +1,4 @@
-using LegalManager.Application.Interfaces;
+﻿using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -46,7 +46,7 @@ public class EmailServiceTests
         await svc.EnviarBoasVindasAsync("cliente@test.com", "Escritório Teste", CancellationToken.None);
 
         Assert.NotNull(capture.Message);
-        Assert.Contains("Bem-vindo ao Nomus", capture.Message!.Subject);
+        Assert.Contains("Bem-vindo ao Causify", capture.Message!.Subject);
         Assert.Contains("cliente@test.com", capture.Message.To);
     }
 

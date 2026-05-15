@@ -12,7 +12,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nomus — Detalhe do Processo</title>
+  <title>Causify — Detalhe do Processo</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
@@ -76,7 +76,7 @@
 <div class="app-layout">
   <header class="header">
     <button class="hamburger" id="hamburger">☰</button>
-    <div class="header-logo">⚖️ Nomus</div>
+    <div class="header-logo">⚖️ Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -872,7 +872,7 @@ async function loadProcesso() {
 }
 
 function renderProcesso() {
-  document.title = `${processo.numeroCNJ} — Nomus`;
+  document.title = `${processo.numeroCNJ} — Causify`;
   document.getElementById('pageTitle').textContent = processo.numeroCNJ;
 
   document.getElementById('badgeStatus').className = statusCls(processo.status);

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -207,7 +207,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                         x.Span(" · ");
                         x.Span(dto.DataProposta);
                         x.Span(" · ");
-                        x.Span("Documento gerado pelo sistema Nomus");
+                        x.Span("Documento gerado pelo sistema Causify");
                     });
                 });
             });

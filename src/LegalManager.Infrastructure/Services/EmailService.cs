@@ -1,4 +1,4 @@
-using LegalManager.Application.Interfaces;
+﻿using LegalManager.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Resend;
 
@@ -29,13 +29,13 @@ public class EmailService : IEmailService
     {
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#1a56db">Bem-vindo ao Nomus!</h2>
+              <h2 style="color:#1a56db">Bem-vindo ao Causify!</h2>
               <p>Olá! O escritório <strong>{nomeEscritorio}</strong> foi cadastrado com sucesso.</p>
               <p>Você tem <strong>10 dias de trial gratuito</strong> com acesso completo.</p>
               <p>Acesse o sistema em: <a href="{_config["App:FrontendUrl"]}">{_config["App:FrontendUrl"]}</a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Bem-vindo ao Nomus — {nomeEscritorio}", html));
+        await _resend.EmailSendAsync(CriarMensagem(email, $"Bem-vindo ao Causify — {nomeEscritorio}", html));
     }
 
     public async Task EnviarConviteUsuarioAsync(string email, string nomeEscritorio, string linkConvite, CancellationToken ct = default)
@@ -43,7 +43,7 @@ public class EmailService : IEmailService
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <h2 style="color:#1a56db">Você foi convidado!</h2>
-              <p>Você recebeu um convite para acessar o <strong>{nomeEscritorio}</strong> no Nomus.</p>
+              <p>Você recebeu um convite para acessar o <strong>{nomeEscritorio}</strong> no Causify.</p>
               <p><a href="{linkConvite}" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Aceitar convite</a></p>
               <p style="color:#666;font-size:12px">Link válido por 7 dias.</p>
             </div>
@@ -61,7 +61,7 @@ public class EmailService : IEmailService
               <p style="color:#666;font-size:12px">Link válido por 1 hora. Se não foi você, ignore este e-mail.</p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, "Redefinição de senha — Nomus", html));
+        await _resend.EmailSendAsync(CriarMensagem(email, "Redefinição de senha — Causify", html));
     }
 
     public async Task EnviarTrialExpirandoAsync(string email, string nomeEscritorio, int diasRestantes, CancellationToken ct = default)
@@ -70,7 +70,7 @@ public class EmailService : IEmailService
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <h2 style="color:#e02424">Seu trial está terminando</h2>
               <p>O período de teste de <strong>{nomeEscritorio}</strong> expira em <strong>{diasRestantes} dia(s)</strong>.</p>
-              <p>Assine um plano para continuar usando o Nomus.</p>
+              <p>Assine um plano para continuar usando o Causify.</p>
               <p><a href="{_config["App:FrontendUrl"]}/planos" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Ver planos</a></p>
             </div>
             """;
@@ -161,7 +161,7 @@ public class EmailService : IEmailService
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
-                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Nomus</h1>
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
                 <p style="color:#94a3b8;margin:4px 0 0">Portal do Cliente</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
@@ -215,7 +215,7 @@ public class EmailService : IEmailService
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
-                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Nomus</h1>
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
                 <p style="color:#94a3b8;margin:4px 0 0">Atualização de Processo</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
@@ -246,7 +246,7 @@ public class EmailService : IEmailService
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
-                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Nomus</h1>
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
                 <p style="color:#94a3b8;margin:4px 0 0">Cobrança de Honorários</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
