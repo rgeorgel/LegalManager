@@ -184,6 +184,18 @@ builder.Services.AddHttpClient<IAbacatePayService, AbacatePayService>(client =>
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 });
 
+builder.Services.AddHttpClient("BCB", c =>
+{
+    c.BaseAddress = new Uri("https://api.bcb.gov.br/");
+    c.DefaultRequestHeaders.Add("Accept", "application/json");
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddHttpClient("TJSP", c =>
+{
+    c.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 LegalManager/1.0");
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
+
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
 builder.Services.AddHangfireServer();
@@ -224,6 +236,15 @@ using (var scope = app.Services.CreateScope())
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole<Guid>(role));
+    }
+
+    // Enfileira job se algum dos 3 índices estiver ausente
+    var tiposPresentes = await db.IndicesCorrecaoMonetaria
+        .Select(i => i.Tipo).Distinct().CountAsync();
+    if (tiposPresentes < 3)
+    {
+        var jobClient = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
+        jobClient.Enqueue<IndicesCorrecaoJob>(job => job.ExecutarAsync());
     }
 }
 
@@ -274,6 +295,11 @@ RecurringJob.AddOrUpdate<DjeJob>(
     "captura-dje",
     job => job.ExecutarAsync(CancellationToken.None),
     "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
+
+RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
+    "indices-correcao-mensal",
+    job => job.ExecutarAsync(),
+    "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

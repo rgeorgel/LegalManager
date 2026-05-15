@@ -443,6 +443,7 @@
         <button class="hc-tab" onclick="hcShowPane('hist',this)">📋 Histórico</button>
         <button class="hc-tab" onclick="hcShowPane('cmp',this)">📊 Comparativo</button>
         <button class="hc-tab" onclick="hcShowPane('proposta',this)">📄 Proposta</button>
+        <button class="hc-tab" onclick="hcShowPane('cfg',this)">⚙️ Configurações</button>
       </div>
 
       <!-- ── CALCULADORA ── -->
@@ -526,6 +527,7 @@
                 <div class="hc-esp-row">
                   <button id="hc-esp-off" class="hc-esp-btn on" onclick="hcSetEsp(false,document.getElementById('hc-esp-off'),document.getElementById('hc-esp-on'))">Sem adicional</button>
                   <button id="hc-esp-on" class="hc-esp-btn" style="color:var(--hc-gold);border-color:var(--hc-gold)" onclick="hcSetEsp(true,document.getElementById('hc-esp-on'),document.getElementById('hc-esp-off'))">+ Especialista 10%</button>
+                  <!-- label atualizado via hcAtualizarBotaoEspecialidade() após carregar config -->
                 </div>
               </div>
             </div>
@@ -563,9 +565,9 @@
                 <label>Correção monetária</label>
                 <select id="hc-idx-corr" onchange="hcRender()">
                   <option value="0">Sem correção</option>
-                  <option value="0.42">IPCA estimado (~0,42%/mês)</option>
-                  <option value="0.55">IGP-M estimado (~0,55%/mês)</option>
-                  <option value="0.80">Tabela TJSP estimada (~0,80%/mês)</option>
+                  <option value="0.42">IPCA (carregando…)</option>
+                  <option value="0.55">IGP-M (carregando…)</option>
+                  <option value="0.80">Tabela TJSP (carregando…)</option>
                   <option value="custom">Personalizado</option>
                 </select>
               </div>
@@ -640,6 +642,28 @@
         </div>
       </div>
 
+      <!-- ── CONFIGURAÇÕES ── -->
+      <div class="hc-pane" id="hc-pane-cfg">
+        <div class="hc-card">
+          <div class="hc-section-title">Adicional de Especialidade</div>
+          <div class="hc-field" style="max-width:340px;margin-top:12px">
+            <label>Percentual do adicional (%)</label>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <input type="number" id="hc-cfg-esp" min="0" max="100" step="1" placeholder="ex: 10" style="width:110px">
+              <button class="btn btn-primary btn-sm" onclick="hcSalvarCfg(this)">Salvar</button>
+            </div>
+            <p style="font-size:12px;color:var(--color-text-muted);margin-top:8px">Valor padrão: 10%. Aplicado quando "Especialista" está ativo na calculadora. Requer perfil Admin.</p>
+          </div>
+        </div>
+        <div class="hc-card" style="margin-top:16px">
+          <div class="hc-section-title">Índices de Correção Monetária</div>
+          <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px;margin-bottom:12px">Atualizados automaticamente todo dia 15 do mês. Fonte: BCB (IPCA e IGP-M) e TJSP.</p>
+          <div id="hc-cfg-indices">
+            <div class="hc-empty"><div class="ic">⏳</div><p>Carregando índices…</p></div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -664,6 +688,8 @@
   // ── STATE ──────────────────────────────────────────────────────────────────
   let hcSt={mode:"j",area:"",act:null,val:0,cx:"Baixa",ri:"Baixo",ur:"Normal",ca:"Média",ex:"Provável",par:"v",esp:false};
   let hcHist=[],hcCmpA=null,hcCmpB=null,hcLastCalc=null,hcProposalItems=[];
+  let hcCfg={adicionalEspecialidade:0.10};
+  let hcIndices={};
 
   // ── TABS ───────────────────────────────────────────────────────────────────
   function hcShowPane(id,btn){
@@ -674,6 +700,7 @@
     if(id==="hist"){hcLoadHist().then(hcRenderHist);}
     if(id==="cmp")hcRenderCmp();
     if(id==="proposta")hcGerarProposta();
+    if(id==="cfg")hcMostrarPainelCfg();
   }
 
   // ── MODE ───────────────────────────────────────────────────────────────────
@@ -749,7 +776,7 @@
     const a=hcSt.act;
     const base=a.p&&hcSt.val>0?Math.max(a.m,hcSt.val*a.p):a.m;
     const mC=M.cx[hcSt.cx],mR=M.ri[hcSt.ri],mU=M.ur[hcSt.ur],mCa=M.ca[hcSt.ca];
-    const mEsp=hcSt.esp?1.10:1;
+    const mEsp=hcSt.esp?(1+hcCfg.adicionalEspecialidade):1;
     const mt=mC*mR*mU*mCa*mEsp;
     const adj=base*mt;
     const pctC=a.p&&hcSt.val>0?hcSt.val*a.p:0;
@@ -1371,11 +1398,108 @@
     return`${inteiro} reais`;
   }
 
+  // ── CONFIGURAÇÃO E ÍNDICES ──────────────────────────────────────────────────
+  async function hcLoadCfg(){
+    try{
+      const data=await hcApiFetch('/api/honorarios/configuracao');
+      hcCfg=data;
+      hcAtualizarBotaoEspecialidade();
+    }catch(e){console.warn('[honorarios] Falha ao carregar configuração',e);}
+  }
+
+  function hcAtualizarBotaoEspecialidade(){
+    const p=Math.round(hcCfg.adicionalEspecialidade*100);
+    const btn=document.getElementById("hc-esp-on");
+    if(btn)btn.textContent=`+ Especialista ${p}%`;
+  }
+
+  async function hcLoadIndices(){
+    try{
+      const data=await hcApiFetch('/api/honorarios/indices');
+      hcIndices={};
+      data.forEach(i=>hcIndices[i.tipo]=i);
+      hcAtualizarDropdownIndices();
+    }catch(e){console.warn('[honorarios] Falha ao carregar índices',e);}
+  }
+
+  function hcAtualizarDropdownIndices(){
+    const sel=document.getElementById("hc-idx-corr");
+    const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    function fmtOpt(tipo,label){
+      const idx=hcIndices[tipo];
+      if(!idx||idx.valor==null)return`<option value="0">${label} (sem dados)</option>`;
+      const pctVal=(idx.valor*100).toFixed(4);
+      const pctStr=(idx.valor*100).toFixed(2).replace('.',',');
+      const ref=`${meses[(idx.mes||1)-1]}/${idx.ano}`;
+      return`<option value="${pctVal}">${label} (${pctStr}%/mês · ${ref})</option>`;
+    }
+    const current=sel.value;
+    sel.innerHTML=`<option value="0">Sem correção</option>
+      ${fmtOpt('IPCA','IPCA')}
+      ${fmtOpt('IGPM','IGP-M')}
+      ${fmtOpt('TJSP','Tabela TJSP')}
+      <option value="custom">Personalizado</option>`;
+    if([...sel.options].some(o=>o.value===current))sel.value=current;
+  }
+
+  function hcMostrarPainelCfg(){
+    const input=document.getElementById("hc-cfg-esp");
+    if(input)input.value=Math.round(hcCfg.adicionalEspecialidade*100);
+    const el=document.getElementById("hc-cfg-indices");
+    const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const linhas=[
+      {tipo:'IPCA',label:'IPCA',fonte:'Banco Central do Brasil'},
+      {tipo:'IGPM',label:'IGP-M',fonte:'Banco Central do Brasil'},
+      {tipo:'TJSP',label:'Tabela TJSP',fonte:'BCB (IPCA-E)'}
+    ].map(({tipo,label,fonte})=>{
+      const idx=hcIndices[tipo];
+      const valor=idx?.valor!=null?`${(idx.valor*100).toFixed(2).replace('.',',')}%/mês`:'—';
+      const ref=idx?.mes?`${meses[idx.mes-1]}/${idx.ano}`:'—';
+      return`<tr style="border-bottom:1px solid var(--color-border)">
+        <td style="padding:8px 12px;font-weight:600">${label}</td>
+        <td style="padding:8px 12px">${valor}</td>
+        <td style="padding:8px 12px;color:var(--color-text-muted)">${ref}</td>
+        <td style="padding:8px 12px;font-size:12px;color:var(--color-text-muted)">${fonte}</td>
+      </tr>`;
+    }).join('');
+    el.innerHTML=`<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:2px solid var(--color-border)">
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Índice</th>
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Taxa Mensal</th>
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Referência</th>
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Fonte</th>
+      </tr></thead>
+      <tbody>${linhas}</tbody>
+    </table>`;
+  }
+
+  async function hcSalvarCfg(btn){
+    const val=parseFloat(document.getElementById("hc-cfg-esp").value);
+    if(isNaN(val)||val<0||val>100){alert("Percentual inválido (0–100).");return;}
+    btn.disabled=true;btn.textContent='Salvando…';
+    try{
+      const data=await hcApiFetch('/api/honorarios/configuracao',{
+        method:'PUT',
+        body:JSON.stringify({adicionalEspecialidade:val/100})
+      });
+      hcCfg=data;
+      hcAtualizarBotaoEspecialidade();
+      btn.textContent='Salvo!';
+      setTimeout(()=>{btn.disabled=false;btn.textContent='Salvar';},2000);
+    }catch(e){
+      alert(e.message==='403'?'Apenas Admin pode alterar esta configuração.':'Erro ao salvar configuração.');
+      btn.disabled=false;btn.textContent='Salvar';
+    }
+  }
+
   // Listen for correction index changes
   document.getElementById("hc-idx-corr").addEventListener("change",hcRender);
 
   // Initialize
-  hcSetMode("j");
+  (async function(){
+    await Promise.all([hcLoadCfg(),hcLoadIndices()]);
+    hcSetMode("j");
+  })();
   </script>
 </body>
 </html>

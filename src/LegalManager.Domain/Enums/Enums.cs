@@ -61,6 +61,8 @@ public enum StatusLancamento { Pendente, Pago, Vencido, Cancelado }
 
 public enum TipoDocumento { Peticao, Decisao, Contrato, Prova, Modelo, Outro }
 
+public enum TipoIndice { IPCA, IGPM, TJSP }
+
 public static class CategoriaLancamento
 {
     public const string Honorario = "Honorario";

@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using LegalManager.Domain.Entities;
+using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -110,6 +111,72 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
         db.HonorariosCalculos.Remove(item);
         await db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpGet("indices")]
+    public async Task<IActionResult> GetIndices(CancellationToken ct)
+    {
+        var tipos = new[] { TipoIndice.IPCA, TipoIndice.IGPM, TipoIndice.TJSP };
+        var result = new List<object>();
+
+        foreach (var tipo in tipos)
+        {
+            var indice = await db.IndicesCorrecaoMonetaria
+                .Where(i => i.Tipo == tipo)
+                .OrderByDescending(i => i.Ano).ThenByDescending(i => i.Mes)
+                .FirstOrDefaultAsync(ct);
+
+            result.Add(new
+            {
+                tipo = tipo.ToString(),
+                valor = indice?.Valor,
+                ano = indice?.Ano,
+                mes = indice?.Mes,
+                atualizadoEm = indice?.AtualizadoEm
+            });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("configuracao")]
+    public async Task<IActionResult> GetConfiguracao(CancellationToken ct)
+    {
+        var cfg = await db.ConfiguracoesCalculadora
+            .FirstOrDefaultAsync(c => c.TenantId == tenantContext.TenantId, ct);
+
+        return Ok(new { adicionalEspecialidade = cfg?.AdicionalEspecialidade ?? 0.10m });
+    }
+
+    [HttpPut("configuracao")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> SalvarConfiguracao([FromBody] ConfiguracaoCalculadoraDto dto, CancellationToken ct)
+    {
+        if (dto.AdicionalEspecialidade < 0 || dto.AdicionalEspecialidade > 1)
+            return BadRequest(new { error = "Percentual deve estar entre 0% e 100%." });
+
+        var cfg = await db.ConfiguracoesCalculadora
+            .FirstOrDefaultAsync(c => c.TenantId == tenantContext.TenantId, ct);
+
+        if (cfg == null)
+        {
+            cfg = new ConfiguracaoCalculadora
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantContext.TenantId,
+                AdicionalEspecialidade = dto.AdicionalEspecialidade,
+                AtualizadoEm = DateTime.UtcNow
+            };
+            db.ConfiguracoesCalculadora.Add(cfg);
+        }
+        else
+        {
+            cfg.AdicionalEspecialidade = dto.AdicionalEspecialidade;
+            cfg.AtualizadoEm = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Ok(new { cfg.AdicionalEspecialidade });
     }
 
     [HttpPost("proposta/pdf")]
@@ -309,6 +376,8 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
         });
     }
 }
+
+public record ConfiguracaoCalculadoraDto(decimal AdicionalEspecialidade);
 
 public record SalvarHistoricoDto(
     string? Cliente,
