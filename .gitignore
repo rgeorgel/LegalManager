@@ -3,6 +3,7 @@
 [Oo]bj/
 *.user
 *.suo
+*.lscache
 .vs/
 
 # NuGet
