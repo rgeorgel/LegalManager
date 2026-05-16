@@ -209,15 +209,13 @@ public class DataJudAdapter : ITribunalAdapter
             ["TO"] = ["tjto", "trf1", "trt10"],
         };
 
-    private static readonly string[] TribunaisSuperiores = ["stj", "tst"];
-
     public async Task<List<ProcessoOabPreviewDto>> BuscarPorOabAsync(
         string numeroOAB, string uf, CancellationToken ct = default)
     {
         if (!TribunaisPorUF.TryGetValue(uf.Trim(), out var tribunais))
             return [];
 
-        var todos = tribunais.Concat(TribunaisSuperiores).ToArray();
+        var todos = tribunais.ToArray();
         var resultados = new System.Collections.Concurrent.ConcurrentBag<ProcessoOabPreviewDto>();
 
         const int concorrencia = 5;
@@ -267,7 +265,13 @@ public class DataJudAdapter : ITribunalAdapter
                         await Task.Delay(TimeSpan.FromSeconds(tentativa + 1), ct);
                         continue;
                     }
-                    if (!resp.IsSuccessStatusCode) return processos;
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        var errBody = await resp.Content.ReadAsStringAsync(ct);
+                        _logger.LogWarning("DataJud OAB: {Status} em {Idx}: {Body}",
+                            resp.StatusCode, idx, errBody.Length > 500 ? errBody[..500] : errBody);
+                        return processos;
+                    }
 
                     result = await resp.Content.ReadFromJsonAsync<DataJudResponse>(
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
@@ -340,7 +344,7 @@ public class DataJudAdapter : ITribunalAdapter
                 new Dictionary<string, object> { ["dataAjuizamento"] = new { order = "desc" } },
                 new Dictionary<string, object> { ["_id"] = new { order = "asc" } }
             },
-            _source = new[] { "numeroProcesso", "classe", "orgaoJulgador", "dataAjuizamento", "siglaTribunal", "grau" }
+            _source = new[] { "numero", "classe", "orgaoJulgador", "dataAjuizamento", "siglaTribunal", "grau" }
         };
 
         if (searchAfter == null)
