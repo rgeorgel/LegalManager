@@ -49,7 +49,14 @@
       "Bash(git *)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\" -Recurse -Directory | Select-Object -First 50 | ForEach-Object { $_.FullName } | Sort-Object)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\code\\\\personal\\\\LegalManager\\\\src\" -Recurse -Directory | ForEach-Object { $_.FullName } | Sort-Object)",
-      "Bash(grep -E \"\\\\.\\(sln|csproj|json|yml|yaml\\)$\")"
+      "Bash(grep -E \"\\\\.\\(sln|csproj|json|yml|yaml\\)$\")",
+      "Bash(Get-ChildItem -Recurse -Filter \"*honorarios*\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Sort-Object Name)",
+      "Bash(Select-Object -Last 3)",
+      "Bash(Select-Object Name)",
+      "WebFetch(domain:rdap.registro.br)"
     ]
   }
 }

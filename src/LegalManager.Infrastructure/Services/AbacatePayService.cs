@@ -168,8 +168,8 @@ public class AbacatePayService : IAbacatePayService
 
     private async Task<string> ObterOuCriarProdutoAsync(string plano, bool isAnual, CancellationToken ct)
     {
-        var externalId = plano == "Plus" ? "lm-plus-mensal" :
-                         isAnual ? "lm-pro-anual" : "lm-pro-mensal";
+        var externalId = plano == "Plus" ? "lm-plus-mensal-2000" :
+                         isAnual ? "lm-pro-anual-48000" : "lm-pro-mensal-5000";
 
         var listResp = await _http.GetAsync($"products/list?externalId={externalId}", ct);
         if (listResp.IsSuccessStatusCode)
