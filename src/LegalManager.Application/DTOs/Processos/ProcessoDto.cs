@@ -138,7 +138,8 @@ public record ProcessoFiltroDto(
 public record CreateAndamentoDto(
     [Required] DateTime Data,
     [Required] TipoAndamento Tipo,
-    [Required] string Descricao
+    [Required] string Descricao,
+    bool VisivelCliente = true
 );
 
 public record AndamentoResponseDto(
@@ -153,10 +154,13 @@ public record AndamentoResponseDto(
     DateTime CriadoEm,
     int? CodigoCNJ,
     string? OrgaoJulgador,
-    string? DadosExtras
+    string? DadosExtras,
+    bool VisivelCliente
 );
 
 public record EncerrarProcessoDto(
     [Required] string Decisao,
     [Required] string Resultado
 );
+
+public record SetVisivelClienteDto(bool Visivel);

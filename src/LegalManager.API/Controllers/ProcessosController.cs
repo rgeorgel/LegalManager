@@ -130,6 +130,13 @@ public class ProcessosController : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{id:guid}/andamentos/{andamentoId:guid}/visivel-cliente")]
+    public async Task<ActionResult<AndamentoResponseDto>> SetAndamentoVisivelCliente(Guid id, Guid andamentoId, [FromBody] SetVisivelClienteDto dto, CancellationToken ct)
+    {
+        var result = await _service.SetAndamentoVisivelClienteAsync(id, andamentoId, dto.Visivel, ct);
+        return Ok(result);
+    }
+
     [HttpPost("{id:guid}/monitoramento/alternar")]
     public async Task<IActionResult> AlternarMonitoramento(Guid id, CancellationToken ct)
     {

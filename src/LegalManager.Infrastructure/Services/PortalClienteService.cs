@@ -123,7 +123,7 @@ public class PortalClienteService : IPortalClienteService
         if (!autorizado) throw new UnauthorizedAccessException("Acesso negado ao processo.");
 
         return await _context.Andamentos
-            .Where(a => a.ProcessoId == processoId)
+            .Where(a => a.ProcessoId == processoId && a.VisivelCliente)
             .OrderByDescending(a => a.Data)
             .Select(a => new MeuAndamentoDto(
                 a.Id, a.Data, a.Tipo, a.Descricao, a.DescricaoTraduzidaIA, a.Fonte, a.CriadoEm))

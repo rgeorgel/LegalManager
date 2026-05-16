@@ -17,6 +17,7 @@ public class Andamento
     public int? CodigoCNJ { get; set; }
     public string? OrgaoJulgador { get; set; }
     public string? DadosExtras { get; set; }
+    public bool VisivelCliente { get; set; } = true;
 
     public Processo Processo { get; set; } = null!;
     public Usuario? RegistradoPor { get; set; }

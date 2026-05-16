@@ -24,6 +24,8 @@
     .andamento-tipo { display:inline-flex; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; background:var(--color-primary-light); color:var(--color-primary); margin-bottom:4px; }
     .andamento-desc { font-size:14px; margin-top:2px; }
     .andamento-fonte { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .andamento-oculto { opacity:.5; }
+    .andamento-oculto .andamento-desc { text-decoration:line-through; }
     .prazo-info { margin-top:8px; padding:8px 10px; background:#f5f3ff; border-radius:6px; border-left:3px solid #7c3aed; }
     .prazo-info-titulo { font-size:12px; font-weight:600; color:#4c1d95; }
     .prazo-info-meta { font-size:11px; color:#6b7280; margin-top:2px; }
@@ -821,7 +823,7 @@
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos } from '/js/ia.js';
-import { getProcesso, getAndamentos, updateProcesso } from '/js/processos.js';
+import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
 
 initLayout();
 
@@ -989,7 +991,7 @@ async function loadAndamentosPreview() {
     }
     const preview = items.slice(0, 5);
     lista.innerHTML = preview.map(a => `
-      <div class="andamento-item">
+      <div class="andamento-item ${a.visivelCliente ? '' : 'andamento-oculto'}">
         <div class="andamento-date">${fmtDate(a.data)}</div>
         <div>
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
@@ -1115,7 +1117,7 @@ async function loadAndamentos() {
       return;
     }
     lista.innerHTML = items.map(a => `
-      <div class="andamento-item">
+      <div class="andamento-item ${a.visivelCliente ? '' : 'andamento-oculto'}">
         <div class="andamento-date">${fmtDate(a.data)}</div>
         <div>
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
@@ -1127,6 +1129,7 @@ async function loadAndamentos() {
         </div>
         <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleVisivelCliente('${a.id}', ${a.visivelCliente})">${a.visivelCliente ? '🙈 Ocultar' : '👁️ Mostrar'}</button>
           ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
         </div>
       </div>`).join('');
@@ -1139,6 +1142,17 @@ window.removeAndamento = async id => {
   if (!confirm('Remover este andamento?')) return;
   try {
     await deleteAndamento(processoId, id);
+    await loadAndamentos();
+    await loadAndamentosPreview();
+  } catch (err) { showAlert(err.message); }
+};
+
+window.toggleVisivelCliente = async (andamentoId, visivelAtual) => {
+  try {
+    await apiFetch(`/processos/${processoId}/andamentos/${andamentoId}/visivel-cliente`, {
+      method: 'PATCH',
+      body: JSON.stringify({ visivel: !visivelAtual })
+    });
     await loadAndamentos();
     await loadAndamentosPreview();
   } catch (err) { showAlert(err.message); }

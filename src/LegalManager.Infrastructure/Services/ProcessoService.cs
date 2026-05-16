@@ -252,7 +252,8 @@ public class ProcessoService : IProcessoService
             Descricao = dto.Descricao,
             Fonte = FonteAndamento.Manual,
             RegistradoPorId = _tenantContext.UserId,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            VisivelCliente = dto.VisivelCliente
         };
 
         _context.Andamentos.Add(andamento);
@@ -284,7 +285,8 @@ public class ProcessoService : IProcessoService
                 a.CriadoEm,
                 a.CodigoCNJ,
                 a.OrgaoJulgador,
-                a.DadosExtras))
+                a.DadosExtras,
+                a.VisivelCliente))
             .ToListAsync(ct);
     }
 
@@ -297,6 +299,24 @@ public class ProcessoService : IProcessoService
 
         _context.Andamentos.Remove(andamento);
         await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<AndamentoResponseDto> SetAndamentoVisivelClienteAsync(Guid processoId, Guid andamentoId, bool visivel, CancellationToken ct = default)
+    {
+        var andamento = await _context.Andamentos
+            .Include(a => a.RegistradoPor)
+            .FirstOrDefaultAsync(a => a.Id == andamentoId && a.ProcessoId == processoId && a.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Andamento não encontrado.");
+
+        andamento.VisivelCliente = visivel;
+        await _context.SaveChangesAsync(ct);
+
+        var nomeUsuario = await _context.Users
+            .Where(u => u.Id == andamento.RegistradoPorId)
+            .Select(u => u.Nome)
+            .FirstOrDefaultAsync(ct) ?? "";
+
+        return MapAndamento(andamento, nomeUsuario);
     }
 
     public async Task AdicionarParteAsync(Guid processoId, Guid contatoId, string tipoParte, CancellationToken ct = default)
@@ -360,5 +380,5 @@ public class ProcessoService : IProcessoService
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>
         new(a.Id, a.Data, a.Tipo, a.Descricao, a.Fonte, a.DescricaoTraduzidaIA,
-            a.RegistradoPorId, nomeUsuario, a.CriadoEm, a.CodigoCNJ, a.OrgaoJulgador, a.DadosExtras);
+            a.RegistradoPorId, nomeUsuario, a.CriadoEm, a.CodigoCNJ, a.OrgaoJulgador, a.DadosExtras, a.VisivelCliente);
 }
