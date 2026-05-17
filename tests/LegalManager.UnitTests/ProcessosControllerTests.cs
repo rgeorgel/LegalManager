@@ -32,7 +32,7 @@ public class ProcessosControllerTests
         mock.Setup(s => s.GetAndamentosAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Empty<AndamentoResponseDto>());
         mock.Setup(s => s.AddAndamentoAsync(It.IsAny<Guid>(), It.IsAny<CreateAndamentoDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AndamentoResponseDto(Guid.NewGuid(), DateTime.UtcNow, TipoAndamento.Despacho, "Andamento", FonteAndamento.Manual, null, null, null, DateTime.UtcNow, null, null, null));
+            .ReturnsAsync(new AndamentoResponseDto(Guid.NewGuid(), DateTime.UtcNow, TipoAndamento.Despacho, "Andamento", FonteAndamento.Manual, null, null, null, DateTime.UtcNow, null, null, null, true));
         mock.Setup(s => s.DeleteAndamentoAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         mock.Setup(s => s.AdicionarParteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -68,7 +68,7 @@ public class ProcessosControllerTests
         return mock;
     }
 
-    private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
+private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         new(
             id,
             "1234567-89.2024.1.01.0001",
@@ -110,7 +110,7 @@ public class ProcessosControllerTests
             null,
             null,
             null,
-            null
+            DateTime.UtcNow
         );
 
     [Fact]

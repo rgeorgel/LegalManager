@@ -390,4 +390,200 @@ public class ProcessoServiceTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteAsync(Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task GetAndamentosAsync_DeveRetornarAndamentosDoProcesso()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "1111111-11.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processo);
+
+        var andamento1 = new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, TenantId = tenant.Id,
+            Data = DateTime.UtcNow.AddDays(-1), Tipo = TipoAndamento.Despacho,
+            Descricao = "Despacho inicial", Fonte = FonteAndamento.Manual,
+            RegistradoPorId = usuario.Id, CriadoEm = DateTime.UtcNow, VisivelCliente = true
+        };
+        var andamento2 = new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, TenantId = tenant.Id,
+            Data = DateTime.UtcNow, Tipo = TipoAndamento.Decisao,
+            Descricao = "Decisão interlocutória", Fonte = FonteAndamento.Automatico,
+            CriadoEm = DateTime.UtcNow, VisivelCliente = false
+        };
+        ctx.Andamentos.AddRange(andamento1, andamento2);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAndamentosAsync(processo.Id);
+
+        Assert.Equal(2, result.Count());
+        var andamentosList = result.ToList();
+        Assert.Equal(andamento2.Id, andamentosList[0].Id);
+        Assert.Equal(andamento1.Id, andamentosList[1].Id);
+    }
+
+    [Fact]
+    public async Task GetAndamentosAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAndamentosAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetAndamentosAsync_DeveLancarKeyNotFoundException_QuandoProcessoDeOutroTenant()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var outroTenant = new Tenant
+        {
+            Id = Guid.NewGuid(), Nome = "Outro Escritório",
+            Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(outroTenant);
+
+        var processoOutroTenant = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = outroTenant.Id, NumeroCNJ = "9999999-99.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processoOutroTenant);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAndamentosAsync(processoOutroTenant.Id));
+    }
+
+    [Fact]
+    public async Task GetAndamentosAsync_DeveRetornarAndamentosDoTenantCorreto()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var outroTenant = new Tenant
+        {
+            Id = Guid.NewGuid(), Nome = "Outro Escritório",
+            Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(outroTenant);
+        var outroUsuario = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = outroTenant.Id, Nome = "Outro Advogado",
+            Email = "outro@teste.com", UserName = "outro@teste.com",
+            Perfil = PerfilUsuario.Advogado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Users.Add(outroUsuario);
+
+        var processoTenant1 = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "1111111-11.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        var processoTenant2 = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = outroTenant.Id, NumeroCNJ = "2222222-22.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.AddRange(processoTenant1, processoTenant2);
+
+        ctx.Andamentos.Add(new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processoTenant1.Id, TenantId = tenant.Id,
+            Data = DateTime.UtcNow, Tipo = TipoAndamento.Despacho,
+            Descricao = "Andamento do Tenant 1", Fonte = FonteAndamento.Manual, CriadoEm = DateTime.UtcNow
+        });
+        ctx.Andamentos.Add(new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processoTenant2.Id, TenantId = outroTenant.Id,
+            Data = DateTime.UtcNow, Tipo = TipoAndamento.Despacho,
+            Descricao = "Andamento do Tenant 2", Fonte = FonteAndamento.Manual, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetAndamentosAsync(processoTenant1.Id);
+
+        Assert.Single(result);
+        Assert.Equal("Andamento do Tenant 1", result.First().Descricao);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DeveRetornarProcessoComPartes()
+    {
+        var (ctx, tenant, usuario, contato) = await SeedAsync();
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "2222222-22.2024.8.26.0001",
+            AreaDireito = AreaDireito.Trabalhista, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, ValorCausa = 50000m, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processo);
+        ctx.ProcessoPartes.Add(new ProcessoParte
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, ContatoId = contato.Id,
+            TipoParte = TipoParteProcesso.Autor
+        });
+        ctx.Andamentos.Add(new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, TenantId = tenant.Id,
+            Data = DateTime.UtcNow, Tipo = TipoAndamento.Despacho,
+            Descricao = "Andamento 1", Fonte = FonteAndamento.Manual, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var result = await service.GetByIdAsync(processo.Id);
+
+        Assert.NotNull(result);
+        Assert.Equal(processo.Id, result.Id);
+        Assert.Single(result.Partes);
+        Assert.Equal(1, result.TotalAndamentos);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DeveRetornarNull_QuandoProcessoNaoExiste()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await service.GetByIdAsync(Guid.NewGuid());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DeveRetornarNull_QuandoProcessoDeOutroTenant()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var outroTenant = new Tenant
+        {
+            Id = Guid.NewGuid(), Nome = "Outro Escritório",
+            Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(outroTenant);
+
+        var processoOutroTenant = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = outroTenant.Id, NumeroCNJ = "8888888-88.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processoOutroTenant);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await service.GetByIdAsync(processoOutroTenant.Id);
+
+        Assert.Null(result);
+    }
 }

@@ -269,19 +269,24 @@ public class ProcessoService : IProcessoService
 
     public async Task<IEnumerable<AndamentoResponseDto>> GetAndamentosAsync(Guid processoId, CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
+        var tenantId = _tenantContext.TenantId;
+        if (tenantId == Guid.Empty)
+            throw new InvalidOperationException("TenantId inválido.");
+
         var processoExiste = await _context.Processos
-            .AnyAsync(p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct);
+            .AnyAsync(p => p.Id == processoId && p.TenantId == tenantId, ct);
 
         if (!processoExiste) throw new KeyNotFoundException("Processo não encontrado.");
 
         return await _context.Andamentos
-            .Include(a => a.RegistradoPor)
-            .Where(a => a.ProcessoId == processoId)
+            .Where(a => a.ProcessoId == processoId && a.TenantId == tenantId)
             .OrderByDescending(a => a.Data)
             .Select(a => new AndamentoResponseDto(
                 a.Id, a.Data, a.Tipo, a.Descricao, a.Fonte, a.DescricaoTraduzidaIA,
                 a.RegistradoPorId,
-                a.RegistradoPor != null ? a.RegistradoPor.Nome : null,
+                null,
                 a.CriadoEm,
                 a.CodigoCNJ,
                 a.OrgaoJulgador,

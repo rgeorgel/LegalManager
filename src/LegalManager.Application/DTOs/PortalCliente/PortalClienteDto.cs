@@ -56,5 +56,6 @@ public record AcessoPortalInfoDto(
     string Email,
     bool Ativo,
     DateTime CriadoEm,
-    DateTime? UltimoAcessoEm
+    DateTime? UltimoAcessoEm,
+    bool TemTokenConvite
 );

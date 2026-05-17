@@ -10,6 +10,10 @@ public class AcessoCliente
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public DateTime? UltimoAcessoEm { get; set; }
+    public string? TokenConvite { get; set; }
+    public DateTime? TokenConviteExpiraEm { get; set; }
+    public string? TokenRedefinicao { get; set; }
+    public DateTime? TokenRedefinicaoExpiraEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Contato Contato { get; set; } = null!;

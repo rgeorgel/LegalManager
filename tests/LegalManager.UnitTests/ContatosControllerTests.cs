@@ -37,7 +37,7 @@ public class ContatosControllerTests
     {
         var mock = new Mock<IPortalClienteService>();
         mock.Setup(s => s.CriarAcessoAsync(It.IsAny<Guid>(), It.IsAny<CriarAcessoPortalDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AcessoPortalInfoDto(Guid.NewGuid(), Guid.NewGuid(), "test@test.com", true, DateTime.UtcNow, null));
+            .ReturnsAsync(new AcessoPortalInfoDto(Guid.NewGuid(), Guid.NewGuid(), "test@test.com", true, DateTime.UtcNow, null, false));
         mock.Setup(s => s.GetAcessoAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((AcessoPortalInfoDto?)null);
         mock.Setup(s => s.RevogarAcessoAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -253,7 +253,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
         var contatoId = Guid.NewGuid();
-        var acesso = new AcessoPortalInfoDto(Guid.NewGuid(), contatoId, "test@test.com", true, DateTime.UtcNow, null);
+        var acesso = new AcessoPortalInfoDto(Guid.NewGuid(), contatoId, "test@test.com", true, DateTime.UtcNow, null, false);
         portalService.Setup(s => s.GetAcessoAsync(contatoId, tenantContext.Object.TenantId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(acesso);
 

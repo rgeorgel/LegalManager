@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +12,12 @@ namespace LegalManager.API.Controllers;
 public class PortalClienteController : ControllerBase
 {
     private readonly IPortalClienteService _service;
+    private readonly ITenantContext _tenantContext;
 
-    public PortalClienteController(IPortalClienteService service)
+    public PortalClienteController(IPortalClienteService service, ITenantContext tenantContext)
     {
         _service = service;
+        _tenantContext = tenantContext;
     }
 
     [HttpPost("login")]

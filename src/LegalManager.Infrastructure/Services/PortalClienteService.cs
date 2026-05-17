@@ -226,5 +226,6 @@ public class PortalClienteService : IPortalClienteService
     }
 
     private static AcessoPortalInfoDto MapInfo(AcessoCliente a) =>
-        new(a.Id, a.ContatoId, a.Email, a.Ativo, a.CriadoEm, a.UltimoAcessoEm);
+        new(a.Id, a.ContatoId, a.Email, a.Ativo, a.CriadoEm, a.UltimoAcessoEm,
+            !string.IsNullOrEmpty(a.TokenConvite) && a.TokenConviteExpiraEm > DateTime.UtcNow);
 }

@@ -35,6 +35,11 @@ public record CreateProcessoDto(
     DateTime? UltimaAtualizacaoDataJud = null
 );
 
+public record ProcessoParteDto(
+    [Required] Guid ContatoId,
+    [Required] TipoParteProcesso TipoParte
+);
+
 public record UpdateProcessoDto(
     [Required, MaxLength(50)] string NumeroCNJ,
     string? Tribunal,
@@ -51,11 +56,6 @@ public record UpdateProcessoDto(
     string? Decisao,
     string? Resultado,
     List<ProcessoParteDto>? Partes
-);
-
-public record ProcessoParteDto(
-    [Required] Guid ContatoId,
-    [Required] TipoParteProcesso TipoParte
 );
 
 public record ProcessoResponseDto(

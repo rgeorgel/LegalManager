@@ -75,8 +75,19 @@ public class ProcessosController : ControllerBase
     [HttpGet("{id:guid}/andamentos")]
     public async Task<ActionResult<IEnumerable<AndamentoResponseDto>>> GetAndamentos(Guid id, CancellationToken ct)
     {
-        var result = await _service.GetAndamentosAsync(id, ct);
-        return Ok(result);
+        try
+        {
+            var result = await _service.GetAndamentosAsync(id, ct);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (OperationCanceledException)
+        {
+            return StatusCode(499);
+        }
     }
 
 [HttpPost]

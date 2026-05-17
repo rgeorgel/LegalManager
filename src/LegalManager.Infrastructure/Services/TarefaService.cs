@@ -125,6 +125,7 @@ public class TarefaService : ITarefaService
         var total = await query.CountAsync(ct);
 
         var items = await query
+            .Include(t => t.Tags)
             .OrderBy(t => t.Prazo == null)
             .ThenBy(t => t.Prazo)
             .ThenByDescending(t => t.Prioridade)
@@ -179,6 +180,7 @@ public class TarefaService : ITarefaService
 
     private async Task<TarefaResponseDto?> LoadResponseAsync(Guid id, CancellationToken ct)
         => await _context.Tarefas
+            .Include(t => t.Tags)
             .Where(t => t.TenantId == _tenantContext.TenantId && t.Id == id)
             .Select(t => new TarefaResponseDto(
                 t.Id,

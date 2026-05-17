@@ -300,7 +300,8 @@ public class PortalClienteControllerTests
     public async Task Login_ReturnsOk_WhenValid()
     {
         var service = CreateServiceMock();
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var result = await controller.Login(new LoginPortalDto("test@test.com", "senha"), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -311,7 +312,8 @@ public class PortalClienteControllerTests
         var service = CreateServiceMock();
         service.Setup(s => s.LoginAsync(It.IsAny<LoginPortalDto>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UnauthorizedAccessException("Invalid credentials"));
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var result = await controller.Login(new LoginPortalDto("invalid@test.com", "wrong"), CancellationToken.None);
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
@@ -320,7 +322,8 @@ public class PortalClienteControllerTests
     public async Task GetMe_ReturnsOk_WhenAuthorized()
     {
         var service = CreateServiceMock();
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
@@ -334,7 +337,8 @@ public class PortalClienteControllerTests
     public async Task GetMeusProcessos_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
@@ -349,7 +353,8 @@ public class PortalClienteControllerTests
     public async Task GetProcesso_ReturnsNotFound_WhenNull()
     {
         var service = CreateServiceMock();
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
@@ -364,7 +369,8 @@ public class PortalClienteControllerTests
     public async Task GetAndamentos_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PortalClienteController(service.Object);
+        var tenantContext = new Mock<ITenantContext>();
+        var controller = new PortalClienteController(service.Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
