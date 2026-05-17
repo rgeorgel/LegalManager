@@ -34,6 +34,43 @@
         <div class="loading"><span class="spinner spinner-dark"></span></div>
       </div>
     </div>
+
+    <div class="card" id="documentosCard" style="display:none">
+      <div class="card-header">
+        <span class="card-title">Documentos</span>
+        <button class="btn btn-sm btn-primary" id="btnNovoDocumento" style="margin-left:auto">+ Enviar documento</button>
+      </div>
+      <div id="documentosUpload" style="display:none;padding:16px;border-bottom:1px solid var(--color-border)">
+        <form id="uploadForm" class="form-inline" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
+          <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+            <label for="uploadFile">Arquivo</label>
+            <input type="file" id="uploadFile" class="form-control" required>
+          </div>
+          <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0">
+            <label for="uploadTipo">Tipo</label>
+            <select id="uploadTipo" class="form-control">
+              <option value="Prova">Prova</option>
+              <option value="Peticao">Petição</option>
+              <option value="Contrato">Contrato</option>
+              <option value="Decisao">Decisão</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0">
+            <label for="uploadNome">Nome (opcional)</label>
+            <input type="text" id="uploadNome" class="form-control" placeholder="Descrição do arquivo">
+          </div>
+          <div style="display:flex;gap:8px;padding-bottom:0">
+            <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCancelUpload">Cancelar</button>
+          </div>
+        </form>
+        <div id="uploadStatus" style="margin-top:12px"></div>
+      </div>
+      <div id="documentosList">
+        <div class="loading"><span class="spinner spinner-dark"></span></div>
+      </div>
+    </div>
   </main>
 
   <script type="module">
@@ -61,6 +98,64 @@
       const andamentosCard = document.getElementById('andamentosCard');
       const andamentosListEl = document.getElementById('andamentosList');
       const countEl = document.getElementById('andamentosCount');
+      const documentosCard = document.getElementById('documentosCard');
+      const documentosListEl = document.getElementById('documentosList');
+      const uploadForm = document.getElementById('uploadForm');
+      const uploadStatus = document.getElementById('uploadStatus');
+
+      async function loadDocumentos() {
+        try {
+          const docs = await portalApi.getDocumentos(processoId);
+          const arr = docs || [];
+          if (arr.length === 0) {
+            documentosListEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📎</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
+          } else {
+            documentosListEl.innerHTML = `<table class="table" style="width:100%"><thead><tr style="text-align:left"><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Enviado em</th></tr></thead><tbody>${arr.map(d => `<tr><td>${escapeHtml(d.nome)}</td><td><span class="badge badge-gray">${d.tipo}</span></td><td>${d.tamanhoFormatado}</td><td>${formatDate(d.criadoEm)}</td></tr>`).join('')}</tbody></table>`;
+          }
+        } catch (err) {
+          documentosListEl.innerHTML = `<div class="alert alert-error" style="margin:16px">${err.message}</div>`;
+        }
+      }
+
+      document.getElementById('btnNovoDocumento').addEventListener('click', () => {
+        document.getElementById('documentosUpload').style.display = '';
+        document.getElementById('btnNovoDocumento').style.display = 'none';
+      });
+
+      document.getElementById('btnCancelUpload').addEventListener('click', () => {
+        document.getElementById('documentosUpload').style.display = 'none';
+        document.getElementById('btnNovoDocumento').style.display = '';
+        uploadForm.reset();
+        uploadStatus.innerHTML = '';
+      });
+
+      uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('uploadFile');
+        const tipoSelect = document.getElementById('uploadTipo');
+        const nomeInput = document.getElementById('uploadNome');
+        const file = fileInput.files[0];
+        if (!file) return;
+        const submitBtn = uploadForm.querySelector('[type=submit]');
+        submitBtn.disabled = true;
+        uploadStatus.innerHTML = '<div class="alert alert-info">Enviando...</div>';
+        try {
+          const res = await portalApi.uploadDocumento(processoId, file, tipoSelect.value, nomeInput.value || null);
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.message || body.title || `Erro ${res.status}`);
+          }
+          uploadStatus.innerHTML = '<div class="alert alert-success">Documento enviado com sucesso.</div>';
+          uploadForm.reset();
+          document.getElementById('documentosUpload').style.display = 'none';
+          document.getElementById('btnNovoDocumento').style.display = '';
+          await loadDocumentos();
+        } catch (err) {
+          uploadStatus.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
 
       try {
         const p = await portalApi.getProcesso(processoId);
@@ -88,6 +183,8 @@
           </div>`;
 
         andamentosCard.style.display = '';
+        documentosCard.style.display = '';
+        await loadDocumentos();
       } catch (err) {
         headerEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
         return;

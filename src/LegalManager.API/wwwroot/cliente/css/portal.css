@@ -463,3 +463,14 @@ a:hover { text-decoration: underline; }
   border-color: rgba(0,0,0,0.15);
   border-top-color: var(--color-primary);
 }
+
+/* ── Table ─────────────────────────────────────────────── */
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+.table th { font-weight: 600; color: var(--color-text-muted); }
+
+/* ── Form inline helpers ───────────────────────────────── */
+.form-inline { }
+
+/* ── Alert info ───────────────────────────────────────── */
+.alert-info { background: var(--color-primary-light); color: var(--color-primary); border: 1px solid #c3d4f7; }

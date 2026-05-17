@@ -79,4 +79,17 @@ export const portalApi = {
   getMeusProcessos: () => clienteApiFetch('/meus-processos'),
   getProcesso: (id) => clienteApiFetch(`/meus-processos/${id}`),
   getAndamentos: (id) => clienteApiFetch(`/meus-processos/${id}/andamentos`),
+  getDocumentos: (id) => clienteApiFetch(`/meus-processos/${id}/documentos`),
+  uploadDocumento: (processoId, file, tipo = 'Prova', nome = null) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tipo', tipo);
+    if (nome) formData.append('nome', nome);
+    return fetch(`${API_BASE}/meus-processos/${processoId}/documentos`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+  }
 };

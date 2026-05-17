@@ -34,6 +34,7 @@ public class DocumentoConfiguration : IEntityTypeConfiguration<Documento>
             .WithMany()
             .HasForeignKey(d => d.UploadedPorId)
             .IsRequired(false)
+            .HasConstraintName("FK_Documentos_AspNetUsers_UploadedPorId")
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(d => new { d.TenantId, d.ProcessoId });

@@ -16,7 +16,7 @@ public class Documento
     public long TamanhoBytes { get; set; }
     public TipoDocumento Tipo { get; set; }
     public DateTime CriadoEm { get; set; }
-    public Guid UploadedPorId { get; set; }
+    public Guid? UploadedPorId { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Processo? Processo { get; set; }

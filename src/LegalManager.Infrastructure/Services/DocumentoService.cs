@@ -68,7 +68,7 @@ public class DocumentoService : IDocumentoService
     }
 
     public async Task<DocumentoDto> UploadAsync(Stream fileStream, string fileName, string contentType,
-        DocumentoUploadDto uploadInfo, CancellationToken ct = default)
+        DocumentoUploadDto uploadInfo, Guid? uploadedPorId = null, CancellationToken ct = default)
     {
         var tenantId = _tenantContext.TenantId;
         if (tenantId == Guid.Empty)
@@ -111,7 +111,7 @@ public class DocumentoService : IDocumentoService
             TamanhoBytes = fileStream.Length,
             Tipo = uploadInfo.Tipo,
             CriadoEm = DateTime.UtcNow,
-            UploadedPorId = _tenantContext.UserId
+            UploadedPorId = uploadedPorId
         };
 
         _context.Documentos.Add(documento);

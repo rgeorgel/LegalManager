@@ -76,7 +76,7 @@ public class DocumentosController : ControllerBase
             Nome = nome
         };
 
-        var result = await _service.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, ct);
+        var result = await _service.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
