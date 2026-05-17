@@ -80,7 +80,7 @@ public class PortalClienteService : IPortalClienteService
                     .Where(pt => pt.ContatoId == contatoId)
                     .Select(pt => pt.TipoParte)
                     .FirstOrDefault(),
-                TotalAndamentos = p.Andamentos.Count
+                TotalAndamentos = p.Andamentos.Count(a => a.VisivelCliente)
             })
             .ToListAsync(ct);
 
@@ -103,7 +103,7 @@ public class PortalClienteService : IPortalClienteService
                     .Where(pt => pt.ContatoId == contatoId)
                     .Select(pt => pt.TipoParte)
                     .FirstOrDefault(),
-                TotalAndamentos = p.Andamentos.Count
+                TotalAndamentos = p.Andamentos.Count(a => a.VisivelCliente)
             })
             .FirstOrDefaultAsync(ct);
 
