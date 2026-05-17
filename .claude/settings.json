@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "PowerShell(npm *)",
+      "PowerShell(npx *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NonInteractive -File scripts/hooks/check-js-after-edit.ps1",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

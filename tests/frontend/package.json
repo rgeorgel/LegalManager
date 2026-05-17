@@ -1,0 +1,19 @@
+{
+  "name": "legalmanager-frontend-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test tests/smoke",
+    "test:flows": "playwright test tests/flows",
+    "test:visual": "playwright test tests/smoke/visual.spec.ts",
+    "test:update-snapshots": "playwright test tests/smoke/visual.spec.ts --update-snapshots",
+    "lint": "eslint --config .eslintrc.json ../../src/LegalManager.API/wwwroot/js --ext .js",
+    "check-syntax": "node scripts/check-syntax.mjs",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "dotenv": "^16.4.0",
+    "eslint": "^8.57.0"
+  }
+}

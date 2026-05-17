@@ -44,3 +44,9 @@ coverage-html/
 # Tools
 .opencode/
 .claude/settings.local.json
+
+# Frontend tests (Playwright)
+tests/frontend/node_modules/
+tests/frontend/playwright-report/
+tests/frontend/test-results/
+tests/frontend/.env
