@@ -124,6 +124,24 @@
 
     <!-- Tab: Kanban (Pro) -->
     <div class="tab-content" id="tab-kanban">
+      <div class="filter-bar">
+        <input type="search" id="filtBuscaKanban" class="form-control" placeholder="Buscar tarefas...">
+        <select id="filtPrioridadeKanban" class="form-control" style="width:auto">
+          <option value="">Todas as prioridades</option>
+          <option value="Baixa">Baixa</option>
+          <option value="Media">Média</option>
+          <option value="Alta">Alta</option>
+          <option value="Urgente">Urgente</option>
+        </select>
+        <select id="filtTipoKanban" class="form-control" style="width:auto">
+          <option value="">Todos os tipos</option>
+          <option value="Tarefa">Tarefas</option>
+          <option value="Prazo">Prazos</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
+          <input type="checkbox" id="filtAtrasadaKanban"> Apenas atrasadas
+        </label>
+      </div>
       <div class="kanban-board" id="board">
         <div class="kanban-col" data-status="Pendente">
           <div class="kanban-col-header">
@@ -503,6 +521,26 @@ document.getElementById('filtBusca').addEventListener('input', () => {
   document.getElementById(id).addEventListener('change', () => loadTarefas(1))
 );
 
+// ── Kanban filters ─────────────────────────────────────────────
+function getKanbanFilters() {
+  return {
+    busca: document.getElementById('filtBuscaKanban').value.trim(),
+    prioridade: document.getElementById('filtPrioridadeKanban').value,
+    tipo: document.getElementById('filtTipoKanban').value,
+    atrasada: document.getElementById('filtAtrasadaKanban').checked,
+  };
+}
+
+let debounceKanban;
+document.getElementById('filtBuscaKanban').addEventListener('input', () => {
+  clearTimeout(debounceKanban);
+  debounceKanban = setTimeout(() => renderBoard(), 400);
+});
+['filtPrioridadeKanban', 'filtTipoKanban'].forEach(id =>
+  document.getElementById(id).addEventListener('change', () => renderBoard())
+);
+document.getElementById('filtAtrasadaKanban').addEventListener('change', () => renderBoard());
+
 // ── Kanban ─────────────────────────────────────────────────────
 const KANBAN_STATUSES = ['Pendente', 'EmAndamento', 'Concluida'];
 let allKanbanTasks = [];
@@ -526,8 +564,16 @@ async function loadBoard() {
 }
 
 function renderBoard() {
+  const f = getKanbanFilters();
   for (const s of KANBAN_STATUSES) {
-    const tasks = allKanbanTasks.filter(t => t.status === s);
+    const tasks = allKanbanTasks.filter(t => {
+      if (t.status !== s) return false;
+      if (f.busca && !t.titulo.toLowerCase().includes(f.busca.toLowerCase())) return false;
+      if (f.prioridade && t.prioridade !== f.prioridade) return false;
+      if (f.tipo && t.tipo !== f.tipo) return false;
+      if (f.atrasada && !t.atrasada) return false;
+      return true;
+    });
     const col = document.getElementById(`col-${s}`);
     document.getElementById(`count-${s}`).textContent = tasks.length;
     col.innerHTML = tasks.length
