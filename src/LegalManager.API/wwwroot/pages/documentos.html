@@ -1,17 +1,17 @@
-Ôªø<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-Z40PJ2FYE2');
+    gtag('config', 'G-RLFFYSH2DC');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify ‚Äî Documentos</title>
+  <title>Causify ó Documentos</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .tipo-peticao { background:#dbeafe; color:#1e40af; }
@@ -45,8 +45,8 @@
 <body>
 <div class="app-layout">
   <header class="header">
-    <button class="hamburger" id="hamburger">‚ò∞</button>
-    <div class="header-logo">‚öñÔ∏è Causify</div>
+    <button class="hamburger" id="hamburger">?</button>
+    <div class="header-logo">?? Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -58,16 +58,16 @@
 
   <nav class="sidebar">
     <ul class="sidebar-nav">
-      <li><a href="/pages/dashboard.html">üìä Dashboard</a></li>
-      <li><a href="/pages/processos.html">‚öñÔ∏è Processos</a></li>
-      <li><a href="/pages/contatos.html">üë• Contatos</a></li>
-      <li><a href="/pages/tarefas.html">‚úÖ Tarefas</a></li>
-      <li><a href="/pages/agenda.html">üìÖ Agenda</a></li>
-      <li><a href="/pages/publicacoes.html">üì∞ Publica√ß√µes</a></li>
-      <li><a href="/pages/prazos.html">‚è∞ Prazos</a></li>
-      <li><a href="/pages/documentos.html" class="active">üìÅ Documentos</a></li>
-      <li><a href="/pages/usuarios.html">üîë Usu√°rios</a></li>
-      <li><a href="/pages/configuracoes.html">‚öôÔ∏è Configura√ß√µes</a></li>
+      <li><a href="/pages/dashboard.html">?? Dashboard</a></li>
+      <li><a href="/pages/processos.html">?? Processos</a></li>
+      <li><a href="/pages/contatos.html">?? Contatos</a></li>
+      <li><a href="/pages/tarefas.html">? Tarefas</a></li>
+      <li><a href="/pages/agenda.html">?? Agenda</a></li>
+      <li><a href="/pages/publicacoes.html">?? PublicaÁıes</a></li>
+      <li><a href="/pages/prazos.html">? Prazos</a></li>
+      <li><a href="/pages/documentos.html" class="active">?? Documentos</a></li>
+      <li><a href="/pages/usuarios.html">?? Usu·rios</a></li>
+      <li><a href="/pages/configuracoes.html">?? ConfiguraÁıes</a></li>
     </ul>
   </nav>
 
@@ -79,16 +79,16 @@
           <button class="btn btn-primary" id="btnUpload">+ Upload</button>
         </div>
         <div class="tab-actions" id="actionsModelos">
-          <button class="btn btn-secondary" id="btnGerarIA">ü§ñ Gerar com IA</button>
+          <button class="btn btn-secondary" id="btnGerarIA">?? Gerar com IA</button>
           <button class="btn btn-primary" id="btnNovoModelo">+ Novo Modelo</button>
         </div>
       </div>
     </div>
 
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="documentos">üìÅ Documentos</button>
+      <button class="tab-btn active" data-tab="documentos">?? Documentos</button>
       <button class="tab-btn" data-tab="modelos" id="tabBtnModelos">
-        üìã Modelos
+        ?? Modelos
         <span id="modelosProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
       </button>
     </div>
@@ -110,8 +110,8 @@
         <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
         <select id="filtTipo" class="form-control" style="width:auto">
           <option value="">Todos os tipos</option>
-          <option value="Peticao">Peti√ß√£o</option>
-          <option value="Decisao">Decis√£o</option>
+          <option value="Peticao">PetiÁ„o</option>
+          <option value="Decisao">Decis„o</option>
           <option value="Contrato">Contrato</option>
           <option value="Prova">Prova</option>
           <option value="Modelo">Modelo</option>
@@ -137,7 +137,7 @@
                 <th>Tamanho</th>
                 <th>Origem</th>
                 <th>Data</th>
-                <th>A√ß√µes</th>
+                <th>AÁıes</th>
               </tr>
             </thead>
             <tbody id="docTableBody">
@@ -158,10 +158,10 @@
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Descri√ß√£o</th>
-                <th>Vari√°veis</th>
+                <th>DescriÁ„o</th>
+                <th>Vari·veis</th>
                 <th>Criado em</th>
-                <th>A√ß√µes</th>
+                <th>AÁıes</th>
               </tr>
             </thead>
             <tbody id="modTableBody">
@@ -179,7 +179,7 @@
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
       <span class="modal-title">Upload de Documento</span>
-      <button class="modal-close" id="modalUploadClose">‚úï</button>
+      <button class="modal-close" id="modalUploadClose">?</button>
     </div>
     <div class="modal-body">
       <div id="uploadAlert" class="alert" style="display:none"></div>
@@ -191,8 +191,8 @@
         <div class="form-group">
           <label>Tipo de Documento *</label>
           <select id="fTipo" class="form-control" required>
-            <option value="Peticao">Peti√ß√£o</option>
-            <option value="Decisao">Decis√£o</option>
+            <option value="Peticao">PetiÁ„o</option>
+            <option value="Decisao">Decis„o</option>
             <option value="Contrato">Contrato</option>
             <option value="Prova">Prova</option>
             <option value="Modelo">Modelo</option>
@@ -232,8 +232,8 @@
     <div class="pdf-modal-header">
       <span class="pdf-modal-title" id="pdfTitle">Documento</span>
       <div class="pdf-modal-actions">
-        <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">‚¨á Download</button>
-        <button class="pdf-modal-close" id="pdfClose">‚úï Fechar</button>
+        <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">? Download</button>
+        <button class="pdf-modal-close" id="pdfClose">? Fechar</button>
       </div>
     </div>
     <div class="pdf-modal-body" id="pdfContainer">
@@ -247,7 +247,7 @@
   <div class="modal" style="max-width:700px">
     <div class="modal-header">
       <span class="modal-title" id="modalModeloTitle">Novo Modelo</span>
-      <button class="modal-close" id="modalModeloClose">‚úï</button>
+      <button class="modal-close" id="modalModeloClose">?</button>
     </div>
     <div class="modal-body">
       <div id="modFormAlert" class="alert" style="display:none"></div>
@@ -255,19 +255,19 @@
         <input type="hidden" id="fModeloId">
         <div class="form-group">
           <label>Nome *</label>
-          <input type="text" id="fModeloNome" class="form-control" required placeholder="Ex: Peti√ß√£o Inicial C√≠vel">
+          <input type="text" id="fModeloNome" class="form-control" required placeholder="Ex: PetiÁ„o Inicial CÌvel">
         </div>
         <div class="form-group">
-          <label>Descri√ß√£o</label>
-          <input type="text" id="fModeloDescricao" class="form-control" placeholder="Breve descri√ß√£o do modelo">
+          <label>DescriÁ„o</label>
+          <input type="text" id="fModeloDescricao" class="form-control" placeholder="Breve descriÁ„o do modelo">
         </div>
         <div class="form-group">
-          <label>Vari√°veis</label>
-          <input type="text" id="fModeloVariaveis" class="form-control" placeholder="Detectadas automaticamente do conte√∫do (ou digite separadas por v√≠rgula)">
+          <label>Vari·veis</label>
+          <input type="text" id="fModeloVariaveis" class="form-control" placeholder="Detectadas automaticamente do conte˙do (ou digite separadas por vÌrgula)">
           <div class="var-list" id="varPreview"></div>
         </div>
         <div class="form-group">
-          <label>Conte√∫do do Modelo *</label>
+          <label>Conte˙do do Modelo *</label>
           <div class="editor-toolbar">
             <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_autor')">&#123;&#123;nome_autor&#125;&#125;</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_reu')">&#123;&#123;nome_reu&#125;&#125;</button>
@@ -281,7 +281,7 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('area_direito')">&#123;&#123;area_direito&#125;&#125;</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('valor_causa')">&#123;&#123;valor_causa&#125;&#125;</button>
           </div>
-          <textarea id="fModeloConteudo" class="form-control" rows="12" required placeholder="Digite o conte√∫do do modelo usando &#123;&#123;variavel&#125;&#125; para vari√°veis din√¢micas"></textarea>
+          <textarea id="fModeloConteudo" class="form-control" rows="12" required placeholder="Digite o conte˙do do modelo usando &#123;&#123;variavel&#125;&#125; para vari·veis din‚micas"></textarea>
         </div>
       </form>
     </div>
@@ -296,20 +296,20 @@
 <div class="modal-overlay" id="modalGerarIA">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span class="modal-title">ü§ñ Gerar Modelo com IA</span>
-      <button class="modal-close" id="modalGerarIAClose">‚úï</button>
+      <span class="modal-title">?? Gerar Modelo com IA</span>
+      <button class="modal-close" id="modalGerarIAClose">?</button>
     </div>
     <div class="modal-body">
       <div id="gerarIAAlert" class="alert" style="display:none"></div>
       <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
-        Descreva o modelo de documento que deseja criar. A IA ir√° gerar um modelo completo em portugu√™s do Brasil, consumindo 1 cr√©dito de pe√ßa jur√≠dica.
+        Descreva o modelo de documento que deseja criar. A IA ir· gerar um modelo completo em portuguÍs do Brasil, consumindo 1 crÈdito de peÁa jurÌdica.
       </p>
       <div class="form-group">
-        <label>Descri√ß√£o do modelo *</label>
-        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Modelo de peti√ß√£o inicial para a√ß√£o de danos morais em face de empresa de telefonia, contendo vari√°veis como nome do autor, CPF, endere√ßo, nome da empresa r√©, CNPJ, valor do dano pedido, fundamentos legais..."></textarea>
+        <label>DescriÁ„o do modelo *</label>
+        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Modelo de petiÁ„o inicial para aÁ„o de danos morais em face de empresa de telefonia, contendo vari·veis como nome do autor, CPF, endereÁo, nome da empresa rÈ, CNPJ, valor do dano pedido, fundamentos legais..."></textarea>
       </div>
       <div id="iaPreview" style="display:none;margin-top:16px">
-        <label>Preview do conte√∫do gerado:</label>
+        <label>Preview do conte˙do gerado:</label>
         <textarea id="iaConteudoGerado" class="form-control" rows="12" readonly style="background:#f9fafb"></textarea>
         <div id="iaVariaveisPreview" style="margin-top:8px;font-size:13px;color:var(--color-text-muted)"></div>
       </div>
@@ -322,12 +322,12 @@
   </div>
 </div>
 
-<!-- ===== MODAL: Aplicar Vari√°veis ===== -->
+<!-- ===== MODAL: Aplicar Vari·veis ===== -->
 <div class="modal-overlay" id="modalAplicar">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span class="modal-title">Aplicar Vari√°veis</span>
-      <button class="modal-close" id="modalAplicarClose">‚úï</button>
+      <span class="modal-title">Aplicar Vari·veis</span>
+      <button class="modal-close" id="modalAplicarClose">?</button>
     </div>
     <div class="modal-body">
       <p id="aplicarModeloNome" style="margin-bottom:16px;font-weight:600"></p>
@@ -339,7 +339,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnFecharAplicar">Fechar</button>
-      <button class="btn btn-primary" id="btnCopiar">Copiar Conte√∫do</button>
+      <button class="btn btn-primary" id="btnCopiar">Copiar Conte˙do</button>
     </div>
   </div>
 </div>
@@ -412,7 +412,7 @@ function tipoBadge(tipo) {
 function getOrigemLabel(doc) {
   if (doc.processoId) return `<a href="/pages/processo-detalhe.html?id=${doc.processoId}">${doc.numeroProcesso || 'Processo'}</a>`;
   if (doc.clienteId) return `<a href="/pages/contatos.html">${doc.nomeCliente || 'Cliente'}</a>`;
-  return '‚Äî';
+  return 'ó';
 }
 
 async function loadCota() {
@@ -468,7 +468,7 @@ async function loadReferenceData() {
 function renderDocsTable(items) {
   const tbody = document.getElementById('docTableBody');
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">üìÅ</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(d => `
@@ -478,7 +478,7 @@ function renderDocsTable(items) {
       <td data-label="Tamanho">${d.tamanhoFormatado}</td>
       <td data-label="Origem">${getOrigemLabel(d)}</td>
       <td data-label="Data">${new Date(d.criadoEm).toLocaleDateString('pt-BR')}</td>
-      <td data-label="A√ß√µes" style="white-space:nowrap">
+      <td data-label="AÁıes" style="white-space:nowrap">
         <button class="btn btn-secondary btn-sm" onclick="viewDoc('${d.id}')">Visualizar</button>
         <button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}')">Download</button>
         <button class="btn btn-danger btn-sm" onclick="deleteDoc('${d.id}')">Excluir</button>
@@ -526,7 +526,7 @@ window.deleteDoc = async id => {
   if (!confirm('Tem certeza que deseja excluir este documento?')) return;
   try {
     await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
-    showDocAlert('Documento exclu√≠do.', 'success');
+    showDocAlert('Documento excluÌdo.', 'success');
     loadDocumentos();
     loadCota();
   } catch (err) { showDocAlert(err.message); }
@@ -671,7 +671,7 @@ async function loadModelos() {
 function renderModelosTable(items) {
   const tbody = document.getElementById('modTableBody');
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">üìã</div><div class="empty-state-text">Nenhum modelo encontrado</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum modelo encontrado</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(m => {
@@ -681,10 +681,10 @@ function renderModelosTable(items) {
     return `
     <tr>
       <td data-label="Nome"><strong>${m.nome}</strong></td>
-      <td data-label="Descri√ß√£o">${m.descricao || '‚Äî'}</td>
-      <td data-label="Vari√°veis">${vars}</td>
+      <td data-label="DescriÁ„o">${m.descricao || 'ó'}</td>
+      <td data-label="Vari·veis">${vars}</td>
       <td data-label="Criado em">${new Date(m.criadoEm).toLocaleDateString('pt-BR')}</td>
-      <td data-label="A√ß√µes" style="white-space:nowrap">
+      <td data-label="AÁıes" style="white-space:nowrap">
         <button class="btn btn-secondary btn-sm" onclick="editarModelo('${m.id}')">Editar</button>
         <button class="btn btn-primary btn-sm" onclick="aplicarModelo('${m.id}')">Usar</button>
         <button class="btn btn-danger btn-sm" onclick="excluirModelo('${m.id}')">Excluir</button>
@@ -738,7 +738,7 @@ window.excluirModelo = async id => {
   if (!confirm('Tem certeza que deseja excluir este modelo?')) return;
   try {
     await apiFetch(`/modelos/${id}`, { method: 'DELETE' });
-    showModAlert('Modelo exclu√≠do.', 'success');
+    showModAlert('Modelo excluÌdo.', 'success');
     loadModelos();
   } catch (err) { showModAlert(err.message); }
 };
@@ -752,8 +752,8 @@ document.getElementById('btnModeloSalvar').addEventListener('click', async () =>
   const descricao = document.getElementById('fModeloDescricao').value.trim();
   const conteudo = document.getElementById('fModeloConteudo').value;
 
-  if (!nome) { showModAlert('Nome √© obrigat√≥rio.'); return; }
-  if (!conteudo) { showModAlert('Conte√∫do √© obrigat√≥rio.'); return; }
+  if (!nome) { showModAlert('Nome È obrigatÛrio.'); return; }
+  if (!conteudo) { showModAlert('Conte˙do È obrigatÛrio.'); return; }
 
   const variaveisMatch = conteudo.match(/\{\{([^}]+)\}\}/g) || [];
   const variaveis = [...new Set(variaveisMatch.map(v => v.replace(/\{\{|\}\}/g, '').trim()))].filter(v => v);
@@ -781,7 +781,7 @@ document.getElementById('btnModeloSalvar').addEventListener('click', async () =>
   }
 });
 
-// Aplicar vari√°veis
+// Aplicar vari·veis
 const modalAplicar = document.getElementById('modalAplicar');
 
 window.aplicarModelo = id => {
@@ -793,7 +793,7 @@ window.aplicarModelo = id => {
   const container = document.getElementById('varInputs');
   container.innerHTML = '';
   if (!m.variaveis || !m.variaveis.length) {
-    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo n√£o possui vari√°veis definidas.</p>';
+    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo n„o possui vari·veis definidas.</p>';
   } else {
     m.variaveis.forEach(v => {
       const div = document.createElement('div');
@@ -827,7 +827,7 @@ function atualizarResultado() {
 
 document.getElementById('btnCopiar').addEventListener('click', () => {
   navigator.clipboard.writeText(document.getElementById('resultadoConteudo').value)
-    .then(() => showModAlert('Conte√∫do copiado!', 'success'))
+    .then(() => showModAlert('Conte˙do copiado!', 'success'))
     .catch(() => showModAlert('Erro ao copiar.'));
 });
 
@@ -870,8 +870,8 @@ document.getElementById('btnGerarIAGerar').addEventListener('click', async () =>
     iaVariaveisGerado = result.variaveis || [];
     document.getElementById('iaConteudoGerado').value = result.conteudo;
     document.getElementById('iaVariaveisPreview').innerHTML = result.variaveis?.length
-      ? `Vari√°veis detectadas: ${result.variaveis.map(v => `<span class="var-badge">${v}</span>`).join(' ')}`
-      : 'Nenhuma vari√°vel detectada';
+      ? `Vari·veis detectadas: ${result.variaveis.map(v => `<span class="var-badge">${v}</span>`).join(' ')}`
+      : 'Nenhuma vari·vel detectada';
     document.getElementById('iaPreview').style.display = '';
     document.getElementById('btnGerarIASalvar').style.display = '';
     btn.style.display = 'none';

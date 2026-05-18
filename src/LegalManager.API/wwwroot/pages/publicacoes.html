@@ -1,18 +1,18 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-Z40PJ2FYE2');
+    gtag('config', 'G-RLFFYSH2DC');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify â€” PublicaÃ§Ãµes</title>
+  <title>Causify — Publicações</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .pub-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
@@ -40,8 +40,8 @@
 <body>
 <div class="app-layout">
   <header class="header">
-    <button class="hamburger" id="hamburger">â˜°</button>
-    <div class="header-logo">âš–ï¸ Causify</div>
+    <button class="hamburger" id="hamburger">?</button>
+    <div class="header-logo">?? Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -53,21 +53,21 @@
 
   <nav class="sidebar">
     <ul class="sidebar-nav">
-      <li><a href="/pages/dashboard.html">ğŸ“Š Dashboard</a></li>
-      <li><a href="/pages/processos.html">âš–ï¸ Processos</a></li>
-      <li><a href="/pages/contatos.html">ğŸ‘¥ Contatos</a></li>
-      <li><a href="/pages/tarefas.html">âœ… Tarefas</a></li>
-      <li><a href="/pages/agenda.html">ğŸ“… Agenda</a></li>
-      <li><a href="/pages/publicacoes.html" class="active">ğŸ“° PublicaÃ§Ãµes</a></li>
-      <li><a href="/pages/prazos.html">â° Prazos</a></li>
-      <li><a href="/pages/usuarios.html">ğŸ”‘ UsuÃ¡rios</a></li>
-      <li><a href="/pages/configuracoes.html">âš™ï¸ ConfiguraÃ§Ãµes</a></li>
+      <li><a href="/pages/dashboard.html">?? Dashboard</a></li>
+      <li><a href="/pages/processos.html">?? Processos</a></li>
+      <li><a href="/pages/contatos.html">?? Contatos</a></li>
+      <li><a href="/pages/tarefas.html">? Tarefas</a></li>
+      <li><a href="/pages/agenda.html">?? Agenda</a></li>
+      <li><a href="/pages/publicacoes.html" class="active">?? Publicações</a></li>
+      <li><a href="/pages/prazos.html">? Prazos</a></li>
+      <li><a href="/pages/usuarios.html">?? Usuários</a></li>
+      <li><a href="/pages/configuracoes.html">?? Configurações</a></li>
     </ul>
   </nav>
 
   <main class="main-content">
     <div class="page-header">
-      <h1 class="page-title">PublicaÃ§Ãµes</h1>
+      <h1 class="page-title">Publicações</h1>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <span id="countNaoLidas" style="display:none" class="badge-count"></span>
         <button class="btn btn-secondary" id="btnMarcarTodasLidas">Marcar todas como lidas</button>
@@ -84,20 +84,20 @@
       <select id="filtroTipo" class="form-control" style="width:auto">
         <option value="">Todos os tipos</option>
         <option value="Prazo">Prazo</option>
-        <option value="Audiencia">AudiÃªncia</option>
-        <option value="Decisao">DecisÃ£o</option>
+        <option value="Audiencia">Audiência</option>
+        <option value="Decisao">Decisão</option>
         <option value="Despacho">Despacho</option>
-        <option value="Intimacao">IntimaÃ§Ã£o</option>
+        <option value="Intimacao">Intimação</option>
         <option value="Outro">Outro</option>
       </select>
       <input type="date" id="filtroDe" class="form-control" style="width:auto" placeholder="De">
-      <input type="date" id="filtroAte" class="form-control" style="width:auto" placeholder="AtÃ©">
+      <input type="date" id="filtroAte" class="form-control" style="width:auto" placeholder="Até">
       <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
     </div>
 
     <div id="listaPubs"></div>
     <div id="semPubs" style="display:none;color:var(--color-text-muted);padding:32px;text-align:center">
-      Nenhuma publicaÃ§Ã£o encontrada.
+      Nenhuma publicação encontrada.
     </div>
   </main>
 </div>

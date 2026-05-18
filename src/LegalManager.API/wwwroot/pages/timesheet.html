@@ -1,18 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-Z40PJ2FYE2');
+    gtag('config', 'G-RLFFYSH2DC');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify — Timesheet</title>
+  <title>Causify � Timesheet</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .cronometro-box { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:24px; margin-bottom:24px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; box-shadow:var(--shadow); }
@@ -34,8 +34,8 @@
 <body>
   <div class="app-layout">
     <header class="header">
-      <button class="hamburger" id="hamburger">☰</button>
-      <div class="header-logo">⚖️ Causify</div>
+      <button class="hamburger" id="hamburger">?</button>
+      <div class="header-logo">?? Causify</div>
       <div class="header-spacer"></div>
       <div class="header-user">
         <span class="header-user-name"></span>
@@ -47,22 +47,22 @@
     <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
     <main class="main-content">
       <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-        <h1 class="page-title">⏱️ Timesheet</h1>
-        <button class="btn btn-secondary" id="btnManual">+ Lançamento Manual</button>
+        <h1 class="page-title">?? Timesheet</h1>
+        <button class="btn btn-secondary" id="btnManual">+ Lan�amento Manual</button>
       </div>
 
-      <!-- Cronômetro -->
+      <!-- Cron�metro -->
       <div class="cronometro-box">
         <div>
           <div class="cronometro-display" id="cronDisplay">00:00:00</div>
-          <div class="cronometro-desc" id="cronDesc">Nenhum cronômetro ativo</div>
+          <div class="cronometro-desc" id="cronDesc">Nenhum cron�metro ativo</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex:1;max-width:260px" id="cronForm">
-          <input id="cronDescInput" type="text" class="form-control" placeholder="Descrição (opcional)">
+          <input id="cronDescInput" type="text" class="form-control" placeholder="Descri��o (opcional)">
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" id="btnIniciar">▶ Iniciar</button>
-          <button class="btn btn-secondary" id="btnParar" style="display:none">⏹ Parar</button>
+          <button class="btn btn-primary" id="btnIniciar">? Iniciar</button>
+          <button class="btn btn-secondary" id="btnParar" style="display:none">? Parar</button>
         </div>
       </div>
 
@@ -70,11 +70,11 @@
       <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px">
         <div class="filter-bar">
           <label style="font-size:13px">De: <input type="date" id="filtroDE"></label>
-          <label style="font-size:13px">Até: <input type="date" id="filtroATE"></label>
+          <label style="font-size:13px">At�: <input type="date" id="filtroATE"></label>
           <button class="btn btn-secondary btn-sm" onclick="loadRegistros()">Filtrar</button>
         </div>
         <div id="totalBar" class="total-bar" style="display:none">
-          Total no período: <strong id="totalMin">—</strong>
+          Total no per�odo: <strong id="totalMin">�</strong>
         </div>
         <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
         <div id="paginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
@@ -82,14 +82,14 @@
     </main>
   </div>
 
-  <!-- Modal lançamento manual — fora do app-layout mas dentro do body -->
+  <!-- Modal lan�amento manual � fora do app-layout mas dentro do body -->
   <div id="modalManual" class="modal-overlay">
     <div class="modal-card">
-      <h2 style="margin:0 0 20px">Lançamento Manual</h2>
+      <h2 style="margin:0 0 20px">Lan�amento Manual</h2>
       <form id="formManual">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="form-group">
-            <label class="form-label">Início *</label>
+            <label class="form-label">In�cio *</label>
             <input id="mInicio" type="datetime-local" class="form-control" required>
           </div>
           <div class="form-group">
@@ -98,7 +98,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Descrição</label>
+          <label class="form-label">Descri��o</label>
           <input id="mDesc" type="text" maxlength="500" class="form-control">
         </div>
         <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
@@ -149,13 +149,13 @@
       return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
-    // ── Cronômetro ──
+    // -- Cron�metro --
 
     async function initCronometro() {
       try {
         const ativo = await apiFetch('/timesheet/ativo');
         if (ativo) {
-          // Server returns UTC without 'Z' — parse correctly
+          // Server returns UTC without 'Z' � parse correctly
           ativoInicio = parseUtc(ativo.inicio);
           setCronometroAtivo(ativo.descricao);
         }
@@ -166,7 +166,7 @@
       document.getElementById('btnIniciar').style.display = 'none';
       document.getElementById('btnParar').style.display = '';
       document.getElementById('cronForm').style.display = 'none';
-      document.getElementById('cronDesc').textContent = desc ? `▶ ${desc}` : '▶ Em andamento...';
+      document.getElementById('cronDesc').textContent = desc ? `? ${desc}` : '? Em andamento...';
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateDisplay, 1000);
       updateDisplay();
@@ -186,7 +186,7 @@
       const desc = document.getElementById('cronDescInput').value.trim() || null;
       try {
         await apiFetch('/timesheet/iniciar', { method: 'POST', body: JSON.stringify({ descricao: desc }) });
-        // Use client time for the display — avoids any server/timezone parsing issues
+        // Use client time for the display � avoids any server/timezone parsing issues
         ativoInicio = new Date();
         setCronometroAtivo(desc);
       } catch (e) { alert(e.message); }
@@ -199,7 +199,7 @@
         timerInterval = null;
         ativoInicio = null;
         document.getElementById('cronDisplay').textContent = '00:00:00';
-        document.getElementById('cronDesc').textContent = 'Nenhum cronômetro ativo';
+        document.getElementById('cronDesc').textContent = 'Nenhum cron�metro ativo';
         document.getElementById('btnIniciar').style.display = '';
         document.getElementById('btnParar').style.display = 'none';
         document.getElementById('cronForm').style.display = '';
@@ -208,7 +208,7 @@
       } catch (e) { alert(e.message); }
     }
 
-    // ── Lista ──
+    // -- Lista --
 
     async function loadRegistros(page = 1) {
       currentPage = page;
@@ -217,12 +217,12 @@
       const qs = new URLSearchParams({ page, pageSize });
 
       if (deVal) {
-        // Start of day in local time → UTC
+        // Start of day in local time ? UTC
         const d = new Date(deVal + 'T00:00:00');
         qs.append('de', d.toISOString());
       }
       if (ateVal) {
-        // End of day in local time → UTC
+        // End of day in local time ? UTC
         const d = new Date(ateVal + 'T23:59:59');
         qs.append('ate', d.toISOString());
       }
@@ -251,17 +251,17 @@
     }
 
     function renderRow(r) {
-      const dur = r.duracaoMinutos != null ? formatDur(r.duracaoMinutos) : (r.emAndamento ? '▶ Ativo' : '—');
+      const dur = r.duracaoMinutos != null ? formatDur(r.duracaoMinutos) : (r.emAndamento ? '? Ativo' : '�');
       const inicio = parseUtc(r.inicio);
       const fim = r.fim ? parseUtc(r.fim) : null;
-      const dtI = inicio && !isNaN(inicio) ? inicio.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '–';
+      const dtI = inicio && !isNaN(inicio) ? inicio.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '�';
       const dtF = fim && !isNaN(fim) ? fim.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '...';
       return `<div class="registro-row">
         <div style="display:flex;gap:16px;align-items:center">
           <div class="registro-dur">${dur}</div>
           <div>
-            <div style="font-size:13px;font-weight:600">${dtI} → ${dtF}</div>
-            <div style="font-size:12px;color:#6b7280">${esc(r.nomeUsuario)}${r.descricao ? ` · ${esc(r.descricao)}` : ''}${r.numeroProcesso ? ` · ${esc(r.numeroProcesso)}` : ''}</div>
+            <div style="font-size:13px;font-weight:600">${dtI} ? ${dtF}</div>
+            <div style="font-size:12px;color:#6b7280">${esc(r.nomeUsuario)}${r.descricao ? ` � ${esc(r.descricao)}` : ''}${r.numeroProcesso ? ` � ${esc(r.numeroProcesso)}` : ''}</div>
           </div>
         </div>
         ${!r.emAndamento ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="deletar('${r.id}')">Excluir</button>` : ''}
@@ -289,7 +289,7 @@
       loadRegistros(currentPage);
     };
 
-    // ── Manual entry ──
+    // -- Manual entry --
 
     async function salvarManual(e) {
       e.preventDefault();

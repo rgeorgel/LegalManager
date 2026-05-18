@@ -1,25 +1,25 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-Z40PJ2FYE2');
+    gtag('config', 'G-RLFFYSH2DC');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify — Contatos</title>
+  <title>Causify � Contatos</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <div class="app-layout">
     <header class="header">
-      <button class="hamburger" id="hamburger">☰</button>
-      <div class="header-logo">⚖️ Causify</div>
+      <button class="hamburger" id="hamburger">?</button>
+      <div class="header-logo">?? Causify</div>
       <div class="header-spacer"></div>
       <div class="header-user">
         <span class="header-user-name"></span>
@@ -31,15 +31,15 @@
 
     <nav class="sidebar">
       <ul class="sidebar-nav">
-        <li><a href="/pages/dashboard.html">📊 Dashboard</a></li>
-        <li><a href="/pages/processos.html">⚖️ Processos</a></li>
-        <li><a href="/pages/contatos.html">👥 Contatos</a></li>
-        <li><a href="/pages/tarefas.html">✅ Tarefas</a></li>
-        <li><a href="/pages/agenda.html">📅 Agenda</a></li>
-        <li><a href="/pages/publicacoes.html">📰 Publicações</a></li>
-      <li><a href="/pages/prazos.html">⏰ Prazos</a></li>
-      <li><a href="/pages/usuarios.html">🔑 Usuários</a></li>
-        <li><a href="/pages/configuracoes.html">⚙️ Configurações</a></li>
+        <li><a href="/pages/dashboard.html">?? Dashboard</a></li>
+        <li><a href="/pages/processos.html">?? Processos</a></li>
+        <li><a href="/pages/contatos.html">?? Contatos</a></li>
+        <li><a href="/pages/tarefas.html">? Tarefas</a></li>
+        <li><a href="/pages/agenda.html">?? Agenda</a></li>
+        <li><a href="/pages/publicacoes.html">?? Publica��es</a></li>
+      <li><a href="/pages/prazos.html">? Prazos</a></li>
+      <li><a href="/pages/usuarios.html">?? Usu�rios</a></li>
+        <li><a href="/pages/configuracoes.html">?? Configura��es</a></li>
       </ul>
     </nav>
 
@@ -53,13 +53,13 @@
         <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, CPF/CNPJ ou e-mail..." autocomplete="off" name="filtBusca_off">
         <select id="filtTipo" class="form-control" style="width:auto">
           <option value="">Todos os tipos</option>
-          <option value="PF">Pessoa Física</option>
-          <option value="PJ">Pessoa Jurídica</option>
+          <option value="PF">Pessoa F�sica</option>
+          <option value="PJ">Pessoa Jur�dica</option>
         </select>
         <select id="filtTipoContato" class="form-control" style="width:auto">
           <option value="">Todas as categorias</option>
           <option value="Cliente">Cliente</option>
-          <option value="ParteContraria">Parte Contrária</option>
+          <option value="ParteContraria">Parte Contr�ria</option>
           <option value="Testemunha">Testemunha</option>
           <option value="Perito">Perito</option>
           <option value="Outro">Outro</option>
@@ -80,7 +80,7 @@
                 <th>E-mail</th>
                 <th>Telefone</th>
                 <th>Tags</th>
-                <th>Ações</th>
+                <th>A��es</th>
               </tr>
             </thead>
             <tbody id="tableBody">
@@ -99,7 +99,7 @@
     <div class="modal">
       <div class="modal-header">
         <span class="modal-title" id="modalTitle">Novo Contato</span>
-        <button class="modal-close" id="modalClose">✕</button>
+        <button class="modal-close" id="modalClose">?</button>
       </div>
       <div class="modal-body">
         <div id="modalAlert" class="alert alert-error" style="display:none"></div>
@@ -108,15 +108,15 @@
             <div class="form-group">
               <label>Tipo de Pessoa</label>
               <select id="fTipo" class="form-control" required>
-                <option value="PF">Pessoa Física</option>
-                <option value="PJ">Pessoa Jurídica</option>
+                <option value="PF">Pessoa F�sica</option>
+                <option value="PJ">Pessoa Jur�dica</option>
               </select>
             </div>
             <div class="form-group">
               <label>Categoria</label>
               <select id="fTipoContato" class="form-control" required>
                 <option value="Cliente">Cliente</option>
-                <option value="ParteContraria">Parte Contrária</option>
+                <option value="ParteContraria">Parte Contr�ria</option>
                 <option value="Testemunha">Testemunha</option>
                 <option value="Perito">Perito</option>
                 <option value="Outro">Outro</option>
@@ -148,8 +148,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Endereço</label>
-            <input type="text" id="fEndereco" class="form-control" placeholder="Rua, número, complemento">
+            <label>Endere�o</label>
+            <input type="text" id="fEndereco" class="form-control" placeholder="Rua, n�mero, complemento">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -172,11 +172,11 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Tags <span style="color:var(--color-text-muted);font-weight:400">(separadas por vírgula)</span></label>
+            <label>Tags <span style="color:var(--color-text-muted);font-weight:400">(separadas por v�rgula)</span></label>
             <input type="text" id="fTags" class="form-control" placeholder="vip, novo, urgente">
           </div>
           <div class="form-group">
-            <label>Observações</label>
+            <label>Observa��es</label>
             <textarea id="fObservacoes" class="form-control" rows="3"></textarea>
           </div>
           <div class="form-group">
@@ -198,7 +198,7 @@
     <div class="modal" style="max-width:440px">
       <div class="modal-header">
         <span class="modal-title">Registrar Atendimento</span>
-        <button class="modal-close" id="atendimentoClose">✕</button>
+        <button class="modal-close" id="atendimentoClose">?</button>
       </div>
       <div class="modal-body">
         <div id="atendimentoAlert" class="alert alert-error" style="display:none"></div>
@@ -208,7 +208,7 @@
             <input type="date" id="aData" class="form-control" required>
           </div>
           <div class="form-group">
-            <label>Descrição *</label>
+            <label>Descri��o *</label>
             <textarea id="aDescricao" class="form-control" rows="4" required></textarea>
           </div>
         </form>
@@ -225,7 +225,7 @@
     <div class="modal" style="max-width:460px">
       <div class="modal-header">
         <span class="modal-title">Portal do Cliente</span>
-        <button class="modal-close" id="portalClose">✕</button>
+        <button class="modal-close" id="portalClose">?</button>
       </div>
       <div class="modal-body">
         <p id="portalContatoNome" style="font-weight:600;margin-bottom:16px"></p>
@@ -237,7 +237,7 @@
         <!-- estado: sem acesso -->
         <div id="portalSemAcesso" style="display:none">
           <p style="color:var(--color-text-muted);margin-bottom:16px;font-size:13px">
-            Este contato não possui acesso ao portal. Defina as credenciais abaixo — o cliente receberá um e-mail automático com os dados de login.
+            Este contato n�o possui acesso ao portal. Defina as credenciais abaixo � o cliente receber� um e-mail autom�tico com os dados de login.
           </p>
           <div class="form-group">
             <label>E-mail de acesso</label>
@@ -245,7 +245,7 @@
           </div>
           <div class="form-group">
             <label>Senha inicial</label>
-            <input type="password" id="pSenha" class="form-control" placeholder="Mínimo 8 caracteres">
+            <input type="password" id="pSenha" class="form-control" placeholder="M�nimo 8 caracteres">
           </div>
         </div>
 
@@ -254,17 +254,17 @@
           <div style="background:var(--color-bg);border-radius:var(--radius);padding:16px;margin-bottom:16px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
               <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">E-mail</div><span id="pAcessoEmail"></span></div>
-              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Situação</div><span id="pAcessoAtivo"></span></div>
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Situa��o</div><span id="pAcessoAtivo"></span></div>
               <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Criado em</div><span id="pAcessoCriado"></span></div>
-              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">Último acesso</div><span id="pAcessoUltimo"></span></div>
+              <div><div style="color:var(--color-text-muted);font-size:11px;text-transform:uppercase;font-weight:600;margin-bottom:2px">�ltimo acesso</div><span id="pAcessoUltimo"></span></div>
             </div>
           </div>
           <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:12px">
-            Para redefinir a senha, libere um novo acesso abaixo — um novo e-mail será enviado ao cliente.
+            Para redefinir a senha, libere um novo acesso abaixo � um novo e-mail ser� enviado ao cliente.
           </p>
           <div class="form-group">
             <label>Nova senha</label>
-            <input type="password" id="pNovaSenha" class="form-control" placeholder="Mínimo 8 caracteres (opcional)">
+            <input type="password" id="pNovaSenha" class="form-control" placeholder="M�nimo 8 caracteres (opcional)">
           </div>
         </div>
       </div>
@@ -322,7 +322,7 @@
       if (!items.length) {
         tbody.innerHTML = `<tr><td colspan="8">
           <div class="empty-state">
-            <div class="empty-state-icon">👥</div>
+            <div class="empty-state-icon">??</div>
             <div class="empty-state-text">Nenhum contato encontrado</div>
           </div>
         </td></tr>`;
@@ -333,11 +333,11 @@
           <td data-label="Nome"><strong>${c.nome}</strong></td>
           <td data-label="Tipo"><span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span></td>
           <td data-label="Categoria">${formatTipoContato(c.tipoContato)}</td>
-          <td data-label="CPF/CNPJ">${c.cpfCnpj || '—'}</td>
-          <td data-label="E-mail">${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'}</td>
-          <td data-label="Telefone">${c.telefone || '—'}</td>
-          <td data-label="Tags">${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join(' ') || '—'}</td>
-          <td data-label="Ações" style="white-space:nowrap">
+          <td data-label="CPF/CNPJ">${c.cpfCnpj || '�'}</td>
+          <td data-label="E-mail">${c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '�'}</td>
+          <td data-label="Telefone">${c.telefone || '�'}</td>
+          <td data-label="Tags">${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join(' ') || '�'}</td>
+          <td data-label="A��es" style="white-space:nowrap">
             <button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button>
             <button class="btn btn-secondary btn-sm" onclick="openAtendimento('${c.id}')">Atendimento</button>
             <button class="btn btn-secondary btn-sm" onclick="openPortal('${c.id}','${c.nome}','${c.email||''}')">Portal</button>
@@ -347,18 +347,18 @@
     }
 
     function formatTipoContato(t) {
-      const map = { Cliente: 'Cliente', ParteContraria: 'Parte Contrária', Testemunha: 'Testemunha', Perito: 'Perito', Outro: 'Outro' };
+      const map = { Cliente: 'Cliente', ParteContraria: 'Parte Contr�ria', Testemunha: 'Testemunha', Perito: 'Perito', Outro: 'Outro' };
       return map[t] || t;
     }
 
     function renderPagination(total, current) {
       const el = document.getElementById('pagination');
       if (total <= 1) { el.innerHTML = ''; return; }
-      let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})">‹</button>`;
+      let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})">�</button>`;
       for (let i = 1; i <= total; i++) {
         html += `<button class="${i === current ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
       }
-      html += `<button ${current >= total ? 'disabled' : ''} onclick="goPage(${current + 1})">›</button>`;
+      html += `<button ${current >= total ? 'disabled' : ''} onclick="goPage(${current + 1})">�</button>`;
       el.innerHTML = html;
     }
 
@@ -507,7 +507,7 @@
       });
     });
 
-    // ── Portal do Cliente ─────────────────────────────────
+    // -- Portal do Cliente ---------------------------------
     const modalPortal = document.getElementById('modalPortal');
     let portalContatoId = null;
     let portalTemAcesso = false;
@@ -520,9 +520,9 @@
     }
 
     function formatDateBr(dt) {
-      if (!dt) return '—';
+      if (!dt) return '�';
       const d = new Date(dt);
-      return !isNaN(d) ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+      return !isNaN(d) ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '�';
     }
 
     window.openPortal = async (id, nome, emailContato) => {

@@ -1,17 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-Z40PJ2FYE2');
+    gtag('config', 'G-RLFFYSH2DC');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify — Tarefas</title>
+  <title>Causify � Tarefas</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     /* Lista */
@@ -63,8 +63,8 @@
 <body>
 <div class="app-layout">
   <header class="header">
-    <button class="hamburger" id="hamburger">☰</button>
-    <div class="header-logo">⚖️ Causify</div>
+    <button class="hamburger" id="hamburger">?</button>
+    <div class="header-logo">?? Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -83,9 +83,9 @@
     </div>
 
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="tarefas">✅ Tarefas/Prazos</button>
+      <button class="tab-btn active" data-tab="tarefas">? Tarefas/Prazos</button>
       <button class="tab-btn" data-tab="kanban" id="tabBtnKanban">
-        🗂 Kanban
+        ?? Kanban
         <span id="kanbanProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
       </button>
     </div>
@@ -98,13 +98,13 @@
           <option value="">Todos os status</option>
           <option value="Pendente">Pendente</option>
           <option value="EmAndamento">Em Andamento</option>
-          <option value="Concluida">Concluída</option>
+          <option value="Concluida">Conclu�da</option>
           <option value="Cancelada">Cancelada</option>
         </select>
         <select id="filtPrioridade" class="form-control" style="width:auto">
           <option value="">Todas as prioridades</option>
           <option value="Baixa">Baixa</option>
-          <option value="Media">Média</option>
+          <option value="Media">M�dia</option>
           <option value="Alta">Alta</option>
           <option value="Urgente">Urgente</option>
         </select>
@@ -126,21 +126,21 @@
       <div class="kanban-board" id="board">
         <div class="kanban-col" data-status="Pendente">
           <div class="kanban-col-header">
-            <span class="kanban-col-title" style="color:#374151">⏳ Pendente</span>
+            <span class="kanban-col-title" style="color:#374151">? Pendente</span>
             <span class="kanban-col-count" id="count-Pendente">0</span>
           </div>
           <div class="kanban-items" id="col-Pendente"></div>
         </div>
         <div class="kanban-col" data-status="EmAndamento">
           <div class="kanban-col-header">
-            <span class="kanban-col-title" style="color:#1d4ed8">🔄 Em Andamento</span>
+            <span class="kanban-col-title" style="color:#1d4ed8">?? Em Andamento</span>
             <span class="kanban-col-count" id="count-EmAndamento">0</span>
           </div>
           <div class="kanban-items" id="col-EmAndamento"></div>
         </div>
         <div class="kanban-col" data-status="Concluida">
           <div class="kanban-col-header">
-            <span class="kanban-col-title" style="color:#057a55">✅ Concluída</span>
+            <span class="kanban-col-title" style="color:#057a55">? Conclu�da</span>
             <span class="kanban-col-count" id="count-Concluida">0</span>
           </div>
           <div class="kanban-items" id="col-Concluida"></div>
@@ -160,11 +160,11 @@
     <form id="formTarefa" novalidate>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label">Título *</label>
+          <label class="form-label">T�tulo *</label>
           <input type="text" id="fTitulo" class="form-control" maxlength="300" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Descrição</label>
+          <label class="form-label">Descri��o</label>
           <textarea id="fDescricao" class="form-control" rows="3" maxlength="4000"></textarea>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -172,7 +172,7 @@
             <label class="form-label">Prioridade *</label>
             <select id="fPrioridade" class="form-control" required>
               <option value="Baixa">Baixa</option>
-              <option value="Media" selected>Média</option>
+              <option value="Media" selected>M�dia</option>
               <option value="Alta">Alta</option>
               <option value="Urgente">Urgente</option>
             </select>
@@ -182,7 +182,7 @@
             <select id="fStatus" class="form-control">
               <option value="Pendente">Pendente</option>
               <option value="EmAndamento">Em Andamento</option>
-              <option value="Concluida">Concluída</option>
+              <option value="Concluida">Conclu�da</option>
               <option value="Cancelada">Cancelada</option>
             </select>
           </div>
@@ -199,12 +199,12 @@
             </select>
             <button type="button" id="fProcessoLink"
                class="btn btn-secondary btn-sm"
-               style="display:none;white-space:nowrap">⚖️ Abrir processo</button>
+               style="display:none;white-space:nowrap">?? Abrir processo</button>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Tags (separadas por vírgula)</label>
-          <input type="text" id="fTags" class="form-control" placeholder="ex: urgente, revisão, cliente-x">
+          <label class="form-label">Tags (separadas por v�rgula)</label>
+          <input type="text" id="fTags" class="form-control" placeholder="ex: urgente, revis�o, cliente-x">
         </div>
         <div id="fmsgErro" class="alert alert-error" style="display:none"></div>
       </div>
@@ -239,7 +239,7 @@ initLayout();
 const free = isPlanoFree();
 if (free) document.getElementById('kanbanProBadge').style.display = '';
 
-// ── Tab switching ──────────────────────────────────────────────
+// -- Tab switching ----------------------------------------------
 let currentTab = 'tarefas';
 let kanbanLoaded = false;
 
@@ -259,16 +259,16 @@ document.querySelectorAll('.tab-btn').forEach(btn =>
 const initTab = new URLSearchParams(location.search).get('tab') || 'tarefas';
 switchTab(initTab);
 
-// ── Shared helpers ─────────────────────────────────────────────
-const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
-const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
+// -- Shared helpers ---------------------------------------------
+const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'M�dia', Alta: 'Alta', Urgente: 'Urgente' };
+const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Conclu�da', Cancelada: 'Cancelada' };
 
 function esc(str) {
   return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
-// ── Lista: state ───────────────────────────────────────────────
+// -- Lista: state -----------------------------------------------
 let currentPage = 1;
 let editingId = null;
 let allListItems = [];
@@ -316,7 +316,7 @@ function renderLista(items, data) {
 function tarefaCard(t) {
   const prioClass = `prioridade-${t.prioridade.toLowerCase()}`;
   const statusClass = `status-${t.status.toLowerCase()}`;
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '�';
   const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   const tags = t.tags?.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') ?? '';
 
@@ -328,20 +328,20 @@ function tarefaCard(t) {
         ${atrasadaBadge}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${t.tipo === 'Prazo' ? '<span class="badge" style="background:#ede9fe;color:#6d28d9">⏰ Prazo</span>' : ''}
+        ${t.tipo === 'Prazo' ? '<span class="badge" style="background:#ede9fe;color:#6d28d9">? Prazo</span>' : ''}
         <span class="badge ${prioClass}">${PRIORIDADE_LABEL[t.prioridade]}</span>
         <span class="badge ${statusClass}">${STATUS_LABEL[t.status]}</span>
       </div>
     </div>
     <div class="tarefa-card-meta">
-      <span>📅 Prazo: ${prazoStr}</span>
-      ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
-      ${t.numeroCNJProcesso && t.processoId ? `<span>⚖️ <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link" onclick="event.stopPropagation()">${esc(t.numeroCNJProcesso)}</a></span>` : t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
+      <span>?? Prazo: ${prazoStr}</span>
+      ${t.nomeResponsavel ? `<span>?? ${esc(t.nomeResponsavel)}</span>` : ''}
+      ${t.numeroCNJProcesso && t.processoId ? `<span>?? <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link" onclick="event.stopPropagation()">${esc(t.numeroCNJProcesso)}</a></span>` : t.numeroCNJProcesso ? `<span>?? ${esc(t.numeroCNJProcesso)}</span>` : ''}
     </div>
     ${tags ? `<div class="tags-list">${tags}</div>` : ''}
     <div class="tarefa-card-actions">
       ${t.status !== 'Concluida' && t.status !== 'Cancelada' ?
-        `<button class="btn btn-secondary btn-sm" data-action="concluir" data-id="${t.id}">✓ Concluir</button>` : ''}
+        `<button class="btn btn-secondary btn-sm" data-action="concluir" data-id="${t.id}">? Concluir</button>` : ''}
       <button class="btn btn-secondary btn-sm" data-action="edit" data-id="${t.id}">Editar</button>
       <button class="btn btn-danger btn-sm" data-action="delete" data-id="${t.id}">Excluir</button>
     </div>
@@ -373,7 +373,7 @@ function bindListActions() {
 }
 
 async function concluir(id) {
-  if (!confirm('Marcar tarefa como concluída?')) return;
+  if (!confirm('Marcar tarefa como conclu�da?')) return;
   await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
   await loadTarefas(currentPage);
 }
@@ -384,7 +384,7 @@ async function deleteTarefa(id) {
   await loadTarefas(currentPage);
 }
 
-// ── Processos helpers ──────────────────────────────────────────
+// -- Processos helpers ------------------------------------------
 async function loadProcessosSelect(selectedId = null) {
   const sel = document.getElementById('fProcesso');
   sel.innerHTML = '<option value="">Nenhum processo vinculado</option>';
@@ -396,7 +396,7 @@ async function loadProcessosSelect(selectedId = null) {
     processosCached.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.numeroCNJ + (p.comarca ? ` — ${p.comarca}` : '');
+      opt.textContent = p.numeroCNJ + (p.comarca ? ` � ${p.comarca}` : '');
       sel.appendChild(opt);
     });
   } catch {}
@@ -409,7 +409,7 @@ function updateProcessoLink() {
   btn.style.display = document.getElementById('fProcesso').value ? '' : 'none';
 }
 
-// ── Modal create/edit ──────────────────────────────────────────
+// -- Modal create/edit ------------------------------------------
 function openCreateModal() {
   editingId = null;
   document.getElementById('modalTarefaTitulo').textContent = 'Nova Tarefa';
@@ -457,7 +457,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
   const errEl = document.getElementById('fmsgErro');
   errEl.style.display = 'none';
   const titulo = document.getElementById('fTitulo').value.trim();
-  if (!titulo) { showErr(errEl, 'Título é obrigatório.'); return; }
+  if (!titulo) { showErr(errEl, 'T�tulo � obrigat�rio.'); return; }
   const tagsRaw = document.getElementById('fTags').value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const prazoVal = document.getElementById('fPrazo').value;
@@ -492,7 +492,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
   }
 });
 
-// ── Filters ────────────────────────────────────────────────────
+// -- Filters ----------------------------------------------------
 let debounceTimer;
 document.getElementById('filtBusca').addEventListener('input', () => {
   clearTimeout(debounceTimer);
@@ -502,7 +502,7 @@ document.getElementById('filtBusca').addEventListener('input', () => {
   document.getElementById(id).addEventListener('change', () => loadTarefas(1))
 );
 
-// ── Kanban ─────────────────────────────────────────────────────
+// -- Kanban -----------------------------------------------------
 const KANBAN_STATUSES = ['Pendente', 'EmAndamento', 'Concluida'];
 let allKanbanTasks = [];
 let draggedId = null;
@@ -552,8 +552,8 @@ function renderKanbanCard(t) {
     <div class="kanban-card-title" data-detail-id="${t.id}">${esc(t.titulo)}</div>
     <div class="kanban-card-meta">
       <span style="background:#e5e7eb;padding:1px 6px;border-radius:3px">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span>
-      ${prazo ? `<span>📅 ${prazo}</span>` : ''}
-      ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
+      ${prazo ? `<span>?? ${prazo}</span>` : ''}
+      ${t.nomeResponsavel ? `<span>?? ${esc(t.nomeResponsavel)}</span>` : ''}
       ${atrasada}
     </div>
   </div>`;
@@ -617,19 +617,19 @@ document.addEventListener('click', async e => {
 });
 
 function showDetailModal(t) {
-  const prazo = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazo = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '�';
   const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') : '';
   const descricao = t.descricao
     ? `<div class="detail-description">${esc(t.descricao)}</div>`
-    : '<div class="detail-description" style="color:var(--color-text-muted)">Sem descrição</div>';
+    : '<div class="detail-description" style="color:var(--color-text-muted)">Sem descri��o</div>';
   document.getElementById('modalDetalheBody').innerHTML = `
-    <div class="detail-row"><span class="detail-label">Título</span><span class="detail-value">${esc(t.titulo)}</span></div>
+    <div class="detail-row"><span class="detail-label">T�tulo</span><span class="detail-value">${esc(t.titulo)}</span></div>
     <div class="detail-row"><span class="detail-label">Prioridade</span><span class="detail-value">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span></div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${STATUS_LABEL[t.status] ?? t.status}</span></div>
     <div class="detail-row"><span class="detail-label">Prazo</span><span class="detail-value">${prazo}</span></div>
-    <div class="detail-row"><span class="detail-label">Responsável</span><span class="detail-value">${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
-    <div class="detail-row"><span class="detail-label">Tags</span><span class="detail-value">${tags || '–'}</span></div>
-    <div style="margin-top:12px"><span class="detail-label">Descrição</span>${descricao}</div>
+    <div class="detail-row"><span class="detail-label">Respons�vel</span><span class="detail-value">${t.nomeResponsavel ? esc(t.nomeResponsavel) : '�'}</span></div>
+    <div class="detail-row"><span class="detail-label">Tags</span><span class="detail-value">${tags || '�'}</span></div>
+    <div style="margin-top:12px"><span class="detail-label">Descri��o</span>${descricao}</div>
   `;
   document.getElementById('modalDetalhe').style.display = 'flex';
 }
@@ -644,7 +644,7 @@ document.getElementById('modalDetalhe').addEventListener('click', e => {
   if (e.target === e.currentTarget) document.getElementById('modalDetalhe').style.display = 'none';
 });
 
-// ── Init ───────────────────────────────────────────────────────
+// -- Init -------------------------------------------------------
 const _urlParams = new URLSearchParams(location.search);
 const _initTipo = _urlParams.get('tipo');
 if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
