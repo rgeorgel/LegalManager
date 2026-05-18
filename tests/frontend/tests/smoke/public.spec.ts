@@ -29,10 +29,4 @@ test('login.html — formulário possui campos de email e senha', async ({ page 
   await expect(page.locator('[type=submit]')).toBeVisible();
 });
 
-test('login.html — usuário já logado é redirecionado para dashboard', async ({ page }) => {
-  await page.addInitScript(() => {
-    sessionStorage.setItem('access_token', 'fake-token-for-redirect-test');
-  });
-  await page.goto('/login.html');
-  await expect(page).toHaveURL(/dashboard\.html/);
-});
+// Redirect de usuário logado é testado em tests/flows/auth.spec.ts (requer credenciais reais)
