@@ -1,20 +1,20 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-RLFFYSH2DC');
+    gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify � Calculadora de Honor�rios</title>
+  <title>Causify — Calculadora de Honorários</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    /* -- Calculadora de Honor�rios -- */
+    /* ── Calculadora de Honorários ── */
     :root {
       --hc-gold: #c9a84c;
       --hc-gold2: #e8c97a;
@@ -419,8 +419,8 @@
 <body>
   <div class="app-layout">
     <header class="header">
-      <button class="hamburger" id="hamburger">?</button>
-      <div class="header-logo">?? Causify</div>
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ Causify</div>
       <div class="header-spacer"></div>
       <div class="header-user">
         <span class="header-user-name"></span>
@@ -433,41 +433,41 @@
     <main class="main-content">
 
       <div class="page-header">
-        <h1 class="page-title">?? Calculadora de Honor�rios</h1>
+        <h1 class="page-title">💰 Calculadora de Honorários</h1>
         <span style="font-size:12px;color:var(--color-text-muted)">Tabela OAB/SP 2026 (CAASP | ESA | PREV)</span>
       </div>
 
       <!-- Tabs -->
       <div class="hc-tabs">
-        <button class="hc-tab on" onclick="hcShowPane('calc',this)">?? Calculadora</button>
-        <button class="hc-tab" onclick="hcShowPane('hist',this)">?? Hist�rico</button>
-        <button class="hc-tab" onclick="hcShowPane('cmp',this)">?? Comparativo</button>
-        <button class="hc-tab" onclick="hcShowPane('proposta',this)">?? Proposta</button>
-        <button class="hc-tab" onclick="hcShowPane('cfg',this)">?? Configura��es</button>
+        <button class="hc-tab on" onclick="hcShowPane('calc',this)">⚖️ Calculadora</button>
+        <button class="hc-tab" onclick="hcShowPane('hist',this)">📋 Histórico</button>
+        <button class="hc-tab" onclick="hcShowPane('cmp',this)">📊 Comparativo</button>
+        <button class="hc-tab" onclick="hcShowPane('proposta',this)">📄 Proposta</button>
+        <button class="hc-tab" onclick="hcShowPane('cfg',this)">⚙️ Configurações</button>
       </div>
 
-      <!-- -- CALCULADORA -- -->
+      <!-- ── CALCULADORA ── -->
       <div class="hc-pane on" id="hc-pane-calc">
         <div class="hc-grid">
 
           <!-- LEFT: Inputs -->
           <div>
             <div class="hc-card">
-              <div class="hc-section-title">Tipo de Servi�o</div>
+              <div class="hc-section-title">Tipo de Serviço</div>
               <div class="hc-mode-btns">
-                <button id="hc-tj" class="hc-mode-btn on" onclick="hcSetMode('j',this)">?? Judicial</button>
-                <button id="hc-te" class="hc-mode-btn" onclick="hcSetMode('e',this)">?? Extrajudicial</button>
+                <button id="hc-tj" class="hc-mode-btn on" onclick="hcSetMode('j',this)">⚖️ Judicial</button>
+                <button id="hc-te" class="hc-mode-btn" onclick="hcSetMode('e',this)">📋 Extrajudicial</button>
               </div>
               <div class="hc-field">
-                <label>�rea de atua��o</label>
+                <label>Área de atuação</label>
                 <select id="hc-sa" onchange="hcOnArea()">
-                  <option value="">� Selecione �</option>
+                  <option value="">— Selecione —</option>
                 </select>
               </div>
               <div class="hc-field">
-                <label>Tipo de a��o / servi�o</label>
+                <label>Tipo de ação / serviço</label>
                 <select id="hc-sc" onchange="hcOnAct()">
-                  <option value="">� Selecione a �rea primeiro �</option>
+                  <option value="">— Selecione a área primeiro —</option>
                 </select>
               </div>
               <div class="hc-field">
@@ -476,7 +476,7 @@
                 <div class="hc-hint" id="hc-rp"></div>
               </div>
               <div class="hc-field">
-                <label>Cliente / Refer�ncia (opcional)</label>
+                <label>Cliente / Referência (opcional)</label>
                 <input type="text" id="hc-cliente" placeholder="Nome do cliente" oninput="hcRender()">
               </div>
             </div>
@@ -486,40 +486,40 @@
               <div class="hc-field">
                 <label>Complexidade</label>
                 <div class="hc-seg">
-                  <button class="on" onclick="hcSeg('cx','Baixa',this)">Baixa �1,0</button>
-                  <button onclick="hcSeg('cx','M�dia',this)">M�dia �1,3</button>
-                  <button onclick="hcSeg('cx','Alta',this)">Alta �1,6</button>
+                  <button class="on" onclick="hcSeg('cx','Baixa',this)">Baixa ×1,0</button>
+                  <button onclick="hcSeg('cx','Média',this)">Média ×1,3</button>
+                  <button onclick="hcSeg('cx','Alta',this)">Alta ×1,6</button>
                 </div>
               </div>
               <div class="hc-field">
                 <label>Risco de recebimento</label>
                 <div class="hc-seg">
                   <button class="on" onclick="hcSeg('ri','Baixo',this)">Bom pagador</button>
-                  <button onclick="hcSeg('ri','M�dio',this)">Risco m�dio</button>
+                  <button onclick="hcSeg('ri','Médio',this)">Risco médio</button>
                   <button onclick="hcSeg('ri','Alto',this)">Mau pagador</button>
                 </div>
               </div>
               <div class="hc-field">
-                <label>Urg�ncia</label>
+                <label>Urgência</label>
                 <div class="hc-seg">
                   <button class="on" onclick="hcSeg('ur','Normal',this)">Normal</button>
                   <button onclick="hcSeg('ur','Alta',this)">Urgente +20%</button>
                 </div>
               </div>
               <div class="hc-field">
-                <label>Capacidade econ�mica do cliente</label>
+                <label>Capacidade econômica do cliente</label>
                 <div class="hc-seg">
-                  <button onclick="hcSeg('ca','Baixa',this)">Baixa -10%</button>
-                  <button class="on" onclick="hcSeg('ca','M�dia',this)">M�dia</button>
+                  <button onclick="hcSeg('ca','Baixa',this)">Baixa −10%</button>
+                  <button class="on" onclick="hcSeg('ca','Média',this)">Média</button>
                   <button onclick="hcSeg('ca','Alta',this)">Alta +20%</button>
                 </div>
               </div>
               <div class="hc-field">
-                <label>Probabilidade de �xito</label>
+                <label>Probabilidade de êxito</label>
                 <div class="hc-seg">
                   <button onclick="hcSeg('ex','Remoto',this)">Remota 25%</button>
-                  <button onclick="hcSeg('ex','Poss�vel',this)">Poss�vel 20%</button>
-                  <button class="on" onclick="hcSeg('ex','Prov�vel',this)">Prov�vel 15%</button>
+                  <button onclick="hcSeg('ex','Possível',this)">Possível 20%</button>
+                  <button class="on" onclick="hcSeg('ex','Provável',this)">Provável 15%</button>
                 </div>
               </div>
               <div class="hc-field">
@@ -527,47 +527,47 @@
                 <div class="hc-esp-row">
                   <button id="hc-esp-off" class="hc-esp-btn on" onclick="hcSetEsp(false,document.getElementById('hc-esp-off'),document.getElementById('hc-esp-on'))">Sem adicional</button>
                   <button id="hc-esp-on" class="hc-esp-btn" style="color:var(--hc-gold);border-color:var(--hc-gold)" onclick="hcSetEsp(true,document.getElementById('hc-esp-on'),document.getElementById('hc-esp-off'))">+ Especialista 10%</button>
-                  <!-- label atualizado via hcAtualizarBotaoEspecialidade() ap�s carregar config -->
+                  <!-- label atualizado via hcAtualizarBotaoEspecialidade() após carregar config -->
                 </div>
               </div>
             </div>
 
             <div class="hc-card">
-              <div class="hc-section-title">Viabilidade � Hora Intelectual</div>
+              <div class="hc-section-title">Viabilidade — Hora Intelectual</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" class="hc-field">
                 <div>
-                  <label>Dura��o (meses)</label>
+                  <label>Duração (meses)</label>
                   <input type="number" id="hc-hi-meses" min="0" max="120" step="1" placeholder="ex: 6" oninput="hcRender()">
                 </div>
                 <div>
-                  <label>Dedica��o semanal (h)</label>
+                  <label>Dedicação semanal (h)</label>
                   <input type="number" id="hc-hi-horas" min="0" max="40" step="0.5" placeholder="ex: 4" oninput="hcRender()">
                 </div>
               </div>
               <div id="hc-hi-result"></div>
-              <div class="hc-hint">M�nimo OAB/SP 2026: R$ 868,96/hora (item 1.2)</div>
+              <div class="hc-hint">Mínimo OAB/SP 2026: R$ 868,96/hora (item 1.2)</div>
             </div>
 
             <div class="hc-card">
               <div class="hc-section-title">Forma de Pagamento</div>
               <div class="hc-field">
                 <div class="hc-seg">
-                  <button class="on" onclick="hcParc('v',this)">� vista</button>
-                  <button onclick="hcParc('o',this)">3� OAB</button>
+                  <button class="on" onclick="hcParc('v',this)">À vista</button>
+                  <button onclick="hcParc('o',this)">3× OAB</button>
                   <button onclick="hcParc('c',this)">Personalizado</button>
                 </div>
               </div>
               <div id="hc-fp-custom" style="display:none" class="hc-field">
-                <label>N�mero de parcelas</label>
+                <label>Número de parcelas</label>
                 <input type="number" id="hc-np" min="2" max="60" step="1" placeholder="ex: 6" oninput="hcRender()">
               </div>
               <div id="hc-fp-corr" style="display:none" class="hc-field">
-                <label>Corre��o monet�ria</label>
+                <label>Correção monetária</label>
                 <select id="hc-idx-corr" onchange="hcRender()">
-                  <option value="0">Sem corre��o</option>
-                  <option value="0.42">IPCA (carregando�)</option>
-                  <option value="0.55">IGP-M (carregando�)</option>
-                  <option value="0.80">Tabela TJSP (carregando�)</option>
+                  <option value="0">Sem correção</option>
+                  <option value="0.42">IPCA (carregando…)</option>
+                  <option value="0.55">IGP-M (carregando…)</option>
+                  <option value="0.80">Tabela TJSP (carregando…)</option>
                   <option value="custom">Personalizado</option>
                 </select>
               </div>
@@ -576,7 +576,7 @@
                 <input type="number" id="hc-custom-rate" min="0" max="5" step="0.01" placeholder="ex: 0.50" oninput="hcRender()">
               </div>
               <div class="hc-field" id="hc-fp-dt-wrap">
-                <label>Data do 1� pagamento</label>
+                <label>Data do 1º pagamento</label>
                 <input type="date" id="hc-dt-inicio" onchange="hcRender()">
               </div>
             </div>
@@ -586,63 +586,63 @@
           <div id="hc-rp2">
             <div class="hc-card">
               <div class="hc-empty">
-                <div class="ic">??</div>
-                <p>Selecione a �rea e o tipo de a��o<br>para calcular os honor�rios</p>
+                <div class="ic">⚖️</div>
+                <p>Selecione a área e o tipo de ação<br>para calcular os honorários</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- -- HIST�RICO -- -->
+      <!-- ── HISTÓRICO ── -->
       <div class="hc-pane" id="hc-pane-hist">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-          <span style="font-size:13px;color:var(--color-text-muted)" id="hc-hist-count">0 c�lculos salvos</span>
+          <span style="font-size:13px;color:var(--color-text-muted)" id="hc-hist-count">0 cálculos salvos</span>
           <button class="btn btn-secondary btn-sm" onclick="hcClearHist()">Limpar tudo</button>
         </div>
         <div id="hc-hist-list">
           <div class="hc-card">
             <div class="hc-empty">
-              <div class="ic">??</div>
-              <p>Nenhum c�lculo salvo ainda.<br>Use o bot�o "+ Hist�rico" na calculadora.</p>
+              <div class="ic">📋</div>
+              <p>Nenhum cálculo salvo ainda.<br>Use o botão "+ Histórico" na calculadora.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- -- COMPARATIVO -- -->
+      <!-- ── COMPARATIVO ── -->
       <div class="hc-pane" id="hc-pane-cmp">
         <div style="margin-bottom:12px;font-size:13px;color:var(--color-text-muted)">
-          Use os bot�es <strong>Salvar Cen. A</strong> e <strong>Salvar Cen. B</strong> na calculadora para comparar dois cen�rios.
+          Use os botões <strong>Salvar Cen. A</strong> e <strong>Salvar Cen. B</strong> na calculadora para comparar dois cenários.
         </div>
         <div id="hc-cmp-content">
           <div class="hc-card">
             <div class="hc-empty">
-              <div class="ic">??</div>
-              <p>Nenhum cen�rio salvo ainda.</p>
+              <div class="ic">📊</div>
+              <p>Nenhum cenário salvo ainda.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- -- PROPOSTA -- -->
+      <!-- ── PROPOSTA ── -->
       <div class="hc-pane" id="hc-pane-proposta">
         <div class="hc-act-row no-print" style="margin-bottom:16px">
-          <button class="btn btn-primary btn-sm" onclick="hcPrint()">??? Imprimir / Salvar PDF</button>
-          <button class="btn btn-secondary btn-sm" onclick="hcCopiarProposta()">?? Copiar texto</button>
-          <button class="btn btn-secondary btn-sm" onclick="hcGerarProposta()">?? Atualizar</button>
+          <button class="btn btn-primary btn-sm" onclick="hcPrint()">🖨️ Imprimir / Salvar PDF</button>
+          <button class="btn btn-secondary btn-sm" onclick="hcCopiarProposta()">📋 Copiar texto</button>
+          <button class="btn btn-secondary btn-sm" onclick="hcGerarProposta()">🔄 Atualizar</button>
         </div>
         <div id="hc-proposta-out">
           <div class="hc-card">
             <div class="hc-empty">
-              <div class="ic">??</div>
-              <p>Nenhum c�lculo dispon�vel.<br>Fa�a um c�lculo e clique em "+ Adicionar � Proposta".</p>
+              <div class="ic">📄</div>
+              <p>Nenhum cálculo disponível.<br>Faça um cálculo e clique em "+ Adicionar à Proposta".</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- -- CONFIGURA��ES -- -->
+      <!-- ── CONFIGURAÇÕES ── -->
       <div class="hc-pane" id="hc-pane-cfg">
         <div class="hc-card">
           <div class="hc-section-title">Adicional de Especialidade</div>
@@ -652,14 +652,14 @@
               <input type="number" id="hc-cfg-esp" min="0" max="100" step="1" placeholder="ex: 10" style="width:110px">
               <button class="btn btn-primary btn-sm" onclick="hcSalvarCfg(this)">Salvar</button>
             </div>
-            <p style="font-size:12px;color:var(--color-text-muted);margin-top:8px">Valor padr�o: 10%. Aplicado quando "Especialista" est� ativo na calculadora. Requer perfil Admin.</p>
+            <p style="font-size:12px;color:var(--color-text-muted);margin-top:8px">Valor padrão: 10%. Aplicado quando "Especialista" está ativo na calculadora. Requer perfil Admin.</p>
           </div>
         </div>
         <div class="hc-card" style="margin-top:16px">
-          <div class="hc-section-title">�ndices de Corre��o Monet�ria</div>
-          <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px;margin-bottom:12px">Atualizados automaticamente todo dia 15 do m�s. Fonte: BCB (IPCA e IGP-M) e TJSP.</p>
+          <div class="hc-section-title">Índices de Correção Monetária</div>
+          <p style="font-size:12px;color:var(--color-text-muted);margin-top:4px;margin-bottom:12px">Atualizados automaticamente todo dia 15 do mês. Fonte: BCB (IPCA e IGP-M) e TJSP.</p>
           <div id="hc-cfg-indices">
-            <div class="hc-empty"><div class="ic">?</div><p>Carregando �ndices�</p></div>
+            <div class="hc-empty"><div class="ic">⏳</div><p>Carregando índices…</p></div>
           </div>
         </div>
       </div>
@@ -673,25 +673,25 @@
   </script>
 
   <script>
-  // -- OAB/SP 2026 TABLE ------------------------------------------------------
-  const T={j:{"C�vel":[{i:"4.1",l:"Procedimento Ordin�rio (proposi��o/defesa)",m:6256.51,p:.20},{i:"4.2",l:"Procedimento Sum�rio (proposi��o/defesa)",m:4344.80,p:.20},{i:"4.3",l:"Cumprimento de Senten�a",m:3475.84,p:.20},{i:"4.4",l:"Impugna��o ao Cumprimento de Senten�a",m:3475.84,p:.20},{i:"4.5",l:"Execu��o de T�tulo Extrajudicial",m:3475.84,p:.20},{i:"4.6",l:"Embargos � Execu��o de T�tulo Extrajudicial",m:3475.84,p:.20},{i:"4.8",l:"Processo Cautelar Espec�fico",m:3475.84,p:.10},{i:"4.9",l:"Processo Cautelar Inominado",m:4344.80,p:.20},{i:"4.10",l:"Consigna��o em Pagamento",m:4344.80,p:.20},{i:"4.14",l:"A��o Possess�ria � M�vel",m:3475.84,p:.20},{i:"4.15",l:"A��o Possess�ria � Im�vel",m:6082.72,p:.20},{i:"4.17",l:"Usucapi�o",m:6082.72,p:.20},{i:"4.19",l:"Embargos de Terceiro",m:6082.72,p:.10},{i:"4.24",l:"A��o Monit�ria",m:3081.41,p:.10},{i:"4.29",l:"Alvar� Judicial",m:3081.41,p:.20},{i:"4.31",l:"Mandado de Seguran�a",m:6951.68,p:.20},{i:"4.32",l:"A��o Ordin�ria de Despejo",m:5392.48,p:.20},{i:"4.33",l:"A��o Renovat�ria de Loca��o",m:5392.48,p:.20},{i:"4.34",l:"Revis�o / Arbitramento de Aluguel",m:5392.48,p:.20},{i:"4.35",l:"Consigna��o de Aluguel",m:4344.80,p:.20},{i:"4.37",l:"Dissolu��o de Sociedade",m:6951.68,p:.20}],"Tribut�rio / Fiscal":[{i:"9.1",l:"Defesa Administrativa � 1� Inst�ncia",m:4344.80,p:.10},{i:"9.2",l:"Defesa Administrativa � 2� Inst�ncia",m:4344.80,p:.10},{i:"9.4",l:"A��o Anulat�ria de D�bito Tribut�rio",m:10427.52,p:.15},{i:"9.5",l:"Defesa em Execu��o Fiscal",m:10427.52,p:.15},{i:"9.6",l:"A��o de Repeti��o de Ind�bito",m:8689.58,p:.15},{i:"9.8",l:"Outros Procedimentos Fiscais/Tribut�rios",m:4344.80,p:.10}],"Insolv�ncia / Recupera��o":[{i:"5.1",l:"Pedido de Fal�ncia (at� decreta��o)",m:5213.74,p:.20},{i:"5.3",l:"Pedido de Recupera��o Judicial",m:9244.25,p:.05},{i:"5.4",l:"Declara��o de Insolv�ncia",m:4344.80,p:.20},{i:"5.5",l:"Habilita��o de Cr�dito",m:4344.80,p:.20},{i:"5.6",l:"Representa��o do Falido (sobre passivo)",m:8689.58,p:.20},{i:"5.8",l:"Representa��o do Adm. Judicial",m:10427.52,p:.10}],"Consumidor / Banc�rio":[{i:"10.3",l:"Responsabilidade por Fato do Produto/Servi�o",m:6082.72,p:.20},{i:"10.4",l:"Responsabilidade por V�cio do Produto/Servi�o",m:6082.72,p:.20},{i:"10.6",l:"Nulidade de Cl�usulas Abusivas",m:6082.72,p:.20},{i:"10.7",l:"Defesa em A��o do Consumidor",m:10427.52,p:.20}],"Fam�lia e Sucess�es":[{i:"6.1a",l:"Div�rcio Consensual",m:7820.64,p:null},{i:"6.1b",l:"Div�rcio Consensual c/ bens/alimentos",m:7820.64,p:.06},{i:"6.1c",l:"Div�rcio Litigioso",m:12165.42,p:null},{i:"6.1d",l:"Div�rcio Litigioso c/ bens/alimentos",m:12165.42,p:.10},{i:"6.5a",l:"Uni�o Est�vel � Dissolu��o Consensual",m:7820.64,p:null},{i:"6.5c",l:"Uni�o Est�vel � Dissolu��o Litigiosa",m:12165.42,p:null},{i:"6.9",l:"A��o de Alimentos (proposi��o/contesta��o)",m:2606.88,p:null},{i:"6.10",l:"Execu��o de Alimentos (pris�o/penhora)",m:2606.88,p:null},{i:"6.22",l:"Desconsidera��o da Personalidade Jur�dica",m:10427.52,p:.20},{i:"6.23a",l:"Invent�rio Judicial sem Lit�gio (8% monte-mor)",m:6082.72,p:.08},{i:"6.23b",l:"Invent�rio Judicial com Lit�gio (10% monte-mor)",m:6082.72,p:.10},{i:"6.25a",l:"Invent�rio Extrajudicial (6% monte-mor)",m:4344.80,p:.06}],"Trabalhista":[{i:"8.1",l:"Reclamante (sobre condena��o/acordo)",m:1737.91,p:.20},{i:"8.4",l:"Reclamado (sobre valor do pedido)",m:4344.80,p:.20},{i:"8.7",l:"Execu��o de Senten�a",m:4344.80,p:.20},{i:"8.24",l:"Indeniza��o por Acidente de Trabalho",m:5392.48,p:.20}],"Tribunais / Recursos":[{i:"17.1a",l:"Agravo de Instrumento",m:6082.72,p:null},{i:"17.1b",l:"Apela��o / Contrarraz�es",m:8168.22,p:null},{i:"17.2a",l:"REsp / RE � Interposi��o ou Resposta",m:16510.22,p:null},{i:"17.3",l:"A��o Rescis�ria",m:10427.52,p:.20},{i:"17.5",l:"Mandado de Seguran�a (Tribunal)",m:12165.42,p:null},{i:"17.9a",l:"Sustenta��o Oral � Tribunal Estadual/Regional",m:8689.58,p:null},{i:"17.9b",l:"Sustenta��o Oral � Tribunal Superior",m:12165.42,p:null}],"Juizados Especiais":[{i:"3.1",l:"Inicial ou Contesta��o + Audi�ncia",m:1390.33,p:.20},{i:"3.2",l:"Segunda Inst�ncia",m:1042.75,p:.10}],"Mat�ria Administrativa":[{i:"2.1",l:"Sindic�ncia / Processo Administrativo",m:3128.26,p:.10},{i:"2.3",l:"A��o ou Defesa � Fase Administrativa",m:10427.52,p:.20},{i:"2.4",l:"Recurso � Fase Administrativa",m:5213.74,p:.10},{i:"2.5",l:"A��o ou Defesa � Fase Judicial",m:17379.18,p:.20},{i:"2.6",l:"Recurso � Fase Judicial",m:8689.58,p:.10}]},e:{"Atos Avulsos / Extrajudiciais":[{i:"1.1",l:"Consulta Jur�dica",m:539.25,p:null},{i:"1.1a",l:"Consulta com Exame de Documentos",m:1155.52,p:null},{i:"1.2",l:"Hora Intelectual",m:868.96,p:null},{i:"1.6",l:"Cobran�a Amig�vel",m:1216.54,p:.10},{i:"1.7",l:"Consigna��o em Pagamento (extrajudicial)",m:2085.52,p:.10},{i:"1.10",l:"Elabora��o de Notifica��o Extrajudicial",m:868.96,p:null},{i:"1.11",l:"Minutas de Contrato / Distrato / Estatuto",m:4930.26,p:.03},{i:"1.12",l:"Parecer ou Memorial",m:3475.84,p:null},{i:"1.14",l:"Requerimento ou Peti��es",m:1216.54,p:null},{i:"1.16",l:"Interven��o Amig�vel c/ interesse econ�mico",m:3081.42,p:.10}],"Tribut�rio Consultivo":[{i:"9.3",l:"Parecer / Planejamento Tribut�rio",m:8689.58,p:.10},{i:"9.9a",l:"Consultoria Mensal � ME/EPP",m:2085.51,p:null},{i:"9.9b",l:"Consultoria Mensal � Ltda.",m:6082.72,p:null},{i:"9.9c",l:"Consultoria Mensal � S/A",m:10427.52,p:null},{i:"9.8",l:"Outros Procedimentos Tribut�rios",m:4344.80,p:.10}],"Empresarial / Societ�rio":[{i:"1.8",l:"Exame de Constitui��o de Pessoa Jur�dica",m:2085.52,p:null},{i:"1.11b",l:"Elabora��o de Contrato / Estatuto Social",m:4930.26,p:.03},{i:"1.15",l:"Exame de Processo em Geral",m:770.35,p:null}],"M�todos Autocompositivos":[{i:"20.4",l:"Acompanhamento em Sess�o (por ato)",m:2222.92,p:null},{i:"20.5",l:"Elabora��o / Revis�o de Termo de Acordo",m:4504.37,p:.03},{i:"20.7",l:"Assessoria Completa em M�todo Autocompositivo",m:9034.61,p:.08}],"Administrativo":[{i:"2.1e",l:"Sindic�ncia / Processo Administrativo",m:3128.26,p:.10},{i:"2.2e",l:"Processo Administrativo � Recurso",m:6082.72,p:.05},{i:"2.3e",l:"A��o ou Defesa Administrativa",m:10427.52,p:.20}]}};
+  // ── OAB/SP 2026 TABLE ──────────────────────────────────────────────────────
+  const T={j:{"Cível":[{i:"4.1",l:"Procedimento Ordinário (proposição/defesa)",m:6256.51,p:.20},{i:"4.2",l:"Procedimento Sumário (proposição/defesa)",m:4344.80,p:.20},{i:"4.3",l:"Cumprimento de Sentença",m:3475.84,p:.20},{i:"4.4",l:"Impugnação ao Cumprimento de Sentença",m:3475.84,p:.20},{i:"4.5",l:"Execução de Título Extrajudicial",m:3475.84,p:.20},{i:"4.6",l:"Embargos à Execução de Título Extrajudicial",m:3475.84,p:.20},{i:"4.8",l:"Processo Cautelar Específico",m:3475.84,p:.10},{i:"4.9",l:"Processo Cautelar Inominado",m:4344.80,p:.20},{i:"4.10",l:"Consignação em Pagamento",m:4344.80,p:.20},{i:"4.14",l:"Ação Possessória — Móvel",m:3475.84,p:.20},{i:"4.15",l:"Ação Possessória — Imóvel",m:6082.72,p:.20},{i:"4.17",l:"Usucapião",m:6082.72,p:.20},{i:"4.19",l:"Embargos de Terceiro",m:6082.72,p:.10},{i:"4.24",l:"Ação Monitória",m:3081.41,p:.10},{i:"4.29",l:"Alvará Judicial",m:3081.41,p:.20},{i:"4.31",l:"Mandado de Segurança",m:6951.68,p:.20},{i:"4.32",l:"Ação Ordinária de Despejo",m:5392.48,p:.20},{i:"4.33",l:"Ação Renovatória de Locação",m:5392.48,p:.20},{i:"4.34",l:"Revisão / Arbitramento de Aluguel",m:5392.48,p:.20},{i:"4.35",l:"Consignação de Aluguel",m:4344.80,p:.20},{i:"4.37",l:"Dissolução de Sociedade",m:6951.68,p:.20}],"Tributário / Fiscal":[{i:"9.1",l:"Defesa Administrativa — 1ª Instância",m:4344.80,p:.10},{i:"9.2",l:"Defesa Administrativa — 2ª Instância",m:4344.80,p:.10},{i:"9.4",l:"Ação Anulatória de Débito Tributário",m:10427.52,p:.15},{i:"9.5",l:"Defesa em Execução Fiscal",m:10427.52,p:.15},{i:"9.6",l:"Ação de Repetição de Indébito",m:8689.58,p:.15},{i:"9.8",l:"Outros Procedimentos Fiscais/Tributários",m:4344.80,p:.10}],"Insolvência / Recuperação":[{i:"5.1",l:"Pedido de Falência (até decretação)",m:5213.74,p:.20},{i:"5.3",l:"Pedido de Recuperação Judicial",m:9244.25,p:.05},{i:"5.4",l:"Declaração de Insolvência",m:4344.80,p:.20},{i:"5.5",l:"Habilitação de Crédito",m:4344.80,p:.20},{i:"5.6",l:"Representação do Falido (sobre passivo)",m:8689.58,p:.20},{i:"5.8",l:"Representação do Adm. Judicial",m:10427.52,p:.10}],"Consumidor / Bancário":[{i:"10.3",l:"Responsabilidade por Fato do Produto/Serviço",m:6082.72,p:.20},{i:"10.4",l:"Responsabilidade por Vício do Produto/Serviço",m:6082.72,p:.20},{i:"10.6",l:"Nulidade de Cláusulas Abusivas",m:6082.72,p:.20},{i:"10.7",l:"Defesa em Ação do Consumidor",m:10427.52,p:.20}],"Família e Sucessões":[{i:"6.1a",l:"Divórcio Consensual",m:7820.64,p:null},{i:"6.1b",l:"Divórcio Consensual c/ bens/alimentos",m:7820.64,p:.06},{i:"6.1c",l:"Divórcio Litigioso",m:12165.42,p:null},{i:"6.1d",l:"Divórcio Litigioso c/ bens/alimentos",m:12165.42,p:.10},{i:"6.5a",l:"União Estável — Dissolução Consensual",m:7820.64,p:null},{i:"6.5c",l:"União Estável — Dissolução Litigiosa",m:12165.42,p:null},{i:"6.9",l:"Ação de Alimentos (proposição/contestação)",m:2606.88,p:null},{i:"6.10",l:"Execução de Alimentos (prisão/penhora)",m:2606.88,p:null},{i:"6.22",l:"Desconsideração da Personalidade Jurídica",m:10427.52,p:.20},{i:"6.23a",l:"Inventário Judicial sem Litígio (8% monte-mor)",m:6082.72,p:.08},{i:"6.23b",l:"Inventário Judicial com Litígio (10% monte-mor)",m:6082.72,p:.10},{i:"6.25a",l:"Inventário Extrajudicial (6% monte-mor)",m:4344.80,p:.06}],"Trabalhista":[{i:"8.1",l:"Reclamante (sobre condenação/acordo)",m:1737.91,p:.20},{i:"8.4",l:"Reclamado (sobre valor do pedido)",m:4344.80,p:.20},{i:"8.7",l:"Execução de Sentença",m:4344.80,p:.20},{i:"8.24",l:"Indenização por Acidente de Trabalho",m:5392.48,p:.20}],"Tribunais / Recursos":[{i:"17.1a",l:"Agravo de Instrumento",m:6082.72,p:null},{i:"17.1b",l:"Apelação / Contrarrazões",m:8168.22,p:null},{i:"17.2a",l:"REsp / RE — Interposição ou Resposta",m:16510.22,p:null},{i:"17.3",l:"Ação Rescisória",m:10427.52,p:.20},{i:"17.5",l:"Mandado de Segurança (Tribunal)",m:12165.42,p:null},{i:"17.9a",l:"Sustentação Oral — Tribunal Estadual/Regional",m:8689.58,p:null},{i:"17.9b",l:"Sustentação Oral — Tribunal Superior",m:12165.42,p:null}],"Juizados Especiais":[{i:"3.1",l:"Inicial ou Contestação + Audiência",m:1390.33,p:.20},{i:"3.2",l:"Segunda Instância",m:1042.75,p:.10}],"Matéria Administrativa":[{i:"2.1",l:"Sindicância / Processo Administrativo",m:3128.26,p:.10},{i:"2.3",l:"Ação ou Defesa — Fase Administrativa",m:10427.52,p:.20},{i:"2.4",l:"Recurso — Fase Administrativa",m:5213.74,p:.10},{i:"2.5",l:"Ação ou Defesa — Fase Judicial",m:17379.18,p:.20},{i:"2.6",l:"Recurso — Fase Judicial",m:8689.58,p:.10}]},e:{"Atos Avulsos / Extrajudiciais":[{i:"1.1",l:"Consulta Jurídica",m:539.25,p:null},{i:"1.1a",l:"Consulta com Exame de Documentos",m:1155.52,p:null},{i:"1.2",l:"Hora Intelectual",m:868.96,p:null},{i:"1.6",l:"Cobrança Amigável",m:1216.54,p:.10},{i:"1.7",l:"Consignação em Pagamento (extrajudicial)",m:2085.52,p:.10},{i:"1.10",l:"Elaboração de Notificação Extrajudicial",m:868.96,p:null},{i:"1.11",l:"Minutas de Contrato / Distrato / Estatuto",m:4930.26,p:.03},{i:"1.12",l:"Parecer ou Memorial",m:3475.84,p:null},{i:"1.14",l:"Requerimento ou Petições",m:1216.54,p:null},{i:"1.16",l:"Intervenção Amigável c/ interesse econômico",m:3081.42,p:.10}],"Tributário Consultivo":[{i:"9.3",l:"Parecer / Planejamento Tributário",m:8689.58,p:.10},{i:"9.9a",l:"Consultoria Mensal — ME/EPP",m:2085.51,p:null},{i:"9.9b",l:"Consultoria Mensal — Ltda.",m:6082.72,p:null},{i:"9.9c",l:"Consultoria Mensal — S/A",m:10427.52,p:null},{i:"9.8",l:"Outros Procedimentos Tributários",m:4344.80,p:.10}],"Empresarial / Societário":[{i:"1.8",l:"Exame de Constituição de Pessoa Jurídica",m:2085.52,p:null},{i:"1.11b",l:"Elaboração de Contrato / Estatuto Social",m:4930.26,p:.03},{i:"1.15",l:"Exame de Processo em Geral",m:770.35,p:null}],"Métodos Autocompositivos":[{i:"20.4",l:"Acompanhamento em Sessão (por ato)",m:2222.92,p:null},{i:"20.5",l:"Elaboração / Revisão de Termo de Acordo",m:4504.37,p:.03},{i:"20.7",l:"Assessoria Completa em Método Autocompositivo",m:9034.61,p:.08}],"Administrativo":[{i:"2.1e",l:"Sindicância / Processo Administrativo",m:3128.26,p:.10},{i:"2.2e",l:"Processo Administrativo — Recurso",m:6082.72,p:.05},{i:"2.3e",l:"Ação ou Defesa Administrativa",m:10427.52,p:.20}]}};
 
-  // -- MULTIPLIERS ------------------------------------------------------------
-  const M={cx:{Baixa:1,M�dia:1.3,Alta:1.6},ri:{Baixo:1,M�dio:1.2,Alto:1.4},ur:{Normal:1,Alta:1.2},ca:{Baixa:.9,M�dia:1,Alta:1.2},ex:{Remoto:.25,Poss�vel:.20,Prov�vel:.15}};
+  // ── MULTIPLIERS ────────────────────────────────────────────────────────────
+  const M={cx:{Baixa:1,Média:1.3,Alta:1.6},ri:{Baixo:1,Médio:1.2,Alto:1.4},ur:{Normal:1,Alta:1.2},ca:{Baixa:.9,Média:1,Alta:1.2},ex:{Remoto:.25,Possível:.20,Provável:.15}};
 
-  // -- UTILS ------------------------------------------------------------------
+  // ── UTILS ──────────────────────────────────────────────────────────────────
   const brl=n=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const pct=p=>(p*100).toFixed(1)+"%";
   const today=()=>new Date().toLocaleDateString("pt-BR");
-  const fmtDateStr=s=>{if(!s)return"�";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`};
+  const fmtDateStr=s=>{if(!s)return"—";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`};
 
-  // -- STATE ------------------------------------------------------------------
-  let hcSt={mode:"j",area:"",act:null,val:0,cx:"Baixa",ri:"Baixo",ur:"Normal",ca:"M�dia",ex:"Prov�vel",par:"v",esp:false};
+  // ── STATE ──────────────────────────────────────────────────────────────────
+  let hcSt={mode:"j",area:"",act:null,val:0,cx:"Baixa",ri:"Baixo",ur:"Normal",ca:"Média",ex:"Provável",par:"v",esp:false};
   let hcHist=[],hcCmpA=null,hcCmpB=null,hcLastCalc=null,hcProposalItems=[];
   let hcCfg={adicionalEspecialidade:0.10};
   let hcIndices={};
 
-  // -- TABS -------------------------------------------------------------------
+  // ── TABS ───────────────────────────────────────────────────────────────────
   function hcShowPane(id,btn){
     document.querySelectorAll(".hc-pane").forEach(p=>p.classList.remove("on"));
     document.querySelectorAll(".hc-tab").forEach(b=>b.classList.remove("on"));
@@ -703,7 +703,7 @@
     if(id==="cfg")hcMostrarPainelCfg();
   }
 
-  // -- MODE -------------------------------------------------------------------
+  // ── MODE ───────────────────────────────────────────────────────────────────
   function hcSetMode(m){
     hcSt.mode=m;hcSt.area="";hcSt.act=null;hcSt.val=0;hcSt.esp=false;
     const espOff=document.getElementById("hc-esp-off");
@@ -714,18 +714,18 @@
     document.getElementById("hc-rp").textContent="";
     document.getElementById("hc-tj").classList.toggle("on",m==="j");
     document.getElementById("hc-te").classList.toggle("on",m==="e");
-    document.getElementById("hc-lv").textContent=m==="j"?"Valor da causa (R$)":"Valor econ�mico / Valor do contrato (R$)";
+    document.getElementById("hc-lv").textContent=m==="j"?"Valor da causa (R$)":"Valor econômico / Valor do contrato (R$)";
     const sa=document.getElementById("hc-sa");
-    sa.innerHTML='<option value="">� Selecione �</option>'+Object.keys(T[m]).map(a=>`<option value="${a}">${a}</option>`).join("");
-    document.getElementById("hc-sc").innerHTML='<option value="">� Selecione a �rea primeiro �</option>';
+    sa.innerHTML='<option value="">— Selecione —</option>'+Object.keys(T[m]).map(a=>`<option value="${a}">${a}</option>`).join("");
+    document.getElementById("hc-sc").innerHTML='<option value="">— Selecione a área primeiro —</option>';
     hcRender();
   }
 
   function hcOnArea(){
     hcSt.area=document.getElementById("hc-sa").value;hcSt.act=null;
     const sc=document.getElementById("hc-sc");
-    if(!hcSt.area){sc.innerHTML='<option value="">� Selecione a �rea primeiro �</option>';hcRender();return;}
-    sc.innerHTML='<option value="">� Selecione �</option>'+T[hcSt.mode][hcSt.area].map((a,i)=>`<option value="${i}">${a.i} � ${a.l}</option>`).join("");
+    if(!hcSt.area){sc.innerHTML='<option value="">— Selecione a área primeiro —</option>';hcRender();return;}
+    sc.innerHTML='<option value="">— Selecione —</option>'+T[hcSt.mode][hcSt.area].map((a,i)=>`<option value="${i}">${a.i} — ${a.l}</option>`).join("");
     hcRender();
   }
 
@@ -733,7 +733,7 @@
     const idx=document.getElementById("hc-sc").value;
     if(idx===""||!hcSt.area){hcSt.act=null;hcRender();return;}
     hcSt.act=T[hcSt.mode][hcSt.area][+idx];
-    document.getElementById("hc-rp").textContent=hcSt.act.p?`Ref. OAB: ${pct(hcSt.act.p)} s/ valor | M�n: ${brl(hcSt.act.m)}`:`Valor m�nimo OAB: ${brl(hcSt.act.m)} (honor�rio fixo)`;
+    document.getElementById("hc-rp").textContent=hcSt.act.p?`Ref. OAB: ${pct(hcSt.act.p)} s/ valor | Mín: ${brl(hcSt.act.m)}`:`Valor mínimo OAB: ${brl(hcSt.act.m)} (honorário fixo)`;
     hcRender();
   }
 
@@ -770,7 +770,7 @@
     return sel==="custom"?parseFloat(document.getElementById("hc-custom-rate").value)||0:parseFloat(sel)||0;
   }
 
-  // -- CALC -------------------------------------------------------------------
+  // ── CALC ───────────────────────────────────────────────────────────────────
   function hcCalc(){
     if(!hcSt.act)return null;
     const a=hcSt.act;
@@ -788,13 +788,13 @@
     const dtStr=document.getElementById("hc-dt-inicio").value;
     const bd=dtStr?new Date(dtStr+"T12:00:00"):null;
     const mkDt=i=>{if(!bd)return null;const d=new Date(bd);d.setMonth(d.getMonth()+i);return d.toLocaleDateString("pt-BR")};
-    if(hcSt.par==="v")return[{l:"� vista",v:total,base:total,corr:0,dt:mkDt(0)}];
+    if(hcSt.par==="v")return[{l:"À vista",v:total,base:total,corr:0,dt:mkDt(0)}];
     let slots=[];
     if(hcSt.par==="o"){
-      slots=[{l:"1� � Outorga da procura��o",base:total/3,offset:0},{l:"2� � At� senten�a de 1� grau",base:total/3,offset:1},{l:"3� � Final / entrega do resultado",base:total/3,offset:2}];
+      slots=[{l:"1ª — Outorga da procuração",base:total/3,offset:0},{l:"2ª — Até sentença de 1º grau",base:total/3,offset:1},{l:"3ª — Final / entrega do resultado",base:total/3,offset:2}];
     }else{
       const n=parseInt(document.getElementById("hc-np").value)||6;
-      for(let i=0;i<n;i++)slots.push({l:i===0?`1� (entrada)`:i===n-1?`${n}� (final)`:`${i+1}�`,base:total/n,offset:i});
+      for(let i=0;i<n;i++)slots.push({l:i===0?`1ª (entrada)`:i===n-1?`${n}ª (final)`:`${i+1}ª`,base:total/n,offset:i});
     }
     return slots.map(s=>{const f=cr>0?Math.pow(1+cr,s.offset):1;const v=s.base*f;return{l:s.l,v,base:s.base,corr:v-s.base,dt:mkDt(s.offset)};});
   }
@@ -807,18 +807,18 @@
     const semanas=meses*4.33;const totalH=semanas*horas;const hrRate=adj/totalH;
     const minOAB=868.96;const ratio=hrRate/minOAB;
     let cls,icon,main,sub;
-    if(ratio>=1.5){cls="ok";icon="?";main=`${brl(hrRate)}/hora � excelente`;sub=`${(ratio*100).toFixed(0)}% acima do m�nimo OAB � ${totalH.toFixed(0)} h estimadas`;}
-    else if(ratio>=1){cls="warn";icon="!";main=`${brl(hrRate)}/hora � adequado`;sub=`${((ratio-1)*100).toFixed(0)}% acima do m�nimo OAB � ${totalH.toFixed(0)} h estimadas`;}
-    else{cls="bad";icon="?";main=`${brl(hrRate)}/hora � abaixo do m�nimo`;sub=`M�nimo OAB: ${brl(minOAB)}/hora � deficit de ${brl(minOAB-hrRate)}/hora � ${totalH.toFixed(0)} h estimadas`;}
+    if(ratio>=1.5){cls="ok";icon="✓";main=`${brl(hrRate)}/hora — excelente`;sub=`${(ratio*100).toFixed(0)}% acima do mínimo OAB · ${totalH.toFixed(0)} h estimadas`;}
+    else if(ratio>=1){cls="warn";icon="!";main=`${brl(hrRate)}/hora — adequado`;sub=`${((ratio-1)*100).toFixed(0)}% acima do mínimo OAB · ${totalH.toFixed(0)} h estimadas`;}
+    else{cls="bad";icon="✗";main=`${brl(hrRate)}/hora — abaixo do mínimo`;sub=`Mínimo OAB: ${brl(minOAB)}/hora · deficit de ${brl(minOAB-hrRate)}/hora · ${totalH.toFixed(0)} h estimadas`;}
     el.innerHTML=`<div class="hc-hi-badge ${cls}"><div class="hc-hi-icon">${icon}</div><div class="hc-hi-text"><div class="hi-main">${main}</div><div class="hi-sub">${sub}</div></div></div>`;
   }
 
-  // -- RENDER RESULTS ---------------------------------------------------------
+  // ── RENDER RESULTS ─────────────────────────────────────────────────────────
   function hcRender(){
     const r=hcCalc();
     const panel=document.getElementById("hc-rp2");
     if(!r){
-      panel.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">??</div><p>Selecione a �rea e o tipo de a��o<br>para calcular os honor�rios</p></div></div>';
+      panel.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">⚖️</div><p>Selecione a área e o tipo de ação<br>para calcular os honorários</p></div></div>';
       document.getElementById("hc-hi-result").innerHTML="";
       return;
     }
@@ -826,11 +826,11 @@
     hcRenderHoraIntelectual(r.adj);
 
     const parts=[];
-    if(r.mC!==1)parts.push(`Complexidade ${hcSt.cx} �${r.mC.toFixed(1)}`);
-    if(r.mR!==1)parts.push(`Risco ${hcSt.ri} �${r.mR.toFixed(1)}`);
-    if(r.mU!==1)parts.push(`Urgente �${r.mU.toFixed(1)}`);
-    if(r.mCa!==1)parts.push(`Cap. ${hcSt.ca} �${r.mCa.toFixed(2)}`);
-    if(r.mEsp!==1)parts.push(`Especialista �1,10`);
+    if(r.mC!==1)parts.push(`Complexidade ${hcSt.cx} ×${r.mC.toFixed(1)}`);
+    if(r.mR!==1)parts.push(`Risco ${hcSt.ri} ×${r.mR.toFixed(1)}`);
+    if(r.mU!==1)parts.push(`Urgente ×${r.mU.toFixed(1)}`);
+    if(r.mCa!==1)parts.push(`Cap. ${hcSt.ca} ×${r.mCa.toFixed(2)}`);
+    if(r.mEsp!==1)parts.push(`Especialista ×1,10`);
 
     const prs=hcGetParcelas(r.adj);
     const cr=hcGetCorrRate();
@@ -838,43 +838,43 @@
     const totalCorr=prs.reduce((s,p)=>s+p.v,0);
     const cliLabel=document.getElementById("hc-cliente").value.trim();
 
-    const corrH=hasCorr?`<th>Corre��o</th>`:"";
+    const corrH=hasCorr?`<th>Correção</th>`:"";
     const dtH=prs[0].dt?`<th>Vencimento</th>`:"";
-    const prsRows=prs.map(p=>`<tr><td>${p.l}</td><td>${brl(p.v)}</td>${hasCorr?`<td class="corr">${p.corr>0?"+"+brl(p.corr):"�"}</td>`:""}${p.dt?`<td style="color:var(--color-text-muted)">${p.dt}</td>`:""}</tr>`).join("");
-    const corrInfoHtml=hasCorr?`<div class="hc-hint" style="margin-top:6px">�ndice ${cr.toFixed(2)}%/m�s � Total corrigido: ${brl(totalCorr)} (acr�scimo ${brl(totalCorr-r.adj)})</div>`:"";
-    const warnHtml=r.minApplied?`<div class="hc-warn-box">? Percentual OAB resultaria em ${brl(r.pctC)}, abaixo do m�nimo. Aplicado: ${brl(r.act.m)}.</div>`:"";
-    const exHtml=r.exVal>0?`<div class="hc-card"><div class="hc-section-title">Cl�usula de �xito Sugerida</div><div class="hc-met suc"><div class="hc-met-l">Honor�rio contingencial</div><div class="hc-met-v">${brl(r.exVal)}</div><div class="hc-met-s">${pct(r.exPct)} s/ valor da causa � �xito ${hcSt.ex} � incide s� em caso de proced�ncia</div></div></div>`:"";
+    const prsRows=prs.map(p=>`<tr><td>${p.l}</td><td>${brl(p.v)}</td>${hasCorr?`<td class="corr">${p.corr>0?"+"+brl(p.corr):"—"}</td>`:""}${p.dt?`<td style="color:var(--color-text-muted)">${p.dt}</td>`:""}</tr>`).join("");
+    const corrInfoHtml=hasCorr?`<div class="hc-hint" style="margin-top:6px">Índice ${cr.toFixed(2)}%/mês · Total corrigido: ${brl(totalCorr)} (acréscimo ${brl(totalCorr-r.adj)})</div>`:"";
+    const warnHtml=r.minApplied?`<div class="hc-warn-box">⚠ Percentual OAB resultaria em ${brl(r.pctC)}, abaixo do mínimo. Aplicado: ${brl(r.act.m)}.</div>`:"";
+    const exHtml=r.exVal>0?`<div class="hc-card"><div class="hc-section-title">Cláusula de Êxito Sugerida</div><div class="hc-met suc"><div class="hc-met-l">Honorário contingencial</div><div class="hc-met-v">${brl(r.exVal)}</div><div class="hc-met-s">${pct(r.exPct)} s/ valor da causa · êxito ${hcSt.ex} · incide só em caso de procedência</div></div></div>`:"";
 
     panel.innerHTML=`
-    ${cliLabel?`<div class="hc-card" style="border-left:3px solid var(--hc-gold)"><div class="hc-section-title">Cliente / Refer�ncia</div><div style="font-size:14px;font-weight:600">${cliLabel}</div></div>`:""}
+    ${cliLabel?`<div class="hc-card" style="border-left:3px solid var(--hc-gold)"><div class="hc-section-title">Cliente / Referência</div><div style="font-size:14px;font-weight:600">${cliLabel}</div></div>`:""}
     <div class="hc-card">
-      <div class="hc-section-title">Refer�ncia OAB/SP 2026</div>
+      <div class="hc-section-title">Referência OAB/SP 2026</div>
       ${warnHtml}
-      <div class="hc-met"><div class="hc-met-l">Honor�rio base (tabela)</div><div class="hc-met-v">${brl(r.base)}</div><div class="hc-met-s">Item ${r.act.i}${r.act.p?" � "+pct(r.act.p)+" s/ valor":" � fixo"} � m�n. ${brl(r.act.m)}</div></div>
+      <div class="hc-met"><div class="hc-met-l">Honorário base (tabela)</div><div class="hc-met-v">${brl(r.base)}</div><div class="hc-met-s">Item ${r.act.i}${r.act.p?" · "+pct(r.act.p)+" s/ valor":" · fixo"} · mín. ${brl(r.act.m)}</div></div>
     </div>
     <div class="hc-card">
-      <div class="hc-section-title">Honor�rio Sugerido</div>
-      <div class="hc-met feat"><div class="hc-met-l">Com todos os ajustes</div><div class="hc-met-v">${brl(r.adj)}</div><div class="hc-met-s">Multiplicador total: �${r.mt.toFixed(2)}</div></div>
+      <div class="hc-section-title">Honorário Sugerido</div>
+      <div class="hc-met feat"><div class="hc-met-l">Com todos os ajustes</div><div class="hc-met-v">${brl(r.adj)}</div><div class="hc-met-s">Multiplicador total: ×${r.mt.toFixed(2)}</div></div>
       <div style="margin-top:8px">${parts.length?parts.map(p=>`<span class="hc-tag">${p}</span>`).join(""):'<span class="hc-hint">Sem ajustes aplicados</span>'}</div>
     </div>
     ${exHtml}
     <div class="hc-card">
-      <div class="hc-section-title">Cronograma de Pagamento${hasCorr?" � corrigido":""}</div>
+      <div class="hc-section-title">Cronograma de Pagamento${hasCorr?" · corrigido":""}</div>
       <table class="hc-table"><thead><tr><th>Parcela</th><th>Valor</th>${corrH}${dtH}</tr></thead>
       <tbody>${prsRows}</tbody>
       ${hcSt.par!=="v"?`<tfoot><tr><td>Total</td><td>${brl(hasCorr?totalCorr:r.adj)}</td>${hasCorr?`<td class="corr">+${brl(totalCorr-r.adj)}</td>`:""}${prs[0].dt?"<td></td>":""}</tr></tfoot>`:""}</table>
-      ${corrInfoHtml}${hcSt.par==="o"?'<div class="hc-hint" style="margin-top:6px">Conforme art. 22, �3�, Lei 8.906/94 (EOAB)</div>':""}
+      ${corrInfoHtml}${hcSt.par==="o"?'<div class="hc-hint" style="margin-top:6px">Conforme art. 22, §3º, Lei 8.906/94 (EOAB)</div>':""}
     </div>
     <div class="hc-act-row">
-      <button class="btn btn-secondary btn-sm" onclick="hcSaveHist(this)">+ Hist�rico</button>
+      <button class="btn btn-secondary btn-sm" onclick="hcSaveHist(this)">+ Histórico</button>
       <button class="btn btn-secondary btn-sm" onclick="hcSaveCmp('A')">Salvar Cen. A</button>
       <button class="btn btn-secondary btn-sm" onclick="hcSaveCmp('B')">Salvar Cen. B</button>
-      <button class="btn btn-sm btn-gold" onclick="hcAddToProposal()">+ Adicionar � Proposta</button>
+      <button class="btn btn-sm btn-gold" onclick="hcAddToProposal()">+ Adicionar à Proposta</button>
     </div>
     ${hcRenderProposalItemsInline()}`;
   }
 
-  // -- PROPOSAL ITEMS INLINE --------------------------------------------------
+  // ── PROPOSAL ITEMS INLINE ──────────────────────────────────────────────────
   function hcRenderProposalItemsInline(){
     if(!hcProposalItems.length)return`<div class="hc-hint no-print" style="margin-top:8px">Nenhum item na proposta ainda.</div>`;
     const rows=hcProposalItems.map((it,i)=>`
@@ -882,7 +882,7 @@
         <span class="hc-proplist-badge">${i+1}</span>
         <span style="flex:1"><strong>${it.tipo}</strong> <span style="color:var(--color-text-muted)">(${it.modeLabel})</span></span>
         <span style="font-weight:700;color:var(--hc-navy)">${brl(it.adj)}</span>
-        <button onclick="hcRemoveProposalItem(${it.id})" style="background:none;border:none;cursor:pointer;color:var(--color-text-muted);font-size:15px;line-height:1;padding:0 2px" title="Remover">?</button>
+        <button onclick="hcRemoveProposalItem(${it.id})" style="background:none;border:none;cursor:pointer;color:var(--color-text-muted);font-size:15px;line-height:1;padding:0 2px" title="Remover">✕</button>
       </div>`).join("");
     const total=hcProposalItems.reduce((s,it)=>s+it.adj,0);
     return`<div class="no-print" style="margin-top:10px;border:1px solid var(--color-border);border-radius:8px;padding:8px 12px">
@@ -893,20 +893,20 @@
         <span style="font-weight:700;color:var(--hc-navy);font-size:16px">${brl(total)}</span>
       </div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <button class="btn btn-sm btn-gold" onclick="hcGerarProposta();document.querySelectorAll('.hc-tab')[3].click()">Ver Proposta ?</button>
+        <button class="btn btn-sm btn-gold" onclick="hcGerarProposta();document.querySelectorAll('.hc-tab')[3].click()">Ver Proposta →</button>
         <button class="btn btn-secondary btn-sm" onclick="hcClearProposal()">Limpar tudo</button>
       </div>
     </div>`;
   }
 
-  // -- ADD/REMOVE PROPOSAL ITEMS ----------------------------------------------
+  // ── ADD/REMOVE PROPOSAL ITEMS ──────────────────────────────────────────────
   function hcAddToProposal(){
     const r=hcCalc();if(!r)return;
-    if(hcProposalItems.length>=3){alert("M�ximo de 3 itens por proposta.\nRemova um item antes de adicionar outro.");return;}
+    if(hcProposalItems.length>=3){alert("Máximo de 3 itens por proposta.\nRemova um item antes de adicionar outro.");return;}
     const item={
       id:Date.now(),mode:hcSt.mode,
       modeLabel:hcSt.mode==="j"?"judicial":"extrajudicial / consultivo",
-      area:hcSt.area||"[�REA]",tipo:r.act.l,itemOAB:r.act.i,
+      area:hcSt.area||"[ÁREA]",tipo:r.act.l,itemOAB:r.act.i,
       val:hcSt.val,base:r.base,adj:r.adj,
       exVal:r.exVal||0,exPct:r.exPct||0,
       hasPerc:!!(r.act.p&&hcSt.val>0),
@@ -921,7 +921,7 @@
   function hcRemoveProposalItem(id){hcProposalItems=hcProposalItems.filter(x=>x.id!==id);hcRender();hcGerarProposta();}
   function hcClearProposal(){if(!hcProposalItems.length)return;if(confirm("Limpar todos os itens da proposta?"))hcProposalItems=[];hcRender();hcGerarProposta();}
 
-  // -- PROPOSAL GENERATION ---------------------------------------------------
+  // ── PROPOSAL GENERATION ───────────────────────────────────────────────────
   function hcGerarProposta(){
     const el=document.getElementById("hc-proposta-out");
     const cliente=document.getElementById("hc-cliente").value.trim()||"[NOME DO CLIENTE]";
@@ -930,7 +930,7 @@
     const hiHoras=parseFloat(document.getElementById("hc-hi-horas").value)||0;
     if(hcProposalItems.length>0){hcGerarPropostaMulti(el,cliente,dataHoje,hiMeses,hiHoras);return;}
     if(!hcLastCalc){
-      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">??</div><p>Nenhum c�lculo dispon�vel.<br>Fa�a um c�lculo e clique em "+ Adicionar � Proposta".</p></div></div>';
+      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">📄</div><p>Nenhum cálculo disponível.<br>Faça um cálculo e clique em "+ Adicionar à Proposta".</p></div></div>';
       return;
     }
     const r=hcLastCalc;
@@ -938,38 +938,38 @@
     const cr=hcGetCorrRate();
     const totalCorr=prs.reduce((s,p)=>s+p.v,0);
     const modeLabel=hcSt.mode==="j"?"judicial":"extrajudicial / consultivo";
-    const area=hcSt.area||"[�REA]";
+    const area=hcSt.area||"[ÁREA]";
     const tipo=r.act.l;
     const item=r.act.i;
 
     let parcTxt="";
     if(hcSt.par==="v"){
-      parcTxt=`O valor total dos honor�rios, no montante de <strong>${brl(r.adj)}</strong>, ser� pago em uma �nica parcela (� vista), no ato da assinatura deste instrumento e da outorga de procura��o.`;
+      parcTxt=`O valor total dos honorários, no montante de <strong>${brl(r.adj)}</strong>, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
     }else if(hcSt.par==="o"){
       const p=prs;
-      parcTxt=`Os honor�rios, no valor total de <strong>${brl(r.adj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  ser�o pagos em 3 (tr�s) parcelas, nos termos do art. 22, �3�, da Lei n� 8.906/1994: (i) <strong>${brl(p[0].v)}</strong> no ato da outorga da procura��o; (ii) <strong>${brl(p[1].v)}</strong> at� a prola��o da senten�a de primeiro grau; (iii) <strong>${brl(p[2].v)}</strong> ao final, com a entrega do resultado.${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de <strong>${brl(r.adj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) <strong>${brl(p[0].v)}</strong> no ato da outorga da procuração; (ii) <strong>${brl(p[1].v)}</strong> até a prolação da sentença de primeiro grau; (iii) <strong>${brl(p[2].v)}</strong> ao final, com a entrega do resultado.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }else{
       const n=prs.length;
-      parcTxt=`Os honor�rios, no valor total de <strong>${brl(r.adj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  ser�o pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de <strong>${brl(prs[0].base)}</strong> cada.${prs[0].dt?` A primeira parcela vencer� em ${prs[0].dt}.`:""}${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de <strong>${brl(r.adj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de <strong>${brl(prs[0].base)}</strong> cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }
 
-    const exitoClause=r.exVal>0?`<div class="p-sec"><div class="p-label">Honor�rios de �xito</div><p>Em caso de �xito na demanda, ser�o devidos honor�rios contingenciais adicionais no percentual de <strong>${pct(r.exPct)}</strong> sobre o valor da condena��o ou proveito econ�mico obtido, correspondendo ao montante estimado de <strong>${brl(r.exVal)}</strong>. Os honor�rios de �xito s�o independentes dos honor�rios contratuais fixos acima estabelecidos e somente ser�o exig�veis com a efetiva satisfa��o da condi��o (art. 22, �2�, Lei 8.906/94).</p></div>`:"";
-    const hiNote=hiMeses&&hiHoras?`<p style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Estimativa interna: ${(hiMeses*4.33*hiHoras).toFixed(0)} h � ${brl(r.adj/(hiMeses*4.33*hiHoras))}/hora</p>`:"";
+    const exitoClause=r.exVal>0?`<div class="p-sec"><div class="p-label">Honorários de Êxito</div><p>Em caso de êxito na demanda, serão devidos honorários contingenciais adicionais no percentual de <strong>${pct(r.exPct)}</strong> sobre o valor da condenação ou proveito econômico obtido, correspondendo ao montante estimado de <strong>${brl(r.exVal)}</strong>. Os honorários de êxito são independentes dos honorários contratuais fixos acima estabelecidos e somente serão exigíveis com a efetiva satisfação da condição (art. 22, §2º, Lei 8.906/94).</p></div>`:"";
+    const hiNote=hiMeses&&hiHoras?`<p style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Estimativa interna: ${(hiMeses*4.33*hiHoras).toFixed(0)} h · ${brl(r.adj/(hiMeses*4.33*hiHoras))}/hora</p>`:"";
 
     el.innerHTML=hcPropostaHeader(cliente,dataHoje)+`
       <div class="p-sec">
-        <div class="p-label">Qualifica��o e Objeto</div>
-        <p>Proposta de presta��o de servi�os advocat�cios de natureza <strong>${modeLabel}</strong> na �rea de <strong>${area}</strong>, especificamente referente a: <strong>${tipo}</strong> (Tabela OAB/SP 2026, item ${item}).</p>
+        <div class="p-label">Qualificação e Objeto</div>
+        <p>Proposta de prestação de serviços advocatícios de natureza <strong>${modeLabel}</strong> na área de <strong>${area}</strong>, especificamente referente a: <strong>${tipo}</strong> (Tabela OAB/SP 2026, item ${item}).</p>
       </div>
       <div class="p-sec">
-        <div class="p-label">Honor�rios Contratuais</div>
-        <p>Os honor�rios advocat�cios ora propostos foram calculados com base na Tabela de Honor�rios Advocat�cios da OAB/SP 2026 (CAASP | ESA | PREV), aprovada nos termos do art. 22 da Lei n� 8.906/1994 (Estatuto da OAB) e do art. 48 do C�digo de �tica e Disciplina da OAB, e ajustados em conformidade com os crit�rios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necess�rios, o lugar da presta��o dos servi�os e demais fatores de equidade e modera��o pertinentes ao caso concreto.</p>
-        <p style="margin-top:6px">O valor dos honor�rios contratuais � de <strong>${brl(r.adj)}</strong> (${hcValorExtenso(r.adj)})${r.act.p&&hcSt.val>0?`, correspondendo ao percentual de ${pct(r.act.p)} sobre o valor da causa de ${brl(hcSt.val)}, observado o valor m�nimo tabela de ${brl(r.act.m)}`:""}.</p>
+        <div class="p-label">Honorários Contratuais</div>
+        <p>Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026 (CAASP | ESA | PREV), aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto.</p>
+        <p style="margin-top:6px">O valor dos honorários contratuais é de <strong>${brl(r.adj)}</strong> (${hcValorExtenso(r.adj)})${r.act.p&&hcSt.val>0?`, correspondendo ao percentual de ${pct(r.act.p)} sobre o valor da causa de ${brl(hcSt.val)}, observado o valor mínimo tabela de ${brl(r.act.m)}`:""}.</p>
         ${hiNote}
       </div>
       ${exitoClause}
       <div class="p-sec">
-        <div class="p-label">Forma e Condi��es de Pagamento</div>
+        <div class="p-label">Forma e Condições de Pagamento</div>
         <p>${parcTxt}</p>
       </div>
       ${hcPropostaDisposicoes()}
@@ -985,31 +985,31 @@
     const tabelaRows=hcProposalItems.map((it,i)=>`
       <tr>
         <td style="padding:6px 8px;font-size:13px"><span style="display:inline-block;background:var(--hc-gold);color:#fff;font-weight:700;font-size:10px;border-radius:10px;padding:0 5px;margin-right:4px">${i+1}</span>${it.tipo}</td>
-        <td style="padding:6px 8px;font-size:12px;color:var(--color-text-muted)">${it.modeLabel} � ${it.area}</td>
+        <td style="padding:6px 8px;font-size:12px;color:var(--color-text-muted)">${it.modeLabel} · ${it.area}</td>
         <td style="padding:6px 8px;font-size:13px;font-weight:600;text-align:right">${brl(it.adj)}</td>
       </tr>`).join("");
     const exitos=hcProposalItems.filter(it=>it.exVal>0);
-    const exitoClause=exitos.length>0?`<div class="p-sec"><div class="p-label">Honor�rios de �xito</div>${exitos.map(it=>`<p style="margin-top:4px">� <strong>${it.tipo}</strong>: ${pct(it.exPct)} sobre o proveito econ�mico obtido, estimado em <strong>${brl(it.exVal)}</strong> (art. 22, �2�, Lei 8.906/94).</p>`).join("")}</div>`:"";
+    const exitoClause=exitos.length>0?`<div class="p-sec"><div class="p-label">Honorários de Êxito</div>${exitos.map(it=>`<p style="margin-top:4px">• <strong>${it.tipo}</strong>: ${pct(it.exPct)} sobre o proveito econômico obtido, estimado em <strong>${brl(it.exVal)}</strong> (art. 22, §2º, Lei 8.906/94).</p>`).join("")}</div>`:"";
 
     let parcTxt="";
     if(hcSt.par==="v"){
-      parcTxt=`O valor total dos honor�rios, no montante de <strong>${brl(totalAdj)}</strong>, ser� pago em uma �nica parcela (� vista), no ato da assinatura deste instrumento e da outorga de procura��o.`;
+      parcTxt=`O valor total dos honorários, no montante de <strong>${brl(totalAdj)}</strong>, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
     }else if(hcSt.par==="o"){
-      parcTxt=`Os honor�rios, no valor total de <strong>${brl(totalAdj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  ser�o pagos em 3 (tr�s) parcelas, nos termos do art. 22, �3�, da Lei n� 8.906/1994: (i) <strong>${brl(prs[0].v)}</strong> no ato da outorga das procura��es; (ii) <strong>${brl(prs[1].v)}</strong> conforme cronograma acordado; (iii) <strong>${brl(prs[2].v)}</strong> ao final, com a entrega dos resultados.${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de <strong>${brl(totalAdj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) <strong>${brl(prs[0].v)}</strong> no ato da outorga das procurações; (ii) <strong>${brl(prs[1].v)}</strong> conforme cronograma acordado; (iii) <strong>${brl(prs[2].v)}</strong> ao final, com a entrega dos resultados.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }else{
       const n=prs.length;
-      parcTxt=`Os honor�rios, no valor total de <strong>${brl(totalAdj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  ser�o pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de <strong>${brl(prs[0].base)}</strong> cada.${prs[0].dt?` A primeira parcela vencer� em ${prs[0].dt}.`:""}${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de <strong>${brl(totalAdj)}</strong>${cr>0?` (total corrigido: ${brl(totalCorr)})`:""},  serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de <strong>${brl(prs[0].base)}</strong> cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }
 
     el.innerHTML=hcPropostaHeader(cliente,dataHoje)+`
       <div class="p-sec">
-        <div class="p-label">Qualifica��o e Objeto</div>
-        <p>Proposta de presta��o de servi�os advocat�cios nos seguintes objetos:</p>
+        <div class="p-label">Qualificação e Objeto</div>
+        <p>Proposta de prestação de serviços advocatícios nos seguintes objetos:</p>
         <table style="width:100%;border-collapse:collapse;margin-top:8px;border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden">
           <thead><tr style="background:var(--hc-navy);color:#fff">
-            <th style="padding:6px 8px;font-size:12px;text-align:left;font-weight:600">Servi�o</th>
-            <th style="padding:6px 8px;font-size:12px;text-align:left;font-weight:600">Natureza / �rea</th>
-            <th style="padding:6px 8px;font-size:12px;text-align:right;font-weight:600">Honor�rio</th>
+            <th style="padding:6px 8px;font-size:12px;text-align:left;font-weight:600">Serviço</th>
+            <th style="padding:6px 8px;font-size:12px;text-align:left;font-weight:600">Natureza / Área</th>
+            <th style="padding:6px 8px;font-size:12px;text-align:right;font-weight:600">Honorário</th>
           </tr></thead>
           <tbody>${tabelaRows}</tbody>
           <tfoot><tr style="background:var(--color-bg);font-weight:700">
@@ -1019,13 +1019,13 @@
         </table>
       </div>
       <div class="p-sec">
-        <div class="p-label">Honor�rios Contratuais</div>
-        <p>Os honor�rios advocat�cios ora propostos foram calculados com base na Tabela de Honor�rios Advocat�cios da OAB/SP 2026, aprovada nos termos do art. 22 da Lei n� 8.906/1994, e ajustados em conformidade com os crit�rios do item 17 da referida Tabela.</p>
-        <p style="margin-top:6px">O valor total dos honor�rios contratuais � de <strong>${brl(totalAdj)}</strong> (${hcValorExtenso(totalAdj)}), conforme discriminado na tabela acima.</p>
+        <div class="p-label">Honorários Contratuais</div>
+        <p>Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026, aprovada nos termos do art. 22 da Lei nº 8.906/1994, e ajustados em conformidade com os critérios do item 17 da referida Tabela.</p>
+        <p style="margin-top:6px">O valor total dos honorários contratuais é de <strong>${brl(totalAdj)}</strong> (${hcValorExtenso(totalAdj)}), conforme discriminado na tabela acima.</p>
       </div>
       ${exitoClause}
       <div class="p-sec">
-        <div class="p-label">Forma e Condi��es de Pagamento</div>
+        <div class="p-label">Forma e Condições de Pagamento</div>
         <p>${parcTxt}</p>
       </div>
       ${hcPropostaDisposicoes()}
@@ -1033,47 +1033,47 @@
   }
 
   function hcNomeEscritorio(){
-    try{const u=JSON.parse(sessionStorage.getItem('user')||'{}');return u.nomeEscritorio||'Escrit�rio de Advocacia';}
-    catch{return'Escrit�rio de Advocacia';}
+    try{const u=JSON.parse(sessionStorage.getItem('user')||'{}');return u.nomeEscritorio||'Escritório de Advocacia';}
+    catch{return'Escritório de Advocacia';}
   }
 
   function hcPropostaHeader(cliente,dataHoje){
     return`<div class="hc-proposta-wrap">
       <div class="hc-proposta-header">
         <div>
-          <div style="font-size:28px;font-weight:700;color:var(--hc-navy)">??</div>
+          <div style="font-size:28px;font-weight:700;color:var(--hc-navy)">⚖️</div>
         </div>
         <div class="hc-proposta-firma">
           <h2>${hcNomeEscritorio()}</h2>
           <p>Tabela OAB/SP 2026 (CAASP | ESA | PREV)</p>
         </div>
       </div>
-      <div class="hc-proposta-titulo">Proposta de Honor�rios Advocat�cios</div>
-      <div class="hc-proposta-sub">Destinat�rio: <strong>${cliente}</strong> &nbsp;�&nbsp; Data: ${dataHoje}</div>`;
+      <div class="hc-proposta-titulo">Proposta de Honorários Advocatícios</div>
+      <div class="hc-proposta-sub">Destinatário: <strong>${cliente}</strong> &nbsp;·&nbsp; Data: ${dataHoje}</div>`;
   }
 
   function hcPropostaDisposicoes(){
     return`<div class="p-sec">
-        <div class="p-label">Disposi��es Gerais</div>
-        <p>Os honor�rios ora pactuados compreendem exclusivamente o patroc�nio das causas em primeiro grau de jurisdi��o, sendo devidos independentemente do resultado das demandas (art. 8�, Tabela OAB/SP 2026). A interposi��o de recursos, sustenta��o oral e atua��o em inst�ncias superiores constituem atos pr�prios e ser�o objeto de contrata��o espec�fica (item 7, Tabela OAB/SP 2026).</p>
-        <p style="margin-top:6px">Os honor�rios de sucumb�ncia eventualmente fixados pelo ju�zo pertencem ao advogado, nos termos do art. 85, �14, do CPC, e n�o ser�o abatidos dos honor�rios contratuais ora ajustados (item 9, Tabela OAB/SP 2026).</p>
-        <p style="margin-top:6px">Em caso de revoga��o do mandato sem culpa do advogado, os honor�rios ser�o devidos em sua totalidade (item 10, Tabela OAB/SP 2026).</p>
+        <div class="p-label">Disposições Gerais</div>
+        <p>Os honorários ora pactuados compreendem exclusivamente o patrocínio das causas em primeiro grau de jurisdição, sendo devidos independentemente do resultado das demandas (art. 8º, Tabela OAB/SP 2026). A interposição de recursos, sustentação oral e atuação em instâncias superiores constituem atos próprios e serão objeto de contratação específica (item 7, Tabela OAB/SP 2026).</p>
+        <p style="margin-top:6px">Os honorários de sucumbência eventualmente fixados pelo juízo pertencem ao advogado, nos termos do art. 85, §14, do CPC, e não serão abatidos dos honorários contratuais ora ajustados (item 9, Tabela OAB/SP 2026).</p>
+        <p style="margin-top:6px">Em caso de revogação do mandato sem culpa do advogado, os honorários serão devidos em sua totalidade (item 10, Tabela OAB/SP 2026).</p>
       </div>
       <div class="p-sec">
         <div class="p-label">Aceite</div>
-        <p>A presente proposta tem validade de <strong>15 (quinze) dias</strong> a contar da data acima. O aceite se formaliza pela assinatura do contrato de honor�rios e outorga de procura��o.</p>
+        <p>A presente proposta tem validade de <strong>15 (quinze) dias</strong> a contar da data acima. O aceite se formaliza pela assinatura do contrato de honorários e outorga de procuração.</p>
       </div>`;
   }
 
   function hcPropostaFooter(dataHoje){
     return`<div class="p-footer">
-        Calculadora de Honor�rios � Tabela OAB/SP 2026 (CAASP | ESA | PREV) � ${dataHoje}<br>
-        Documento gerado pelo sistema Causify � Uso interno
+        Calculadora de Honorários — Tabela OAB/SP 2026 (CAASP | ESA | PREV) · ${dataHoje}<br>
+        Documento gerado pelo sistema Causify · Uso interno
       </div>
     </div>`;
   }
 
-  // -- HISTORY (DB-backed) ----------------------------------------------------
+  // ── HISTORY (DB-backed) ────────────────────────────────────────────────────
   function hcApiToken(){return sessionStorage.getItem('access_token')||'';}
 
   async function hcApiFetch(url,opts={}){
@@ -1087,7 +1087,7 @@
     const prs=hcGetParcelas(r.adj);const cr=hcGetCorrRate();
     const total=prs.reduce((s,p)=>s+p.v,0);
     const cli=document.getElementById("hc-cliente").value.trim();
-    btn.disabled=true;btn.textContent='Salvando�';
+    btn.disabled=true;btn.textContent='Salvando…';
     try{
       await hcApiFetch('/api/honorarios/historico',{
         method:'POST',
@@ -1114,8 +1114,8 @@
       });
       // refresh in-memory cache
       await hcLoadHist();
-    }catch(e){alert('Erro ao salvar no hist�rico.');}
-    finally{btn.disabled=false;btn.textContent='+ Hist�rico';}
+    }catch(e){alert('Erro ao salvar no histórico.');}
+    finally{btn.disabled=false;btn.textContent='+ Histórico';}
   }
 
   async function hcLoadHist(){
@@ -1148,19 +1148,19 @@
 
   function hcRenderHist(){
     const el=document.getElementById("hc-hist-list");
-    document.getElementById("hc-hist-count").textContent=`${hcHist.length} c�lculo${hcHist.length!==1?"s":""} salvo${hcHist.length!==1?"s":""}`;
+    document.getElementById("hc-hist-count").textContent=`${hcHist.length} cálculo${hcHist.length!==1?"s":""} salvo${hcHist.length!==1?"s":""}`;
     if(!hcHist.length){
-      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">??</div><p>Nenhum c�lculo salvo ainda.<br>Use o bot�o "+ Hist�rico" na calculadora.</p></div></div>';
+      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">📋</div><p>Nenhum cálculo salvo ainda.<br>Use o botão "+ Histórico" na calculadora.</p></div></div>';
       return;
     }
     el.innerHTML='<div class="hc-hist-grid">'+hcHist.map((h,i)=>`
       <div class="hc-hcard">
-        <div class="hc-num">#${hcHist.length-i} � ${h.ts}</div>
+        <div class="hc-num">#${hcHist.length-i} · ${h.ts}</div>
         ${h.cli?`<div class="hc-cli">${h.cli}</div>`:""}
         <div class="hc-tipo">${h.tipo}</div>
-        <div class="hc-area">${h.area} � Item ${h.item}</div>
+        <div class="hc-area">${h.area} · Item ${h.item}</div>
         <div class="hc-val">${brl(h.adj)}</div>
-        <div class="hc-sub">Base: ${brl(h.base)} � �${parseFloat(h.mt).toFixed(2)}${h.cr>0?" � Corr "+h.cr+"%/m�s":""}</div>
+        <div class="hc-sub">Base: ${brl(h.base)} · ×${parseFloat(h.mt).toFixed(2)}${h.cr>0?" · Corr "+h.cr+"%/mês":""}</div>
         <div class="hc-btns">
           <button onclick="hcRestoreHist(${i})">Restaurar</button>
           <button onclick="hcDeleteHist('${h.id}',this)">Excluir</button>
@@ -1184,7 +1184,7 @@
   }
 
   async function hcDeleteHist(id,btn){
-    btn.disabled=true;btn.textContent='�';
+    btn.disabled=true;btn.textContent='…';
     try{
       await hcApiFetch(`/api/honorarios/historico/${id}`,{method:'DELETE'});
       hcHist=hcHist.filter(h=>h.id!==id);
@@ -1194,43 +1194,43 @@
 
   async function hcClearHist(){
     if(!hcHist.length)return;
-    if(!confirm("Limpar todo o hist�rico?"))return;
+    if(!confirm("Limpar todo o histórico?"))return;
     try{
       await Promise.all(hcHist.map(h=>hcApiFetch(`/api/honorarios/historico/${h.id}`,{method:'DELETE'})));
       hcHist=[];hcRenderHist();
-    }catch{alert('Erro ao limpar o hist�rico.');}
+    }catch{alert('Erro ao limpar o histórico.');}
   }
 
-  // -- COMPARISON -------------------------------------------------------------
+  // ── COMPARISON ─────────────────────────────────────────────────────────────
   function hcSaveCmp(letter){
-    const r=hcCalc();if(!r){alert("Nenhum c�lculo para salvar.");return;}
+    const r=hcCalc();if(!r){alert("Nenhum cálculo para salvar.");return;}
     const prs=hcGetParcelas(r.adj);const cr=hcGetCorrRate();
     const total=prs.reduce((s,p)=>s+p.v,0);
     const snap={letter,cli:document.getElementById("hc-cliente").value.trim(),area:hcSt.area,tipo:r.act.l,item:r.act.i,val:hcSt.val,base:r.base,adj:r.adj,total,mt:r.mt,cr,par:hcSt.par,npar:hcSt.par==="c"?(parseInt(document.getElementById("hc-np").value)||6):hcSt.par==="o"?3:1,cx:hcSt.cx,ri:hcSt.ri,ur:hcSt.ur,ca:hcSt.ca,ex:hcSt.ex,exVal:r.exVal,exPct:r.exPct};
     if(letter==="A")hcCmpA=snap;else hcCmpB=snap;
-    alert(`Cen�rio ${letter} salvo!`);
+    alert(`Cenário ${letter} salvo!`);
   }
 
   function hcRenderCmp(){
     const el=document.getElementById("hc-cmp-content");
     if(!hcCmpA&&!hcCmpB){
-      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">??</div><p>Nenhum cen�rio salvo ainda.</p></div></div>';
+      el.innerHTML='<div class="hc-card"><div class="hc-empty"><div class="ic">📊</div><p>Nenhum cenário salvo ainda.</p></div></div>';
       return;
     }
     const side=(c,L)=>{
-      if(!c)return`<div class="hc-cmp-card ${L}" style="display:flex;align-items:center;justify-content:center;min-height:180px"><div class="hc-empty"><p>Cen�rio ${L} n�o salvo</p></div></div>`;
-      const parc=c.par==="v"?"� vista":c.par==="o"?"3� (OAB)":`${c.npar}� personalizado`;
+      if(!c)return`<div class="hc-cmp-card ${L}" style="display:flex;align-items:center;justify-content:center;min-height:180px"><div class="hc-empty"><p>Cenário ${L} não salvo</p></div></div>`;
+      const parc=c.par==="v"?"À vista":c.par==="o"?"3× (OAB)":`${c.npar}× personalizado`;
       return`<div class="hc-cmp-card ${L}">
-        <div class="hc-cmp-label">CEN�RIO ${L}</div>
+        <div class="hc-cmp-label">CENÁRIO ${L}</div>
         ${c.cli?`<div class="hc-cmp-row"><span class="k">Cliente</span><span class="v">${c.cli}</span></div>`:""}
-        <div class="hc-cmp-row"><span class="k">�rea</span><span class="v" style="font-size:11px">${c.area}</span></div>
+        <div class="hc-cmp-row"><span class="k">Área</span><span class="v" style="font-size:11px">${c.area}</span></div>
         <div class="hc-cmp-row"><span class="k">Item</span><span class="v">${c.item}</span></div>
-        <div class="hc-cmp-row"><span class="k">Valor da causa</span><span class="v">${c.val>0?brl(c.val):"�"}</span></div>
+        <div class="hc-cmp-row"><span class="k">Valor da causa</span><span class="v">${c.val>0?brl(c.val):"—"}</span></div>
         <div class="hc-cmp-row"><span class="k">Base OAB</span><span class="v">${brl(c.base)}</span></div>
-        <div class="hc-cmp-row"><span class="k">Multiplicador</span><span class="v">�${c.mt.toFixed(2)}</span></div>
-        <div class="hc-cmp-row"><span class="k" style="font-weight:600">Honor�rio ajustado</span><span class="v" style="font-size:15px">${brl(c.adj)}</span></div>
-        <div class="hc-cmp-row"><span class="k">Total c/ corre��o</span><span class="v">${brl(c.total)}</span></div>
-        <div class="hc-cmp-row"><span class="k">�xito estimado</span><span class="v">${c.exVal>0?brl(c.exVal):"�"}</span></div>
+        <div class="hc-cmp-row"><span class="k">Multiplicador</span><span class="v">×${c.mt.toFixed(2)}</span></div>
+        <div class="hc-cmp-row"><span class="k" style="font-weight:600">Honorário ajustado</span><span class="v" style="font-size:15px">${brl(c.adj)}</span></div>
+        <div class="hc-cmp-row"><span class="k">Total c/ correção</span><span class="v">${brl(c.total)}</span></div>
+        <div class="hc-cmp-row"><span class="k">Êxito estimado</span><span class="v">${c.exVal>0?brl(c.exVal):"—"}</span></div>
         <div class="hc-cmp-row"><span class="k">Parcelamento</span><span class="v">${parc}</span></div>
         <div class="hc-cmp-row"><span class="k">Complexidade / Risco</span><span class="v">${c.cx} / ${c.ri}</span></div>
       </div>`;
@@ -1238,41 +1238,41 @@
     let delta="";
     if(hcCmpA&&hcCmpB){
       const d=hcCmpB.adj-hcCmpA.adj;const dt=hcCmpB.total-hcCmpA.total;const pos=d>=0;
-      const dp=hcCmpA.adj>0?((Math.abs(d)/hcCmpA.adj)*100).toFixed(1):"�";
+      const dp=hcCmpA.adj>0?((Math.abs(d)/hcCmpA.adj)*100).toFixed(1):"—";
       delta=`<div class="hc-delta" style="background:${pos?"#eaf3de":"#fcebeb"};border:1px solid ${pos?"#639922":"#e24b4a"};margin-top:0">
-        <div class="d-l" style="color:${pos?"#3b6d11":"#a32d2d"}">? Cen�rio B - Cen�rio A</div>
+        <div class="d-l" style="color:${pos?"#3b6d11":"#a32d2d"}">Δ Cenário B − Cenário A</div>
         <div class="d-v" style="color:${pos?"#3b6d11":"#a32d2d"}">${d>=0?"+":""}${brl(d)}</div>
         <div class="d-sub" style="color:${pos?"#3b6d11":"#a32d2d"}">
-          ${dp!=="�"?`${pos?"+":"-"}${dp}% sobre o Cen�rio A`:""} ${dt!==0?`� Total corrigido: ${dt>=0?"+":""}${brl(dt)}`:""}
+          ${dp!=="—"?`${pos?"+":"−"}${dp}% sobre o Cenário A`:""} ${dt!==0?`· Total corrigido: ${dt>=0?"+":""}${brl(dt)}`:""}
         </div>
       </div>`;
     }
     el.innerHTML=`<div class="hc-cmp-grid">${side(hcCmpA,"A")}${side(hcCmpB,"B")}</div>${delta}`;
   }
 
-  // -- PDF DOWNLOAD (backend generation) -------------------------------------
+  // ── PDF DOWNLOAD (backend generation) ─────────────────────────────────────
   async function hcPrint(){
     if(hcProposalItems.length>0){
       await hcDownloadPdfMulti();
       return;
     }
-    if(!hcLastCalc){alert("Nenhum c�lculo dispon�vel.");return;}
+    if(!hcLastCalc){alert("Nenhum cálculo disponível.");return;}
     const r=hcLastCalc;
     const prs=hcGetParcelas(r.adj);
     const cr=hcGetCorrRate();
     const totalCorr=prs.reduce((s,p)=>s+p.v,0);
     const cliente=document.getElementById("hc-cliente").value.trim()||"[NOME DO CLIENTE]";
     const modeLabel=hcSt.mode==="j"?"judicial":"extrajudicial / consultivo";
-    const area=hcSt.area||"[�REA]";
+    const area=hcSt.area||"[ÁREA]";
 
     let parcTxt="";
     if(hcSt.par==="v"){
-      parcTxt=`O valor total dos honor�rios, no montante de ${brl(r.adj)}, ser� pago em uma �nica parcela (� vista), no ato da assinatura deste instrumento e da outorga de procura��o.`;
+      parcTxt=`O valor total dos honorários, no montante de ${brl(r.adj)}, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
     }else if(hcSt.par==="o"){
-      parcTxt=`Os honor�rios, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, ser�o pagos em 3 (tr�s) parcelas, nos termos do art. 22, �3�, da Lei n� 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga da procura��o; (ii) ${brl(prs[1].v)} at� a prola��o da senten�a de primeiro grau; (iii) ${brl(prs[2].v)} ao final, com a entrega do resultado.${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga da procuração; (ii) ${brl(prs[1].v)} até a prolação da sentença de primeiro grau; (iii) ${brl(prs[2].v)} ao final, com a entrega do resultado.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }else{
       const n=prs.length;
-      parcTxt=`Os honor�rios, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, ser�o pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencer� em ${prs[0].dt}.`:""}${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de ${brl(r.adj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }
 
     const dto={
@@ -1308,22 +1308,22 @@
 
     let parcTxt="";
     if(hcSt.par==="v"){
-      parcTxt=`O valor total dos honor�rios, no montante de ${brl(totalAdj)}, ser� pago em uma �nica parcela (� vista), no ato da assinatura deste instrumento e da outorga de procura��o.`;
+      parcTxt=`O valor total dos honorários, no montante de ${brl(totalAdj)}, será pago em uma única parcela (à vista), no ato da assinatura deste instrumento e da outorga de procuração.`;
     }else if(hcSt.par==="o"){
-      parcTxt=`Os honor�rios, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, ser�o pagos em 3 (tr�s) parcelas, nos termos do art. 22, �3�, da Lei n� 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga das procura��es; (ii) ${brl(prs[1].v)} conforme cronograma acordado; (iii) ${brl(prs[2].v)} ao final, com a entrega dos resultados.${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) ${brl(prs[0].v)} no ato da outorga das procurações; (ii) ${brl(prs[1].v)} conforme cronograma acordado; (iii) ${brl(prs[2].v)} ao final, com a entrega dos resultados.${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }else{
       const n=prs.length;
-      parcTxt=`Os honor�rios, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, ser�o pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencer� em ${prs[0].dt}.`:""}${cr>0?` As parcelas ser�o atualizadas pelo �ndice de ${cr.toFixed(2)}% ao m�s a partir do vencimento.`:""}`;
+      parcTxt=`Os honorários, no valor total de ${brl(totalAdj)}${cr>0?` (total corrigido: ${brl(totalCorr)})`:""}, serão pagos em ${n} (${hcNumExtenso(n)}) parcelas iguais de ${brl(prs[0].base)} cada.${prs[0].dt?` A primeira parcela vencerá em ${prs[0].dt}.`:""}${cr>0?` As parcelas serão atualizadas pelo índice de ${cr.toFixed(2)}% ao mês a partir do vencimento.`:""}`;
     }
 
     const exitos=hcProposalItems.filter(it=>it.exVal>0);
 
     const dto={
       cliente,
-      modeLabel:"m�ltiplos servi�os",
-      area:hcProposalItems.map(it=>it.area).filter(Boolean).join(", ")||"[V�RIAS �REAS]",
-      tipo:hcProposalItems.map(it=>it.tipo).join("; ")||"[V�RIOS TIPOS]",
-      itemOAB:hcProposalItems[0]?.itemOAB||"[V�RIOS]",
+      modeLabel:"múltiplos serviços",
+      area:hcProposalItems.map(it=>it.area).filter(Boolean).join(", ")||"[VÁRIAS ÁREAS]",
+      tipo:hcProposalItems.map(it=>it.tipo).join("; ")||"[VÁRIOS TIPOS]",
+      itemOAB:hcProposalItems[0]?.itemOAB||"[VÁRIOS]",
       valorCausa:null,
       valorFormatado:brl(totalAdj),
       valorExtenso:hcValorExtenso(totalAdj),
@@ -1342,7 +1342,7 @@
         numero:i+1,
         tipo:it.tipo,
         modeLabel:it.modeLabel,
-        area:it.area||"[�REA]",
+        area:it.area||"[ÁREA]",
         valorFormatado:brl(it.adj)
       }))
     };
@@ -1353,7 +1353,7 @@
   async function hcDownloadPdf(dto){
     const btn=document.querySelector('[onclick="hcPrint()"]');
     const origText=btn.textContent;
-    btn.disabled=true;btn.textContent="Gerando PDF�";
+    btn.disabled=true;btn.textContent="Gerando PDF…";
     try{
       const res=await fetch('/api/honorarios/proposta/pdf',{
         method:'POST',
@@ -1378,16 +1378,16 @@
     finally{btn.disabled=false;btn.textContent=origText;}
   }
 
-  // -- CLIPBOARD --------------------------------------------------------------
+  // ── CLIPBOARD ──────────────────────────────────────────────────────────────
   function hcCopiarProposta(){
     const el=document.getElementById("hc-proposta-out");
     const txt=el.innerText||el.textContent;
     navigator.clipboard.writeText(txt).then(()=>alert("Texto copiado!")).catch(()=>alert("Use Ctrl+A / Ctrl+C para copiar manualmente."));
   }
 
-  // -- HELPERS ----------------------------------------------------------------
+  // ── HELPERS ────────────────────────────────────────────────────────────────
   function hcNumExtenso(n){
-    const e=["","um","dois","tr�s","quatro","cinco","seis","sete","oito","nove","dez","onze","doze","treze","quatorze","quinze","dezesseis","dezessete","dezoito","dezenove","vinte","vinte e um","vinte e dois","vinte e tr�s","vinte e quatro"];
+    const e=["","um","dois","três","quatro","cinco","seis","sete","oito","nove","dez","onze","doze","treze","quatorze","quinze","dezesseis","dezessete","dezoito","dezenove","vinte","vinte e um","vinte e dois","vinte e três","vinte e quatro"];
     return e[n]||n;
   }
 
@@ -1398,13 +1398,13 @@
     return`${inteiro} reais`;
   }
 
-  // -- CONFIGURA��O E �NDICES --------------------------------------------------
+  // ── CONFIGURAÇÃO E ÍNDICES ──────────────────────────────────────────────────
   async function hcLoadCfg(){
     try{
       const data=await hcApiFetch('/api/honorarios/configuracao');
       hcCfg=data;
       hcAtualizarBotaoEspecialidade();
-    }catch(e){console.warn('[honorarios] Falha ao carregar configura��o',e);}
+    }catch(e){console.warn('[honorarios] Falha ao carregar configuração',e);}
   }
 
   function hcAtualizarBotaoEspecialidade(){
@@ -1419,7 +1419,7 @@
       hcIndices={};
       data.forEach(i=>hcIndices[i.tipo]=i);
       hcAtualizarDropdownIndices();
-    }catch(e){console.warn('[honorarios] Falha ao carregar �ndices',e);}
+    }catch(e){console.warn('[honorarios] Falha ao carregar índices',e);}
   }
 
   function hcAtualizarDropdownIndices(){
@@ -1431,10 +1431,10 @@
       const pctVal=(idx.valor*100).toFixed(4);
       const pctStr=(idx.valor*100).toFixed(2).replace('.',',');
       const ref=`${meses[(idx.mes||1)-1]}/${idx.ano}`;
-      return`<option value="${pctVal}">${label} (${pctStr}%/m�s � ${ref})</option>`;
+      return`<option value="${pctVal}">${label} (${pctStr}%/mês · ${ref})</option>`;
     }
     const current=sel.value;
-    sel.innerHTML=`<option value="0">Sem corre��o</option>
+    sel.innerHTML=`<option value="0">Sem correção</option>
       ${fmtOpt('IPCA','IPCA')}
       ${fmtOpt('IGPM','IGP-M')}
       ${fmtOpt('TJSP','Tabela TJSP')}
@@ -1453,8 +1453,8 @@
       {tipo:'TJSP',label:'Tabela TJSP',fonte:'BCB (IPCA-E)'}
     ].map(({tipo,label,fonte})=>{
       const idx=hcIndices[tipo];
-      const valor=idx?.valor!=null?`${(idx.valor*100).toFixed(2).replace('.',',')}%/m�s`:'�';
-      const ref=idx?.mes?`${meses[idx.mes-1]}/${idx.ano}`:'�';
+      const valor=idx?.valor!=null?`${(idx.valor*100).toFixed(2).replace('.',',')}%/mês`:'—';
+      const ref=idx?.mes?`${meses[idx.mes-1]}/${idx.ano}`:'—';
       return`<tr style="border-bottom:1px solid var(--color-border)">
         <td style="padding:8px 12px;font-weight:600">${label}</td>
         <td style="padding:8px 12px">${valor}</td>
@@ -1464,9 +1464,9 @@
     }).join('');
     el.innerHTML=`<table style="width:100%;border-collapse:collapse">
       <thead><tr style="border-bottom:2px solid var(--color-border)">
-        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">�ndice</th>
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Índice</th>
         <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Taxa Mensal</th>
-        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Refer�ncia</th>
+        <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Referência</th>
         <th style="padding:6px 12px;text-align:left;font-size:12px;color:var(--color-text-muted)">Fonte</th>
       </tr></thead>
       <tbody>${linhas}</tbody>
@@ -1475,8 +1475,8 @@
 
   async function hcSalvarCfg(btn){
     const val=parseFloat(document.getElementById("hc-cfg-esp").value);
-    if(isNaN(val)||val<0||val>100){alert("Percentual inv�lido (0�100).");return;}
-    btn.disabled=true;btn.textContent='Salvando�';
+    if(isNaN(val)||val<0||val>100){alert("Percentual inválido (0–100).");return;}
+    btn.disabled=true;btn.textContent='Salvando…';
     try{
       const data=await hcApiFetch('/api/honorarios/configuracao',{
         method:'PUT',
@@ -1487,7 +1487,7 @@
       btn.textContent='Salvo!';
       setTimeout(()=>{btn.disabled=false;btn.textContent='Salvar';},2000);
     }catch(e){
-      alert(e.message==='403'?'Apenas Admin pode alterar esta configura��o.':'Erro ao salvar configura��o.');
+      alert(e.message==='403'?'Apenas Admin pode alterar esta configuração.':'Erro ao salvar configuração.');
       btn.disabled=false;btn.textContent='Salvar';
     }
   }

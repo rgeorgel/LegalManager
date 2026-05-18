@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-RLFFYSH2DC');
+    gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify � Dashboard</title>
+  <title>Causify — Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .dashboard-grid {
@@ -74,11 +74,11 @@
         <!-- Step 1: Busca por OAB -->
         <div class="ob-step" id="obStep1">
           <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
-            Informe seu n�mero de OAB e o estado de inscri��o. Buscaremos seus processos em todos os tribunais da UF (TJ, TRF, TRT) via DataJud (CNJ).
+            Informe seu número de OAB e o estado de inscrição. Buscaremos seus processos em todos os tribunais da UF (TJ, TRF, TRT) via DataJud (CNJ).
           </p>
           <div style="display:grid;grid-template-columns:1fr 100px;gap:12px">
             <div>
-              <label class="form-label">N�mero OAB <span style="font-weight:400;color:var(--color-text-muted)">(s� d�gitos)</span></label>
+              <label class="form-label">Número OAB <span style="font-weight:400;color:var(--color-text-muted)">(só dígitos)</span></label>
               <input id="obOab" class="form-control" type="text" inputmode="numeric" placeholder="Ex: 123456" autocomplete="off">
             </div>
             <div>
@@ -108,10 +108,10 @@
           <div id="obErroImportar" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
         </div>
 
-        <!-- Step 3: Conclu�do -->
+        <!-- Step 3: Concluído -->
         <div class="ob-step" id="obStep3">
           <div style="text-align:center;padding:16px 0">
-            <div style="font-size:40px;margin-bottom:12px">?</div>
+            <div style="font-size:40px;margin-bottom:12px">✅</div>
             <div id="obResultadoTexto" style="font-size:16px;font-weight:600;margin-bottom:8px"></div>
             <pre id="obResultadoDetalhe" style="display:none;font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:4px;text-align:left;white-space:pre-wrap"></pre>
           </div>
@@ -136,8 +136,8 @@
 
   <div class="app-layout">
     <header class="header">
-      <button class="hamburger" id="hamburger">?</button>
-      <div class="header-logo">?? Causify</div>
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo">⚖️ Causify</div>
       <div class="header-spacer"></div>
       <div class="header-user">
         <span class="header-user-name"></span>
@@ -155,9 +155,9 @@
       </div>
 
       <div class="tab-nav">
-        <button class="tab-btn active" data-tab="dashboard">?? Dashboard</button>
+        <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
         <button class="tab-btn" data-tab="indicadores" id="tabBtnIndicadores">
-          ?? Indicadores
+          📈 Indicadores
           <span id="indProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PLUS</span>
         </button>
       </div>
@@ -168,35 +168,35 @@
         <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-card-label">Processos Ativos</div>
-            <div class="stat-card-value" id="statProcessos">�</div>
+            <div class="stat-card-value" id="statProcessos">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Contatos</div>
-            <div class="stat-card-value" id="statContatos">�</div>
+            <div class="stat-card-value" id="statContatos">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Tarefas Abertas</div>
-            <div class="stat-card-value" id="statTarefas">�</div>
+            <div class="stat-card-value" id="statTarefas">—</div>
           </div>
           <div class="stat-card" style="border-color:#fca5a5">
             <div class="stat-card-label" style="color:#dc2626">Tarefas Atrasadas</div>
-            <div class="stat-card-value" style="color:#dc2626" id="statAtrasadas">�</div>
+            <div class="stat-card-value" style="color:#dc2626" id="statAtrasadas">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Processos Encerrados</div>
-            <div class="stat-card-value" style="font-size:22px" id="statEncerrados">�</div>
+            <div class="stat-card-value" style="font-size:22px" id="statEncerrados">—</div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Plano / Status</div>
-            <div class="stat-card-value" style="font-size:14px" id="statPlano">�</div>
+            <div class="stat-card-value" style="font-size:14px" id="statPlano">—</div>
           </div>
         </div>
 
-        <!-- Financeiro do m�s -->
+        <!-- Financeiro do mês -->
         <div id="finSection" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px;position:relative;overflow:hidden">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <div style="font-weight:700;font-size:15px">?? Financeiro (m�s atual)</div>
-            <a href="/pages/financeiro.html" style="font-size:13px;color:#1a56db">Ver detalhe ?</a>
+            <div style="font-weight:700;font-size:15px">💰 Financeiro (mês atual)</div>
+            <a href="/pages/financeiro.html" style="font-size:13px;color:#1a56db">Ver detalhe →</a>
           </div>
           <div class="fin-grid">
             <div class="fin-card">
@@ -208,7 +208,7 @@
               <div class="fin-value" style="color:#dc2626" id="finDespesas">R$ 1.200,00</div>
             </div>
             <div class="fin-card">
-              <div class="fin-label">Saldo do m�s</div>
+              <div class="fin-label">Saldo do mês</div>
               <div class="fin-value" style="color:#15803d" id="finSaldo">R$ 3.600,00</div>
             </div>
             <div class="fin-card">
@@ -226,24 +226,24 @@
           </div>
           <!-- Plus overlay (shown only for Free plan) -->
           <div id="finProOverlay" style="display:none;position:absolute;inset:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(15,23,42,.55);border-radius:var(--radius);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px">
-            <div style="font-size:28px">??</div>
+            <div style="font-size:28px">💰</div>
             <div style="font-weight:800;font-size:16px;color:#f8fafc">Controle Financeiro</div>
-            <div style="font-size:13px;color:#cbd5e1;max-width:260px">Acompanhe receitas, despesas e saldo do escrit�rio. Dispon�vel a partir do plano <strong style="color:#f59e0b">Plus</strong>.</div>
+            <div style="font-size:13px;color:#cbd5e1;max-width:260px">Acompanhe receitas, despesas e saldo do escritório. Disponível a partir do plano <strong style="color:#f59e0b">Plus</strong>.</div>
             <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Plus</a>
           </div>
         </div>
 
-        <!-- Pr�ximos eventos -->
+        <!-- Próximos eventos -->
         <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:12px">?? Pr�ximos Eventos (7 dias)</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:12px">📅 Próximos Eventos (7 dias)</div>
           <div id="proximosEventos"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
         </div>
 
         <!-- Tarefas urgentes -->
         <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div style="font-weight:700;font-size:15px">? Tarefas Urgentes / Alta Prioridade</div>
-            <a href="/pages/tarefas.html" style="font-size:13px;color:#1a56db">Ver todas ?</a>
+            <div style="font-weight:700;font-size:15px">✅ Tarefas Urgentes / Alta Prioridade</div>
+            <a href="/pages/tarefas.html" style="font-size:13px;color:#1a56db">Ver todas →</a>
           </div>
           <div id="tarefasUrgentes"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
         </div>
@@ -256,17 +256,17 @@
 
           <!-- Processos -->
           <div class="section">
-            <div class="section-title">?? Processos</div>
+            <div class="section-title">⚖️ Processos</div>
             <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Total</div><div class="ind-value" id="pTotal">�</div></div>
-              <div class="ind-card"><div class="ind-label">Ativos</div><div class="ind-value" id="pAtivos">�</div></div>
-              <div class="ind-card"><div class="ind-label">Encerrados</div><div class="ind-value" id="pEncerrados">�</div></div>
-              <div class="ind-card"><div class="ind-label">Suspensos</div><div class="ind-value amber" id="pSuspensos">�</div></div>
-              <div class="ind-card"><div class="ind-label">Novos este m�s</div><div class="ind-value green" id="pNovos">�</div></div>
+              <div class="ind-card"><div class="ind-label">Total</div><div class="ind-value" id="pTotal">—</div></div>
+              <div class="ind-card"><div class="ind-label">Ativos</div><div class="ind-value" id="pAtivos">—</div></div>
+              <div class="ind-card"><div class="ind-label">Encerrados</div><div class="ind-value" id="pEncerrados">—</div></div>
+              <div class="ind-card"><div class="ind-label">Suspensos</div><div class="ind-value amber" id="pSuspensos">—</div></div>
+              <div class="ind-card"><div class="ind-label">Novos este mês</div><div class="ind-value green" id="pNovos">—</div></div>
             </div>
             <div class="kpi-row" style="margin-top:16px">
               <div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR �REA</div>
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR ÁREA</div>
                 <div id="barArea"></div>
               </div>
               <div>
@@ -278,13 +278,13 @@
 
           <!-- Tarefas -->
           <div class="section">
-            <div class="section-title">? Tarefas</div>
+            <div class="section-title">✅ Tarefas</div>
             <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Pendentes</div><div class="ind-value" id="tPendentes">�</div></div>
-              <div class="ind-card"><div class="ind-label">Em Andamento</div><div class="ind-value" style="color:#1d4ed8" id="tEmAndamento">�</div></div>
-              <div class="ind-card"><div class="ind-label">Conclu�das</div><div class="ind-value green" id="tConcluidas">�</div></div>
-              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Atrasadas</div><div class="ind-value red" id="tAtrasadas">�</div></div>
-              <div class="ind-card"><div class="ind-label">Conclu�das este m�s</div><div class="ind-value green" id="tConcluidasMes">�</div></div>
+              <div class="ind-card"><div class="ind-label">Pendentes</div><div class="ind-value" id="tPendentes">—</div></div>
+              <div class="ind-card"><div class="ind-label">Em Andamento</div><div class="ind-value" style="color:#1d4ed8" id="tEmAndamento">—</div></div>
+              <div class="ind-card"><div class="ind-label">Concluídas</div><div class="ind-value green" id="tConcluidas">—</div></div>
+              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Atrasadas</div><div class="ind-value red" id="tAtrasadas">—</div></div>
+              <div class="ind-card"><div class="ind-label">Concluídas este mês</div><div class="ind-value green" id="tConcluidasMes">—</div></div>
             </div>
             <div style="margin-top:16px">
               <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">ABERTAS POR PRIORIDADE</div>
@@ -294,17 +294,17 @@
 
           <!-- Financeiro -->
           <div class="section">
-            <div class="section-title">?? Financeiro (m�s atual)</div>
+            <div class="section-title">💰 Financeiro (mês atual)</div>
             <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Receitas pagas (R$)</div><div class="ind-value green" id="fReceitas">�</div></div>
-              <div class="ind-card"><div class="ind-label">Despesas pagas (R$)</div><div class="ind-value red" id="fDespesas">�</div></div>
-              <div class="ind-card"><div class="ind-label">Saldo do m�s (R$)</div><div class="ind-value" id="fSaldo">�</div></div>
-              <div class="ind-card"><div class="ind-label">A receber (R$)</div><div class="ind-value amber" id="fAReceber">�</div></div>
-              <div class="ind-card"><div class="ind-label">A pagar (R$)</div><div class="ind-value amber" id="fAPagar">�</div></div>
-              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos (R$)</div><div class="ind-value red" style="font-size:18px" id="fVencidos">�</div></div>
+              <div class="ind-card"><div class="ind-label">Receitas pagas (R$)</div><div class="ind-value green" id="fReceitas">—</div></div>
+              <div class="ind-card"><div class="ind-label">Despesas pagas (R$)</div><div class="ind-value red" id="fDespesas">—</div></div>
+              <div class="ind-card"><div class="ind-label">Saldo do mês (R$)</div><div class="ind-value" id="fSaldo">—</div></div>
+              <div class="ind-card"><div class="ind-label">A receber (R$)</div><div class="ind-value amber" id="fAReceber">—</div></div>
+              <div class="ind-card"><div class="ind-label">A pagar (R$)</div><div class="ind-value amber" id="fAPagar">—</div></div>
+              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos (R$)</div><div class="ind-value red" style="font-size:18px" id="fVencidos">—</div></div>
             </div>
             <div style="margin-top:20px">
-              <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--color-text-muted)">EVOLU��O � �LTIMOS 6 MESES</div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--color-text-muted)">EVOLUÇÃO — ÚLTIMOS 6 MESES</div>
               <div class="trend-row" id="trendMeses"></div>
               <div style="display:flex;gap:16px;margin-top:8px;font-size:12px">
                 <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px"></span>Receitas</span>
@@ -315,11 +315,11 @@
 
           <!-- Timesheet -->
           <div class="section">
-            <div class="section-title">?? Timesheet (m�s atual)</div>
+            <div class="section-title">⏱️ Timesheet (mês atual)</div>
             <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Horas este m�s</div><div class="ind-value" id="tsEsteMes">�</div></div>
-              <div class="ind-card"><div class="ind-label">Horas m�s anterior</div><div class="ind-value" style="font-size:20px;color:#6b7280" id="tsMesAnterior">�</div></div>
-              <div class="ind-card"><div class="ind-label">Registros este m�s</div><div class="ind-value" id="tsRegistros">�</div></div>
+              <div class="ind-card"><div class="ind-label">Horas este mês</div><div class="ind-value" id="tsEsteMes">—</div></div>
+              <div class="ind-card"><div class="ind-label">Horas mês anterior</div><div class="ind-value" style="font-size:20px;color:#6b7280" id="tsMesAnterior">—</div></div>
+              <div class="ind-card"><div class="ind-label">Registros este mês</div><div class="ind-value" id="tsRegistros">—</div></div>
             </div>
             <div style="margin-top:16px" id="tsTopWrap">
               <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">TOP PROCESSOS (horas)</div>
@@ -376,7 +376,7 @@
     const initTab = new URLSearchParams(location.search).get('tab') || 'dashboard';
     switchTab(initTab);
 
-    // -- Dashboard ----------------------------------------------
+    // ── Dashboard ──────────────────────────────────────────────
     async function loadStats() {
       try {
         const now = new Date();
@@ -401,11 +401,11 @@
         document.getElementById('statAtrasadas').textContent = tarefasAtrasadas?.total ?? '0';
 
         const tenant = me?.tenant;
-        const planoLabel = tenant?.plano ?? '�';
+        const planoLabel = tenant?.plano ?? '–';
         const statusLabel = tenant?.status === 'Trial' && tenant?.trialExpiraEm
           ? `${Math.max(0, Math.ceil((new Date(tenant.trialExpiraEm) - now) / 86400000))}d trial`
-          : tenant?.status ?? '�';
-        document.getElementById('statPlano').textContent = `${planoLabel} � ${statusLabel}`;
+          : tenant?.status ?? '–';
+        document.getElementById('statPlano').textContent = `${planoLabel} · ${statusLabel}`;
 
         const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
         const f = financeiro?.mes;
@@ -423,17 +423,17 @@
         const evEl = document.getElementById('proximosEventos');
         const evList = (eventos ?? []).filter(e => e.tipo !== 'Tarefa').slice(0, 5);
         if (!evList.length) {
-          evEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum evento nos pr�ximos 7 dias.</span>';
+          evEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum evento nos próximos 7 dias.</span>';
         } else {
           evEl.innerHTML = evList.map(ev => {
             const dt = ev.dataHora ? new Date(ev.dataHora) : null;
-            const dtStr = dt && !isNaN(dt) ? dt.toLocaleDateString('pt-BR', {weekday:'short',day:'numeric',month:'short'}) : '�';
+            const dtStr = dt && !isNaN(dt) ? dt.toLocaleDateString('pt-BR', {weekday:'short',day:'numeric',month:'short'}) : '–';
             const tmStr = dt && !isNaN(dt) ? dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
             return `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f3f4f6;align-items:center">
               <div style="width:10px;height:10px;border-radius:50%;background:${ev.cor};flex-shrink:0"></div>
               <div>
                 <div style="font-weight:600;font-size:13px">${esc(ev.titulo)}</div>
-                <div style="font-size:12px;color:#6b7280">${ev.tipo} � ${dtStr}${tmStr ? ' ' + tmStr : ''}${ev.local ? ` � ??${esc(ev.local)}` : ''}</div>
+                <div style="font-size:12px;color:#6b7280">${ev.tipo} · ${dtStr}${tmStr ? ' ' + tmStr : ''}${ev.local ? ` · 📍${esc(ev.local)}` : ''}</div>
               </div>
             </div>`;
           }).join('');
@@ -445,14 +445,14 @@
           tuEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhuma tarefa urgente no momento.</span>';
         } else {
           tuEl.innerHTML = tuList.map(t => {
-            const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '�'; })() : '�';
+            const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '–'; })() : '–';
             const atrasada = t.atrasada ? '<span style="background:#fef2f2;color:#dc2626;font-size:11px;padding:2px 6px;border-radius:4px;margin-left:6px">Atrasada</span>' : '';
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px">
               <div>
                 <span style="font-weight:600;font-size:13px">${esc(t.titulo)}</span>${atrasada}
-                ${t.nomeResponsavel ? `<span style="font-size:12px;color:#6b7280;margin-left:8px">??${esc(t.nomeResponsavel)}</span>` : ''}
+                ${t.nomeResponsavel ? `<span style="font-size:12px;color:#6b7280;margin-left:8px">👤${esc(t.nomeResponsavel)}</span>` : ''}
               </div>
-              <span style="font-size:12px;color:#6b7280">?? ${prazo}</span>
+              <span style="font-size:12px;color:#6b7280">📅 ${prazo}</span>
             </div>`;
           }).join('');
         }
@@ -461,7 +461,7 @@
       }
     }
 
-    // -- Indicadores --------------------------------------------
+    // ── Indicadores ────────────────────────────────────────────
     async function loadIndicadores() {
       try {
         const d = await apiFetch('/indicadores');
@@ -534,12 +534,12 @@
     }
 
     const LABEL_MAP = {
-      Civil:'Civil', Trabalhista:'Trabalhista', Criminal:'Criminal', Tributario:'Tribut�rio',
-      Previdenciario:'Previdenci�rio', Administrativo:'Administrativo', Consumidor:'Consumidor',
-      Familia:'Fam�lia', Empresarial:'Empresarial', Ambiental:'Ambiental', Imobiliario:'Imobili�rio',
-      Conhecimento:'Conhecimento', Recursal:'Recursal', Execucao:'Execu��o', Cumprimento:'Cumprimento',
-      InqueritoPolicial:'Inqu�rito Policial', InvestigacaoDefensiva:'Invest. Defensiva',
-      Urgente:'Urgente', Alta:'Alta', Media:'M�dia', Baixa:'Baixa', Outro:'Outro'
+      Civil:'Civil', Trabalhista:'Trabalhista', Criminal:'Criminal', Tributario:'Tributário',
+      Previdenciario:'Previdenciário', Administrativo:'Administrativo', Consumidor:'Consumidor',
+      Familia:'Família', Empresarial:'Empresarial', Ambiental:'Ambiental', Imobiliario:'Imobiliário',
+      Conhecimento:'Conhecimento', Recursal:'Recursal', Execucao:'Execução', Cumprimento:'Cumprimento',
+      InqueritoPolicial:'Inquérito Policial', InvestigacaoDefensiva:'Invest. Defensiva',
+      Urgente:'Urgente', Alta:'Alta', Media:'Média', Baixa:'Baixa', Outro:'Outro'
     };
 
     function renderBars(elId, items, defaultColor, colorMap, fmtFn) {

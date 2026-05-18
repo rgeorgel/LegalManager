@@ -1,17 +1,17 @@
-<!DOCTYPE html>
+Ôªø<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-RLFFYSH2DC');
+    gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify ó ConfiguraÁıes</title>
+  <title>Causify ‚Äî Configura√ß√µes</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .config-section { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px 24px; margin-bottom:20px; }
@@ -40,8 +40,8 @@
 <body>
 <div class="app-layout">
   <header class="header">
-    <button class="hamburger" id="hamburger">?</button>
-    <div class="header-logo">?? Causify</div>
+    <button class="hamburger" id="hamburger">‚ò∞</button>
+    <div class="header-logo">‚öñÔ∏è Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -55,20 +55,20 @@
 
   <main class="main-content">
     <div class="page-header">
-      <h1 class="page-title">ConfiguraÁıes</h1>
+      <h1 class="page-title">Configura√ß√µes</h1>
       <div style="display:flex;gap:8px">
         <div class="tab-actions" id="actionsUsuarios">
-          <button class="btn btn-primary" id="btnConvidar">+ Convidar Usu·rio</button>
+          <button class="btn btn-primary" id="btnConvidar">+ Convidar Usu√°rio</button>
         </div>
       </div>
     </div>
 
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab="configuracoes">?? ConfiguraÁıes</button>
-      <button class="tab-btn" data-tab="usuarios">?? Usu·rios</button>
+      <button class="tab-btn active" data-tab="configuracoes">‚öôÔ∏è Configura√ß√µes</button>
+      <button class="tab-btn" data-tab="usuarios">üîë Usu√°rios</button>
     </div>
 
-    <!-- ===== TAB: CONFIGURA«’ES ===== -->
+    <!-- ===== TAB: CONFIGURA√á√ïES ===== -->
     <div class="tab-content active" id="tab-configuracoes">
 
       <!-- Plano e uso -->
@@ -78,12 +78,12 @@
         <div class="uso-grid" id="usoGrid"></div>
       </div>
 
-      <!-- Perfil do escritÛrio -->
+      <!-- Perfil do escrit√≥rio -->
       <div class="config-section" id="perfilSection" style="display:none">
-        <div class="config-section-title">Perfil do EscritÛrio</div>
+        <div class="config-section-title">Perfil do Escrit√≥rio</div>
         <form id="formPerfil" novalidate>
           <div class="form-group">
-            <label class="form-label">Nome do escritÛrio *</label>
+            <label class="form-label">Nome do escrit√≥rio *</label>
             <input type="text" id="cNome" class="form-control" maxlength="200" required>
           </div>
           <div class="form-group">
@@ -91,11 +91,11 @@
             <input type="text" id="cCnpj" class="form-control" maxlength="18" placeholder="00.000.000/0001-00">
           </div>
           <div class="form-group">
-            <label class="form-label">EndereÁo</label>
+            <label class="form-label">Endere√ßo</label>
             <input type="text" id="cEndereco" class="form-control" maxlength="500">
           </div>
           <div id="perfilMsg" class="alert" style="display:none"></div>
-          <button type="submit" class="btn btn-primary">Salvar alteraÁıes</button>
+          <button type="submit" class="btn btn-primary">Salvar altera√ß√µes</button>
         </form>
       </div>
 
@@ -124,27 +124,27 @@
       <div class="config-section" style="display:none;position:relative;overflow:hidden">
         <div class="config-section-title">Processos Monitorados</div>
         <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-          Monitore publicaÁıes de processos especÌficos nos Di·rios Oficiais. Cadastre o n˙mero CNJ dos processos que deseja acompanhar.
+          Monitore publica√ß√µes de processos espec√≠ficos nos Di√°rios Oficiais. Cadastre o n√∫mero CNJ dos processos que deseja acompanhar.
         </p>
         <div id="listaNomes" style="margin-bottom:16px"></div>
         <div id="formNomeWrapper">
           <div class="input-with-search">
-            <input type="text" id="inputNome" class="form-control" placeholder="N˙mero do processo (ex: 0000000-00.0000.0.00.0000)" maxlength="50">
-            <button class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">??</button>
+            <input type="text" id="inputNome" class="form-control" placeholder="N√∫mero do processo (ex: 0000000-00.0000.0.00.0000)" maxlength="50">
+            <button class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">üîç</button>
             <button class="btn btn-primary" id="btnAdicionarNome">Adicionar</button>
           </div>
           <div id="processPreview" class="process-preview"></div>
           <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
         </div>
         <div style="margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:13px;color:#92400e">
-          <strong>?? IntegraÁ„o DJE em desenvolvimento</strong><br>
-          A captura autom·tica de publicaÁıes por nome de advogado ainda n„o est· disponÌvel. Cadastre os n˙meros dos processos que deseja monitorar ó quando a integraÁ„o JusBrasil estiver ativa, seus processos ser„o acompanhados automaticamente.
+          <strong>üì∞ Integra√ß√£o DJE em desenvolvimento</strong><br>
+          A captura autom√°tica de publica√ß√µes por nome de advogado ainda n√£o est√° dispon√≠vel. Cadastre os n√∫meros dos processos que deseja monitorar ‚Äî quando a integra√ß√£o JusBrasil estiver ativa, seus processos ser√£o acompanhados automaticamente.
         </div>
       </div>
 
-      <!-- PreferÍncias de alertas -->
+      <!-- Prefer√™ncias de alertas -->
       <div class="config-section">
-        <div class="config-section-title">PreferÍncias de Alertas</div>
+        <div class="config-section-title">Prefer√™ncias de Alertas</div>
         <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
           Escolha quais alertas deseja receber dentro do sistema e por e-mail.
         </p>
@@ -161,20 +161,20 @@
             <tbody id="prefsTable"></tbody>
           </table>
           <div id="prefsMsg" class="alert" style="display:none;margin-top:12px"></div>
-          <button class="btn btn-primary" id="btnSalvarPrefs" style="margin-top:16px">Salvar preferÍncias</button>
+          <button class="btn btn-primary" id="btnSalvarPrefs" style="margin-top:16px">Salvar prefer√™ncias</button>
         </div>
       </div>
 
-      <!-- ¡reas de atuaÁ„o -->
+      <!-- √Åreas de atua√ß√£o -->
       <div class="config-section" style="display:none">
-        <div class="config-section-title">¡reas de AtuaÁ„o</div>
+        <div class="config-section-title">√Åreas de Atua√ß√£o</div>
         <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-          Defina as ·reas jurÌdicas do escritÛrio (ex: Direito Trabalhista, Direito Civil, etc.)
+          Defina as √°reas jur√≠dicas do escrit√≥rio (ex: Direito Trabalhista, Direito Civil, etc.)
         </p>
         <div id="areasLista" style="margin-bottom:16px"></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="inputAreaNome" class="form-control" placeholder="Nome da ·rea" maxlength="100" style="flex:1;min-width:200px">
-          <input type="text" id="inputAreaDesc" class="form-control" placeholder="DescriÁ„o (opcional)" maxlength="500" style="flex:2;min-width:240px">
+          <input type="text" id="inputAreaNome" class="form-control" placeholder="Nome da √°rea" maxlength="100" style="flex:1;min-width:200px">
+          <input type="text" id="inputAreaDesc" class="form-control" placeholder="Descri√ß√£o (opcional)" maxlength="500" style="flex:2;min-width:240px">
           <button class="btn btn-primary" id="btnAdicionarArea">Adicionar</button>
         </div>
         <div id="areaMsg" class="alert" style="display:none;margin-top:8px"></div>
@@ -184,7 +184,7 @@
       <div class="config-section">
         <div class="config-section-title">Categorias Financeiras</div>
         <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-          Personalize as categorias de receitas e despesas para organizar lanÁamentos.
+          Personalize as categorias de receitas e despesas para organizar lan√ßamentos.
         </p>
         <div id="catsLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
         <div id="catsContent" style="display:none">
@@ -212,7 +212,7 @@
 
     </div><!-- /tab-configuracoes -->
 
-    <!-- ===== TAB: USU¡RIOS ===== -->
+    <!-- ===== TAB: USU√ÅRIOS ===== -->
     <div class="tab-content" id="tab-usuarios">
       <div id="usuariosAlertMsg" class="alert" style="display:none"></div>
       <div class="card">
@@ -225,7 +225,7 @@
                 <th>Perfil</th>
                 <th>Status</th>
                 <th>Membro desde</th>
-                <th>AÁıes</th>
+                <th>A√ß√µes</th>
               </tr>
             </thead>
             <tbody id="usuariosTableBody">
@@ -239,12 +239,12 @@
   </main>
 </div>
 
-<!-- Modal Convidar Usu·rio -->
+<!-- Modal Convidar Usu√°rio -->
 <div class="modal-overlay" id="modalConvite">
   <div class="modal" style="max-width:400px">
     <div class="modal-header">
-      <span class="modal-title">Convidar Usu·rio</span>
-      <button class="modal-close" id="modalConviteClose">?</button>
+      <span class="modal-title">Convidar Usu√°rio</span>
+      <button class="modal-close" id="modalConviteClose">‚úï</button>
     </div>
     <div class="modal-body">
       <div id="modalConviteAlert" class="alert alert-error" style="display:none"></div>
@@ -301,7 +301,7 @@
   if (initialTab === 'usuarios') switchTab('usuarios');
 
   // ============================================================
-  // CONFIGURA«’ES
+  // CONFIGURA√á√ïES
   // ============================================================
   document.getElementById('cCnpj').addEventListener('input', e => mascaraCpfCnpj(e.target));
 
@@ -331,7 +331,7 @@
 
       const usoCols = [
         { label: 'Processos',       val: uso.processos,       limite: uso.processosLimite },
-        { label: 'Usu·rios',        val: uso.usuarios,        limite: uso.usuariosLimite },
+        { label: 'Usu√°rios',        val: uso.usuarios,        limite: uso.usuariosLimite },
         { label: 'Tarefas abertas', val: uso.tarefasAbertas,  limite: null },
         { label: 'Contatos',        val: uso.contatos,        limite: null },
         { label: 'Armazenamento',   val: Math.round(uso.armazenamentoUsadoMB / 1024 * 10) / 10 + ' GB', limite: uso.armazenamentoLimiteMB / 1024 + ' GB' },
@@ -386,7 +386,7 @@
     const confirmar = document.getElementById('sConfirmar').value;
     if (nova !== confirmar) {
       msg.className = 'alert alert-error';
-      msg.textContent = 'As senhas n„o coincidem.';
+      msg.textContent = 'As senhas n√£o coincidem.';
       msg.style.display = '';
       return;
     }
@@ -444,7 +444,7 @@
     const cnj = input.value.trim();
     if (!cnj) {
       preview.className = 'process-preview nao-encontrado';
-      preview.innerHTML = 'Digite um n˙mero de processo.';
+      preview.innerHTML = 'Digite um n√∫mero de processo.';
       preview.style.display = 'block';
       return;
     }
@@ -456,13 +456,13 @@
       const result = await apiFetch(`/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`);
       if (result.encontrado) {
         preview.className = 'process-preview encontrado';
-        preview.innerHTML = `<span class="preview-tribunal">? Processo encontrado</span><br>
+        preview.innerHTML = `<span class="preview-tribunal">‚úì Processo encontrado</span><br>
           <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
-          <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentaÁ„o(ıes) disponÌvel(is)</span>`;
+          <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimenta√ß√£o(√µes) dispon√≠vel(is)</span>`;
       } else {
         preview.className = 'process-preview nao-encontrado';
-        preview.innerHTML = `<span class="preview-tribunal">? Processo n„o encontrado no CNJ</span><br>
-          <span class="preview-vara">Os dados ser„o preenchidos quando houver movimentaÁ„o.</span>`;
+        preview.innerHTML = `<span class="preview-tribunal">‚úó Processo n√£o encontrado no CNJ</span><br>
+          <span class="preview-vara">Os dados ser√£o preenchidos quando houver movimenta√ß√£o.</span>`;
       }
     } catch {
       preview.className = 'process-preview nao-encontrado';
@@ -498,12 +498,12 @@
     }
   });
 
-  // PreferÍncias de alertas
+  // Prefer√™ncias de alertas
   const PREF_ROWS = [
     { label: 'Tarefas (prazos)',            inApp: 'tarefasInApp',     email: 'tarefasEmail' },
     { label: 'Eventos (agenda)',             inApp: 'eventosInApp',     email: 'eventosEmail' },
     { label: 'Prazos processuais',           inApp: 'prazosInApp',      email: 'prazosEmail' },
-    { label: 'PublicaÁıes / andamentos',     inApp: 'publicacoesInApp', email: 'publicacoesEmail' },
+    { label: 'Publica√ß√µes / andamentos',     inApp: 'publicacoesInApp', email: 'publicacoesEmail' },
     { label: 'Aviso de trial',               inApp: 'trialInApp',       email: null },
     { label: 'Alertas gerais',               inApp: 'geralInApp',       email: null },
   ];
@@ -517,7 +517,7 @@
       document.getElementById('prefsContent').style.display = '';
       renderPrefsTable();
     } catch {
-      document.getElementById('prefsLoading').textContent = 'Erro ao carregar preferÍncias.';
+      document.getElementById('prefsLoading').textContent = 'Erro ao carregar prefer√™ncias.';
     }
   }
 
@@ -527,7 +527,7 @@
         ? `<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">
              <input type="checkbox" id="pref_${row.email}" ${currentPrefs[row.email] ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
            </td>`
-        : `<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#d1d5db;font-size:12px">ó</td>`;
+        : `<td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#d1d5db;font-size:12px">‚Äî</td>`;
       return `<tr>
         <td style="padding:10px 12px;border-bottom:1px solid #f3f4f6;font-weight:500">${row.label}</td>
         <td style="text-align:center;padding:10px 12px;border-bottom:1px solid #f3f4f6">
@@ -555,16 +555,16 @@
         })
       });
       msg.className = 'alert alert-success';
-      msg.textContent = 'PreferÍncias salvas!';
+      msg.textContent = 'Prefer√™ncias salvas!';
       msg.style.display = '';
     } catch (err) {
       msg.className = 'alert alert-error';
-      msg.textContent = err.message ?? 'Erro ao salvar preferÍncias.';
+      msg.textContent = err.message ?? 'Erro ao salvar prefer√™ncias.';
       msg.style.display = '';
     }
   });
 
-  // ¡reas de atuaÁ„o
+  // √Åreas de atua√ß√£o
   async function loadAreas() {
     try {
       const areas = await apiFetch('/configuracoes/areas-atuacao');
@@ -575,20 +575,20 @@
   function renderAreas(areas) {
     const el = document.getElementById('areasLista');
     if (!areas.length) {
-      el.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhuma ·rea cadastrada.</p>';
+      el.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhuma √°rea cadastrada.</p>';
       return;
     }
     el.innerHTML = areas.map(a => `
       <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px">
         <span style="flex:1">
           <span style="font-weight:500">${esc(a.nome)}</span>
-          ${a.descricao ? `<span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">ó ${esc(a.descricao)}</span>` : ''}
+          ${a.descricao ? `<span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">‚Äî ${esc(a.descricao)}</span>` : ''}
         </span>
         <button class="btn btn-danger btn-sm" data-id="${a.id}" data-action="removerArea">Remover</button>
       </div>`).join('');
     el.querySelectorAll('[data-action="removerArea"]').forEach(btn =>
       btn.addEventListener('click', async () => {
-        if (!confirm('Remover esta ·rea?')) return;
+        if (!confirm('Remover esta √°rea?')) return;
         await apiFetch(`/configuracoes/areas-atuacao/${btn.dataset.id}`, { method: 'DELETE' });
         loadAreas();
       }));
@@ -611,7 +611,7 @@
       loadAreas();
     } catch (err) {
       msg.className = 'alert alert-error';
-      msg.textContent = err.message ?? 'Erro ao adicionar ·rea.';
+      msg.textContent = err.message ?? 'Erro ao adicionar √°rea.';
       msg.style.display = '';
     }
   });
@@ -648,7 +648,7 @@
   function catItem(c) {
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:6px">
       <span style="flex:1;font-weight:500;font-size:13px">${esc(c.nome)}</span>
-      <button class="btn btn-danger btn-sm" data-id="${c.id}" data-action="removerCat">?</button>
+      <button class="btn btn-danger btn-sm" data-id="${c.id}" data-action="removerCat">‚úï</button>
     </div>`;
   }
 
@@ -674,7 +674,7 @@
   });
 
   // ============================================================
-  // USU¡RIOS
+  // USU√ÅRIOS
   // ============================================================
   function showUsuariosAlert(msg, type = 'error') {
     const el = document.getElementById('usuariosAlertMsg');
@@ -689,7 +689,7 @@
       const users = await apiFetch('/usuarios');
       const tbody = document.getElementById('usuariosTableBody');
       if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Nenhum usu·rio</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Nenhum usu√°rio</td></tr>';
         return;
       }
       tbody.innerHTML = users.map(u => `
@@ -698,8 +698,8 @@
           <td data-label="E-mail">${esc(u.email)}</td>
           <td data-label="Perfil"><span class="badge badge-blue">${u.perfil}</span></td>
           <td data-label="Status"><span class="badge badge-${u.ativo ? 'green' : 'red'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
-          <td data-label="Membro desde">${u.criadoEm ? (() => { const d = new Date(u.criadoEm); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : 'ñ'; })() : 'ñ'}</td>
-          <td data-label="AÁıes">
+          <td data-label="Membro desde">${u.criadoEm ? (() => { const d = new Date(u.criadoEm); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '‚Äì'; })() : '‚Äì'}</td>
+          <td data-label="A√ß√µes">
             ${u.ativo ? `<button class="btn btn-danger btn-sm" onclick="desativarUsuario('${u.id}','${esc(u.nome)}')">Desativar</button>` : ''}
           </td>
         </tr>`).join('');
@@ -707,10 +707,10 @@
   }
 
   window.desativarUsuario = async (id, nome) => {
-    if (!confirm(`Desativar o usu·rio "${nome}"?`)) return;
+    if (!confirm(`Desativar o usu√°rio "${nome}"?`)) return;
     try {
       await apiFetch(`/usuarios/${id}/desativar`, { method: 'PUT' });
-      showUsuariosAlert('Usu·rio desativado.', 'success');
+      showUsuariosAlert('Usu√°rio desativado.', 'success');
       loadUsuarios();
     } catch (err) { showUsuariosAlert(err.message); }
   };

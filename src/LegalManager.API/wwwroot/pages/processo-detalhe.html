@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-RLFFYSH2DC"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    gtag('config', 'G-RLFFYSH2DC');
+    gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify — Detalhe do Processo</title>
+  <title>Causify â€” Detalhe do Processo</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
@@ -77,8 +77,8 @@
 <body>
 <div class="app-layout">
   <header class="header">
-    <button class="hamburger" id="hamburger">?</button>
-    <div class="header-logo">?? Causify</div>
+    <button class="hamburger" id="hamburger">â˜°</button>
+    <div class="header-logo">âš–ï¸ Causify</div>
     <div class="header-spacer"></div>
     <div class="header-user">
       <span class="header-user-name"></span>
@@ -90,27 +90,27 @@
 
   <nav class="sidebar">
     <ul class="sidebar-nav">
-      <li><a href="/pages/dashboard.html">?? Dashboard</a></li>
-      <li><a href="/pages/processos.html">?? Processos</a></li>
-      <li><a href="/pages/contatos.html">?? Contatos</a></li>
-      <li><a href="/pages/tarefas.html">? Tarefas</a></li>
-      <li><a href="/pages/agenda.html">?? Agenda</a></li>
-      <li><a href="/pages/publicacoes.html">?? Publicações</a></li>
-      <li><a href="/pages/prazos.html">? Prazos</a></li>
-      <li><a href="/pages/usuarios.html">?? Usuários</a></li>
-      <li><a href="/pages/configuracoes.html">?? Configurações</a></li>
+      <li><a href="/pages/dashboard.html">ğŸ“Š Dashboard</a></li>
+      <li><a href="/pages/processos.html">âš–ï¸ Processos</a></li>
+      <li><a href="/pages/contatos.html">ğŸ‘¥ Contatos</a></li>
+      <li><a href="/pages/tarefas.html">âœ… Tarefas</a></li>
+      <li><a href="/pages/agenda.html">ğŸ“… Agenda</a></li>
+      <li><a href="/pages/publicacoes.html">ğŸ“° PublicaÃ§Ãµes</a></li>
+      <li><a href="/pages/prazos.html">â° Prazos</a></li>
+      <li><a href="/pages/usuarios.html">ğŸ”‘ UsuÃ¡rios</a></li>
+      <li><a href="/pages/configuracoes.html">âš™ï¸ ConfiguraÃ§Ãµes</a></li>
     </ul>
   </nav>
 
   <main class="main-content">
     <div class="page-header">
       <div>
-        <a href="/pages/processos.html" style="font-size:13px;color:var(--color-text-muted)">? Processos</a>
+        <a href="/pages/processos.html" style="font-size:13px;color:var(--color-text-muted)">â† Processos</a>
         <h1 class="page-title" id="pageTitle">Carregando...</h1>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">?? Consultar</button>
-        <button class="btn btn-secondary" id="btnGerarPeca">?? Gerar Peça</button>
+        <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">ğŸ”„ Consultar</button>
+        <button class="btn btn-secondary" id="btnGerarPeca">ğŸ“„ Gerar PeÃ§a</button>
         <button class="btn btn-secondary" id="btnEditar">Editar</button>
         <button class="btn btn-danger" id="btnEncerrar" style="display:none">Encerrar</button>
       </div>
@@ -128,7 +128,7 @@
 
     <!-- Tabs -->
     <div class="tabs" role="tablist">
-      <button class="tab-btn active" data-tab="info" role="tab">Informações</button>
+      <button class="tab-btn active" data-tab="info" role="tab">InformaÃ§Ãµes</button>
       <button class="tab-btn" data-tab="andamentos" role="tab">
         Andamentos<span class="tab-badge count" id="tabCountAndamentos" style="display:none">0</span>
       </button>
@@ -143,78 +143,78 @@
       </button>
     </div>
 
-    <!-- Tab: Informações -->
+    <!-- Tab: InformaÃ§Ãµes -->
     <div class="tab-content active" id="tab-info" role="tabpanel">
       <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
         <div>
-          <!-- Informações gerais -->
+          <!-- InformaÃ§Ãµes gerais -->
           <div class="card" style="margin-bottom:20px">
             <div class="card-body">
-              <div class="card-title">Informações do Processo</div>
+              <div class="card-title">InformaÃ§Ãµes do Processo</div>
               <div class="info-grid" id="infoGrid">
-                <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
-                <div class="info-item"><label>Sigla</label><span id="infoSiglaTribunal">—</span></div>
-                <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
-                <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
-                <div class="info-item"><label>Classe</label><span id="infoClasse">—</span></div>
-                <div class="info-item"><label>Código Classe</label><span id="infoCodigoClasse">—</span></div>
-                <div class="info-item"><label>Assuntos</label><span id="infoAssuntos">—</span></div>
-                <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
-                <div class="info-item"><label>Data Distribuição</label><span id="infoDataDistribuicao">—</span></div>
-                <div class="info-item"><label>Grau</label><span id="infoGrau">—</span></div>
-                <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
-                <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
-                <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
-                <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
+                <div class="info-item"><label>Tribunal</label><span id="infoTribunal">â€”</span></div>
+                <div class="info-item"><label>Sigla</label><span id="infoSiglaTribunal">â€”</span></div>
+                <div class="info-item"><label>Vara</label><span id="infoVara">â€”</span></div>
+                <div class="info-item"><label>Comarca</label><span id="infoComarca">â€”</span></div>
+                <div class="info-item"><label>Classe</label><span id="infoClasse">â€”</span></div>
+                <div class="info-item"><label>CÃ³digo Classe</label><span id="infoCodigoClasse">â€”</span></div>
+                <div class="info-item"><label>Assuntos</label><span id="infoAssuntos">â€”</span></div>
+                <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">â€”</span></div>
+                <div class="info-item"><label>Data DistribuiÃ§Ã£o</label><span id="infoDataDistribuicao">â€”</span></div>
+                <div class="info-item"><label>Grau</label><span id="infoGrau">â€”</span></div>
+                <div class="info-item"><label>Tipo de AÃ§Ã£o</label><span id="infoTipoAcao">â€”</span></div>
+                <div class="info-item"><label>Valor da Causa</label><span id="infoValor">â€”</span></div>
+                <div class="info-item"><label>Advogado ResponsÃ¡vel</label><span id="infoAdvogado">â€”</span></div>
+                <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">â€”</span></div>
                 <div class="info-item" id="infoEncerradoGroup" style="display:none">
-                  <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
+                  <label>Encerrado em</label><span id="infoEncerradoEm">â€”</span>
                 </div>
               </div>
               <div id="infoExtraCollapsible" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
                 <div class="info-grid">
-                  <div class="info-item"><label>Instância</label><span id="infoInstancia">—</span></div>
-                  <div class="info-item"><label>Segmento</label><span id="infoSegmento">—</span></div>
-                  <div class="info-item"><label>Sistema</label><span id="infoSistema">—</span></div>
-                  <div class="info-item"><label>Formato</label><span id="infoFormato">—</span></div>
-                  <div class="info-item"><label>Relator</label><span id="infoRelator">—</span></div>
-                  <div class="info-item"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
-                  <div class="info-item"><label>Data Julgamento</label><span id="infoDataJulgamento">—</span></div>
-                  <div class="info-item"><label>Data Publicação</label><span id="infoDataPublicacao">—</span></div>
-                  <div class="info-item"><label>Última Atualização</label><span id="infoUltimaAtualizacao">—</span></div>
+                  <div class="info-item"><label>InstÃ¢ncia</label><span id="infoInstancia">â€”</span></div>
+                  <div class="info-item"><label>Segmento</label><span id="infoSegmento">â€”</span></div>
+                  <div class="info-item"><label>Sistema</label><span id="infoSistema">â€”</span></div>
+                  <div class="info-item"><label>Formato</label><span id="infoFormato">â€”</span></div>
+                  <div class="info-item"><label>Relator</label><span id="infoRelator">â€”</span></div>
+                  <div class="info-item"><label>Tipo DecisÃ£o</label><span id="infoTipoDecisao">â€”</span></div>
+                  <div class="info-item"><label>Data Julgamento</label><span id="infoDataJulgamento">â€”</span></div>
+                  <div class="info-item"><label>Data PublicaÃ§Ã£o</label><span id="infoDataPublicacao">â€”</span></div>
+                  <div class="info-item"><label>Ãšltima AtualizaÃ§Ã£o</label><span id="infoUltimaAtualizacao">â€”</span></div>
                 </div>
               </div>
               <div id="infoDataJudExtras" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
                 <div class="card-title" style="margin-bottom:12px;font-size:13px">Dados DataJud</div>
-                <div id="infoRelatorGroup" class="info-item" style="display:none"><label>Relator</label><span id="infoRelator">—</span></div>
-                <div id="infoTipoDecisaoGroup" class="info-item" style="display:none"><label>Tipo Decisão</label><span id="infoTipoDecisao">—</span></div>
-                <div id="infoResultadoJulgamentoGroup" class="info-item" style="display:none"><label>Resultado Julgamento</label><span id="infoResultadoJulgamento">—</span></div>
+                <div id="infoRelatorGroup" class="info-item" style="display:none"><label>Relator</label><span id="infoRelator">â€”</span></div>
+                <div id="infoTipoDecisaoGroup" class="info-item" style="display:none"><label>Tipo DecisÃ£o</label><span id="infoTipoDecisao">â€”</span></div>
+                <div id="infoResultadoJulgamentoGroup" class="info-item" style="display:none"><label>Resultado Julgamento</label><span id="infoResultadoJulgamento">â€”</span></div>
               </div>
               <div id="infoEmentaGroup" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
                 <div class="card-title" style="margin-bottom:12px;font-size:13px">Ementa</div>
                 <p id="infoEmenta" style="font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:6px;max-height:300px;overflow-y:auto"></p>
               </div>
               <div id="infoDecisaoGroup" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
-                <div class="card-title" style="margin-bottom:12px;font-size:13px">Decisão (DataJud)</div>
+                <div class="card-title" style="margin-bottom:12px;font-size:13px">DecisÃ£o (DataJud)</div>
                 <p id="infoDecisaoDataJud" style="font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f9fafb;padding:12px;border-radius:6px;max-height:300px;overflow-y:auto"></p>
               </div>
               <div id="infoDecisaoGroup" style="display:none;margin-top:12px">
-                <div class="info-item"><label>Decisão</label><span id="infoDecisao">—</span></div>
-                <div class="info-item" style="margin-top:8px"><label>Resultado</label><span id="infoResultado">—</span></div>
+                <div class="info-item"><label>DecisÃ£o</label><span id="infoDecisao">â€”</span></div>
+                <div class="info-item" style="margin-top:8px"><label>Resultado</label><span id="infoResultado">â€”</span></div>
               </div>
               <div id="infoObsGroup" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--color-border)">
-                <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Observações</label>
+                <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">ObservaÃ§Ãµes</label>
                 <p id="infoObservacoes" style="margin-top:4px;font-size:14px"></p>
               </div>
-              <button id="toggleInfoExtraBtn" style="background:none;border:none;color:var(--color-primary);cursor:pointer;font-size:13px;padding:8px 0 0;display:none" onclick="toggleInfoExtra()">Mostrar mais ?</button>
+              <button id="toggleInfoExtraBtn" style="background:none;border:none;color:var(--color-primary);cursor:pointer;font-size:13px;padding:8px 0 0;display:none" onclick="toggleInfoExtra()">Mostrar mais â†“</button>
             </div>
           </div>
 
-          <!-- Últimos andamentos (preview) -->
+          <!-- Ãšltimos andamentos (preview) -->
           <div class="card">
             <div class="card-body">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-                <div class="card-title" style="margin-bottom:0">Últimos Andamentos</div>
-                <button class="btn btn-secondary btn-sm" id="btnVerTodosAndamentos" style="display:none">Ver todos ?</button>
+                <div class="card-title" style="margin-bottom:0">Ãšltimos Andamentos</div>
+                <button class="btn btn-secondary btn-sm" id="btnVerTodosAndamentos" style="display:none">Ver todos â†’</button>
               </div>
               <div id="andamentosPreviewLista">
                 <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>
@@ -240,7 +240,7 @@
             <div class="card-body">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <div class="card-title" style="margin-bottom:0">Tarefas Recentes</div>
-                <button class="btn btn-secondary btn-sm" id="btnVerTodasTarefas" style="display:none">Ver todas ?</button>
+                <button class="btn btn-secondary btn-sm" id="btnVerTodasTarefas" style="display:none">Ver todas â†’</button>
               </div>
               <div id="tarefasPreviewLista">
                 <p style="color:var(--color-text-muted);font-size:13px">Carregando...</p>
@@ -273,7 +273,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div class="card-title" style="margin-bottom:0">Documentos Anexados</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-secondary btn-sm" id="btnGerarModeloDoc">?? Gerar com Modelo</button>
+              <button class="btn btn-secondary btn-sm" id="btnGerarModeloDoc">ğŸ“‹ Gerar com Modelo</button>
               <button class="btn btn-primary btn-sm" id="btnAddDocumentoTab">+ Adicionar</button>
             </div>
           </div>
@@ -289,11 +289,11 @@
       <div class="card">
         <div class="card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div class="card-title" style="margin-bottom:0">Lançamentos Financeiros</div>
-            <button class="btn btn-primary btn-sm" id="btnAddFinanceiroTab">+ Novo Lançamento</button>
+            <div class="card-title" style="margin-bottom:0">LanÃ§amentos Financeiros</div>
+            <button class="btn btn-primary btn-sm" id="btnAddFinanceiroTab">+ Novo LanÃ§amento</button>
           </div>
           <div id="financeiroLista">
-            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando lançamentos...</p>
+            <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando lanÃ§amentos...</p>
           </div>
           <div id="financeiroPaginacao" style="display:flex;justify-content:center;gap:8px;margin-top:16px"></div>
         </div>
@@ -322,17 +322,17 @@
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <span class="modal-title" id="novaTarefaModalTitle">Nova Tarefa</span>
-      <button class="modal-close" id="novaTarefaClose">?</button>
+      <button class="modal-close" id="novaTarefaClose">âœ•</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="ntId">
       <div id="novaTarefaAlert" class="alert alert-error" style="display:none"></div>
       <div class="form-group">
-        <label class="form-label">Título *</label>
+        <label class="form-label">TÃ­tulo *</label>
         <input type="text" id="ntTitulo" class="form-control" maxlength="300">
       </div>
       <div class="form-group">
-        <label class="form-label">Descrição</label>
+        <label class="form-label">DescriÃ§Ã£o</label>
         <textarea id="ntDescricao" class="form-control" rows="3" maxlength="4000"></textarea>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -340,7 +340,7 @@
           <label class="form-label">Prioridade *</label>
           <select id="ntPrioridade" class="form-control">
             <option value="Baixa">Baixa</option>
-            <option value="Media" selected>Média</option>
+            <option value="Media" selected>MÃ©dia</option>
             <option value="Alta">Alta</option>
             <option value="Urgente">Urgente</option>
           </select>
@@ -350,7 +350,7 @@
           <select id="ntStatus" class="form-control">
             <option value="Pendente">Pendente</option>
             <option value="EmAndamento">Em Andamento</option>
-            <option value="Concluida">Concluída</option>
+            <option value="Concluida">ConcluÃ­da</option>
             <option value="Cancelada">Cancelada</option>
           </select>
         </div>
@@ -360,8 +360,8 @@
         <input type="datetime-local" id="ntPrazo" class="form-control">
       </div>
       <div class="form-group">
-        <label class="form-label">Tags (separadas por vírgula)</label>
-        <input type="text" id="ntTags" class="form-control" placeholder="ex: urgente, revisão">
+        <label class="form-label">Tags (separadas por vÃ­rgula)</label>
+        <input type="text" id="ntTags" class="form-control" placeholder="ex: urgente, revisÃ£o">
       </div>
     </div>
     <div class="modal-footer">
@@ -376,13 +376,13 @@
   <div class="modal" style="max-width:700px">
     <div class="modal-header">
       <span class="modal-title">Editar Processo</span>
-      <button class="modal-close" id="editarClose">?</button>
+      <button class="modal-close" id="editarClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="editarAlert" class="alert alert-error" style="display:none"></div>
       <form id="editarForm">
         <div class="form-group">
-          <label>Número CNJ *</label>
+          <label>NÃºmero CNJ *</label>
           <input type="text" id="eCNJ" class="form-control" required>
         </div>
         <div class="form-row">
@@ -401,29 +401,29 @@
             <input type="text" id="eComarca" class="form-control">
           </div>
           <div class="form-group">
-            <label>Área do Direito *</label>
+            <label>Ãrea do Direito *</label>
             <select id="eAreaDireito" class="form-control" required>
               <option value="Civil">Civil</option><option value="Trabalhista">Trabalhista</option>
-              <option value="Criminal">Criminal</option><option value="Tributario">Tributário</option>
-              <option value="Previdenciario">Previdenciário</option><option value="Administrativo">Administrativo</option>
-              <option value="Consumidor">Consumidor</option><option value="Familia">Família</option>
+              <option value="Criminal">Criminal</option><option value="Tributario">TributÃ¡rio</option>
+              <option value="Previdenciario">PrevidenciÃ¡rio</option><option value="Administrativo">Administrativo</option>
+              <option value="Consumidor">Consumidor</option><option value="Familia">FamÃ­lia</option>
               <option value="Empresarial">Empresarial</option><option value="Ambiental">Ambiental</option>
-              <option value="Imobiliario">Imobiliário</option><option value="Outro">Outro</option>
+              <option value="Imobiliario">ImobiliÃ¡rio</option><option value="Outro">Outro</option>
             </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tipo de Ação</label>
+            <label>Tipo de AÃ§Ã£o</label>
             <input type="text" id="eTipoAcao" class="form-control">
           </div>
           <div class="form-group">
             <label>Fase Processual *</label>
             <select id="eFase" class="form-control" required>
               <option value="Conhecimento">Conhecimento</option><option value="Recursal">Recursal</option>
-              <option value="Execucao">Execução</option><option value="Cumprimento">Cumprimento de Sentença</option>
-              <option value="InqueritoPolicial">Inquérito Policial</option>
-              <option value="InvestigacaoDefensiva">Investigação Defensiva</option><option value="Outro">Outro</option>
+              <option value="Execucao">ExecuÃ§Ã£o</option><option value="Cumprimento">Cumprimento de SentenÃ§a</option>
+              <option value="InqueritoPolicial">InquÃ©rito Policial</option>
+              <option value="InvestigacaoDefensiva">InvestigaÃ§Ã£o Defensiva</option><option value="Outro">Outro</option>
             </select>
           </div>
         </div>
@@ -442,7 +442,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Advogado Responsável</label>
+            <label>Advogado ResponsÃ¡vel</label>
             <select id="eAdvogado" class="form-control">
               <option value="">Selecionar...</option>
             </select>
@@ -450,13 +450,13 @@
           <div class="form-group">
             <label>Monitorar Andamentos</label>
             <select id="eMonitorado" class="form-control">
-              <option value="false">Não</option>
+              <option value="false">NÃ£o</option>
               <option value="true">Sim</option>
             </select>
           </div>
         </div>
         <div class="form-group">
-          <label>Observações</label>
+          <label>ObservaÃ§Ãµes</label>
           <textarea id="eObservacoes" class="form-control" rows="3"></textarea>
         </div>
       </form>
@@ -473,20 +473,20 @@
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
       <span class="modal-title">Encerrar Processo</span>
-      <button class="modal-close" id="encerrarClose">?</button>
+      <button class="modal-close" id="encerrarClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="encerrarAlert" class="alert alert-error" style="display:none"></div>
       <div class="form-group">
-        <label>Decisão *</label>
-        <input type="text" id="encDecisao" class="form-control" placeholder="Sentença procedente, Acordo...">
+        <label>DecisÃ£o *</label>
+        <input type="text" id="encDecisao" class="form-control" placeholder="SentenÃ§a procedente, Acordo...">
       </div>
       <div class="form-group">
         <label>Resultado *</label>
         <select id="encResultado" class="form-control">
           <option value="">Selecionar...</option>
           <option value="Ganho">Ganho</option><option value="Perdido">Perdido</option>
-          <option value="Acordo">Acordo</option><option value="Desistência">Desistência</option>
+          <option value="Acordo">Acordo</option><option value="DesistÃªncia">DesistÃªncia</option>
           <option value="Arquivado">Arquivado</option><option value="Outro">Outro</option>
         </select>
       </div>
@@ -503,7 +503,7 @@
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
       <span class="modal-title">Adicionar Parte</span>
-      <button class="modal-close" id="parteClose">?</button>
+      <button class="modal-close" id="parteClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="parteAlert" class="alert" style="display:none"></div>
@@ -512,7 +512,7 @@
         <select id="pTipo" class="form-control" required>
           <option value="">Selecione...</option>
           <option value="Autor">Autor</option>
-          <option value="Reu">Réu</option>
+          <option value="Reu">RÃ©u</option>
           <option value="Interessado">Interessado</option>
           <option value="Terceiro">Terceiro</option>
         </select>
@@ -522,7 +522,7 @@
         <select id="pContato" class="form-control" required>
           <option value="">Carregando...</option>
         </select>
-        <small style="color:var(--color-text-muted);font-size:12px">Não encontrou? <a href="/pages/contatos.html" target="_blank">Cadastre um novo contato</a></small>
+        <small style="color:var(--color-text-muted);font-size:12px">NÃ£o encontrou? <a href="/pages/contatos.html" target="_blank">Cadastre um novo contato</a></small>
       </div>
     </div>
     <div class="modal-footer">
@@ -532,52 +532,52 @@
   </div>
 </div>
 
-<!-- Modal Gerar Peça -->
+<!-- Modal Gerar PeÃ§a -->
 <div class="modal-overlay" id="modalGerarPeca">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span class="modal-title">Gerar Peça Jurídica</span>
-      <button class="modal-close" id="gerarPecaClose">?</button>
+      <span class="modal-title">Gerar PeÃ§a JurÃ­dica</span>
+      <button class="modal-close" id="gerarPecaClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="gerarPecaAlert" class="alert alert-error" style="display:none"></div>
       <div id="creditosInfo" style="margin-bottom:16px;padding:10px 14px;background:#f3f4f6;border-radius:6px;font-size:13px;color:#6b7280"></div>
       <div class="form-group">
-        <label>Tipo de Peça *</label>
+        <label>Tipo de PeÃ§a *</label>
         <select id="gpTipo" class="form-control" required>
-          <option value="">Selecione o tipo de peça...</option>
-          <option value="PeticaoInicial">Petição Inicial</option>
-          <option value="Contestacao">Contestação</option>
+          <option value="">Selecione o tipo de peÃ§a...</option>
+          <option value="PeticaoInicial">PetiÃ§Ã£o Inicial</option>
+          <option value="Contestacao">ContestaÃ§Ã£o</option>
           <option value="Recurso">Recurso</option>
-          <option value="AlegacoesFinais">Alegações Finais</option>
+          <option value="AlegacoesFinais">AlegaÃ§Ãµes Finais</option>
           <option value="Memoriais">Memoriais</option>
           <option value="Pedido">Pedido</option>
-          <option value="Manifestacao">Manifestação</option>
+          <option value="Manifestacao">ManifestaÃ§Ã£o</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Descrição / Contexto *</label>
-        <textarea id="gpDescricao" class="form-control" rows="6" required placeholder="Descreva o objetivo desta peça. Ex: 'A parte autora perdeu o prazo para cumprimento de sentença, preciso de um pedido de reconsideração...&#10;&#10;Inclua os fatos relevantes e o que você espera da peça.'"></textarea>
+        <label>DescriÃ§Ã£o / Contexto *</label>
+        <textarea id="gpDescricao" class="form-control" rows="6" required placeholder="Descreva o objetivo desta peÃ§a. Ex: 'A parte autora perdeu o prazo para cumprimento de sentenÃ§a, preciso de um pedido de reconsideraÃ§Ã£o...&#10;&#10;Inclua os fatos relevantes e o que vocÃª espera da peÃ§a.'"></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="gerarPecaCancelar">Cancelar</button>
-      <button class="btn btn-primary" id="gerarPecaGerar">?? Gerar Peça</button>
+      <button class="btn btn-primary" id="gerarPecaGerar">ğŸ”® Gerar PeÃ§a</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Resultado Peça -->
+<!-- Modal Resultado PeÃ§a -->
 <div class="modal-overlay" id="modalPecaGerada">
   <div class="modal" style="max-width:800px;max-height:90vh;overflow-y:auto">
     <div class="modal-header">
-      <span class="modal-title">Peça Gerada</span>
-      <button class="modal-close" id="pecaGeradaClose">?</button>
+      <span class="modal-title">PeÃ§a Gerada</span>
+      <button class="modal-close" id="pecaGeradaClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div style="margin-bottom:16px;padding:12px;background:#f0fdf4;border-radius:6px;border-left:4px solid #16a34a">
         <div style="font-size:13px;color:#166534">
-          <strong>Peça gerada por IA</strong> — Revise o conteúdo antes de usar. Este é um rascunho.
+          <strong>PeÃ§a gerada por IA</strong> â€” Revise o conteÃºdo antes de usar. Este Ã© um rascunho.
         </div>
       </div>
       <div class="form-group">
@@ -585,18 +585,18 @@
         <div id="pgTipo" style="font-size:14px;margin-bottom:12px"></div>
       </div>
       <div class="form-group">
-        <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Peça Jurídica</label>
+        <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">PeÃ§a JurÃ­dica</label>
         <div id="pgConteudo" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.7;white-space:pre-wrap;font-family:Georgia,serif;max-height:400px;overflow-y:auto"></div>
       </div>
       <div id="pgJurisprudenciaGroup" style="display:none;margin-top:16px">
         <div class="form-group">
-          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Jurisprudência Citada</label>
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">JurisprudÃªncia Citada</label>
           <div id="pgJurisprudencia" style="background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;padding:14px;font-size:13px;line-height:1.6;color:#374151"></div>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="pecaCopiar">?? Copiar Texto</button>
+      <button class="btn btn-secondary" id="pecaCopiar">ğŸ“‹ Copiar Texto</button>
       <button class="btn btn-primary" id="pecaFechar">Fechar</button>
     </div>
   </div>
@@ -607,7 +607,7 @@
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
       <span class="modal-title">Novo Andamento</span>
-      <button class="modal-close" id="andamentoClose">?</button>
+      <button class="modal-close" id="andamentoClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="andamentoAlert" class="alert alert-error" style="display:none"></div>
@@ -620,19 +620,19 @@
           <label>Tipo *</label>
           <select id="aTipo" class="form-control" required>
             <option value="Despacho">Despacho</option>
-            <option value="Decisao">Decisão</option>
-            <option value="Sentenca">Sentença</option>
-            <option value="Acordao">Acórdão</option>
-            <option value="Audiencia">Audiência</option>
-            <option value="Peticao">Petição</option>
-            <option value="Intimacao">Intimação</option>
-            <option value="Publicacao">Publicação</option>
+            <option value="Decisao">DecisÃ£o</option>
+            <option value="Sentenca">SentenÃ§a</option>
+            <option value="Acordao">AcÃ³rdÃ£o</option>
+            <option value="Audiencia">AudiÃªncia</option>
+            <option value="Peticao">PetiÃ§Ã£o</option>
+            <option value="Intimacao">IntimaÃ§Ã£o</option>
+            <option value="Publicacao">PublicaÃ§Ã£o</option>
             <option value="Outro">Outro</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label>Descrição *</label>
+        <label>DescriÃ§Ã£o *</label>
         <textarea id="aDescricao" class="form-control" rows="5" required placeholder="Descreva o andamento..."></textarea>
       </div>
     </div>
@@ -648,7 +648,7 @@
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
       <span class="modal-title">Adicionar Documento</span>
-      <button class="modal-close" id="docClose">?</button>
+      <button class="modal-close" id="docClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="docAlert" class="alert" style="display:none"></div>
@@ -659,14 +659,14 @@
         </div>
         <div class="form-group">
           <label>Nome do Documento</label>
-          <input type="text" id="docNome" class="form-control" placeholder="Ex: Petição Inicial - Réplica">
+          <input type="text" id="docNome" class="form-control" placeholder="Ex: PetiÃ§Ã£o Inicial - RÃ©plica">
           <small style="color:var(--color-text-muted);font-size:12px">Deixe em branco para usar o nome original do arquivo</small>
         </div>
         <div class="form-group">
           <label>Tipo de Documento *</label>
           <select id="docTipo" class="form-control" required>
-            <option value="Peticao">Petição</option>
-            <option value="Decisao">Decisão</option>
+            <option value="Peticao">PetiÃ§Ã£o</option>
+            <option value="Decisao">DecisÃ£o</option>
             <option value="Contrato">Contrato</option>
             <option value="Prova">Prova</option>
             <option value="Modelo">Modelo</option>
@@ -693,7 +693,7 @@
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
       <span class="modal-title">Gerar Documento com Modelo</span>
-      <button class="modal-close" id="gerarModeloClose">?</button>
+      <button class="modal-close" id="gerarModeloClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="gerarModeloAlert" class="alert" style="display:none"></div>
@@ -711,18 +711,18 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="gmCopiar">Copiar Texto</button>
-      <button class="btn btn-primary" id="gmGerarPdf">?? Gerar PDF</button>
+      <button class="btn btn-primary" id="gmGerarPdf">ğŸ“„ Gerar PDF</button>
       <button class="btn btn-primary" id="gmSalvar">Salvar Documento</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Lançamento Financeiro -->
+<!-- Modal LanÃ§amento Financeiro -->
 <div class="modal-overlay" id="modalFinanceiro">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <span class="modal-title">Novo Lançamento</span>
-      <button class="modal-close" id="financeiroClose">?</button>
+      <span class="modal-title">Novo LanÃ§amento</span>
+      <button class="modal-close" id="financeiroClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="financeiroAlert" class="alert" style="display:none"></div>
@@ -750,7 +750,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Descrição</label>
+        <label>DescriÃ§Ã£o</label>
         <input id="finDescricao" type="text" maxlength="500" class="form-control">
       </div>
     </div>
@@ -767,8 +767,8 @@
     <div class="pdf-modal-header">
       <span class="pdf-modal-title" id="pdfTitle">Documento</span>
       <div class="pdf-modal-actions">
-        <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">? Download</button>
-        <button class="pdf-modal-close" id="pdfClose">? Fechar</button>
+        <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">â¬‡ Download</button>
+        <button class="pdf-modal-close" id="pdfClose">âœ• Fechar</button>
       </div>
     </div>
     <div class="pdf-modal-body" id="pdfContainer">
@@ -785,14 +785,14 @@
 <div class="modal-overlay" id="modalCriarPrazo" style="display:none">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <span class="modal-title">? Criar Prazo</span>
-      <button class="modal-close" id="criarPrazoClose">?</button>
+      <span class="modal-title">â° Criar Prazo</span>
+      <button class="modal-close" id="criarPrazoClose">âœ•</button>
     </div>
     <div class="modal-body">
       <div id="criarPrazoAlert" class="alert alert-error" style="display:none"></div>
       <div class="form-group">
-        <label class="form-label">Título *</label>
-        <input type="text" id="cpTitulo" class="form-control" maxlength="300" placeholder="Ex: Prazo para contestação">
+        <label class="form-label">TÃ­tulo *</label>
+        <input type="text" id="cpTitulo" class="form-control" maxlength="300" placeholder="Ex: Prazo para contestaÃ§Ã£o">
       </div>
       <div class="form-group">
         <label class="form-label">Data do Prazo *</label>
@@ -802,13 +802,13 @@
         <label class="form-label">Prioridade</label>
         <select id="cpPrioridade" class="form-control">
           <option value="Baixa">Baixa</option>
-          <option value="Media" selected>Média</option>
+          <option value="Media" selected>MÃ©dia</option>
           <option value="Alta">Alta</option>
           <option value="Urgente">Urgente</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Descrição</label>
+        <label class="form-label">DescriÃ§Ã£o</label>
         <textarea id="cpDescricao" class="form-control" rows="3" maxlength="4000" placeholder="Detalhes adicionais sobre o prazo..."></textarea>
       </div>
     </div>
@@ -841,14 +841,14 @@ function showAlert(msg, type = 'error') {
   setTimeout(() => alertMsg.style.display = 'none', 4000);
 }
 
-const areaLabels = { Tributario:'Tributário', Previdenciario:'Previdenciário', Familia:'Família', Imobiliario:'Imobiliário' };
-const faseLabels = { Execucao:'Execução', Cumprimento:'Cumprimento de Sentença', InqueritoPolicial:'Inquérito Policial', InvestigacaoDefensiva:'Investigação Defensiva' };
-const tipoAndLabels = { Decisao:'Decisão', Sentenca:'Sentença', Acordao:'Acórdão', Audiencia:'Audiência', Peticao:'Petição', Intimacao:'Intimação', Publicacao:'Publicação' };
+const areaLabels = { Tributario:'TributÃ¡rio', Previdenciario:'PrevidenciÃ¡rio', Familia:'FamÃ­lia', Imobiliario:'ImobiliÃ¡rio' };
+const faseLabels = { Execucao:'ExecuÃ§Ã£o', Cumprimento:'Cumprimento de SentenÃ§a', InqueritoPolicial:'InquÃ©rito Policial', InvestigacaoDefensiva:'InvestigaÃ§Ã£o Defensiva' };
+const tipoAndLabels = { Decisao:'DecisÃ£o', Sentenca:'SentenÃ§a', Acordao:'AcÃ³rdÃ£o', Audiencia:'AudiÃªncia', Peticao:'PetiÃ§Ã£o', Intimacao:'IntimaÃ§Ã£o', Publicacao:'PublicaÃ§Ã£o' };
 
 function label(map, val) { return map[val] || val; }
-function fmtDate(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '—'; }
-function fmtDateTime(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleString('pt-BR') : '—'; }
-function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'; }
+function fmtDate(s) { if (!s) return 'â€”'; const d = new Date(s); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : 'â€”'; }
+function fmtDateTime(s) { if (!s) return 'â€”'; const d = new Date(s); return !isNaN(d) ? d.toLocaleString('pt-BR') : 'â€”'; }
+function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : 'â€”'; }
 
 function statusCls(s) { return `badge status-${s?.toLowerCase()}`; }
 
@@ -858,10 +858,10 @@ function toggleInfoExtra() {
   const btn = document.getElementById('toggleInfoExtraBtn');
   if (window._infoExtraExpanded) {
     el.style.display = 'block';
-    btn.textContent = 'Mostrar menos ?';
+    btn.textContent = 'Mostrar menos â†‘';
   } else {
     el.style.display = 'none';
-    btn.textContent = 'Mostrar mais ?';
+    btn.textContent = 'Mostrar mais â†“';
   }
 }
 
@@ -874,7 +874,7 @@ async function loadProcesso() {
 }
 
 function renderProcesso() {
-  document.title = `${processo.numeroCNJ} — Causify`;
+  document.title = `${processo.numeroCNJ} â€” Causify`;
   document.getElementById('pageTitle').textContent = processo.numeroCNJ;
 
   document.getElementById('badgeStatus').className = statusCls(processo.status);
@@ -885,25 +885,25 @@ function renderProcesso() {
   const badgeMon = document.getElementById('badgeMonitorado');
   if (processo.monitorado) {
     badgeMon.className = 'badge badge-green';
-    badgeMon.textContent = '?? Monitorado';
+    badgeMon.textContent = 'ğŸ”„ Monitorado';
     badgeMon.style.display = '';
   } else {
     badgeMon.style.display = 'none';
   }
 
-  document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
-  document.getElementById('infoSiglaTribunal').textContent = processo.siglaTribunal || '—';
-  document.getElementById('infoVara').textContent = processo.vara || '—';
-  document.getElementById('infoComarca').textContent = processo.comarca || '—';
-  document.getElementById('infoClasse').textContent = processo.classe || '—';
-  document.getElementById('infoCodigoClasse').textContent = processo.codigoClasse || '—';
-  document.getElementById('infoAssuntos').textContent = processo.assuntos || '—';
-  document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : '—';
-  document.getElementById('infoDataDistribuicao').textContent = processo.dataDistribuicao ? fmtDate(processo.dataDistribuicao) : '—';
-  document.getElementById('infoGrau').textContent = processo.grau || '—';
-  document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
+  document.getElementById('infoTribunal').textContent = processo.tribunal || 'â€”';
+  document.getElementById('infoSiglaTribunal').textContent = processo.siglaTribunal || 'â€”';
+  document.getElementById('infoVara').textContent = processo.vara || 'â€”';
+  document.getElementById('infoComarca').textContent = processo.comarca || 'â€”';
+  document.getElementById('infoClasse').textContent = processo.classe || 'â€”';
+  document.getElementById('infoCodigoClasse').textContent = processo.codigoClasse || 'â€”';
+  document.getElementById('infoAssuntos').textContent = processo.assuntos || 'â€”';
+  document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : 'â€”';
+  document.getElementById('infoDataDistribuicao').textContent = processo.dataDistribuicao ? fmtDate(processo.dataDistribuicao) : 'â€”';
+  document.getElementById('infoGrau').textContent = processo.grau || 'â€”';
+  document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || 'â€”';
   document.getElementById('infoValor').textContent = fmtMoney(processo.valorCausa);
-  document.getElementById('infoAdvogado').textContent = processo.nomeAdvogadoResponsavel || '—';
+  document.getElementById('infoAdvogado').textContent = processo.nomeAdvogadoResponsavel || 'â€”';
   document.getElementById('infoCriadoEm').textContent = fmtDate(processo.criadoEm);
 
   if (processo.encerradoEm) {
@@ -913,7 +913,7 @@ function renderProcesso() {
   if (processo.decisao) {
     document.getElementById('infoDecisaoGroup').style.display = '';
     document.getElementById('infoDecisao').textContent = processo.decisao;
-    document.getElementById('infoResultado').textContent = processo.resultado || '—';
+    document.getElementById('infoResultado').textContent = processo.resultado || 'â€”';
   }
   if (processo.observacoes) {
     document.getElementById('infoObsGroup').style.display = '';
@@ -926,7 +926,7 @@ function renderProcesso() {
   document.getElementById('infoExtraCollapsible').style.display = hasExtra ? '' : 'none';
   document.getElementById('toggleInfoExtraBtn').style.display = hasExtra ? '' : 'none';
   if (window._infoExtraExpanded === undefined) window._infoExtraExpanded = false;
-  document.getElementById('toggleInfoExtraBtn').textContent = window._infoExtraExpanded ? 'Mostrar menos ?' : 'Mostrar mais ?';
+  document.getElementById('toggleInfoExtraBtn').textContent = window._infoExtraExpanded ? 'Mostrar menos â†‘' : 'Mostrar mais â†“';
   document.getElementById('infoExtraCollapsible').style.display = window._infoExtraExpanded ? '' : 'none';
 
   // DataJud extras
@@ -958,14 +958,14 @@ function renderProcesso() {
   // Partes
   const partesEl = document.getElementById('partesLista');
   if (processo.partes?.length) {
-    const tipoLabel = { Reu: 'Réu', Autor: 'Autor', Interessado: 'Interessado', Terceiro: 'Terceiro' };
+    const tipoLabel = { Reu: 'RÃ©u', Autor: 'Autor', Interessado: 'Interessado', Terceiro: 'Terceiro' };
     partesEl.innerHTML = processo.partes.map(pt => `
       <div class="parte-item">
         <div style="flex:1">
           <div style="font-weight:500">${pt.nomeContato}</div>
           <div><span class="badge badge-${pt.tipoParte === 'Autor' ? 'blue' : 'gray'}">${tipoLabel[pt.tipoParte] || pt.tipoParte}</span></div>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="removerParte('${pt.contatoId}')" title="Remover">?</button>
+        <button class="btn btn-danger btn-sm" onclick="removerParte('${pt.contatoId}')" title="Remover">âœ•</button>
       </div>`).join('');
   } else {
     partesEl.innerHTML = '<p style="color:var(--color-text-muted);font-size:13px">Nenhuma parte cadastrada.</p>';
@@ -986,7 +986,7 @@ async function loadAndamentosPreview() {
     tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
     btnVerTodos.style.display = items.length > 5 ? '' : 'none';
     if (!items.length) {
-      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">ğŸ“‹</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
       return;
     }
     const preview = items.slice(0, 5);
@@ -997,20 +997,20 @@ async function loadAndamentosPreview() {
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
           <div class="andamento-desc">${a.descricao}</div>
           <div class="andamento-fonte">
-            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
+            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'AutomÃ¡tico'}
           </div>
           ${renderPrazosDoAndamento(a.id)}
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">? Criar Prazo</button>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">â° Criar Prazo</button>
       </div>`).join('');
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
   }
 }
 
-// -- Tarefas ------------------------------------------------
-const PRIO_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
-const STATUS_TAREFA_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
+// â”€â”€ Tarefas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const PRIO_LABEL = { Baixa: 'Baixa', Media: 'MÃ©dia', Alta: 'Alta', Urgente: 'Urgente' };
+const STATUS_TAREFA_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'ConcluÃ­da', Cancelada: 'Cancelada' };
 
 async function fetchTarefasProcesso() {
   const data = await apiFetch(`/tarefas?processoId=${processoId}&pageSize=200`);
@@ -1020,13 +1020,13 @@ async function fetchTarefasProcesso() {
 function tarefaItemHtml(t, showActions) {
   const prioKey = t.prioridade.toLowerCase();
   const statusKey = t.status === 'EmAndamento' ? 'emandamento' : t.status.toLowerCase();
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '—';
+  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : 'â€”';
   const atrasada = t.atrasada ? '<span class="t-atrasada">Atrasada</span>' : '';
   const tags = (t.tags ?? []).map(tag => `<span class="t-tag">${esc(tag)}</span>`).join('');
   const actions = showActions ? `
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
       ${t.status !== 'Concluida' && t.status !== 'Cancelada'
-        ? `<button class="btn btn-secondary btn-sm" onclick="concluirTarefa('${t.id}')">? Concluir</button>` : ''}
+        ? `<button class="btn btn-secondary btn-sm" onclick="concluirTarefa('${t.id}')">âœ“ Concluir</button>` : ''}
       <button class="btn btn-secondary btn-sm" onclick="editarTarefa('${t.id}')">Editar</button>
       <button class="btn btn-danger btn-sm" onclick="excluirTarefa('${t.id}')">Excluir</button>
     </div>` : '';
@@ -1039,7 +1039,7 @@ function tarefaItemHtml(t, showActions) {
           <span class="badge ts-${statusKey}">${STATUS_TAREFA_LABEL[t.status]}</span>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">?? Prazo: ${prazoStr}</div>
+      <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">ğŸ“… Prazo: ${prazoStr}</div>
       ${t.descricao ? `<div style="font-size:12px;color:var(--color-text);margin-top:6px;padding:8px;background:var(--color-surface);border-radius:4px;border-left:3px solid var(--color-primary)">${esc(t.descricao)}</div>` : ''}
       ${tags ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${tags}</div>` : ''}
       ${actions}
@@ -1055,7 +1055,7 @@ async function loadTarefasTab() {
     tabBadge.textContent = items.length;
     tabBadge.style.display = items.length > 0 ? 'inline-flex' : 'none';
     if (!items.length) {
-      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">?</div><div class="empty-state-text">Nenhuma tarefa associada</div></div>';
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">âœ…</div><div class="empty-state-text">Nenhuma tarefa associada</div></div>';
       return;
     }
     lista.innerHTML = items.map(t => tarefaItemHtml(t, true)).join('');
@@ -1079,7 +1079,7 @@ async function loadTarefasPreview() {
     }
     lista.innerHTML = items.slice(0, 5).map(t => tarefaItemHtml(t, false)).join('');
     if (items.length > 5) {
-      lista.innerHTML += `<div style="margin-top:8px;text-align:center"><button class="btn btn-secondary btn-sm" onclick="switchTab('tarefas')">Ver todas ${items.length} tarefas ?</button></div>`;
+      lista.innerHTML += `<div style="margin-top:8px;text-align:center"><button class="btn btn-secondary btn-sm" onclick="switchTab('tarefas')">Ver todas ${items.length} tarefas â†’</button></div>`;
     }
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
@@ -1087,12 +1087,12 @@ async function loadTarefasPreview() {
 }
 
 window.concluirTarefa = async id => {
-  if (!confirm('Marcar tarefa como concluída?')) return;
+  if (!confirm('Marcar tarefa como concluÃ­da?')) return;
   try {
     await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
     await loadTarefasTab();
     await loadTarefasPreview();
-    showAlert('Tarefa concluída.', 'success');
+    showAlert('Tarefa concluÃ­da.', 'success');
   } catch (err) { showAlert(err.message); }
 };
 
@@ -1102,10 +1102,10 @@ window.excluirTarefa = async id => {
     await apiFetch(`/tarefas/${id}`, { method: 'DELETE' });
     await loadTarefasTab();
     await loadTarefasPreview();
-    showAlert('Tarefa excluída.', 'success');
+    showAlert('Tarefa excluÃ­da.', 'success');
   } catch (err) { showAlert(err.message); }
 };
-// ---------------------------------------------------------
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function loadAndamentos() {
   const lista = document.getElementById('andamentosLista');
@@ -1113,7 +1113,7 @@ async function loadAndamentos() {
     await carregarPrazosProcesso();
     const items = await getAndamentos(processoId);
     if (!items.length) {
-      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">ğŸ“‹</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
       return;
     }
     lista.innerHTML = items.map(a => `
@@ -1123,14 +1123,14 @@ async function loadAndamentos() {
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
           <div class="andamento-desc">${a.descricao}</div>
           <div class="andamento-fonte">
-            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'Automático'}
+            ${a.fonte === 'Manual' ? `Por ${a.nomeRegistradoPor || 'sistema'}` : 'AutomÃ¡tico'}
           </div>
           ${renderPrazosDoAndamento(a.id)}
         </div>
         <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">? Criar Prazo</button>
-          <button class="btn btn-secondary btn-sm" onclick="toggleVisivelCliente('${a.id}', ${a.visivelCliente})">${a.visivelCliente ? '?? Ocultar' : '??? Mostrar'}</button>
-          ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">?</button>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">â° Criar Prazo</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleVisivelCliente('${a.id}', ${a.visivelCliente})">${a.visivelCliente ? 'ğŸ™ˆ Ocultar' : 'ğŸ‘ï¸ Mostrar'}</button>
+          ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">âœ•</button>` : ''}
         </div>
       </div>`).join('');
   } catch (err) {
@@ -1158,7 +1158,7 @@ window.toggleVisivelCliente = async (andamentoId, visivelAtual) => {
   } catch (err) { showAlert(err.message); }
 };
 
-// -- Prazos de andamento ----------------------------------------
+// â”€â”€ Prazos de andamento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _prazosCache = [];
 
 async function carregarPrazosProcesso() {
@@ -1176,33 +1176,33 @@ function renderPrazosDoAndamento(andamentoId) {
   const prazos = prazosDoAndamento(andamentoId);
   if (!prazos.length) return '';
   const STATUS_COLOR = { Pendente: '#374151', EmAndamento: '#1d4ed8', Concluida: '#057a55', Cancelada: '#e02424' };
-  const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
+  const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'ConcluÃ­da', Cancelada: 'Cancelada' };
   return prazos.map(p => {
     const concluida = p.status === 'Concluida' || p.status === 'Cancelada';
-    const prazoStr = p.prazo ? new Date(p.prazo).toLocaleString('pt-BR') : '—';
+    const prazoStr = p.prazo ? new Date(p.prazo).toLocaleString('pt-BR') : 'â€”';
     const statusColor = STATUS_COLOR[p.status] ?? '#374151';
     return `<div class="prazo-info${concluida ? ' prazo-concluido' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
         <div>
-          <div class="prazo-info-titulo">? ${esc(p.titulo)}</div>
-          <div class="prazo-info-meta">?? ${prazoStr} · <span style="color:${statusColor};font-weight:600">${STATUS_LABEL[p.status] ?? p.status}</span></div>
+          <div class="prazo-info-titulo">â° ${esc(p.titulo)}</div>
+          <div class="prazo-info-meta">ğŸ“… ${prazoStr} Â· <span style="color:${statusColor};font-weight:600">${STATUS_LABEL[p.status] ?? p.status}</span></div>
           ${p.descricao ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${esc(p.descricao)}</div>` : ''}
         </div>
-        ${!concluida ? `<button class="btn btn-secondary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="concluirPrazoAndamento('${p.id}')">? Concluir</button>` : '<span style="font-size:11px;color:#057a55;font-weight:600;white-space:nowrap">? Concluído</span>'}
+        ${!concluida ? `<button class="btn btn-secondary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="concluirPrazoAndamento('${p.id}')">âœ“ Concluir</button>` : '<span style="font-size:11px;color:#057a55;font-weight:600;white-space:nowrap">âœ“ ConcluÃ­do</span>'}
       </div>
     </div>`;
   }).join('');
 }
 
 window.concluirPrazoAndamento = async (id) => {
-  if (!confirm('Marcar este prazo como concluído?')) return;
+  if (!confirm('Marcar este prazo como concluÃ­do?')) return;
   try {
     await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
     await Promise.all([loadAndamentos(), loadAndamentosPreview(), loadTarefasTab()]);
   } catch (err) { showAlert(err.message ?? 'Erro ao concluir prazo.'); }
 };
 
-// -- Criar Prazo (a partir de andamento) ------------------------
+// â”€â”€ Criar Prazo (a partir de andamento) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _cpAndamentoId = null;
 
 window.abrirModalCriarPrazo = (andamentoId) => {
@@ -1232,8 +1232,8 @@ document.getElementById('criarPrazoSalvar').addEventListener('click', async () =
   const titulo = document.getElementById('cpTitulo').value.trim();
   const prazo = document.getElementById('cpPrazo').value;
 
-  if (!titulo) { alertEl.textContent = 'Título é obrigatório.'; alertEl.style.display = ''; return; }
-  if (!prazo) { alertEl.textContent = 'Data do prazo é obrigatória.'; alertEl.style.display = ''; return; }
+  if (!titulo) { alertEl.textContent = 'TÃ­tulo Ã© obrigatÃ³rio.'; alertEl.style.display = ''; return; }
+  if (!prazo) { alertEl.textContent = 'Data do prazo Ã© obrigatÃ³ria.'; alertEl.style.display = ''; return; }
 
   try {
     await apiFetch('/tarefas', {
@@ -1396,7 +1396,7 @@ document.getElementById('andamentoSalvar').addEventListener('click', async () =>
   } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
 });
 
-// Gerar Peça
+// Gerar PeÃ§a
 let creditosDisponiveis = 0;
 
 async function loadCreditos() {
@@ -1406,16 +1406,16 @@ async function loadCreditos() {
     creditosDisponiveis = credPeca?.quantidadeDisponivel ?? 0;
     const el = document.getElementById('creditosInfo');
     if (creditosDisponiveis > 0) {
-      el.innerHTML = `?? Créditos disponíveis: <strong>${creditosDisponiveis}</strong>`;
+      el.innerHTML = `ğŸ”® CrÃ©ditos disponÃ­veis: <strong>${creditosDisponiveis}</strong>`;
       el.style.background = '#f0fdf4';
       el.style.color = '#166534';
     } else {
-      el.innerHTML = `?? Créditos esgotados. Não é possível gerar peças no momento.`;
+      el.innerHTML = `âš ï¸ CrÃ©ditos esgotados. NÃ£o Ã© possÃ­vel gerar peÃ§as no momento.`;
       el.style.background = '#fef2f2';
       el.style.color = '#991b1b';
     }
   } catch {
-    document.getElementById('creditosInfo').innerHTML = 'Não foi possível carregar créditos.';
+    document.getElementById('creditosInfo').innerHTML = 'NÃ£o foi possÃ­vel carregar crÃ©ditos.';
   }
 }
 
@@ -1445,7 +1445,7 @@ document.getElementById('gerarPecaGerar').addEventListener('click', async () => 
   const tipo = document.getElementById('gpTipo').value;
   const descricao = document.getElementById('gpDescricao').value;
   if (!tipo || !descricao) {
-    alertEl.textContent = 'Preencha o tipo e a descrição.';
+    alertEl.textContent = 'Preencha o tipo e a descriÃ§Ã£o.';
     alertEl.style.display = 'block';
     return;
   }
@@ -1471,7 +1471,7 @@ document.getElementById('gerarPecaGerar').addEventListener('click', async () => 
     alertEl.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.textContent = '?? Gerar Peça';
+    btn.textContent = 'ğŸ”® Gerar PeÃ§a';
   }
 });
 
@@ -1483,7 +1483,7 @@ document.getElementById('pecaCopiar').addEventListener('click', () => {
   navigator.clipboard.writeText(texto).then(() => {
     const btn = document.getElementById('pecaCopiar');
     const original = btn.textContent;
-    btn.textContent = '? Copiado!';
+    btn.textContent = 'âœ… Copiado!';
     setTimeout(() => btn.textContent = original, 2000);
   });
 });
@@ -1503,7 +1503,7 @@ document.getElementById('btnMonitorar').addEventListener('click', async () => {
     showAlert(err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = '?? Consultar';
+    btn.textContent = 'ğŸ”„ Consultar';
   }
 });
 
@@ -1513,7 +1513,7 @@ async function loadDocumentos() {
   try {
     const docs = await apiFetch(`/documentos/processo/${processoId}`);
     if (!docs || !docs.length) {
-      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum documento anexado</div></div>';
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">ğŸ“</div><div class="empty-state-text">Nenhum documento anexado</div></div>';
       return;
     }
     lista.innerHTML = docs.map(d => `
@@ -1544,10 +1544,10 @@ window.viewDoc = async id => {
 };
 
 window.deleteDoc = async id => {
-  if (!confirm('?? Tem certeza?\n\nO documento será excluído permanentemente e não poderá ser recuperado.')) return;
+  if (!confirm('âš ï¸ Tem certeza?\n\nO documento serÃ¡ excluÃ­do permanentemente e nÃ£o poderÃ¡ ser recuperado.')) return;
   try {
     await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
-    showAlert('Documento excluído.', 'success');
+    showAlert('Documento excluÃ­do.', 'success');
     await loadDocumentos();
   } catch (err) { showAlert(err.message); }
 };
@@ -1612,7 +1612,7 @@ document.getElementById('gmModelo').addEventListener('change', () => {
     return;
   }
   if (!m.variaveis || !m.variaveis.length) {
-    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo não possui variáveis.</p>';
+    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo nÃ£o possui variÃ¡veis.</p>';
   } else {
     container.innerHTML = m.variaveis.map(v => {
       let preValue = '';
@@ -1666,7 +1666,7 @@ function atualizarGmResultado() {
 
 document.getElementById('gmCopiar').addEventListener('click', () => {
   const texto = document.getElementById('gmResultado').value;
-  navigator.clipboard.writeText(texto).then(() => showAlert('Conteúdo copiado!', 'success')).catch(() => showAlert('Erro ao copiar.'));
+  navigator.clipboard.writeText(texto).then(() => showAlert('ConteÃºdo copiado!', 'success')).catch(() => showAlert('Erro ao copiar.'));
 });
 
 document.getElementById('gmGerarPdf').addEventListener('click', () => {
@@ -1685,7 +1685,7 @@ document.getElementById('gmGerarPdf').addEventListener('click', () => {
 
 document.getElementById('gmSalvar').addEventListener('click', async () => {
   const resultado = document.getElementById('gmResultado').value;
-  if (!resultado) { showAlert('Gere o conteúdo primeiro.', 'error', 'gerarModeloAlert'); return; }
+  if (!resultado) { showAlert('Gere o conteÃºdo primeiro.', 'error', 'gerarModeloAlert'); return; }
   const nome = prompt('Nome do documento:', currentGmModelo?.nome || 'Documento Gerado');
   if (!nome) return;
   try {
@@ -1809,7 +1809,7 @@ document.getElementById('novaTarefaSalvar').addEventListener('click', async () =
   const btn = document.getElementById('novaTarefaSalvar');
   const alertEl = document.getElementById('novaTarefaAlert');
   const titulo = document.getElementById('ntTitulo').value.trim();
-  if (!titulo) { alertEl.textContent = 'Título é obrigatório.'; alertEl.style.display = 'block'; return; }
+  if (!titulo) { alertEl.textContent = 'TÃ­tulo Ã© obrigatÃ³rio.'; alertEl.style.display = 'block'; return; }
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   alertEl.style.display = 'none';
   try {
@@ -1856,8 +1856,8 @@ document.getElementById('novaTarefaSalvar').addEventListener('click', async () =
 // Financeiro
 function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 const CAT_LABELS_FIN = {
-  Honorario:'Honorário', Custas:'Custas', Pericia:'Perícia', Deposito:'Depósito',
-  Reembolso:'Reembolso', Salario:'Salário', AluguelEscritorio:'Aluguel Escritório',
+  Honorario:'HonorÃ¡rio', Custas:'Custas', Pericia:'PerÃ­cia', Deposito:'DepÃ³sito',
+  Reembolso:'Reembolso', Salario:'SalÃ¡rio', AluguelEscritorio:'Aluguel EscritÃ³rio',
   Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
 };
 
@@ -1869,14 +1869,14 @@ async function loadFinanceiro(page = 1) {
     const qs = new URLSearchParams({ page, pageSize: 20, processoId });
     const data = await apiFetch(`/financeiro?${qs}`);
     if (!data?.items?.length) {
-      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">??</div><div class="empty-state-text">Nenhum lançamento financeiro</div></div>';
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">ğŸ’°</div><div class="empty-state-text">Nenhum lanÃ§amento financeiro</div></div>';
       pagEl.innerHTML = '';
       return;
     }
     lista.innerHTML = data.items.map(l => {
       const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2});
       const dVenc = new Date(l.dataVencimento);
-      const dt = !isNaN(dVenc) ? dVenc.toLocaleDateString('pt-BR') : '–';
+      const dt = !isNaN(dVenc) ? dVenc.toLocaleDateString('pt-BR') : 'â€“';
       let dtPago = null;
       if (l.dataPagamento) {
         const dPag = new Date(l.dataPagamento.endsWith('Z') ? l.dataPagamento : l.dataPagamento + 'Z');
@@ -1889,11 +1889,11 @@ async function loadFinanceiro(page = 1) {
           <span class="tipo-${l.tipo.toLowerCase()}" style="margin-left:6px">${l.tipo}</span>
           <span class="status-${l.status.toLowerCase()}" style="margin-left:6px">${l.status}</span>
           <span style="font-size:12px;color:var(--color-text-muted);margin-left:8px">${CAT_LABELS_FIN[l.categoria] ?? l.categoria}</span>
-          <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}</div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">Venc: ${dt}${dtPago ? ` Â· Pago: ${dtPago}` : ''}</div>
           ${l.descricao ? `<div style="font-size:12px;color:#6b7280">${esc(l.descricao)}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px">
-          ${l.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" onclick="pagarLancamento('${l.id}')">? Pagar</button>` : ''}
+          ${l.status === 'Pendente' ? `<button class="btn btn-secondary btn-sm" onclick="pagarLancamento('${l.id}')">âœ“ Pagar</button>` : ''}
           ${l.status !== 'Cancelado' && l.status !== 'Pago' ? `<button class="btn btn-secondary btn-sm" style="color:#dc2626" onclick="cancelarLancamento('${l.id}')">Cancelar</button>` : ''}
         </div>
       </div>`;
@@ -1919,10 +1919,10 @@ window.pagarLancamento = async id => {
 };
 
 window.cancelarLancamento = async id => {
-  if (!confirm('Cancelar este lançamento?')) return;
+  if (!confirm('Cancelar este lanÃ§amento?')) return;
   try {
     await apiFetch(`/financeiro/${id}/cancelar`, { method: 'POST' });
-    showAlert('Lançamento cancelado.', 'success');
+    showAlert('LanÃ§amento cancelado.', 'success');
     await loadFinanceiro();
   } catch (err) { showAlert(err.message); }
 };
@@ -1932,8 +1932,8 @@ const CATEGORIAS_FIN = {
   Despesa: ['Salario','AluguelEscritorio','Software','Marketing','Custas','Multa','Outro']
 };
 const CAT_LABELS_FIN2 = {
-  Honorario:'Honorário', Custas:'Custas', Pericia:'Perícia', Deposito:'Depósito',
-  Reembolso:'Reembolso', Salario:'Salário', AluguelEscritorio:'Aluguel Escritório',
+  Honorario:'HonorÃ¡rio', Custas:'Custas', Pericia:'PerÃ­cia', Deposito:'DepÃ³sito',
+  Reembolso:'Reembolso', Salario:'SalÃ¡rio', AluguelEscritorio:'Aluguel EscritÃ³rio',
   Software:'Software', Marketing:'Marketing', Multa:'Multa', Outro:'Outro'
 };
 let customCatsFin = { Receita: [], Despesa: [] };
@@ -1992,7 +1992,7 @@ document.getElementById('financeiroSalvar').addEventListener('click', async () =
     });
     document.getElementById('modalFinanceiro').classList.remove('open');
     await loadFinanceiro();
-    showAlert('Lançamento criado.', 'success');
+    showAlert('LanÃ§amento criado.', 'success');
   } catch (err) {
     alertEl.textContent = err.message;
     alertEl.className = 'alert alert-error';
