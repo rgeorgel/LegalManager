@@ -74,6 +74,43 @@ export function logout() {
   window.location.href = '/cliente/';
 }
 
+export async function solicitarRedefinicao(email) {
+  const res = await fetch(`${API_BASE}/solicitar-redefinicao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return res;
+}
+
+export async function redefinirSenha(token, novaSenha) {
+  const res = await fetch(`${API_BASE}/redefinir-senha`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, novaSenha }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.title || 'Erro ao redefinir senha.');
+  }
+  return res.json();
+}
+
+export async function aceitarConvitePortal(token, senha) {
+  const res = await fetch(`${API_BASE}/aceitar-convite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, senha }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.title || 'Convite inválido ou expirado.');
+  }
+  const json = await res.json();
+  setSession(json);
+  return json;
+}
+
 export const portalApi = {
   getMe: () => clienteApiFetch('/me'),
   getMeusProcessos: () => clienteApiFetch('/meus-processos'),
