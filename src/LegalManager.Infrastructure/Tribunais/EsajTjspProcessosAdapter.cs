@@ -203,23 +203,21 @@ public class EsajTjspProcessosAdapter
                 var tdNome = tr.SelectSingleNode(".//td[@class='nomeParteEAdvogado']");
                 if (tdNome == null) continue;
 
-                var polo = WebUtility.HtmlDecode(tdLabel?.InnerText.Trim() ?? "").Replace("\u00A0", "");
-                var parteHtml = tdNome.InnerHtml;
-                var partes = parteHtml.Split(new[] { "<br", "</td>" }, StringSplitOptions.RemoveEmptyEntries);
+                var nome = WebUtility.HtmlDecode(tdNome.InnerText.Trim()).Replace("\u00A0", "");
+                var polosTexto = WebUtility.HtmlDecode(tdLabel?.InnerText.Trim() ?? "").Replace("\u00A0", "");
 
-                var nomeDoc = new HtmlDocument();
-                nomeDoc.LoadHtml(partes[0]);
-                var nomeParte = WebUtility.HtmlDecode(nomeDoc.DocumentNode.InnerText.Trim()).Replace("\u00A0", "");
-
-                var advogadosRaw = partes.Length > 1 ? partes[1] : "";
-                var advogadoMatch = System.Text.RegularExpressions.Regex.Match(
-                    advogadosRaw, @"Advogado[as]?:\s*([^\s<][^<]*)\s*(?:<|$)",
+                var abogadosMatch = System.Text.RegularExpressions.Regex.Match(
+                    nome, @"Advogado[as]?:\s*([^\s<][^<]*)\s*(?:<|$)",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                var advogados = advogadoMatch.Success
-                    ? new List<string> { WebUtility.HtmlDecode(advogadoMatch.Groups[1].Value.Trim()) }
+                var abogados = abogadosMatch.Success
+                    ? new List<string> { WebUtility.HtmlDecode(abogadosMatch.Groups[1].Value.Trim()) }
                     : new List<string>();
 
-                dto.Partes.Add(new ParteEsajDto { Nome = nomeParte, Polo = polo, Advogados = advogados });
+                // Remove the lawyer part from the party name
+                if (abogadosMatch.Success)
+                    nome = nome.Replace(abogadosMatch.Value, "").Trim();
+
+                dto.Partes.Add(new ParteEsajDto { Nome = nome, Polo = polosTexto, Advogados = abogados });
             }
         }
 
@@ -232,6 +230,8 @@ public class EsajTjspProcessosAdapter
 
         var todasLinhas = doc.DocumentNode.SelectNodes(".//tr[contains(@class,'containerMovimentacao')]");
         if (todasLinhas == null) return dto;
+
+        var vistas = new HashSet<string>();
 
         foreach (var tr in todasLinhas)
         {
@@ -257,6 +257,10 @@ public class EsajTjspProcessosAdapter
 
             var dataStr = WebUtility.HtmlDecode(tdData?.InnerText.Trim() ?? "");
             DateTime.TryParseExact(dataStr, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dataMovimento);
+
+            // Deduplica por data+titulo para evitar movimentos duplicados entre G1/G2
+            var chave = $"{dataStr}|{titulo}";
+            if (!vistas.Add(chave)) continue;
 
             dto.Movimentos.Add(new MovimentoEsajDto
             {
