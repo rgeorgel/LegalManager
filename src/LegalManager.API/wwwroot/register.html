@@ -139,6 +139,13 @@
           <label for="senha">Senha <span style="color:var(--color-text-muted)">(mín. 8 caracteres)</span></label>
           <input type="password" id="senha" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password">
         </div>
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:0.25rem">
+          <input type="checkbox" id="aceitoTermos" required style="margin-top:0.2rem;width:auto;flex-shrink:0">
+          <label for="aceitoTermos" style="font-size:0.875rem;color:var(--color-text-muted);margin-bottom:0;font-weight:400">
+            Li e aceito os <a href="/termos.html" target="_blank">Termos e Condições</a>
+            e a <a href="/privacidade.html" target="_blank">Política de Privacidade</a>
+          </label>
+        </div>
         <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">
           Criar escritório
         </button>

@@ -7,6 +7,8 @@ const PUBLIC_PAGES = [
   '/forgot-password.html',
   '/reset-password.html',
   '/aceitar-convite.html',
+  '/termos.html',
+  '/privacidade.html',
 ];
 
 for (const pagePath of PUBLIC_PAGES) {
