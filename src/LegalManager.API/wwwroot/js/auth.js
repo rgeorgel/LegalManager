@@ -1,10 +1,18 @@
 import { apiFetch, setSession, clearSession, isLoggedIn, getUser } from './api.js';
 
 export async function login(email, senha) {
-  const data = await apiFetch('/auth/login', {
+  // Usa fetch direto (não apiFetch) para evitar que 401 cause redirect
+  // antes do catch block do formulário exibir o erro
+  const res = await fetch('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, senha })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, senha }),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.title || 'E-mail ou senha inválidos.');
+  }
+  const data = await res.json();
   setSession(data);
   return data;
 }

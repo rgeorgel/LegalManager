@@ -25,15 +25,14 @@ test('botão de novo processo abre modal ou navega para formulário', async ({ a
   await page.goto('/pages/processos.html');
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 
-  // Procura botão de novo processo
-  const btnNovo = page.locator('[id*="Novo"], [id*="novo"], button:has-text("Novo"), button:has-text("+ Novo")').first();
+  const btnNovo = page.locator('#btnNovo');
   await expect(btnNovo).toBeVisible({ timeout: 5_000 });
 
   await btnNovo.click();
 
-  // Deve abrir modal ou navegar — verificar que algo mudou
+  // .open é adicionado ao .modal-overlay (wrapper externo)
   await page.waitForTimeout(300);
-  const modal = page.locator('.modal, dialog, [role="dialog"]');
+  const modal = page.locator('.modal-overlay.open');
   const onForm = page.url().includes('formulario') || page.url().includes('novo');
   const modalVisible = await modal.isVisible().catch(() => false);
 

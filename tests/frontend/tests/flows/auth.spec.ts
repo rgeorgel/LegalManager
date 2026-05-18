@@ -56,15 +56,19 @@ test('logout limpa sessão e redireciona para login', async ({ page }) => {
 });
 
 test('sessão expirada redireciona para login automaticamente', async ({ page }) => {
-  // Injeta token inválido para simular expiração
-  await page.addInitScript(() => {
+  // Navega para uma página neutra primeiro para poder setar sessionStorage
+  await page.goto('/login.html');
+
+  // Seta tokens inválidos via evaluate (não addInitScript, que re-injetaria a cada navegação)
+  await page.evaluate(() => {
     sessionStorage.setItem('access_token', 'token-expirado-invalido');
     sessionStorage.setItem('refresh_token', 'refresh-invalido');
     sessionStorage.setItem('user', JSON.stringify({ nome: 'Test', plano: 'Free' }));
   });
 
+  // Navega para página protegida — sessionStorage é preservado na mesma aba/origem
   await page.goto('/pages/dashboard.html');
 
-  // Aguarda redirecionamento após falha de auth
+  // Após 401 + falha no refresh, deve redirecionar para login
   await expect(page).toHaveURL(/login\.html/, { timeout: 15_000 });
 });

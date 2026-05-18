@@ -31,8 +31,8 @@ test('botão Novo Contato abre modal de cadastro', async ({ adminPage: page }) =
   await expect(btnNovo).toBeVisible({ timeout: 5_000 });
   await btnNovo.click();
 
-  // Modal deve aparecer
-  const modal = page.locator('.modal, dialog, [role="dialog"]');
+  // .open é adicionado ao .modal-overlay (wrapper externo)
+  const modal = page.locator('.modal-overlay.open');
   await expect(modal).toBeVisible({ timeout: 3_000 });
 });
 
