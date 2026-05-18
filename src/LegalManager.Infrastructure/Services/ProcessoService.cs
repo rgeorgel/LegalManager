@@ -80,7 +80,9 @@ public class ProcessoService : IProcessoService
                 CodigoCNJ = a.CodigoCNJ,
                 OrgaoJulgador = a.OrgaoJulgador,
                 Fonte = FonteAndamento.DataJud,
-                CriadoEm = DateTime.UtcNow
+                CriadoEm = DateTime.UtcNow,
+                TenantId = _tenantContext.TenantId,
+                VisivelCliente = true
             }).ToList();
 
         _context.Processos.Add(processo);

@@ -197,7 +197,8 @@ public class ProcessosController : ControllerBase
                             Descricao = x.Descricao,
                             Fonte = Domain.Enums.FonteAndamento.Automatico,
                             CriadoEm = DateTime.UtcNow,
-                            OrgaoJulgador = x.OrgaoJulgador
+                            OrgaoJulgador = x.OrgaoJulgador,
+                            VisivelCliente = true
                         }).ToList();
 
                     if (andamentosImportados.Count > 0)
