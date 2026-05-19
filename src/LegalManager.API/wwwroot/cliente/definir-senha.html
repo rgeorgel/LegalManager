@@ -1,14 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Causify — Definir Senha</title>
+  <title>Causify â€” Definir Senha</title>
   <link rel="stylesheet" href="/cliente/css/portal.css">
 </head>
 <body>
   <header class="portal-nav">
-    <a href="/cliente/index.html" class="portal-logo">⚖️ Causify</a>
+    <a href="/cliente/index.html" class="portal-logo">âš–ï¸ Causify</a>
   </header>
 
   <main class="portal-page">
@@ -37,7 +38,7 @@
 
     if (!token) {
       alertEl.className = 'alert alert-error';
-      alertEl.textContent = 'Token de redefinição inválido.';
+      alertEl.textContent = 'Token de redefiniÃ§Ã£o invÃ¡lido.';
       alertEl.style.display = 'block';
       document.getElementById('form').style.display = 'none';
     }
@@ -48,7 +49,7 @@
       const confirmar = document.getElementById('confirmar').value;
       if (senha !== confirmar) {
         alertEl.className = 'alert alert-error';
-        alertEl.textContent = 'As senhas não coincidem.';
+        alertEl.textContent = 'As senhas nÃ£o coincidem.';
         alertEl.style.display = 'block';
         return;
       }

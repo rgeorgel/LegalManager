@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) -->
@@ -11,15 +11,16 @@
     gtag('config', 'G-Z40PJ2FYE2');
   </script>
   <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Processo — Portal do Cliente</title>
+  <title>Processo â€” Portal do Cliente</title>
   <link rel="stylesheet" href="/cliente/css/portal.css">
 </head>
 <body>
   <header class="portal-nav" id="portalNav"></header>
 
   <main class="portal-page">
-    <button class="back-link" onclick="history.back()">← Voltar</button>
+    <button class="back-link" onclick="history.back()">â† Voltar</button>
 
     <div id="processoHeader">
       <div class="loading"><span class="spinner spinner-dark"></span></div>
@@ -65,11 +66,11 @@
       try {
         const p = await portalApi.getProcesso(processoId);
         if (!p) {
-          headerEl.innerHTML = `<div class="alert alert-error">Processo não encontrado.</div>`;
+          headerEl.innerHTML = `<div class="alert alert-error">Processo nÃ£o encontrado.</div>`;
           return;
         }
 
-        document.title = `${p.numeroCNJ} — Portal do Cliente`;
+        document.title = `${p.numeroCNJ} â€” Portal do Cliente`;
 
         headerEl.innerHTML = `
           <div class="detail-header">
@@ -82,7 +83,7 @@
             <div class="detail-grid">
               ${p.tribunal ? `<div class="detail-field"><label>Tribunal</label><span>${p.tribunal}</span></div>` : ''}
               ${p.comarca ? `<div class="detail-field"><label>Comarca</label><span>${p.comarca}</span></div>` : ''}
-              <div class="detail-field"><label>Área</label><span>${p.areaDireito}</span></div>
+              <div class="detail-field"><label>Ãrea</label><span>${p.areaDireito}</span></div>
               <div class="detail-field"><label>Cadastrado em</label><span>${formatDate(p.criadoEm)}</span></div>
             </div>
           </div>`;
@@ -106,9 +107,9 @@
                   <span class="card-title">Andamentos</span>
                 </div>
                 <div class="empty-state">
-                  <div class="empty-state-icon">📋</div>
+                  <div class="empty-state-icon">ðŸ“‹</div>
                   <div class="empty-state-title">Nenhum andamento registrado</div>
-                  <div class="empty-state-desc">Os andamentos do processo aparecerão aqui.</div>
+                  <div class="empty-state-desc">Os andamentos do processo aparecerÃ£o aqui.</div>
                 </div>
               </div>`;
             return;
@@ -121,7 +122,7 @@
             </div>
             <div class="andamento-list">${arr.map(a => `
             <div class="andamento-item">
-              <div class="andamento-date">${formatDateTime(a.data)} · <span class="badge badge-gray" style="font-size:11px">${a.tipo}</span></div>
+              <div class="andamento-date">${formatDateTime(a.data)} Â· <span class="badge badge-gray" style="font-size:11px">${a.tipo}</span></div>
               <div class="andamento-desc">${escapeHtml(a.descricao)}</div>
               ${a.descricaoTraduzidaIA ? `<div class="andamento-ia">${escapeHtml(a.descricaoTraduzidaIA)}</div>` : ''}
             </div>`).join('')}</div>
@@ -153,15 +154,15 @@
                     <label for="uploadTipo">Tipo</label>
                     <select id="uploadTipo" class="form-control">
                       <option value="Prova">Prova</option>
-                      <option value="Peticao">Petição</option>
+                      <option value="Peticao">PetiÃ§Ã£o</option>
                       <option value="Contrato">Contrato</option>
-                      <option value="Decisao">Decisão</option>
+                      <option value="Decisao">DecisÃ£o</option>
                       <option value="Outro">Outro</option>
                     </select>
                   </div>
                   <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0">
                     <label for="uploadNome">Nome (opcional)</label>
-                    <input type="text" id="uploadNome" class="form-control" placeholder="Descrição do arquivo">
+                    <input type="text" id="uploadNome" class="form-control" placeholder="DescriÃ§Ã£o do arquivo">
                   </div>
                   <div style="display:flex;gap:8px;padding-bottom:0">
                     <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
@@ -177,7 +178,7 @@
           uploadStatus = document.getElementById('uploadStatus');
 
           if (arr.length === 0) {
-            document.getElementById('documentosList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📎</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
+            document.getElementById('documentosList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">ðŸ“Ž</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
           } else {
             document.getElementById('documentosList').innerHTML = `<table class="table" style="width:100%"><thead><tr style="text-align:left"><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Enviado em</th></tr></thead><tbody>${arr.map(d => `<tr><td>${escapeHtml(d.nome)}</td><td><span class="badge badge-gray">${d.tipo}</span></td><td>${d.tamanhoFormatado}</td><td>${formatDate(d.criadoEm)}</td></tr>`).join('')}</tbody></table>`;
           }
