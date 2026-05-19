@@ -12,7 +12,7 @@ public static class PlanoRestricoes
     };
     public static int MaxProcessosMonitorados(PlanoTipo plano) => plano switch
     {
-        PlanoTipo.Free => 40,
+        PlanoTipo.Free => 20,
         PlanoTipo.Plus => 100,
         _ => 500
     };
