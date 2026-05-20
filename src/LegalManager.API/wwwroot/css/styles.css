@@ -110,11 +110,7 @@ a:active { opacity: 0.7; }
   box-shadow: var(--shadow);
   z-index: 100;
 }
-.header-logo {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-primary);
-}
+.header-logo img { height: 70px; margin-top: 5px; }
 .header-spacer { flex: 1; }
 .header-user {
   display: flex;
@@ -604,11 +600,9 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .auth-logo {
   text-align: center;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-primary);
   margin-bottom: 8px;
 }
+.auth-logo img { height: 100px; }
 .auth-subtitle { text-align: center; color: var(--color-text-muted); margin-bottom: 28px; font-size: 14px; }
 .auth-footer { text-align: center; margin-top: 20px; font-size: 13px; color: var(--color-text-muted); }
 

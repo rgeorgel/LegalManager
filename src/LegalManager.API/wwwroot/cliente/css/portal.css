@@ -104,7 +104,10 @@ a:hover { text-decoration: underline; }
   font-weight: 700;
   color: var(--color-primary);
   margin-bottom: 4px;
+  text-align: center;
 }
+.auth-logo img { height: 100px; }
+.portal-logo img { height: 70px; margin-top: 5px; }
 
 .auth-subtitle {
   color: var(--color-text-muted);
