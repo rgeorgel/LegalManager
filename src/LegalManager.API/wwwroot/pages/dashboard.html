@@ -96,8 +96,11 @@
               </select>
             </div>
           </div>
-          <div id="obProgresso" style="display:none;margin-top:12px;font-size:13px;color:var(--color-text-muted)">
-            <span id="obProgressoTxt"></span>
+          <div id="obLoadingSearch" class="loading-overlay" style="display:none">
+            <div style="text-align:center">
+              <img src="/images/search_process.gif" alt="Buscando processos..." style="width:300px;height:300px">
+              <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Procurando processos</div>
+            </div>
           </div>
           <div id="obErroBusca" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
         </div>
@@ -133,6 +136,12 @@
         <div id="obFooterStep2" style="display:none;gap:8px;width:100%;justify-content:flex-end">
           <button id="obPularStep2Btn" class="btn btn-secondary" type="button">Pular</button>
           <button id="obImportarBtn" class="btn btn-primary" type="button">Importar Selecionados</button>
+          <div id="obLoadingImport" class="loading-overlay" style="display:none">
+            <div style="text-align:center">
+              <img src="/images/loading_processos.gif" alt="Importando..." style="width:300px;height:300px">
+              <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Importando processos</div>
+            </div>
+          </div>
         </div>
         <div id="obFooterStep3" style="display:none;width:100%;justify-content:flex-end">
           <button id="obConcluirBtn" class="btn btn-primary" type="button">Concluir</button>

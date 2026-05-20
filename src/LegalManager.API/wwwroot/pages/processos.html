@@ -291,7 +291,12 @@
     <div id="alertMsg" class="alert" style="display:none"></div>
 
     <div id="processosContainer" class="processos-grid" style="display:none"></div>
-    <div id="processosLoading" style="text-align:center;padding:48px;color:var(--color-text-muted)">Carregando...</div>
+    <div id="processosLoading" class="loading-overlay" style="display:none">
+      <div style="text-align:center">
+        <img src="/images/search_process.gif" alt="Buscando processos..." style="width:300px;height:300px">
+        <div id="processosLoadingTxt" style="color:white;font-size:16px;margin-top:16px;font-weight:500">Procurando processos</div>
+      </div>
+    </div>
     <div id="processosEmpty" style="display:none;text-align:center;padding:48px">
       <div style="font-size:48px;margin-bottom:12px">⚖️</div>
       <div style="font-weight:600;margin-bottom:4px">Nenhum processo encontrado</div>
@@ -497,8 +502,11 @@
               </select>
           </div>
         </div>
-        <div id="obProgresso" style="display:none;margin-top:12px;font-size:13px;color:var(--color-text-muted)">
-          <span id="obProgressoTxt"></span>
+        <div id="obLoadingSearch" class="loading-overlay" style="display:none">
+          <div style="text-align:center">
+            <img src="/images/search_process.gif" alt="Buscando processos..." style="width:300px;height:300px">
+            <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Procurando processos</div>
+          </div>
         </div>
         <div id="obErroBusca" style="color:#dc2626;font-size:13px;margin-top:8px"></div>
       </div>
@@ -529,6 +537,12 @@
       <div id="obFooterStep2" style="display:none;gap:8px;width:100%;justify-content:flex-end">
         <button id="obPularStep2Btn" class="btn btn-secondary" type="button">Cancelar</button>
         <button id="obImportarBtn" class="btn btn-primary" type="button">Importar Selecionados</button>
+        <div id="obLoadingImport" class="loading-overlay" style="display:none">
+          <div style="text-align:center">
+            <img src="/images/loading_processos.gif" alt="Importando..." style="width:300px;height:300px">
+            <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Importando processos</div>
+          </div>
+        </div>
       </div>
       <div id="obFooterStep3" style="display:none;width:100%;justify-content:flex-end">
         <button id="obConcluirBtn" class="btn btn-primary" type="button">Concluir</button>
@@ -542,7 +556,7 @@ import { initLayout } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { mascaraCnj } from '/js/mascaras.js';
-import { initOnboardingModal, openOnboardingModal } from '/js/onboarding.js';
+import { initOnboardingModal, openOnboardingModal, startDots, stopDots } from '/js/onboarding.js';
 
 initLayout();
 
@@ -821,15 +835,18 @@ async function loadProcessos() {
   grid.style.display = 'none';
   empty.style.display = 'none';
   error.style.display = 'none';
-  loading.style.display = 'block';
+  loading.style.display = 'flex';
+  startDots('processos', 'Procurando processos');
 
   try {
     const result = await getProcessos({ ...currentFilters, page: currentPage });
     loading.style.display = 'none';
+    stopDots('processos');
     renderTable(result.items);
     renderPagination(result.totalPages, result.page);
   } catch (err) {
     loading.style.display = 'none';
+    stopDots('processos');
     error.textContent = err.message;
     error.style.display = 'block';
   }

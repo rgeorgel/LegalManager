@@ -14,6 +14,23 @@ const TRIBUNAIS_POR_UF = {
   TO:3,
 };
 
+const DOTS_TXT = { search: null, import: null };
+
+export function startDots(key, baseText, txtEl) {
+  let count = 0;
+  const txt = txtEl || document.querySelector(`#${key === 'search' ? 'obLoadingSearch' : key === 'import' ? 'obLoadingImport' : 'processosLoading'} div > div:last-child`);
+  if (!txt) return;
+  txt.textContent = baseText;
+  DOTS_TXT[key] = setInterval(() => {
+    count = (count + 1) % 4;
+    txt.textContent = baseText + '.'.repeat(count);
+  }, 400);
+}
+
+export function stopDots(key) {
+  if (DOTS_TXT[key]) { clearInterval(DOTS_TXT[key]); DOTS_TXT[key] = null; }
+}
+
 export async function initOnboarding() {
   try {
     const status = await apiFetch('/onboarding/status');
@@ -100,14 +117,12 @@ async function buscarPorOab() {
   }
 
   const btn = document.getElementById('obBuscarBtn');
-  const progressWrap = document.getElementById('obProgresso');
-  const progressTxt = document.getElementById('obProgressoTxt');
+  const loadingEl = document.getElementById('obLoadingSearch');
   btn.disabled = true;
   btn.textContent = 'Buscando...';
 
-  const total = (TRIBUNAIS_POR_UF[uf] ?? 3) + 2; // +2 tribunais superiores
-  progressWrap.style.display = 'block';
-  progressTxt.textContent = `Consultando ${total} tribunais...`;
+  loadingEl.style.display = 'flex';
+  startDots('search', 'Procurando processos');
 
   try {
     const processos = await apiFetch('/onboarding/buscar-por-oab', {
@@ -115,11 +130,13 @@ async function buscarPorOab() {
       body: JSON.stringify({ numeroOAB, uf })
     });
 
-    progressWrap.style.display = 'none';
+    loadingEl.style.display = 'none';
+    stopDots('search');
     renderResultados(processos);
     showStep(2);
   } catch {
-    progressWrap.style.display = 'none';
+    loadingEl.style.display = 'none';
+    stopDots('search');
     erroEl.textContent = 'Erro ao buscar processos. Verifique o número OAB e tente novamente.';
   } finally {
     btn.disabled = false;
@@ -187,8 +204,11 @@ async function importar() {
   }
 
   const btn = document.getElementById('obImportarBtn');
+  const loadingEl = document.getElementById('obLoadingImport');
   btn.disabled = true;
   btn.textContent = `Importando ${processos.length} processo(s)...`;
+  loadingEl.style.display = 'flex';
+  startDots('import', 'Importando processos');
   document.getElementById('obErroImportar').textContent = '';
 
   try {
@@ -216,6 +236,8 @@ async function importar() {
   } catch {
     document.getElementById('obErroImportar').textContent = 'Erro ao importar processos. Tente novamente.';
   } finally {
+    loadingEl.style.display = 'none';
+    stopDots('import');
     btn.disabled = false;
     btn.textContent = 'Importar Selecionados';
   }

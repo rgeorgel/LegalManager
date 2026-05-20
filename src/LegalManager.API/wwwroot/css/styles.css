@@ -582,6 +582,18 @@ tbody tr:last-child td { border-bottom: none; }
   background: linear-gradient(135deg, #1e2a3b 0%, #1a56db 100%);
   padding: 16px;
 }
+
+/* ── Loading Overlay ───────────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
 .auth-card {
   background: #fff;
   border-radius: 12px;
