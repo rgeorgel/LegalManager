@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <!-- Google tag (gtag.js) — only loads in non-local environments -->
@@ -17,7 +17,7 @@
   <meta charset="UTF-8">
   <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InÃ­cio â€” Portal do Cliente</title>
+  <title>Início – Portal do Cliente</title>
   <link rel="stylesheet" href="/cliente/css/portal.css">
 </head>
 <body>
@@ -25,17 +25,17 @@
 
   <main class="portal-page">
     <div class="page-header">
-      <h1 class="page-title" id="welcomeTitle">OlÃ¡!</h1>
+      <h1 class="page-title" id="welcomeTitle">Olá!</h1>
       <p class="page-subtitle">Acompanhe seus processos em andamento</p>
     </div>
 
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card">
-        <div class="stat-number" id="statTotal">â€”</div>
+        <div class="stat-number" id="statTotal">–</div>
         <div class="stat-label">Processos Ativos</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="statAndamentos">â€”</div>
+        <div class="stat-number" id="statAndamentos">–</div>
         <div class="stat-label">Andamentos Totais</div>
       </div>
     </div>
@@ -64,7 +64,7 @@
         return;
       }
 
-      document.getElementById('welcomeTitle').textContent = `OlÃ¡, ${user.nome.split(' ')[0]}!`;
+      document.getElementById('welcomeTitle').textContent = `Olá, ${user.nome.split(' ')[0]}!`;
       
       try {
         const processos = await portalApi.getMeusProcessos();
@@ -77,9 +77,9 @@
         if (arr.length === 0) {
           processosList.innerHTML = `
             <div class="empty-state">
-              <div class="empty-state-icon">ðŸ“‚</div>
+              <div class="empty-state-icon">📂</div>
               <div class="empty-state-title">Nenhum processo encontrado</div>
-              <div class="empty-state-desc">Seus processos aparecerÃ£o aqui quando forem cadastrados.</div>
+              <div class="empty-state-desc">Seus processos aparecerão aqui quando forem cadastrados.</div>
             </div>`;
           return;
         }
