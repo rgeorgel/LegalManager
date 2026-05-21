@@ -18,9 +18,27 @@ public class FeriadoConfiguration : IEntityTypeConfiguration<Feriado>
         builder.Property(f => f.CriadoEm).HasDefaultValueSql("NOW()");
         builder.Property(f => f.AtualizadoEm).HasDefaultValueSql("NOW()");
 
+        builder.Property(f => f.TenantId).IsRequired(false);
+        builder.HasOne(f => f.Tenant)
+            .WithMany()
+            .HasForeignKey(f => f.TenantId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(f => f.Data).HasDatabaseName("idx_feriados_data");
         builder.HasIndex(f => f.Tipo).HasDatabaseName("idx_feriados_tipo");
         builder.HasIndex(f => f.Ativo).HasDatabaseName("idx_feriados_ativo");
-        builder.HasIndex(f => new { f.Data, f.Tipo, f.Uf, f.Municipio }).IsUnique();
+
+        // Global feriados (nacional/estadual): unique por (Data, Tipo, Uf, Municipio)
+        builder.HasIndex(f => new { f.Data, f.Tipo, f.Uf, f.Municipio })
+            .IsUnique()
+            .HasFilter("\"TenantId\" IS NULL")
+            .HasDatabaseName("idx_feriados_global_unique");
+
+        // Tenant feriados (municipal): unique por (Data, TenantId, Uf, Municipio)
+        builder.HasIndex(f => new { f.Data, f.TenantId, f.Uf, f.Municipio })
+            .IsUnique()
+            .HasFilter("\"TenantId\" IS NOT NULL")
+            .HasDatabaseName("idx_feriados_tenant_unique");
     }
 }

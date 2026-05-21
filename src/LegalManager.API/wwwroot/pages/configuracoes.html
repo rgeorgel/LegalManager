@@ -247,9 +247,12 @@
     <!-- ===== TAB: FERIADOS ===== -->
     <div class="tab-content" id="tab-feriados">
 
-      <!-- Formulário de cadastro (admin only) -->
+      <!-- Formulário de cadastro (admin only) — apenas feriados municipais do escritório -->
       <div class="config-section" id="feriadoAdminSection" style="display:none">
-        <div class="config-section-title">Adicionar Feriado</div>
+        <div class="config-section-title">Adicionar Feriado Municipal</div>
+        <p style="font-size:13px;color:var(--color-text-muted);margin-bottom:12px">
+          Adicione feriados municipais específicos do seu escritório. Feriados nacionais e estaduais são gerenciados globalmente.
+        </p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
           <div>
             <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Data *</label>
@@ -260,19 +263,11 @@
             <input type="text" id="novoFeriadoNome" class="form-control" placeholder="Ex: Aniversário de São Paulo" maxlength="120">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Tipo *</label>
-            <select id="novoFeriadoTipo" class="form-control" style="width:150px">
-              <option value="nacional">Nacional</option>
-              <option value="estadual">Estadual</option>
-              <option value="municipal">Municipal</option>
-            </select>
-          </div>
-          <div id="novoFeriadoUfWrap">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">UF</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">UF *</label>
             <input type="text" id="novoFeriadoUf" class="form-control" placeholder="SP" maxlength="2" style="width:70px;text-transform:uppercase">
           </div>
-          <div id="novoFeriadoMunicipioWrap" style="display:none">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Município</label>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Município *</label>
             <input type="text" id="novoFeriadoMunicipio" class="form-control" placeholder="São Paulo" maxlength="100" style="width:180px">
           </div>
           <button class="btn btn-primary" id="btnAdicionarFeriado">Adicionar</button>
@@ -284,7 +279,7 @@
       <div class="config-section">
         <div class="config-section-title">Feriados Cadastrados</div>
         <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-          Feriados considerados nos cálculos de prazos. Administradores podem adicionar e remover feriados.
+          Feriados considerados nos cálculos de prazos. Feriados nacionais e estaduais são globais (somente leitura). Administradores podem adicionar e remover feriados municipais do escritório.
         </p>
 
         <!-- Filtros -->
@@ -953,10 +948,12 @@
       ? filtered.map(f => {
           const [y, m, d] = f.data.split('-');
           const badge = TIPO_BADGE[f.tipo] ?? '';
+          const canEdit = isAdmin && !f.global;
           const acoesCell = isAdmin ? `
-            <td data-label="Ações" style="white-space:nowrap">
+            <td data-label="Ações" style="white-space:nowrap">${canEdit ? `
               <button class="btn btn-secondary btn-sm" data-action="toggle" data-id="${f.id}">${f.ativo ? 'Desativar' : 'Ativar'}</button>
-              <button class="btn btn-danger btn-sm" data-action="excluir" data-id="${f.id}" style="margin-left:4px">✕</button>
+              <button class="btn btn-danger btn-sm" data-action="excluir" data-id="${f.id}" style="margin-left:4px">✕</button>` : `
+              <span style="font-size:12px;color:var(--color-text-muted)">Global</span>`}
             </td>` : '';
           return `<tr>
             <td data-label="Data" style="font-family:monospace">${d}/${m}/${y}</td>
@@ -982,25 +979,17 @@
   }
 
   function setupAdminFeriados() {
-    const tipoSel = document.getElementById('novoFeriadoTipo');
-    tipoSel.addEventListener('change', () => {
-      const t = tipoSel.value;
-      document.getElementById('novoFeriadoUfWrap').style.display = t === 'nacional' ? 'none' : '';
-      document.getElementById('novoFeriadoMunicipioWrap').style.display = t === 'municipal' ? '' : 'none';
-    });
-
     document.getElementById('btnAdicionarFeriado').addEventListener('click', async () => {
       const msg = document.getElementById('novoFeriadoMsg');
       msg.style.display = 'none';
       const data = document.getElementById('novoFeriadoData').value;
       const nome = document.getElementById('novoFeriadoNome').value.trim();
-      const tipo = document.getElementById('novoFeriadoTipo').value;
       const uf   = document.getElementById('novoFeriadoUf').value.trim().toUpperCase() || null;
       const municipio = document.getElementById('novoFeriadoMunicipio').value.trim() || null;
 
-      if (!data || !nome) {
+      if (!data || !nome || !uf || !municipio) {
         msg.className = 'alert alert-error';
-        msg.textContent = 'Data e Nome são obrigatórios.';
+        msg.textContent = 'Data, Nome, UF e Município são obrigatórios.';
         msg.style.display = '';
         return;
       }
@@ -1008,15 +997,17 @@
       try {
         const created = await apiFetch('/feriados', {
           method: 'POST',
-          body: JSON.stringify({ data, nome, tipo, uf, municipio })
+          body: JSON.stringify({ data, nome, tipo: 'municipal', uf, municipio })
         });
         feriadosAll.push(created);
         feriadosAll.sort((a, b) => a.data.localeCompare(b.data));
         document.getElementById('novoFeriadoData').value = '';
         document.getElementById('novoFeriadoNome').value = '';
+        document.getElementById('novoFeriadoUf').value = '';
+        document.getElementById('novoFeriadoMunicipio').value = '';
         renderFeriados();
         msg.className = 'alert alert-success';
-        msg.textContent = 'Feriado adicionado com sucesso!';
+        msg.textContent = 'Feriado municipal adicionado com sucesso!';
         msg.style.display = '';
       } catch (err) {
         msg.className = 'alert alert-error';

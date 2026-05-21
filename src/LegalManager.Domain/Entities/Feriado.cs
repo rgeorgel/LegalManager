@@ -11,4 +11,8 @@ public class Feriado
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
+
+    // null = feriado global (nacional/estadual); not null = municipal criado pelo tenant
+    public Guid? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 }

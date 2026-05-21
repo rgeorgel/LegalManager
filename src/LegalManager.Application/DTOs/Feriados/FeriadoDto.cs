@@ -7,5 +7,6 @@ public record FeriadoDto(
     string Tipo,
     string? Uf,
     string? Municipio,
-    bool Ativo
+    bool Ativo,
+    bool Global
 );
