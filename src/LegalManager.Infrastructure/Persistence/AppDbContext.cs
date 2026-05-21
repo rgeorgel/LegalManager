@@ -35,7 +35,6 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Publicacao> Publicacoes => Set<Publicacao>();
     public DbSet<ProcessoMonitorado> ProcessosMonitorados => Set<ProcessoMonitorado>();
     public DbSet<ProcessoMonitoradoAndamento> ProcessosMonitoradosAndamentos => Set<ProcessoMonitoradoAndamento>();
-    public DbSet<Prazo> Prazos => Set<Prazo>();
     public DbSet<AcessoCliente> AcessosCliente => Set<AcessoCliente>();
     public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();
     public DbSet<RegistroTempo> RegistrosTempo => Set<RegistroTempo>();
@@ -51,6 +50,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<HonorarioCalculo> HonorariosCalculos => Set<HonorarioCalculo>();
     public DbSet<IndiceCorrecaoMonetaria> IndicesCorrecaoMonetaria => Set<IndiceCorrecaoMonetaria>();
     public DbSet<ConfiguracaoCalculadora> ConfiguracoesCalculadora => Set<ConfiguracaoCalculadora>();
+    public DbSet<Feriado> Feriados => Set<Feriado>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

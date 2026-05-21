@@ -35,7 +35,7 @@ public enum TipoAndamento
     Peticao, Intimacao, Publicacao, Outro
 }
 
-public enum StatusTarefa { Pendente, EmAndamento, Concluida, Cancelada }
+public enum StatusTarefa { Pendente, EmAndamento, Concluida, Cancelada, Perdida, Suspensa }
 
 public enum PrioridadeTarefa { Baixa, Media, Alta, Urgente }
 

@@ -29,7 +29,13 @@ const NAV_GROUPS = [
     label: 'Financeiro',
     items: [
       { href: '/pages/financeiro.html',    label: '💰 Financeiro', plus: true },
-      { href: '/pages/honorarios.html',    label: '⚖️ Honorários' },
+    ],
+  },
+  {
+    label: 'Calculadoras',
+    items: [
+      { href: '/pages/honorarios.html',          label: '⚖️ Honorários' },
+      { href: '/pages/calculadora-prazos.html',  label: '📅 Calculadora de Prazos', plus: true },
     ],
   },
   {

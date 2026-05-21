@@ -301,7 +301,7 @@ public class PortalClienteControllerTests
     {
         var service = CreateServiceMock();
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var result = await controller.Login(new LoginPortalDto("test@test.com", "senha"), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -313,7 +313,7 @@ public class PortalClienteControllerTests
         service.Setup(s => s.LoginAsync(It.IsAny<LoginPortalDto>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UnauthorizedAccessException("Invalid credentials"));
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var result = await controller.Login(new LoginPortalDto("invalid@test.com", "wrong"), CancellationToken.None);
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
     }
@@ -323,7 +323,7 @@ public class PortalClienteControllerTests
     {
         var service = CreateServiceMock();
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
@@ -338,7 +338,7 @@ public class PortalClienteControllerTests
     {
         var service = CreateServiceMock();
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
@@ -354,7 +354,7 @@ public class PortalClienteControllerTests
     {
         var service = CreateServiceMock();
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
@@ -370,7 +370,7 @@ public class PortalClienteControllerTests
     {
         var service = CreateServiceMock();
         var tenantContext = new Mock<ITenantContext>();
-        var controller = new PortalClienteController(service.Object, tenantContext.Object);
+        var controller = new PortalClienteController(service.Object, new Mock<IDocumentoService>().Object, tenantContext.Object);
         var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
         {
             new System.Security.Claims.Claim("contatoId", Guid.NewGuid().ToString()),
@@ -553,76 +553,18 @@ public class NotificacoesControllerTests
 
 public class PrazosControllerTests
 {
-    private static Mock<IPrazoService> CreatePrazoServiceMock()
+    private static PrazosController CreateController(PlanoTipo plano = PlanoTipo.Free)
     {
-        var mock = new Mock<IPrazoService>();
-        mock.Setup(s => s.GetPendentesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Enumerable.Empty<PrazoResponseDto>());
-        mock.Setup(s => s.GetByProcessoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Enumerable.Empty<PrazoResponseDto>());
-        mock.Setup(s => s.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((PrazoResponseDto?)null);
-        mock.Setup(s => s.CalcularDataFinal(It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<bool>()))
-            .Returns(DateTime.UtcNow.AddDays(30));
-        return mock;
-    }
-
-    private static Mock<ITenantContext> CreateTenantContextMock(PlanoTipo plano = PlanoTipo.Free)
-    {
-        var mock = new Mock<ITenantContext>();
-        mock.Setup(t => t.TenantId).Returns(Guid.NewGuid());
-        mock.Setup(t => t.Plano).Returns(plano);
-        return mock;
-    }
-
-    [Fact]
-    public async Task GetPendentes_ReturnsOk()
-    {
-        var service = CreatePrazoServiceMock();
-        var tenant = CreateTenantContextMock();
-        var controller = new PrazosController(service.Object, tenant.Object);
-        var result = await controller.GetPendentes(30, CancellationToken.None);
-        Assert.IsType<OkObjectResult>(result);
-    }
-
-    [Fact]
-    public async Task GetByProcesso_ReturnsOk()
-    {
-        var service = CreatePrazoServiceMock();
-        var tenant = CreateTenantContextMock();
-        var controller = new PrazosController(service.Object, tenant.Object);
-        var result = await controller.GetByProcesso(Guid.NewGuid(), CancellationToken.None);
-        Assert.IsType<OkObjectResult>(result);
-    }
-
-    [Fact]
-    public async Task GetById_ReturnsNotFound_WhenNull()
-    {
-        var service = CreatePrazoServiceMock();
-        var tenant = CreateTenantContextMock();
-        var controller = new PrazosController(service.Object, tenant.Object);
-        var result = await controller.GetById(Guid.NewGuid(), CancellationToken.None);
-        Assert.IsType<NotFoundResult>(result);
-    }
-
-    [Fact]
-    public async Task Delete_ReturnsNoContent()
-    {
-        var service = CreatePrazoServiceMock();
-        service.Setup(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        var tenant = CreateTenantContextMock();
-        var controller = new PrazosController(service.Object, tenant.Object);
-        var result = await controller.Delete(Guid.NewGuid(), CancellationToken.None);
-        Assert.IsType<NoContentResult>(result);
+        var tenant = new Mock<ITenantContext>();
+        tenant.Setup(t => t.TenantId).Returns(Guid.NewGuid());
+        tenant.Setup(t => t.Plano).Returns(plano);
+        return new PrazosController(tenant.Object);
     }
 
     [Fact]
     public void Calcular_Returns402_WhenFreePlan()
     {
-        var service = CreatePrazoServiceMock();
-        var tenant = CreateTenantContextMock(PlanoTipo.Free);
-        var controller = new PrazosController(service.Object, tenant.Object);
+        var controller = CreateController(PlanoTipo.Free);
         var dto = new CalcularPrazoDto(DateTime.UtcNow, 5, TipoCalculo.DiasUteis);
         var result = controller.Calcular(dto);
         var objectResult = Assert.IsType<ObjectResult>(result);
@@ -632,10 +574,17 @@ public class PrazosControllerTests
     [Fact]
     public void Calcular_ReturnsOk_WhenProPlan()
     {
-        var service = CreatePrazoServiceMock();
-        var tenant = CreateTenantContextMock(PlanoTipo.Pro);
-        var controller = new PrazosController(service.Object, tenant.Object);
+        var controller = CreateController(PlanoTipo.Pro);
         var dto = new CalcularPrazoDto(DateTime.UtcNow, 5, TipoCalculo.DiasUteis);
+        var result = controller.Calcular(dto);
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public void Calcular_ReturnsOk_WhenPlusPlan()
+    {
+        var controller = CreateController(PlanoTipo.Plus);
+        var dto = new CalcularPrazoDto(DateTime.UtcNow, 10, TipoCalculo.DiasCorridos);
         var result = controller.Calcular(dto);
         Assert.IsType<OkObjectResult>(result);
     }

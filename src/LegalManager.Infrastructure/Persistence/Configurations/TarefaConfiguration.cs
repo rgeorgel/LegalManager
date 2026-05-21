@@ -11,6 +11,9 @@ public class TarefaConfiguration : IEntityTypeConfiguration<Tarefa>
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Titulo).HasMaxLength(300).IsRequired();
         builder.Property(t => t.Descricao).HasMaxLength(4000);
+        builder.Property(t => t.DataInicio).IsRequired(false);
+        builder.Property(t => t.QuantidadeDias).IsRequired(false);
+        builder.Property(t => t.TipoCalculo).IsRequired(false);
 
         builder.HasOne(t => t.Tenant)
             .WithMany()

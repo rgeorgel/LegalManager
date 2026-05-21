@@ -59,7 +59,6 @@ public class SeedService
         _context.Tarefas.RemoveRange(_context.Tarefas.Where(t => t.TenantId == tenantId));
 
         _context.Publicacoes.RemoveRange(_context.Publicacoes.Where(p => p.TenantId == tenantId));
-        _context.Prazos.RemoveRange(_context.Prazos.Where(p => p.TenantId == tenantId));
 
         _context.ProcessoPartes.RemoveRange(
             _context.ProcessoPartes.Include(pp => pp.Processo)

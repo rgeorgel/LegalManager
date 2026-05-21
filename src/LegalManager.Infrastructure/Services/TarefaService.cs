@@ -22,6 +22,7 @@ public class TarefaService : ITarefaService
 
     public async Task<TarefaResponseDto> CreateAsync(CreateTarefaDto dto, CancellationToken ct = default)
     {
+        var prazoCalculado = CalcularPrazo(dto.DataInicio, dto.QuantidadeDias, dto.TipoCalculo, dto.FeriadosAdicionais);
         var tarefa = new Tarefa
         {
             Id = Guid.NewGuid(),
@@ -30,7 +31,12 @@ public class TarefaService : ITarefaService
             Descricao = dto.Descricao,
             ResponsavelId = dto.ResponsavelId,
             CriadoPorId = _tenantContext.UserId,
-            Prazo = dto.Prazo,
+            Prazo = prazoCalculado.HasValue && dto.Prazo.HasValue
+                ? prazoCalculado.Value.Date.Add(dto.Prazo.Value.TimeOfDay)
+                : prazoCalculado ?? dto.Prazo,
+            DataInicio = dto.DataInicio,
+            QuantidadeDias = dto.QuantidadeDias,
+            TipoCalculo = dto.TipoCalculo,
             Prioridade = dto.Prioridade,
             Status = StatusTarefa.Pendente,
             ProcessoId = dto.ProcessoId,
@@ -57,10 +63,14 @@ public class TarefaService : ITarefaService
             .FirstOrDefaultAsync(t => t.TenantId == _tenantContext.TenantId && t.Id == id, ct)
             ?? throw new KeyNotFoundException("Tarefa não encontrada.");
 
+        var prazoCalculado = CalcularPrazo(dto.DataInicio, dto.QuantidadeDias, dto.TipoCalculo, null);
         tarefa.Titulo = dto.Titulo;
         tarefa.Descricao = dto.Descricao;
         tarefa.ResponsavelId = dto.ResponsavelId;
-        tarefa.Prazo = dto.Prazo;
+        tarefa.Prazo = prazoCalculado ?? dto.Prazo;
+        tarefa.DataInicio = dto.DataInicio;
+        tarefa.QuantidadeDias = dto.QuantidadeDias;
+        tarefa.TipoCalculo = dto.TipoCalculo;
         tarefa.Prioridade = dto.Prioridade;
         tarefa.ProcessoId = dto.ProcessoId;
         tarefa.ContatoId = dto.ContatoId;
@@ -148,7 +158,10 @@ public class TarefaService : ITarefaService
                 t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
                 t.CriadoEm,
                 t.Tipo,
-                t.AndamentoId
+                t.AndamentoId,
+                t.DataInicio,
+                t.QuantidadeDias,
+                t.TipoCalculo
             ))
             .ToListAsync(ct);
 
@@ -202,7 +215,10 @@ public class TarefaService : ITarefaService
                 t.ConcluidaEm,
                 t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
                 t.Tipo,
-                t.AndamentoId
+                t.AndamentoId,
+                t.DataInicio,
+                t.QuantidadeDias,
+                t.TipoCalculo
             ))
             .FirstOrDefaultAsync(ct);
 
@@ -217,5 +233,15 @@ public class TarefaService : ITarefaService
             tarefa.ConcluidaEm = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
+    }
+
+    private static DateTime? CalcularPrazo(DateTime? dataInicio, int? quantidadeDias, TipoCalculo? tipoCalculo, IEnumerable<DateOnly>? feriadosAdicionais)
+    {
+        if (!dataInicio.HasValue || !quantidadeDias.HasValue)
+            return null;
+
+        return tipoCalculo == TipoCalculo.DiasUteis
+            ? FeriadosService.AdicionarDiasUteis(dataInicio.Value, quantidadeDias.Value, feriadosAdicionais)
+            : dataInicio.Value.Date.AddDays(quantidadeDias.Value);
     }
 }

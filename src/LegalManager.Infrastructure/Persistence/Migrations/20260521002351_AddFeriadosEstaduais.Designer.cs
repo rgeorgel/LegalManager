@@ -3,6 +3,7 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260521002351_AddFeriadosEstaduais")]
+    partial class AddFeriadosEstaduais
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1052,6 +1055,69 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("PecasGeradas");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.Prazo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AndamentoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataFinal")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ProcessoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("QuantidadeDias")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ResponsavelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TipoCalculo")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AndamentoId");
+
+                    b.HasIndex("ProcessoId");
+
+                    b.HasIndex("ResponsavelId");
+
+                    b.HasIndex("TenantId", "DataFinal");
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("Prazos");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.PreferenciasNotificacao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1532,9 +1598,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CriadoPorId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("DataInicio")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Descricao")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -1548,9 +1611,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ProcessoId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("QuantidadeDias")
-                        .HasColumnType("integer");
-
                     b.Property<Guid?>("ResponsavelId")
                         .HasColumnType("uuid");
 
@@ -1561,9 +1621,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int>("Tipo")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TipoCalculo")
                         .HasColumnType("integer");
 
                     b.Property<string>("Titulo")
@@ -2232,6 +2289,38 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("GeradoPor");
 
                     b.Navigation("Processo");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.Prazo", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Andamento", "Andamento")
+                        .WithMany()
+                        .HasForeignKey("AndamentoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Processo", "Processo")
+                        .WithMany()
+                        .HasForeignKey("ProcessoId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "Responsavel")
+                        .WithMany()
+                        .HasForeignKey("ResponsavelId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Andamento");
+
+                    b.Navigation("Processo");
+
+                    b.Navigation("Responsavel");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.PreferenciasNotificacao", b =>

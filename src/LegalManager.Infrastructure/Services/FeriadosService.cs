@@ -45,14 +45,21 @@ public static class FeriadosService
         return !feriados.Contains(date.Date);
     }
 
-    public static DateTime AdicionarDiasUteis(DateTime inicio, int dias)
+    public static DateTime AdicionarDiasUteis(DateTime inicio, int dias, IEnumerable<DateOnly>? feriadosAdicionais = null)
     {
         var current = inicio.Date;
         var cache = new Dictionary<int, HashSet<DateTime>>();
+        var extras = feriadosAdicionais?.Select(f => f.ToDateTime(TimeOnly.MinValue).Date).ToHashSet()
+                     ?? [];
 
         HashSet<DateTime> GetFeriados(int year)
         {
-            if (!cache.TryGetValue(year, out var f)) cache[year] = f = GetFeriadosNacionais(year);
+            if (!cache.TryGetValue(year, out var f))
+            {
+                f = GetFeriadosNacionais(year);
+                foreach (var e in extras.Where(e => e.Year == year)) f.Add(e);
+                cache[year] = f;
+            }
             return f;
         }
 
@@ -65,10 +72,12 @@ public static class FeriadosService
         return current;
     }
 
-    public static IReadOnlyList<string> ListarFeriadosNoIntervalo(DateTime inicio, DateTime fim)
+    public static IReadOnlyList<string> ListarFeriadosNoIntervalo(DateTime inicio, DateTime fim, IEnumerable<DateOnly>? feriadosAdicionais = null)
     {
         var years = Enumerable.Range(inicio.Year, fim.Year - inicio.Year + 1);
         var todos = years.SelectMany(y => GetFeriadosNacionais(y)).ToHashSet();
+        if (feriadosAdicionais != null)
+            foreach (var f in feriadosAdicionais) todos.Add(f.ToDateTime(TimeOnly.MinValue).Date);
         return todos
             .Where(f => f >= inicio.Date && f <= fim.Date)
             .OrderBy(f => f)

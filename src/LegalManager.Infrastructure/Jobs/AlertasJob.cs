@@ -252,17 +252,22 @@ public class AlertasJob
         foreach (var dias in limites)
         {
             var dataAlvo = hoje.AddDays(dias).Date;
-            var prazos = await _context.Set<Domain.Entities.Prazo>()
-                .Where(p => p.Status == Domain.Enums.StatusPrazo.Pendente &&
-                            p.DataFinal.Date == dataAlvo &&
-                            p.ResponsavelId.HasValue)
-                .Select(p => new
+            var prazos = await _context.Tarefas
+                .Where(t => t.Tipo == TipoTarefa.Prazo &&
+                            t.Status == StatusTarefa.Pendente &&
+                            t.Prazo.HasValue &&
+                            t.Prazo.Value.Date == dataAlvo &&
+                            t.ResponsavelId.HasValue)
+                .Select(t => new
                 {
-                    p.Id,
-                    p.TenantId, p.Descricao, p.DataFinal, p.ResponsavelId,
-                    NumeroCNJ = p.Processo != null ? p.Processo.NumeroCNJ : null,
-                    ResponsavelNome = p.Responsavel!.Nome,
-                    ResponsavelEmail = p.Responsavel!.Email
+                    t.Id,
+                    t.TenantId,
+                    Descricao = t.Titulo,
+                    DataFinal = t.Prazo!.Value,
+                    t.ResponsavelId,
+                    NumeroCNJ = t.Processo != null ? t.Processo.NumeroCNJ : null,
+                    ResponsavelNome = t.Responsavel!.Nome,
+                    ResponsavelEmail = t.Responsavel!.Email
                 })
                 .ToListAsync();
 
@@ -306,7 +311,7 @@ public class AlertasJob
                             TipoNotificacao.PrazoTarefa,
                             $"Prazo processual em {dias} dia(s)",
                             $"O prazo \"{prazo.Descricao}\" vence em {dias} dia(s).",
-                            "/pages/prazos.html", chave);
+                            "/pages/tarefas.html?tipo=Prazo", chave);
                 }
                 catch (Exception ex)
                 {

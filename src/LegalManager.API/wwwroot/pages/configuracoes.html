@@ -73,6 +73,7 @@
     <div class="tab-nav">
       <button class="tab-btn active" data-tab="configuracoes">⚙️ Configurações</button>
       <button class="tab-btn" data-tab="usuarios">🔑 Usuários</button>
+      <button class="tab-btn" data-tab="feriados">📅 Feriados</button>
     </div>
 
     <!-- ===== TAB: CONFIGURAÇÕES ===== -->
@@ -243,6 +244,115 @@
       </div>
     </div><!-- /tab-usuarios -->
 
+    <!-- ===== TAB: FERIADOS ===== -->
+    <div class="tab-content" id="tab-feriados">
+
+      <!-- Formulário de cadastro (admin only) -->
+      <div class="config-section" id="feriadoAdminSection" style="display:none">
+        <div class="config-section-title">Adicionar Feriado</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Data *</label>
+            <input type="date" id="novoFeriadoData" class="form-control" style="width:150px">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Nome *</label>
+            <input type="text" id="novoFeriadoNome" class="form-control" placeholder="Ex: Aniversário de São Paulo" maxlength="120">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Tipo *</label>
+            <select id="novoFeriadoTipo" class="form-control" style="width:150px">
+              <option value="nacional">Nacional</option>
+              <option value="estadual">Estadual</option>
+              <option value="municipal">Municipal</option>
+            </select>
+          </div>
+          <div id="novoFeriadoUfWrap">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">UF</label>
+            <input type="text" id="novoFeriadoUf" class="form-control" placeholder="SP" maxlength="2" style="width:70px;text-transform:uppercase">
+          </div>
+          <div id="novoFeriadoMunicipioWrap" style="display:none">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Município</label>
+            <input type="text" id="novoFeriadoMunicipio" class="form-control" placeholder="São Paulo" maxlength="100" style="width:180px">
+          </div>
+          <button class="btn btn-primary" id="btnAdicionarFeriado">Adicionar</button>
+        </div>
+        <div id="novoFeriadoMsg" class="alert" style="display:none;margin-top:10px"></div>
+      </div>
+
+      <!-- Listagem -->
+      <div class="config-section">
+        <div class="config-section-title">Feriados Cadastrados</div>
+        <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+          Feriados considerados nos cálculos de prazos. Administradores podem adicionar e remover feriados.
+        </p>
+
+        <!-- Filtros -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Buscar por nome</label>
+            <input type="text" id="feriadoBusca" class="form-control" placeholder="Ex: Tiradentes" style="width:200px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Tipo</label>
+            <select id="feriadoTipo" class="form-control" style="width:145px">
+              <option value="">Todos</option>
+              <option value="nacional">Nacional</option>
+              <option value="estadual">Estadual</option>
+              <option value="municipal">Municipal</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">UF</label>
+            <select id="feriadoUfFiltro" class="form-control" style="width:100px">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Município</label>
+            <select id="feriadoMunicipioFiltro" class="form-control" style="width:160px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Ano</label>
+            <select id="feriadoAno" class="form-control" style="width:100px">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:4px">Status</label>
+            <select id="feriadoStatus" class="form-control" style="width:120px">
+              <option value="">Todos</option>
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="feriadosLoading" style="font-size:14px;color:var(--color-text-muted)">Carregando...</div>
+        <div id="feriadosContent" style="display:none">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th>Tipo</th>
+                  <th>UF</th>
+                  <th>Município</th>
+                  <th>Status</th>
+                  <th id="feriadoAcoesHeader" style="display:none">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="feriadosTableBody"></tbody>
+            </table>
+          </div>
+          <div id="feriadosCounter" style="font-size:12px;color:var(--color-text-muted);margin-top:10px;text-align:right"></div>
+        </div>
+      </div>
+    </div><!-- /tab-feriados -->
+
   </main>
 </div>
 
@@ -287,6 +397,8 @@
   // TAB SWITCHING
   // ============================================================
   let usuariosLoaded = false;
+  let feriadosLoaded = false;
+  let feriadosAll = [];
 
   function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
@@ -298,6 +410,10 @@
       loadUsuarios();
       usuariosLoaded = true;
     }
+    if (name === 'feriados' && !feriadosLoaded) {
+      loadFeriados();
+      feriadosLoaded = true;
+    }
   }
 
   document.querySelectorAll('.tab-btn').forEach(btn =>
@@ -306,6 +422,7 @@
 
   const initialTab = new URLSearchParams(window.location.search).get('tab');
   if (initialTab === 'usuarios') switchTab('usuarios');
+  if (initialTab === 'feriados') switchTab('feriados');
 
   // ============================================================
   // CONFIGURAÇÕES
@@ -758,6 +875,174 @@
       btn.textContent = 'Enviar convite';
     }
   });
+
+  // ============================================================
+  // FERIADOS
+  // ============================================================
+  async function loadFeriados() {
+    try {
+      feriadosAll = await apiFetch('/feriados');
+
+      // Ano
+      const anos = [...new Set(feriadosAll.map(f => f.data.substring(0, 4)))].sort();
+      const anoSel = document.getElementById('feriadoAno');
+      anos.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; anoSel.appendChild(o); });
+
+      // UF
+      const ufs = [...new Set(feriadosAll.filter(f => f.uf).map(f => f.uf))].sort();
+      const ufSel = document.getElementById('feriadoUfFiltro');
+      ufs.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; ufSel.appendChild(o); });
+
+      // Municípios (reloaded on UF change)
+      ufSel.addEventListener('change', refreshMunicipioFiltro);
+
+      document.getElementById('feriadosLoading').style.display = 'none';
+      document.getElementById('feriadosContent').style.display = '';
+      renderFeriados();
+
+      ['feriadoBusca', 'feriadoTipo', 'feriadoUfFiltro', 'feriadoMunicipioFiltro', 'feriadoAno', 'feriadoStatus'].forEach(id =>
+        document.getElementById(id).addEventListener('input', renderFeriados));
+
+      // Admin UI
+      if (isAdmin) {
+        document.getElementById('feriadoAdminSection').style.display = '';
+        document.getElementById('feriadoAcoesHeader').style.display = '';
+        setupAdminFeriados();
+      }
+    } catch {
+      document.getElementById('feriadosLoading').textContent = 'Erro ao carregar feriados.';
+    }
+  }
+
+  function refreshMunicipioFiltro() {
+    const uf = document.getElementById('feriadoUfFiltro').value;
+    const sel = document.getElementById('feriadoMunicipioFiltro');
+    sel.innerHTML = '<option value="">Todos</option>';
+    if (!uf) return;
+    const municipios = [...new Set(feriadosAll.filter(f => f.tipo === 'municipal' && f.uf === uf).map(f => f.municipio).filter(Boolean))].sort();
+    municipios.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+  }
+
+  function renderFeriados() {
+    const busca     = document.getElementById('feriadoBusca').value.toLowerCase();
+    const tipo      = document.getElementById('feriadoTipo').value;
+    const uf        = document.getElementById('feriadoUfFiltro').value;
+    const municipio = document.getElementById('feriadoMunicipioFiltro').value;
+    const ano       = document.getElementById('feriadoAno').value;
+    const status    = document.getElementById('feriadoStatus').value;
+
+    const filtered = feriadosAll.filter(f => {
+      if (busca     && !f.nome.toLowerCase().includes(busca)) return false;
+      if (tipo      && f.tipo !== tipo) return false;
+      if (uf        && f.uf !== uf) return false;
+      if (municipio && f.municipio !== municipio) return false;
+      if (ano       && !f.data.startsWith(ano)) return false;
+      if (status === 'ativo'   && !f.ativo) return false;
+      if (status === 'inativo' &&  f.ativo) return false;
+      return true;
+    });
+
+    const TIPO_BADGE = {
+      nacional:  'background:#dbeafe;color:#1e40af',
+      estadual:  'background:#d1fae5;color:#065f46',
+      municipal: 'background:#fef3c7;color:#92400e',
+    };
+
+    const colspan = isAdmin ? 7 : 6;
+    document.getElementById('feriadosTableBody').innerHTML = filtered.length
+      ? filtered.map(f => {
+          const [y, m, d] = f.data.split('-');
+          const badge = TIPO_BADGE[f.tipo] ?? '';
+          const acoesCell = isAdmin ? `
+            <td data-label="Ações" style="white-space:nowrap">
+              <button class="btn btn-secondary btn-sm" data-action="toggle" data-id="${f.id}">${f.ativo ? 'Desativar' : 'Ativar'}</button>
+              <button class="btn btn-danger btn-sm" data-action="excluir" data-id="${f.id}" style="margin-left:4px">✕</button>
+            </td>` : '';
+          return `<tr>
+            <td data-label="Data" style="font-family:monospace">${d}/${m}/${y}</td>
+            <td data-label="Nome">${esc(f.nome)}</td>
+            <td data-label="Tipo"><span style="padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;${badge}">${f.tipo}</span></td>
+            <td data-label="UF">${f.uf ?? '—'}</td>
+            <td data-label="Município">${f.municipio ?? '—'}</td>
+            <td data-label="Status"><span class="badge badge-${f.ativo ? 'green' : 'red'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
+            ${acoesCell}
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="${colspan}" style="text-align:center;padding:32px;color:var(--color-text-muted)">Nenhum feriado encontrado.</td></tr>`;
+
+    if (isAdmin) {
+      document.querySelectorAll('[data-action="toggle"]').forEach(btn =>
+        btn.addEventListener('click', () => toggleFeriado(parseInt(btn.dataset.id))));
+      document.querySelectorAll('[data-action="excluir"]').forEach(btn =>
+        btn.addEventListener('click', () => excluirFeriado(parseInt(btn.dataset.id))));
+    }
+
+    document.getElementById('feriadosCounter').textContent =
+      `${filtered.length} registro(s) exibido(s) de ${feriadosAll.length} total`;
+  }
+
+  function setupAdminFeriados() {
+    const tipoSel = document.getElementById('novoFeriadoTipo');
+    tipoSel.addEventListener('change', () => {
+      const t = tipoSel.value;
+      document.getElementById('novoFeriadoUfWrap').style.display = t === 'nacional' ? 'none' : '';
+      document.getElementById('novoFeriadoMunicipioWrap').style.display = t === 'municipal' ? '' : 'none';
+    });
+
+    document.getElementById('btnAdicionarFeriado').addEventListener('click', async () => {
+      const msg = document.getElementById('novoFeriadoMsg');
+      msg.style.display = 'none';
+      const data = document.getElementById('novoFeriadoData').value;
+      const nome = document.getElementById('novoFeriadoNome').value.trim();
+      const tipo = document.getElementById('novoFeriadoTipo').value;
+      const uf   = document.getElementById('novoFeriadoUf').value.trim().toUpperCase() || null;
+      const municipio = document.getElementById('novoFeriadoMunicipio').value.trim() || null;
+
+      if (!data || !nome) {
+        msg.className = 'alert alert-error';
+        msg.textContent = 'Data e Nome são obrigatórios.';
+        msg.style.display = '';
+        return;
+      }
+
+      try {
+        const created = await apiFetch('/feriados', {
+          method: 'POST',
+          body: JSON.stringify({ data, nome, tipo, uf, municipio })
+        });
+        feriadosAll.push(created);
+        feriadosAll.sort((a, b) => a.data.localeCompare(b.data));
+        document.getElementById('novoFeriadoData').value = '';
+        document.getElementById('novoFeriadoNome').value = '';
+        renderFeriados();
+        msg.className = 'alert alert-success';
+        msg.textContent = 'Feriado adicionado com sucesso!';
+        msg.style.display = '';
+      } catch (err) {
+        msg.className = 'alert alert-error';
+        msg.textContent = err.message ?? 'Erro ao adicionar feriado.';
+        msg.style.display = '';
+      }
+    });
+  }
+
+  async function toggleFeriado(id) {
+    try {
+      const updated = await apiFetch(`/feriados/${id}/ativo`, { method: 'PATCH' });
+      const idx = feriadosAll.findIndex(f => f.id === id);
+      if (idx !== -1) feriadosAll[idx] = updated;
+      renderFeriados();
+    } catch (err) { alert(err.message ?? 'Erro ao alterar status.'); }
+  }
+
+  async function excluirFeriado(id) {
+    if (!confirm('Excluir este feriado permanentemente?')) return;
+    try {
+      await apiFetch(`/feriados/${id}`, { method: 'DELETE' });
+      feriadosAll = feriadosAll.filter(f => f.id !== id);
+      renderFeriados();
+    } catch (err) { alert(err.message ?? 'Erro ao excluir feriado.'); }
+  }
 
   // ============================================================
   // INIT

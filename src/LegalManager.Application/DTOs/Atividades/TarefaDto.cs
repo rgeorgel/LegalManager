@@ -13,7 +13,11 @@ public record CreateTarefaDto(
     Guid? ContatoId,
     List<string>? Tags,
     TipoTarefa Tipo = TipoTarefa.Tarefa,
-    Guid? AndamentoId = null
+    Guid? AndamentoId = null,
+    DateTime? DataInicio = null,
+    int? QuantidadeDias = null,
+    TipoCalculo? TipoCalculo = null,
+    DateOnly[]? FeriadosAdicionais = null
 );
 
 public record UpdateTarefaDto(
@@ -26,7 +30,10 @@ public record UpdateTarefaDto(
     Guid? ProcessoId,
     Guid? ContatoId,
     List<string>? Tags,
-    TipoTarefa Tipo = TipoTarefa.Tarefa
+    TipoTarefa Tipo = TipoTarefa.Tarefa,
+    DateTime? DataInicio = null,
+    int? QuantidadeDias = null,
+    TipoCalculo? TipoCalculo = null
 );
 
 public record TarefaResponseDto(
@@ -49,7 +56,10 @@ public record TarefaResponseDto(
     DateTime? ConcluidaEm,
     bool Atrasada,
     TipoTarefa Tipo = TipoTarefa.Tarefa,
-    Guid? AndamentoId = null
+    Guid? AndamentoId = null,
+    DateTime? DataInicio = null,
+    int? QuantidadeDias = null,
+    TipoCalculo? TipoCalculo = null
 );
 
 public record TarefaListItemDto(
@@ -69,7 +79,10 @@ public record TarefaListItemDto(
     bool Atrasada,
     DateTime CriadoEm,
     TipoTarefa Tipo = TipoTarefa.Tarefa,
-    Guid? AndamentoId = null
+    Guid? AndamentoId = null,
+    DateTime? DataInicio = null,
+    int? QuantidadeDias = null,
+    TipoCalculo? TipoCalculo = null
 );
 
 public record TarefaFiltroDto(

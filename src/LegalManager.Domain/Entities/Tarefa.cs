@@ -13,6 +13,9 @@ public class Tarefa
     public Guid? ResponsavelId { get; set; }
     public Guid CriadoPorId { get; set; }
     public DateTime? Prazo { get; set; }
+    public DateTime? DataInicio { get; set; }
+    public int? QuantidadeDias { get; set; }
+    public TipoCalculo? TipoCalculo { get; set; }
     public PrioridadeTarefa Prioridade { get; set; }
     public StatusTarefa Status { get; set; }
     public TipoTarefa Tipo { get; set; }

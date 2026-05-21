@@ -195,13 +195,16 @@ public class AlertasJobTests
             AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
             Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.Prazos.Add(new Prazo
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, ProcessoId = processoId,
-            Descricao = "Prazo para contestação", DataInicio = DateTime.UtcNow.Date.AddDays(-5),
+            Titulo = "Prazo para contestação",
+            DataInicio = DateTime.UtcNow.Date.AddDays(-5),
             QuantidadeDias = 5, TipoCalculo = TipoCalculo.DiasCorridos,
-            DataFinal = amanha, Status = StatusPrazo.Pendente,
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = amanha, Status = StatusTarefa.Pendente,
+            Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow,
+            CriadoPorId = responsavelId, Prioridade = PrioridadeTarefa.Alta
         });
         await ctx.SaveChangesAsync();
 
@@ -381,13 +384,16 @@ public class AlertasJobTests
             AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
             Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
         });
-        ctx.Prazos.Add(new Prazo
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, ProcessoId = processoId,
-            Descricao = "Prazo para contestação", DataInicio = DateTime.UtcNow.Date.AddDays(-5),
+            Titulo = "Prazo para contestação",
+            DataInicio = DateTime.UtcNow.Date.AddDays(-5),
             QuantidadeDias = 5, TipoCalculo = TipoCalculo.DiasCorridos,
-            DataFinal = amanha, Status = StatusPrazo.Pendente,
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = amanha, Status = StatusTarefa.Pendente,
+            Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow,
+            CriadoPorId = responsavelId, Prioridade = PrioridadeTarefa.Alta
         });
         await ctx.SaveChangesAsync();
 

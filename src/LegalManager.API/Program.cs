@@ -79,7 +79,6 @@ builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
-builder.Services.AddScoped<IPrazoService, PrazoService>();
 builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
 builder.Services.AddScoped<IProcessoMonitoradoService, ProcessoMonitoradoService>();
 builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();

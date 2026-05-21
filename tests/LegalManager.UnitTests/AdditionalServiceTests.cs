@@ -750,46 +750,39 @@ public class NotificacoesControllerAdditionalTests
     }
 }
 
-// ─── PrazosController – Create & Update ──────────────────────────────────────
+// ─── PrazosController – Calcular ─────────────────────────────────────────────
 
 public class PrazosControllerAdditionalTests
 {
-    private static PrazosController CreateController(Mock<IPrazoService>? svc = null)
+    private static PrazosController CreateController(PlanoTipo plano = PlanoTipo.Pro)
     {
-        svc ??= new Mock<IPrazoService>();
         var tenant = new Mock<ITenantContext>();
         tenant.Setup(t => t.TenantId).Returns(Guid.NewGuid());
-        tenant.Setup(t => t.Plano).Returns(PlanoTipo.Pro);
-        return new PrazosController(svc.Object, tenant.Object);
-    }
-
-    private static PrazoResponseDto MakeResponse(Guid id) =>
-        new(id, null, null, null, "Prazo teste", DateTime.UtcNow, 30, TipoCalculo.DiasUteis,
-            DateTime.UtcNow.AddDays(30), StatusPrazo.Pendente, null, null, null, 30, DateTime.UtcNow);
-
-    [Fact]
-    public async Task Create_RetornsCreated()
-    {
-        var svc = new Mock<IPrazoService>();
-        var prazoId = Guid.NewGuid();
-        svc.Setup(s => s.CreateAsync(It.IsAny<CreatePrazoDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeResponse(prazoId));
-        var ctrl = CreateController(svc);
-        var dto = new CreatePrazoDto(null, null, "Prazo teste", DateTime.UtcNow, 30, TipoCalculo.DiasUteis, null, null);
-        var result = await ctrl.Create(dto, default);
-        Assert.IsType<CreatedAtActionResult>(result.Result);
+        tenant.Setup(t => t.Plano).Returns(plano);
+        return new PrazosController(tenant.Object);
     }
 
     [Fact]
-    public async Task Update_RetornsOk()
+    public void Calcular_DiasCorridos_ReturnsCorrectDataFinal()
     {
-        var svc = new Mock<IPrazoService>();
-        var id = Guid.NewGuid();
-        svc.Setup(s => s.UpdateAsync(id, It.IsAny<UpdatePrazoDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(MakeResponse(id));
-        var ctrl = CreateController(svc);
-        var dto = new UpdatePrazoDto("Prazo atualizado", DateTime.UtcNow, 15, TipoCalculo.DiasCorridos, StatusPrazo.Pendente, null, null);
-        var result = await ctrl.Update(id, dto, default);
-        Assert.IsType<OkObjectResult>(result);
+        var ctrl = CreateController();
+        var inicio = new DateTime(2025, 1, 6); // segunda-feira
+        var dto = new CalcularPrazoDto(inicio, 10, TipoCalculo.DiasCorridos);
+        var result = ctrl.Calcular(dto);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var res = Assert.IsType<CalcularPrazoResultDto>(ok.Value);
+        Assert.Equal(inicio.AddDays(10), res.DataFinal);
+    }
+
+    [Fact]
+    public void Calcular_DiasUteis_SkipsWeekends()
+    {
+        var ctrl = CreateController();
+        var sexta = new DateTime(2025, 1, 3); // sexta-feira
+        var dto = new CalcularPrazoDto(sexta, 1, TipoCalculo.DiasUteis);
+        var result = ctrl.Calcular(dto);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var res = Assert.IsType<CalcularPrazoResultDto>(ok.Value);
+        Assert.Equal(DayOfWeek.Monday, res.DataFinal.DayOfWeek);
     }
 }

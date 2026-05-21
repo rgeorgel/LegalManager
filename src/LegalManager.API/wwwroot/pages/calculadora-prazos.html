@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de Prazos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .cp-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .cp-grid { grid-template-columns: 1fr; } }
+
+    .cp-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .cp-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 16px;
+    }
+    .cp-field { margin-bottom: 14px; }
+    .cp-field:last-of-type { margin-bottom: 0; }
+    .cp-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      margin-bottom: 5px;
+    }
+    .cp-field input, .cp-field select {
+      width: 100%;
+      height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--color-background);
+      color: var(--color-text);
+      box-sizing: border-box;
+    }
+    .cp-tipo-btns { display: flex; gap: 8px; }
+    .cp-tipo-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background: var(--color-background);
+      color: var(--color-text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: .15s;
+      text-align: center;
+    }
+    .cp-tipo-btn.on {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    .cp-result-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: var(--color-text-muted);
+      font-size: 14px;
+      text-align: center;
+      gap: 10px;
+    }
+    .cp-result-empty span { font-size: 40px; }
+
+    .cp-data-final {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+    .cp-data-final-weekday {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      text-transform: capitalize;
+      margin-bottom: 16px;
+    }
+    .cp-stat-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .cp-stat {
+      background: var(--color-background);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      min-width: 100px;
+    }
+    .cp-stat-label { font-size: 11px; color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing:.05em; }
+    .cp-stat-value { font-size: 20px; font-weight: 700; margin-top: 2px; }
+
+    .cp-feriados-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-border);
+    }
+    .cp-feriado-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 13px;
+    }
+    .cp-feriado-item:last-child { border-bottom: none; }
+    .cp-feriado-date {
+      font-weight: 600;
+      font-family: monospace;
+      color: var(--color-text-muted);
+      min-width: 76px;
+    }
+    .cp-badge-feriado {
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .cp-gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 30px;
+      text-align: center;
+      gap: 12px;
+    }
+    .cp-gate-icon { font-size: 48px; }
+    .cp-gate h2 { font-size: 20px; font-weight: 700; margin: 0; }
+    .cp-gate p { font-size: 14px; color: var(--color-text-muted); margin: 0; }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de Prazos</h1>
+    </div>
+
+    <!-- Plan gate -->
+    <div id="planGate" style="display:none" class="card cp-gate">
+      <div class="cp-gate-icon">📅</div>
+      <h2>Disponível a partir do plano Plus</h2>
+      <p>Calcule prazos processuais em dias úteis ou corridos, considerando feriados nacionais automaticamente.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <!-- Main content -->
+    <div id="mainContent" style="display:none">
+      <div class="cp-grid">
+        <!-- Inputs -->
+        <div class="cp-card">
+          <div class="cp-card-title">Parâmetros</div>
+
+          <div class="cp-field">
+            <label>Data de início</label>
+            <input type="date" id="cpInicio">
+          </div>
+
+          <div class="cp-field">
+            <label>Quantidade de dias</label>
+            <input type="number" id="cpDias" min="1" max="3650" placeholder="Ex: 15">
+          </div>
+
+          <div class="cp-field">
+            <label>Tipo de contagem</label>
+            <div class="cp-tipo-btns">
+              <button class="cp-tipo-btn on" data-tipo="DiasUteis">Dias úteis</button>
+              <button class="cp-tipo-btn" data-tipo="DiasCorridos">Dias corridos</button>
+            </div>
+          </div>
+
+          <div class="cp-field">
+            <label>Estado (UF) <span style="font-weight:400;color:var(--color-text-muted)">— opcional</span></label>
+            <select id="cpUf">
+              <option value="">Nacional apenas</option>
+            </select>
+          </div>
+
+          <div class="cp-field" id="cpMunicipioField" style="display:none">
+            <label>Município <span style="font-weight:400;color:var(--color-text-muted)">— opcional</span></label>
+            <select id="cpMunicipio">
+              <option value="">Sem município</option>
+            </select>
+          </div>
+
+          <div style="margin-top:20px">
+            <button class="btn btn-primary" id="cpBtnCalcular" style="width:100%">Calcular prazo</button>
+          </div>
+
+          <div id="cpErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+        </div>
+
+        <!-- Resultado -->
+        <div class="cp-card" id="cpResultCard">
+          <div id="cpResultEmpty" class="cp-result-empty">
+            <span>📅</span>
+            <div>Preencha os dados ao lado e clique em <strong>Calcular prazo</strong></div>
+          </div>
+
+          <div id="cpResultado" style="display:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div class="cp-card-title" style="margin-bottom:0">Resultado</div>
+              <button class="btn btn-primary btn-sm" id="cpBtnCriarPrazo">+ Criar prazo</button>
+            </div>
+            <div class="cp-data-final" id="cpDataFinal">—</div>
+            <div class="cp-data-final-weekday" id="cpDataFinalWeekday"></div>
+
+            <div class="cp-stat-row">
+              <div class="cp-stat">
+                <div class="cp-stat-label">Início</div>
+                <div class="cp-stat-value" id="cpStatInicio" style="font-size:15px">—</div>
+              </div>
+              <div class="cp-stat">
+                <div class="cp-stat-label">Dias pedidos</div>
+                <div class="cp-stat-value" id="cpStatDias">—</div>
+              </div>
+              <div class="cp-stat">
+                <div class="cp-stat-label">Tipo</div>
+                <div class="cp-stat-value" id="cpStatTipo" style="font-size:13px">—</div>
+              </div>
+            </div>
+
+            <div id="cpFeriadosWrapper">
+              <div class="cp-feriados-title">Feriados no intervalo</div>
+              <div id="cpFeriadosList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Criar Prazo -->
+<div class="modal-overlay" id="modalCriarPrazo">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Criar Prazo</span>
+      <button class="modal-close" id="modalCriarPrazoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Resumo do cálculo -->
+      <div style="background:var(--color-background);border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div><span style="color:var(--color-text-muted)">Início:</span> <strong id="mResumoInicio">—</strong></div>
+          <div><span style="color:var(--color-text-muted)">Dias:</span> <strong id="mResumoDias">—</strong></div>
+          <div><span style="color:var(--color-text-muted)">Tipo:</span> <strong id="mResumoTipo">—</strong></div>
+          <div><span style="color:var(--color-text-muted)">Vencimento:</span> <strong id="mResumoFinal" style="color:var(--color-primary)">—</strong></div>
+        </div>
+      </div>
+
+      <div id="modalCriarPrazoAlert" class="alert alert-error" style="display:none"></div>
+
+      <div class="form-group">
+        <label class="form-label">Descrição *</label>
+        <input type="text" id="mDescricao" class="form-control" maxlength="500" placeholder="Ex: Prazo para contestação">
+      </div>
+
+      <div class="form-group" style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="form-label">Data de vencimento</label>
+          <input type="text" id="mDataFinalDisplay" class="form-control" disabled style="background:var(--color-background);color:var(--color-text-muted)">
+        </div>
+        <div style="width:110px">
+          <label class="form-label">Horário</label>
+          <input type="time" id="mHorario" class="form-control" value="12:00">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Processo <span style="font-weight:400;color:var(--color-text-muted)">— opcional</span></label>
+        <select id="mProcesso" class="form-control">
+          <option value="">Nenhum processo vinculado</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Observações <span style="font-weight:400;color:var(--color-text-muted)">— opcional</span></label>
+        <textarea id="mObservacoes" class="form-control" rows="2" maxlength="2000" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCriarPrazoCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnCriarPrazoSalvar">Criar prazo</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+
+  initLayout();
+
+  // Plan gate
+  if (isPlanoFree()) {
+    document.getElementById('planGate').style.display = '';
+  } else {
+    document.getElementById('mainContent').style.display = '';
+    init();
+  }
+
+  let feriadosDB = [];
+  let tipoAtivo = 'DiasUteis';
+  let lastCalculo = null;   // { dataInicio, quantidadeDias, tipoCalculo, dataFinal }
+  let processosCached = null;
+
+  async function init() {
+    document.getElementById('cpInicio').value = new Date().toISOString().substring(0, 10);
+
+    try {
+      feriadosDB = await apiFetch('/feriados?ativo=true');
+    } catch {
+      feriadosDB = [];
+    }
+
+    populateUfSelect();
+
+    document.querySelectorAll('.cp-tipo-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cp-tipo-btn').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        tipoAtivo = btn.dataset.tipo;
+      });
+    });
+
+    document.getElementById('cpUf').addEventListener('change', onUfChange);
+    document.getElementById('cpBtnCalcular').addEventListener('click', calcular);
+
+    ['cpInicio', 'cpDias'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') calcular();
+      });
+    });
+
+    setupModal();
+  }
+
+  function setupModal() {
+    const modal = document.getElementById('modalCriarPrazo');
+    const close = () => modal.classList.remove('open');
+
+    document.getElementById('modalCriarPrazoClose').addEventListener('click', close);
+    document.getElementById('btnCriarPrazoCancelar').addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    document.getElementById('cpBtnCriarPrazo').addEventListener('click', openModal);
+    document.getElementById('btnCriarPrazoSalvar').addEventListener('click', salvarPrazo);
+  }
+
+  async function openModal() {
+    if (!lastCalculo) return;
+
+    const modal = document.getElementById('modalCriarPrazo');
+    document.getElementById('modalCriarPrazoAlert').style.display = 'none';
+    document.getElementById('mDescricao').value = '';
+    document.getElementById('mObservacoes').value = '';
+
+    // Preenche resumo
+    const dInicio = new Date(lastCalculo.dataInicio + 'T12:00:00');
+    const dFinal  = new Date(lastCalculo.dataFinal.substring(0, 10) + 'T12:00:00');
+    document.getElementById('mResumoInicio').textContent =
+      dInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('mResumoDias').textContent = lastCalculo.quantidadeDias;
+    document.getElementById('mResumoTipo').textContent = lastCalculo.tipoCalculo === 'DiasUteis' ? 'Dias úteis' : 'Dias corridos';
+    const dataFinalLabel = dFinal.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('mResumoFinal').textContent = dataFinalLabel;
+    document.getElementById('mDataFinalDisplay').value = dataFinalLabel;
+
+    // Carrega processos (uma só vez)
+    await loadProcessosSelect();
+
+    modal.classList.add('open');
+    document.getElementById('mDescricao').focus();
+  }
+
+  async function loadProcessosSelect() {
+    const sel = document.getElementById('mProcesso');
+    sel.innerHTML = '<option value="">Nenhum processo vinculado</option>';
+
+    try {
+      if (!processosCached) {
+        const data = await apiFetch('/processos?pageSize=200');
+        processosCached = data.items ?? [];
+      }
+      processosCached.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.numeroCNJ + (p.comarca ? ` — ${p.comarca}` : '');
+        sel.appendChild(opt);
+      });
+    } catch { /* sem processos — tudo bem */ }
+  }
+
+  async function salvarPrazo() {
+    const alertEl = document.getElementById('modalCriarPrazoAlert');
+    alertEl.style.display = 'none';
+
+    const descricao = document.getElementById('mDescricao').value.trim();
+    if (!descricao) {
+      alertEl.textContent = 'Descrição é obrigatória.';
+      alertEl.style.display = '';
+      document.getElementById('mDescricao').focus();
+      return;
+    }
+
+    const btn = document.getElementById('btnCriarPrazoSalvar');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    try {
+      const horario = document.getElementById('mHorario').value || '12:00';
+      const dataFinalDate = lastCalculo.dataFinal.substring(0, 10);
+      const prazoISO = `${dataFinalDate}T${horario}:00`;
+
+      await apiFetch('/tarefas', {
+        method: 'POST',
+        body: JSON.stringify({
+          titulo:          descricao,
+          descricao:       document.getElementById('mObservacoes').value.trim() || null,
+          tipo:            'Prazo',
+          prioridade:      'Media',
+          prazo:           prazoISO,
+          dataInicio:      lastCalculo.dataInicio,
+          quantidadeDias:  lastCalculo.quantidadeDias,
+          tipoCalculo:     lastCalculo.tipoCalculo,
+          feriadosAdicionais: getFeriadosAdicionais(),
+          processoId:      document.getElementById('mProcesso').value || null,
+        }),
+      });
+      document.getElementById('modalCriarPrazo').classList.remove('open');
+    } catch (err) {
+      alertEl.textContent = err.message ?? 'Erro ao criar prazo.';
+      alertEl.style.display = '';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Criar prazo';
+    }
+  }
+
+  function populateUfSelect() {
+    const ufs = [...new Set(
+      feriadosDB.filter(f => f.tipo === 'estadual' || f.tipo === 'municipal').map(f => f.uf).filter(Boolean)
+    )].sort();
+    const sel = document.getElementById('cpUf');
+    ufs.forEach(uf => {
+      const o = document.createElement('option');
+      o.value = uf;
+      o.textContent = uf;
+      sel.appendChild(o);
+    });
+  }
+
+  function onUfChange() {
+    const uf = document.getElementById('cpUf').value;
+    const municipioField = document.getElementById('cpMunicipioField');
+    const municipioSel = document.getElementById('cpMunicipio');
+
+    municipioSel.innerHTML = '<option value="">Sem município</option>';
+
+    if (!uf) {
+      municipioField.style.display = 'none';
+      return;
+    }
+
+    const municipios = [...new Set(
+      feriadosDB.filter(f => f.tipo === 'municipal' && f.uf === uf).map(f => f.municipio).filter(Boolean)
+    )].sort();
+
+    if (municipios.length === 0) {
+      municipioField.style.display = 'none';
+      return;
+    }
+
+    municipios.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = m;
+      municipioSel.appendChild(o);
+    });
+    municipioField.style.display = '';
+  }
+
+  function getFeriadosAdicionais() {
+    const uf = document.getElementById('cpUf').value;
+    const municipio = document.getElementById('cpMunicipio').value;
+    if (!uf) return [];
+
+    return feriadosDB
+      .filter(f => f.ativo && (
+        (f.tipo === 'estadual' && f.uf === uf) ||
+        (f.tipo === 'municipal' && f.uf === uf && f.municipio === municipio)
+      ))
+      .map(f => f.data); // "YYYY-MM-DD" — DateOnly serializa neste formato
+  }
+
+  async function calcular() {
+    const inicio = document.getElementById('cpInicio').value;
+    const dias = parseInt(document.getElementById('cpDias').value);
+    const errEl = document.getElementById('cpErr');
+    errEl.style.display = 'none';
+
+    if (!inicio || !dias || dias < 1) {
+      errEl.textContent = 'Informe a data de início e a quantidade de dias.';
+      errEl.style.display = '';
+      return;
+    }
+
+    const btn = document.getElementById('cpBtnCalcular');
+    btn.disabled = true;
+    btn.textContent = 'Calculando...';
+
+    const feriadosAdicionais = getFeriadosAdicionais();
+
+    try {
+      const res = await apiFetch('/prazos/calcular', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataInicio: inicio,
+          quantidadeDias: dias,
+          tipoCalculo: tipoAtivo,
+          feriadosAdicionais: feriadosAdicionais.length > 0 ? feriadosAdicionais : null,
+        })
+      });
+      renderResultado(res, inicio, dias);
+    } catch (err) {
+      errEl.textContent = err.message ?? 'Erro ao calcular. Verifique sua assinatura.';
+      errEl.style.display = '';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Calcular prazo';
+    }
+  }
+
+  function renderResultado(res, inicio, dias) {
+    lastCalculo = { dataInicio: inicio, quantidadeDias: dias, tipoCalculo: tipoAtivo, dataFinal: res.dataFinal };
+
+    const dataFinal = new Date(res.dataFinal.substring(0, 10) + 'T12:00:00');
+    const dataInicio = new Date(inicio + 'T12:00:00');
+    const uf = document.getElementById('cpUf').value;
+    const municipio = document.getElementById('cpMunicipio').value;
+
+    document.getElementById('cpResultEmpty').style.display = 'none';
+    document.getElementById('cpResultado').style.display = '';
+
+    document.getElementById('cpDataFinal').textContent =
+      dataFinal.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('cpDataFinalWeekday').textContent =
+      dataFinal.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    document.getElementById('cpStatInicio').textContent =
+      dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('cpStatDias').textContent = dias;
+    document.getElementById('cpStatTipo').textContent = tipoAtivo === 'DiasUteis' ? 'Úteis' : 'Corridos';
+
+    // Feriados no intervalo — filtra do banco conforme escopo selecionado
+    const feriadosNoPeriodo = feriadosDB.filter(f => {
+      if (!f.ativo) return false;
+      const d = new Date(f.data + 'T12:00:00');
+      if (d < dataInicio || d > dataFinal) return false;
+      if (f.tipo === 'nacional') return true;
+      if (f.tipo === 'estadual' && f.uf === uf) return true;
+      if (f.tipo === 'municipal' && f.uf === uf && f.municipio === municipio) return true;
+      return false;
+    });
+
+    const listEl = document.getElementById('cpFeriadosList');
+    if (feriadosNoPeriodo.length === 0) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--color-text-muted);padding:8px 0">Nenhum feriado no intervalo.</p>';
+    } else {
+      listEl.innerHTML = feriadosNoPeriodo.map(f => {
+        const d = new Date(f.data + 'T12:00:00');
+        const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+        const TIPO_COLOR = { nacional: '#1e40af', estadual: '#065f46', municipal: '#92400e' };
+        return `<div class="cp-feriado-item">
+          <span class="cp-feriado-date">${formatDate(f.data)}</span>
+          <span style="flex:1">${esc(f.nome)} <span style="font-size:11px;color:var(--color-text-muted)">(${weekday})</span></span>
+          <span class="cp-badge-feriado" style="color:${TIPO_COLOR[f.tipo] ?? '#374151'}">${f.tipo}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  function formatDate(isoDate) {
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function esc(s) {
+    return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+</script>
+</body>
+</html>
