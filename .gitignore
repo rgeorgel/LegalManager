@@ -22,6 +22,9 @@ packages/
 publish/
 artifacts/
 
+# Docker data volumes
+data/
+
 # User secrets / sensitive configs
 appsettings.*.local.json
 secrets.json
