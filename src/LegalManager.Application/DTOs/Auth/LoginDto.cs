@@ -21,7 +21,8 @@ public record UsuarioInfoDto(
     string Perfil,
     Guid TenantId,
     string NomeEscritorio,
-    string Plano
+    string Plano,
+    DateTime? UltimoAcessoEm
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

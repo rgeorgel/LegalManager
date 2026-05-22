@@ -9,6 +9,7 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
     public void Configure(EntityTypeBuilder<Usuario> builder)
     {
         builder.Property(u => u.Nome).HasMaxLength(200).IsRequired();
+        builder.Property(u => u.UltimoAcessoEm).IsRequired(false);
         builder.HasOne(u => u.Tenant)
             .WithMany(t => t.Usuarios)
             .HasForeignKey(u => u.TenantId)

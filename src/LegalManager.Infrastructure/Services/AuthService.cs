@@ -106,6 +106,9 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync(ct);
         }
 
+        usuario.UltimoAcessoEm = DateTime.UtcNow;
+        await _userManager.UpdateAsync(usuario);
+
         return await GerarAuthResponseAsync(usuario, tenant, ct);
     }
 
@@ -118,6 +121,8 @@ public class AuthService : IAuthService
 
         token.Revogado = true;
         _context.RefreshTokens.Update(token);
+
+        token.Usuario.UltimoAcessoEm = DateTime.UtcNow;
 
         var tenant = await _context.Tenants.FindAsync([token.Usuario.TenantId], ct)!;
         return await GerarAuthResponseAsync(token.Usuario, tenant!, ct);
@@ -203,7 +208,8 @@ public class AuthService : IAuthService
             UserName = convite.Email,
             Perfil = convite.Perfil,
             Ativo = true,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            UltimoAcessoEm = DateTime.UtcNow
         };
 
         var result = await _userManager.CreateAsync(usuario, dto.Senha);
@@ -227,7 +233,7 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken.Token,
             refreshToken.ExpiresAt,
-            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString())
+            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm)
         );
     }
 

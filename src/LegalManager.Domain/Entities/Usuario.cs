@@ -11,6 +11,7 @@ public class Usuario : IdentityUser<Guid>
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public bool OnboardingImportacaoCompleto { get; set; } = false;
+    public DateTime? UltimoAcessoEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

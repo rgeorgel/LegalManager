@@ -31,7 +31,7 @@ public class UsuariosController : ControllerBase
     {
         var usuarios = await _context.Users
             .Where(u => u.TenantId == _tenantContext.TenantId)
-            .Select(u => new { u.Id, u.Nome, u.Email, u.Perfil, u.Ativo, u.CriadoEm })
+            .Select(u => new { u.Id, u.Nome, u.Email, u.Perfil, u.Ativo, u.CriadoEm, u.UltimoAcessoEm })
             .ToListAsync(ct);
 
         return Ok(usuarios);
@@ -89,6 +89,7 @@ public class UsuariosController : ControllerBase
             usuario.Email,
             usuario.Perfil,
             usuario.Ativo,
+            usuario.UltimoAcessoEm,
             Tenant = new { usuario.Tenant.Id, usuario.Tenant.Nome, usuario.Tenant.Plano, usuario.Tenant.Status, usuario.Tenant.TrialExpiraEm }
         });
     }
