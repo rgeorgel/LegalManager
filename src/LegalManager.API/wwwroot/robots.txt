@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://causify.com.br/sitemap.xml
+
+# Crawl-delay para evitar sobrecarga
+Crawl-delay: 1
+
+# Bloquear assets desnecessários
+Disallow: /images/logos/*
+Disallow: /cliente/*
+Disallow: /pages/debug-*
