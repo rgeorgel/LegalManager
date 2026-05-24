@@ -22,7 +22,7 @@
   <style>
     .plan-selector {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
       margin-bottom: 1.25rem;
     }
@@ -113,13 +113,19 @@
               <input type="radio" name="plano" value="3">
               <div class="plan-name">Plus</div>
               <div class="plan-price">R$ 20<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
-              <div class="plan-desc">2 usuários · 100 processos · Portal cliente · Financeiro</div>
+              <div class="plan-desc">1 usuário · 40 processos · Portal cliente · Financeiro</div>
             </label>
             <label class="plan-option" id="planProLabel">
               <input type="radio" name="plano" value="1">
               <div class="plan-name">Pro</div>
               <div class="plan-price">R$ 50<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
-              <div class="plan-desc">5 usuários · 500 processos · Financeiro · Relatórios</div>
+              <div class="plan-desc">2 usuários · 100 processos · 1 captura · Templates</div>
+            </label>
+            <label class="plan-option" id="planMaxLabel">
+              <input type="radio" name="plano" value="4">
+              <div class="plan-name">Max</div>
+              <div class="plan-price">R$ 125<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              <div class="plan-desc">5 usuários · 250 processos · 3 capturas · 10 GB</div>
             </label>
           </div>
         </div>
@@ -175,7 +181,8 @@
     const labels = {
       0: document.getElementById('planFreeLabel'),
       3: document.getElementById('planPlusLabel'),
-      1: document.getElementById('planProLabel')
+      1: document.getElementById('planProLabel'),
+      4: document.getElementById('planMaxLabel')
     };
     radios.forEach(r => {
       r.addEventListener('change', () => {
@@ -183,6 +190,17 @@
         labels[r.value]?.classList.add('selected');
       });
     });
+
+    // Pre-select plan from URL param ?plano=
+    const planoParam = new URLSearchParams(location.search).get('plano');
+    if (planoParam !== null) {
+      const radio = document.querySelector(`input[name="plano"][value="${planoParam}"]`);
+      if (radio) {
+        radio.checked = true;
+        Object.values(labels).forEach(l => l?.classList.remove('selected'));
+        labels[parseInt(planoParam)]?.classList.add('selected');
+      }
+    }
 
     const form = document.getElementById('registerForm');
     const alertEl = document.getElementById('alert');

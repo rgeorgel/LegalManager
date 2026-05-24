@@ -29,7 +29,7 @@ public class AbacatePayService : IAbacatePayService
     public async Task<AbacatePayBillingResult> CriarBillingAsync(CriarBillingInput input, CancellationToken ct = default)
     {
         var customerId = await CriarOuObterClienteAsync(input, ct);
-        var productId = await ObterOuCriarProdutoAsync(input.Plano, input.Periodo == "Anual", ct);
+        var productId = await ObterOuCriarProdutoAsync(input.Plano, ct);
 
         var metadata = new Dictionary<string, string>
         {
@@ -166,10 +166,14 @@ public class AbacatePayService : IAbacatePayService
         return customerId;
     }
 
-    private async Task<string> ObterOuCriarProdutoAsync(string plano, bool isAnual, CancellationToken ct)
+    private async Task<string> ObterOuCriarProdutoAsync(string plano, CancellationToken ct)
     {
-        var externalId = plano == "Plus" ? "lm-plus-mensal-2000" :
-                         isAnual ? "lm-pro-anual-48000" : "lm-pro-mensal-5000";
+        var externalId = plano switch
+        {
+            "Plus" => "lm-plus-mensal-2000",
+            "Max"  => "lm-max-mensal-12500",
+            _      => "lm-pro-mensal-5000"
+        };
 
         var listResp = await _http.GetAsync($"products/list?externalId={externalId}", ct);
         if (listResp.IsSuccessStatusCode)
@@ -188,13 +192,14 @@ public class AbacatePayService : IAbacatePayService
             }
         }
 
-        var (name, description, price, cycle) = plano == "Plus"
-            ? ("LegalManager Plus — Mensal (R$ 20)", "Assinatura mensal do plano Plus", 2_000, "MONTHLY")
-            : isAnual
-                ? ("LegalManager Pro — Anual (R$ 480)", "Assinatura anual do plano Pro", 48_000, "ANNUALLY")
-                : ("LegalManager Pro — Mensal (R$ 50)", "Assinatura mensal do plano Pro", 5_000, "MONTHLY");
+        var (name, description, price) = plano switch
+        {
+            "Plus" => ("Causify Plus — Mensal (R$ 20)", "Assinatura mensal do plano Plus", 2_000),
+            "Max"  => ("Causify Max — Mensal (R$ 125)", "Assinatura mensal do plano Max", 12_500),
+            _      => ("Causify Pro — Mensal (R$ 50)", "Assinatura mensal do plano Pro", 5_000)
+        };
 
-        var payload = new { externalId, name, description, price, currency = "BRL", cycle };
+        var payload = new { externalId, name, description, price, currency = "BRL", cycle = "MONTHLY" };
         var body = await PostAsync("products/create", payload, ct);
 
         using var doc = JsonDocument.Parse(body);

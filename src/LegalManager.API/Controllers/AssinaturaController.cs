@@ -79,14 +79,12 @@ public class AssinaturaController(
         var planoAlvo = dto.Plano?.ToLowerInvariant() switch
         {
             "plus" => PlanoTipo.Plus,
-            _ => PlanoTipo.Pro
+            "max"  => PlanoTipo.Max,
+            _      => PlanoTipo.Pro
         };
 
-        if (planoAlvo == PlanoTipo.Plus && dto.Periodo != "Mensal")
-            return BadRequest(new { message = "O plano Plus está disponível apenas na modalidade Mensal." });
-
-        if (planoAlvo == PlanoTipo.Pro && dto.Periodo != "Mensal" && dto.Periodo != "Anual")
-            return BadRequest(new { message = "Período inválido. Use 'Mensal' ou 'Anual'." });
+        if (dto.Periodo != "Mensal")
+            return BadRequest(new { message = "Apenas o período mensal está disponível no momento." });
 
         var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
         if (tenant is null) return NotFound();
@@ -296,7 +294,7 @@ public class WebhookController(
         var periodo = ExtrairMetadata(root, "periodo") ?? tenant.PeriodoBilling ?? "Mensal";
 
         var planoStr = ExtrairMetadata(root, "plano");
-        tenant.Plano = planoStr == "Plus" ? PlanoTipo.Plus : PlanoTipo.Pro;
+        tenant.Plano = planoStr switch { "Plus" => PlanoTipo.Plus, "Max" => PlanoTipo.Max, _ => PlanoTipo.Pro };
         tenant.Status = StatusTenant.Ativo;
         tenant.TrialExpiraEm = null;
         tenant.PlanoExpiraEm = null;

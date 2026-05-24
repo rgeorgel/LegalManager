@@ -415,16 +415,19 @@
     }
 
     .plans-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 2rem; max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem; max-width: 1400px; margin: 0 auto;
     }
-    @media (max-width: 860px) {
+    @media (max-width: 1024px) {
+      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
       .plans-grid { grid-template-columns: 1fr; }
     }
 
     .plan-card {
       background: var(--navy); border: 1px solid var(--border);
-      border-radius: 20px; padding: 2.5rem;
+      border-radius: 20px; padding: 2rem 1.5rem;
       position: relative; transition: all 0.3s;
     }
 
@@ -454,7 +457,7 @@
     .price-annual-note { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; min-height: 1.1rem; }
     .price-annual-note .save { color: var(--green); font-weight: 600; }
 
-    .plan-desc { font-size: 0.9rem; color: var(--text-muted); margin: 1.25rem 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+    .plan-desc { font-size: 0.9rem; color: var(--text-muted); margin: 1.25rem 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); min-height: calc(1.2rem * 1.6 * 3); }
 
     .plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
 
@@ -669,13 +672,6 @@
     <p class="section-subtitle" style="margin: 0 auto 2rem;">Comece grátis e evolua quando precisar. Sem surpresas na fatura.</p>
   </div>
 
-  <div class="toggle-wrapper">
-    <div class="billing-toggle" id="billingToggle">
-      <span class="toggle-opt active" data-period="mensal">Mensal</span>
-      <span class="toggle-opt" data-period="anual">Anual <span class="annual-badge">-20%</span></span>
-    </div>
-  </div>
-
   <div class="plans-grid">
 
     <!-- FREE -->
@@ -733,12 +729,12 @@
       <ul class="plan-features">
         <li class="section-sep">Processos</li>
         <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
-        <li><span class="check">✓</span> 100 processos monitorados</li>
-        <li><span class="check">✓</span> 1 captura de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
-        <li><span class="check">✓</span> 5 GB de armazenamento</li>
+        <li><span class="check">✓</span> 40 processos monitorados</li>
+        <li><span class="cross">✗</span> Captura de publicações</li>
+        <li><span class="check">✓</span> 2 GB de armazenamento</li>
 
         <li class="section-sep">Usuários e Clientes</li>
-        <li><span class="check">✓</span> 2 usuários</li>
+        <li><span class="check">✓</span> 1 usuário</li>
         <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
         <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
 
@@ -764,18 +760,57 @@
       <div class="plan-name">Pro</div>
       <div class="plan-price">
         <span class="price-currency">R$</span>
-        <span class="price-value" id="priceValue">50</span>
+        <span class="price-value">50</span>
         <span class="price-period">/mês</span>
       </div>
-      <div class="price-annual-note" id="annualNote">&nbsp;</div>
-      <div class="plan-desc">Para escritórios em crescimento que precisam de controle completo, finanças e equipe.</div>
+      <div class="price-annual-note">&nbsp;</div>
+      <div class="plan-desc">Para escritórios que precisam de controle completo, publicações e equipe.</div>
 
       <ul class="plan-features">
         <li class="section-sep">Processos</li>
         <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
-        <li><span class="check">✓</span> 500 processos monitorados</li>
+        <li><span class="check">✓</span> 100 processos monitorados</li>
+        <li><span class="check">✓</span> 1 captura de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
+        <li><span class="check">✓</span> 5 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> 2 usuários</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li><span class="check">✓</span> Gestão Kanban</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
+        <li><span class="check">✓</span> Calculadora de prazos</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li><span class="check">✓</span> Controle financeiro por processo</li>
+        <li><span class="check">✓</span> Indicadores e relatórios completos</li>
+        <li><span class="check">✓</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html?plano=1" class="btn btn-primary" style="width:100%; display:flex;">Assinar Pro</a>
+    </div>
+
+    <!-- MAX -->
+    <div class="plan-card">
+      <div class="plan-name">Max</div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">125</span>
+        <span class="price-period">/mês</span>
+      </div>
+      <div class="price-annual-note">&nbsp;</div>
+      <div class="plan-desc">Para grandes escritórios com alto volume de processos e equipe completa.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 250 processos monitorados</li>
         <li><span class="check">✓</span> 3 capturas de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
-        <li><span class="check">✓</span> 20 GB de armazenamento</li>
+        <li><span class="check">✓</span> 10 GB de armazenamento</li>
 
         <li class="section-sep">Usuários e Clientes</li>
         <li><span class="check">✓</span> Até 5 usuários</li>
@@ -791,12 +826,11 @@
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
-
         <li><span class="check">✓</span> Indicadores e relatórios completos</li>
         <li><span class="check">✓</span> Templates de documentos</li>
       </ul>
 
-      <a href="/register.html" class="btn btn-primary" style="width:100%; display:flex;">Começar Pro</a>
+      <a href="/register.html?plano=4" class="btn btn-primary" style="width:100%; display:flex;">Assinar Max</a>
     </div>
 
   </div>
@@ -855,25 +889,6 @@
 </footer>
 
 <script>
-  const toggle = document.getElementById('billingToggle');
-  const opts = toggle.querySelectorAll('.toggle-opt');
-  const priceEl = document.getElementById('priceValue');
-  const noteEl = document.getElementById('annualNote');
-
-  opts.forEach(opt => {
-    opt.addEventListener('click', () => {
-      opts.forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      if (opt.dataset.period === 'anual') {
-        priceEl.textContent = '40';
-        noteEl.innerHTML = '<span class="save">Você economiza R$120/ano</span>';
-      } else {
-        priceEl.textContent = '50';
-        noteEl.innerHTML = '&nbsp;';
-      }
-    });
-  });
-
   // Smooth active nav link on scroll
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-links a');

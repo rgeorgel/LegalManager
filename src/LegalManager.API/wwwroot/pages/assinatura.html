@@ -45,6 +45,7 @@
     .assin-badge.free   { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
     .assin-badge.plus   { background: #fef9c3; color: #78350f; border: 1px solid #fcd34d; }
     .assin-badge.pro    { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+    .assin-badge.max    { background: #f3e8ff; color: #6b21a8; border: 1px solid #c084fc; }
     .assin-badge.trial  { background: #eff6ff; color: #1e40af; border: 1px solid #93c5fd; }
 
     /* Tab navigation */
@@ -112,9 +113,9 @@
 
     .plans-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 20px;
-      max-width: 1020px;
+      max-width: 1360px;
       margin: 0 auto 32px;
     }
     .plan-card {
@@ -319,14 +320,6 @@
     <!-- Tab: Planos -->
     <div class="tab-panel active" id="tab-planos">
 
-      <!-- Toggle mensal/anual -->
-      <div class="toggle-wrapper">
-        <div class="billing-toggle" id="billingToggle">
-          <div class="billing-opt active" data-period="mensal">Mensal</div>
-          <div class="billing-opt" data-period="anual">Anual <span class="save-badge">-20%</span></div>
-        </div>
-      </div>
-
       <!-- Planos -->
       <div class="plans-grid" id="plansGrid">
 
@@ -377,11 +370,11 @@
           <ul class="plan-features">
             <li class="feat-section">Processos</li>
             <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
-            <li><span class="feat-check">✓</span> 100 processos monitorados</li>
-            <li><span class="feat-check">✓</span> 1 captura de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
-            <li><span class="feat-check">✓</span> 5 GB de armazenamento</li>
+            <li><span class="feat-check">✓</span> 40 processos monitorados</li>
+            <li><span class="feat-cross">✗</span> Captura de publicações</li>
+            <li><span class="feat-check">✓</span> 2 GB de armazenamento</li>
             <li class="feat-section">Usuários e Clientes</li>
-            <li><span class="feat-check">✓</span> 2 usuários</li>
+            <li><span class="feat-check">✓</span> 1 usuário</li>
             <li><span class="feat-check">✓</span> Cadastro de clientes e contatos</li>
             <li><span class="feat-check">✓</span> Acesso personalizado ao cliente</li>
             <li class="feat-section">Produtividade e Financeiro</li>
@@ -402,17 +395,49 @@
           <div class="plan-name">Pro</div>
           <div class="plan-price">
             <span class="plan-currency">R$</span>
-            <span class="plan-value" id="proValue">50</span>
+            <span class="plan-value">50</span>
             <span class="plan-period">/mês</span>
           </div>
-          <div class="plan-note" id="proNote">&nbsp;</div>
-          <div class="plan-desc">Para escritórios que precisam de controle completo, financeiro e equipe.</div>
+          <div class="plan-note">&nbsp;</div>
+          <div class="plan-desc">Para escritórios que precisam de controle completo, publicações e equipe.</div>
           <ul class="plan-features">
             <li class="feat-section">Processos</li>
             <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
-            <li><span class="feat-check">✓</span> 500 processos monitorados</li>
+            <li><span class="feat-check">✓</span> 100 processos monitorados</li>
+            <li><span class="feat-check">✓</span> 1 captura de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
+            <li><span class="feat-check">✓</span> 5 GB de armazenamento</li>
+            <li class="feat-section">Usuários e Clientes</li>
+            <li><span class="feat-check">✓</span> 2 usuários</li>
+            <li><span class="feat-check">✓</span> Cadastro de clientes e contatos</li>
+            <li><span class="feat-check">✓</span> Acesso personalizado ao cliente</li>
+            <li class="feat-section">Produtividade e Financeiro</li>
+            <li><span class="feat-check">✓</span> Tarefas, agenda e timesheet</li>
+            <li><span class="feat-check">✓</span> Gestão Kanban</li>
+            <li><span class="feat-check">✓</span> Calculadora de honorários</li>
+            <li><span class="feat-check">✓</span> Calculadora de prazos</li>
+            <li><span class="feat-check">✓</span> Controle financeiro por processo</li>
+            <li><span class="feat-check">✓</span> Indicadores e relatórios completos</li>
+            <li><span class="feat-check">✓</span> Templates de documentos</li>
+          </ul>
+          <button id="btnPro" class="btn btn-primary" style="width:100%">Assinar Pro</button>
+        </div>
+
+        <!-- Max -->
+        <div class="plan-card" id="cardMax">
+          <div class="plan-name">Max</div>
+          <div class="plan-price">
+            <span class="plan-currency">R$</span>
+            <span class="plan-value">125</span>
+            <span class="plan-period">/mês</span>
+          </div>
+          <div class="plan-note">&nbsp;</div>
+          <div class="plan-desc">Para grandes escritórios com alto volume de processos e equipe completa.</div>
+          <ul class="plan-features">
+            <li class="feat-section">Processos</li>
+            <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
+            <li><span class="feat-check">✓</span> 250 processos monitorados</li>
             <li><span class="feat-check">✓</span> 3 capturas de publicações <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;vertical-align:middle;white-space:nowrap">Em breve</span></li>
-            <li><span class="feat-check">✓</span> 20 GB de armazenamento</li>
+            <li><span class="feat-check">✓</span> 10 GB de armazenamento</li>
             <li class="feat-section">Usuários e Clientes</li>
             <li><span class="feat-check">✓</span> Até 5 usuários</li>
             <li><span class="feat-check">✓</span> Cadastro de clientes e contatos</li>
@@ -423,11 +448,10 @@
             <li><span class="feat-check">✓</span> Calculadora de honorários</li>
             <li><span class="feat-check">✓</span> Calculadora de prazos</li>
             <li><span class="feat-check">✓</span> Controle financeiro por processo</li>
-
             <li><span class="feat-check">✓</span> Indicadores e relatórios completos</li>
             <li><span class="feat-check">✓</span> Templates de documentos</li>
           </ul>
-          <button id="btnPro" class="btn btn-primary" style="width:100%">Assinar Pro</button>
+          <button id="btnMax" class="btn btn-primary" style="width:100%">Assinar Max</button>
         </div>
 
       </div>
@@ -506,7 +530,6 @@
   const isAdmin = user?.perfil === 'Admin';
   let currentPlano = user?.plano ?? 'Free';
   let currentStatus = '';
-  let billingPeriod = 'mensal';
 
   // Handle return from AbacatePay checkout
   const params = new URLSearchParams(location.search);
@@ -534,25 +557,6 @@
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
   }
 
-  // Billing toggle
-  document.querySelectorAll('.billing-opt').forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('.billing-opt').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      billingPeriod = opt.dataset.period;
-      updatePricing();
-    });
-  });
-
-  function updatePricing() {
-    const isAnual = billingPeriod === 'anual';
-    document.getElementById('proValue').textContent = isAnual ? '40' : '50';
-    document.getElementById('proNote').innerHTML = isAnual
-      ? '<span style="color:#16a34a;font-weight:600">Você economiza R$ 120/ano</span>'
-      : '&nbsp;';
-    // Plus não tem toggle anual — note permanece fixo
-  }
-
   async function loadPlano() {
     try {
       const data = await apiFetch('/assinatura');
@@ -561,7 +565,7 @@
 
       const badge = document.getElementById('planoAtualBadge');
       badge.textContent = currentPlano;
-      const badgeClass = { Pro: 'pro', Plus: 'plus', Free: 'free' }[currentPlano] ?? 'trial';
+      const badgeClass = { Pro: 'pro', Plus: 'plus', Free: 'free', Max: 'max' }[currentPlano] ?? 'trial';
       badge.className = 'assin-badge ' + badgeClass;
 
       const statusEl = document.getElementById('statusInfo');
@@ -572,7 +576,7 @@
       } else if (data.status === 'Cancelado' && data.planoExpiraEm) {
         const expira = data.planoExpiraEm ? new Date(data.planoExpiraEm).toLocaleDateString('pt-BR') : '–';
         statusEl.innerHTML = `<span style="color:#dc2626">Cancelado — acesso ${currentPlano} até ${expira}</span>`;
-      } else if (data.periodo && (currentPlano === 'Pro' || currentPlano === 'Plus')) {
+      } else if (data.periodo && (currentPlano === 'Pro' || currentPlano === 'Plus' || currentPlano === 'Max')) {
         statusEl.textContent = `${data.periodo} · Ativo`;
       } else {
         statusEl.textContent = data.status === 'Ativo' ? 'Ativo' : data.status;
@@ -592,23 +596,26 @@
   function updateCards(data) {
     const isFree = currentPlano === 'Free';
     const isPlus = currentPlano === 'Plus';
-    const isPro = currentPlano === 'Pro';
+    const isPro  = currentPlano === 'Pro';
+    const isMax  = currentPlano === 'Max';
     const isCancelado = data?.status === 'Cancelado';
 
     const cardFree = document.getElementById('cardFree');
     const cardPlus = document.getElementById('cardPlus');
     const cardPro  = document.getElementById('cardPro');
+    const cardMax  = document.getElementById('cardMax');
     const btnFree  = document.getElementById('btnFree');
     const btnPlus  = document.getElementById('btnPlus');
     const btnPro   = document.getElementById('btnPro');
+    const btnMax   = document.getElementById('btnMax');
     const dangerZone = document.getElementById('dangerZone');
 
     cardFree.classList.toggle('current', isFree);
     cardPlus.classList.toggle('current', isPlus);
     cardPro.classList.toggle('current', isPro);
+    cardMax.classList.toggle('current', isMax);
 
-    // Remove old dynamic badges
-    ['#cardFree .plan-top-badge', '#cardPlus .plan-top-badge', '#cardPro .plan-top-badge']
+    ['#cardFree .plan-top-badge', '#cardPlus .plan-top-badge', '#cardPro .plan-top-badge', '#cardMax .plan-top-badge']
       .forEach(sel => document.querySelector(sel)?.remove());
 
     function addBadge(card, text, cls) {
@@ -636,6 +643,11 @@
       btnPro.className = 'btn btn-outline';
       if (!isAdmin) btnPro.title = 'Apenas o administrador pode assinar';
 
+      btnMax.textContent = 'Assinar Max';
+      btnMax.disabled = !isAdmin;
+      btnMax.className = 'btn btn-outline';
+      if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
+
       dangerZone.style.display = 'none';
     } else if (isPlus) {
       addBadge(cardPlus, 'Plano atual', 'current-badge');
@@ -654,6 +666,11 @@
       btnPro.className = 'btn btn-primary';
       if (!isAdmin) btnPro.title = 'Apenas o administrador pode assinar';
 
+      btnMax.textContent = 'Fazer upgrade para Max';
+      btnMax.disabled = !isAdmin;
+      btnMax.className = 'btn btn-outline';
+      if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
+
       if (!isCancelado && isAdmin) {
         const expiraEm = new Date(Date.now() + 30 * 86400000);
         document.getElementById('dangerDesc').textContent =
@@ -662,9 +679,9 @@
       } else {
         dangerZone.style.display = 'none';
       }
-    } else {
-      // Pro
-      addBadge(cardPro, 'Plano atual', 'popular-badge');
+    } else if (isPro) {
+      addBadge(cardPro, 'Plano atual', 'current-badge');
+      addBadge(cardMax, 'Recomendado', 'popular-badge');
 
       btnFree.textContent = 'Ver Free';
       btnFree.disabled = true;
@@ -678,12 +695,43 @@
       btnPro.disabled = isCancelado ? !isAdmin : true;
       btnPro.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
 
+      btnMax.textContent = 'Fazer upgrade para Max';
+      btnMax.disabled = !isAdmin;
+      btnMax.className = 'btn btn-primary';
+      if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
+
       if (!isCancelado && isAdmin) {
-        const expiraEm = data?.periodo === 'Anual'
-          ? new Date(Date.now() + 365 * 86400000)
-          : new Date(Date.now() + 30 * 86400000);
+        const expiraEm = new Date(Date.now() + 30 * 86400000);
         document.getElementById('dangerDesc').textContent =
           `Ao cancelar, você continuará com acesso Pro até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
+        dangerZone.style.display = '';
+      } else {
+        dangerZone.style.display = 'none';
+      }
+    } else {
+      // Max
+      addBadge(cardMax, 'Plano atual', 'current-badge');
+
+      btnFree.textContent = 'Ver Free';
+      btnFree.disabled = true;
+      btnFree.className = 'btn btn-secondary';
+
+      btnPlus.textContent = 'Ver Plus';
+      btnPlus.disabled = true;
+      btnPlus.className = 'btn btn-secondary';
+
+      btnPro.textContent = 'Ver Pro';
+      btnPro.disabled = true;
+      btnPro.className = 'btn btn-secondary';
+
+      btnMax.textContent = isCancelado ? 'Renovar assinatura' : 'Plano atual';
+      btnMax.disabled = isCancelado ? !isAdmin : true;
+      btnMax.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
+
+      if (!isCancelado && isAdmin) {
+        const expiraEm = new Date(Date.now() + 30 * 86400000);
+        document.getElementById('dangerDesc').textContent =
+          `Ao cancelar, você continuará com acesso Max até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
         dangerZone.style.display = '';
       } else {
         dangerZone.style.display = 'none';
@@ -737,22 +785,41 @@
     );
   });
 
-  // Assinar Pro → redireciona para AbacatePay checkout
+  // Assinar Pro
   document.getElementById('btnPro').addEventListener('click', () => {
     if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
-    const isAnual = billingPeriod === 'anual';
-    const valorStr = isAnual ? 'R$ 480/ano (R$ 40/mês)' : 'R$ 50/mês';
     openModal(
       'Assinar plano Pro',
-      `Você será redirecionado para o checkout seguro. O valor cobrado será ${valorStr}.`,
+      'Você será redirecionado para o checkout seguro. Valor: R$ 50/mês.',
       'Ir para o checkout',
       'btn-primary',
       async () => {
         try {
-          const periodo = isAnual ? 'Anual' : 'Mensal';
           const result = await apiFetch('/assinatura/iniciar', {
             method: 'POST',
-            body: JSON.stringify({ periodo, plano: 'Pro' })
+            body: JSON.stringify({ periodo: 'Mensal', plano: 'Pro' })
+          });
+          window.location.href = result.checkoutUrl;
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+        }
+      }
+    );
+  });
+
+  // Assinar Max
+  document.getElementById('btnMax').addEventListener('click', () => {
+    if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
+    openModal(
+      'Assinar plano Max',
+      'Você será redirecionado para o checkout seguro. Valor: R$ 125/mês.',
+      'Ir para o checkout',
+      'btn-primary',
+      async () => {
+        try {
+          const result = await apiFetch('/assinatura/iniciar', {
+            method: 'POST',
+            body: JSON.stringify({ periodo: 'Mensal', plano: 'Max' })
           });
           window.location.href = result.checkoutUrl;
         } catch (e) {
