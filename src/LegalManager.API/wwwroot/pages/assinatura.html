@@ -256,6 +256,10 @@
     .credit-price-cents { font-size: 14px; font-weight: 700; padding-bottom: 4px; color: var(--color-text-muted); }
     .credit-desc { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
 
+    .wmsg { font-size: 13px; padding: 8px 12px; border-radius: 6px; }
+    .wmsg-success { background: #dcfce7; color: #166534; }
+    .wmsg-error   { background: #fee2e2; color: #991b1b; }
+
     #toast {
       display: none;
       position: fixed;
@@ -506,6 +510,28 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- Waitlist modal -->
+<div id="waitlistModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:var(--color-surface);border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-weight:700;font-size:16px;margin-bottom:8px">Plano <span id="wModalPlano"></span> — Em breve</div>
+    <div style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px;line-height:1.55">
+      Este plano ainda não está disponível para assinatura. Enquanto isso, o <strong>plano Free</strong> continua totalmente disponível.<br><br>
+      Quer entrar na lista de espera e ser o primeiro a saber quando o plano for lançado?
+    </div>
+    <div id="wModalForm">
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <input id="wModalNome"  class="form-control" placeholder="Seu nome" type="text">
+        <input id="wModalEmail" class="form-control" placeholder="Seu e-mail" type="email">
+      </div>
+    </div>
+    <div id="wModalMsg" class="wmsg" style="display:none;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" id="wModalClose">Fechar</button>
+      <button class="btn btn-primary" id="wModalConfirm">Entrar na lista</button>
+    </div>
+  </div>
+</div>
 
 <!-- Confirm modal -->
 <div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center">
@@ -763,70 +789,67 @@
     el._t = setTimeout(() => { el.style.display = 'none'; }, 6000);
   }
 
-  // Assinar Plus
-  document.getElementById('btnPlus').addEventListener('click', () => {
-    if (currentPlano === 'Plus' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Plus',
-      'Você será redirecionado para o checkout seguro. Valor: R$ 20/mês.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ periodo: 'Mensal', plano: 'Plus' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
-    );
+  function abrirWaitlist(plano) {
+    const wModal = document.getElementById('waitlistModal');
+    document.getElementById('wModalPlano').textContent = plano;
+    document.getElementById('wModalNome').value = user?.nome ?? '';
+    document.getElementById('wModalEmail').value = user?.email ?? '';
+    document.getElementById('wModalMsg').style.display = 'none';
+    document.getElementById('wModalForm').style.display = '';
+    document.getElementById('wModalConfirm').dataset.plano = plano;
+    wModal.style.display = 'flex';
+  }
+
+  document.getElementById('wModalClose').addEventListener('click', () => {
+    document.getElementById('waitlistModal').style.display = 'none';
+  });
+  document.getElementById('waitlistModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('waitlistModal'))
+      document.getElementById('waitlistModal').style.display = 'none';
   });
 
-  // Assinar Pro
-  document.getElementById('btnPro').addEventListener('click', () => {
-    if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Pro',
-      'Você será redirecionado para o checkout seguro. Valor: R$ 50/mês.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ periodo: 'Mensal', plano: 'Pro' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
-    );
+  document.getElementById('wModalConfirm').addEventListener('click', async () => {
+    const btn = document.getElementById('wModalConfirm');
+    const nome  = document.getElementById('wModalNome').value.trim();
+    const email = document.getElementById('wModalEmail').value.trim();
+    const plano = btn.dataset.plano;
+    const msgEl = document.getElementById('wModalMsg');
+
+    if (!nome || !email) {
+      msgEl.textContent = 'Preencha nome e e-mail para continuar.';
+      msgEl.className = 'wmsg wmsg-error';
+      msgEl.style.display = '';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+    try {
+      const res = await apiFetch('/waitlist', {
+        method: 'POST',
+        body: JSON.stringify({ nome, email, plano })
+      });
+      msgEl.textContent = res.message;
+      msgEl.className = 'wmsg wmsg-success';
+      msgEl.style.display = '';
+      document.getElementById('wModalForm').style.display = 'none';
+      btn.style.display = 'none';
+    } catch (e) {
+      msgEl.textContent = e.message ?? 'Erro ao entrar na lista. Tente novamente.';
+      msgEl.className = 'wmsg wmsg-error';
+      msgEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Entrar na lista';
+    }
   });
 
-  // Assinar Max
-  document.getElementById('btnMax').addEventListener('click', () => {
-    if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Max',
-      'Você será redirecionado para o checkout seguro. Valor: R$ 125/mês.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ periodo: 'Mensal', plano: 'Max' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
-    );
+  ['btnPlus', 'btnPro', 'btnMax'].forEach(id => {
+    const planoMap = { btnPlus: 'Plus', btnPro: 'Pro', btnMax: 'Max' };
+    document.getElementById(id).addEventListener('click', () => {
+      const plano = planoMap[id];
+      if (currentPlano === plano && currentStatus !== 'Cancelado') return;
+      abrirWaitlist(plano);
+    });
   });
 
   async function loadHistorico() {

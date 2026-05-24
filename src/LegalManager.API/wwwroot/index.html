@@ -752,7 +752,7 @@
         <li><span class="cross">✗</span> Templates de documentos</li>
       </ul>
 
-      <a href="/register.html?plano=3" class="btn btn-primary" style="width:100%; display:flex;">Assinar Plus</a>
+      <button class="btn btn-primary" style="width:100%" onclick="abrirWaitlist('Plus')">Assinar Plus</button>
     </div>
 
     <!-- PRO -->
@@ -791,7 +791,7 @@
         <li><span class="check">✓</span> Templates de documentos</li>
       </ul>
 
-      <a href="/register.html?plano=1" class="btn btn-primary" style="width:100%; display:flex;">Assinar Pro</a>
+      <button class="btn btn-primary" style="width:100%" onclick="abrirWaitlist('Pro')">Assinar Pro</button>
     </div>
 
     <!-- MAX -->
@@ -830,7 +830,7 @@
         <li><span class="check">✓</span> Templates de documentos</li>
       </ul>
 
-      <a href="/register.html?plano=4" class="btn btn-primary" style="width:100%; display:flex;">Assinar Max</a>
+      <button class="btn btn-primary" style="width:100%" onclick="abrirWaitlist('Max')">Assinar Max</button>
     </div>
 
   </div>
@@ -888,7 +888,82 @@
   <p style="margin-top:0.5rem; font-size:0.75rem">© 2026 Causify. Todos os direitos reservados.</p>
 </footer>
 
+<!-- Waitlist modal -->
+<div id="waitlistModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="font-weight:700;font-size:17px;margin-bottom:8px;color:#f8fafc">Plano <span id="wPlano"></span> — Em breve</div>
+    <div style="font-size:14px;color:#94a3b8;margin-bottom:20px;line-height:1.6">
+      Este plano ainda não está disponível para assinatura. Enquanto isso, o <strong style="color:#f8fafc">plano Free</strong> continua totalmente disponível.<br><br>
+      Quer entrar na lista de espera e ser o primeiro a saber quando o plano for lançado?
+    </div>
+    <div id="wForm" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <input id="wNome"  type="text"  placeholder="Seu nome"  style="padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;font-size:14px;outline:none">
+      <input id="wEmail" type="email" placeholder="Seu e-mail" style="padding:10px 14px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;font-size:14px;outline:none">
+    </div>
+    <div id="wMsg" style="display:none;font-size:13px;padding:8px 12px;border-radius:6px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('waitlistModal').style.display='none'" style="padding:8px 18px;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:14px;cursor:pointer">Fechar</button>
+      <button id="wConfirm" onclick="submitWaitlist()" style="padding:8px 18px;border-radius:8px;border:none;background:#f59e0b;color:#0f172a;font-weight:700;font-size:14px;cursor:pointer">Entrar na lista</button>
+    </div>
+  </div>
+</div>
+
 <script>
+  function abrirWaitlist(plano) {
+    document.getElementById('wPlano').textContent = plano;
+    document.getElementById('wNome').value = '';
+    document.getElementById('wEmail').value = '';
+    document.getElementById('wMsg').style.display = 'none';
+    document.getElementById('wForm').style.display = 'flex';
+    document.getElementById('wConfirm').style.display = '';
+    document.getElementById('wConfirm').disabled = false;
+    document.getElementById('wConfirm').textContent = 'Entrar na lista';
+    document.getElementById('wConfirm').dataset.plano = plano;
+    document.getElementById('waitlistModal').style.display = 'flex';
+  }
+
+  document.getElementById('waitlistModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('waitlistModal'))
+      document.getElementById('waitlistModal').style.display = 'none';
+  });
+
+  async function submitWaitlist() {
+    const nome  = document.getElementById('wNome').value.trim();
+    const email = document.getElementById('wEmail').value.trim();
+    const plano = document.getElementById('wConfirm').dataset.plano;
+    const msgEl = document.getElementById('wMsg');
+    const btn   = document.getElementById('wConfirm');
+
+    if (!nome || !email) {
+      msgEl.textContent = 'Preencha nome e e-mail para continuar.';
+      msgEl.style.background = '#fee2e2'; msgEl.style.color = '#991b1b';
+      msgEl.style.display = '';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, plano })
+      });
+      const data = await res.json();
+      msgEl.textContent = data.message;
+      msgEl.style.background = '#dcfce7'; msgEl.style.color = '#166534';
+      msgEl.style.display = '';
+      document.getElementById('wForm').style.display = 'none';
+      btn.style.display = 'none';
+    } catch {
+      msgEl.textContent = 'Erro ao entrar na lista. Tente novamente.';
+      msgEl.style.background = '#fee2e2'; msgEl.style.color = '#991b1b';
+      msgEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Entrar na lista';
+    }
+  }
+
   // Smooth active nav link on scroll
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-links a');
