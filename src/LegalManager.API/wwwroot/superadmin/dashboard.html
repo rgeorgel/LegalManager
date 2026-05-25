@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+    .stat-value { font-size: 32px; font-weight: 700; margin-top: 8px; color: var(--color-primary); }
+    .stat-value.green { color: #15803d; }
+    .stat-value.amber { color: #ca8a04; }
+    .stat-value.red { color: #dc2626; }
+    .section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+    .section-title { font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+    .plan-pill { background: #f8fafc; border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; text-align: center; }
+    .plan-pill-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; }
+    .plan-pill-value { font-size: 24px; font-weight: 700; margin-top: 4px; color: var(--color-text); }
+    .recent-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .recent-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .recent-table td { padding: 9px 10px; border-bottom: 1px solid var(--color-border); }
+    .recent-table tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-red { background: #fee2e2; color: #b91c1c; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; }
+    .mrr-card { background: linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%); color: #fff; border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
+    .mrr-label { font-size: 12px; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: .06em; }
+    .mrr-value { font-size: 36px; font-weight: 700; margin-top: 6px; }
+    .mrr-sub { font-size: 12px; opacity: .7; margin-top: 4px; }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 20px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar">
+      <ul class="sidebar-nav"></ul>
+    </aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+      </div>
+
+      <div id="mrrCard" class="mrr-card" style="display:none">
+        <div class="mrr-label">MRR Estimado</div>
+        <div class="mrr-value" id="mrrValue">—</div>
+        <div class="mrr-sub">baseado nos planos ativos e em trial</div>
+      </div>
+
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><div class="stat-label">Total Tenants</div><div class="stat-value skeleton">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Ativos</div><div class="stat-value skeleton">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Em Trial</div><div class="stat-value skeleton">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Suspensos</div><div class="stat-value skeleton">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Total Usuários</div><div class="stat-value skeleton">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Waitlist Pendente</div><div class="stat-value skeleton">&nbsp;</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tenants por Plano</div>
+        <div class="plan-grid" id="planGrid">
+          <div class="plan-pill"><div class="plan-pill-label">Carregando</div><div class="plan-pill-value skeleton">&nbsp;</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Últimos Cadastros</div>
+        <div id="recentTable">
+          <table class="recent-table">
+            <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th>Cadastro</th></tr></thead>
+            <tbody id="recentBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:20px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
+    const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
+
+    function fmtDate(iso) {
+      return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
+    }
+
+    function fmtBRL(v) {
+      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 });
+    }
+
+    async function loadMetrics() {
+      try {
+        const m = await saFetch('/superadmin/metrics');
+
+        const mrrCard = document.getElementById('mrrCard');
+        document.getElementById('mrrValue').textContent = fmtBRL(m.mrrEstimate);
+        mrrCard.style.display = '';
+
+        const statData = [
+          { label: 'Total Tenants', value: m.totalTenants, cls: '' },
+          { label: 'Ativos', value: m.activeTenants, cls: 'green' },
+          { label: 'Em Trial', value: m.trialTenants, cls: 'amber' },
+          { label: 'Suspensos', value: m.suspendedTenants, cls: 'red' },
+          { label: 'Total Usuários', value: m.totalUsers, cls: '' },
+          { label: 'Waitlist Pendente', value: m.waitlistPending, cls: m.waitlistPending > 0 ? 'amber' : '' },
+        ];
+
+        document.getElementById('statGrid').innerHTML = statData.map(s => `
+          <div class="stat-card">
+            <div class="stat-label">${s.label}</div>
+            <div class="stat-value ${s.cls}">${s.value}</div>
+          </div>`).join('');
+
+        const planOrder = ['Free', 'Plus', 'Pro', 'Max', 'Enterprise'];
+        document.getElementById('planGrid').innerHTML = planOrder.map(p => `
+          <div class="plan-pill">
+            <div class="plan-pill-label">${p}</div>
+            <div class="plan-pill-value">${m.tenantsByPlan[p] ?? 0}</div>
+          </div>`).join('');
+
+        document.getElementById('recentBody').innerHTML = m.recentSignups.length === 0
+          ? '<tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:16px">Nenhum cadastro</td></tr>'
+          : m.recentSignups.map(t => `
+            <tr>
+              <td><a href="/superadmin/tenants.html?id=${t.id}" style="color:var(--color-primary);text-decoration:none;font-weight:500">${esc(t.nome)}</a></td>
+              <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
+              <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
+              <td style="color:var(--color-text-muted)">${fmtDate(t.criadoEm)}</td>
+            </tr>`).join('');
+      } catch (e) {
+        document.getElementById('statGrid').innerHTML = `<p style="color:var(--color-danger);grid-column:1/-1">Erro ao carregar métricas: ${e.message}</p>`;
+      }
+    }
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    loadMetrics();
+  </script>
+</body>
+</html>

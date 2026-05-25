@@ -231,11 +231,13 @@ using (var scope = app.Services.CreateScope())
         """);
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    foreach (var role in new[] { "Admin", "Advogado", "Colaborador", "Cliente" })
+    foreach (var role in new[] { "Admin", "Advogado", "Colaborador", "Cliente", "SuperAdmin" })
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole<Guid>(role));
     }
+
+    await SeedSuperAdminAsync(scope.ServiceProvider, builder.Configuration);
 
     // Enfileira job se algum dos 3 índices estiver ausente
     var tiposPresentes = await db.IndicesCorrecaoMonetaria
@@ -304,3 +306,44 @@ app.MapControllers();
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+static async Task SeedSuperAdminAsync(IServiceProvider services, IConfiguration config)
+{
+    var systemTenantId = new Guid("00000000-0000-0000-0000-000000000001");
+    var email = config["SuperAdmin:Email"] ?? "superadmin@causify.internal";
+    var password = config["SuperAdmin:Password"] ?? "ChangeMeNow!1";
+
+    var db = services.GetRequiredService<AppDbContext>();
+    var userManager = services.GetRequiredService<UserManager<Usuario>>();
+
+    if (!await db.Tenants.AnyAsync(t => t.Id == systemTenantId))
+    {
+        db.Tenants.Add(new Tenant
+        {
+            Id = systemTenantId,
+            Nome = "Sistema",
+            Plano = LegalManager.Domain.Enums.PlanoTipo.Enterprise,
+            Status = LegalManager.Domain.Enums.StatusTenant.Ativo,
+            CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+    }
+
+    if (await userManager.FindByEmailAsync(email) == null)
+    {
+        var admin = new Usuario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = systemTenantId,
+            Nome = "Super Admin",
+            Email = email,
+            UserName = email,
+            Perfil = LegalManager.Domain.Enums.PerfilUsuario.SuperAdmin,
+            Ativo = true,
+            CriadoEm = DateTime.UtcNow
+        };
+        var result = await userManager.CreateAsync(admin, password);
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(admin, "SuperAdmin");
+    }
+}

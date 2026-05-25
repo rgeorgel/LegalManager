@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Tenants</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .filters input, .filters select { padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); }
+    .filters input { flex: 1; min-width: 180px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); white-space: nowrap; }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f9fafb; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-red { background: #fee2e2; color: #b91c1c; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; }
+    .action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); }
+    .action-btn:hover { background: var(--color-bg); }
+    .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; }
+    .pagination button { padding: 5px 12px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-surface); cursor: pointer; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--color-surface); border-radius: 10px; padding: 24px; width: 100%; max-width: 440px; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .detail-section { margin-bottom: 16px; }
+    .detail-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+    .detail-label { color: var(--color-text-muted); min-width: 120px; }
+    .users-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
+    .users-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
+    .users-list-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Tenants</h1>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="searchInput" placeholder="Buscar por nome ou CNPJ...">
+        <select id="statusFilter">
+          <option value="">Todos os status</option>
+          <option value="Ativo">Ativo</option>
+          <option value="Trial">Trial</option>
+          <option value="Suspenso">Suspenso</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+        <select id="planoFilter">
+          <option value="">Todos os planos</option>
+          <option value="Free">Free</option>
+          <option value="Plus">Plus</option>
+          <option value="Pro">Pro</option>
+          <option value="Max">Max</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Plano</th>
+              <th>Status</th>
+              <th>Usuários</th>
+              <th>Processos</th>
+              <th>Docs</th>
+              <th>Tarefas</th>
+              <th>Cadastro</th>
+              <th>Expira</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="11" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button id="prevBtn" disabled>← Anterior</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" disabled>Próxima →</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Detalhes do Tenant -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-title" id="detailTitle">Detalhes</div>
+      <div id="detailContent"></div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('detailModal')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Alterar Plano -->
+  <div class="modal-overlay" id="planoModal">
+    <div class="modal">
+      <div class="modal-title">Alterar Plano</div>
+      <div class="form-group">
+        <label class="form-label">Novo Plano</label>
+        <select id="novoPlano" class="form-control">
+          <option value="Free">Free</option>
+          <option value="Plus">Plus</option>
+          <option value="Pro">Pro</option>
+          <option value="Max">Max</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Período de Billing</label>
+        <select id="periodoBilling" class="form-control">
+          <option value="">— (não aplicável)</option>
+          <option value="Mensal">Mensal</option>
+          <option value="Anual">Anual</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('planoModal')">Cancelar</button>
+        <button class="btn btn-primary" id="savePlanoBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Alterar Status -->
+  <div class="modal-overlay" id="statusModal">
+    <div class="modal">
+      <div class="modal-title">Alterar Status</div>
+      <div class="form-group">
+        <label class="form-label">Novo Status</label>
+        <select id="novoStatus" class="form-control">
+          <option value="Ativo">Ativo</option>
+          <option value="Trial">Trial</option>
+          <option value="Suspenso">Suspenso</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div id="statusModalMsg" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;display:none">
+        Suspenso/Cancelado bloqueia o acesso dos usuários do tenant.
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('statusModal')">Cancelar</button>
+        <button class="btn btn-primary" id="saveStatusBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
+    const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
+
+    let page = 1;
+    const pageSize = 20;
+    let total = 0;
+    let currentTenantId = null;
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—'; }
+    function fmtBytes(b) {
+      if (!b) return '0 B';
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+      if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
+      return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    async function load() {
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      const plano = document.getElementById('planoFilter').value;
+
+      const params = new URLSearchParams({ page, pageSize });
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      if (plano) params.set('plano', plano);
+
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="11" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>';
+
+      try {
+        const data = await saFetch(`/superadmin/tenants?${params}`);
+        total = data.total;
+
+        if (data.items.length === 0) {
+          document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="11" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum tenant encontrado.</td></tr>';
+        } else {
+          document.getElementById('tableBody').innerHTML = data.items.map(t => `
+            <tr>
+              <td style="font-weight:500">${esc(t.nome)}</td>
+              <td style="color:var(--color-text-muted);font-size:12px">${esc(t.cnpj ?? '—')}</td>
+              <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
+              <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">${t.userCount}</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">${t.processoCount}</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap">
+                ${t.documentoCount}
+                ${t.documentoTamanhoBytes > 0 ? `<span style="color:var(--color-text-muted);font-size:11px;margin-left:3px">${fmtBytes(t.documentoTamanhoBytes)}</span>` : ''}
+              </td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums">${t.tarefaCount}</td>
+              <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.criadoEm)}</td>
+              <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</td>
+              <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
+                <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
+                <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}')">Plano</button>
+                <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
+              </td>
+            </tr>`).join('');
+        }
+
+        const pages = Math.ceil(total / pageSize);
+        document.getElementById('pageInfo').textContent = `Página ${page} de ${Math.max(1, pages)} (${total} tenants)`;
+        document.getElementById('prevBtn').disabled = page <= 1;
+        document.getElementById('nextBtn').disabled = page >= pages;
+      } catch (e) {
+        document.getElementById('tableBody').innerHTML =
+          `<tr><td colspan="11" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    window.openDetail = async function(id) {
+      document.getElementById('detailContent').innerHTML = '<p style="color:var(--color-text-muted)">Carregando...</p>';
+      openModal('detailModal');
+      try {
+        const t = await saFetch(`/superadmin/tenants/${id}`);
+        document.getElementById('detailTitle').textContent = t.nome;
+        const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
+        const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
+        document.getElementById('detailContent').innerHTML = `
+          <div class="detail-section">
+            <div class="detail-row"><span class="detail-label">CNPJ</span><span>${esc(t.cnpj ?? '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Endereço</span><span>${esc(t.endereco ?? '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Plano</span><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></div>
+            <div class="detail-row"><span class="detail-label">Período</span><span>${esc(t.periodoBilling ?? '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></div>
+            <div class="detail-row"><span class="detail-label">Cadastro</span><span>${fmtDate(t.criadoEm)}</span></div>
+            <div class="detail-row"><span class="detail-label">Trial expira</span><span>${fmtDate(t.trialExpiraEm)}</span></div>
+            <div class="detail-row"><span class="detail-label">Plano expira</span><span>${fmtDate(t.planoExpiraEm)}</span></div>
+            <div class="detail-row"><span class="detail-label">AbacatePay ID</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId ?? '—')}</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Processos</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Docs</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.documentoCount}</div>
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:1px">${fmtBytes(t.documentoTamanhoBytes)}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Tarefas</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.tarefaCount}</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Usuários</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.userCount}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+            Usuários (${t.usuarios.length})
+          </div>
+          <div class="users-list">
+            ${t.usuarios.length === 0
+              ? '<div style="padding:10px;text-align:center;color:var(--color-text-muted)">Sem usuários</div>'
+              : t.usuarios.map(u => `
+                <div class="users-list-row">
+                  <span style="flex:1;font-weight:500">${esc(u.nome)}</span>
+                  <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
+                  <span class="badge badge-${u.ativo ? 'green' : 'gray'}" style="margin-left:4px">${u.perfil}</span>
+                </div>`).join('')}
+          </div>`;
+      } catch (e) {
+        document.getElementById('detailContent').innerHTML = `<p style="color:var(--color-danger)">Erro: ${esc(e.message)}</p>`;
+      }
+    };
+
+    window.openPlano = function(id, planoAtual, periodoAtual) {
+      currentTenantId = id;
+      document.getElementById('novoPlano').value = planoAtual;
+      document.getElementById('periodoBilling').value = periodoAtual || '';
+      openModal('planoModal');
+    };
+
+    document.getElementById('savePlanoBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('savePlanoBtn');
+      btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/tenants/${currentTenantId}/plano`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            plano: document.getElementById('novoPlano').value,
+            periodoBilling: document.getElementById('periodoBilling').value || null
+          })
+        });
+        closeModal('planoModal');
+        load();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    window.openStatus = function(id, statusAtual) {
+      currentTenantId = id;
+      document.getElementById('novoStatus').value = statusAtual;
+      document.getElementById('statusModalMsg').style.display = 'none';
+      openModal('statusModal');
+    };
+
+    document.getElementById('novoStatus').addEventListener('change', e => {
+      const msg = document.getElementById('statusModalMsg');
+      msg.style.display = (e.target.value === 'Suspenso' || e.target.value === 'Cancelado') ? '' : 'none';
+    });
+
+    document.getElementById('saveStatusBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveStatusBtn');
+      btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/tenants/${currentTenantId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ status: document.getElementById('novoStatus').value })
+        });
+        closeModal('statusModal');
+        load();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => { page--; load(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { page++; load(); });
+
+    let searchTimer;
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { page = 1; load(); }, 350);
+    });
+    document.getElementById('statusFilter').addEventListener('change', () => { page = 1; load(); });
+    document.getElementById('planoFilter').addEventListener('change', () => { page = 1; load(); });
+
+    // Open tenant detail via URL param
+    const urlId = new URLSearchParams(location.search).get('id');
+    if (urlId) window.openDetail(urlId);
+
+    load();
+  </script>
+</body>
+</html>

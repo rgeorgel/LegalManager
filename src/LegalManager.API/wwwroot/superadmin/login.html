@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Super Admin</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body { background: var(--color-sidebar); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: var(--color-surface); border-radius: 12px; padding: 40px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .login-logo { text-align: center; margin-bottom: 8px; }
+    .login-logo img { height: 36px; }
+    .login-badge { text-align: center; margin-bottom: 28px; }
+    .login-badge span { background: #dc2626; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 10px; border-radius: 100px; text-transform: uppercase; }
+    .login-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; text-align: center; }
+    .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="/images/causify-logo-3A-escuro.png" alt="Causify">
+    </div>
+    <div class="login-badge"><span>Super Admin</span></div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input type="email" id="email" class="form-control" placeholder="superadmin@causify.internal" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input type="password" id="senha" class="form-control" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px" id="submitBtn">
+        Entrar
+      </button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { setSession, isAuthenticated } from '/superadmin/js/superAdminApi.js';
+
+    if (isAuthenticated()) window.location.href = '/superadmin/dashboard.html';
+
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            senha: document.getElementById('senha').value
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.message || 'Credenciais inválidas.';
+          errorMsg.style.display = '';
+          return;
+        }
+
+        if (data.usuario?.perfil !== 'SuperAdmin') {
+          errorMsg.textContent = 'Acesso restrito ao painel super admin.';
+          errorMsg.style.display = '';
+          return;
+        }
+
+        setSession(data);
+        window.location.href = '/superadmin/dashboard.html';
+      } catch {
+        errorMsg.textContent = 'Erro ao conectar ao servidor.';
+        errorMsg.style.display = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+  </script>
+</body>
+</html>

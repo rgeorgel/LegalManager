@@ -8,4 +8,5 @@ public class WaitlistEntry
     public string Plano { get; set; } = string.Empty;
     public Guid? UserId { get; set; }
     public DateTime CriadoEm { get; set; }
+    public string? Status { get; set; }
 }
