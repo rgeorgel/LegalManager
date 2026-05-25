@@ -6,6 +6,7 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
 {
     public bool Authorize(DashboardContext context)
     {
-        return true;
+        var user = context.GetHttpContext().User;
+        return user.Identity?.IsAuthenticated == true && user.IsInRole("SuperAdmin");
     }
 }

@@ -4,6 +4,7 @@ using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LegalManager.API.Controllers;
 
@@ -21,6 +22,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Register(RegisterTenantDto dto, CancellationToken ct)
     {
         try
@@ -35,6 +37,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, CancellationToken ct)
     {
         try
@@ -68,6 +71,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto, CancellationToken ct)
     {
         await _authService.ForgotPasswordAsync(dto, ct);
@@ -75,6 +79,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword(ResetPasswordDto dto, CancellationToken ct)
     {
         await _authService.ResetPasswordAsync(dto, ct);
