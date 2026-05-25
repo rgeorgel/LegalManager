@@ -101,6 +101,39 @@ cd src/LegalManager.API
 dotnet run
 ```
 
+## Deploy
+
+### Primeira vez: publicar a imagem base
+
+A imagem base (aspnet + AWS CLI) fica hospedada no GitHub Container Registry e só precisa ser publicada quando as dependências dela mudam.
+
+```bash
+# Construir a imagem base localmente
+docker build -f src/LegalManager.API/Dockerfile.base \
+  -t ghcr.io/rgeorgel/legalmanager-base:latest \
+  src/LegalManager.API
+
+# Fazer login no GHCR (requer Personal Access Token com write:packages)
+echo "<SEU_PAT>" | docker login ghcr.io -u rgeorgel --password-stdin
+
+# Publicar
+docker push ghcr.io/rgeorgel/legalmanager-base:latest
+```
+
+Após publicar, torne a imagem pública em: **GitHub → Packages → legalmanager-base → Package settings → Change visibility → Public**
+
+### Deployment no servidor
+
+```bash
+# Constrói a nova imagem enquanto o container antigo ainda serve tráfego
+docker compose build api
+
+# Troca o container (apenas alguns segundos de downtime)
+docker compose up -d api
+```
+
+> Se precisar reiniciar tudo (ex: mudança no banco): `docker compose down && docker compose up -d --build`
+
 ## Estrutura de Diretórios
 
 ```

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.claude
+.vs
+data/
+tests/
+scripts/
+*.md
+*.ps1
+.env*
+!.env.example
+node_modules
+**/bin
+**/obj
