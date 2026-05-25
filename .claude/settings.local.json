@@ -117,7 +117,8 @@
       "PowerShell(docker logs legalmanager-api-1 --since=\"5m\" 2>&1 | Where-Object { $_ -match \"OAB|TRF3|PJe|ESAJ|DataJud|processos\" } | Select-Object -Last 25 | ForEach-Object { $_.Substring\\(0, [Math]::Min\\($_.Length, 250\\)\\) })",
       "Bash(docker-compose ps *)",
       "Bash(.\\\\scripts\\\\check-js.ps1)",
-      "PowerShell(.\\\\scripts\\\\check-js.ps1 2>&1 | Select-Object -First 20)"
+      "PowerShell(.\\\\scripts\\\\check-js.ps1 2>&1 | Select-Object -First 20)",
+      "Bash(ls *)"
     ]
   }
 }
