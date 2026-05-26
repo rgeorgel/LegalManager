@@ -96,15 +96,25 @@ Operacional (não implementado, recomendado):
 
 ## 3. Custos
 
-### Confirmado pela documentação pública
+### Preços confirmados (`api.escavador.com/servicos`)
 
-| Ação | Custo |
+#### Consultas pontuais
+
+| Serviço | Custo |
 |---|---|
-| Busca OAB v2 — primeiros 200 processos | **R$ 4,50** (taxa base) |
-| Blocos adicionais de 200 processos | **+ R$ 0,05** por bloco |
-| Mesma busca repetida no mesmo dia | só o bloco, sem taxa base |
+| Processos do advogado por OAB (`GET /v2/advogado/{oab}/processos`) | R$ 4,50 até 200 itens + R$ 0,05 a cada 200 |
+| Processos do envolvido por CPF/CNPJ | R$ 4,50 até 200 itens + R$ 0,05 a cada 200 |
+| Resumo do advogado por OAB | R$ 0,40 |
+| Capa de um processo por CNJ | R$ 0,05 |
+| Envolvidos de um processo | R$ 0,05 |
+| Movimentações de um processo | R$ 0,05 |
+| Atualização do processo no tribunal | R$ 0,10 |
+| Atualização do processo + documentos públicos | R$ 0,20 |
+| Atualização do processo + baixar autos | R$ 1,50 |
+| Resumo IA de um processo (geração) | R$ 0,08 |
+| Resumo IA de um processo (leitura) | R$ 0,05 |
 
-**Exemplos:**
+**Custo da busca OAB por total de processos:**
 
 | Processos do advogado | Páginas (limit=100) | Custo |
 |---|---|---|
@@ -115,145 +125,124 @@ Operacional (não implementado, recomendado):
 
 > Usar `limit=100` (máximo) minimiza chamadas HTTP sem alterar o custo total.
 
-### Não públicos — confirmar no dashboard `api.escavador.com/servicos`
+#### Monitoramentos (assinaturas mensais)
 
-Os valores abaixo não constam na documentação pública. São estimativas baseadas em padrões de mercado para APIs similares.
+| Serviço | Custo / mês |
+|---|---|
+| **Monitoramento de processo — atualização diária** (tribunal + DOs) | **R$ 1,76 / processo** |
+| **Monitoramento de processo — atualização semanal** (tribunal + DOs) | **R$ 0,32 / processo** |
+| **Monitoramento de processo — atualização mensal** (tribunal + DOs) | **R$ 0,08 / processo** |
+| **Monitoramento de novos processos por termo** (OAB, CPF, nome) | **R$ 2,20** até 200 itens + R$ 0,05/200 |
 
-| Ação | Endpoint | Estimativa |
-|---|---|---|
-| Criar monitoramento no tribunal | `POST /v2/monitoramento-processos` | R$ 0,10 – 0,50 / criação |
-| Manutenção mensal por monitoramento ativo | — | R$ 0,50 – 2,00 / processo / mês |
-| Callback recebido (andamento, decisão etc.) | webhook | R$ 0,01 – 0,10 / evento |
-| Criar monitoramento em Diário Oficial | `POST /v1/monitoramento-de-diarios-oficiais/criar` | R$ 0,05 – 0,20 / termo |
-| Publicação encontrada em Diário | webhook `publicacao_em_diario` | R$ 0,05 – 0,30 / aparição |
-| Busca assíncrona v1 no tribunal | `POST /v1/processos/oab` | R$ 1,00 – 5,00 / busca |
+> O monitoramento de processo já inclui Diários Oficiais — não é necessário contratar monitoramento de DOs separado para processos já monitorados. O "monitoramento de novos processos" serve para detectar processos novos que mencionem o advogado (por OAB/nome) e ainda não estão no sistema.
 
 ---
 
 ## 4. Estimativas de Escala
 
-### Premissas do modelo
+### Premissas do modelo (preços confirmados)
 
-| Item | Otimista | Provável | Pessimista |
+| Item | Diário | Semanal | Mensal |
 |---|---|---|---|
-| Busca OAB (até 200 proc) | R$ 4,50 | R$ 4,50 | R$ 4,50 |
-| Criação de monitoramento / processo | R$ 0,10 | R$ 0,30 | R$ 0,50 |
-| Manutenção mensal / processo monitorado | R$ 0,50 | R$ 1,25 | R$ 2,00 |
-| Callback de andamento recebido | R$ 0,01 | R$ 0,05 | R$ 0,10 |
-| Criação de monitoramento Diário (2 termos) | R$ 0,10 | R$ 0,25 | R$ 0,40 |
-| Callbacks de Diários (~8/mês) | R$ 0,40 | R$ 1,40 | R$ 2,40 |
-| Polling fallback (~720 GETs/mês) | R$ 0,72 | R$ 2,16 | R$ 3,60 |
+| Busca OAB (até 200 proc, uma vez no onboarding) | R$ 4,50 | R$ 4,50 | R$ 4,50 |
+| Monitoramento por processo / mês | **R$ 1,76** | **R$ 0,32** | **R$ 0,08** |
+| Monitoramento de novos processos por OAB (1 termo) | R$ 2,20 | R$ 2,20 | R$ 2,20 |
 
-Hipóteses de comportamento: **3 andamentos/processo/mês** (média esperada para processo ativo).
+**Cobertura do monitoramento de processo**: inclui atualizações do tribunal + Diários Oficiais. Callbacks por andamento não têm cobrança extra visível — incluídos na assinatura.
+
+**Polling fallback** (`GET /api/v2/callback/listar`): não listado na tabela de preços — custo provavelmente nulo ou marginal, não incluído nas estimativas.
+
+**Recomendação de tier por situação:**
+- Processo ativo (movimentação nos últimos 90 dias): **Diário** — necessário para prazos de 5 dias
+- Processo dormente (sem movimentação há 6+ meses): **Semanal** — suficiente, sem prazos iminentes
+- Processo arquivado: **cancelar monitoramento** (ver Estratégia 2, seção 6)
 
 ---
 
 ### Custo por advogado individual
 
-#### Setup único (onboarding — ocorre só no Mês 1)
-
-| Processos monitorados | Otimista | Provável | Pessimista |
-|---|---|---|---|
-| **1** | R$ 4,70 | R$ 5,05 | R$ 5,40 |
-| **5** | R$ 5,10 | R$ 6,25 | R$ 7,40 |
-| **10** | R$ 5,60 | R$ 7,75 | R$ 9,90 |
-| **25** | R$ 7,10 | R$ 12,25 | R$ 17,40 |
-| **50** | R$ 9,60 | R$ 19,75 | R$ 29,90 |
-| **100** | R$ 14,60 | R$ 34,75 | R$ 54,90 |
-| **500** | R$ 54,70 | R$ 154,85 | R$ 255,00 |
-
-<details>
-<summary>Composição do setup</summary>
-
-Setup = busca OAB (R$4,50 fixo) + criação dos monitoramentos de tribunal × N + 2 monitoramentos de Diário. O custo é **dominado pela taxa fixa da busca** — variações dependem só do número de processos selecionados.
-</details>
+Setup = busca OAB (R$4,50 fixo, uma vez). Recorrente = N × tier + R$2,20 (monitoramento de OAB para novos processos). Mês 1 = Setup + primeiro mês de recorrente.
 
 #### Recorrente mensal (Mês 2+ em diante)
 
-| Processos monitorados | Otimista | Provável | Pessimista |
-|---|---|---|---|
-| **1** | R$ 1,65 | R$ 4,98 | R$ 8,30 |
-| **5** | R$ 3,77 | R$ 10,64 | R$ 17,50 |
-| **10** | R$ 6,42 | R$ 17,71 | R$ 29,00 |
-| **25** | R$ 14,37 | R$ 38,94 | R$ 63,50 |
-| **50** | R$ 27,62 | R$ 74,31 | R$ 121,00 |
-| **100** | R$ 54,12 | R$ 145,06 | R$ 236,00 |
-| **500** | R$ 266,12 | R$ 711,06 | R$ 1.156,00 |
+| Processos monitorados | Diário (R$1,76/proc) | Semanal (R$0,32/proc) |
+|---|---|---|
+| **1** | R$ 3,96 | R$ 2,52 |
+| **5** | R$ 11,00 | R$ 3,80 |
+| **10** | R$ 19,80 | R$ 5,40 |
+| **25** | R$ 46,20 | R$ 10,20 |
+| **50** | R$ 90,20 | R$ 18,20 |
+| **100** | R$ 178,20 | R$ 34,20 |
+| **500** | R$ 882,20 | R$ 162,20 |
 
-<details>
-<summary>Composição do recorrente</summary>
+#### Total Mês 1 (setup R$4,50 + primeiro mês de recorrente)
 
-Recorrente = manutenção mensal dos N monitoramentos + callbacks de andamentos (3/proc/mês) + callbacks de Diários (~8/mês) + polling fallback (~720 GETs/mês). A **manutenção mensal por processo é o maior driver de custo** — e o de maior incerteza, pois não está publicado. O cenário pessimista assume R$2,00/processo/mês.
-</details>
-
-#### Total Mês 1 = Setup + Recorrente
-
-O primeiro mês é mais caro que os seguintes por incluir os dois componentes.
-
-| Processos monitorados | Otimista | Provável | Pessimista |
-|---|---|---|---|
-| **1** | R$ 6,35 | R$ 10,03 | R$ 13,70 |
-| **5** | R$ 8,87 | R$ 16,89 | R$ 24,90 |
-| **10** | R$ 12,02 | R$ 25,46 | R$ 38,90 |
-| **25** | R$ 21,47 | R$ 51,19 | R$ 80,90 |
-| **50** | R$ 37,22 | R$ 94,06 | R$ 150,90 |
-| **100** | R$ 68,72 | R$ 179,81 | R$ 290,90 |
-| **500** | R$ 320,82 | R$ 865,91 | R$ 1.411,00 |
+| Processos monitorados | Diário | Semanal |
+|---|---|---|
+| **1** | R$ 8,46 | R$ 7,02 |
+| **5** | R$ 15,50 | R$ 8,30 |
+| **10** | R$ 24,30 | R$ 9,90 |
+| **25** | R$ 50,70 | R$ 14,70 |
+| **50** | R$ 94,70 | R$ 22,70 |
+| **100** | R$ 182,70 | R$ 38,70 |
+| **500** | R$ 886,80 | R$ 166,80 |
 
 ---
 
 ### Custo total da plataforma — Matriz de escala
 
-Os valores abaixo usam o cenário **Provável** (coluna do meio acima).
+Valores usando **monitoramento diário (R$1,76/proc/mês)** — cenário padrão para processos ativos.
 
-#### Mês 1 — Total (setup + recorrente, cenário Provável)
-
-| | **1 proc** | **5 proc** | **10 proc** | **25 proc** | **50 proc** | **100 proc** | **500 proc** |
-|---|---|---|---|---|---|---|---|
-| **1 advogado** | R$ 10 | R$ 17 | R$ 25 | R$ 51 | R$ 94 | R$ 180 | R$ 866 |
-| **10 advogados** | R$ 100 | R$ 169 | R$ 255 | R$ 512 | R$ 941 | R$ 1.798 | R$ 8.659 |
-| **50 advogados** | R$ 502 | R$ 845 | R$ 1.273 | R$ 2.560 | R$ 4.703 | R$ 8.991 | R$ 43.296 |
-| **100 advogados** | R$ 1.003 | R$ 1.689 | R$ 2.546 | R$ 5.119 | R$ 9.406 | R$ 17.981 | R$ 86.591 |
-
-#### Mês 2+ — Recorrente mensal (cenário Provável)
+#### Mês 1 — Total (setup + primeiro mês, monitoramento diário)
 
 | | **1 proc** | **5 proc** | **10 proc** | **25 proc** | **50 proc** | **100 proc** | **500 proc** |
 |---|---|---|---|---|---|---|---|
-| **1 advogado** | R$ 5 | R$ 11 | R$ 18 | R$ 39 | R$ 74 | R$ 145 | R$ 711 |
-| **10 advogados** | R$ 50 | R$ 106 | R$ 177 | R$ 389 | R$ 743 | R$ 1.451 | R$ 7.111 |
-| **50 advogados** | R$ 249 | R$ 532 | R$ 886 | R$ 1.947 | R$ 3.716 | R$ 7.253 | R$ 35.553 |
-| **100 advogados** | R$ 498 | R$ 1.064 | R$ 1.771 | R$ 3.894 | R$ 7.431 | R$ 14.506 | R$ 71.106 |
+| **1 advogado** | R$ 8 | R$ 16 | R$ 24 | R$ 51 | R$ 95 | R$ 183 | R$ 887 |
+| **10 advogados** | R$ 85 | R$ 155 | R$ 243 | R$ 507 | R$ 947 | R$ 1.827 | R$ 8.868 |
+| **50 advogados** | R$ 423 | R$ 775 | R$ 1.215 | R$ 2.535 | R$ 4.735 | R$ 9.135 | R$ 44.340 |
+| **100 advogados** | R$ 846 | R$ 1.550 | R$ 2.430 | R$ 5.070 | R$ 9.470 | R$ 18.270 | R$ 88.680 |
+
+#### Mês 2+ — Recorrente mensal (monitoramento diário)
+
+| | **1 proc** | **5 proc** | **10 proc** | **25 proc** | **50 proc** | **100 proc** | **500 proc** |
+|---|---|---|---|---|---|---|---|
+| **1 advogado** | R$ 4 | R$ 11 | R$ 20 | R$ 46 | R$ 90 | R$ 178 | R$ 882 |
+| **10 advogados** | R$ 40 | R$ 110 | R$ 198 | R$ 462 | R$ 902 | R$ 1.782 | R$ 8.822 |
+| **50 advogados** | R$ 198 | R$ 550 | R$ 990 | R$ 2.310 | R$ 4.510 | R$ 8.910 | R$ 44.110 |
+| **100 advogados** | R$ 396 | R$ 1.100 | R$ 1.980 | R$ 4.620 | R$ 9.020 | R$ 17.820 | R$ 88.220 |
 
 ---
 
-### Faixa completa (otimista → pessimista)
+### Faixa de custo por tier de monitoramento
 
-Para dimensionamento de budget, considere a faixa abaixo ao invés do ponto médio.
+A variável de custo agora é o **tier de monitoramento**, não estimativas. Use diário para processos ativos e semanal para dormentes (ver Estratégia 5, seção 6).
 
-Mês 1 = setup + recorrente (sempre maior que Mês 2+). Mês 2+ = só recorrente.
+Mês 1 = setup + primeiro mês. Mês 2+ = só recorrente.
 
-| Escala | 1 proc | 5 proc | 10 proc | 25 proc | 50 proc | 100 proc | 500 proc |
-|---|---|---|---|---|---|---|---|
-| **1 adv — Mês 1** | R$ 6 – R$ 14 | R$ 9 – R$ 25 | R$ 12 – R$ 39 | R$ 21 – R$ 81 | R$ 37 – R$ 151 | R$ 69 – R$ 291 | R$ 321 – R$ 1.411 |
-| **1 adv — Mês 2+** | R$ 2 – R$ 8 | R$ 4 – R$ 18 | R$ 6 – R$ 29 | R$ 14 – R$ 64 | R$ 28 – R$ 121 | R$ 54 – R$ 236 | R$ 266 – R$ 1.156 |
-| **10 adv — Mês 1** | R$ 64 – R$ 137 | R$ 89 – R$ 249 | R$ 120 – R$ 390 | R$ 215 – R$ 809 | R$ 372 – R$ 1.509 | R$ 687 – R$ 2.909 | R$ 3.208 – R$ 14.110 |
-| **10 adv — Mês 2+** | R$ 17 – R$ 83 | R$ 38 – R$ 175 | R$ 64 – R$ 290 | R$ 144 – R$ 635 | R$ 276 – R$ 1.210 | R$ 541 – R$ 2.360 | R$ 2.661 – R$ 11.560 |
-| **50 adv — Mês 1** | R$ 318 – R$ 685 | R$ 444 – R$ 1.245 | R$ 601 – R$ 1.945 | R$ 1.074 – R$ 4.045 | R$ 1.861 – R$ 7.545 | R$ 3.436 – R$ 14.545 | R$ 16.041 – R$ 70.550 |
-| **50 adv — Mês 2+** | R$ 83 – R$ 415 | R$ 189 – R$ 875 | R$ 321 – R$ 1.450 | R$ 719 – R$ 3.175 | R$ 1.381 – R$ 6.050 | R$ 2.706 – R$ 11.800 | R$ 13.306 – R$ 57.800 |
-| **100 adv — Mês 1** | R$ 635 – R$ 1.370 | R$ 887 – R$ 2.490 | R$ 1.202 – R$ 3.890 | R$ 2.147 – R$ 8.090 | R$ 3.722 – R$ 15.090 | R$ 6.872 – R$ 29.090 | R$ 32.082 – R$ 141.100 |
-| **100 adv — Mês 2+** | R$ 165 – R$ 830 | R$ 377 – R$ 1.750 | R$ 642 – R$ 2.900 | R$ 1.437 – R$ 6.350 | R$ 2.762 – R$ 12.100 | R$ 5.412 – R$ 23.600 | R$ 26.612 – R$ 115.600 |
+| Escala | 10 proc | 25 proc | 50 proc | 100 proc |
+|---|---|---|---|---|
+| **1 adv — Mês 1 (diário)** | R$ 24 | R$ 51 | R$ 95 | R$ 183 |
+| **1 adv — Mês 1 (semanal)** | R$ 10 | R$ 15 | R$ 23 | R$ 39 |
+| **1 adv — Mês 2+ (diário)** | R$ 20 | R$ 46 | R$ 90 | R$ 178 |
+| **1 adv — Mês 2+ (semanal)** | R$ 5 | R$ 10 | R$ 18 | R$ 34 |
+| **10 adv — Mês 2+ (diário)** | R$ 198 | R$ 462 | R$ 902 | R$ 1.782 |
+| **10 adv — Mês 2+ (semanal)** | R$ 54 | R$ 102 | R$ 182 | R$ 342 |
+| **50 adv — Mês 2+ (diário)** | R$ 990 | R$ 2.310 | R$ 4.510 | R$ 8.910 |
+| **50 adv — Mês 2+ (semanal)** | R$ 270 | R$ 510 | R$ 910 | R$ 1.710 |
+| **100 adv — Mês 2+ (diário)** | R$ 1.980 | R$ 4.620 | R$ 9.020 | R$ 17.820 |
+| **100 adv — Mês 2+ (semanal)** | R$ 540 | R$ 1.020 | R$ 1.820 | R$ 3.420 |
 
 ---
 
 ### Observações críticas
 
-**A manutenção mensal é o risco principal.** O custo recorrente por processo monitorado não está publicado na documentação pública. Se for R$2,00/processo/mês (cenário pessimista), uma base de 100 advogados com 50 processos cada chega a **R$12.100/mês** só de API — o que pode ser inviável dependendo do ticket médio da plataforma.
+**O tier de monitoramento é o principal lever de custo.** Com preços confirmados, a diferença entre diário (R$1,76) e semanal (R$0,32) é 5,5× por processo. Para uma base de 100 advogados com 50 processos cada, usar diário em todos custa **R$9.020/mês** contra **R$1.820/mês** com semanal — a decisão de tier deve ser consciente.
 
 **Recomendações antes de ir a produção:**
-1. Acessar `api.escavador.com/servicos` com credenciais para confirmar todos os valores unitários
-2. Criar 2–3 monitoramentos de teste e observar o header `Creditos-Utilizados` nas respostas
-3. Definir um teto máximo de processos monitorados por plano da Causify com base nos valores reais
-4. Considerar não repassar o custo de manutenção 1:1 — absorver na margem do plano ou criar um tier "monitoramento" separado
+1. Confirmar se callbacks por andamento têm custo adicional (não visível na tabela de serviços) observando o header `Creditos-Utilizados` nas respostas
+2. Implementar lógica de tier automático (diário ↔ semanal) com base em data do último andamento
+3. Definir limite máximo de processos com monitoramento diário por plano da Causify
+4. Considerar absorver o custo de monitoramento na margem do plano em vez de cobrar por processo
 
 ---
 
@@ -296,7 +285,105 @@ Vai ao site do tribunal diretamente, sem depender da indexação do Escavador. �
 
 ---
 
-## 6. Decisões em Aberto
+## 6. Estratégias de Redução de Custo
+
+As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de perder prazos. São apresentadas em ordem de facilidade de implementação.
+
+---
+
+### Estratégia 1 — Reduzir polling fallback de 1h para 6h
+
+**Economia**: ~R$ 1,80/mês por advogado (-83% do custo de polling)
+
+**Por que é seguro**: o polling é apenas um fallback para webhooks não entregues. Prazos processuais no Brasil são de 5, 10 ou 15 dias corridos — uma janela de até 6 horas para capturar um webhook perdido é completamente negligenciável.
+
+**Implementação**: trocar o cron de `"0 * * * *"` para `"0 */6 * * *"` em `EscavadorCallbackPollingJob`.
+
+**Risco**: praticamente nulo. O webhook em tempo real continua sendo o canal principal.
+
+---
+
+### Estratégia 2 — Deletar monitoramento ao arquivar processo
+
+**Economia**: R$ 1,25/mês por processo encerrado (o maior driver de custo recorrente)
+
+**Por que é seguro**: processo arquivado não gera novos prazos. O Escavador já envia o evento `processo_arquivado` via webhook — basta tratá-lo.
+
+**Implementação**:
+- Em `EscavadorController.ReceberCallback`, ao receber `tipo == "processo_arquivado"`:
+  - Chamar `DELETE /api/v2/monitoramento-processos/{EscavadorMonitoramentoId}`
+  - Setar `Processo.Monitorado = false` e `Processo.EscavadorMonitoramentoId = null`
+- Job de limpeza mensal (Hangfire) para processos já arquivados no banco sem esse tratamento anterior.
+
+**Risco**: nulo. Processo encerrado não tem prazo futuro.
+
+---
+
+### Estratégia 3 — Monitorar só o número OAB no Diário Oficial (não o nome)
+
+**Economia**: ~R$ 0,60–0,70/mês por advogado (manutenção do segundo termo + metade dos callbacks)
+
+**Por que é seguro**: o número de OAB (`123456/SP`) é específico o suficiente para capturar todas as publicações que mencionam o advogado. O nome completo gera falsos positivos em nomes comuns e dobra o custo sem aumentar a cobertura relevante.
+
+**Implementação**: ao criar monitoramentos de Diário no `OnboardingController.Importar`, criar apenas 1 termo (OAB) em vez de 2 (OAB + nome).
+
+**Risco**: baixo. Publicações identificam o advogado pelo número de OAB por padrão.
+
+---
+
+### Estratégia 4 — Suspender monitoramento de processos dormentes
+
+**Economia**: depende do perfil — carteiras antigas podem ter 30–50% dos processos sem movimentação há mais de 6 meses
+
+**Por que é seguro**: processos dormentes raramente têm prazo iminente. A plataforma pode pausar o monitoramento Escavador e verificar o DataJud passivamente a cada 30 dias. Se houver movimentação, reativa o monitoramento automaticamente.
+
+**Implementação**:
+- Critério de dormência: sem `Andamento` com `DataOcorrencia` nos últimos 180 dias
+- Job mensal (Hangfire): para processos dormentes com `Monitorado = true`, chama `DELETE /api/v2/monitoramento-processos/{id}`, seta `Monitorado = false`
+- Ao receber andamento via DataJud polling para um processo não monitorado: reativa com `POST /api/v2/monitoramento-processos`
+- UI: mostrar badge "Monitoramento pausado" no processo-detalhe com botão para reativar manualmente
+
+**Risco**: moderado — requer critério de reativação robusto. Não implementar sem o mecanismo de reativação automática.
+
+---
+
+---
+
+### Estratégia 5 — Usar monitoramento semanal para processos dormentes
+
+**Economia**: R$ 1,44/processo dormente/mês (de R$1,76 para R$0,32 = -82%)
+
+**Por que é seguro**: processos sem movimentação há 6+ meses raramente têm prazo correndo. A atualização semanal garante detecção dentro de 7 dias — mais que suficiente para prazos de 10 ou 15 dias. Processos com prazos de 5 dias **devem permanecer em diário**.
+
+**Implementação**:
+- Job mensal (Hangfire): identifica processos com `Andamento.DataOcorrencia < hoje - 180 dias`
+- Para cada um: atualiza o monitoramento Escavador para tier semanal (endpoint a confirmar na API v2)
+- Ao receber novo andamento via webhook: reativa automaticamente para diário
+- UI: badge "Monitoramento semanal" no processo-detalhe com botão para forçar diário
+
+**Risco**: baixo para processos genuinamente dormentes. O trigger de reativação pelo webhook garante que, ao retomar atividade, o processo volta ao tier adequado no mesmo dia.
+
+---
+
+### Impacto combinado — 25 processos monitorados (todos diário como baseline)
+
+| Estratégia | Economia/mês | Complexidade |
+|---|---|---|
+| 1 · Polling 6h | marginal (custo não listado) | Baixa — 1 linha |
+| 2 · Auto-cancelar monitoramento ao arquivar | R$ 1,76 × proc. arquivados | Baixa — novo case no webhook |
+| 3 · 1 termo Diário em vez de 2 | R$ 2,20 (economiza 1 termo) | Baixa — remover 1 chamada no onboarding |
+| 4 · Suspender monitoramento de processos dormentes | R$ 1,76 × proc. dormentes (cancelar) | Média — job + reativação |
+| 5 · Tier semanal para processos dormentes | R$ 1,44 × proc. dormentes | Média — job + reativação + atualização de tier |
+| **4 ou 5** | **R$ 7,20 – R$ 10,56** (20–30% da carteira) | |
+
+> **Estratégia 4 vs 5**: prefira a 5 (tier semanal) à 4 (cancelar) para processos dormentes que ainda podem ter movimentação eventual. Cancele só o que foi explicitamente arquivado (Estratégia 2).
+
+**Custo base** (25 proc., todos diário): R$ 46,20/mês
+**Com estratégias 2 + 3 + 5** (30% dormentes, 1 termo Diário): ~ R$ 46,20 − R$ 2,20 − R$ 10,56 ≈ **R$ 33,44/mês** (−28%)
+
+---
+
+## 7. Decisões em Aberto
 
 | # | Questão | Opções |
 |---|---|---|
@@ -304,7 +391,9 @@ Vai ao site do tribunal diretamente, sem depender da indexação do Escavador. �
 | 2 | Paginação no onboarding: limitar em quantas páginas? | Cap 20 (2.000 proc.) parece seguro; latência aceitável |
 | 3 | Busca v1 assíncrona: automática ou sob demanda? | Recomendado: botão "Busca aprofundada" ou automático se v2 retornar < 5 resultados |
 | 4 | Plano de créditos: quanto comprar? | Depende dos custos exatos do painel — confirmar antes de ir a produção |
-| 5 | Polling fallback: manter 1×/hora? | OK para produção; reduzir para 1×/6h se custo de GET for alto |
+| 5 | Polling fallback: manter 1×/hora? | Custo de GET não listado na tabela de serviços — provavelmente nulo; reduzir para 1×/6h por precaução |
+| 6 | Tier semanal: critério de dormência? | Sugestão: 180 dias sem andamento; ajustar por tipo de processo (trabalhista costuma ter prazos mais curtos) |
+| 7 | Atualização de tier via API: endpoint disponível? | Confirmar se `PUT /api/v2/monitoramento-processos/{id}` aceita mudança de frequência ou se é necessário recriar |
 
 ---
 
