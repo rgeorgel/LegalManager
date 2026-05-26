@@ -1255,6 +1255,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("UltimaAtualizacaoDataJud")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("UltimoAndamentoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("UltimoMonitoramento")
                         .HasColumnType("timestamp with time zone");
 
