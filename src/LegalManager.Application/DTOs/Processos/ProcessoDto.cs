@@ -99,7 +99,8 @@ public record ProcessoResponseDto(
     DateTime? DataPublicacao,
     string? SiglaTribunal,
     string? Segmento,
-    DateTime? DataDistribuicao
+    DateTime? DataDistribuicao,
+    DateTime? UltimoAndamentoEm
 );
 
 public record ProcessoParteResponseDto(
@@ -122,7 +123,8 @@ public record ProcessoListItemDto(
     string? NomeAdvogadoResponsavel,
     string? NomeCliente,
     DateTime CriadoEm,
-    int TotalAndamentos
+    int TotalAndamentos,
+    DateTime? UltimoAndamentoEm
 );
 
 public record ProcessoFiltroDto(

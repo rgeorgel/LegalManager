@@ -85,6 +85,9 @@ public class ProcessoService : IProcessoService
                 VisivelCliente = true
             }).ToList();
 
+        if (dto.Andamentos != null && dto.Andamentos.Count > 0)
+            processo.UltimoAndamentoEm = dto.Andamentos.Max(a => a.Data);
+
         _context.Processos.Add(processo);
         await _context.SaveChangesAsync(ct);
 
@@ -193,7 +196,7 @@ public class ProcessoService : IProcessoService
             .Select(p => new
             {
                 p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
-                p.Status, p.ValorCausa, p.CriadoEm,
+                p.Status, p.ValorCausa, p.CriadoEm, p.UltimoAndamentoEm,
                 NomeAdvogado = p.AdvogadoResponsavel != null ? p.AdvogadoResponsavel.Nome : null,
                 NomeCliente = p.Partes
                     .Where(pt => pt.TipoParte == TipoParteProcesso.Autor)
@@ -206,7 +209,7 @@ public class ProcessoService : IProcessoService
         return new PagedResultDto<ProcessoListItemDto>(
             items.Select(p => new ProcessoListItemDto(
                 p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
-                p.Status, p.ValorCausa, p.NomeAdvogado, p.NomeCliente, p.CriadoEm, p.TotalAndamentos)),
+                p.Status, p.ValorCausa, p.NomeAdvogado, p.NomeCliente, p.CriadoEm, p.TotalAndamentos, p.UltimoAndamentoEm)),
             total, filtro.Page, filtro.PageSize,
             (int)Math.Ceiling((double)total / filtro.PageSize));
     }
@@ -239,10 +242,10 @@ public class ProcessoService : IProcessoService
 
     public async Task<AndamentoResponseDto> AddAndamentoAsync(Guid processoId, CreateAndamentoDto dto, CancellationToken ct = default)
     {
-        var exists = await _context.Processos
-            .AnyAsync(p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct);
+        var processo = await _context.Processos
+            .FirstOrDefaultAsync(p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct);
 
-        if (!exists) throw new KeyNotFoundException("Processo não encontrado.");
+        if (processo == null) throw new KeyNotFoundException("Processo não encontrado.");
 
         var andamento = new Andamento
         {
@@ -259,6 +262,8 @@ public class ProcessoService : IProcessoService
         };
 
         _context.Andamentos.Add(andamento);
+        processo.UltimoAndamentoEm = dto.Data;
+        processo.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
 
         var nomeUsuario = await _context.Users
@@ -382,7 +387,8 @@ public class ProcessoService : IProcessoService
             p.Classe, p.Assuntos, p.DataAjuizamento, p.Grau, p.Sistema, p.Formato, p.NivelSigilo, p.UltimaAtualizacaoDataJud,
             p.Ementa, p.DecisaoDataJud, p.Observacao, p.Relator, p.TipoDecisao, p.ResultadoJulgamento,
             p.CodigoClasse, p.Instancia, p.DataJulgamento, p.DataPublicacao,
-            p.SiglaTribunal, p.Segmento, p.DataDistribuicao);
+            p.SiglaTribunal, p.Segmento, p.DataDistribuicao,
+            p.UltimoAndamentoEm);
     }
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>

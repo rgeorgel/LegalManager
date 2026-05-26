@@ -24,6 +24,7 @@ public class Processo
     public DateTime? AtualizadoEm { get; set; }
     public DateTime? EncerradoEm { get; set; }
     public DateTime? UltimoMonitoramento { get; set; }
+    public DateTime? UltimoAndamentoEm { get; set; }
 
     // DataJud fields
     public string? Classe { get; set; }
