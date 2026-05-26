@@ -212,9 +212,9 @@ public class OnboardingController : ControllerBase
                 AreaDireito: MapearAreaDireito(detalhe.Area),
                 TipoAcao: detalhe.Classe,
                 Fase: FaseProcessual.Conhecimento,
-                Status: StatusProcesso.Ativo,
+                Status: MapearStatus(detalhe.Situacao),
                 ValorCausa: ParseValor(detalhe.ValorAcao),
-AdvogadoResponsavelId: _tenantContext.UserId,
+                AdvogadoResponsavelId: _tenantContext.UserId,
                 Classe: detalhe.Classe,
                 Assuntos: detalhe.Assunto,
                 DataAjuizamento: ParseDataDistribuicao(detalhe.DataDistribuicao),
@@ -492,6 +492,21 @@ AdvogadoResponsavelId: _tenantContext.UserId,
             var a when a.Contains("AMBIENT") => AreaDireito.Ambiental,
             _ => AreaDireito.Outro
         };
+
+    private static StatusProcesso MapearStatus(string situacao)
+    {
+        if (string.IsNullOrWhiteSpace(situacao))
+            return StatusProcesso.Ativo;
+
+        var upper = situacao.ToUpperInvariant();
+        if (upper.Contains("EXTINTO") || upper.Contains("ENCERRADO") || upper.Contains("JULGADO"))
+            return StatusProcesso.Encerrado;
+        if (upper.Contains("ARQUIVADO") || upper.Contains("ARQUIVAMENTO"))
+            return StatusProcesso.Arquivado;
+        if (upper.Contains("SUSPENSO") || upper.Contains("SUSPENSÃO"))
+            return StatusProcesso.Suspenso;
+        return StatusProcesso.Ativo;
+    }
 
     private static decimal? ParseValor(string? texto)
     {

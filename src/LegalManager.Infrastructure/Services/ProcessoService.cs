@@ -187,7 +187,7 @@ public class ProcessoService : IProcessoService
         var total = await query.CountAsync(ct);
 
         var items = await query
-            .OrderByDescending(p => p.CriadoEm)
+            .OrderBy(p => (int)p.Status).ThenByDescending(p => p.CriadoEm)
             .Skip((filtro.Page - 1) * filtro.PageSize)
             .Take(filtro.PageSize)
             .Select(p => new
