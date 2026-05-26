@@ -4,6 +4,8 @@ using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Onboarding;
 using LegalManager.Application.DTOs.Processos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
+using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
@@ -11,6 +13,7 @@ using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LegalManager.API.Controllers;
 
@@ -23,23 +26,29 @@ public class OnboardingController : ControllerBase
     private readonly ITenantContext _tenantContext;
     private readonly DataJudAdapter _dataJud;
     private readonly EsajTjspProcessosAdapter _esaj;
+    private readonly IEscavadorService _escavador;
     private readonly IProcessoService _processoService;
     private readonly IContatoService _contatoService;
+    private readonly ILogger<OnboardingController> _logger;
 
     public OnboardingController(
         AppDbContext context,
         ITenantContext tenantContext,
         DataJudAdapter dataJud,
         EsajTjspProcessosAdapter esaj,
+        IEscavadorService escavador,
         IProcessoService processoService,
-        IContatoService contatoService)
+        IContatoService contatoService,
+        ILogger<OnboardingController> logger)
     {
         _context = context;
         _tenantContext = tenantContext;
         _dataJud = dataJud;
         _esaj = esaj;
+        _escavador = escavador;
         _processoService = processoService;
         _contatoService = contatoService;
+        _logger = logger;
     }
 
     [HttpGet("status")]
@@ -54,16 +63,19 @@ public class OnboardingController : ControllerBase
     public async Task<ActionResult<List<ProcessoOabPreviewDto>>> BuscarPorOab(
         BuscarPorOabDto dto, CancellationToken ct)
     {
-        // TJSP usa ESAJ; demais tribunais usam DataJud
+        // TJSP usa ESAJ; demais tribunais estaduais usam DataJud; TRF/TRT usam Escavador
         var tarefaDataJud = _dataJud.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct);
         var tarefaEsaj = dto.Uf.Equals("SP", StringComparison.OrdinalIgnoreCase)
             ? _esaj.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct)
             : Task.FromResult(new List<ProcessoOabPreviewDto>());
+        var tarefaEscavador = BuscarEscavadorOabAsync(dto.NumeroOAB, dto.Uf, ct);
 
-        await Task.WhenAll(tarefaDataJud, tarefaEsaj);
+        await Task.WhenAll(tarefaDataJud, tarefaEsaj, tarefaEscavador);
 
+        // DataJud preferred over Escavador when same CNJ appears in both
         var processos = tarefaDataJud.Result
             .Concat(tarefaEsaj.Result)
+            .Concat(tarefaEscavador.Result)
             .GroupBy(p => p.NumeroCNJ)
             .Select(g => g.First())
             .OrderByDescending(p => p.DataAjuizamento)
@@ -90,10 +102,68 @@ public class OnboardingController : ControllerBase
         var importados = 0;
         var mensagens = new List<string>();
 
+        // Pre-fetch plan limits if any item comes from Escavador
+        var temEscavador = dto.Processos.Any(x => x.Fonte == "escavador");
+        var monitoradosCount = 0;
+        var limiteMonitorados = 0;
+        if (temEscavador)
+        {
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Id == _tenantContext.TenantId, ct);
+            monitoradosCount = await _context.Processos
+                .CountAsync(p => p.TenantId == _tenantContext.TenantId && p.Monitorado, ct);
+            limiteMonitorados = PlanoRestricoes.MaxProcessosMonitorados(tenant?.Plano ?? PlanoTipo.Free);
+        }
+
         foreach (var item in dto.Processos.GroupBy(x => x.NumeroCNJ).Select(g => g.First()))
         {
             try
             {
+                if (item.Fonte == "escavador")
+                {
+                    var cnj = item.NumeroCNJ.Trim();
+
+                    if (await _context.Processos.AnyAsync(
+                            p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == cnj, ct))
+                    {
+                        mensagens.Add($"{cnj}: já cadastrado");
+                        continue;
+                    }
+
+                    var criarMon = monitoradosCount < limiteMonitorados;
+                    string? monitoramentoId = null;
+                    if (criarMon)
+                    {
+                        var mon = await _escavador.CriarMonitoramentoAsync(cnj, ct);
+                        monitoramentoId = mon?.Id.ToString();
+                        monitoradosCount++;
+                    }
+
+                    _context.Processos.Add(new Processo
+                    {
+                        Id = Guid.NewGuid(),
+                        TenantId = _tenantContext.TenantId,
+                        NumeroCNJ = cnj,
+                        Tribunal = item.NomeTribunal ?? item.SiglaTribunal,
+                        SiglaTribunal = item.SiglaTribunal,
+                        Vara = item.Vara,
+                        Comarca = item.Comarca,
+                        Classe = item.Classe,
+                        Assuntos = item.Assuntos,
+                        DataAjuizamento = item.DataAjuizamento,
+                        AreaDireito = InferirAreaEscavador(item.SiglaTribunal),
+                        Fase = FaseProcessual.Conhecimento,
+                        Status = StatusProcesso.Ativo,
+                        Monitorado = criarMon,
+                        EscavadorMonitoramentoId = monitoramentoId,
+                        AdvogadoResponsavelId = _tenantContext.UserId,
+                        CriadoEm = DateTime.Now
+                    });
+                    await _context.SaveChangesAsync(ct);
+                    importados++;
+                    continue;
+                }
+
                 CreateProcessoDto? createDto;
 
                 if (EhTjsp(item.NumeroCNJ, item.Tribunal))
@@ -354,6 +424,57 @@ AdvogadoResponsavelId: _tenantContext.UserId,
                 new AndamentoDto(m.Data, m.Descricao, m.CodigoCNJ, m.OrgaoJulgador)).ToList()
         );
     }
+
+    private async Task<List<ProcessoOabPreviewDto>> BuscarEscavadorOabAsync(
+        string oab, string uf, CancellationToken ct)
+    {
+        try
+        {
+            var todos = new List<EscavadorProcessoDto>();
+            for (var pagina = 1; pagina <= 2; pagina++)
+            {
+                var resultado = await _escavador.BuscarPorOabAsync(oab.Trim(), uf.Trim(), pagina, ct);
+                foreach (var p in resultado.Data)
+                    if (EhFederalOuTrabalhista(p.SiglaTribunal) && !string.IsNullOrWhiteSpace(p.Numero))
+                        todos.Add(p);
+                if (!resultado.TemProxima) break;
+            }
+
+            return todos
+                .GroupBy(p => p.Numero)
+                .Select(g => g.First())
+                .Select(p => new ProcessoOabPreviewDto(
+                    NumeroCNJ: p.Numero!,
+                    Tribunal: p.NomeTribunal ?? p.SiglaTribunal ?? "Tribunal Federal/Trabalhista",
+                    Vara: p.Vara,
+                    Classe: p.Classe,
+                    DataAjuizamento: p.DataAjuizamento,
+                    Grau: null,
+                    Fonte: "escavador",
+                    SiglaTribunal: p.SiglaTribunal,
+                    Comarca: p.Comarca,
+                    Assuntos: p.Assuntos
+                ))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Escavador OAB search failed, continuing without results");
+            return [];
+        }
+    }
+
+    private static bool EhFederalOuTrabalhista(string? sigla) =>
+        !string.IsNullOrWhiteSpace(sigla) &&
+        (sigla.StartsWith("TRF", StringComparison.OrdinalIgnoreCase) ||
+         sigla.StartsWith("TRT", StringComparison.OrdinalIgnoreCase));
+
+    private static AreaDireito InferirAreaEscavador(string? sigla) =>
+        sigla?.StartsWith("TRT", StringComparison.OrdinalIgnoreCase) == true
+            ? AreaDireito.Trabalhista
+            : sigla?.StartsWith("TRF", StringComparison.OrdinalIgnoreCase) == true
+                ? AreaDireito.Civil
+                : AreaDireito.Outro;
 
     private static AreaDireito MapearAreaDireito(string area) =>
         area.ToUpperInvariant() switch

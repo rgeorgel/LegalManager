@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 820 560" xmlns="http://www.w3.org/2000/svg"
+     font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6b7280"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1a56db"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="560" fill="#f9fafb" rx="12" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="410" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#111827">
+    Busca por OAB — 3 Fontes em Paralelo
+  </text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#6b7280">
+    Task.WhenAll executa DataJud, ESAJ e Escavador simultaneamente
+  </text>
+
+  <!-- ── USER ACTION ── -->
+  <rect x="305" y="64" width="210" height="48" rx="8" fill="#1e2a3b"/>
+  <text x="410" y="84" text-anchor="middle" fill="white" font-size="12" font-weight="600">Usuário</text>
+  <text x="410" y="101" text-anchor="middle" fill="#94a3b8" font-size="11">clica "Importar por OAB"</text>
+
+  <!-- Arrow: User → Controller -->
+  <line x1="410" y1="112" x2="410" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── CONTROLLER ── -->
+  <rect x="230" y="130" width="360" height="50" rx="8" fill="#1a56db"/>
+  <text x="410" y="151" text-anchor="middle" fill="white" font-size="12" font-weight="600">OnboardingController</text>
+  <text x="410" y="168" text-anchor="middle" fill="#bfdbfe" font-size="11">POST /api/onboarding/buscar-por-oab</text>
+
+  <!-- Fork: vertical from controller -->
+  <line x1="410" y1="180" x2="410" y2="200" stroke="#6b7280" stroke-width="1.5"/>
+  <!-- Horizontal spread -->
+  <line x1="110" y1="200" x2="710" y2="200" stroke="#6b7280" stroke-width="1.5"/>
+  <!-- Three verticals down to sources -->
+  <line x1="110" y1="200" x2="110" y2="218" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="410" y1="200" x2="410" y2="218" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="710" y1="200" x2="710" y2="218" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── Task.WhenAll label ── -->
+  <text x="410" y="213" text-anchor="middle" font-size="10" fill="#9ca3af" font-style="italic">Task.WhenAll</text>
+
+  <!-- ── SOURCE 1: DataJud ── -->
+  <rect x="20" y="218" width="180" height="110" rx="8" fill="#0f766e"/>
+  <text x="110" y="240" text-anchor="middle" fill="white" font-size="12" font-weight="700">DataJud (CNJ)</text>
+  <line x1="35" y1="248" x2="185" y2="248" stroke="#0d9488" stroke-width="1"/>
+  <text x="110" y="264" text-anchor="middle" fill="#ccfbf1" font-size="10">api.tjsp.jus.br</text>
+  <text x="110" y="279" text-anchor="middle" fill="#ccfbf1" font-size="10">Todos os tribunais estaduais</text>
+  <text x="110" y="295" text-anchor="middle" fill="#ccfbf1" font-size="10">TJ(AC, AL, AM … SP …)</text>
+  <rect x="55" y="304" width="110" height="18" rx="9" fill="rgba(255,255,255,0.15)"/>
+  <text x="110" y="317" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">fonte: "datajud"</text>
+
+  <!-- ── SOURCE 2: ESAJ ── -->
+  <rect x="310" y="218" width="200" height="110" rx="8" fill="#15803d"/>
+  <text x="410" y="240" text-anchor="middle" fill="white" font-size="12" font-weight="700">ESAJ / TJSP</text>
+  <line x1="325" y1="248" x2="495" y2="248" stroke="#16a34a" stroke-width="1"/>
+  <text x="410" y="264" text-anchor="middle" fill="#bbf7d0" font-size="10">tjsp.jus.br (web scraping)</text>
+  <text x="410" y="279" text-anchor="middle" fill="#bbf7d0" font-size="10">Ativado somente para UF = SP</text>
+  <text x="410" y="295" text-anchor="middle" fill="#bbf7d0" font-size="10">Grau G1 e G2</text>
+  <rect x="360" y="304" width="100" height="18" rx="9" fill="rgba(255,255,255,0.15)"/>
+  <text x="410" y="317" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">fonte: "esaj"</text>
+
+  <!-- ── SOURCE 3: Escavador ── -->
+  <rect x="620" y="218" width="180" height="110" rx="8" fill="#6d28d9"/>
+  <text x="710" y="240" text-anchor="middle" fill="white" font-size="12" font-weight="700">Escavador API</text>
+  <line x1="635" y1="248" x2="785" y2="248" stroke="#7c3aed" stroke-width="1"/>
+  <text x="710" y="264" text-anchor="middle" fill="#ede9fe" font-size="10">api.escavador.com/api/v2</text>
+  <text x="710" y="279" text-anchor="middle" fill="#ede9fe" font-size="10">TRF1 · TRF2 · … TRF6</text>
+  <text x="710" y="295" text-anchor="middle" fill="#ede9fe" font-size="10">TRT1 · TRT2 · … TRT24</text>
+  <rect x="655" y="304" width="110" height="18" rx="9" fill="rgba(255,255,255,0.15)"/>
+  <text x="710" y="317" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">fonte: "escavador"</text>
+
+  <!-- Join lines from sources to merge -->
+  <line x1="110" y1="328" x2="110" y2="368" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="410" y1="328" x2="410" y2="368" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="710" y1="328" x2="710" y2="368" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="110" y1="368" x2="710" y2="368" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="410" y1="368" x2="410" y2="386" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── MERGE ── -->
+  <rect x="185" y="386" width="450" height="56" rx="8" fill="#374151"/>
+  <text x="410" y="407" text-anchor="middle" fill="white" font-size="12" font-weight="700">Merge + Deduplicação por NumeroCNJ</text>
+  <text x="410" y="423" text-anchor="middle" fill="#d1d5db" font-size="11">GroupBy CNJ → DataJud preferido em duplicatas</text>
+  <text x="410" y="438" text-anchor="middle" fill="#9ca3af" font-size="10">OrderByDescending(DataAjuizamento) · marca JaCadastrado via DB</text>
+
+  <!-- Arrow: Merge → Result -->
+  <line x1="410" y1="442" x2="410" y2="462" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── RESULT ── -->
+  <rect x="90" y="462" width="640" height="80" rx="8" fill="white" stroke="#e5e7eb" stroke-width="1.5"/>
+  <text x="410" y="480" text-anchor="middle" fill="#111827" font-size="12" font-weight="700">Lista unificada exibida ao usuário</text>
+
+  <!-- TRT badge -->
+  <rect x="108" y="490" width="58" height="20" rx="10" fill="#fef3c7"/>
+  <text x="137" y="504" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">TRT2</text>
+
+  <!-- TRF badge -->
+  <rect x="174" y="490" width="58" height="20" rx="10" fill="#dbeafe"/>
+  <text x="203" y="504" text-anchor="middle" fill="#1e40af" font-size="10" font-weight="700">TRF3</text>
+
+  <!-- Label: federal/trabalhista -->
+  <text x="270" y="498" fill="#374151" font-size="10">← Escavador (federal e trabalhista)</text>
+
+  <!-- "Já importado" badge -->
+  <rect x="520" y="490" width="98" height="20" rx="10" fill="#d1fae5"/>
+  <text x="569" y="504" text-anchor="middle" fill="#065f46" font-size="10" font-weight="700">✓ Já importado</text>
+
+  <!-- DataJud note -->
+  <text x="410" y="530" text-anchor="middle" fill="#6b7280" font-size="10">
+    Processos estaduais (DataJud/ESAJ) sem badge de tribunal · ordenados do mais recente
+  </text>
+</svg>

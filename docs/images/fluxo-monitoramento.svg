@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 820 620" xmlns="http://www.w3.org/2000/svg"
+     font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6b7280"/>
+    </marker>
+    <marker id="arr-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#c27803"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="620" fill="#f9fafb" rx="12" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="410" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#111827">
+    Monitoramento Automático — Escavador Webhook + Polling
+  </text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#6b7280">
+    Dois mecanismos: webhook em tempo real e job de polling horário como fallback
+  </text>
+
+  <!-- ── COLUMN HEADERS ── -->
+  <!-- Left: Webhook path -->
+  <rect x="20" y="68" width="370" height="28" rx="6" fill="#6d28d9"/>
+  <text x="205" y="87" text-anchor="middle" fill="white" font-size="12" font-weight="700">📡 Webhook (Tempo Real)</text>
+
+  <!-- Right: Polling path -->
+  <rect x="430" y="68" width="370" height="28" rx="6" fill="#c27803"/>
+  <text x="615" y="87" text-anchor="middle" fill="white" font-size="12" font-weight="700">⏰ Polling Horário (Fallback)</text>
+
+  <!-- Divider -->
+  <line x1="410" y1="68" x2="410" y2="580" stroke="#e5e7eb" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- ════ WEBHOOK PATH (LEFT) ════ -->
+
+  <!-- Escavador detects event -->
+  <rect x="40" y="114" width="330" height="48" rx="8" fill="#6d28d9"/>
+  <text x="205" y="134" text-anchor="middle" fill="white" font-size="12" font-weight="600">Escavador detecta novo andamento</text>
+  <text x="205" y="151" text-anchor="middle" fill="#ede9fe" font-size="11">tribunal publica movimentação processual</text>
+
+  <line x1="205" y1="162" x2="205" y2="180" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- POST callback -->
+  <rect x="40" y="180" width="330" height="50" rx="8" fill="#4c1d95"/>
+  <text x="205" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="600">POST /api/escavador/callback</text>
+  <text x="205" y="217" text-anchor="middle" fill="#ede9fe" font-size="11">Authorization: Bearer {CallbackSecret}</text>
+
+  <line x1="205" y1="230" x2="205" y2="248" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Validate token -->
+  <rect x="40" y="248" width="330" height="40" rx="8" fill="#374151"/>
+  <text x="205" y="263" text-anchor="middle" fill="white" font-size="12" font-weight="600">ValidarCallbackToken()</text>
+  <text x="205" y="280" text-anchor="middle" fill="#d1d5db" font-size="11">rejeita 401 se token inválido</text>
+
+  <line x1="205" y1="288" x2="205" y2="306" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Shared block: Find Processo -->
+  <!-- (Both paths converge here via shared logic) -->
+  <rect x="40" y="306" width="330" height="48" rx="8" fill="#1e2a3b"/>
+  <text x="205" y="326" text-anchor="middle" fill="white" font-size="12" font-weight="600">EncontrarProcessoAsync</text>
+  <text x="205" y="343" text-anchor="middle" fill="#94a3b8" font-size="11">por EscavadorMonitoramentoId → fallback por NumeroCNJ</text>
+
+  <line x1="205" y1="354" x2="205" y2="372" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Check duplicate -->
+  <rect x="40" y="372" width="330" height="40" rx="8" fill="#1e40af"/>
+  <text x="205" y="387" text-anchor="middle" fill="white" font-size="12" font-weight="600">Verificar andamento duplicado</text>
+  <text x="205" y="404" text-anchor="middle" fill="#bfdbfe" font-size="11">AnyAsync(descricao + data) → skip se já existe</text>
+
+  <line x1="205" y1="412" x2="205" y2="430" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Create Andamento -->
+  <rect x="40" y="430" width="330" height="48" rx="8" fill="#0f766e"/>
+  <text x="205" y="450" text-anchor="middle" fill="white" font-size="12" font-weight="600">Criar Andamento</text>
+  <text x="205" y="467" text-anchor="middle" fill="#ccfbf1" font-size="11">Fonte: FonteAndamento.Automatico · MapearTipo(descricao)</text>
+
+  <line x1="205" y1="478" x2="205" y2="496" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Notify lawyer -->
+  <rect x="40" y="496" width="330" height="48" rx="8" fill="#1a56db"/>
+  <text x="205" y="516" text-anchor="middle" fill="white" font-size="12" font-weight="600">Criar Notificação</text>
+  <text x="205" y="533" text-anchor="middle" fill="#bfdbfe" font-size="11">TipoNotificacao.NovoAndamento → AdvogadoResponsavelId</text>
+
+  <line x1="205" y1="544" x2="205" y2="562" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Advogado sees notification -->
+  <rect x="40" y="562" width="330" height="40" rx="8" fill="#057a55"/>
+  <text x="205" y="578" text-anchor="middle" fill="white" font-size="12" font-weight="600">Advogado vê notificação no painel</text>
+  <text x="205" y="595" text-anchor="middle" fill="#d1fae5" font-size="11">ícone de sino · link para processo-detalhe</text>
+
+  <!-- ════ POLLING PATH (RIGHT) ════ -->
+
+  <!-- Hourly trigger -->
+  <rect x="450" y="114" width="330" height="48" rx="8" fill="#c27803"/>
+  <text x="615" y="134" text-anchor="middle" fill="white" font-size="12" font-weight="600">Hangfire — a cada 1 hora</text>
+  <text x="615" y="151" text-anchor="middle" fill="#fef3c7" font-size="11">RecurringJob cron: "0 * * * *"</text>
+
+  <line x1="615" y1="162" x2="615" y2="180" stroke="#c27803" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+  <!-- GET callbacks -->
+  <rect x="450" y="180" width="330" height="50" rx="8" fill="#92400e"/>
+  <text x="615" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="600">EscavadorCallbackPollingJob</text>
+  <text x="615" y="217" text-anchor="middle" fill="#fef3c7" font-size="11">GET /api/v2/callbacks</text>
+
+  <line x1="615" y1="230" x2="615" y2="248" stroke="#c27803" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+  <!-- For each callback -->
+  <rect x="450" y="248" width="330" height="40" rx="8" fill="#374151"/>
+  <text x="615" y="263" text-anchor="middle" fill="white" font-size="12" font-weight="600">Para cada callback pendente</text>
+  <text x="615" y="280" text-anchor="middle" fill="#d1d5db" font-size="11">mesma lógica do webhook (find → andamento → notify)</text>
+
+  <line x1="615" y1="288" x2="615" y2="306" stroke="#c27803" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+
+  <!-- Mark received -->
+  <rect x="450" y="306" width="330" height="48" rx="8" fill="#92400e"/>
+  <text x="615" y="326" text-anchor="middle" fill="white" font-size="12" font-weight="600">Marcar como recebidos</text>
+  <text x="615" y="343" text-anchor="middle" fill="#fef3c7" font-size="11">POST /api/v2/callbacks/recebidos · idempotência</text>
+
+  <!-- Use case note -->
+  <rect x="450" y="374" width="330" height="80" rx="8" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="615" y="394" text-anchor="middle" fill="#374151" font-size="11" font-weight="600">Quando o polling é necessário</text>
+  <text x="615" y="412" text-anchor="middle" fill="#6b7280" font-size="10">• Webhook não configurado (dev local)</text>
+  <text x="615" y="428" text-anchor="middle" fill="#6b7280" font-size="10">• URL pública não disponível (VPN, ngrok)</text>
+  <text x="615" y="444" text-anchor="middle" fill="#6b7280" font-size="10">• Recuperação de callbacks não entregues</text>
+
+  <!-- Config note -->
+  <rect x="450" y="474" width="330" height="80" rx="8" fill="#1e2a3b"/>
+  <text x="615" y="494" text-anchor="middle" fill="white" font-size="11" font-weight="600">Configuração (appsettings.json)</text>
+  <text x="615" y="512" text-anchor="middle" fill="#94a3b8" font-size="10">"Escavador:ApiToken"  →  Bearer token</text>
+  <text x="615" y="528" text-anchor="middle" fill="#94a3b8" font-size="10">"Escavador:CallbackSecret"  →  valida webhook</text>
+  <text x="615" y="544" text-anchor="middle" fill="#94a3b8" font-size="10">"Escavador:BaseUrl"  →  https://api.escavador.com</text>
+</svg>

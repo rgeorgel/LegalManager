@@ -54,6 +54,8 @@ services:
       IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
       DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
       DataJud__ApiKey: ${DATAJUD_API_KEY:-}
+      Escavador__ApiToken: ${ESCAVADOR_API_TOKEN:-}
+      Escavador__CallbackSecret: ${ESCAVADOR_CALLBACK_SECRET:-}
       SuperAdmin__Email: ${SUPERADMIN_EMAIL:-superadmin@causify.internal}
       SuperAdmin__Password: ${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD is required}
     depends_on:

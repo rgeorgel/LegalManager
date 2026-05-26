@@ -69,6 +69,7 @@ function showStep(n) {
 
 let _marcarCompleto = true;
 let _onImportSuccess = null;
+let _oabResultados = [];
 
 async function completar() {
   if (_marcarCompleto) {
@@ -122,7 +123,7 @@ async function buscarPorOab() {
   btn.textContent = 'Buscando...';
 
   loadingEl.style.display = 'flex';
-  startDots('search', 'Procurando processos');
+  startDots('search', 'Consultando tribunais');
 
   try {
     const processos = await apiFetch('/onboarding/buscar-por-oab', {
@@ -130,6 +131,7 @@ async function buscarPorOab() {
       body: JSON.stringify({ numeroOAB, uf })
     });
 
+    _oabResultados = processos ?? [];
     loadingEl.style.display = 'none';
     stopDots('search');
     renderResultados(processos);
@@ -169,14 +171,23 @@ function renderResultados(processos) {
       ? new Date(p.dataAjuizamento).toLocaleDateString('pt-BR')
       : '—';
 
-    const badge = p.jaCadastrado
+    const badgeImportado = p.jaCadastrado
       ? '<span style="font-size:10px;background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">Já importado</span>'
       : '';
+
+    const badgeTribunal = (() => {
+      if (!p.siglaTribunal) return '';
+      if (p.siglaTribunal.startsWith('TRT'))
+        return `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">${esc(p.siglaTribunal)}</span>`;
+      if (p.siglaTribunal.startsWith('TRF'))
+        return `<span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">${esc(p.siglaTribunal)}</span>`;
+      return '';
+    })();
 
     item.innerHTML = `
       <input type="checkbox" value="${esc(p.numeroCNJ)}" data-codigo="${esc(p.codigo ?? '')}" data-foro="${esc(p.foro ?? '')}" ${p.jaCadastrado ? 'disabled checked' : 'checked'} style="margin-top:3px;flex-shrink:0">
       <div>
-        <div style="font-size:13px;font-weight:600;font-family:monospace">${esc(p.numeroCNJ)}${badge}</div>
+        <div style="font-size:13px;font-weight:600;font-family:monospace">${esc(p.numeroCNJ)}${badgeTribunal}${badgeImportado}</div>
         <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">
           ${esc(p.tribunal)}${p.vara ? ' · ' + esc(p.vara) : ''}${p.classe ? ' · ' + esc(p.classe) : ''} · Ajuizado: ${dataStr}
         </div>
@@ -192,11 +203,27 @@ function renderResultados(processos) {
 
 async function importar() {
   const checkboxes = document.querySelectorAll('#obListaProcessos input[type=checkbox]:checked:not(:disabled)');
-  const processos = Array.from(checkboxes).map(cb => ({
-    numeroCNJ: cb.value,
-    codigo: cb.dataset.codigo || null,
-    foro: cb.dataset.foro || null
-  }));
+  const processos = Array.from(checkboxes).map(cb => {
+    const found = _oabResultados.find(r => r.numeroCNJ === cb.value);
+    if (found?.fonte === 'escavador') {
+      return {
+        numeroCNJ: found.numeroCNJ,
+        fonte: 'escavador',
+        siglaTribunal: found.siglaTribunal ?? null,
+        nomeTribunal: found.tribunal ?? null,
+        vara: found.vara ?? null,
+        comarca: found.comarca ?? null,
+        classe: found.classe ?? null,
+        assuntos: found.assuntos ?? null,
+        dataAjuizamento: found.dataAjuizamento ?? null
+      };
+    }
+    return {
+      numeroCNJ: cb.value,
+      codigo: cb.dataset.codigo || null,
+      foro: cb.dataset.foro || null
+    };
+  });
 
   if (processos.length === 0) {
     document.getElementById('obErroImportar').textContent = 'Selecione ao menos um processo para importar.';

@@ -10,6 +10,7 @@ using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.Infrastructure.Storage;
+using LegalManager.Infrastructure.Escavador;
 using LegalManager.Infrastructure.Tribunais;
 using LegalManager.Infrastructure.Tribunais.Dje;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -96,6 +97,7 @@ builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCl
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<CapturaPublicacaoJob>();
+builder.Services.AddScoped<EscavadorCallbackPollingJob>();
 
 builder.Services.AddHttpClient<IIAService, IAService>(client =>
 {
@@ -109,6 +111,17 @@ builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
 builder.Services.AddScoped<SeedService>();
+
+builder.Services.AddHttpClient<IEscavadorService, LegalManager.Infrastructure.Escavador.EscavadorHttpClient>(client =>
+{
+    var baseUrl = builder.Configuration["Escavador:BaseUrl"] ?? "https://api.escavador.com";
+    client.BaseAddress = new Uri(baseUrl);
+    var token = builder.Configuration["Escavador:ApiToken"] ?? "";
+    if (!string.IsNullOrEmpty(token))
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {
@@ -342,6 +355,11 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     "indices-correcao-mensal",
     job => job.ExecutarAsync(),
     "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
+
+RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
+    "escavador-callback-polling",
+    job => job.ExecutarAsync(),
+    "0 * * * *"); // a cada hora — fallback para webhooks não recebidos
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

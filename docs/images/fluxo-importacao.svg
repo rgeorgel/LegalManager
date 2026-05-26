@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 820 580" xmlns="http://www.w3.org/2000/svg"
+     font-family="system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820" height="580" fill="#f9fafb" rx="12" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Title -->
+  <text x="410" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="#111827">
+    Importação de Processos — Decisão por Fonte
+  </text>
+  <text x="410" y="50" text-anchor="middle" font-size="11" fill="#6b7280">
+    POST /api/onboarding/importar · cada processo é roteado conforme sua origem
+  </text>
+
+  <!-- ── USER: selects processos ── -->
+  <rect x="305" y="64" width="210" height="48" rx="8" fill="#1e2a3b"/>
+  <text x="410" y="84" text-anchor="middle" fill="white" font-size="12" font-weight="600">Usuário</text>
+  <text x="410" y="101" text-anchor="middle" fill="#94a3b8" font-size="11">seleciona processos e clica importar</text>
+
+  <!-- Arrow: User → Controller -->
+  <line x1="410" y1="112" x2="410" y2="130" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── CONTROLLER ── -->
+  <rect x="230" y="130" width="360" height="50" rx="8" fill="#1a56db"/>
+  <text x="410" y="151" text-anchor="middle" fill="white" font-size="12" font-weight="600">OnboardingController.Importar</text>
+  <text x="410" y="168" text-anchor="middle" fill="#bfdbfe" font-size="11">itera sobre cada processo selecionado (GroupBy NumeroCNJ)</text>
+
+  <!-- ── DECISION ── -->
+  <!-- Diamond shape -->
+  <line x1="410" y1="180" x2="410" y2="204" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+  <polygon points="410,204 460,230 410,256 360,230" fill="#f3f4f6" stroke="#374151" stroke-width="1.5"/>
+  <text x="410" y="228" text-anchor="middle" fill="#111827" font-size="11" font-weight="600">item.Fonte</text>
+  <text x="410" y="243" text-anchor="middle" fill="#6b7280" font-size="10">== ?</text>
+
+  <!-- Three branches -->
+  <!-- LEFT: escavador -->
+  <line x1="360" y1="230" x2="120" y2="230" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="235" y="222" text-anchor="middle" fill="#6b7280" font-size="10">"escavador"</text>
+  <line x1="120" y1="230" x2="120" y2="280" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- CENTER: esaj -->
+  <line x1="410" y1="256" x2="410" y2="280" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="410" y="273" text-anchor="middle" fill="#6b7280" font-size="10">"esaj"</text>
+
+  <!-- RIGHT: datajud -->
+  <line x1="460" y1="230" x2="700" y2="230" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="580" y="222" text-anchor="middle" fill="#6b7280" font-size="10">"datajud"</text>
+  <line x1="700" y1="230" x2="700" y2="280" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── BRANCH 1: Escavador ── -->
+  <rect x="20" y="280" width="200" height="180" rx="8" fill="#6d28d9"/>
+  <text x="120" y="302" text-anchor="middle" fill="white" font-size="12" font-weight="700">Fonte Escavador</text>
+  <line x1="35" y1="310" x2="205" y2="310" stroke="#7c3aed" stroke-width="1"/>
+  <text x="120" y="328" text-anchor="middle" fill="#ede9fe" font-size="10">1. Verificar duplicata no DB</text>
+  <text x="120" y="346" text-anchor="middle" fill="#ede9fe" font-size="10">2. Checar limite do plano</text>
+  <text x="120" y="364" text-anchor="middle" fill="#ede9fe" font-size="10">3. CriarMonitoramentoAsync</text>
+  <text x="120" y="382" text-anchor="middle" fill="#ede9fe" font-size="10">   → EscavadorMonitoramentoId</text>
+  <text x="120" y="400" text-anchor="middle" fill="#ede9fe" font-size="10">4. Add Processo no DbContext</text>
+  <text x="120" y="418" text-anchor="middle" fill="#ede9fe" font-size="10">   AreaDireito: TRT→Trabalhista</text>
+  <text x="120" y="436" text-anchor="middle" fill="#ede9fe" font-size="10">              TRF→Civil</text>
+  <text x="120" y="450" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">5. SaveChangesAsync</text>
+
+  <!-- ── BRANCH 2: ESAJ ── -->
+  <rect x="310" y="280" width="200" height="180" rx="8" fill="#15803d"/>
+  <text x="410" y="302" text-anchor="middle" fill="white" font-size="12" font-weight="700">Fonte ESAJ / TJSP</text>
+  <line x1="325" y1="310" x2="495" y2="310" stroke="#16a34a" stroke-width="1"/>
+  <text x="410" y="328" text-anchor="middle" fill="#bbf7d0" font-size="10">EhTjsp(numeroCNJ) = true</text>
+  <text x="410" y="346" text-anchor="middle" fill="#bbf7d0" font-size="10">MontarDtoEsajAsync</text>
+  <text x="410" y="364" text-anchor="middle" fill="#bbf7d0" font-size="10">  → GET tjsp.jus.br (G1 e G2)</text>
+  <text x="410" y="382" text-anchor="middle" fill="#bbf7d0" font-size="10">  → Partes · Movimentos</text>
+  <text x="410" y="400" text-anchor="middle" fill="#bbf7d0" font-size="10">  → Contactos (ResolverPartes)</text>
+  <text x="410" y="418" text-anchor="middle" fill="#bbf7d0" font-size="10">  → ValorCausa · DataDistrib.</text>
+  <text x="410" y="450" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">ProcessoService.CreateAsync</text>
+
+  <!-- ── BRANCH 3: DataJud ── -->
+  <rect x="600" y="280" width="200" height="180" rx="8" fill="#0f766e"/>
+  <text x="700" y="302" text-anchor="middle" fill="white" font-size="12" font-weight="700">Fonte DataJud</text>
+  <line x1="615" y1="310" x2="785" y2="310" stroke="#0d9488" stroke-width="1"/>
+  <text x="700" y="328" text-anchor="middle" fill="#ccfbf1" font-size="10">EhTjsp = false</text>
+  <text x="700" y="346" text-anchor="middle" fill="#ccfbf1" font-size="10">MontarDtoDataJudAsync</text>
+  <text x="700" y="364" text-anchor="middle" fill="#ccfbf1" font-size="10">  → GET api.tjsp.jus.br/cnj</text>
+  <text x="700" y="382" text-anchor="middle" fill="#ccfbf1" font-size="10">  → Partes · Movimentos</text>
+  <text x="700" y="400" text-anchor="middle" fill="#ccfbf1" font-size="10">  → UltimaAtualizacaoDataJud</text>
+  <text x="700" y="418" text-anchor="middle" fill="#ccfbf1" font-size="10">  → SiglaTribunal · Vara</text>
+  <text x="700" y="450" text-anchor="middle" fill="#fef9c3" font-size="10" font-weight="600">ProcessoService.CreateAsync</text>
+
+  <!-- Converge arrows to result -->
+  <line x1="120" y1="460" x2="120" y2="510" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="410" y1="460" x2="410" y2="510" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="700" y1="460" x2="700" y2="510" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="120" y1="510" x2="700" y2="510" stroke="#6b7280" stroke-width="1.5"/>
+  <line x1="410" y1="510" x2="410" y2="526" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── RESULT ── -->
+  <rect x="180" y="526" width="460" height="42" rx="8" fill="#057a55"/>
+  <text x="410" y="543" text-anchor="middle" fill="white" font-size="12" font-weight="700">Processo criado no banco · importados++</text>
+  <text x="410" y="559" text-anchor="middle" fill="#d1fae5" font-size="11">ImportarResultadoDto → { importados, erros, mensagens }</text>
+</svg>

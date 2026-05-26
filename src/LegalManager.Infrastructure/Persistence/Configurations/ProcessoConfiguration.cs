@@ -52,6 +52,8 @@ public class ProcessoConfiguration : IEntityTypeConfiguration<Processo>
 
         builder.HasIndex(p => new { p.TenantId, p.NumeroCNJ }).IsUnique();
         builder.HasIndex(p => new { p.TenantId, p.Status });
+        builder.HasIndex(p => p.EscavadorMonitoramentoId)
+            .HasFilter("\"EscavadorMonitoramentoId\" IS NOT NULL");
     }
 }
 

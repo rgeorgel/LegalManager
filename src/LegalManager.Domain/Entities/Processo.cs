@@ -48,6 +48,9 @@ public class Processo
     public DateTime? DataJulgamento { get; set; }
     public DateTime? DataPublicacao { get; set; }
 
+    // Escavador integration
+    public string? EscavadorMonitoramentoId { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }
     public ICollection<ProcessoParte> Partes { get; set; } = new List<ProcessoParte>();
