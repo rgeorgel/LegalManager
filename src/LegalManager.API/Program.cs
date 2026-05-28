@@ -110,6 +110,7 @@ builder.Services.AddHttpClient<IIAService, IAService>(client =>
 builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
+builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
 builder.Services.AddScoped<SeedService>();
 
 builder.Services.AddHttpClient<IEscavadorService, LegalManager.Infrastructure.Escavador.EscavadorHttpClient>(client =>

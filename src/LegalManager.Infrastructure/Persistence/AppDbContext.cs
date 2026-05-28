@@ -52,6 +52,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<ConfiguracaoCalculadora> ConfiguracoesCalculadora => Set<ConfiguracaoCalculadora>();
     public DbSet<Feriado> Feriados => Set<Feriado>();
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+    public DbSet<ResumoProcesso> ResumosProcesso => Set<ResumoProcesso>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

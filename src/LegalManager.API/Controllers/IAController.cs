@@ -15,17 +15,20 @@ public class IAController : ControllerBase
     private readonly IPecaJuridicaService _pecaJuridicaService;
     private readonly ICreditoService _creditoService;
     private readonly ITenantContext _tenantContext;
+    private readonly IResumoProcessoService _resumoService;
 
     public IAController(
         ITraducaoService traducaoService,
         IPecaJuridicaService pecaJuridicaService,
         ICreditoService creditoService,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        IResumoProcessoService resumoService)
     {
         _traducaoService = traducaoService;
         _pecaJuridicaService = pecaJuridicaService;
         _creditoService = creditoService;
         _tenantContext = tenantContext;
+        _resumoService = resumoService;
     }
 
     [HttpPost("traduzir-andamento")]
@@ -88,6 +91,31 @@ public class IAController : ControllerBase
     {
         var result = await _pecaJuridicaService.ObterPecaAsync(id, ct);
         return result == null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost("resumo-processo")]
+    public async Task<ActionResult<ResumoProcessoResponseDto>> GerarResumo(
+        GerarResumoDto dto,
+        CancellationToken ct)
+    {
+        try
+        {
+            var result = await _resumoService.GerarAsync(dto, _tenantContext.UserId, ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("resumo-processo")]
+    public async Task<ActionResult<IEnumerable<ResumoProcessoResponseDto>>> ListarResumos(
+        [FromQuery] Guid processoId,
+        CancellationToken ct)
+    {
+        var result = await _resumoService.ListarAsync(processoId, ct);
+        return Ok(result);
     }
 }
 

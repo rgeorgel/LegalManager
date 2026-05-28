@@ -34,3 +34,14 @@ export async function obterPeca(id) {
 export async function getCreditos() {
   return apiFetch('/creditos');
 }
+
+export async function gerarResumoProcesso(processoId) {
+  return apiFetch('/ia/resumo-processo', {
+    method: 'POST',
+    body: JSON.stringify({ processoId })
+  });
+}
+
+export async function listarResumosProcesso(processoId) {
+  return apiFetch(`/ia/resumo-processo?processoId=${processoId}`);
+}

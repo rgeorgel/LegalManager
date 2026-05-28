@@ -77,9 +77,10 @@ public class CreditoService : ICreditoService
             .Where(c => c.TenantId == tenantId)
             .ToListAsync(ct);
 
-        if (existentes.Any()) return;
+        var tiposExistentes = existentes.Select(c => c.Tipo).ToHashSet();
+        var faltando = _creditosPadrao.Where(kvp => !tiposExistentes.Contains(kvp.Key));
 
-        var creditos = _creditosPadrao.Select(kvp => new CreditoAI
+        var novos = faltando.Select(kvp => new CreditoAI
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
@@ -90,8 +91,11 @@ public class CreditoService : ICreditoService
             CriadoEm = DateTime.UtcNow
         }).ToList();
 
-        await _context.CreditosAI.AddRangeAsync(creditos, ct);
-        await _context.SaveChangesAsync(ct);
+        if (novos.Count > 0)
+        {
+            await _context.CreditosAI.AddRangeAsync(novos, ct);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 
     public async Task AdicionarCreditosCompradosAsync(Guid tenantId, int creditosTraducao, int creditosPeca, CancellationToken ct = default)

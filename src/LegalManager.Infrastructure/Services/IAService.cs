@@ -167,6 +167,32 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         return ParsearClassificacaoPublicacao(resposta);
     }
 
+    public async Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default)
+    {
+        var prompt = $"""
+            Você é um assistente jurídico brasileiro especializado em análise de processos.
+
+            Gere um resumo completo e claro do processo jurídico abaixo, escrito em Português do Brasil.
+            O resumo deve ser acessível tanto para advogados quanto para clientes leigos.
+
+            Estruture o resumo nos seguintes tópicos:
+            1. **Visão Geral**: número do processo, tribunal, vara, área do direito e fase atual
+            2. **Partes Envolvidas**: quem são os autores, réus e demais partes
+            3. **Situação Atual**: status, andamentos mais relevantes e o que aconteceu até agora
+            4. **Documentos e Tarefas**: documentos anexados e tarefas em aberto
+            5. **Próximos Passos**: o que se espera ou o que deve ser feito, com base nos dados disponíveis
+
+            Use linguagem clara. Seja objetivo, mas completo.
+            Responda EXCLUSIVAMENTE em Português do Brasil.
+
+            Dados do processo:
+            {contextoProcesso}
+            """;
+
+        var resultado = await EnviarPromptAsync(prompt, ct);
+        return LimparETValidarResposta(resultado);
+    }
+
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
     {
         var prompt = $$$"""

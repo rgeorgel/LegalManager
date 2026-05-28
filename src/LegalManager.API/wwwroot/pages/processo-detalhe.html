@@ -116,6 +116,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
+        <button class="btn btn-secondary" id="btnResumoIA">🤖 Resumo IA</button>
         <button class="btn btn-secondary" id="btnGerarPeca">📄 Gerar Peça</button>
         <button class="btn btn-secondary" id="btnEditar">Editar</button>
         <button class="btn btn-danger" id="btnEncerrar" style="display:none">Encerrar</button>
@@ -787,6 +788,69 @@
   </div>
 </div>
 
+<!-- Modal Confirmar Resumo IA -->
+<div class="modal-overlay" id="modalResumoConfirm">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">🤖 Gerar Resumo do Processo</span>
+      <button class="modal-close" id="resumoConfirmClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="resumoConfirmAlert" class="alert alert-error" style="display:none"></div>
+      <div style="padding:14px 16px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px">
+        <div style="font-weight:600;color:#92400e;margin-bottom:6px">⚠️ Uso de Crédito de IA</div>
+        <div style="font-size:13px;color:#78350f;line-height:1.5">
+          Esta operação consome <strong>1 crédito de Tradução de Partes</strong>. O sistema irá analisar todos os
+          dados do processo (partes, andamentos, documentos e tarefas) e gerar um resumo completo em linguagem clara.
+        </div>
+      </div>
+      <div id="resumoCreditos" style="font-size:13px;color:var(--color-text-muted);margin-bottom:8px"></div>
+      <p style="font-size:14px;color:var(--color-text)">Deseja continuar e gerar o resumo agora?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="resumoConfirmCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="resumoConfirmGerar">🤖 Gerar Resumo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resumo Gerado -->
+<div class="modal-overlay" id="modalResumoResultado">
+  <div class="modal" style="max-width:720px;max-height:90vh;overflow-y:auto">
+    <div class="modal-header">
+      <span class="modal-title">🤖 Resumo do Processo</span>
+      <button class="modal-close" id="resumoResultadoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--color-border);padding-bottom:12px">
+        <button class="btn btn-sm" id="tabResumoAtual" style="display:none;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;background:var(--color-primary);color:#fff;font-size:13px">Último Resumo</button>
+        <button class="btn btn-secondary btn-sm" id="tabResumoHistorico" style="font-size:13px;background:var(--color-primary);color:#fff;border-color:var(--color-primary)">Histórico</button>
+      </div>
+
+      <!-- Painel: Resumo Atual -->
+      <div id="panelResumoAtual" style="display:none">
+        <div style="margin-bottom:12px;padding:10px 14px;background:#f0fdf4;border-radius:6px;border-left:4px solid #16a34a;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:#166534"><strong>Resumo gerado por IA</strong> — Revise o conteúdo. Este é um resumo automático.</span>
+          <span id="resumoMeta" style="font-size:12px;color:#166534;font-weight:600;white-space:nowrap"></span>
+        </div>
+        <div id="resumoConteudo" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;max-height:450px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Painel: Histórico -->
+      <div id="panelResumoHistorico">
+        <div id="resumoHistoricoLista">
+          <p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando histórico...</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="resumoCopiar" style="display:none">📋 Copiar</button>
+      <button class="btn btn-secondary" id="btnGerarNovoResumo">🤖 Gerar Novo</button>
+      <button class="btn btn-primary" id="resumoFechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Criar Prazo (a partir de andamento) -->
 <div class="modal-overlay" id="modalCriarPrazo" style="display:none">
   <div class="modal" style="max-width:480px">
@@ -828,7 +892,7 @@
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
-import { gerarPeca, getCreditos } from '/js/ia.js';
+import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
 
 initLayout();
@@ -2158,6 +2222,137 @@ async function loadFinanceiroBadge() {
     tabBadge.style.display = data?.total > 0 ? 'inline-flex' : 'none';
   } catch {}
 }
+
+// ===== Resumo IA =====
+function fmtDateTimeResumo(s) {
+  if (!s) return '';
+  const d = new Date(s.endsWith('Z') ? s : s + 'Z');
+  return isNaN(d) ? '' : d.toLocaleString('pt-BR');
+}
+
+function ativarTabResumo(tab) {
+  const eHistorico = tab === 'historico';
+  document.getElementById('panelResumoAtual').style.display = eHistorico ? 'none' : '';
+  document.getElementById('panelResumoHistorico').style.display = eHistorico ? '' : 'none';
+  document.getElementById('resumoCopiar').style.display = eHistorico ? 'none' : '';
+  const tabAtual = document.getElementById('tabResumoAtual');
+  const tabHist = document.getElementById('tabResumoHistorico');
+  tabAtual.style.background = eHistorico ? '' : 'var(--color-primary)';
+  tabAtual.style.color = eHistorico ? '' : '#fff';
+  tabAtual.style.borderColor = eHistorico ? '' : 'var(--color-primary)';
+  tabHist.style.background = eHistorico ? 'var(--color-primary)' : '';
+  tabHist.style.color = eHistorico ? '#fff' : '';
+  tabHist.style.borderColor = eHistorico ? 'var(--color-primary)' : '';
+}
+
+function mostrarResumoNoModal(resumo) {
+  document.getElementById('resumoConteudo').textContent = resumo.conteudo;
+  document.getElementById('resumoMeta').textContent = fmtDateTimeResumo(resumo.geradoEm);
+  document.getElementById('tabResumoAtual').style.display = '';
+  ativarTabResumo('atual');
+}
+
+async function carregarHistoricoResumos() {
+  const lista = document.getElementById('resumoHistoricoLista');
+  lista.innerHTML = '<p style="color:var(--color-text-muted);text-align:center;padding:24px">Carregando...</p>';
+  try {
+    const resumos = await listarResumosProcesso(processoId);
+    if (!resumos?.length) {
+      lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🤖</div><div class="empty-state-text">Nenhum resumo gerado ainda</div></div>';
+      return;
+    }
+    lista.innerHTML = resumos.map((r, i) => `
+      <div style="border:1px solid var(--color-border);border-radius:8px;padding:14px;margin-bottom:12px${i === 0 ? ';border-color:var(--color-primary)' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;color:var(--color-primary)">${i === 0 ? '⭐ Mais recente' : `#${resumos.length - i}`}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--color-text)">${fmtDateTimeResumo(r.geradoEm)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:8px">por ${r.geradoPorNome}</div>
+        <div style="font-size:13px;line-height:1.6;color:var(--color-text);white-space:pre-wrap;max-height:180px;overflow-y:auto;font-family:Georgia,serif;background:#f9fafb;padding:10px;border-radius:4px">${r.conteudo}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px" onclick="verResumoCompleto(${i})">Ver completo</button>
+      </div>`).join('');
+    window._resumosHistorico = resumos;
+  } catch (err) {
+    lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
+  }
+}
+
+window.verResumoCompleto = (idx) => {
+  const r = window._resumosHistorico?.[idx];
+  if (!r) return;
+  mostrarResumoNoModal(r);
+};
+
+// Abrir modal principal direto no histórico
+document.getElementById('btnResumoIA').addEventListener('click', async () => {
+  ativarTabResumo('historico');
+  document.getElementById('modalResumoResultado').classList.add('open');
+  await carregarHistoricoResumos();
+});
+
+document.getElementById('tabResumoAtual').addEventListener('click', () => ativarTabResumo('atual'));
+
+document.getElementById('tabResumoHistorico').addEventListener('click', async () => {
+  ativarTabResumo('historico');
+  await carregarHistoricoResumos();
+});
+
+// Gerar Novo — fecha resultados, abre confirmação; ao fechar confirmação reabre resultados
+async function abrirConfirmacaoResumo() {
+  document.getElementById('modalResumoResultado').classList.remove('open');
+  document.getElementById('resumoConfirmAlert').style.display = 'none';
+  document.getElementById('resumoCreditos').textContent = 'Verificando créditos...';
+  document.getElementById('modalResumoConfirm').classList.add('open');
+  try {
+    const creditos = await getCreditos();
+    const creditoResumo = creditos.creditos?.find(c => c.tipo === 'TraducaoAndamento');
+    const disponiveis = creditoResumo?.quantidadeDisponivel ?? 0;
+    document.getElementById('resumoCreditos').textContent = `Créditos de Tradução de Partes disponíveis: ${disponiveis}`;
+    document.getElementById('resumoConfirmGerar').disabled = disponiveis <= 0;
+    document.getElementById('resumoCreditos').style.color = disponiveis <= 0 ? '#dc2626' : '';
+  } catch {
+    document.getElementById('resumoCreditos').textContent = 'Não foi possível verificar os créditos.';
+  }
+}
+
+function fecharConfirmacaoVoltarResultados() {
+  document.getElementById('modalResumoConfirm').classList.remove('open');
+  document.getElementById('modalResumoResultado').classList.add('open');
+}
+
+document.getElementById('btnGerarNovoResumo').addEventListener('click', abrirConfirmacaoResumo);
+
+[document.getElementById('resumoConfirmClose'), document.getElementById('resumoConfirmCancelar')].forEach(el =>
+  el.addEventListener('click', fecharConfirmacaoVoltarResultados));
+
+document.getElementById('resumoConfirmGerar').addEventListener('click', async () => {
+  const btn = document.getElementById('resumoConfirmGerar');
+  const alertEl = document.getElementById('resumoConfirmAlert');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Gerando...';
+  alertEl.style.display = 'none';
+  try {
+    const result = await gerarResumoProcesso(processoId);
+    document.getElementById('modalResumoConfirm').classList.remove('open');
+    mostrarResumoNoModal(result);
+    document.getElementById('modalResumoResultado').classList.add('open');
+  } catch (err) {
+    alertEl.textContent = err.message || 'Erro ao gerar resumo.';
+    alertEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🤖 Gerar Resumo';
+  }
+});
+
+document.getElementById('resumoCopiar').addEventListener('click', () => {
+  const texto = document.getElementById('resumoConteudo').textContent;
+  navigator.clipboard.writeText(texto).then(() => showAlert('Copiado!', 'success'));
+});
+
+[document.getElementById('resumoResultadoClose'), document.getElementById('resumoFechar')].forEach(el =>
+  el.addEventListener('click', () => document.getElementById('modalResumoResultado').classList.remove('open')));
+// ===== Fim Resumo IA =====
 
 await loadAdvogados();
 await loadCustomCatsFin();

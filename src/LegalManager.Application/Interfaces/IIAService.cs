@@ -10,4 +10,5 @@ public interface IIAService
     Task<(TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa)> ClassificarPublicacaoAsync(
         string conteudo, string? numeroCNJ = null, CancellationToken ct = default);
     Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default);
+    Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default);
 }
