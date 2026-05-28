@@ -39,15 +39,30 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterTenantAsync(RegisterTenantDto dto, CancellationToken ct = default)
     {
+        var beneficio = string.IsNullOrWhiteSpace(dto.Voucher)
+            ? null
+            : await AplicarVoucherAsync(dto.Voucher, ct);
+
+        var planoFinal = beneficio?.Plano ?? dto.Plano;
+
+        if (planoFinal is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise)
+            throw new InvalidOperationException("Este plano não está disponível para cadastro direto.");
+
         var tenant = new Tenant
         {
             Id = Guid.NewGuid(),
             Nome = dto.NomeEscritorio,
             Cnpj = dto.Cnpj,
-            Plano = dto.Plano,
-            Status = dto.Plano == PlanoTipo.Free ? StatusTenant.Ativo : StatusTenant.Trial,
+            Plano = planoFinal,
+            Status = beneficio != null ? StatusTenant.Ativo
+                : planoFinal == PlanoTipo.Free ? StatusTenant.Ativo
+                : StatusTenant.Trial,
             CriadoEm = DateTime.UtcNow,
-            TrialExpiraEm = dto.Plano == PlanoTipo.Free ? null : DateTime.UtcNow.AddDays(10)
+            TrialExpiraEm = beneficio != null ? null
+                : planoFinal == PlanoTipo.Free ? null
+                : DateTime.UtcNow.AddDays(10),
+            PlanoExpiraEm = beneficio?.PlanoExpiraEm,
+            VoucherUtilizado = beneficio != null ? dto.Voucher!.Trim().ToLowerInvariant() : null
         };
 
         _context.Tenants.Add(tenant);
@@ -286,4 +301,25 @@ public class AuthService : IAuthService
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes);
     }
+
+    private async Task<VoucherBeneficio> AplicarVoucherAsync(string voucher, CancellationToken ct)
+    {
+        var code = voucher.Trim().ToLowerInvariant();
+        var section = _config.GetSection($"Vouchers:{code}");
+
+        if (!section.Exists())
+            throw new InvalidOperationException("Voucher inválido.");
+
+        var maxUsos = section.GetValue<int>("MaxUsos");
+        var usosAtuais = await _context.Tenants.CountAsync(t => t.VoucherUtilizado == code, ct);
+        if (usosAtuais >= maxUsos)
+            throw new InvalidOperationException("Voucher esgotado.");
+
+        var planoTipo = (PlanoTipo)section.GetValue<int>("PlanoTipo");
+        var meses = section.GetValue<int>("MesesGratuitos");
+
+        return new VoucherBeneficio(planoTipo, DateTime.UtcNow.AddMonths(meses));
+    }
+
+    private record VoucherBeneficio(PlanoTipo Plano, DateTime PlanoExpiraEm);
 }

@@ -280,6 +280,30 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         return Ok(new { total, page, pageSize, items });
     }
 
+    [HttpGet("vouchers/{codigo}/usuarios")]
+    public async Task<IActionResult> GetVoucherUsuarios(string codigo, CancellationToken ct)
+    {
+        var code = codigo.Trim().ToLowerInvariant();
+
+        var tenants = await db.Tenants
+            .Where(t => t.VoucherUtilizado == code)
+            .OrderByDescending(t => t.CriadoEm)
+            .Select(t => new
+            {
+                t.Id,
+                NomeEscritorio = t.Nome,
+                EmailAdmin = db.Users
+                    .Where(u => u.TenantId == t.Id && u.Perfil == PerfilUsuario.Admin)
+                    .Select(u => u.Email)
+                    .FirstOrDefault(),
+                t.CriadoEm,
+                t.PlanoExpiraEm
+            })
+            .ToListAsync(ct);
+
+        return Ok(new { voucher = code, total = tenants.Count, usuarios = tenants });
+    }
+
     [HttpPut("waitlist/{id:guid}/status")]
     public async Task<IActionResult> UpdateWaitlistStatus(Guid id, [FromBody] UpdateWaitlistStatusDto dto, CancellationToken ct)
     {

@@ -87,6 +87,11 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+    .plan-option.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -113,16 +118,18 @@
               <input type="radio" name="plano" value="3">
               <div class="plan-name">Plus</div>
               <div class="plan-price">R$ 20<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
-              <div class="plan-desc">1 usuário · 40 processos · Portal cliente · Financeiro</div>
+              <div class="plan-desc">1 usuário · 20 processos · Portal cliente · Financeiro</div>
             </label>
-            <label class="plan-option" id="planProLabel">
-              <input type="radio" name="plano" value="1">
+            <label class="plan-option disabled">
+              <div class="plan-badge" style="background:#64748b;color:#f8fafc">Em breve</div>
+              <input type="radio" name="plano" value="1" disabled>
               <div class="plan-name">Pro</div>
               <div class="plan-price">R$ 50<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
               <div class="plan-desc">2 usuários · 100 processos · 1 captura · Templates</div>
             </label>
-            <label class="plan-option" id="planMaxLabel">
-              <input type="radio" name="plano" value="4">
+            <label class="plan-option disabled">
+              <div class="plan-badge" style="background:#64748b;color:#f8fafc">Em breve</div>
+              <input type="radio" name="plano" value="4" disabled>
               <div class="plan-name">Max</div>
               <div class="plan-price">R$ 125<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
               <div class="plan-desc">5 usuários · 250 processos · 3 capturas · 10 GB</div>
@@ -149,6 +156,11 @@
         <div class="form-group">
           <label for="senha">Senha <span style="color:var(--color-text-muted)">(mín. 8 caracteres)</span></label>
           <input type="password" id="senha" class="form-control" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="voucher">Código promocional <span style="color:var(--color-text-muted)">(opcional)</span></label>
+          <input type="text" id="voucher" class="form-control" placeholder="Ex: primeiros50" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.05em">
+          <div id="voucherBanner" style="display:none;margin-top:0.5rem;padding:0.6rem 0.875rem;border-radius:8px;font-size:0.8rem;font-weight:600"></div>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:0.25rem">
           <input type="checkbox" id="aceitoTermos" required style="margin-top:0.2rem;width:auto;flex-shrink:0">
@@ -180,27 +192,69 @@
     const radios = document.querySelectorAll('input[name="plano"]');
     const labels = {
       0: document.getElementById('planFreeLabel'),
-      3: document.getElementById('planPlusLabel'),
-      1: document.getElementById('planProLabel'),
-      4: document.getElementById('planMaxLabel')
+      3: document.getElementById('planPlusLabel')
     };
+
+    function selectPlan(value) {
+      const radio = document.querySelector(`input[name="plano"][value="${value}"]`);
+      if (!radio) return;
+      radio.checked = true;
+      Object.values(labels).forEach(l => l?.classList.remove('selected'));
+      labels[parseInt(value)]?.classList.add('selected');
+    }
+
     radios.forEach(r => {
-      r.addEventListener('change', () => {
-        Object.values(labels).forEach(l => l?.classList.remove('selected'));
-        labels[r.value]?.classList.add('selected');
-      });
+      r.addEventListener('change', () => selectPlan(r.value));
     });
 
     // Pre-select plan from URL param ?plano=
-    const planoParam = new URLSearchParams(location.search).get('plano');
-    if (planoParam !== null) {
-      const radio = document.querySelector(`input[name="plano"][value="${planoParam}"]`);
-      if (radio) {
-        radio.checked = true;
-        Object.values(labels).forEach(l => l?.classList.remove('selected'));
-        labels[parseInt(planoParam)]?.classList.add('selected');
+    const params = new URLSearchParams(location.search);
+    const planoParam = params.get('plano');
+    if (planoParam !== null) selectPlan(planoParam);
+
+    // Voucher logic
+    const voucherInput = document.getElementById('voucher');
+    const voucherBanner = document.getElementById('voucherBanner');
+    const planSelector = document.querySelector('.plan-selector');
+
+    const VOUCHER_PRIMEIROS50 = 'primeiros50';
+
+    function applyVoucherUI(code) {
+      if (code.toLowerCase() === VOUCHER_PRIMEIROS50) {
+        selectPlan('3'); // força Plus
+        planSelector.style.pointerEvents = 'none';
+        planSelector.style.opacity = '0.5';
+        voucherBanner.textContent = '6 meses do plano Plus gratuito — aproveite!';
+        voucherBanner.style.color = '#16a34a';
+        voucherBanner.style.borderColor = 'rgba(22,163,74,0.4)';
+        voucherBanner.style.background = 'rgba(22,163,74,0.08)';
+        voucherBanner.style.display = 'block';
+      } else if (code.length > 0) {
+        voucherBanner.textContent = 'Código promocional não reconhecido.';
+        voucherBanner.style.color = '#f87171';
+        voucherBanner.style.borderColor = 'rgba(248,113,113,0.4)';
+        voucherBanner.style.background = 'rgba(248,113,113,0.08)';
+        voucherBanner.style.display = 'block';
+        planSelector.style.pointerEvents = '';
+        planSelector.style.opacity = '';
+      } else {
+        voucherBanner.style.display = 'none';
+        planSelector.style.pointerEvents = '';
+        planSelector.style.opacity = '';
       }
     }
+
+    // Pre-fill voucher from URL param ?voucher=
+    const voucherParam = params.get('voucher');
+    if (voucherParam) {
+      voucherInput.value = voucherParam.toUpperCase();
+      applyVoucherUI(voucherParam);
+    }
+
+    voucherInput.addEventListener('input', () => applyVoucherUI(voucherInput.value.trim()));
+    voucherInput.addEventListener('blur', () => {
+      voucherInput.value = voucherInput.value.trim().toUpperCase();
+    });
 
     const form = document.getElementById('registerForm');
     const alertEl = document.getElementById('alert');
@@ -213,6 +267,7 @@
       btn.innerHTML = '<span class="spinner"></span> Criando...';
 
       const planoSelecionado = parseInt(document.querySelector('input[name="plano"]:checked').value);
+      const voucher = voucherInput.value.trim().toLowerCase() || null;
 
       try {
         await register({
@@ -221,7 +276,8 @@
           nomeAdmin: document.getElementById('nomeAdmin').value,
           email: document.getElementById('email').value,
           senha: document.getElementById('senha').value,
-          plano: planoSelecionado
+          plano: planoSelecionado,
+          voucher
         });
         window.location.href = '/pages/dashboard.html';
       } catch (err) {

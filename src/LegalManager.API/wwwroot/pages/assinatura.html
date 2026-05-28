@@ -374,7 +374,7 @@
           <ul class="plan-features">
             <li class="feat-section">Processos</li>
             <li><span class="feat-check">✓</span> Processos ilimitados cadastrados</li>
-            <li><span class="feat-check">✓</span> 40 processos monitorados</li>
+            <li><span class="feat-check">✓</span> 20 processos monitorados</li>
             <li><span class="feat-cross">✗</span> Captura de publicações</li>
             <li><span class="feat-check">✓</span> 2 GB de armazenamento</li>
             <li class="feat-section">Usuários e Clientes</li>
@@ -664,15 +664,15 @@
       btnPlus.className = 'btn btn-primary';
       if (!isAdmin) btnPlus.title = 'Apenas o administrador pode assinar';
 
-      btnPro.textContent = 'Assinar Pro';
-      btnPro.disabled = !isAdmin;
-      btnPro.className = 'btn btn-outline';
-      if (!isAdmin) btnPro.title = 'Apenas o administrador pode assinar';
+      btnPro.textContent = 'Em breve';
+      btnPro.disabled = true;
+      btnPro.className = 'btn btn-secondary';
+      btnPro.title = 'Este plano ainda não está disponível para assinatura';
 
-      btnMax.textContent = 'Assinar Max';
-      btnMax.disabled = !isAdmin;
-      btnMax.className = 'btn btn-outline';
-      if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
+      btnMax.textContent = 'Em breve';
+      btnMax.disabled = true;
+      btnMax.className = 'btn btn-secondary';
+      btnMax.title = 'Este plano ainda não está disponível para assinatura';
 
       dangerZone.style.display = 'none';
     } else if (isPlus) {
@@ -843,8 +843,29 @@
     }
   });
 
-  ['btnPlus', 'btnPro', 'btnMax'].forEach(id => {
-    const planoMap = { btnPlus: 'Plus', btnPro: 'Pro', btnMax: 'Max' };
+  document.getElementById('btnPlus').addEventListener('click', async () => {
+    if (currentPlano === 'Plus' && currentStatus !== 'Cancelado') return;
+    openModal(
+      'Assinar plano Plus',
+      'Você será redirecionado para o checkout seguro. O plano Plus custa R$ 20/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
+      'Ir para o checkout',
+      'btn-primary',
+      async () => {
+        try {
+          const result = await apiFetch('/assinatura/iniciar', {
+            method: 'POST',
+            body: JSON.stringify({ plano: 'Plus', periodo: 'Mensal' })
+          });
+          window.location.href = result.checkoutUrl;
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+        }
+      }
+    );
+  });
+
+  ['btnPro', 'btnMax'].forEach(id => {
+    const planoMap = { btnPro: 'Pro', btnMax: 'Max' };
     document.getElementById(id).addEventListener('click', () => {
       const plano = planoMap[id];
       if (currentPlano === plano && currentStatus !== 'Cancelado') return;
