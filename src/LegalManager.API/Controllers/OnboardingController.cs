@@ -72,12 +72,11 @@ public class OnboardingController : ControllerBase
 
         await Task.WhenAll(tarefaDataJud, tarefaEsaj, tarefaEscavador);
 
-        // DataJud preferred over Escavador when same CNJ appears in both
         var processos = tarefaDataJud.Result
             .Concat(tarefaEsaj.Result)
             .Concat(tarefaEscavador.Result)
             .GroupBy(p => p.NumeroCNJ)
-            .Select(g => g.First())
+            .Select(MergePreview)
             .OrderByDescending(p => p.DataAjuizamento)
             .ToList();
 
@@ -130,6 +129,52 @@ public class OnboardingController : ControllerBase
                         continue;
                     }
 
+                    // Enriquecer com dados do cache (JSON bruto salvo durante a busca)
+                    var siglaTribunal = item.SiglaTribunal;
+                    var nomeTribunal = item.NomeTribunal;
+                    var vara = item.Vara;
+                    var comarca = item.Comarca;
+                    var classe = item.Classe;
+                    var assuntos = item.Assuntos;
+                    var dataAjuizamento = item.DataAjuizamento;
+
+                    var cache = await _context.ProcessosImportacaoCache.FirstOrDefaultAsync(
+                        c => c.TenantId == _tenantContext.TenantId
+                          && c.NumeroCNJ == cnj
+                          && c.Fonte == "escavador"
+                          && c.ExpiraEm > DateTime.UtcNow, ct);
+
+                    if (cache != null)
+                    {
+                        try
+                        {
+                            using var doc = System.Text.Json.JsonDocument.Parse(cache.DadosJson);
+                            var r = doc.RootElement;
+                            siglaTribunal = JsonStr(r, "unidade_origem", "tribunal_sigla") ?? siglaTribunal;
+                            nomeTribunal = JsonStr(r, "unidade_origem", "nome") ?? nomeTribunal;
+                            comarca = JsonStr(r, "unidade_origem", "cidade") ?? comarca;
+                            if (r.TryGetProperty("fontes", out var fontesEl) &&
+                                fontesEl.ValueKind == System.Text.Json.JsonValueKind.Array &&
+                                fontesEl.GetArrayLength() > 0)
+                            {
+                                var capa = fontesEl[0];
+                                if (capa.TryGetProperty("capa", out var capaEl))
+                                {
+                                    vara = JsonStr(capaEl, "orgao_julgador") ?? vara;
+                                    classe = JsonStr(capaEl, "classe") ?? classe;
+                                    assuntos = JsonStr(capaEl, "assunto") ?? assuntos;
+                                }
+                            }
+                            if (r.TryGetProperty("data_inicio", out var dtEl)
+                                && dtEl.TryGetDateTime(out var dtVal))
+                                dataAjuizamento = dtVal;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "[Import] Falha ao ler cache Escavador para {CNJ}", cnj);
+                        }
+                    }
+
                     var criarMon = monitoradosCount < limiteMonitorados;
                     string? monitoramentoId = null;
                     if (criarMon)
@@ -144,14 +189,14 @@ public class OnboardingController : ControllerBase
                         Id = Guid.NewGuid(),
                         TenantId = _tenantContext.TenantId,
                         NumeroCNJ = cnj,
-                        Tribunal = item.NomeTribunal ?? item.SiglaTribunal,
-                        SiglaTribunal = item.SiglaTribunal,
-                        Vara = item.Vara,
-                        Comarca = item.Comarca,
-                        Classe = item.Classe,
-                        Assuntos = item.Assuntos,
-                        DataAjuizamento = item.DataAjuizamento,
-                        AreaDireito = InferirAreaEscavador(item.SiglaTribunal),
+                        Tribunal = nomeTribunal ?? siglaTribunal,
+                        SiglaTribunal = siglaTribunal,
+                        Vara = vara,
+                        Comarca = comarca,
+                        Classe = classe,
+                        Assuntos = assuntos,
+                        DataAjuizamento = dataAjuizamento,
+                        AreaDireito = InferirAreaEscavador(siglaTribunal),
                         Fase = FaseProcessual.Conhecimento,
                         Status = StatusProcesso.Ativo,
                         Monitorado = criarMon,
@@ -382,6 +427,34 @@ public class OnboardingController : ControllerBase
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    private static ProcessoOabPreviewDto MergePreview(IGrouping<string, ProcessoOabPreviewDto> grupo)
+    {
+        // Escavador na frente — dados tendem a ser mais completos
+        var lista = grupo.OrderByDescending(p => p.Fonte == "escavador").ToList();
+        if (lista.Count == 1) return lista[0];
+
+        static string? PrimeiroValido(IEnumerable<string?> valores) =>
+            valores.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+
+        var fontePreferida = lista.Any(p => p.Fonte == "escavador") ? "escavador"
+            : PrimeiroValido(lista.Select(p => p.Fonte)) ?? "datajud";
+
+        return new ProcessoOabPreviewDto(
+            NumeroCNJ: grupo.Key,
+            Tribunal: PrimeiroValido(lista.Select(p => p.Tribunal)) ?? grupo.Key,
+            Vara: PrimeiroValido(lista.Select(p => p.Vara)),
+            Classe: PrimeiroValido(lista.Select(p => p.Classe)),
+            DataAjuizamento: lista.Select(p => p.DataAjuizamento).FirstOrDefault(v => v.HasValue),
+            Grau: PrimeiroValido(lista.Select(p => p.Grau)),
+            Codigo: PrimeiroValido(lista.Select(p => p.Codigo)),
+            Foro: PrimeiroValido(lista.Select(p => p.Foro)),
+            Fonte: fontePreferida,
+            SiglaTribunal: PrimeiroValido(lista.Select(p => p.SiglaTribunal)),
+            Comarca: PrimeiroValido(lista.Select(p => p.Comarca)),
+            Assuntos: PrimeiroValido(lista.Select(p => p.Assuntos))
+        );
+    }
+
     private static bool EhTjsp(string numeroCNJ, string? tribunal = null)
     {
         if (!string.IsNullOrWhiteSpace(tribunal))
@@ -435,17 +508,20 @@ public class OnboardingController : ControllerBase
             {
                 var resultado = await _escavador.BuscarPorOabAsync(oab.Trim(), uf.Trim(), pagina, ct);
                 foreach (var p in resultado.Data)
-                    if (EhFederalOuTrabalhista(p.SiglaTribunal) && !string.IsNullOrWhiteSpace(p.Numero))
+                    if (!string.IsNullOrWhiteSpace(p.Numero))
                         todos.Add(p);
                 if (!resultado.TemProxima) break;
             }
+
+            _logger.LogInformation("[Escavador] {N} processos retornados para OAB {Oab}/{Uf}", todos.Count, oab, uf);
+            await SalvarCacheEscavadorAsync(todos, ct);
 
             return todos
                 .GroupBy(p => p.Numero)
                 .Select(g => g.First())
                 .Select(p => new ProcessoOabPreviewDto(
                     NumeroCNJ: p.Numero!,
-                    Tribunal: p.NomeTribunal ?? p.SiglaTribunal ?? "Tribunal Federal/Trabalhista",
+                    Tribunal: p.NomeTribunal ?? p.SiglaTribunal ?? "Escavador",
                     Vara: p.Vara,
                     Classe: p.Classe,
                     DataAjuizamento: p.DataAjuizamento,
@@ -464,10 +540,40 @@ public class OnboardingController : ControllerBase
         }
     }
 
-    private static bool EhFederalOuTrabalhista(string? sigla) =>
-        !string.IsNullOrWhiteSpace(sigla) &&
-        (sigla.StartsWith("TRF", StringComparison.OrdinalIgnoreCase) ||
-         sigla.StartsWith("TRT", StringComparison.OrdinalIgnoreCase));
+    private async Task SalvarCacheEscavadorAsync(List<EscavadorProcessoDto> processos, CancellationToken ct)
+    {
+        if (processos.Count == 0) return;
+        var expira = DateTime.UtcNow.AddHours(24);
+        var agora = DateTime.UtcNow;
+
+        foreach (var p in processos.Where(p => !string.IsNullOrWhiteSpace(p.JsonBruto)))
+        {
+            var existing = await _context.ProcessosImportacaoCache.FirstOrDefaultAsync(
+                c => c.TenantId == _tenantContext.TenantId
+                  && c.NumeroCNJ == p.Numero!
+                  && c.Fonte == "escavador", ct);
+
+            if (existing != null)
+            {
+                existing.DadosJson = p.JsonBruto!;
+                existing.ExpiraEm = expira;
+            }
+            else
+            {
+                _context.ProcessosImportacaoCache.Add(new Domain.Entities.ProcessoImportacaoCache
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = _tenantContext.TenantId,
+                    NumeroCNJ = p.Numero!,
+                    Fonte = "escavador",
+                    DadosJson = p.JsonBruto!,
+                    ExpiraEm = expira,
+                    CriadoEm = agora
+                });
+            }
+        }
+        await _context.SaveChangesAsync(ct);
+    }
 
     private static AreaDireito InferirAreaEscavador(string? sigla) =>
         sigla?.StartsWith("TRT", StringComparison.OrdinalIgnoreCase) == true
@@ -514,6 +620,15 @@ public class OnboardingController : ControllerBase
         var limpo = System.Text.RegularExpressions.Regex.Replace(texto, @"[R$\s]", "")
             .Replace(".", "").Replace(",", ".");
         return decimal.TryParse(limpo, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : null;
+    }
+
+    private static string? JsonStr(System.Text.Json.JsonElement el, string prop1, string? prop2 = null)
+    {
+        if (!el.TryGetProperty(prop1, out var p1)) return null;
+        if (prop2 == null)
+            return p1.ValueKind == System.Text.Json.JsonValueKind.String ? p1.GetString() : null;
+        if (!p1.TryGetProperty(prop2, out var p2)) return null;
+        return p2.ValueKind == System.Text.Json.JsonValueKind.String ? p2.GetString() : null;
     }
 
     private static DateTime? ParseDataDistribuicao(string? texto)

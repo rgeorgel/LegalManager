@@ -11,7 +11,8 @@ public record EscavadorProcessoDto(
     string? Comarca,
     string? Classe,
     string? Assuntos,
-    DateTime? DataAjuizamento
+    DateTime? DataAjuizamento,
+    string? JsonBruto = null
 );
 
 public record EscavadorMonitoramentoDto(long Id, string? Status);

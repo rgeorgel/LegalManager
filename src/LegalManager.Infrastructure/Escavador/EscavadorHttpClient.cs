@@ -26,18 +26,18 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorOabAsync(
         string oab, string uf, int pagina = 1, CancellationToken ct = default)
     {
-        var url = $"/api/v2/advogado/{Uri.EscapeDataString(oab)}/processos?uf={Uri.EscapeDataString(uf)}&page={pagina}";
-        _logger.LogInformation("[Escavador] Buscando processos por OAB {Oab}/{Uf} página {P}", oab, uf, pagina);
-        return await FetchProcessosPaged(url, ct);
+        _logger.LogInformation("[Escavador] Buscando processos por OAB {Oab}/{Uf}", oab, uf);
+        var firstUrl = $"/api/v2/advogado/processos?oab_estado={Uri.EscapeDataString(uf)}&oab_numero={Uri.EscapeDataString(oab)}";
+        return await FetchAllByCursor(firstUrl, ct);
     }
 
     public async Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorCpfCnpjAsync(
         string cpfCnpj, int pagina = 1, CancellationToken ct = default)
     {
         var limpo = new string(cpfCnpj.Where(char.IsDigit).ToArray());
-        var url = $"/api/v2/envolvido/processos?documento={Uri.EscapeDataString(limpo)}&page={pagina}";
-        _logger.LogInformation("[Escavador] Buscando processos por CPF/CNPJ página {P}", pagina);
-        return await FetchProcessosPaged(url, ct);
+        _logger.LogInformation("[Escavador] Buscando processos por CPF/CNPJ");
+        var firstUrl = $"/api/v2/envolvido/processos?documento={Uri.EscapeDataString(limpo)}";
+        return await FetchAllByCursor(firstUrl, ct);
     }
 
     public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoAsync(
@@ -113,7 +113,27 @@ public class EscavadorHttpClient : IEscavadorService
         }
     }
 
-    private async Task<EscavadorPagedResult<EscavadorProcessoDto>> FetchProcessosPaged(
+    // Follows cursor pagination (links.next) and returns all pages merged into one result
+    private async Task<EscavadorPagedResult<EscavadorProcessoDto>> FetchAllByCursor(
+        string firstUrl, CancellationToken ct)
+    {
+        var all = new List<EscavadorProcessoDto>();
+        string? nextUrl = firstUrl;
+        const int maxPages = 10;
+        var pageCount = 0;
+
+        while (nextUrl != null && pageCount < maxPages)
+        {
+            var (items, next) = await FetchOnePage(nextUrl, ct);
+            all.AddRange(items);
+            nextUrl = next;
+            pageCount++;
+        }
+
+        return new EscavadorPagedResult<EscavadorProcessoDto>(all, all.Count, 1, 1, false);
+    }
+
+    private async Task<(List<EscavadorProcessoDto> Items, string? NextUrl)> FetchOnePage(
         string url, CancellationToken ct)
     {
         try
@@ -122,18 +142,38 @@ public class EscavadorHttpClient : IEscavadorService
             if (!resp.IsSuccessStatusCode)
             {
                 _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
-                return EmptyProcessos();
+                return ([], null);
             }
             var json = await resp.Content.ReadAsStringAsync(ct);
-            var doc = JsonSerializer.Deserialize<EscavadorListWrapper<ProcessoData>>(json, JsonOpts);
-            if (doc == null) return EmptyProcessos();
-            var data = doc.Data?.Select(MapProcesso).ToList() ?? [];
-            return BuildPaged(data, doc.Meta);
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var items = new List<EscavadorProcessoDto>();
+            if (root.TryGetProperty("items", out var itemsEl))
+            {
+                foreach (var item in itemsEl.EnumerateArray())
+                {
+                    var rawText = item.GetRawText();
+                    var processoData = JsonSerializer.Deserialize<ProcessoData>(rawText, JsonOpts);
+                    if (processoData != null && !string.IsNullOrWhiteSpace(processoData.NumeroCnj))
+                        items.Add(MapProcesso(processoData, rawText));
+                }
+            }
+
+            string? nextUrl = null;
+            if (root.TryGetProperty("links", out var linksEl) &&
+                linksEl.TryGetProperty("next", out var nextEl) &&
+                nextEl.ValueKind == JsonValueKind.String)
+            {
+                nextUrl = nextEl.GetString();
+            }
+
+            return (items, nextUrl);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
-            return EmptyProcessos();
+            return ([], null);
         }
     }
 
@@ -149,10 +189,10 @@ public class EscavadorHttpClient : IEscavadorService
                 return EmptyCallbacks();
             }
             var json = await resp.Content.ReadAsStringAsync(ct);
-            var doc = JsonSerializer.Deserialize<EscavadorListWrapper<CallbackData>>(json, JsonOpts);
-            if (doc == null) return EmptyCallbacks();
-            var data = doc.Data?.Select(MapCallback).ToList() ?? [];
-            return BuildPaged(data, doc.Meta);
+            var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<CallbackData>>(json, JsonOpts);
+            if (wrapper == null) return EmptyCallbacks();
+            var data = wrapper.Data?.Select(MapCallback).ToList() ?? [];
+            return BuildPaged(data, wrapper.Meta);
         }
         catch (Exception ex)
         {
@@ -174,17 +214,22 @@ public class EscavadorHttpClient : IEscavadorService
             meta?.LastPage ?? 1,
             (meta?.CurrentPage ?? 1) < (meta?.LastPage ?? 1));
 
-    private static EscavadorProcessoDto MapProcesso(ProcessoData r) => new(
-        r.Id,
-        r.Numero ?? r.NumeroProcesso,
-        r.SiglaTribunal ?? r.Tribunal?.Sigla,
-        r.Tribunal?.Nome,
-        r.Vara,
-        r.Comarca,
-        r.Classe?.Nome,
-        r.Assunto?.Nome,
-        r.DataAjuizamento
-    );
+    private static EscavadorProcessoDto MapProcesso(ProcessoData r, string jsonBruto)
+    {
+        var capa = r.Fontes?.FirstOrDefault()?.Capa;
+        return new EscavadorProcessoDto(
+            Id: 0,
+            Numero: r.NumeroCnj,
+            SiglaTribunal: r.UnidadeOrigem?.TribunalSigla,
+            NomeTribunal: r.UnidadeOrigem?.Nome,
+            Vara: capa?.OrgaoJulgador ?? r.UnidadeOrigem?.Nome,
+            Comarca: r.UnidadeOrigem?.Cidade,
+            Classe: capa?.Classe,
+            Assuntos: capa?.Assunto,
+            DataAjuizamento: r.DataInicio,
+            JsonBruto: jsonBruto
+        );
+    }
 
     private static EscavadorCallbackDto MapCallback(CallbackData r) => new(
         r.Id,
@@ -216,29 +261,42 @@ public class EscavadorHttpClient : IEscavadorService
         [JsonPropertyName("total")] public int Total { get; set; }
     }
 
+    // Matches the actual Escavador v2 response shape
     private sealed class ProcessoData
     {
-        [JsonPropertyName("id")] public long Id { get; set; }
-        [JsonPropertyName("numero")] public string? Numero { get; set; }
-        [JsonPropertyName("numero_processo")] public string? NumeroProcesso { get; set; }
-        [JsonPropertyName("sigla_tribunal")] public string? SiglaTribunal { get; set; }
-        [JsonPropertyName("tribunal")] public TribunalRef? Tribunal { get; set; }
-        [JsonPropertyName("vara")] public string? Vara { get; set; }
-        [JsonPropertyName("comarca")] public string? Comarca { get; set; }
-        [JsonPropertyName("classe")] public NomeRef? Classe { get; set; }
-        [JsonPropertyName("assunto")] public NomeRef? Assunto { get; set; }
-        [JsonPropertyName("data_ajuizamento")] public DateTime? DataAjuizamento { get; set; }
+        [JsonPropertyName("numero_cnj")] public string? NumeroCnj { get; set; }
+        [JsonPropertyName("data_inicio")] public DateTime? DataInicio { get; set; }
+        [JsonPropertyName("unidade_origem")] public UnidadeOrigemRef? UnidadeOrigem { get; set; }
+        [JsonPropertyName("titulo_polo_ativo")] public string? TituloPoloAtivo { get; set; }
+        [JsonPropertyName("titulo_polo_passivo")] public string? TituloPoloPassivo { get; set; }
+        [JsonPropertyName("fontes")] public List<FonteData>? Fontes { get; set; }
     }
 
-    private sealed class TribunalRef
+    private sealed class UnidadeOrigemRef
     {
-        [JsonPropertyName("sigla")] public string? Sigla { get; set; }
+        [JsonPropertyName("tribunal_sigla")] public string? TribunalSigla { get; set; }
         [JsonPropertyName("nome")] public string? Nome { get; set; }
+        [JsonPropertyName("cidade")] public string? Cidade { get; set; }
     }
 
-    private sealed class NomeRef
+    private sealed class FonteData
     {
-        [JsonPropertyName("nome")] public string? Nome { get; set; }
+        [JsonPropertyName("capa")] public CapaData? Capa { get; set; }
+    }
+
+    private sealed class CapaData
+    {
+        [JsonPropertyName("classe")] public string? Classe { get; set; }
+        // Real API returns assunto as a plain string, not an object
+        [JsonPropertyName("assunto")] public string? Assunto { get; set; }
+        [JsonPropertyName("valor_causa")] public ValorCausaRef? ValorCausa { get; set; }
+        [JsonPropertyName("orgao_julgador")] public string? OrgaoJulgador { get; set; }
+    }
+
+    private sealed class ValorCausaRef
+    {
+        // Real API returns valor as a string ("2510.3800"), not a number
+        [JsonPropertyName("valor")] public string? Valor { get; set; }
     }
 
     private sealed class MonitoramentoData

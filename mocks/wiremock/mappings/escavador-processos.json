@@ -1,0 +1,36 @@
+{
+  "mappings": [
+    {
+      "name": "GET advogado/processos",
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/api/v2/advogado/processos"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "bodyFileName": "escavador-processos.json"
+      }
+    },
+    {
+      "name": "POST monitoramento (criar)",
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/v2/monitoramento-processos"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "data": { "id": 999999, "status": "ativo" } }
+      }
+    },
+    {
+      "name": "DELETE monitoramento",
+      "request": {
+        "method": "DELETE",
+        "urlPathPattern": "/api/v2/monitoramento-processos/.*"
+      },
+      "response": { "status": 204 }
+    }
+  ]
+}

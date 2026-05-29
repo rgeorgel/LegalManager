@@ -113,16 +113,27 @@ builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
 builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
 builder.Services.AddScoped<SeedService>();
 
-builder.Services.AddHttpClient<IEscavadorService, LegalManager.Infrastructure.Escavador.EscavadorHttpClient>(client =>
+if (builder.Configuration.GetValue<bool>("Escavador:UseMock"))
 {
-    var baseUrl = builder.Configuration["Escavador:BaseUrl"] ?? "https://api.escavador.com";
-    client.BaseAddress = new Uri(baseUrl);
-    var token = builder.Configuration["Escavador:ApiToken"] ?? "";
-    if (!string.IsNullOrEmpty(token))
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
+    builder.Services.AddScoped<IEscavadorService, LegalManager.Infrastructure.Escavador.EscavadorMockClient>();
+}
+else
+{
+    builder.Services.AddHttpClient<IEscavadorService, LegalManager.Infrastructure.Escavador.EscavadorHttpClient>(client =>
+    {
+        var baseUrl = builder.Configuration["Escavador:BaseUrl"] ?? "https://api.escavador.com";
+        client.BaseAddress = new Uri(baseUrl);
+        var token = builder.Configuration["Escavador:ApiToken"] ?? "";
+        if (!string.IsNullOrEmpty(token))
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        client.Timeout = TimeSpan.FromSeconds(30);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        CheckCertificateRevocationList = false
+    });
+}
 
 builder.Services.AddHttpClient<DataJudAdapter>(client =>
 {
@@ -357,10 +368,11 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     job => job.ExecutarAsync(),
     "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
 
-RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
-    "escavador-callback-polling",
-    job => job.ExecutarAsync(),
-    "0 * * * *"); // a cada hora — fallback para webhooks não recebidos
+// Desabilitado: polling de callbacks do Escavador não está em uso
+// RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
+//     "escavador-callback-polling",
+//     job => job.ExecutarAsync(),
+//     "0 * * * *");
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");

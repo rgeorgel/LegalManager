@@ -16,6 +16,14 @@ services:
       timeout: 5s
       retries: 5
 
+  escavador-mock:
+    image: wiremock/wiremock:3x-alpine
+    profiles: ["mock"]
+    volumes:
+      - ./mocks/wiremock:/home/wiremock
+    ports:
+      - "8888:8080"
+
   api:
     build:
       context: .
@@ -54,6 +62,8 @@ services:
       IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
       DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
       DataJud__ApiKey: ${DATAJUD_API_KEY:-}
+      Escavador__UseMock: ${ESCAVADOR_USE_MOCK:-false}
+      Escavador__BaseUrl: ${ESCAVADOR_BASE_URL:-https://api.escavador.com}
       Escavador__ApiToken: ${ESCAVADOR_API_TOKEN:-}
       Escavador__CallbackSecret: ${ESCAVADOR_CALLBACK_SECRET:-}
       SuperAdmin__Email: ${SUPERADMIN_EMAIL:-superadmin@causify.internal}

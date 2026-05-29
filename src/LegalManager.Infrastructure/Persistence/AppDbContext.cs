@@ -53,6 +53,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Feriado> Feriados => Set<Feriado>();
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
     public DbSet<ResumoProcesso> ResumosProcesso => Set<ResumoProcesso>();
+    public DbSet<ProcessoImportacaoCache> ProcessosImportacaoCache => Set<ProcessoImportacaoCache>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
