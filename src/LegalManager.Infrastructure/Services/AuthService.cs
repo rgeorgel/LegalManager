@@ -88,7 +88,8 @@ public class AuthService : IAuthService
 
         await _userManager.AddToRoleAsync(usuario, PerfilUsuario.Admin.ToString());
 
-        _ = _emailService.EnviarBoasVindasAsync(dto.Email, dto.NomeEscritorio, ct);
+        var expiraEm = tenant.TrialExpiraEm ?? tenant.PlanoExpiraEm;
+        await _emailService.EnviarBoasVindasAsync(dto.Email, dto.NomeAdmin, dto.NomeEscritorio, planoFinal.ToString(), expiraEm);
 
         return await GerarAuthResponseAsync(usuario, tenant, ct);
     }

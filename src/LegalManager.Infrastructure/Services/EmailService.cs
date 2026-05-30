@@ -1,5 +1,6 @@
 ﻿using LegalManager.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Resend;
 
 namespace LegalManager.Infrastructure.Services;
@@ -8,11 +9,13 @@ public class EmailService : IEmailService
 {
     private readonly IResend _resend;
     private readonly IConfiguration _config;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IResend resend, IConfiguration config)
+    public EmailService(IResend resend, IConfiguration config, ILogger<EmailService> logger)
     {
         _resend = resend;
         _config = config;
+        _logger = logger;
     }
 
     private EmailMessage CriarMensagem(string para, string assunto, string htmlBody)
@@ -25,17 +28,70 @@ public class EmailService : IEmailService
         return msg;
     }
 
-    public async Task EnviarBoasVindasAsync(string email, string nomeEscritorio, CancellationToken ct = default)
+    private async Task EnviarAsync(EmailMessage msg)
     {
+        var apiToken = _config["Resend:ApiToken"];
+        if (string.IsNullOrWhiteSpace(apiToken))
+        {
+            _logger.LogWarning("Email não enviado (Resend:ApiToken ausente). Assunto={Assunto}", msg.Subject);
+            return;
+        }
+        try
+        {
+            await _resend.EmailSendAsync(msg);
+            _logger.LogInformation("Email enviado para={Para} assunto={Assunto}",
+                string.Join(",", msg.To), msg.Subject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falha ao enviar email para={Para} assunto={Assunto}",
+                string.Join(",", msg.To), msg.Subject);
+        }
+    }
+
+    public async Task EnviarBoasVindasAsync(string email, string nomeAdmin, string nomeEscritorio, string plano, DateTime? expiraEm, CancellationToken ct = default)
+    {
+        var infoPlano = (plano, expiraEm) switch
+        {
+            ("Free", _)    => "Plano Gratuito — sem expiração",
+            (_, null)      => $"Plano {plano} — sem expiração",
+            (_, DateTime d) when d > DateTime.UtcNow.AddDays(15)
+                           => $"Plano {plano} ativo até {d.ToLocalTime():dd/MM/yyyy}",
+            (_, DateTime d) => $"Período de teste ativo até {d.ToLocalTime():dd/MM/yyyy}",
+        };
+
+        var frontendUrl = _config["App:FrontendUrl"];
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#1a56db">Bem-vindo ao Causify!</h2>
-              <p>Olá! O escritório <strong>{nomeEscritorio}</strong> foi cadastrado com sucesso.</p>
-              <p>Você tem <strong>10 dias de trial gratuito</strong> com acesso completo.</p>
-              <p>Acesse o sistema em: <a href="{_config["App:FrontendUrl"]}">{_config["App:FrontendUrl"]}</a></p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:22px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0;font-size:14px">Sistema de Gestão Jurídica</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#1a56db;margin-top:0">Bem-vindo ao Causify!</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeAdmin)}</strong>!</p>
+                <p>O escritório <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> foi cadastrado com sucesso. Guarde os dados abaixo para acessar o sistema:</p>
+
+                <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0">
+                  <p style="margin:0 0 12px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Seus dados de acesso</p>
+                  <p style="margin:4px 0"><strong>E-mail (login):</strong> {System.Net.WebUtility.HtmlEncode(email)}</p>
+                  <p style="margin:4px 0"><strong>Plano:</strong> {System.Net.WebUtility.HtmlEncode(infoPlano)}</p>
+                </div>
+
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{frontendUrl}" style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Acessar o sistema
+                  </a>
+                </p>
+
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Se tiver dúvidas, acesse a central de ajuda ou responda este e-mail.<br>
+                  Não compartilhe suas credenciais.
+                </p>
+              </div>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Bem-vindo ao Causify — {nomeEscritorio}", html));
+        await EnviarAsync(CriarMensagem(email, $"Bem-vindo ao Causify — {nomeEscritorio}", html));
     }
 
     public async Task EnviarConviteUsuarioAsync(string email, string nomeEscritorio, string linkConvite, CancellationToken ct = default)
@@ -48,7 +104,7 @@ public class EmailService : IEmailService
               <p style="color:#666;font-size:12px">Link válido por 7 dias.</p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Convite para {nomeEscritorio}", html));
+        await EnviarAsync(CriarMensagem(email, $"Convite para {nomeEscritorio}", html));
     }
 
     public async Task EnviarResetSenhaAsync(string email, string linkReset, CancellationToken ct = default)
@@ -61,7 +117,7 @@ public class EmailService : IEmailService
               <p style="color:#666;font-size:12px">Link válido por 1 hora. Se não foi você, ignore este e-mail.</p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, "Redefinição de senha — Causify", html));
+        await EnviarAsync(CriarMensagem(email, "Redefinição de senha — Causify", html));
     }
 
     public async Task EnviarTrialExpirandoAsync(string email, string nomeEscritorio, int diasRestantes, CancellationToken ct = default)
@@ -74,7 +130,7 @@ public class EmailService : IEmailService
               <p><a href="{_config["App:FrontendUrl"]}/planos" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Ver planos</a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Seu período de teste termina em {diasRestantes} dia(s)", html));
+        await EnviarAsync(CriarMensagem(email, $"Seu período de teste termina em {diasRestantes} dia(s)", html));
     }
 
     public async Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa,
@@ -93,7 +149,7 @@ public class EmailService : IEmailService
               </a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {tituloTarefa}", html));
+        await EnviarAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {tituloTarefa}", html));
     }
 
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
@@ -112,7 +168,7 @@ public class EmailService : IEmailService
               </a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Evento amanhã: {tituloEvento}", html));
+        await EnviarAsync(CriarMensagem(email, $"Evento amanhã: {tituloEvento}", html));
     }
 
     public async Task EnviarNovoAndamentoAsync(string email, string nomeUsuario,
@@ -132,7 +188,7 @@ public class EmailService : IEmailService
               </a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Novo andamento — {numeroCNJ}", html));
+        await EnviarAsync(CriarMensagem(email, $"Novo andamento — {numeroCNJ}", html));
     }
 
     public async Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario,
@@ -152,7 +208,7 @@ public class EmailService : IEmailService
               </a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
+        await EnviarAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
     }
 
     public async Task EnviarAcessoPortalAsync(string email, string nomeCliente, string nomeEscritorio,
@@ -188,7 +244,7 @@ public class EmailService : IEmailService
               </div>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Seu acesso ao Portal do Cliente — {nomeEscritorio}", html));
+        await EnviarAsync(CriarMensagem(email, $"Seu acesso ao Portal do Cliente — {nomeEscritorio}", html));
     }
 
     public async Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario,
@@ -206,7 +262,7 @@ public class EmailService : IEmailService
               </a></p>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Nova publicação — {numeroCNJ}", html));
+        await EnviarAsync(CriarMensagem(email, $"Nova publicação — {numeroCNJ}", html));
     }
 
     public async Task EnviarAndamentoTraduzidoAsync(string email, string nomeCliente,
@@ -231,7 +287,7 @@ public class EmailService : IEmailService
               </div>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Atualização do processo {numeroCNJ}", html));
+        await EnviarAsync(CriarMensagem(email, $"Atualização do processo {numeroCNJ}", html));
     }
 
     public async Task EnviarCobrancaAsync(string email, string nomeCliente, string nomeEscritorio,
@@ -275,6 +331,6 @@ public class EmailService : IEmailService
               </div>
             </div>
             """;
-        await _resend.EmailSendAsync(CriarMensagem(email, $"Cobrança de honorários — vencimento {vencimento:dd/MM/yyyy}", html));
+        await EnviarAsync(CriarMensagem(email, $"Cobrança de honorários — vencimento {vencimento:dd/MM/yyyy}", html));
     }
 }

@@ -154,7 +154,7 @@ public class PortalClienteService : IPortalClienteService
             existente.SenhaHash = _hasher.HashPassword(existente, dto.Senha);
             existente.Ativo = true;
             await _context.SaveChangesAsync(ct);
-            _ = _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
+            await _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
             return MapInfo(existente);
         }
 
