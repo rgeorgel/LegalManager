@@ -56,7 +56,7 @@
       </div>
 
       <div class="filter-bar">
-        <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, CPF/CNPJ ou e-mail..." autocomplete="off" name="filtBusca_off">
+        <input type="text" id="filtBusca" class="form-control" placeholder="Buscar por nome, CPF/CNPJ ou e-mail..." autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
         <select id="filtTipo" class="form-control" style="width:auto">
           <option value="">Todos os tipos</option>
           <option value="PF">Pessoa Física</option>
@@ -496,7 +496,6 @@
       }
     });
 
-    // Filters with debounce
     let debounceTimer;
     ['filtBusca', 'filtTipo', 'filtTipoContato'].forEach(id => {
       document.getElementById(id).addEventListener('input', () => {
