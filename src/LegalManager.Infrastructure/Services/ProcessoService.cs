@@ -14,11 +14,13 @@ public class ProcessoService : IProcessoService
 {
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
+    private readonly IEscavadorService _escavador;
 
-    public ProcessoService(AppDbContext context, ITenantContext tenantContext)
+    public ProcessoService(AppDbContext context, ITenantContext tenantContext, IEscavadorService escavador)
     {
         _context = context;
         _tenantContext = tenantContext;
+        _escavador = escavador;
     }
 
     public async Task<ProcessoResponseDto> CreateAsync(CreateProcessoDto dto, CancellationToken ct = default)
@@ -133,6 +135,9 @@ public class ProcessoService : IProcessoService
             processo.Monitorado = dto.Monitorado.Value;
         }
 
+        if (dto.Status is StatusProcesso.Encerrado or StatusProcesso.Arquivado)
+            await CancelarMonitoramentoEscavadorAsync(processo);
+
         if (dto.Status == StatusProcesso.Encerrado && processo.EncerradoEm == null)
             processo.EncerradoEm = DateTime.UtcNow;
         else if (dto.Status != StatusProcesso.Encerrado)
@@ -226,6 +231,7 @@ public class ProcessoService : IProcessoService
         processo.EncerradoEm = DateTime.UtcNow;
         processo.AtualizadoEm = DateTime.UtcNow;
 
+        await CancelarMonitoramentoEscavadorAsync(processo);
         await _context.SaveChangesAsync(ct);
     }
 
@@ -237,6 +243,8 @@ public class ProcessoService : IProcessoService
 
         processo.Status = StatusProcesso.Arquivado;
         processo.AtualizadoEm = DateTime.UtcNow;
+
+        await CancelarMonitoramentoEscavadorAsync(processo);
         await _context.SaveChangesAsync(ct);
     }
 
@@ -361,6 +369,18 @@ public class ProcessoService : IProcessoService
 
         _context.ProcessoPartes.Remove(parte);
         await _context.SaveChangesAsync(ct);
+    }
+
+    private async Task CancelarMonitoramentoEscavadorAsync(Processo processo)
+    {
+        if (!processo.Monitorado || string.IsNullOrWhiteSpace(processo.EscavadorMonitoramentoId))
+            return;
+
+        if (long.TryParse(processo.EscavadorMonitoramentoId, out var monId))
+            await _escavador.RemoverMonitoramentoAsync(monId);
+
+        processo.Monitorado = false;
+        processo.EscavadorMonitoramentoId = null;
     }
 
     private async Task<ProcessoResponseDto?> LoadResponseAsync(Guid id, CancellationToken ct)
