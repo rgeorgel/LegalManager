@@ -397,6 +397,100 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 ---
 
+## Casos Reais — Análise de Custo por Carteira
+
+> Análise feita em 2026-05-30. Hoje = 30/05/2026.
+
+---
+
+### Caso A — 25 processos (carteira antiga, muitos inativos)
+
+**Dados:**
+
+| Processo | Andamentos | Última data | Categoria |
+|---|---|---|---|
+| cb81e3ca | 173 | 2026-05-21 | 🔴 Ativo (18 dias) |
+| 5f864304 | 107 | 2026-05-20 | 🔴 Ativo (20 dias) |
+| 369bc06b | 37 | 2026-05-06 | 🔴 Ativo (34 dias) |
+| 0c1167a4 | 506 | 2026-05-05 | 🔴 Ativo (35 dias) |
+| ac7dbc50 | 61 | 2026-04-15 | 🔴 Ativo (55 dias) |
+| 71642ada | 150 | 2026-04-14 | 🔴 Ativo (56 dias) |
+| 4cdfe088 | 65 | 2026-04-09 | 🔴 Ativo (61 dias) |
+| eba060d4 | 41 | 2026-03-23 | 🔴 Ativo (78 dias) |
+| 27a4b5d7 | 136 | 2026-02-03 | 🟡 Dormente (116 dias) |
+| 055f8beb | 88 | 2026-02-03 | 🟡 Dormente (116 dias) |
+| 61e3f298 | 222 | 2026-01-28 | 🟡 Dormente (122 dias) |
+| 513b3208 | 58 | 2025-08-20 | 🔵 Inativo (284 dias) |
+| 6fd98f6c | 61 | 2025-05-23 | 🔵 Inativo (372 dias) |
+| 96ec5bd4 | 97 | 2025-05-16 | 🔵 Inativo (379 dias) |
+| 859130c0 | 280 | 2024-12-06 | 🔵 Inativo (540 dias) |
+| c6ffa565 | 25 | 2022-05-25 | 🔵 Inativo (~1460 dias) |
+| 8f81e92d | 151 | 2022-05-11 | 🔵 Inativo (~1474 dias) |
+| 2a46d570 | 65 | 2021-07-05 | 🔵 Inativo (~1790 dias) |
+| 6542551d | 69 | 2020-10-01 | 🔵 Inativo (~2050 dias) |
+| de9981ab | 41 | 2020-08-25 | 🔵 Inativo (~2120 dias) |
+| bef3867e | 116 | 2020-01-30 | 🔵 Inativo (~2290 dias) |
+| 1f272043 | 111 | 2020-01-16 | 🔵 Inativo (~2300 dias) |
+| 820c359a | 27 | 2019-01-21 | 🔵 Inativo (~2670 dias) |
+| cc62a0e9 | 44 | 2018-08-29 | 🔵 Inativo (~2820 dias) |
+| 2f815425 | 37 | 2018-07-19 | 🔵 Inativo (~2880 dias) |
+
+**Classificação:**
+
+| Categoria | Qtd | Critério | Tier |
+|---|---|---|---|
+| 🔴 Ativos | 15 | < 90 dias sem movimentação | Diário (R$ 1,76) |
+| 🟡 Dormentes | 3 | 90–180 dias sem movimentação | Semanal (R$ 0,32) |
+| 🔵 Inativos | 7 | > 180 dias sem movimentação | Semanal (R$ 0,32) |
+
+**Custos:**
+
+| Cenário | Ativos | Dormentes | Inativos | OAB | Total |
+|---|---|---|---|---|---|
+| Atual (tudo diário) | 15 × R$ 1,76 = R$ 26,40 | 3 × R$ 1,76 = R$ 5,28 | 7 × R$ 1,76 = R$ 12,32 | R$ 2,20 | **R$ 46,20** |
+| Com Estratégia 5 | 15 × R$ 1,76 = R$ 26,40 | 3 × R$ 0,32 = R$ 0,96 | 7 × R$ 0,32 = R$ 2,24 | R$ 2,20 | **R$ 31,80** |
+
+**Resultado:** Economia de R$ 14,40/mês (−31%).
+
+---
+
+### Caso B — 11 processos (carteira nova, poucos inativos)
+
+**Dados:**
+
+| Processo | Andamentos | Última data | Categoria |
+|---|---|---|---|
+| 28454789 | 451 | 2026-05-27 | 🔴 Ativo (3 dias) |
+| 0d4967ce | 146 | 2026-05-22 | 🔴 Ativo (8 dias) |
+| 662651a2 | 75 | 2026-05-21 | 🔴 Ativo (9 dias) |
+| b891196b | 283 | 2026-04-23 | 🔴 Ativo (37 dias) |
+| 915998a5 | 37 | 2026-03-16 | 🔴 Ativo (75 dias) |
+| 6723c4a9 | 157 | 2024-09-19 | 🔵 Inativo (253 dias) |
+| 0296d083 | 50 | 2023-08-25 | 🔵 Inativo (644 dias) |
+| eeacdccb | 114 | 2023-02-02 | 🔵 Inativo (818 dias) |
+| accc10ca | 267 | 2022-10-24 | 🔵 Inativo (954 dias) |
+| 78f97055 | 52 | 2021-09-28 | 🔵 Inativo (~1270 dias) |
+| d86d5e3a | 46 | 2020-08-04 | 🔵 Inativo (~1750 dias) |
+
+**Classificação:**
+
+| Categoria | Qtd | Critério | Tier |
+|---|---|---|---|
+| 🔴 Ativos | 5 | < 90 dias sem movimentação | Diário (R$ 1,76) |
+| 🔵 Inativos | 6 | > 180 dias sem movimentação | Semanal (R$ 0,32) |
+| 🟡 Dormentes | 0 | — | — |
+
+**Custos:**
+
+| Cenário | Ativos | Inativos | OAB | Total |
+|---|---|---|---|---|
+| Atual (tudo diário) | 5 × R$ 1,76 = R$ 8,80 | 6 × R$ 1,76 = R$ 10,56 | R$ 2,20 | **R$ 21,56** |
+| Com Estratégia 5 | 5 × R$ 1,76 = R$ 8,80 | 6 × R$ 0,32 = R$ 1,92 | R$ 2,20 | **R$ 12,92** |
+
+**Resultado:** Economia de R$ 8,64/mês (−40%).
+
+---
+
 ## Fontes
 
 - [Documentação API v1](https://api.escavador.com/v1/docs/)
