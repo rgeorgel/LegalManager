@@ -477,13 +477,49 @@
           <td data-label="Telefone">${c.telefone || '—'}</td>
           <td data-label="Tags">${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join(' ') || '—'}</td>
           <td data-label="Ações" style="white-space:nowrap">
-            <button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button>
-            <button class="btn btn-secondary btn-sm" onclick="openAtendimento('${c.id}')">Atendimento</button>
-            <button class="btn btn-secondary btn-sm" onclick="openDocContato('${c.id}','${c.nome.replace(/'/g, "\\'")}')">Docs</button>
-            <button class="btn btn-secondary btn-sm" onclick="openPortal('${c.id}','${c.nome}','${c.email||''}')">Portal</button>
-            <button class="btn btn-danger btn-sm" onclick="removeContato('${c.id}','${c.nome}')">Excluir</button>
+            <button class="btn btn-secondary btn-sm" style="padding:4px 18px;font-size:16px;line-height:1;text-align:center" onclick="toggleRowMenu(this, '${c.id}')">⋮</button>
           </td>
         </tr>`).join('');
+      // attach row menus after render
+      attachRowMenus(items);
+    }
+
+    function attachRowMenus(items) {
+      // remove old menus
+      document.querySelectorAll('.row-menu-dropdown').forEach(el => el.remove());
+      items.forEach(c => {
+        const menu = document.createElement('div');
+        menu.id = `rowMenu_${c.id}`;
+        menu.className = 'row-menu-dropdown';
+        menu.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1px solid var(--color-border);border-radius:8px;padding:4px;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none';
+        menu.innerHTML = `
+          <div onclick="editContato('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>✏️</span><span>Editar</span></div>
+          <div onclick="openAtendimento('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📋</span><span>Atendimento</span></div>
+          <div onclick="openDocContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📄</span><span>Docs</span></div>
+          <div onclick="openPortal('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}','${(c.email||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>🔑</span><span>Portal</span></div>
+          <div onclick="removeContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)"><span>🗑️</span><span>Excluir</span></div>`;
+        document.body.appendChild(menu);
+      });
+    }
+
+    window.toggleRowMenu = function(btn, id) {
+      closeAllRowMenus();
+      const menu = document.getElementById(`rowMenu_${id}`);
+      if (!menu) return;
+      const rect = btn.getBoundingClientRect();
+      menu.style.left = Math.min(rect.left, window.innerWidth - 160) + 'px';
+      menu.style.top = (rect.bottom + 4) + 'px';
+      menu.style.display = 'block';
+      menu.querySelectorAll('div').forEach(item => {
+        item.onmouseenter = () => item.style.background = 'var(--color-hover)';
+        item.onmouseleave = () => item.style.background = '';
+      });
+      setTimeout(() => document.addEventListener('click', closeAllRowMenus, { once: true }), 0);
+    };
+
+    function closeAllRowMenus() {
+      document.querySelectorAll('.row-menu-dropdown').forEach(el => el.style.display = 'none');
+      document.removeEventListener('click', closeAllRowMenus);
     }
 
     function formatTipoContato(t) {
