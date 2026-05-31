@@ -91,6 +91,7 @@ builder.Services.AddScoped<IPreferenciasNotificacaoService, PreferenciasNotifica
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<IStorageService, OciStorageService>();
 builder.Services.AddScoped<IDocumentoService, DocumentoService>();
+builder.Services.AddScoped<IPastaService, PastaService>();
 builder.Services.AddScoped<IModeloDocumentoService, ModeloDocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
@@ -311,6 +312,7 @@ app.Use(async (ctx, next) =>
         "font-src 'self' data:; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +
+        "frame-src 'self' blob:; " +
         "base-uri 'self'; " +
         "object-src 'none';";
     await next();

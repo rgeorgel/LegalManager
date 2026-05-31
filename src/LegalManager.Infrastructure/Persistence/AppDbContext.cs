@@ -47,6 +47,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<PecaGerada> PecasGeradas => Set<PecaGerada>();
     public DbSet<Documento> Documentos => Set<Documento>();
     public DbSet<ModeloDocumento> ModelosDocumento => Set<ModeloDocumento>();
+    public DbSet<Pasta> Pastas => Set<Pasta>();
     public DbSet<HonorarioCalculo> HonorariosCalculos => Set<HonorarioCalculo>();
     public DbSet<IndiceCorrecaoMonetaria> IndicesCorrecaoMonetaria => Set<IndiceCorrecaoMonetaria>();
     public DbSet<ConfiguracaoCalculadora> ConfiguracoesCalculadora => Set<ConfiguracaoCalculadora>();

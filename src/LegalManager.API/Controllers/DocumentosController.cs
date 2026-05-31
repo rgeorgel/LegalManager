@@ -22,9 +22,9 @@ public class DocumentosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll(CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll([FromQuery] Guid? pastaId = null, CancellationToken ct = default)
     {
-        var result = await _service.GetAllAsync(ct);
+        var result = await _service.GetAllAsync(pastaId, ct);
         return Ok(result);
     }
 
@@ -35,6 +35,20 @@ public class DocumentosController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
+    [HttpPatch("{id:guid}/pasta")]
+    public async Task<IActionResult> UpdatePasta(Guid id, [FromBody] UpdateDocumentoPastaDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            await _service.UpdatePastaAsync(id, dto.PastaId, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpGet("processo/{processoId:guid}")]
     public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetByProcesso(Guid processoId, CancellationToken ct = default)
     {
@@ -43,9 +57,9 @@ public class DocumentosController : ControllerBase
     }
 
     [HttpGet("cliente/{clienteId:guid}")]
-    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetByCliente(Guid clienteId, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetByCliente(Guid clienteId, [FromQuery] Guid? pastaId = null, CancellationToken ct = default)
     {
-        var result = await _service.GetByClienteAsync(clienteId, ct);
+        var result = await _service.GetByClienteAsync(clienteId, pastaId, ct);
         return Ok(result);
     }
 
@@ -60,6 +74,7 @@ public class DocumentosController : ControllerBase
         [FromForm] Guid? modeloId,
         [FromForm] TipoDocumento tipo = TipoDocumento.Outro,
         [FromForm] string? nome = null,
+        [FromForm] Guid? pastaId = null,
         CancellationToken ct = default)
     {
         if (file == null || file.Length == 0)
@@ -73,7 +88,8 @@ public class DocumentosController : ControllerBase
             ContratoId = contratoId,
             ModeloId = modeloId,
             Tipo = tipo,
-            Nome = nome
+            Nome = nome,
+            PastaId = pastaId
         };
 
         var result = await _service.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);

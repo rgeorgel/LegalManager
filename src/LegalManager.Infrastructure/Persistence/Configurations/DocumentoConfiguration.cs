@@ -37,6 +37,12 @@ public class DocumentoConfiguration : IEntityTypeConfiguration<Documento>
             .HasConstraintName("FK_Documentos_AspNetUsers_UploadedPorId")
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(d => d.Pasta)
+            .WithMany()
+            .HasForeignKey(d => d.PastaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(d => d.PastaId);
         builder.HasIndex(d => new { d.TenantId, d.ProcessoId });
         builder.HasIndex(d => new { d.TenantId, d.ClienteId });
         builder.HasIndex(d => new { d.TenantId, d.ContratoId });

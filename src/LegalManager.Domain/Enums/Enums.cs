@@ -59,6 +59,8 @@ public enum TipoLancamento { Receita, Despesa }
 
 public enum StatusLancamento { Pendente, Pago, Vencido, Cancelado }
 
+public enum EntidadeTipo { Documento = 0, Contato = 1 }
+
 public enum TipoDocumento { Peticao, Decisao, Contrato, Prova, Modelo, Outro }
 
 public enum TipoIndice { IPCA, IGPM, TJSP }

@@ -43,24 +43,49 @@ public class DocumentoService : IDocumentoService
         return documentos.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, CancellationToken ct = default)
+    public async Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, CancellationToken ct = default)
     {
-        var documentos = await _context.Documentos
+        var query = _context.Documentos
             .Include(d => d.Processo)
             .Include(d => d.Cliente)
-            .Where(d => d.ClienteId == clienteId && d.TenantId == _tenantContext.TenantId)
+            .Include(d => d.Pasta)
+            .Where(d => d.ClienteId == clienteId && d.TenantId == _tenantContext.TenantId);
+
+        if (pastaId.HasValue)
+            query = query.Where(d => d.PastaId == pastaId.Value);
+
+        var documentos = await query
             .OrderByDescending(d => d.CriadoEm)
             .ToListAsync(ct);
 
         return documentos.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, CancellationToken ct = default)
+    {
+        var query = _context.Documentos
+            .Include(d => d.Processo)
+            .Include(d => d.Cliente)
+            .Include(d => d.Pasta)
+            .Where(d => d.TenantId == _tenantContext.TenantId);
+
+        if (pastaId.HasValue)
+            query = query.Where(d => d.PastaId == pastaId.Value);
+
+        var documentos = await query
+            .OrderByDescending(d => d.CriadoEm)
+            .ToListAsync(ct);
+
+        return documentos.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<DocumentoDto>> GetByPastaAsync(Guid pastaId, CancellationToken ct = default)
     {
         var documentos = await _context.Documentos
             .Include(d => d.Processo)
             .Include(d => d.Cliente)
-            .Where(d => d.TenantId == _tenantContext.TenantId)
+            .Include(d => d.Pasta)
+            .Where(d => d.PastaId == pastaId && d.TenantId == _tenantContext.TenantId)
             .OrderByDescending(d => d.CriadoEm)
             .ToListAsync(ct);
 
@@ -84,7 +109,9 @@ public class DocumentoService : IDocumentoService
         var safeFileName = System.Text.RegularExpressions.Regex.Replace(fileName, @"[^A-Za-z0-9._\-]", "_");
 
         string objectKey;
-        if (uploadInfo.ProcessoId.HasValue)
+        if (uploadInfo.PastaId.HasValue)
+            objectKey = $"{tenantId}/documentos/{uploadInfo.PastaId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
+        else if (uploadInfo.ProcessoId.HasValue)
             objectKey = $"{tenantId}/processos/{uploadInfo.ProcessoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
         else if (uploadInfo.ContratoId.HasValue)
             objectKey = $"{tenantId}/contratos/{uploadInfo.ContratoId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{safeFileName}";
@@ -111,7 +138,8 @@ public class DocumentoService : IDocumentoService
             TamanhoBytes = fileStream.Length,
             Tipo = uploadInfo.Tipo,
             CriadoEm = DateTime.UtcNow,
-            UploadedPorId = uploadedPorId
+            UploadedPorId = uploadedPorId,
+            PastaId = uploadInfo.PastaId
         };
 
         _context.Documentos.Add(documento);
@@ -129,6 +157,16 @@ public class DocumentoService : IDocumentoService
         await _storageService.DeleteAsync(documento.ObjectKey, ct);
 
         _context.Documentos.Remove(documento);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdatePastaAsync(Guid id, Guid? pastaId, CancellationToken ct = default)
+    {
+        var documento = await _context.Documentos
+            .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Documento não encontrado.");
+
+        documento.PastaId = pastaId;
         await _context.SaveChangesAsync(ct);
     }
 
@@ -176,6 +214,8 @@ public class DocumentoService : IDocumentoService
         ContentType = d.ContentType,
         TamanhoBytes = d.TamanhoBytes,
         Tipo = d.Tipo,
-        CriadoEm = d.CriadoEm
+        CriadoEm = d.CriadoEm,
+        PastaId = d.PastaId,
+        PastaNome = d.Pasta?.Nome
     };
 }

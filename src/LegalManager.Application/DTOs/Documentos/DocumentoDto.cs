@@ -18,6 +18,8 @@ public class DocumentoDto
     public TipoDocumento Tipo { get; set; }
     public DateTime CriadoEm { get; set; }
     public string? UrlDownload { get; set; }
+    public Guid? PastaId { get; set; }
+    public string? PastaNome { get; set; }
 }
 
 public class DocumentoUploadDto
@@ -28,6 +30,7 @@ public class DocumentoUploadDto
     public Guid? ModeloId { get; set; }
     public TipoDocumento Tipo { get; set; }
     public string? Nome { get; set; }
+    public Guid? PastaId { get; set; }
 }
 
 public class CotaArmazenamentoDto

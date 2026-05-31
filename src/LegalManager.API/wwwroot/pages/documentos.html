@@ -46,8 +46,39 @@
     .editor-toolbar { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
     .editor-toolbar button { padding:4px 12px; font-size:13px; }
 
+    /* Folder tree */
+    .folder-layout { display:flex; gap:16px; flex:1; min-height:0; }
+    .folder-panel { width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+    .folder-panel-header { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius); }
+    .folder-panel-title { font-weight:600; font-size:13px; color:var(--color-text); }
+    .folder-tree { flex:1; overflow-y:auto; background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius); padding:8px; }
+    .folder-item { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--color-text); user-select:none; transition:background 0.15s; }
+    .folder-item:hover { background:var(--color-hover); }
+    .folder-item.active { background:var(--color-primary-bg, #dbeafe); color:var(--color-primary, #1e40af); font-weight:500; }
+    .folder-item .folder-icon { font-size:14px; flex-shrink:0; }
+    .folder-item .folder-count { margin-left:auto; font-size:11px; background:var(--color-border); color:var(--color-text-muted); padding:1px 6px; border-radius:10px; }
+    .folder-item .folder-toggle { font-size:10px; width:14px; text-align:center; flex-shrink:0; transition:transform 0.15s; }
+    .folder-item .folder-toggle.open { transform:rotate(90deg); }
+    .folder-menu-btn { opacity:0; transition:opacity 0.15s; }
+    .folder-item:hover .folder-menu-btn { opacity:1; }
+    .folder-children { padding-left:16px; }
+    .folder-root-item { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--color-text); user-select:none; }
+    .folder-root-item:hover { background:var(--color-hover); }
+    .folder-root-item.active { background:var(--color-primary-bg, #dbeafe); color:var(--color-primary, #1e40af); font-weight:500; }
+    .folder-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+    .folder-input-group { display:flex; gap:4px; }
+    .folder-input-group input { flex:1; font-size:12px; padding:4px 8px; }
+    .folder-input-group button { font-size:12px; padding:4px 8px; }
   </style>
-<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+<script>
+    // Crisp.chat - load async to avoid blocking
+    window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";
+    (function(){
+      var d=document,s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;
+      s.onerror=function(){}; // ignore CSP errors for external script
+      d.getElementsByTagName("head")[0].appendChild(s);
+    })();
+  </script>
 </head>
 <body>
 <div class="app-layout">
@@ -83,6 +114,7 @@
       <h1 class="page-title">Documentos</h1>
       <div style="display:flex;gap:8px">
         <div class="tab-actions active" id="actionsDocumentos">
+          <button class="btn btn-secondary" id="btnMoverDocs" style="display:none">📂 Mover selecionados (<span id="selectedCount">0</span>)</button>
           <button class="btn btn-primary" id="btnUpload">+ Upload</button>
         </div>
         <div class="tab-actions" id="actionsModelos">
@@ -102,55 +134,77 @@
 
     <!-- ===== TAB: DOCUMENTOS ===== -->
     <div class="tab-content active" id="tab-documentos">
-      <div class="card" style="margin-bottom:16px">
-        <div style="padding:16px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Armazenamento</strong>
-            <span id="quotaText">0 MB / 20 GB</span>
+      <div class="folder-layout">
+        <!-- Folder Tree Panel -->
+        <div class="folder-panel">
+          <div class="folder-panel-header">
+            <span class="folder-panel-title">Pastas</span>
+            <button class="btn btn-secondary btn-sm" id="btnNewFolder" title="Nova pasta">+</button>
           </div>
-          <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
-          <div class="quota-label" id="quotaLabel">Carregando...</div>
+          <div class="folder-tree" id="folderTree">
+            <div class="folder-root-item active" id="folderRoot" data-id="">
+              <span>📂</span>
+              <span style="flex:1">Raiz</span>
+            </div>
+            <div id="folderList"></div>
+          </div>
         </div>
-      </div>
 
-      <div class="filter-bar">
-        <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
-        <select id="filtTipo" class="form-control" style="width:auto">
-          <option value="">Todos os tipos</option>
-          <option value="Peticao">Petição</option>
-          <option value="Decisao">Decisão</option>
-          <option value="Contrato">Contrato</option>
-          <option value="Prova">Prova</option>
-          <option value="Modelo">Modelo</option>
-          <option value="Outro">Outro</option>
-        </select>
-        <select id="filtOrigem" class="form-control" style="width:auto">
-          <option value="">Todas as origens</option>
-          <option value="processo">Por Processo</option>
-          <option value="cliente">Por Cliente</option>
-          <option value="outros">Outros</option>
-        </select>
-      </div>
+        <!-- Main Content -->
+        <div class="folder-content">
+          <div class="card" style="margin-bottom:16px">
+            <div style="padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>Armazenamento</strong>
+                <span id="quotaText">0 MB / 20 GB</span>
+              </div>
+              <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:0%"></div></div>
+              <div class="quota-label" id="quotaLabel">Carregando...</div>
+            </div>
+          </div>
 
-      <div id="docAlertMsg" class="alert" style="display:none"></div>
+          <div class="filter-bar">
+            <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por nome, processo ou cliente...">
+            <select id="filtTipo" class="form-control" style="width:auto">
+              <option value="">Todos os tipos</option>
+              <option value="Peticao">Petição</option>
+              <option value="Decisao">Decisão</option>
+              <option value="Contrato">Contrato</option>
+              <option value="Prova">Prova</option>
+              <option value="Modelo">Modelo</option>
+              <option value="Outro">Outro</option>
+            </select>
+            <select id="filtOrigem" class="form-control" style="width:auto">
+              <option value="">Todas as origens</option>
+              <option value="processo">Por Processo</option>
+              <option value="cliente">Por Cliente</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
 
-      <div class="card">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Tipo</th>
-                <th>Tamanho</th>
-                <th>Origem</th>
-                <th>Data</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="docTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
-            </tbody>
-          </table>
+          <div id="docAlertMsg" class="alert" style="display:none"></div>
+
+          <div class="card">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:40px"><input type="checkbox" id="selectAllDocs"></th>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Tamanho</th>
+                    <th>Origem</th>
+                    <th>Pasta</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="docTableBody">
+                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -218,6 +272,12 @@
             <option value="">Nenhum</option>
           </select>
         </div>
+        <div class="form-group">
+          <label>Pasta</label>
+          <select id="fPasta" class="form-control">
+            <option value="">Raiz (sem pasta)</option>
+          </select>
+        </div>
       </form>
       <div id="uploadProgress" style="display:none;margin-top:16px">
         <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden">
@@ -229,6 +289,69 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnUploadCancelar">Cancelar</button>
       <button class="btn btn-primary" id="btnEnviar">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Renomear Pasta ===== -->
+<div class="modal-overlay" id="modalRenamePasta">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Renomear Pasta</span>
+      <button class="modal-close" id="modalRenamePastaClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome da pasta</label>
+        <input type="text" id="fRenamePastaNome" class="form-control" placeholder="Nome da pasta">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnRenamePastaCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnRenamePastaConfirmar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Excluir Pasta ===== -->
+<div class="modal-overlay" id="modalDeletePasta">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Excluir Pasta</span>
+      <button class="modal-close" id="modalDeletePastaClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="deletePastaMsg" style="margin-bottom:16px"></p>
+      <div class="form-group">
+        <label>O que deve acontecer com os documentos desta pasta?</label>
+        <select id="fDeletePastaOpcao" class="form-control">
+          <option value="mover">Mover documentos para a pasta pai</option>
+          <option value="excluir">Excluir documentos junto com a pasta</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnDeletePastaCancelar">Cancelar</button>
+      <button class="btn btn-danger" id="btnDeletePastaConfirmar">Excluir</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalMoverDocs">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title">Mover para Pasta</span>
+      <button class="modal-close" id="modalMoverDocsClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="moverDocsCount" style="margin-bottom:12px;font-size:14px;color:var(--color-text-muted)"></p>
+      <div class="form-group">
+        <label>Selecione a pasta de destino</label>
+        <select id="fMoverPasta" class="form-control"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnMoverDocsCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnMoverDocsConfirmar">Mover</button>
     </div>
   </div>
 </div>
@@ -389,6 +512,274 @@ const initialTab = new URLSearchParams(window.location.search).get('tab');
 if (initialTab === 'modelos') switchTab('modelos');
 
 // ============================================================
+// FOLDERS
+// ============================================================
+let pastas = [];
+let currentPastaId = null;
+
+async function loadPastas() {
+  try {
+    pastas = await apiFetch('/pastas?entidadeTipo=Documento');
+    renderFolderTree();
+    await populateFolderSelect();
+  } catch {}
+}
+
+function buildFolderTree(parentId = null, depth = 0) {
+  return pastas
+    .filter(p => p.parentPastaId === parentId)
+    .sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome))
+    .map(p => ({ ...p, depth }));
+}
+
+function renderFolderTree() {
+  const container = document.getElementById('folderList');
+  const roots = buildFolderTree(null);
+  if (!roots.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--color-text-muted);padding:8px">Nenhuma pasta</div>';
+    return;
+  }
+  container.innerHTML = roots.map(p => renderFolderItem(p)).join('');
+}
+
+function renderFolderItem(pasta) {
+  const children = buildFolderTree(pasta.id, pasta.depth + 1);
+  const hasChildren = children.length > 0;
+  const isActive = currentPastaId === pasta.id;
+  const indent = pasta.depth * 16;
+  let html = `
+    <div class="folder-item${isActive ? ' active' : ''}" data-id="${pasta.id}" data-action="folder" style="padding-left:${indent}px">
+      ${hasChildren ? `<span class="folder-toggle">▶</span>` : '<span style="width:14px;display:inline-block"></span>'}
+      <span class="folder-icon">📁</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pasta.nome}</span>
+      ${pasta.documentoCount ? `<span class="folder-count">${pasta.documentoCount}</span>` : ''}
+      <button class="folder-menu-btn" data-id="${pasta.id}" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;line-height:1;color:var(--color-text-muted)">⋮</button>
+    </div>`;
+  if (hasChildren) {
+    html += `<div class="folder-children" data-parent="${pasta.id}">${children.map(c => renderFolderItem(c)).join('')}</div>`;
+  }
+  return html;
+}
+
+function setupFolderEvents() {
+  document.getElementById('folderRoot').addEventListener('click', () => {
+    currentPastaId = null;
+    document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('folderRoot').classList.add('active');
+    loadDocumentos();
+  });
+
+  document.getElementById('folderList').addEventListener('click', e => {
+    const item = e.target.closest('.folder-item');
+    if (!item) return;
+    const id = item.dataset.id;
+    currentPastaId = id;
+    document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active'));
+    item.classList.add('active');
+    loadDocumentos();
+  });
+
+  document.getElementById('folderList').addEventListener('click', e => {
+    const menuBtn = e.target.closest('.folder-menu-btn');
+    if (menuBtn) {
+      e.stopPropagation();
+      closeFolderMenu();
+      const pastaId = menuBtn.dataset.id;
+      const pasta = pastas.find(p => p.id === pastaId);
+      const docCount = pasta?.documentoCount || 0;
+      const msg = docCount > 0
+        ? `A pasta "${pasta?.nome || ''}" contém ${docCount} documento(s).`
+        : `Pasta "${pasta?.nome || ''}" — vazia.`;
+      document.getElementById('deletePastaMsg').textContent = msg;
+      document.getElementById('modalDeletePasta')._pastaId = pastaId;
+
+      const menu = document.createElement('div');
+      menu.id = 'folderCtxMenu';
+      Object.assign(menu.style, {
+        position: 'fixed', zIndex: 9999,
+        background: '#fff',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px', padding: '4px',
+        minWidth: '160px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      });
+      menu.innerHTML = `
+        <div class="ctx-item" data-action="rename" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">✏️</span><span>Renomear</span>
+        </div>
+        <div class="ctx-item" data-action="new-child" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">📁</span><span>Nova subpasta</span>
+        </div>
+        <div class="ctx-item" data-action="delete" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)">
+          <span style="font-size:14px">🗑️</span><span>Excluir</span>
+        </div>`;
+
+      const rect = menuBtn.getBoundingClientRect();
+      menu.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+      menu.style.top = (rect.bottom + 4) + 'px';
+      document.body.appendChild(menu);
+
+      menu.querySelectorAll('.ctx-item').forEach(item => {
+        item.addEventListener('mouseenter', () => item.style.background = 'var(--color-hover)');
+        item.addEventListener('mouseleave', () => item.style.background = '');
+        item.addEventListener('click', () => handleFolderMenuAction(item.dataset.action, item.dataset.id));
+      });
+      setTimeout(() => document.addEventListener('click', closeFolderMenu, { once: true }), 0);
+      return;
+    }
+
+    const toggle = e.target.closest('.folder-toggle');
+    if (toggle) {
+      const children = toggle.closest('.folder-item').nextElementSibling;
+      if (children && children.classList.contains('folder-children')) {
+        children.style.display = children.style.display === 'none' ? '' : 'none';
+        toggle.classList.toggle('open');
+      }
+      return;
+    }
+
+    const item = e.target.closest('.folder-item');
+    if (item) {
+      const id = item.dataset.id;
+      currentPastaId = id;
+      document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      loadDocumentos();
+    }
+  });
+
+  document.getElementById('btnNewFolder').addEventListener('click', () => {
+    document.getElementById('fRenamePastaNome').value = '';
+    document.getElementById('modalRenamePasta')._pastaId = null;
+    document.getElementById('modalRenamePasta').classList.add('open');
+  });
+}
+
+// Modal: Rename folder
+document.getElementById('modalRenamePastaClose').addEventListener('click', () =>
+  document.getElementById('modalRenamePasta').classList.remove('open'));
+document.getElementById('btnRenamePastaCancelar').addEventListener('click', () =>
+  document.getElementById('modalRenamePasta').classList.remove('open'));
+document.getElementById('btnRenamePastaConfirmar').addEventListener('click', async () => {
+  const modal = document.getElementById('modalRenamePasta');
+  const nome = document.getElementById('fRenamePastaNome').value.trim();
+  if (!nome) return;
+  const pastaId = modal._pastaId;
+  const parentPastaId = modal._parentPastaId ?? currentPastaId;
+  modal.classList.remove('open');
+  try {
+    if (pastaId) {
+      await apiFetch(`/pastas/${pastaId}?entidadeTipo=Documento`, {
+        method: 'PUT', body: JSON.stringify({ nome })
+      });
+    } else {
+      await apiFetch('/pastas?entidadeTipo=Documento', {
+        method: 'POST', body: JSON.stringify({ nome, parentPastaId: parentPastaId || null })
+      });
+    }
+    loadPastas();
+  } catch (err) { showDocAlert(err.message); }
+});
+
+// Modal: Delete folder
+document.getElementById('modalDeletePastaClose').addEventListener('click', () =>
+  document.getElementById('modalDeletePasta').classList.remove('open'));
+document.getElementById('btnDeletePastaCancelar').addEventListener('click', () =>
+  document.getElementById('modalDeletePasta').classList.remove('open'));
+document.getElementById('btnDeletePastaConfirmar').addEventListener('click', async () => {
+  const modal = document.getElementById('modalDeletePasta');
+  const pastaId = modal._pastaId;
+  const excluirDocs = document.getElementById('fDeletePastaOpcao').value === 'excluir';
+  modal.classList.remove('open');
+  try {
+    await apiFetch(`/pastas/${pastaId}?excluirDocs=${excluirDocs}`, { method: 'DELETE' });
+    if (currentPastaId === pastaId) currentPastaId = null;
+    loadPastas();
+    loadDocumentos();
+  } catch (err) { showDocAlert(err.message); }
+});
+
+function showFolderMenu(e, pastaId) {
+  e.preventDefault();
+  closeFolderMenu();
+  const pasta = pastas.find(p => p.id === pastaId);
+  const docCount = pasta?.documentoCount || 0;
+  const msg = docCount > 0
+    ? `A pasta "${pasta?.nome || ''}" contém ${docCount} documento(s). O que deseja fazer com eles?`
+    : `Excluir a pasta "${pasta?.nome || ''}"?`;
+  document.getElementById('deletePastaMsg').textContent = msg;
+  document.getElementById('modalDeletePasta')._pastaId = pastaId;
+
+  const menu = document.createElement('div');
+  menu.id = 'folderCtxMenu';
+  menu.style.cssText = 'position:fixed;z-index:9999;background:var(--color-card);border:1px solid var(--color-border);border-radius:8px;padding:4px;min-width:150px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+  menu.innerHTML = `
+    <div class="ctx-item" data-action="rename" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px">✏️ Renomear</div>
+    <div class="ctx-item" data-action="new-child" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px">📁 Nova subpasta</div>
+    <div class="ctx-item" data-action="delete" data-id="${pastaId}" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;color:var(--color-danger)">🗑️ Excluir</div>
+  `;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 80) + 'px';
+  document.body.appendChild(menu);
+
+  menu.querySelectorAll('.ctx-item').forEach(item => {
+    item.addEventListener('mouseenter', () => item.style.background = 'var(--color-hover)');
+    item.addEventListener('mouseleave', () => item.style.background = '');
+    item.addEventListener('click', () => handleFolderMenuAction(item.dataset.action, item.dataset.id));
+  });
+
+  setTimeout(() => document.addEventListener('click', closeFolderMenu, { once: true }), 0);
+}
+
+function closeFolderMenu() {
+  document.getElementById('folderCtxMenu')?.remove();
+}
+
+async function handleFolderMenuAction(action, pastaId) {
+  closeFolderMenu();
+  const pasta = pastas.find(p => p.id === pastaId);
+
+  if (action === 'rename') {
+    document.getElementById('fRenamePastaNome').value = pasta?.nome || '';
+    document.getElementById('modalRenamePasta')._pastaId = pastaId;
+    document.getElementById('modalRenamePasta').classList.add('open');
+
+  } else if (action === 'new-child') {
+    document.getElementById('fRenamePastaNome').value = '';
+    document.getElementById('modalRenamePasta')._pastaId = null;
+    document.getElementById('modalRenamePasta')._parentPastaId = pastaId;
+    document.getElementById('modalRenamePasta').classList.add('open');
+
+  } else if (action === 'delete') {
+    const docCount = pasta?.documentoCount || 0;
+    const msg = docCount > 0
+      ? `A pasta "${pasta?.nome || ''}" contém ${docCount} documento(s). O que deseja fazer com eles?`
+      : `Excluir a pasta "${pasta?.nome || ''}"?`;
+    document.getElementById('deletePastaMsg').textContent = msg;
+    document.getElementById('modalDeletePasta')._pastaId = pastaId;
+    document.getElementById('modalDeletePasta').classList.add('open');
+  }
+}
+
+async function populateFolderSelect() {
+  const select = document.getElementById('fPasta');
+  select.innerHTML = '<option value="">Raiz (sem pasta)</option>';
+  const flat = [];
+  function addOptions(parentId = null, prefix = '') {
+    pastas.filter(p => p.parentPastaId === parentId)
+      .sort((a, b) => a.ordem - b.ordem || a.nome.localeCompare(b.nome))
+      .forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = prefix + p.nome;
+        select.appendChild(opt);
+        addOptions(p.id, prefix + '— ');
+      });
+  }
+  addOptions();
+}
+
+// ============================================================
 // DOCUMENTOS
 // ============================================================
 let documentos = [];
@@ -402,6 +793,102 @@ function showDocAlert(msg, type = 'error') {
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 5000);
 }
+
+let selectedDocs = new Set();
+
+function setupDocSelection() {
+  document.getElementById('selectAllDocs').addEventListener('change', e => {
+    const checked = e.target.checked;
+    document.querySelectorAll('.doc-check').forEach(cb => { cb.checked = checked; });
+    if (checked) {
+      documentos.forEach(d => selectedDocs.add(d.id));
+    } else {
+      selectedDocs.clear();
+    }
+    updateMoveButton();
+  });
+
+  document.getElementById('docTableBody').addEventListener('change', e => {
+    if (e.target.classList.contains('doc-check')) {
+      const id = e.target.value;
+      if (e.target.checked) selectedDocs.add(id);
+      else selectedDocs.delete(id);
+      updateMoveButton();
+    }
+  });
+
+  document.getElementById('docTableBody').addEventListener('click', e => {
+    if (e.target.classList.contains('pasta-link')) {
+      e.preventDefault();
+      openMoverDocsModal([e.target.dataset.id]);
+    }
+  });
+
+  document.getElementById('btnMoverDocs').addEventListener('click', () => {
+    if (selectedDocs.size === 0) return;
+    openMoverDocsModal([...selectedDocs]);
+  });
+}
+
+function updateMoveButton() {
+  const btn = document.getElementById('btnMoverDocs');
+  const count = document.getElementById('selectedCount');
+  const n = selectedDocs.size;
+  btn.style.display = n > 0 ? '' : 'none';
+  count.textContent = n;
+}
+
+function openMoverDocsModal(docIds) {
+  const count = docIds.length;
+  document.getElementById('moverDocsCount').textContent =
+    count === 1
+      ? `Movendo: "${documentos.find(d => d.id === docIds[0])?.nome || 'documento'}"`
+      : `Movendo ${count} documentos`;
+
+  const select = document.getElementById('fMoverPasta');
+  select.innerHTML = '<option value="">Raiz (sem pasta)</option>';
+  pastas.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nome;
+    select.appendChild(opt);
+  });
+
+  const modal = document.getElementById('modalMoverDocs');
+  modal._docIds = docIds;
+  modal.classList.add('open');
+}
+
+document.getElementById('modalMoverDocsClose').addEventListener('click', () => {
+  document.getElementById('modalMoverDocs').classList.remove('open');
+});
+document.getElementById('btnMoverDocsCancelar').addEventListener('click', () => {
+  document.getElementById('modalMoverDocs').classList.remove('open');
+});
+document.getElementById('btnMoverDocsConfirmar').addEventListener('click', async () => {
+  const modal = document.getElementById('modalMoverDocs');
+  const pastaId = document.getElementById('fMoverPasta').value || null;
+  const docIds = modal._docIds;
+  modal.classList.remove('open');
+
+  try {
+    await Promise.all(docIds.map(id =>
+      apiFetch(`/documentos/${id}/pasta`, {
+        method: 'PATCH',
+        body: JSON.stringify({ pastaId })
+      })
+    ));
+    showDocAlert(`${docIds.length} documento(s) movido(s).`, 'success');
+    selectedDocs.clear();
+    document.querySelectorAll('.doc-check').forEach(cb => cb.checked = false);
+    document.getElementById('selectAllDocs').checked = false;
+    updateMoveButton();
+    loadDocumentos();
+    loadPastas();
+  } catch (err) {
+    showDocAlert(err.message);
+  }
+});
 
 function formatBytes(bytes) {
   if (bytes === 0) return '0 B';
@@ -438,12 +925,14 @@ async function loadCota() {
 
 async function loadDocumentos() {
   const tbody = document.getElementById('docTableBody');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px">Carregando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px">Carregando...</td></tr>';
   try {
-    documentos = await apiFetch('/documentos');
+    let url = '/documentos';
+    if (currentPastaId) url += `?pastaId=${currentPastaId}`;
+    documentos = await apiFetch(url);
     renderDocsTable(documentos);
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
   }
 }
 
@@ -475,15 +964,17 @@ async function loadReferenceData() {
 function renderDocsTable(items) {
   const tbody = document.getElementById('docTableBody');
   if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento encontrado</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = items.map(d => `
-    <tr>
+    <tr data-id="${d.id}">
+      <td><input type="checkbox" class="doc-check" value="${d.id}"></td>
       <td data-label="Nome"><strong>${d.nome}</strong></td>
       <td data-label="Tipo">${tipoBadge(d.tipo)}</td>
       <td data-label="Tamanho">${d.tamanhoFormatado}</td>
       <td data-label="Origem">${getOrigemLabel(d)}</td>
+      <td data-label="Pasta"><a href="#" class="pasta-link" data-id="${d.id}" data-pasta="${d.pastaId || ''}">${d.pastaNome || '—'}</a></td>
       <td data-label="Data">${new Date(d.criadoEm).toLocaleDateString('pt-BR')}</td>
       <td data-label="Ações" style="white-space:nowrap">
         <button class="btn btn-secondary btn-sm" onclick="viewDoc('${d.id}')">Visualizar</button>
@@ -568,8 +1059,10 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
   formData.append('tipo', document.getElementById('fTipo').value);
   const processoId = document.getElementById('fProcesso').value;
   const clienteId = document.getElementById('fCliente').value;
+  const pastaId = document.getElementById('fPasta').value;
   if (processoId) formData.append('processoId', processoId);
   if (clienteId) formData.append('clienteId', clienteId);
+  if (pastaId) formData.append('pastaId', pastaId);
 
   const token = sessionStorage.getItem('access_token');
   try {
@@ -904,6 +1397,9 @@ document.getElementById('btnGerarIASalvar').addEventListener('click', () => {
 // ============================================================
 // INIT
 // ============================================================
+setupFolderEvents();
+setupDocSelection();
+await loadPastas();
 await loadReferenceData();
 await loadCota();
 loadDocumentos();

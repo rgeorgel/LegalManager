@@ -118,7 +118,17 @@
       "Bash(docker-compose ps *)",
       "Bash(.\\\\scripts\\\\check-js.ps1)",
       "PowerShell(.\\\\scripts\\\\check-js.ps1 2>&1 | Select-Object -First 20)",
-      "Bash(ls *)"
+      "Bash(ls *)",
+      "Bash(Find -Path \"C:\\\\code\\\\personal\\\\LegalManager\" -name \"appsettings*.json\" -o -name \"*secret*\" -o -name \".env*\")",
+      "WebFetch(domain:api.escavador.com)",
+      "WebFetch(domain:suporte-api.escavador.com)",
+      "WebFetch(domain:blog.escavador.com)",
+      "WebFetch(domain:www.escavador.com)",
+      "Bash(Select-String -NotMatch \"NU1903\")",
+      "Bash(Select-Object -Last 10)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(dotnet clean src/LegalManager.API 2>&1 | Select-Object -Last 3; dotnet build src/LegalManager.API -q 2>&1 | Where-Object { $_ -notmatch \"NU1903\" } | Select-Object -Last 5)",
+      "PowerShell(Get-Process *)"
     ]
   }
 }

@@ -17,9 +17,11 @@ public class Documento
     public TipoDocumento Tipo { get; set; }
     public DateTime CriadoEm { get; set; }
     public Guid? UploadedPorId { get; set; }
+    public Guid? PastaId { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Processo? Processo { get; set; }
     public Contato? Cliente { get; set; }
+    public Pasta? Pasta { get; set; }
     public Usuario? UploadedPor { get; set; }
 }

@@ -19,6 +19,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Contatos</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .doc-tab-content { display:none; }
+    .doc-tab-content.active { display:block; }
+    .folder-layout { display:flex; gap:16px; flex:1; min-height:0; margin-top:16px; }
+    .folder-panel { width:220px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
+    .folder-panel-header { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius); }
+    .folder-panel-title { font-weight:600; font-size:13px; }
+    .folder-tree { flex:1; overflow-y:auto; background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius); padding:8px; }
+    .folder-item { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--color-text); user-select:none; transition:background 0.15s; }
+    .folder-item:hover { background:var(--color-hover); }
+    .folder-item.active { background:var(--color-primary-bg, #dbeafe); color:var(--color-primary, #1e40af); font-weight:500; }
+    .folder-item .folder-icon { font-size:14px; flex-shrink:0; }
+    .folder-item .folder-count { margin-left:auto; font-size:11px; background:var(--color-border); color:var(--color-text-muted); padding:1px 6px; border-radius:10px; }
+    .folder-item .folder-toggle { font-size:10px; width:14px; text-align:center; flex-shrink:0; transition:transform 0.15s; }
+    .folder-item .folder-toggle.open { transform:rotate(90deg); }
+    .folder-children { padding-left:16px; }
+    .folder-root-item { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:6px; cursor:pointer; font-size:13px; color:var(--color-text); user-select:none; }
+    .folder-root-item:hover { background:var(--color-hover); }
+    .folder-root-item.active { background:var(--color-primary-bg, #dbeafe); color:var(--color-primary, #1e40af); font-weight:500; }
+    .folder-content { flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
+    .folder-menu-btn { background:none;border:none;cursor:pointer;padding:2px 4px;font-size:12px;line-height:1;color:var(--color-text-muted);opacity:0;transition:opacity 0.15s; }
+    .folder-item:hover .folder-menu-btn { opacity:1; }
+    .tipo-peticao { background:#dbeafe; color:#1e40af; }
+    .tipo-decisao { background:#fef3c7; color:#92400e; }
+    .tipo-contrato { background:#d1fae5; color:#065f46; }
+    .tipo-prova { background:#fce7f3; color:#9d174d; }
+    .tipo-modelo { background:#e0e7ff; color:#3730a3; }
+    .tipo-outro { background:#f3f4f6; color:#374151; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:500; }
+    .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
+    .pdf-modal-overlay.open { display:flex; }
+    .pdf-modal-content { background:#fff; border-radius:12px; width:90vw; height:90vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); position:relative; }
+    .pdf-modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--color-border); background:#f9fafb; flex-shrink:0; z-index:10; }
+    .pdf-modal-title { font-weight:600; font-size:15px; }
+    .pdf-modal-actions { display:flex; gap:10px; align-items:center; }
+    .pdf-modal-close { background:none; border:none; font-size:14px; color:var(--color-text-muted); cursor:pointer; padding:4px 8px; border-radius:4px; }
+    .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
+    .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
+    #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
+  </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
 <body>
@@ -97,7 +137,99 @@
       </div>
 
       <div class="pagination" id="pagination"></div>
+
+      <!-- Seção de Documentos do Contato — agora dentro de modal -->
+      <div id="contatoDocsSection" style="display:none;margin-top:32px"></div>
     </main>
+  </div>
+
+  <!-- Modal Documentos do Contato -->
+  <div class="modal-overlay" id="modalContatoDocs">
+    <div class="modal" style="max-width:975px">
+      <div class="modal-header">
+        <span class="modal-title">Documentos de <span id="docsContatoNome"></span></span>
+        <button class="modal-close" id="modalContatoDocsClose">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0">
+        <div style="display:flex;gap:16px;padding:16px;flex-direction:column">
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary btn-sm" id="btnUploadDocContato">+ Upload</button>
+          </div>
+          <div class="folder-layout" style="gap:12px">
+            <div class="folder-panel">
+              <div class="folder-panel-header">
+                <span class="folder-panel-title">Pastas</span>
+                <button class="btn btn-secondary btn-sm" id="btnNewDocPasta">+</button>
+              </div>
+              <div class="folder-tree" id="docFolderTree">
+                <div class="folder-root-item" id="docFolderRoot" data-id=""><span>📂</span><span style="flex:1">Raiz</span></div>
+                <div id="docFolderList"></div>
+              </div>
+            </div>
+            <div class="folder-content">
+              <div id="contatoDocAlert" class="alert" style="display:none"></div>
+              <div class="card">
+                <div class="table-wrapper">
+                  <table>
+                    <thead><tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Data</th><th>Ações</th></tr></thead>
+                    <tbody id="contatoDocTableBody"><tr><td colspan="5" style="text-align:center;padding:32px">Selecione uma pasta ou clique em Raiz</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Upload Documento p/ Contato -->
+  <div class="modal-overlay" id="modalUploadDocContato">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-header"><span class="modal-title">Upload de Documento</span><button class="modal-close" id="modalUploadDocContatoClose">✕</button></div>
+      <div class="modal-body">
+        <div id="uploadDocContatoAlert" class="alert" style="display:none"></div>
+        <form id="uploadDocContatoForm">
+          <div class="form-group"><label>Arquivo *</label><input type="file" id="fileInputDoc" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" required></div>
+          <div class="form-group"><label>Tipo *</label><select id="fDocTipo" class="form-control" required><option value="Outro">Outro</option><option value="Peticao">Petição</option><option value="Decisao">Decisão</option><option value="Contrato">Contrato</option><option value="Prova">Prova</option></select></div>
+          <div class="form-group"><label>Pasta</label><select id="fDocPasta" class="form-control"><option value="">Raiz (sem pasta)</option></select></div>
+        </form>
+        <div id="uploadDocContatoProgress" style="display:none;margin-top:16px"><div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden"><div id="progressBarDoc" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.2s"></div></div></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" id="btnUploadDocContatoCancel">Cancelar</button><button class="btn btn-primary" id="btnUploadDocContatoEnviar">Enviar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal Renomear/Criar Pasta -->
+  <div class="modal-overlay" id="modalDocRenamePasta">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header"><span class="modal-title" id="modalDocRenamePastaTitle">Nova Pasta</span><button class="modal-close" id="modalDocRenamePastaClose">✕</button></div>
+      <div class="modal-body"><div class="form-group"><label>Nome da pasta</label><input type="text" id="fDocRenamePastaNome" class="form-control"></div></div>
+      <div class="modal-footer"><button class="btn btn-secondary" id="btnDocRenamePastaCancel">Cancelar</button><button class="btn btn-primary" id="btnDocRenamePastaConfirm">Salvar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal Excluir Pasta -->
+  <div class="modal-overlay" id="modalDocDeletePasta">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header"><span class="modal-title">Excluir Pasta</span><button class="modal-close" id="modalDocDeletePastaClose">✕</button></div>
+      <div class="modal-body"><p id="deleteDocPastaMsg" style="margin-bottom:16px"></p><div class="form-group"><select id="fDocDeletePastaOpcao" class="form-control"><option value="mover">Mover para a pasta pai</option><option value="excluir">Excluir junto</option></select></div></div>
+      <div class="modal-footer"><button class="btn btn-secondary" id="btnDocDeletePastaCancel">Cancelar</button><button class="btn btn-danger" id="btnDocDeletePastaConfirm">Excluir</button></div>
+    </div>
+  </div>
+
+  <!-- Modal Visualizador PDF -->
+  <div class="pdf-modal-overlay" id="pdfModal">
+    <div class="pdf-modal-content">
+      <div class="pdf-modal-header">
+        <span class="pdf-modal-title" id="pdfTitle">Documento</span>
+        <div class="pdf-modal-actions">
+          <button class="btn btn-primary btn-sm" id="pdfDownloadBtn">⬇ Download</button>
+          <button class="pdf-modal-close" id="pdfClose">✕ Fechar</button>
+        </div>
+      </div>
+      <div class="pdf-modal-body" id="pdfContainer"></div>
+    </div>
   </div>
 
   <!-- Modal Contato -->
@@ -284,6 +416,7 @@
 
   <script type="module">
     import { initLayout } from '/js/layout.js';
+    import { apiFetch } from '/js/api.js';
     import { getContatos, createContato, updateContato, deleteContato, addAtendimento, getPortalAcesso, criarPortalAcesso, revogarPortalAcesso } from '/js/contatos.js';
     import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
 
@@ -346,6 +479,7 @@
           <td data-label="Ações" style="white-space:nowrap">
             <button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button>
             <button class="btn btn-secondary btn-sm" onclick="openAtendimento('${c.id}')">Atendimento</button>
+            <button class="btn btn-secondary btn-sm" onclick="openDocContato('${c.id}','${c.nome.replace(/'/g, "\\'")}')">Docs</button>
             <button class="btn btn-secondary btn-sm" onclick="openPortal('${c.id}','${c.nome}','${c.email||''}')">Portal</button>
             <button class="btn btn-danger btn-sm" onclick="removeContato('${c.id}','${c.nome}')">Excluir</button>
           </td>
@@ -625,6 +759,293 @@
       el.addEventListener('click', () => modalPortal.classList.remove('open')));
 
     loadContatos();
+
+    // ============================================================
+    // DOCUMENTOS DO CONTATO
+    // ============================================================
+    let contatoDocs = [];
+    let contatoPastas = [];
+    let currentDocPastaId = null;
+    let currentDocContatoId = null;
+    let currentDocContatoNome = '';
+
+    window.openDocContato = (id, nome) => {
+      currentDocContatoId = id;
+      currentDocContatoNome = nome;
+      document.getElementById('docsContatoNome').textContent = nome;
+      document.getElementById('contatoDocsSection').style.display = 'none';
+      loadContatoPastas();
+      loadContatoDocs();
+      populateDocPastaSelect();
+      document.getElementById('modalContatoDocs').classList.add('open');
+    };
+
+    document.getElementById('modalContatoDocsClose').addEventListener('click', () => {
+      document.getElementById('modalContatoDocs').classList.remove('open');
+      currentDocContatoId = null;
+      currentDocPastaId = null;
+    });
+
+    async function loadContatoPastas() {
+      try {
+        contatoPastas = await apiFetch('/pastas?entidadeTipo=Contato');
+        renderContatoFolderTree();
+      } catch { contatoPastas = []; }
+    }
+
+    function renderContatoFolderTree() {
+      const list = document.getElementById('docFolderList');
+      const roots = contatoPastas.filter(p => !p.parentPastaId).sort((a,b) => a.nome.localeCompare(b.nome));
+      if (!roots.length) { list.innerHTML = '<div style="font-size:12px;color:var(--color-text-muted);padding:8px">Nenhuma pasta</div>'; return; }
+      list.innerHTML = roots.map(r => renderContatoFolderItem(r)).join('');
+    }
+
+    function renderContatoFolderItem(pasta) {
+      const children = contatoPastas.filter(c => c.parentPastaId === pasta.id).sort((a,b) => a.nome.localeCompare(b.nome));
+      const hasChildren = children.length > 0;
+      const isActive = currentDocPastaId === pasta.id;
+      let html = `<div class="folder-item${isActive ? ' active' : ''}" data-id="${pasta.id}" style="padding-left:0">
+        ${hasChildren ? '<span class="folder-toggle">▶</span>' : '<span style="width:14px;display:inline-block"></span>'}
+        <span class="folder-icon">📁</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pasta.nome}</span>
+        ${pasta.documentoCount ? `<span class="folder-count">${pasta.documentoCount}</span>` : ''}
+        <button class="folder-menu-btn" data-id="${pasta.id}">⋮</button>
+      </div>`;
+      if (hasChildren) html += `<div class="folder-children" data-parent="${pasta.id}">${children.map(c => renderContatoFolderItem(c)).join('')}</div>`;
+      return html;
+    }
+
+    function setupContatoFolderEvents() {
+      document.getElementById('docFolderRoot').addEventListener('click', () => {
+        currentDocPastaId = null;
+        document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('docFolderRoot').classList.add('active');
+        loadContatoDocs();
+      });
+
+      document.getElementById('docFolderList').addEventListener('click', e => {
+        const menuBtn = e.target.closest('.folder-menu-btn');
+        if (menuBtn) { e.stopPropagation(); showDocFolderMenu(e, menuBtn.dataset.id); return; }
+        const toggle = e.target.closest('.folder-toggle');
+        if (toggle) { const children = toggle.closest('.folder-item').nextElementSibling; if (children?.classList.contains('folder-children')) { children.style.display = children.style.display === 'none' ? '' : 'none'; toggle.classList.toggle('open'); } return; }
+        const item = e.target.closest('.folder-item');
+        if (item) { currentDocPastaId = item.dataset.id; document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active')); item.classList.add('active'); loadContatoDocs(); }
+      });
+
+      document.getElementById('btnNewDocPasta').addEventListener('click', () => {
+        document.getElementById('fDocRenamePastaNome').value = '';
+        document.getElementById('modalDocRenamePasta')._pastaId = null;
+        document.getElementById('modalDocRenamePasta')._parentPastaId = currentDocPastaId;
+        document.getElementById('modalDocRenamePastaTitle').textContent = 'Nova Pasta';
+        document.getElementById('modalDocRenamePasta').classList.add('open');
+      });
+    }
+
+    function showDocFolderMenu(e, pastaId) {
+      closeFolderMenu();
+      const pasta = contatoPastas.find(p => p.id === pastaId);
+      document.getElementById('deleteDocPastaMsg').textContent = pasta?.documentoCount > 0 ? `A pasta "${pasta?.nome}" contém ${pasta.documentoCount} documento(s).` : `Excluir a pasta "${pasta?.nome}"?`;
+      document.getElementById('modalDocDeletePasta')._pastaId = pastaId;
+      const menu = document.createElement('div');
+      menu.id = 'folderCtxMenu';
+      Object.assign(menu.style, { position: 'fixed', zIndex: 9999, background: '#fff', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px', minWidth: '160px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' });
+      menu.innerHTML = `
+        <div class="ctx-item" data-action="rename" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span style="font-size:14px">✏️</span><span>Renomear</span></div>
+        <div class="ctx-item" data-action="new-child" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span style="font-size:14px">📁</span><span>Nova subpasta</span></div>
+        <div class="ctx-item" data-action="delete" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)"><span style="font-size:14px">🗑️</span><span>Excluir</span></div>`;
+      const rect = e.target.closest('.folder-menu-btn').getBoundingClientRect();
+      menu.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+      menu.style.top = (rect.bottom + 4) + 'px';
+      document.body.appendChild(menu);
+      menu.querySelectorAll('.ctx-item').forEach(item => {
+        item.addEventListener('mouseenter', () => item.style.background = 'var(--color-hover)');
+        item.addEventListener('mouseleave', () => item.style.background = '');
+        item.addEventListener('click', () => { handleDocFolderMenuAction(item.dataset.action, pastaId); });
+      });
+      setTimeout(() => document.addEventListener('click', closeFolderMenu, { once: true }), 0);
+    }
+
+    function closeFolderMenu() { document.getElementById('folderCtxMenu')?.remove(); }
+
+    async function handleDocFolderMenuAction(action, pastaId) {
+      closeFolderMenu();
+      if (action === 'rename') {
+        const pasta = contatoPastas.find(p => p.id === pastaId);
+        document.getElementById('fDocRenamePastaNome').value = pasta?.nome || '';
+        document.getElementById('modalDocRenamePasta')._pastaId = pastaId;
+        document.getElementById('modalDocRenamePasta')._parentPastaId = null;
+        document.getElementById('modalDocRenamePastaTitle').textContent = 'Renomear Pasta';
+        document.getElementById('modalDocRenamePasta').classList.add('open');
+      } else if (action === 'new-child') {
+        document.getElementById('fDocRenamePastaNome').value = '';
+        document.getElementById('modalDocRenamePasta')._pastaId = null;
+        document.getElementById('modalDocRenamePasta')._parentPastaId = pastaId;
+        document.getElementById('modalDocRenamePastaTitle').textContent = 'Nova Subpasta';
+        document.getElementById('modalDocRenamePasta').classList.add('open');
+      } else if (action === 'delete') {
+        document.getElementById('modalDocDeletePasta').classList.add('open');
+      }
+    }
+
+    document.getElementById('modalDocRenamePastaClose').addEventListener('click', () => document.getElementById('modalDocRenamePasta').classList.remove('open'));
+    document.getElementById('btnDocRenamePastaCancel').addEventListener('click', () => document.getElementById('modalDocRenamePasta').classList.remove('open'));
+    document.getElementById('btnDocRenamePastaConfirm').addEventListener('click', async () => {
+      const modal = document.getElementById('modalDocRenamePasta');
+      const nome = document.getElementById('fDocRenamePastaNome').value.trim();
+      if (!nome) return;
+      const pastaId = modal._pastaId;
+      const parentPastaId = modal._parentPastaId;
+      modal.classList.remove('open');
+      try {
+        if (pastaId) {
+          await apiFetch(`/pastas/${pastaId}?entidadeTipo=Contato`, { method: 'PUT', body: JSON.stringify({ nome }) });
+        } else {
+          await apiFetch('/pastas?entidadeTipo=Contato', { method: 'POST', body: JSON.stringify({ nome, parentPastaId: parentPastaId || null }) });
+        }
+        loadContatoPastas();
+      } catch (err) { showDocContatoAlert(err.message); }
+    });
+
+    document.getElementById('modalDocDeletePastaClose').addEventListener('click', () => document.getElementById('modalDocDeletePasta').classList.remove('open'));
+    document.getElementById('btnDocDeletePastaCancel').addEventListener('click', () => document.getElementById('modalDocDeletePasta').classList.remove('open'));
+    document.getElementById('btnDocDeletePastaConfirm').addEventListener('click', async () => {
+      const modal = document.getElementById('modalDocDeletePasta');
+      const pastaId = modal._pastaId;
+      const excluirDocs = document.getElementById('fDocDeletePastaOpcao').value === 'excluir';
+      modal.classList.remove('open');
+      try {
+        await apiFetch(`/pastas/${pastaId}?excluirDocs=${excluirDocs}`, { method: 'DELETE' });
+        if (currentDocPastaId === pastaId) currentDocPastaId = null;
+        loadContatoPastas();
+        loadContatoDocs();
+      } catch (err) { showDocContatoAlert(err.message); }
+    });
+
+    async function loadContatoDocs() {
+      const tbody = document.getElementById('contatoDocTableBody');
+      if (!currentDocContatoId) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px">Selecione um contato</td></tr>'; return; }
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px">Carregando...</td></tr>';
+      try {
+        let url = `/documentos/cliente/${currentDocContatoId}`;
+        if (currentDocPastaId) url += `?pastaId=${currentDocPastaId}`;
+        contatoDocs = await apiFetch(url);
+        renderContatoDocsTable(contatoDocs);
+      } catch (err) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`; }
+    }
+
+    function renderContatoDocsTable(items) {
+      const tbody = document.getElementById('contatoDocTableBody');
+      if (!items.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">Nenhum documento</div></div></td></tr>'; return; }
+      const tipoCls = { Peticao:'peticao', Decisao:'decisao', Contrato:'contrato', Prova:'prova', Modelo:'modelo', Outro:'outro' };
+      tbody.innerHTML = items.map(d => `<tr>
+        <td data-label="Nome"><strong>${d.nome}</strong></td>
+        <td data-label="Tipo"><span class="badge tipo-${tipoCls[d.tipo] || 'outro'}">${d.tipo}</span></td>
+        <td data-label="Tamanho">${d.tamanhoFormatado}</td>
+        <td data-label="Data">${new Date(d.criadoEm).toLocaleDateString('pt-BR')}</td>
+        <td data-label="Ações" style="white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick="viewContatoDoc('${d.id}')">Visualizar</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadContatoDoc('${d.id}')">Download</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteContatoDoc('${d.id}')">Excluir</button>
+        </td>
+      </tr>`).join('');
+    }
+
+    window.viewContatoDoc = id => {
+      const doc = contatoDocs.find(d => d.id === id);
+      if (!doc) return;
+      const container = document.getElementById('pdfContainer');
+      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff"><div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+      document.getElementById('pdfTitle').textContent = doc.nome;
+      document.getElementById('pdfModal').classList.add('open');
+      document.getElementById('pdfDownloadBtn').onclick = () => downloadContatoDoc(id);
+      const token = sessionStorage.getItem('access_token');
+      fetch(`/api/documentos/${id}/file`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
+        .then(blob => {
+          if (blob.size === 0) throw new Error('Documento vazio');
+          const url = URL.createObjectURL(blob);
+          container.innerHTML = '';
+          const iframe = document.createElement('iframe');
+          iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;background:#fff;';
+          iframe.src = url;
+          container.appendChild(iframe);
+        })
+        .catch(err => { container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ff6b6b;font-size:14px">Erro: ${err.message}</div>`; });
+    };
+
+    const pdfModal = document.getElementById('pdfModal');
+    let currentPdfUrl = '';
+
+    document.getElementById('pdfClose').addEventListener('click', () => {
+      pdfModal.classList.remove('open');
+      document.getElementById('pdfContainer').innerHTML = '';
+    });
+    document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
+      if (currentPdfUrl) window.open(currentPdfUrl, '_blank');
+    });
+    pdfModal.addEventListener('click', e => { if (e.target === pdfModal) { pdfModal.classList.remove('open'); document.getElementById('pdfContainer').innerHTML = ''; } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && pdfModal.classList.contains('open')) { pdfModal.classList.remove('open'); document.getElementById('pdfContainer').innerHTML = ''; } });
+
+    window.downloadContatoDoc = async id => {
+      const { url } = await apiFetch(`/documentos/${id}/download`);
+      window.open(url, '_blank');
+    };
+
+    window.deleteContatoDoc = async id => {
+      if (!confirm('Excluir este documento?')) return;
+      await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
+      loadContatoDocs();
+      loadContatoPastas();
+    };
+
+    function showDocContatoAlert(msg, type = 'error') {
+      const el = document.getElementById('contatoDocAlert');
+      el.className = `alert alert-${type}`; el.textContent = msg; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    document.getElementById('btnUploadDocContato').addEventListener('click', () => {
+      document.getElementById('uploadDocContatoForm').reset();
+      document.getElementById('uploadDocContatoAlert').style.display = 'none';
+      document.getElementById('modalUploadDocContato').classList.add('open');
+    });
+    document.getElementById('modalUploadDocContatoClose').addEventListener('click', () => document.getElementById('modalUploadDocContato').classList.remove('open'));
+    document.getElementById('btnUploadDocContatoCancel').addEventListener('click', () => document.getElementById('modalUploadDocContato').classList.remove('open'));
+    document.getElementById('btnUploadDocContatoEnviar').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInputDoc');
+      const file = fileInput.files[0];
+      if (!file) { showDocContatoAlert('Selecione um arquivo.'); return; }
+      const btn = document.getElementById('btnUploadDocContatoEnviar');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+      document.getElementById('uploadDocContatoAlert').style.display = 'none';
+      document.getElementById('uploadDocContatoProgress').style.display = 'block';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('tipo', document.getElementById('fDocTipo').value);
+      formData.append('clienteId', currentDocContatoId);
+      const pastaId = document.getElementById('fDocPasta').value;
+      if (pastaId) formData.append('pastaId', pastaId);
+      const token = sessionStorage.getItem('access_token');
+      try {
+        const res = await fetch('/api/documentos/upload', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+        if (!res.ok) { const b = await res.json().catch(()=>({})); throw new Error(b.message || `HTTP ${res.status}`); }
+        document.getElementById('modalUploadDocContato').classList.remove('open');
+        showDocContatoAlert('Documento enviado.', 'success');
+        loadContatoDocs();
+        loadContatoPastas();
+      } catch (err) { document.getElementById('uploadDocContatoAlert').textContent = err.message; document.getElementById('uploadDocContatoAlert').style.display = 'block'; }
+      finally { btn.disabled = false; btn.textContent = 'Enviar'; document.getElementById('uploadDocContatoProgress').style.display = 'none'; }
+    });
+
+    function populateDocPastaSelect() {
+      const select = document.getElementById('fDocPasta');
+      select.innerHTML = '<option value="">Raiz (sem pasta)</option>';
+      contatoPastas.filter(p => !p.parentPastaId).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(p => {
+        const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.nome; select.appendChild(opt);
+      });
+    }
+
+    setupContatoFolderEvents();
   </script>
 </body>
 </html>
