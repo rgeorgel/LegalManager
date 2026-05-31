@@ -9,7 +9,7 @@ namespace LegalManager.Infrastructure.Jobs;
 
 /// <summary>
 /// Fallback para quando o webhook do Escavador não for recebido (ex: dev local sem URL pública).
-/// Consulta callbacks pendentes a cada hora, processa e marca como recebidos.
+/// Executa 1× por dia às 06:00 — webhooks são o canal principal; este job só cobre falhas de entrega.
 /// </summary>
 public class EscavadorCallbackPollingJob
 {

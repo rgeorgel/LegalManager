@@ -14,6 +14,7 @@ Análise das chamadas de API necessárias para o ciclo de vida de um advogado na
 | `GET /api/v2/envolvido/processos?documento={cpfcnpj}` | Lista processos por CPF/CNPJ |
 | `POST /api/v2/monitoramento-processos` | Cria monitoramento de processo no tribunal (push webhook) |
 | `DELETE /api/v2/monitoramento-processos/{id}` | Remove monitoramento |
+| `PUT /api/v2/monitoramento-processos/{id}` *(a confirmar)* | Atualiza frequência do monitoramento (diário ↔ semanal) |
 | `GET /api/v2/callback/listar` | Lista callbacks pendentes (polling fallback) |
 | `POST /api/v2/callback/marcar-como-recebidos` | Marca callbacks como recebidos |
 
@@ -39,7 +40,7 @@ Passo 1 — Busca imediata (implementado, parcialmente)
   ESAJ     →  scraping TJSP (somente UF = SP)                (paralelo)
   Escavador →  GET /api/v2/advogado/{oab}/processos          (paralelo)
                Cobertura: TRF1-6 · TRT1-24
-               ⚠ Limitado a 2 páginas (40 resultados) — deveria paginar tudo
+               ⚠ Limitado a 2 páginas — com limit=100 cobre até 200 resultados; deveria paginar tudo
 
 Passo 2 — Busca profunda no site do tribunal (não implementado, opcional)
   POST /api/v1/processos/oab
@@ -85,8 +86,8 @@ Fluxo principal (push):
     • publicacao_identificada_em_diario  → publicação linkada a processo cadastrado
 
 Fallback ativo (implementado — EscavadorCallbackPollingJob, 1×/hora):
-  GET  /api/v1/callback/listar
-  POST /api/v1/callback/marcar-como-recebidos
+  GET  /api/v2/callback/listar
+  POST /api/v2/callback/marcar-como-recebidos
 
 Operacional (não implementado, recomendado):
   GET /api/v1/saldo-da-api/consultar-saldo  → alertar quando créditos < threshold
@@ -113,6 +114,7 @@ Operacional (não implementado, recomendado):
 | Atualização do processo + baixar autos | R$ 1,50 |
 | Resumo IA de um processo (geração) | R$ 0,08 |
 | Resumo IA de um processo (leitura) | R$ 0,05 |
+| Busca assíncrona por OAB no tribunal (`POST /v1/processos/oab`) | R$ 1,00 – R$ 5,00 *(estimativa; não confirmado na tabela oficial)* |
 
 **Custo da busca OAB por total de processos:**
 
@@ -154,7 +156,7 @@ Operacional (não implementado, recomendado):
 
 **Recomendação de tier por situação:**
 - Processo ativo (movimentação nos últimos 90 dias): **Diário** — necessário para prazos de 5 dias
-- Processo dormente (sem movimentação há 6+ meses): **Semanal** — suficiente, sem prazos iminentes
+- Processo inativo (sem movimentação há 6+ meses): **Semanal** — suficiente, sem prazos iminentes
 - Processo arquivado: **cancelar monitoramento** (ver Estratégia 2, seção 6)
 
 ---
@@ -234,6 +236,21 @@ Mês 1 = setup + primeiro mês. Mês 2+ = só recorrente.
 
 ---
 
+### COGS Escavador por Plano Causify
+
+Estimativa de custo direto de API por plano. **Fórmula:** `(processos × 0,7 × R$1,76) + (processos × 0,3 × R$0,32) + R$2,20` — mix 70% diário / 30% semanal com Estratégia 5 aplicada.
+
+| Plano | Receita/mês | Limite de processos | COGS no limite (mix 70/30) | COGS no limite (todos diário) | Margem no limite |
+|---|---|---|---|---|---|
+| Free | R$ 0 | 20 | R$ 28,76 | R$ 37,40 | — |
+| Plus | R$ 20 | 20 | R$ 28,76 | R$ 37,40 | **−R$ 8,76** |
+| Pro | R$ 50 | 100 | R$ 135,00 | R$ 178,20 | **−R$ 85,00** |
+| Max | R$ 125 | 250 | R$ 334,20 | R$ 442,20 | **−R$ 209,20** |
+
+> ⚠ **Todos os planos operam com COGS maior que a receita quando o limite de processos é atingido.** O Escavador não pode ser custeado apenas pelo valor da assinatura assumindo uso máximo. O COGS real depende do número médio de processos efetivamente monitorados por usuário — que em geral é bem inferior ao limite do plano. Ações necessárias: (1) monitorar o uso médio real por plano; (2) aplicar obrigatoriamente as Estratégias 2–5; (3) avaliar se os limites de processos precisam ser revisados em função do custo de infraestrutura.
+
+---
+
 ### Observações críticas
 
 **O tier de monitoramento é o principal lever de custo.** Com preços confirmados, a diferença entre diário (R$1,76) e semanal (R$0,32) é 5,5× por processo. Para uma base de 100 advogados com 50 processos cada, usar diário em todos custa **R$9.020/mês** contra **R$1.820/mês** com semanal — a decisão de tier deve ser consciente.
@@ -250,7 +267,7 @@ Mês 1 = setup + primeiro mês. Mês 2+ = só recorrente.
 
 ### A · Paginação completa no onboarding
 
-**Impacto**: advogados com mais de 40 processos federais/trabalhistas não veem todos no onboarding.
+**Impacto**: advogados com mais de 200 processos federais/trabalhistas não veem todos no onboarding (com `limit=100`; se a implementação atual usa `limit=20`, o limite real é 40 processos).
 
 - **Arquivo**: `OnboardingController.BuscarEscavadorOabAsync`
 - **Mudança**: substituir `pagina <= 2` por loop até `resultado.TemProxima == false`, com cap de segurança (ex: 20 páginas = 2000 processos)
@@ -289,15 +306,26 @@ Vai ao site do tribunal diretamente, sem depender da indexação do Escavador. �
 
 As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de perder prazos. São apresentadas em ordem de facilidade de implementação.
 
+### Definições de Estado de Processo
+
+| Estado | Critério | Tier padrão |
+|---|---|---|
+| **Ativo** | Último andamento há < 90 dias | Diário (R$ 1,76/mês) |
+| **Dormente** | Último andamento há 90–180 dias | Diário (monitoramento mantido por segurança) |
+| **Inativo** | Último andamento há > 180 dias | Semanal (R$ 0,32/mês) — candidato à Estratégia 4 |
+| **Arquivado** | Evento `processo_arquivado` recebido via webhook | Cancelar monitoramento (Estratégia 2) |
+
+> Processos **dormentes** e **inativos** diferem apenas por tempo; processos **arquivados** foram encerrados formalmente pelo tribunal e não devem voltar a diário.
+
 ---
 
-### Estratégia 1 — Reduzir polling fallback de 1h para 6h
+### Estratégia 1 — Reduzir polling fallback de 1×/hora para 1×/dia ✅ Implementado
 
-**Economia**: ~R$ 1,80/mês por advogado (-83% do custo de polling)
+**Economia**: redução de ~96% nas chamadas de polling (custo unitário de GET não listado na tabela oficial — provavelmente marginal; ver Decisão em Aberto nº 5)
 
-**Por que é seguro**: o polling é apenas um fallback para webhooks não entregues. Prazos processuais no Brasil são de 5, 10 ou 15 dias corridos — uma janela de até 6 horas para capturar um webhook perdido é completamente negligenciável.
+**Por que é seguro**: o polling é apenas um fallback para webhooks não entregues. Prazos processuais no Brasil são de 5, 10 ou 15 dias corridos — uma janela de até 24 horas para capturar um webhook perdido é completamente negligenciável.
 
-**Implementação**: trocar o cron de `"0 * * * *"` para `"0 */6 * * *"` em `EscavadorCallbackPollingJob`.
+**Implementação**: cron `"0 6 * * *"` em `EscavadorCallbackPollingJob` — executa às 06:00 todos os dias (`Program.cs`).
 
 **Risco**: praticamente nulo. O webhook em tempo real continua sendo o canal principal.
 
@@ -305,7 +333,7 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 ### Estratégia 2 — Deletar monitoramento ao arquivar processo
 
-**Economia**: R$ 1,25/mês por processo encerrado (o maior driver de custo recorrente)
+**Economia**: R$ 1,76/mês por processo encerrado em monitoramento diário; R$ 0,32 em semanal (eliminação total do custo recorrente)
 
 **Por que é seguro**: processo arquivado não gera novos prazos. O Escavador já envia o evento `processo_arquivado` via webhook — basta tratá-lo.
 
@@ -338,14 +366,12 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 **Por que é seguro**: processos dormentes raramente têm prazo iminente. A plataforma pode pausar o monitoramento Escavador e verificar o DataJud passivamente a cada 30 dias. Se houver movimentação, reativa o monitoramento automaticamente.
 
 **Implementação**:
-- Critério de dormência: sem `Andamento` com `DataOcorrencia` nos últimos 180 dias
+- Critério de inatividade: sem `Andamento` com `DataOcorrencia` nos últimos 180 dias (ver definições no início da seção 6)
 - Job mensal (Hangfire): para processos dormentes com `Monitorado = true`, chama `DELETE /api/v2/monitoramento-processos/{id}`, seta `Monitorado = false`
 - Ao receber andamento via DataJud polling para um processo não monitorado: reativa com `POST /api/v2/monitoramento-processos`
 - UI: mostrar badge "Monitoramento pausado" no processo-detalhe com botão para reativar manualmente
 
 **Risco**: moderado — requer critério de reativação robusto. Não implementar sem o mecanismo de reativação automática.
-
----
 
 ---
 
@@ -356,8 +382,8 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 **Por que é seguro**: processos sem movimentação há 6+ meses raramente têm prazo correndo. A atualização semanal garante detecção dentro de 7 dias — mais que suficiente para prazos de 10 ou 15 dias. Processos com prazos de 5 dias **devem permanecer em diário**.
 
 **Implementação**:
-- Job mensal (Hangfire): identifica processos com `Andamento.DataOcorrencia < hoje - 180 dias`
-- Para cada um: atualiza o monitoramento Escavador para tier semanal (endpoint a confirmar na API v2)
+- Job mensal (Hangfire): identifica processos com `Andamento.DataOcorrencia < hoje - 180 dias` (inativos — ver definições no início da seção 6)
+- Para cada um: atualiza o monitoramento Escavador para tier semanal via `PUT /api/v2/monitoramento-processos/{id}` (a confirmar — ver Decisão em Aberto nº 7)
 - Ao receber novo andamento via webhook: reativa automaticamente para diário
 - UI: badge "Monitoramento semanal" no processo-detalhe com botão para forçar diário
 
@@ -369,7 +395,7 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 | Estratégia | Economia/mês | Complexidade |
 |---|---|---|
-| 1 · Polling 6h | marginal (custo não listado) | Baixa — 1 linha |
+| 1 · Polling 1×/dia às 06:00 ✅ | marginal (custo não listado) | **Implementado** |
 | 2 · Auto-cancelar monitoramento ao arquivar | R$ 1,76 × proc. arquivados | Baixa — novo case no webhook |
 | 3 · 1 termo Diário em vez de 2 | R$ 2,20 (economiza 1 termo) | Baixa — remover 1 chamada no onboarding |
 | 4 · Suspender monitoramento de processos dormentes | R$ 1,76 × proc. dormentes (cancelar) | Média — job + reativação |
@@ -393,11 +419,12 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 | 4 | Plano de créditos: quanto comprar? | Depende dos custos exatos do painel — confirmar antes de ir a produção |
 | 5 | Polling fallback: manter 1×/hora? | Custo de GET não listado na tabela de serviços — provavelmente nulo; reduzir para 1×/6h por precaução |
 | 6 | Tier semanal: critério de dormência? | Sugestão: 180 dias sem andamento; ajustar por tipo de processo (trabalhista costuma ter prazos mais curtos) |
-| 7 | Atualização de tier via API: endpoint disponível? | Confirmar se `PUT /api/v2/monitoramento-processos/{id}` aceita mudança de frequência ou se é necessário recriar |
+| 7 | Atualização de tier via API: endpoint disponível? | Confirmar se `PUT /api/v2/monitoramento-processos/{id}` aceita mudança de frequência ou se é necessário `DELETE` + `POST` (ver mapa de endpoints, seção 1) |
+| 8 | Comportamento ao esgotar créditos | Verificar se chamadas falham silenciosamente ou retornam erro explícito; implementar alerta via `GET /api/v1/saldo-da-api/consultar-saldo` antes de chegar a zero |
 
 ---
 
-## Casos Reais — Análise de Custo por Carteira
+## 8. Casos Reais — Análise de Custo por Carteira
 
 > Análise feita em 2026-05-30. Hoje = 30/05/2026.
 
@@ -491,7 +518,7 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 ---
 
-## Fontes
+## 9. Fontes
 
 - [Documentação API v1](https://api.escavador.com/v1/docs/)
 - [Documentação API v2](https://api.escavador.com/v2/docs/)

@@ -370,11 +370,10 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     job => job.ExecutarAsync(),
     "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
 
-// Desabilitado: polling de callbacks do Escavador não está em uso
-// RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
-//     "escavador-callback-polling",
-//     job => job.ExecutarAsync(),
-//     "0 * * * *");
+RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
+    "escavador-callback-polling",
+    job => job.ExecutarAsync(),
+    "0 6 * * *"); // fallback diário às 06:00 — webhooks são o canal principal
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
