@@ -26,7 +26,7 @@ O campo `J` (posição 14 da string normalizada) indica a Justiça:
 
 Ao clicar em **Importar por OAB** e informar o número OAB + UF, o backend dispara **três buscas em paralelo** com `Task.WhenAll`:
 
-![Fluxo de Busca por OAB](images/fluxo-busca-oab.svg)
+![Fluxo de Busca por OAB](../images/fluxo-busca-oab.svg)
 
 ### Detalhes por fonte
 
@@ -75,7 +75,7 @@ O mesmo CNJ nunca aparece duas vezes. Se DataJud e Escavador retornam o mesmo pr
 
 Ao selecionar processos e clicar em **Importar Selecionados**, cada item é roteado conforme sua origem:
 
-![Fluxo de Importação](images/fluxo-importacao.svg)
+![Fluxo de Importação](../images/fluxo-importacao.svg)
 
 ### Roteamento por `Fonte`
 
@@ -109,7 +109,7 @@ AreaDireito inferida:
 
 Processos importados via Escavador são monitorados por push webhook, sem polling periódico dos tribunais:
 
-![Fluxo de Monitoramento](images/fluxo-monitoramento.svg)
+![Fluxo de Monitoramento](../images/fluxo-monitoramento.svg)
 
 ### Webhook (tempo real)
 

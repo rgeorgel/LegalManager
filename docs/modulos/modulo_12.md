@@ -7,7 +7,7 @@
 
 ## Visão Geral
 
-O Módulo 12 implementa o painel administrativo para configuração do escritório e gestão do plano de assinatura, conforme especificado no [implementation_plan.md](./implementation_plan.md).
+O Módulo 12 implementa o painel administrativo para configuração do escritório e gestão do plano de assinatura, conforme especificado no [implementation_plan.md](../plano/implementation_plan.md).
 
 ## Funcionalidades Implementadas
 
