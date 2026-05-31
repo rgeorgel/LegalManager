@@ -48,7 +48,12 @@ public class EscavadorController : ControllerBase
         var processo = await EncontrarProcessoAsync(payload.MonitoramentoId, numeroCNJ);
         if (processo == null) return Ok();
 
-        var descricao = payload.Conteudo?.Descricao ?? payload.Conteudo?.Texto ?? "Atualização via Escavador";
+        if (payload.Tipo == "processo_arquivado")
+            await CancelarMonitoramentoAsync(processo);
+
+        var descricao = payload.Conteudo?.Descricao
+            ?? payload.Conteudo?.Texto
+            ?? (payload.Tipo == "processo_arquivado" ? "Processo arquivado" : "Atualização via Escavador");
         var dataAndamento = payload.Conteudo?.Data ?? DateTime.Now;
 
         var jaExiste = await _context.Andamentos.AnyAsync(a =>
@@ -88,6 +93,17 @@ public class EscavadorController : ControllerBase
 
         await _context.SaveChangesAsync();
         return Ok();
+    }
+
+    private async Task CancelarMonitoramentoAsync(Processo processo)
+    {
+        if (!string.IsNullOrWhiteSpace(processo.EscavadorMonitoramentoId)
+            && long.TryParse(processo.EscavadorMonitoramentoId, out var monId))
+        {
+            await _escavador.RemoverMonitoramentoAsync(monId);
+        }
+        processo.Monitorado = false;
+        processo.EscavadorMonitoramentoId = null;
     }
 
     private bool ValidarCallbackToken()

@@ -331,29 +331,27 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 ---
 
-### Estratégia 2 — Deletar monitoramento ao arquivar processo
+### Estratégia 2 — Deletar monitoramento ao arquivar processo ✅ Implementado
 
 **Economia**: R$ 1,76/mês por processo encerrado em monitoramento diário; R$ 0,32 em semanal (eliminação total do custo recorrente)
 
 **Por que é seguro**: processo arquivado não gera novos prazos. O Escavador já envia o evento `processo_arquivado` via webhook — basta tratá-lo.
 
-**Implementação**:
-- Em `EscavadorController.ReceberCallback`, ao receber `tipo == "processo_arquivado"`:
-  - Chamar `DELETE /api/v2/monitoramento-processos/{EscavadorMonitoramentoId}`
-  - Setar `Processo.Monitorado = false` e `Processo.EscavadorMonitoramentoId = null`
-- Job de limpeza mensal (Hangfire) para processos já arquivados no banco sem esse tratamento anterior.
+**Implementação**: `EscavadorController.ReceberCallback` — ao receber `payload.Tipo == "processo_arquivado"`, chama `CancelarMonitoramentoAsync` que invoca `RemoverMonitoramentoAsync` e seta `Monitorado = false` / `EscavadorMonitoramentoId = null`. O andamento de arquivamento é registrado normalmente na timeline.
+
+**Pendente**: job de limpeza mensal (Hangfire) para processos já arquivados no banco antes desta implementação.
 
 **Risco**: nulo. Processo encerrado não tem prazo futuro.
 
 ---
 
-### Estratégia 3 — Monitorar só o número OAB no Diário Oficial (não o nome)
+### Estratégia 3 — Monitorar só o número OAB no Diário Oficial (não o nome) ✅ Implementado
 
 **Economia**: ~R$ 0,60–0,70/mês por advogado (manutenção do segundo termo + metade dos callbacks)
 
 **Por que é seguro**: o número de OAB (`123456/SP`) é específico o suficiente para capturar todas as publicações que mencionam o advogado. O nome completo gera falsos positivos em nomes comuns e dobra o custo sem aumentar a cobertura relevante.
 
-**Implementação**: ao criar monitoramentos de Diário no `OnboardingController.Importar`, criar apenas 1 termo (OAB) em vez de 2 (OAB + nome).
+**Implementação**: restrição de design aplicada como TODO estruturado em `OnboardingController.Importar` (bloco Escavador), no ponto exato onde o monitoramento de DO será criado na implementação da seção 5B. Quando implementado, criar apenas 1 termo (OAB formatado, ex: `"123456/SP"`) — nunca o segundo termo com nome do advogado.
 
 **Risco**: baixo. Publicações identificam o advogado pelo número de OAB por padrão.
 
@@ -396,8 +394,8 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 | Estratégia | Economia/mês | Complexidade |
 |---|---|---|
 | 1 · Polling 1×/dia às 06:00 ✅ | marginal (custo não listado) | **Implementado** |
-| 2 · Auto-cancelar monitoramento ao arquivar | R$ 1,76 × proc. arquivados | Baixa — novo case no webhook |
-| 3 · 1 termo Diário em vez de 2 | R$ 2,20 (economiza 1 termo) | Baixa — remover 1 chamada no onboarding |
+| 2 · Auto-cancelar monitoramento ao arquivar ✅ | R$ 1,76 × proc. arquivados | **Implementado** |
+| 3 · 1 termo Diário em vez de 2 ✅ | R$ 2,20 (economiza 1 termo) | **Implementado** (restrição de design aplicada) |
 | 4 · Suspender monitoramento de processos dormentes | R$ 1,76 × proc. dormentes (cancelar) | Média — job + reativação |
 | 5 · Tier semanal para processos dormentes | R$ 1,44 × proc. dormentes | Média — job + reativação + atualização de tier |
 | **4 ou 5** | **R$ 7,20 – R$ 10,56** (20–30% da carteira) | |

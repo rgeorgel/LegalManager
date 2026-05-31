@@ -206,6 +206,11 @@ public class OnboardingController : ControllerBase
                     });
                     await _context.SaveChangesAsync(ct);
                     importados++;
+
+                    // TODO (5B — Estratégia 3): ao implementar monitoramento de Diários Oficiais,
+                    // criar aqui 1 único termo por tenant (idempotente) com o número OAB formatado
+                    // (ex: "123456/SP"). NÃO criar segundo termo com nome do advogado — Estratégia 3.
+                    // POST /api/v1/monitoramento-de-diarios-oficiais/criar
                     continue;
                 }
 
