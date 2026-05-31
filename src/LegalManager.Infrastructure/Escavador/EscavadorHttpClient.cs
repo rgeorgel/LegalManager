@@ -41,12 +41,14 @@ public class EscavadorHttpClient : IEscavadorService
     }
 
     public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoAsync(
-        string numeroCNJ, CancellationToken ct = default)
+        string numeroCNJ, string? frequencia = null, CancellationToken ct = default)
     {
-        _logger.LogInformation("[Escavador] Criando monitoramento para {CNJ}", numeroCNJ);
+        _logger.LogInformation("[Escavador] Criando monitoramento para {CNJ} frequencia={F}", numeroCNJ, frequencia ?? "diaria");
         try
         {
-            var body = JsonSerializer.Serialize(new { numero_processo = numeroCNJ });
+            var body = frequencia != null
+                ? JsonSerializer.Serialize(new { numero_processo = numeroCNJ, frequencia })
+                : JsonSerializer.Serialize(new { numero_processo = numeroCNJ });
             using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/monitoramento-processos")
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")

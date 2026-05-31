@@ -90,9 +90,9 @@ public class EscavadorMockClient : IEscavadorService
     }
 
     public Task<EscavadorMonitoramentoDto?> CriarMonitoramentoAsync(
-        string numeroCNJ, CancellationToken ct = default)
+        string numeroCNJ, string? frequencia = null, CancellationToken ct = default)
     {
-        _logger.LogWarning("[Escavador MOCK] CriarMonitoramentoAsync {CNJ} — retornando ID fictício", numeroCNJ);
+        _logger.LogWarning("[Escavador MOCK] CriarMonitoramentoAsync {CNJ} frequencia={F} — retornando ID fictício", numeroCNJ, frequencia ?? "diaria");
         EscavadorMonitoramentoDto? dto = new(Id: 999999L, Status: "ativo");
         return Task.FromResult(dto);
     }

@@ -51,6 +51,7 @@ public class Processo
 
     // Escavador integration
     public string? EscavadorMonitoramentoId { get; set; }
+    public bool MonitoramentoSemanal { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }

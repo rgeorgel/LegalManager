@@ -47,7 +47,7 @@ public interface IEscavadorService
         string cpfCnpj, int pagina = 1, CancellationToken ct = default);
 
     Task<EscavadorMonitoramentoDto?> CriarMonitoramentoAsync(
-        string numeroCNJ, CancellationToken ct = default);
+        string numeroCNJ, string? frequencia = null, CancellationToken ct = default);
 
     Task<bool> RemoverMonitoramentoAsync(long id, CancellationToken ct = default);
 

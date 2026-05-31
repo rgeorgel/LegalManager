@@ -373,13 +373,18 @@ public class ProcessoService : IProcessoService
 
     private async Task CancelarMonitoramentoEscavadorAsync(Processo processo)
     {
-        if (!processo.Monitorado || string.IsNullOrWhiteSpace(processo.EscavadorMonitoramentoId))
+        if (string.IsNullOrWhiteSpace(processo.EscavadorMonitoramentoId))
+        {
+            processo.Monitorado = false;
+            processo.MonitoramentoSemanal = false;
             return;
+        }
 
         if (long.TryParse(processo.EscavadorMonitoramentoId, out var monId))
             await _escavador.RemoverMonitoramentoAsync(monId);
 
         processo.Monitorado = false;
+        processo.MonitoramentoSemanal = false;
         processo.EscavadorMonitoramentoId = null;
     }
 

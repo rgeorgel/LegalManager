@@ -49,7 +49,19 @@ public class EscavadorController : ControllerBase
         if (processo == null) return Ok();
 
         if (payload.Tipo == "processo_arquivado")
+        {
             await CancelarMonitoramentoAsync(processo);
+        }
+        else if (processo.MonitoramentoSemanal)
+        {
+            // Estratégia 5: processo voltou a ter atividade — upgrade para diário
+            await UpgradeParaDiarioAsync(processo);
+        }
+        else if (!processo.Monitorado)
+        {
+            // Estratégia 4: processo suspenso recebeu evento — reativar monitoramento
+            await ReativarMonitoramentoAsync(processo);
+        }
 
         var descricao = payload.Conteudo?.Descricao
             ?? payload.Conteudo?.Texto
@@ -103,7 +115,34 @@ public class EscavadorController : ControllerBase
             await _escavador.RemoverMonitoramentoAsync(monId);
         }
         processo.Monitorado = false;
+        processo.MonitoramentoSemanal = false;
         processo.EscavadorMonitoramentoId = null;
+    }
+
+    private async Task UpgradeParaDiarioAsync(Processo processo)
+    {
+        if (!string.IsNullOrWhiteSpace(processo.EscavadorMonitoramentoId)
+            && long.TryParse(processo.EscavadorMonitoramentoId, out var id))
+        {
+            await _escavador.RemoverMonitoramentoAsync(id);
+        }
+        var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ);
+        if (mon != null)
+        {
+            processo.EscavadorMonitoramentoId = mon.Id.ToString();
+            processo.MonitoramentoSemanal = false;
+        }
+    }
+
+    private async Task ReativarMonitoramentoAsync(Processo processo)
+    {
+        var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ);
+        if (mon != null)
+        {
+            processo.EscavadorMonitoramentoId = mon.Id.ToString();
+            processo.Monitorado = true;
+            processo.MonitoramentoSemanal = false;
+        }
     }
 
     private bool ValidarCallbackToken()

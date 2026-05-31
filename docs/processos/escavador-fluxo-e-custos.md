@@ -357,33 +357,31 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 ---
 
-### Estratégia 4 — Suspender monitoramento de processos dormentes
+### Estratégia 4 — Suspender monitoramento de processos dormentes ✅ Implementado
 
 **Economia**: depende do perfil — carteiras antigas podem ter 30–50% dos processos sem movimentação há mais de 6 meses
 
 **Por que é seguro**: processos dormentes raramente têm prazo iminente. A plataforma pode pausar o monitoramento Escavador e verificar o DataJud passivamente a cada 30 dias. Se houver movimentação, reativa o monitoramento automaticamente.
 
-**Implementação**:
-- Critério de inatividade: sem `Andamento` com `DataOcorrencia` nos últimos 180 dias (ver definições no início da seção 6)
-- Job mensal (Hangfire): para processos dormentes com `Monitorado = true`, chama `DELETE /api/v2/monitoramento-processos/{id}`, seta `Monitorado = false`
-- Ao receber andamento via DataJud polling para um processo não monitorado: reativa com `POST /api/v2/monitoramento-processos`
-- UI: mostrar badge "Monitoramento pausado" no processo-detalhe com botão para reativar manualmente
+**Implementação**: `EscavadorTierManagementJob.SuspenderMonitoramentosAsync` — job mensal (disponível mas não registrado no cron por padrão; a Estratégia 5 é a ativa). Critério: `UltimoAndamentoEm < hoje - 180 dias`. Reativação automática via webhook: `EscavadorController.ReativarMonitoramentoAsync` acionada quando Escavador envia evento para processo suspenso.
+
+Para ativar a Estratégia 4 no lugar da 5, substituir em `Program.cs`:
+```csharp
+job => job.AplicarTierSemanalAsync()  →  job => job.SuspenderMonitoramentosAsync()
+```
 
 **Risco**: moderado — requer critério de reativação robusto. Não implementar sem o mecanismo de reativação automática.
 
 ---
 
-### Estratégia 5 — Usar monitoramento semanal para processos dormentes
+### Estratégia 5 — Usar monitoramento semanal para processos dormentes ✅ Implementado
 
 **Economia**: R$ 1,44/processo dormente/mês (de R$1,76 para R$0,32 = -82%)
 
 **Por que é seguro**: processos sem movimentação há 6+ meses raramente têm prazo correndo. A atualização semanal garante detecção dentro de 7 dias — mais que suficiente para prazos de 10 ou 15 dias. Processos com prazos de 5 dias **devem permanecer em diário**.
 
 **Implementação**:
-- Job mensal (Hangfire): identifica processos com `Andamento.DataOcorrencia < hoje - 180 dias` (inativos — ver definições no início da seção 6)
-- Para cada um: atualiza o monitoramento Escavador para tier semanal via `PUT /api/v2/monitoramento-processos/{id}` (a confirmar — ver Decisão em Aberto nº 7)
-- Ao receber novo andamento via webhook: reativa automaticamente para diário
-- UI: badge "Monitoramento semanal" no processo-detalhe com botão para forçar diário
+**Implementação**: `EscavadorTierManagementJob.AplicarTierSemanalAsync` — registrado no cron dia 1 de cada mês às 07:00. Critério: `UltimoAndamentoEm < hoje - 180 dias`. Implementado como `DELETE + POST frequencia=semanal` (endpoint PUT não confirmado — ver Decisão em Aberto nº 7). Campo `Processo.MonitoramentoSemanal` (bool) rastreia o tier atual. Reativação automática via webhook: `EscavadorController.UpgradeParaDiarioAsync` acionada ao receber qualquer andamento em processo semanal (`DELETE + POST` sem frequencia = diário).
 
 **Risco**: baixo para processos genuinamente dormentes. O trigger de reativação pelo webhook garante que, ao retomar atividade, o processo volta ao tier adequado no mesmo dia.
 
@@ -396,8 +394,8 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 | 1 · Polling 1×/dia às 06:00 ✅ | marginal (custo não listado) | **Implementado** |
 | 2 · Auto-cancelar monitoramento ao arquivar ✅ | R$ 1,76 × proc. arquivados | **Implementado** |
 | 3 · 1 termo Diário em vez de 2 ✅ | R$ 2,20 (economiza 1 termo) | **Implementado** (restrição de design aplicada) |
-| 4 · Suspender monitoramento de processos dormentes | R$ 1,76 × proc. dormentes (cancelar) | Média — job + reativação |
-| 5 · Tier semanal para processos dormentes | R$ 1,44 × proc. dormentes | Média — job + reativação + atualização de tier |
+| 4 · Suspender monitoramento de processos dormentes ✅ | R$ 1,76 × proc. dormentes (cancelar) | **Implementado** (inativo no cron) |
+| 5 · Tier semanal para processos dormentes ✅ | R$ 1,44 × proc. dormentes | **Implementado** (ativo no cron) |
 | **4 ou 5** | **R$ 7,20 – R$ 10,56** (20–30% da carteira) | |
 
 > **Estratégia 4 vs 5**: prefira a 5 (tier semanal) à 4 (cancelar) para processos dormentes que ainda podem ter movimentação eventual. Cancele só o que foi explicitamente arquivado (Estratégia 2).

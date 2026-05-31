@@ -179,7 +179,7 @@ public class OnboardingController : ControllerBase
                     string? monitoramentoId = null;
                     if (criarMon)
                     {
-                        var mon = await _escavador.CriarMonitoramentoAsync(cnj, ct);
+                        var mon = await _escavador.CriarMonitoramentoAsync(cnj, ct: ct);
                         monitoramentoId = mon?.Id.ToString();
                         monitoradosCount++;
                     }

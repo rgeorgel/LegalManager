@@ -99,6 +99,7 @@ builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<CapturaPublicacaoJob>();
 builder.Services.AddScoped<EscavadorCallbackPollingJob>();
+builder.Services.AddScoped<EscavadorTierManagementJob>();
 
 builder.Services.AddHttpClient<IIAService, IAService>(client =>
 {
@@ -374,6 +375,12 @@ RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
     "escavador-callback-polling",
     job => job.ExecutarAsync(),
     "0 6 * * *"); // fallback diário às 06:00 — webhooks são o canal principal
+
+RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
+    "escavador-tier-semanal",
+    job => job.AplicarTierSemanalAsync(),
+    "0 7 1 * *"); // dia 1 de cada mês às 07:00 — Estratégia 5 (downgrade para semanal após 180 dias)
+// Para ativar a Estratégia 4 (cancelar) em vez da 5, substituir por: job => job.SuspenderMonitoramentosAsync()
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
