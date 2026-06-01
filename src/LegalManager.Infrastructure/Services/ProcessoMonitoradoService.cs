@@ -98,7 +98,7 @@ public class ProcessoMonitoradoService : IProcessoMonitoradoService
                     AreaDireito = AreaDireito.Outro,
                     Fase = FaseProcessual.Conhecimento,
                     Status = StatusProcesso.Ativo,
-                    Monitorado = true,
+                    Monitorado = false,
                     CriadoEm = DateTime.UtcNow,
                     UltimoMonitoramento = DateTime.UtcNow
                 };

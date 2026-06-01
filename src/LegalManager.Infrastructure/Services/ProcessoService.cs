@@ -131,6 +131,19 @@ public class ProcessoService : IProcessoService
                 if (totalMonitorados >= limite)
                     throw new InvalidOperationException(
                         $"Limite de {limite} processos monitorados atingido no plano {_tenantContext.Plano}.");
+
+                var dormante = processo.UltimoAndamentoEm < DateTime.Now.AddDays(-180);
+                var frequencia = dormante ? "semanal" : null;
+                var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ, frequencia, ct);
+                if (mon != null)
+                {
+                    processo.EscavadorMonitoramentoId = mon.Id.ToString();
+                    processo.MonitoramentoSemanal = dormante;
+                }
+            }
+            else if (!dto.Monitorado.Value && processo.Monitorado)
+            {
+                await CancelarMonitoramentoEscavadorAsync(processo);
             }
             processo.Monitorado = dto.Monitorado.Value;
         }
