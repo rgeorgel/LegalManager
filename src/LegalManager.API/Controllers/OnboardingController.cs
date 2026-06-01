@@ -101,19 +101,6 @@ public class OnboardingController : ControllerBase
         var importados = 0;
         var mensagens = new List<string>();
 
-        // Pre-fetch plan limits if any item comes from Escavador
-        var temEscavador = dto.Processos.Any(x => x.Fonte == "escavador");
-        var monitoradosCount = 0;
-        var limiteMonitorados = 0;
-        if (temEscavador)
-        {
-            var tenant = await _context.Tenants
-                .FirstOrDefaultAsync(t => t.Id == _tenantContext.TenantId, ct);
-            monitoradosCount = await _context.Processos
-                .CountAsync(p => p.TenantId == _tenantContext.TenantId && p.Monitorado, ct);
-            limiteMonitorados = PlanoRestricoes.MaxProcessosMonitorados(tenant?.Plano ?? PlanoTipo.Free);
-        }
-
         foreach (var item in dto.Processos.GroupBy(x => x.NumeroCNJ).Select(g => g.First()))
         {
             try
@@ -175,15 +162,6 @@ public class OnboardingController : ControllerBase
                         }
                     }
 
-                    var criarMon = monitoradosCount < limiteMonitorados;
-                    string? monitoramentoId = null;
-                    if (criarMon)
-                    {
-                        var mon = await _escavador.CriarMonitoramentoAsync(cnj, ct: ct);
-                        monitoramentoId = mon?.Id.ToString();
-                        monitoradosCount++;
-                    }
-
                     _context.Processos.Add(new Processo
                     {
                         Id = Guid.NewGuid(),
@@ -199,8 +177,8 @@ public class OnboardingController : ControllerBase
                         AreaDireito = InferirAreaEscavador(siglaTribunal),
                         Fase = FaseProcessual.Conhecimento,
                         Status = StatusProcesso.Ativo,
-                        Monitorado = criarMon,
-                        EscavadorMonitoramentoId = monitoramentoId,
+                        Monitorado = false,
+                        EscavadorMonitoramentoId = null,
                         AdvogadoResponsavelId = _tenantContext.UserId,
                         CriadoEm = DateTime.Now
                     });
