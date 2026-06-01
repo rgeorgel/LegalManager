@@ -385,7 +385,7 @@ public class DocumentosControllerAdditionalTests
     public async Task GetByCliente_ReturnsOk()
     {
         var svc = new Mock<IDocumentoService>();
-        svc.Setup(s => s.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new List<DocumentoDto>());
         var ctrl = CreateController(svc);
 
@@ -424,7 +424,7 @@ public class ProcessoServiceUpdateMonitoradoTests
         var tenant = new Mock<ITenantContext>();
         tenant.Setup(t => t.TenantId).Returns(tenantId);
         tenant.Setup(t => t.Plano).Returns(plano);
-        return (new ProcessoService(ctx, tenant.Object), ctx, tenantId);
+        return (new ProcessoService(ctx, tenant.Object, new Mock<IEscavadorService>().Object), ctx, tenantId);
     }
 
     [Fact]

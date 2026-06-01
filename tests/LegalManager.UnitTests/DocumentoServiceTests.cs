@@ -319,7 +319,7 @@ public class DocumentoServiceTests
             Nome = "Meu Documento.pdf"
         };
 
-        var result = await service.UploadAsync(stream, "original.pdf", "application/pdf", uploadInfo);
+        var result = await service.UploadAsync(stream, "original.pdf", "application/pdf", uploadInfo, usuario.Id);
 
         Assert.NotNull(result);
         Assert.Equal("Meu Documento.pdf", result.Nome);
@@ -348,7 +348,7 @@ public class DocumentoServiceTests
             Nome = "Nome Customizado"
         };
 
-        var result = await service.UploadAsync(stream, "original.pdf", "application/pdf", uploadInfo);
+        var result = await service.UploadAsync(stream, "original.pdf", "application/pdf", uploadInfo, usuario.Id);
 
         Assert.Equal("Nome Customizado", result.Nome);
     }

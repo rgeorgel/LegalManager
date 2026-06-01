@@ -876,6 +876,17 @@ public class IAControllerTests
         return mock;
     }
 
+    private static Mock<IResumoProcessoService> CreateResumoMock()
+    {
+        var mock = new Mock<IResumoProcessoService>();
+        var dto = new ResumoProcessoResponseDto(Guid.NewGuid(), Guid.NewGuid(), "Resumo", "Usuário", DateTime.UtcNow);
+        mock.Setup(s => s.GerarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dto);
+        mock.Setup(s => s.ListarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([dto]);
+        return mock;
+    }
+
     private static Mock<ITenantContext> CreateTenantMock()
     {
         var mock = new Mock<ITenantContext>();
@@ -887,7 +898,7 @@ public class IAControllerTests
     [Fact]
     public async Task TraduzirAndamento_ReturnsOk_QuandoSucesso()
     {
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var dto = new TraduzirAndamentoDto(Guid.NewGuid(), null, false, false);
         var result = await controller.TraduzirAndamento(dto, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
@@ -899,7 +910,7 @@ public class IAControllerTests
         var traducao = CreateTraducaoMock();
         traducao.Setup(s => s.TraduzirAndamentoAsync(It.IsAny<TraduzirAndamentoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Créditos insuficientes"));
-        var controller = new IAController(traducao.Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(traducao.Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.TraduzirAndamento(new TraduzirAndamentoDto(Guid.NewGuid(), null, false, false), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
@@ -907,7 +918,7 @@ public class IAControllerTests
     [Fact]
     public async Task ObterTraducao_ReturnsNotFound_QuandoNulo()
     {
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.ObterTraducao(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result.Result);
     }
@@ -918,7 +929,7 @@ public class IAControllerTests
         var traducao = CreateTraducaoMock();
         var dto = new TraducaoResponseDto(Guid.NewGuid(), Guid.NewGuid(), "O", "T", false, false, DateTime.UtcNow);
         traducao.Setup(s => s.ObterTraducaoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(dto);
-        var controller = new IAController(traducao.Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(traducao.Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.ObterTraducao(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -926,7 +937,7 @@ public class IAControllerTests
     [Fact]
     public async Task GerarPeca_ReturnsOk_QuandoSucesso()
     {
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var dto = new GerarPecaDto(null, Domain.Entities.TipoPecaJuridica.PeticaoInicial, "Petição inicial...");
         var result = await controller.GerarPeca(dto, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
@@ -938,7 +949,7 @@ public class IAControllerTests
         var peca = CreatePecaMock();
         peca.Setup(s => s.GerarPecaAsync(It.IsAny<GerarPecaDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Sem créditos"));
-        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.GerarPeca(new GerarPecaDto(null, Domain.Entities.TipoPecaJuridica.PeticaoInicial, "..."), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
@@ -946,7 +957,7 @@ public class IAControllerTests
     [Fact]
     public async Task ListarPecasGeradas_ReturnsOk()
     {
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.ListarPecasGeradas(1, 20, null, null, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -954,7 +965,7 @@ public class IAControllerTests
     [Fact]
     public async Task ObterPeca_ReturnsNotFound_QuandoNulo()
     {
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.ObterPeca(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result.Result);
     }
@@ -965,7 +976,7 @@ public class IAControllerTests
         var peca = CreatePecaMock();
         var dto = new PecaGeradaResponseDto(Guid.NewGuid(), null, Guid.NewGuid(), Domain.Entities.TipoPecaJuridica.PeticaoInicial, "P", "C", null, null, DateTime.UtcNow);
         peca.Setup(s => s.ObterPecaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(dto);
-        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object);
+        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
         var result = await controller.ObterPeca(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }

@@ -62,7 +62,7 @@ public class AuthServiceTests
     private Mock<IEmailService> CreateEmailServiceMock()
     {
         var mock = new Mock<IEmailService>();
-        mock.Setup(e => e.EnviarBoasVindasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        mock.Setup(e => e.EnviarBoasVindasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         mock.Setup(e => e.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -139,7 +139,7 @@ public class AuthServiceTests
 
         await service.RegisterTenantAsync(dto);
 
-        emailService.Verify(e => e.EnviarBoasVindasAsync("admin@teste.com", "Escritório Teste", It.IsAny<CancellationToken>()), Times.Once);
+        emailService.Verify(e => e.EnviarBoasVindasAsync("admin@teste.com", It.IsAny<string>(), "Escritório Teste", It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -469,7 +469,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = ConviteTenantId, Nome = "Teste", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 1; i++)
         {
             ctx.Users.Add(new Usuario
             {

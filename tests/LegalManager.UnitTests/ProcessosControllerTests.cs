@@ -110,6 +110,7 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
             null,
             null,
             null,
+            null,
             DateTime.UtcNow
         );
 
@@ -381,7 +382,8 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
                 DataPublicacao: null,
                 SiglaTribunal: null,
                 Segmento: null,
-                DataDistribuicao: null
+                DataDistribuicao: null,
+                UltimoAndamentoEm: null
             ));
 
         var controller = new ProcessosController(processoMock.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!);

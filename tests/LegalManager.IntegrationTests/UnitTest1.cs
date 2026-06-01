@@ -285,8 +285,8 @@ public class MultiTenantIsolationTests
         ctx.Users.AddRange(user1, user2);
         await ctx.SaveChangesAsync();
 
-        var service1 = new ProcessoService(ctx, TestHelpers.CreateTenantContext(tenant1.Id, user1.Id));
-        var service2 = new ProcessoService(ctx, TestHelpers.CreateTenantContext(tenant2.Id, user2.Id));
+        var service1 = new ProcessoService(ctx, TestHelpers.CreateTenantContext(tenant1.Id, user1.Id), new Mock<IEscavadorService>().Object);
+        var service2 = new ProcessoService(ctx, TestHelpers.CreateTenantContext(tenant2.Id, user2.Id), new Mock<IEscavadorService>().Object);
 
         await service1.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
             "0001234-56.2026.8.26.0001", null, "1ª Vara Cível", "São Paulo",
@@ -316,7 +316,7 @@ public class ProcessoTarefaWorkflowTests
         var (ctx, tenant, usuario) = await TestHelpers.SeedTenantAsync();
         var tenantCtx = TestHelpers.CreateTenantContext(tenant.Id, usuario.Id);
 
-        var processoService = new ProcessoService(ctx, tenantCtx);
+        var processoService = new ProcessoService(ctx, tenantCtx, new Mock<IEscavadorService>().Object);
         var tarefaService = new TarefaService(ctx, tenantCtx);
 
         var processo = await processoService.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(
@@ -348,7 +348,7 @@ public class ProcessoTarefaWorkflowTests
         var (ctx, tenant, usuario) = await TestHelpers.SeedTenantAsync();
         var tenantCtx = TestHelpers.CreateTenantContext(tenant.Id, usuario.Id);
 
-        var processoService = new ProcessoService(ctx, tenantCtx);
+        var processoService = new ProcessoService(ctx, tenantCtx, new Mock<IEscavadorService>().Object);
         var tarefaService = new TarefaService(ctx, tenantCtx);
 
         var processo1 = await processoService.CreateAsync(new Application.DTOs.Processos.CreateProcessoDto(

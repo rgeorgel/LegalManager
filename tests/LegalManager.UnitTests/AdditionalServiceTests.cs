@@ -49,7 +49,7 @@ public class ProcessoServiceAdditionalTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = plano, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Adv", Email = "a@a.com", UserName = "a@a.com" });
         ctx.SaveChanges();
-        var svc = new ProcessoService(ctx, SvcTestHelpers.TenantMock(tenantId, userId, plano).Object);
+        var svc = new ProcessoService(ctx, SvcTestHelpers.TenantMock(tenantId, userId, plano).Object, new Mock<IEscavadorService>().Object);
         return (svc, ctx, tenantId, userId);
     }
 

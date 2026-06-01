@@ -1,6 +1,7 @@
 ﻿using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Resend;
 
@@ -22,6 +23,7 @@ public class EmailServiceTests
             {
                 ["Resend:FromName"] = "LegalManager",
                 ["Resend:FromEmail"] = "noreply@test.com.br",
+                ["Resend:ApiToken"] = "test-token",
                 ["App:FrontendUrl"] = "http://localhost:5000"
             })
             .Build();
@@ -41,9 +43,9 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
-        await svc.EnviarBoasVindasAsync("cliente@test.com", "Escritório Teste", CancellationToken.None);
+        await svc.EnviarBoasVindasAsync("cliente@test.com", "Admin Teste", "Escritório Teste", "Free", null, CancellationToken.None);
 
         Assert.NotNull(capture.Message);
         Assert.Contains("Bem-vindo ao Causify", capture.Message!.Subject);
@@ -55,12 +57,12 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
-        await svc.EnviarBoasVindasAsync("cliente@test.com", "Meu Escritório", CancellationToken.None);
+        await svc.EnviarBoasVindasAsync("cliente@test.com", "Admin Teste", "Meu Escritório", "Free", null, CancellationToken.None);
 
         Assert.NotNull(capture.Message);
-        Assert.Contains("Meu Escritório", capture.Message!.HtmlBody);
+        Assert.Contains("Meu Escrit", capture.Message!.HtmlBody);
     }
 
     [Fact]
@@ -68,7 +70,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarConviteUsuarioAsync(
             "usuario@test.com", "Escritorio XYZ", "http://localhost/convite/abc123", CancellationToken.None);
@@ -83,7 +85,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarResetSenhaAsync("user@test.com", "http://localhost/reset/xyz789", CancellationToken.None);
 
@@ -97,7 +99,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarTrialExpirandoAsync("admin@test.com", "Escritório Teste", 5, CancellationToken.None);
 
@@ -110,7 +112,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var prazo = DateTime.UtcNow.AddHours(5);
         await svc.EnviarAlertaPrazoTarefaAsync(
@@ -126,7 +128,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var prazo = DateTime.UtcNow.AddDays(3);
         await svc.EnviarAlertaPrazoTarefaAsync(
@@ -141,7 +143,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var dataHora = DateTime.UtcNow.AddDays(1).AddHours(14);
         await svc.EnviarAlertaEventoAsync(
@@ -156,7 +158,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var dataHora = DateTime.UtcNow.AddDays(1).AddHours(9);
         await svc.EnviarAlertaEventoAsync(
@@ -171,7 +173,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarNovoAndamentoAsync(
             "adv@test.com", "Dr. Joao", "1234567-89.2024.8.26.0001",
@@ -187,7 +189,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var dataFinal = new DateTime(2026, 5, 15);
         await svc.EnviarAlertaPrazoProcessualAsync(
@@ -205,7 +207,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarNovaPublicacaoAsync(
             "adv@test.com", "Dr. João", "9876543-11.2024.5.00.0001", CancellationToken.None);
@@ -219,7 +221,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarAcessoPortalAsync(
             "cliente@test.com", "Maria Oliveira", "Escritorio XYZ",
@@ -236,7 +238,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarAndamentoTraduzidoAsync(
             "cliente@test.com", "Carlos Souza", "1234567-89.2024.8.26.0001",
@@ -252,7 +254,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarCobrancaAsync(
             "cliente@test.com", "Joao Silva", "Escritorio Legal",
@@ -270,7 +272,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var qrBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
         await svc.EnviarCobrancaAsync(
@@ -290,7 +292,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarCobrancaAsync(
             "cliente@test.com", "Cliente", "Escritorio",
@@ -306,9 +308,9 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
-        await svc.EnviarBoasVindasAsync("x@y.com", "Test", CancellationToken.None);
+        await svc.EnviarBoasVindasAsync("x@y.com", "Test", "Test", "Free", null, CancellationToken.None);
 
         Assert.NotNull(capture.Message);
         Assert.Equal("LegalManager <noreply@test.com.br>", capture.Message!.From);
@@ -319,7 +321,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         await svc.EnviarAndamentoTraduzidoAsync(
             "cliente@test.com", "<script>alert('xss')</script>",
@@ -339,7 +341,7 @@ public class EmailServiceTests
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
-        var svc = new EmailService(mock.Object, _config);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
 
         var qrBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
         await svc.EnviarCobrancaAsync(

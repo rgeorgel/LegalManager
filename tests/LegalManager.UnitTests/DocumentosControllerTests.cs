@@ -36,7 +36,7 @@ public class DocumentosControllerTests
             new() { Id = Guid.NewGuid(), Nome = "Doc1.pdf" },
             new() { Id = Guid.NewGuid(), Nome = "Doc2.pdf" }
         };
-        service.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>()))
+        service.Setup(s => s.GetAllAsync(It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(documentos);
 
         var result = await controller.GetAll();

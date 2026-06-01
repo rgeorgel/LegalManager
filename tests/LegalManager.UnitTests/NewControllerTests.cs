@@ -725,7 +725,7 @@ public class AuthControllerTests
         configMock.Setup(c => c["App:FrontendUrl"]).Returns("https://app.legalmanager.com.br");
 
         var emailServiceMock = new Mock<IEmailService>();
-        emailServiceMock.Setup(s => s.EnviarBoasVindasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        emailServiceMock.Setup(s => s.EnviarBoasVindasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         emailServiceMock.Setup(s => s.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

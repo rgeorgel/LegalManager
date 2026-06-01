@@ -209,23 +209,27 @@ public class CreditoServiceTests
     public async Task InicializarCreditosPadraoAsync_DeveIgnorar_QuandoJaExistenCreditos()
     {
         var (ctx, tenantId) = await SeedTenantAsync();
-        ctx.CreditosAI.Add(new CreditoAI
+        // Pre-popula os três tipos de crédito padrão
+        foreach (var tipo in new[] { TipoCreditoAI.TraducaoAndamento, TipoCreditoAI.GeracaoPeca, TipoCreditoAI.ClassificacaoPublicacao })
         {
-            Id = Guid.NewGuid(),
-            TenantId = tenantId,
-            Tipo = TipoCreditoAI.TraducaoAndamento,
-            QuantidadeTotal = 10,
-            QuantidadeUsada = 0,
-            Origem = OrigemCreditoAI.Cortesai,
-            CriadoEm = DateTime.UtcNow
-        });
+            ctx.CreditosAI.Add(new CreditoAI
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Tipo = tipo,
+                QuantidadeTotal = 10,
+                QuantidadeUsada = 0,
+                Origem = OrigemCreditoAI.Cortesai,
+                CriadoEm = DateTime.UtcNow
+            });
+        }
         await ctx.SaveChangesAsync();
 
         var service = new CreditoService(ctx, CreateTenantContext(tenantId));
         await service.InicializarCreditosPadraoAsync(tenantId, PlanoTipo.Pro);
 
         var count = await ctx.CreditosAI.Where(c => c.TenantId == tenantId).CountAsync();
-        Assert.Equal(1, count);
+        Assert.Equal(3, count);
     }
 
     [Fact]

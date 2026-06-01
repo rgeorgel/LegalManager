@@ -149,7 +149,8 @@ public class PlanoRestricoesTests
 {
     [Theory]
     [InlineData(PlanoTipo.Free, 1)]
-    [InlineData(PlanoTipo.Pro, 5)]
+    [InlineData(PlanoTipo.Plus, 1)]
+    [InlineData(PlanoTipo.Pro, 2)]
     [InlineData(PlanoTipo.Enterprise, 5)]
     public void MaxUsuarios_ReturnsCorrectValue(PlanoTipo plano, int expected)
     {
@@ -157,8 +158,10 @@ public class PlanoRestricoesTests
     }
 
     [Theory]
-    [InlineData(PlanoTipo.Free, 40)]
-    [InlineData(PlanoTipo.Pro, 500)]
+    [InlineData(PlanoTipo.Free, 20)]
+    [InlineData(PlanoTipo.Plus, 20)]
+    [InlineData(PlanoTipo.Pro, 100)]
+    [InlineData(PlanoTipo.Max, 250)]
     [InlineData(PlanoTipo.Enterprise, 500)]
     public void MaxProcessosMonitorados_ReturnsCorrectValue(PlanoTipo plano, int expected)
     {
@@ -167,7 +170,9 @@ public class PlanoRestricoesTests
 
     [Theory]
     [InlineData(PlanoTipo.Free, 1024)]
-    [InlineData(PlanoTipo.Pro, 20 * 1024)]
+    [InlineData(PlanoTipo.Plus, 2 * 1024)]
+    [InlineData(PlanoTipo.Pro, 5 * 1024)]
+    [InlineData(PlanoTipo.Max, 10 * 1024)]
     [InlineData(PlanoTipo.Enterprise, 20 * 1024)]
     public void ArmazenamentoLimiteMB_ReturnsCorrectValue(PlanoTipo plano, int expected)
     {
