@@ -49,7 +49,7 @@ public class TenantOabService : ITenantOabService
     public async Task<TenantOabDto> CriarAsync(CriarTenantOabRequest req, CancellationToken ct = default)
     {
         ValidarPlano();
-        ValidarLimiteOabs();
+        await ValidarLimiteOabs();
         ValidarOab(req.Uf, req.Numero);
 
         var uf = req.Uf.ToUpperInvariant();
@@ -218,15 +218,18 @@ public class TenantOabService : ITenantOabService
     private async Task RemoverMonitoramentoRemotoAsync(TenantOab oab)
     {
         if (!oab.EscavadorMonitoramentoId.HasValue) return;
+        var monId = oab.EscavadorMonitoramentoId.Value;
+        // Limpa localmente antes da chamada remota: se a remoção falhar, o ID stale não
+        // impede o EscavadorOabSyncJob de recriar o monitoramento na próxima execução.
+        oab.EscavadorMonitoramentoId = null;
+        oab.SyncError = null;
         try
         {
-            await _escavador.RemoverMonitoramentoAsync(oab.EscavadorMonitoramentoId.Value);
+            await _escavador.RemoverMonitoramentoAsync(monId);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "[TenantOab] Falha ao remover monitoramento remoto {Id} (continuando)",
-                oab.EscavadorMonitoramentoId);
-            // Não bloqueia — se a remoção remota falhar, o remoto fica órfão mas o local segue consistente
+            _logger.LogWarning(ex, "[TenantOab] Falha ao remover monitoramento remoto {Id} (continuando)", monId);
         }
     }
 

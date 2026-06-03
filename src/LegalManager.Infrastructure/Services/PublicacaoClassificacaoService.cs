@@ -31,11 +31,9 @@ public class PublicacaoClassificacaoService
 
     public async Task ExecutarAsync()
     {
-        var limite = DateTime.UtcNow.AddHours(-1);
         var pendentes = await _context.Publicacoes
             .Where(p => p.FonteCaptura == FonteCaptura.Escavador
-                        && p.ClassificacaoIA == null
-                        && p.CapturaEm >= limite)
+                        && p.ClassificacaoIA == null)
             .OrderBy(p => p.CapturaEm)
             .Take(100)
             .ToListAsync();

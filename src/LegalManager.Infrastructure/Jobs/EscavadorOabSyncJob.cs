@@ -61,8 +61,21 @@ public class EscavadorOabSyncJob
 
                 foreach (var oab in pending)
                 {
-                    // Limpa erro anterior e tenta recriar
                     oab.SyncError = null;
+
+                    // Se há ID stale (falha após RemoverMonitoramentoRemotoAsync), tenta remover
+                    // o monitoramento órfão antes de criar um novo, evitando duplicatas no Escavador.
+                    if (oab.EscavadorMonitoramentoId.HasValue)
+                    {
+                        var oldId = oab.EscavadorMonitoramentoId.Value;
+                        oab.EscavadorMonitoramentoId = null;
+                        try { await _escavador.RemoverMonitoramentoAsync(oldId); }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "[EscavadorOabSyncJob] Falha ao remover monitoramento órfão {Id}", oldId);
+                        }
+                    }
+
                     try
                     {
                         var mon = await _escavador.CriarMonitoramentoOabAsync(oab.Uf, oab.Numero, oab.Nome);
