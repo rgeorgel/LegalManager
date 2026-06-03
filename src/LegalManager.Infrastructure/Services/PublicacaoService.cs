@@ -31,6 +31,8 @@ public class PublicacaoService : IPublicacaoService
             q = q.Where(p => p.Tipo == filtro.Tipo);
         if (filtro.Status.HasValue)
             q = q.Where(p => p.Status == filtro.Status);
+        if (filtro.FonteCaptura.HasValue)
+            q = q.Where(p => p.FonteCaptura == filtro.FonteCaptura);
         if (filtro.De.HasValue)
             q = q.Where(p => p.DataPublicacao >= filtro.De);
         if (filtro.Ate.HasValue)
@@ -44,7 +46,9 @@ public class PublicacaoService : IPublicacaoService
                 p.Id, p.ProcessoId, p.NumeroCNJ,
                 p.Processo != null ? p.Processo.NumeroCNJ : p.NumeroCNJ,
                 p.Diario, p.DataPublicacao, p.Conteudo,
-                p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm))
+                p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm,
+                p.FonteCaptura, p.LinkEscavador, p.LinkPdf, p.Snippet,
+                p.Tribunal, p.OrigemEstado, p.DiarioSigla))
             .ToListAsync(ct);
     }
 
@@ -56,7 +60,9 @@ public class PublicacaoService : IPublicacaoService
         if (p == null) return null;
         return new PublicacaoResponseDto(p.Id, p.ProcessoId, p.NumeroCNJ,
             p.Processo?.NumeroCNJ ?? p.NumeroCNJ, p.Diario,
-            p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm);
+            p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm,
+            p.FonteCaptura, p.LinkEscavador, p.LinkPdf, p.Snippet,
+            p.Tribunal, p.OrigemEstado, p.DiarioSigla);
     }
 
     public async Task MarcarLidaAsync(Guid id, CancellationToken ct = default)

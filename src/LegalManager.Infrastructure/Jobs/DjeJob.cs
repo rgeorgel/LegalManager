@@ -33,8 +33,8 @@ public class DjeJob
             return;
         }
 
-        var processos = await _context.ProcessosMonitorados
-            .Where(p => p.Ativo)
+        var processos = await _context.Processos
+            .Where(p => p.Monitorado && p.Status == StatusProcesso.Ativo)
             .Select(p => new { p.Id, p.TenantId, p.NumeroCNJ })
             .ToListAsync(ct);
 

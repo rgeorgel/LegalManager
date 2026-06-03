@@ -411,7 +411,7 @@ public class PublicacoesControllerTests
     {
         var service = CreateServiceMock();
         var controller = new PublicacoesController(service.Object, CreateProTenant());
-        var result = await controller.GetAll(null, null, null, null, null, 1, 20, CancellationToken.None);
+        var result = await controller.GetAll(null, null, null, null, null, null, 1, 20, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
 

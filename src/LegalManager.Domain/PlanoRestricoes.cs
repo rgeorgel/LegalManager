@@ -33,7 +33,12 @@ public static class PlanoRestricoes
     public static bool PermitePortalCliente(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteCapturacaoPublicacoes(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;
     public static bool PermiteTemplatesDocumentos(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;
-    public static int MaxCapturasPublicacoes(PlanoTipo plano) => plano switch
+    /// <summary>
+    /// Número MÁXIMO de OABs que o tenant pode cadastrar para monitoramento.
+    /// Não confundir com quantidade de publicações — esse limite é sobre quantos
+    /// itens (OABs cadastradas) o tenant pode ter ativos simultaneamente.
+    /// </summary>
+    public static int MaxOabsMonitoradas(PlanoTipo plano) => plano switch
     {
         PlanoTipo.Pro => 1,
         PlanoTipo.Max => 3,

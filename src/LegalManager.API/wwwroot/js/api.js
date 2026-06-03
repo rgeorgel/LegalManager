@@ -32,7 +32,7 @@ async function refreshTokenIfNeeded() {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: rt })
+      body: { refreshToken: rt }
     });
     if (res.ok) {
       const data = await res.json();
@@ -51,13 +51,20 @@ export async function apiFetch(path, options = {}) {
     ...(options.headers || {})
   };
 
-  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  // fetch() doesn't auto-serialize objects — without this, the server receives "[object Object]".
+  // Stringify any non-string body (objects, arrays) before passing to fetch.
+  let body = options.body;
+  if (body != null && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)) {
+    body = JSON.stringify(body);
+  }
+
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers, body });
 
   if (res.status === 401) {
     const refreshed = await refreshTokenIfNeeded();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${getToken()}`;
-      res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+      res = await fetch(`${API_BASE}${path}`, { ...options, headers, body });
     } else {
       clearSession();
       window.location.href = '/login.html';
@@ -71,7 +78,9 @@ export async function apiFetch(path, options = {}) {
     if (contentType.includes('application/json')) {
       try {
         const body = await res.json();
-        errorMsg = body.message || body.title || errorMsg;
+        errorMsg = body.message || body.title || body.errors
+          ? Object.values(body.errors || {}).flat().join('; ')
+          : errorMsg;
       } catch {}
     } else {
       const text = await res.text();

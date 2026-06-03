@@ -3,6 +3,7 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603001241_CapturaPublicacoesEscavador")]
+    partial class CapturaPublicacoesEscavador
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1375,6 +1378,73 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("ProcessosImportacaoCache");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoMonitorado", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NomeExibicao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NumeroCNJ")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ProcessosMonitorados");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoMonitoradoAndamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("CodigoCNJ")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Fonte")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OrgaoJulgador")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ProcessoMonitoradoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessoMonitoradoId");
+
+                    b.ToTable("ProcessosMonitoradosAndamentos");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoParte", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1800,9 +1870,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("EscavadorMonitoramentoId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1812,9 +1879,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<string>("SyncError")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -1827,19 +1891,18 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("UltimaVerificacao")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("UltimoSyncEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Variacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("TenantId", "Ativo");
-
-                    b.HasIndex("TenantId", "EscavadorMonitoramentoId");
 
                     b.HasIndex("TenantId", "Uf", "Numero")
                         .IsUnique();
@@ -2527,6 +2590,28 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoMonitorado", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoMonitoradoAndamento", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.ProcessoMonitorado", "ProcessoMonitorado")
+                        .WithMany("Andamentos")
+                        .HasForeignKey("ProcessoMonitoradoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProcessoMonitorado");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoParte", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
@@ -2805,6 +2890,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Andamentos");
 
                     b.Navigation("Partes");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoMonitorado", b =>
+                {
+                    b.Navigation("Andamentos");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Tarefa", b =>

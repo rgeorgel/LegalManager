@@ -13,6 +13,13 @@ public class PublicacaoConfiguration : IEntityTypeConfiguration<Publicacao>
         builder.Property(p => p.NumeroCNJ).HasMaxLength(50);
         builder.Property(p => p.Conteudo).IsRequired();
         builder.Property(p => p.ClassificacaoIA).HasMaxLength(500);
+        builder.Property(p => p.LinkEscavador).HasMaxLength(500);
+        builder.Property(p => p.LinkPdf).HasMaxLength(500);
+        builder.Property(p => p.DiarioSigla).HasMaxLength(50);
+        builder.Property(p => p.Snippet).HasMaxLength(1000);
+        builder.Property(p => p.UuidExterno).HasMaxLength(100);
+        builder.Property(p => p.Tribunal).HasMaxLength(50);
+        builder.Property(p => p.OrigemEstado).HasMaxLength(2);
 
         builder.HasOne(p => p.Tenant)
             .WithMany()
@@ -27,6 +34,12 @@ public class PublicacaoConfiguration : IEntityTypeConfiguration<Publicacao>
 
         builder.HasIndex(p => new { p.TenantId, p.Status });
         builder.HasIndex(p => new { p.TenantId, p.DataPublicacao });
+        builder.HasIndex(p => new { p.TenantId, p.FonteCaptura });
+        // Idempotency: unique UUID per tenant. Partial filter: only Escavador rows
+        // (DJe rows use IdExterno/HashDje; legacy/manual rows have no UUID).
+        builder.HasIndex(p => new { p.TenantId, p.UuidExterno })
+            .IsUnique()
+            .HasFilter("\"UuidExterno\" IS NOT NULL");
         builder.HasIndex(p => p.ProcessoId);
     }
 }

@@ -33,8 +33,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Evento> Eventos => Set<Evento>();
     public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
     public DbSet<Publicacao> Publicacoes => Set<Publicacao>();
-    public DbSet<ProcessoMonitorado> ProcessosMonitorados => Set<ProcessoMonitorado>();
-    public DbSet<ProcessoMonitoradoAndamento> ProcessosMonitoradosAndamentos => Set<ProcessoMonitoradoAndamento>();
+    public DbSet<TenantOab> TenantOabs => Set<TenantOab>();
     public DbSet<AcessoCliente> AcessosCliente => Set<AcessoCliente>();
     public DbSet<LancamentoFinanceiro> LancamentosFinanceiros => Set<LancamentoFinanceiro>();
     public DbSet<RegistroTempo> RegistrosTempo => Set<RegistroTempo>();

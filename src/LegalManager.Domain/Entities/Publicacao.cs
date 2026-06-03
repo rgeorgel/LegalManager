@@ -21,6 +21,18 @@ public class Publicacao
     public string? Pagina { get; set; }
     public DateTime CapturaEm { get; set; }
 
+    // Escavador fields
+    public string? LinkEscavador { get; set; }
+    public string? LinkPdf { get; set; }
+    public long? DiarioId { get; set; }
+    public string? DiarioSigla { get; set; }
+    public string? Snippet { get; set; }
+    public long? OrigemId { get; set; }
+    public FonteCaptura FonteCaptura { get; set; } = FonteCaptura.Manual;
+    public string? UuidExterno { get; set; }
+    public string? Tribunal { get; set; }
+    public string? OrigemEstado { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public Processo? Processo { get; set; }
 }

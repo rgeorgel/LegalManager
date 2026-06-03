@@ -15,6 +15,7 @@ const NAV_GROUPS = [
       { href: '/pages/contatos.html',     label: '👥 Contatos' },
       { href: '/pages/documentos.html',   label: '📁 Documentos' },
       { href: '/pages/publicacoes.html',   label: '📰 Publicações', pro: true },  // Pro-only: Plus não tem acesso
+      { href: '/pages/oabs.html',          label: '👨‍⚖️ OABs Monitoradas', pro: true },
     ],
   },
   {

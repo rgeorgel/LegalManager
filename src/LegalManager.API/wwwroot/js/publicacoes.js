@@ -15,12 +15,14 @@ let pubs = [];
 async function load() {
   const status = document.getElementById('filtroStatus').value;
   const tipo = document.getElementById('filtroTipo').value;
+  const fonte = document.getElementById('filtroFonte').value;
   const de = document.getElementById('filtroDe').value;
   const ate = document.getElementById('filtroAte').value;
 
   const params = new URLSearchParams({ pageSize: 50 });
   if (status) params.set('status', status);
   if (tipo) params.set('tipo', tipo);
+  if (fonte) params.set('fonteCaptura', fonte);
   if (de) params.set('de', de);
   if (ate) params.set('ate', ate);
 
@@ -58,6 +60,11 @@ function render() {
   sem.style.display = 'none';
   list.innerHTML = pubs.map(p => {
     const statusClass = { Nova: 'pub-badge-nova', Lida: 'pub-badge-lida', Arquivada: 'pub-badge-arquivada' }[p.status];
+    const fonteBadge = {
+      Escavador: '<span class="pub-badge" style="background:#ecfdf5;color:#065f46">📡 Escavador</span>',
+      DJe: '<span class="pub-badge" style="background:#fef3c7;color:#92400e">📰 DJe</span>',
+      Manual: '<span class="pub-badge" style="background:#f3f4f6;color:#6b7280">✍️ Manual</span>'
+    }[p.fonteCaptura] ?? '';
     return `
     <div class="pub-card${p.urgente ? ' pub-card-urgente' : ''}" data-id="${p.id}">
       <div class="pub-card-header">
@@ -65,14 +72,18 @@ function render() {
           ${p.urgente ? '<span class="pub-badge-urgente">🔴 URGENTE</span>' : ''}
           <span class="pub-tipo">${TIPO_LABEL[p.tipo] ?? p.tipo}</span>
           <span class="pub-badge ${statusClass}">${STATUS_LABEL[p.status]}</span>
+          ${fonteBadge}
           ${p.numeroCNJ ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.numeroCNJ)}</span>` : ''}
         </div>
-        <span class="pub-card-meta">${new Date(p.dataPublicacao).toLocaleDateString('pt-BR')} — ${esc(p.diario)}</span>
+        <span class="pub-card-meta">${new Date(p.dataPublicacao).toLocaleDateString('pt-BR')} — ${esc(p.diario)}${p.tribunal ? ' — ' + esc(p.tribunal) : ''}</span>
       </div>
       ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}
+      ${p.snippet ? `<div class="pub-snippet" style="font-size:13px;color:var(--color-text-muted);margin-bottom:6px;font-style:italic">${esc(p.snippet)}</div>` : ''}
       <div class="pub-card-conteudo" id="conteudo-${p.id}">${esc(p.conteudo)}</div>
       <div class="pub-card-actions">
         ${p.conteudo.length > 300 ? `<button class="btn btn-secondary btn-sm" data-action="expandir" data-id="${p.id}">Ver mais</button>` : ''}
+        ${p.linkPdf ? `<a class="btn btn-secondary btn-sm" href="${esc(p.linkPdf)}" target="_blank" rel="noopener">📄 Ver PDF</a>` : ''}
+        ${p.linkEscavador ? `<a class="btn btn-secondary btn-sm" href="${esc(p.linkEscavador)}" target="_blank" rel="noopener">🔗 Ver no Escavador</a>` : ''}
         ${p.status === 'Nova' ? `<button class="btn btn-primary btn-sm" data-action="lida" data-id="${p.id}">Marcar como lida</button>` : ''}
         ${p.status !== 'Arquivada' ? `<button class="btn btn-secondary btn-sm" data-action="arquivar" data-id="${p.id}">Arquivar</button>` : ''}
       </div>

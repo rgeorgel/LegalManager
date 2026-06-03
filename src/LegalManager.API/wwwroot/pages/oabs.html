@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — OABs Monitoradas</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .page-intro { color: var(--color-text-muted); font-size: 14px; margin: 0 0 20px 0; max-width: 720px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .page-header .actions { display: flex; gap: 8px; }
+
+    .oab-table-wrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; }
+    table.oab-table { width: 100%; border-collapse: collapse; }
+    .oab-table th, .oab-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--color-border); font-size: 14px; vertical-align: middle; }
+    .oab-table th { background: var(--color-bg); font-size: 12px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .oab-table tr:last-child td { border-bottom: none; }
+    .oab-table tbody tr:hover { background: var(--color-bg); }
+    .oab-table .oab-numero { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+    .oab-table .oab-row-inativa { opacity: 0.55; }
+    .oab-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+    .oab-status .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .oab-status.ativo .dot { background: #10b981; }
+    .oab-status.inativo .dot { background: #9ca3af; }
+    .oab-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+    .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .sync-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .sync-badge.synced { background: #ecfdf5; color: #065f46; }
+    .sync-badge.synced .dot { background: #10b981; }
+    .sync-badge.pending { background: #fef3c7; color: #92400e; }
+    .sync-badge.pending .dot { background: #f59e0b; }
+    .sync-badge.error { background: #fee2e2; color: #991b1b; }
+    .sync-badge.error .dot { background: #dc2626; }
+    .sync-error-msg { font-size: 11px; color: #dc2626; margin-top: 2px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .empty-state { padding: 48px 24px; text-align: center; color: var(--color-text-muted); }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; animation: fade-in 0.15s ease; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .modal { background: var(--color-surface); border-radius: 12px; width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.25); animation: slide-up 0.2s ease; }
+    @keyframes slide-up { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--color-border); }
+    .modal-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 22px; line-height: 1; color: var(--color-text-muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .modal-close:hover { background: var(--color-bg); color: var(--color-text); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: 8px; background: var(--color-bg); border-radius: 0 0 12px 12px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--color-text); }
+    .form-group label .required { color: #dc2626; }
+    .form-group .hint { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
+    .form-control { width: 100%; padding: 8px 10px; font-size: 14px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); color: var(--color-text); transition: border-color 0.15s, box-shadow 0.15s; }
+    .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    .form-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; }
+    .form-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .form-error.visible { display: block; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--color-bg); border-radius: 6px; }
+    .checkbox-row input { margin: 0; }
+    .checkbox-row label { margin: 0; font-weight: 500; font-size: 14px; cursor: pointer; }
+
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav" id="sidebarNav"></ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">OABs Monitoradas</h1>
+      <div class="actions">
+        <button class="btn btn-secondary" id="btnSincronizarTodas" title="Recriar monitoramentos remotos para todas as OABs">⟳ Sincronizar todas</button>
+        <button class="btn btn-primary" id="btnNovaOab">+ Adicionar OAB</button>
+      </div>
+    </div>
+
+    <p class="page-intro">
+      Cada OAB cadastrada é registrada como monitoramento no Escavador — novas publicações chegam automaticamente via webhook.
+      Disponível a partir do plano Pro.
+    </p>
+
+    <div class="oab-table-wrap" id="oabsList"></div>
+  </main>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop" style="display:none" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <div class="modal-header">
+      <h2 id="modalTitulo">Nova OAB</h2>
+      <button type="button" class="modal-close" id="btnFechar" aria-label="Fechar">×</button>
+    </div>
+    <form id="formOab" novalidate>
+      <div class="modal-body">
+        <div id="formError" class="form-error" role="alert"></div>
+        <input type="hidden" id="oabId">
+
+        <div class="form-group">
+          <label for="oabNome">Nome do advogado <span class="required">*</span></label>
+          <input type="text" id="oabNome" class="form-control" required maxlength="200" placeholder="Ex.: Dr. João da Silva">
+        </div>
+
+        <div class="form-group">
+          <label>UF e número <span class="required">*</span></label>
+          <div class="form-row">
+            <select id="oabUf" class="form-control" required>
+              <option value="">UF</option>
+              <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+              <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+              <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+              <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+              <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+              <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+              <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+              <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+              <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+            </select>
+            <input type="text" id="oabNumero" class="form-control" required maxlength="20" placeholder="Número da OAB (somente dígitos)">
+          </div>
+          <div class="hint">Formato esperado: 3 a 7 dígitos. Será normalizado automaticamente.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="oabUserId">Advogado vinculado <span style="font-weight:400;color:var(--color-text-muted)">(opcional)</span></label>
+          <select id="oabUserId" class="form-control">
+            <option value="">— Sem vínculo —</option>
+          </select>
+          <div class="hint">Notificações de novas publicações serão enviadas a este usuário.</div>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-row">
+            <input type="checkbox" id="oabAtivo" checked>
+            <label for="oabAtivo">OAB ativa para monitoramento</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar OAB</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/js/oabs.js"></script>
+</body>
+</html>

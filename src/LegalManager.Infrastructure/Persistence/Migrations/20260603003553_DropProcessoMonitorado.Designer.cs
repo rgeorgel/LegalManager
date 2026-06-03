@@ -3,6 +3,7 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603003553_DropProcessoMonitorado")]
+    partial class DropProcessoMonitorado
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1800,9 +1803,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long?>("EscavadorMonitoramentoId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1812,9 +1812,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<string>("SyncError")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -1827,19 +1824,18 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("UltimaVerificacao")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("UltimoSyncEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Variacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("TenantId", "Ativo");
-
-                    b.HasIndex("TenantId", "EscavadorMonitoramentoId");
 
                     b.HasIndex("TenantId", "Uf", "Numero")
                         .IsUnique();

@@ -14,13 +14,21 @@ public record PublicacaoResponseDto(
     StatusPublicacao Status,
     bool Urgente,
     string? ClassificacaoIA,
-    DateTime CapturaEm
+    DateTime CapturaEm,
+    FonteCaptura FonteCaptura = FonteCaptura.Manual,
+    string? LinkEscavador = null,
+    string? LinkPdf = null,
+    string? Snippet = null,
+    string? Tribunal = null,
+    string? OrigemEstado = null,
+    string? DiarioSigla = null
 );
 
 public record PublicacaoFiltroDto(
     Guid? ProcessoId = null,
     TipoPublicacao? Tipo = null,
     StatusPublicacao? Status = null,
+    FonteCaptura? FonteCaptura = null,
     DateTime? De = null,
     DateTime? Ate = null,
     int Page = 1,

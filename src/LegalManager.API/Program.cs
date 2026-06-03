@@ -82,7 +82,6 @@ builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
 builder.Services.AddScoped<IMonitoramentoService, MonitoramentoService>();
 builder.Services.AddScoped<IPublicacaoService, PublicacaoService>();
-builder.Services.AddScoped<IProcessoMonitoradoService, ProcessoMonitoradoService>();
 builder.Services.AddScoped<IPortalClienteService, PortalClienteService>();
 builder.Services.AddScoped<IFinanceiroService, FinanceiroService>();
 builder.Services.AddScoped<IIndicadoresService, IndicadoresService>();
@@ -97,8 +96,11 @@ builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCl
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
-builder.Services.AddScoped<CapturaPublicacaoJob>();
-builder.Services.AddScoped<EscavadorCallbackPollingJob>();
+builder.Services.AddScoped<EscavadorMovimentacoesPollingJob>();
+builder.Services.AddScoped<EscavadorOabSyncJob>();
+builder.Services.AddScoped<PublicacaoClassificacaoService>();
+builder.Services.AddScoped<PublicacaoMapper>();
+builder.Services.AddScoped<ITenantOabService, TenantOabService>();
 builder.Services.AddScoped<EscavadorTierManagementJob>();
 
 builder.Services.AddHttpClient<IIAService, IAService>(client =>
@@ -356,11 +358,6 @@ RecurringJob.AddOrUpdate<MonitoramentoJob>(
     job => job.ExecutarAsync(),
     "0 6 * * *"); // daily at 06:00 UTC (03:00 Brasília)
 
-RecurringJob.AddOrUpdate<CapturaPublicacaoJob>(
-    "captura-publicacoes",
-    job => job.ExecutarAsync(),
-    "0 7 * * *"); // daily at 07:00 UTC, after MonitoramentoJob
-
 RecurringJob.AddOrUpdate<DjeJob>(
     "captura-dje",
     job => job.ExecutarAsync(CancellationToken.None),
@@ -371,10 +368,33 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     job => job.ExecutarAsync(),
     "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
 
-RecurringJob.AddOrUpdate<EscavadorCallbackPollingJob>(
-    "escavador-callback-polling",
+// Escavador: modo configurável (Webhook | Polling | Hybrid).
+// Webhook é primário; polling é backstop para Hybrid/Polling.
+var escavadorModo = builder.Configuration["Escavador:ModoCaptura"] ?? "Hybrid";
+if (escavadorModo is "Polling" or "Hybrid")
+{
+    var cron = builder.Configuration["Escavador:PollingCron"] ?? "0 6 * * *";
+    RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
+        "escavador-movimentacoes-polling",
+        job => job.ExecutarAsync(),
+        cron);
+}
+
+// Classificação IA assíncrona: a cada 5 min enriquece Publicacoes Escavador recém-criadas
+RecurringJob.AddOrUpdate<PublicacaoClassificacaoService>(
+    "publicacao-classificacao-ia",
     job => job.ExecutarAsync(),
-    "0 6 * * *"); // fallback diário às 06:00 — webhooks são o canal principal
+    "*/5 * * * *");
+
+// Sync de OABs com Escavador (retry de monitoramentos não criados)
+if (builder.Configuration.GetValue<bool>("Escavador:OabSyncEnabled", true))
+{
+    var oabCron = builder.Configuration["Escavador:OabSyncCron"] ?? "0 5 * * *";
+    RecurringJob.AddOrUpdate<EscavadorOabSyncJob>(
+        "escavador-oab-sync",
+        job => job.ExecutarAsync(),
+        oabCron);
+}
 
 RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
     "escavador-tier-semanal",

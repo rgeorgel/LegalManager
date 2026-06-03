@@ -115,6 +115,185 @@ public class EscavadorHttpClient : IEscavadorService
         }
     }
 
+    public async Task MarcarCallbackRecebidoAsync(string uuid, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(uuid)) return;
+        _logger.LogInformation("[Escavador] Marcando callback uuid={Uuid} como recebido", uuid);
+        try
+        {
+            var body = JsonSerializer.Serialize(new { uuids = new[] { uuid } });
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/callbacks/recebidos")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+            var resp = await _http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode)
+                _logger.LogWarning("[Escavador] Falha ao marcar callback {Uuid}: {S}", uuid, resp.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro ao marcar callback {Uuid}", uuid);
+        }
+    }
+
+    public async Task<EscavadorMovimentacaoDto?> BuscarMovimentacoesPorUuidAsync(
+        string uuid, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Buscando movimentacao uuid={Uuid}", uuid);
+        try
+        {
+            var resp = await _http.GetAsync($"/api/v2/movimentacoes/{Uri.EscapeDataString(uuid)}", ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] {S} ao buscar movimentacao {Uuid}", resp.StatusCode, uuid);
+                return null;
+            }
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            var wrapper = JsonSerializer.Deserialize<EscavadorSingleWrapper<MovimentacaoData>>(json, JsonOpts);
+            return wrapper?.Data is { } m ? MapMovimentacao(m, json) : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro ao buscar movimentacao {Uuid}", uuid);
+            return null;
+        }
+    }
+
+    public async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> ListarMovimentacoesPorProcessoAsync(
+        string numeroCNJ, DateTime? desde, int pagina = 1, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ} desde={Desde}", numeroCNJ, desde);
+        var de = desde ?? DateTime.UtcNow.AddDays(-7);
+        var url = $"/api/v2/processos/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?page={pagina}&de={de:yyyy-MM-dd}";
+        return await FetchMovimentacoesPaged(url, ct);
+    }
+
+    public async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
+        string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Buscando publicacoes OAB {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
+            uf, oab, de, ate);
+        var url = $"/api/v1/oab/{Uri.EscapeDataString(uf.ToUpperInvariant())}/{Uri.EscapeDataString(oab)}/publicacoes" +
+                  $"?de={de:yyyy-MM-dd}&ate={ate:yyyy-MM-dd}&page={pagina}";
+        return await FetchPublicacoesPaged(url, ct);
+    }
+
+    private async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> FetchMovimentacoesPaged(
+        string url, CancellationToken ct)
+    {
+        try
+        {
+            var resp = await _http.GetAsync(url, ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
+                return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
+            }
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<MovimentacaoData>>(json, JsonOpts);
+            if (wrapper == null) return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
+            var data = wrapper.Data?.Select(m => MapMovimentacao(m, "{}")).ToList() ?? [];
+            return new EscavadorPagedResult<EscavadorMovimentacaoDto>(
+                data, data.Count, wrapper.Meta?.CurrentPage ?? 1, wrapper.Meta?.LastPage ?? 1,
+                (wrapper.Meta?.CurrentPage ?? 1) < (wrapper.Meta?.LastPage ?? 1));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
+            return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
+        }
+    }
+
+    private async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> FetchPublicacoesPaged(
+        string url, CancellationToken ct)
+    {
+        try
+        {
+            var resp = await _http.GetAsync(url, ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
+                return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
+            }
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<PublicacaoData>>(json, JsonOpts);
+            if (wrapper == null) return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
+            var data = wrapper.Data?.Select(MapPublicacao).ToList() ?? [];
+            return new EscavadorPagedResult<EscavadorPublicacaoDto>(
+                data, data.Count, wrapper.Meta?.CurrentPage ?? 1, wrapper.Meta?.LastPage ?? 1,
+                (wrapper.Meta?.CurrentPage ?? 1) < (wrapper.Meta?.LastPage ?? 1));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
+            return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
+        }
+    }
+
+    private static EscavadorMovimentacaoDto MapMovimentacao(MovimentacaoData r, string jsonBruto) => new(
+        r.Id, r.Uuid ?? string.Empty, r.Data,
+        r.Conteudo, r.Snippet, r.Tipo, r.Diario,
+        r.DiarioId, r.DiarioSigla, r.OrigemEstado,
+        r.Link, r.LinkApi, r.LinkPdf, r.LinkPdfApi, r.NumeroCnj, jsonBruto);
+
+    private static EscavadorPublicacaoDto MapPublicacao(PublicacaoData r) => new(
+        r.Id, r.Uuid ?? string.Empty, r.NumeroCnj, r.Data ?? DateTime.UtcNow,
+        r.Diario, r.Snippet, r.LinkPdf, "{}");
+
+    public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoOabAsync(
+        string uf, string numero, string? nomeAdvogado, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Criando monitoramento OAB {Uf}/{Numero}", uf, numero);
+        try
+        {
+            var ufUpper = (uf ?? "").ToUpperInvariant();
+            // Variações comuns de como a OAB aparece em publicações: "123456", "123456/SP", "OAB/SP 123456"
+            var variacoes = new List<string>
+            {
+                numero,
+                $"{numero}/{ufUpper}",
+                $"OAB/{ufUpper} {numero}",
+                $"OAB {numero}/{ufUpper}"
+            };
+
+            // termos_auxiliares filtra para garantir que a publicação realmente se refere
+            // ao advogado certo (evita falsos positivos de OABs com mesmo número em UFs diferentes).
+            var termosAuxiliares = new List<object>();
+            if (!string.IsNullOrWhiteSpace(nomeAdvogado))
+            {
+                termosAuxiliares.Add(new { condicao = "CONTEM", termo = nomeAdvogado });
+            }
+
+            var body = new
+            {
+                tipo = "TERMO",
+                termo = numero,
+                variacoes = variacoes.ToArray(),
+                termos_auxiliares = termosAuxiliares.ToArray()
+            };
+            var json = JsonSerializer.Serialize(body);
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v1/monitoramentos")
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            var resp = await _http.SendAsync(req, ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] Falha ao criar monitoramento OAB {Uf}/{Numero}: {S}", ufUpper, numero, resp.StatusCode);
+                return null;
+            }
+            var respJson = await resp.Content.ReadAsStringAsync(ct);
+            var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(respJson, JsonOpts);
+            if (doc?.Data == null) return null;
+            return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro ao criar monitoramento OAB {Uf}/{Numero}", uf, numero);
+            return null;
+        }
+    }
+
     // Follows cursor pagination (links.next) and returns all pages merged into one result
     private async Task<EscavadorPagedResult<EscavadorProcessoDto>> FetchAllByCursor(
         string firstUrl, CancellationToken ct)
@@ -328,5 +507,35 @@ public class EscavadorHttpClient : IEscavadorService
         [JsonPropertyName("descricao")] public string? Descricao { get; set; }
         [JsonPropertyName("texto")] public string? Texto { get; set; }
         [JsonPropertyName("data")] public DateTime? Data { get; set; }
+    }
+
+    private sealed class MovimentacaoData
+    {
+        [JsonPropertyName("id")] public long Id { get; set; }
+        [JsonPropertyName("uuid")] public string? Uuid { get; set; }
+        [JsonPropertyName("data")] public DateTime? Data { get; set; }
+        [JsonPropertyName("conteudo")] public string? Conteudo { get; set; }
+        [JsonPropertyName("snippet")] public string? Snippet { get; set; }
+        [JsonPropertyName("tipo")] public string? Tipo { get; set; }
+        [JsonPropertyName("diario")] public string? Diario { get; set; }
+        [JsonPropertyName("diario_id")] public long? DiarioId { get; set; }
+        [JsonPropertyName("diario_sigla")] public string? DiarioSigla { get; set; }
+        [JsonPropertyName("origem_estado")] public string? OrigemEstado { get; set; }
+        [JsonPropertyName("link")] public string? Link { get; set; }
+        [JsonPropertyName("link_api")] public string? LinkApi { get; set; }
+        [JsonPropertyName("link_pdf")] public string? LinkPdf { get; set; }
+        [JsonPropertyName("link_pdf_api")] public string? LinkPdfApi { get; set; }
+        [JsonPropertyName("numero_cnj")] public string? NumeroCnj { get; set; }
+    }
+
+    private sealed class PublicacaoData
+    {
+        [JsonPropertyName("id")] public long Id { get; set; }
+        [JsonPropertyName("uuid")] public string? Uuid { get; set; }
+        [JsonPropertyName("numero_cnj")] public string? NumeroCnj { get; set; }
+        [JsonPropertyName("data")] public DateTime? Data { get; set; }
+        [JsonPropertyName("diario")] public string? Diario { get; set; }
+        [JsonPropertyName("snippet")] public string? Snippet { get; set; }
+        [JsonPropertyName("link_pdf")] public string? LinkPdf { get; set; }
     }
 }

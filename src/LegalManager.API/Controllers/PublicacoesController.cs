@@ -27,6 +27,7 @@ public class PublicacoesController : ControllerBase
         [FromQuery] Guid? processoId,
         [FromQuery] string? tipo,
         [FromQuery] string? status,
+        [FromQuery] string? fonteCaptura,
         [FromQuery] DateTime? de,
         [FromQuery] DateTime? ate,
         [FromQuery] int page = 1,
@@ -39,6 +40,7 @@ public class PublicacoesController : ControllerBase
             processoId,
             tipo != null && Enum.TryParse<TipoPublicacao>(tipo, true, out var t) ? t : null,
             status != null && Enum.TryParse<StatusPublicacao>(status, true, out var s) ? s : null,
+            fonteCaptura != null && Enum.TryParse<FonteCaptura>(fonteCaptura, true, out var f) ? f : null,
             de, ate, page, pageSize);
         return Ok(await _service.GetAllAsync(filtro, ct));
     }
