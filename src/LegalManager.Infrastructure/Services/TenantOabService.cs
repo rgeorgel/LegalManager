@@ -211,7 +211,8 @@ public class TenantOabService : ITenantOabService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[TenantOab] Erro ao sincronizar OAB {Id} com Escavador", oab.Id);
-            oab.SyncError = ex.Message;
+            var msg = ex.Message;
+            oab.SyncError = msg.Length > 300 ? msg[..300] + "…" : msg;
         }
     }
 
