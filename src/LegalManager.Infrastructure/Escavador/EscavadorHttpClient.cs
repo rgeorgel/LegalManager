@@ -47,9 +47,9 @@ public class EscavadorHttpClient : IEscavadorService
         try
         {
             var body = frequencia != null
-                ? JsonSerializer.Serialize(new { numero_processo = numeroCNJ, frequencia })
-                : JsonSerializer.Serialize(new { numero_processo = numeroCNJ });
-            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/monitoramento-processos")
+                ? JsonSerializer.Serialize(new { numero = numeroCNJ, frequencia })
+                : JsonSerializer.Serialize(new { numero = numeroCNJ });
+            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/monitoramentos/processos")
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
@@ -76,7 +76,7 @@ public class EscavadorHttpClient : IEscavadorService
         _logger.LogInformation("[Escavador] Removendo monitoramento {Id}", id);
         try
         {
-            var resp = await _http.DeleteAsync($"/api/v2/monitoramento-processos/{id}", ct);
+            var resp = await _http.DeleteAsync($"/api/v2/monitoramentos/processos/{id}", ct);
             return resp.IsSuccessStatusCode;
         }
         catch (Exception ex)
