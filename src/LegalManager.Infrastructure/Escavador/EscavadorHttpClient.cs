@@ -282,7 +282,7 @@ public class EscavadorHttpClient : IEscavadorService
             {
                 // "Você já monitora este termo" — monitoramento existe remotamente mas não temos o ID local.
                 // Busca o monitoramento existente pela listagem para recuperar o ID.
-                if ((int)resp.StatusCode == 422 && respJson.Contains("já monitora"))
+                if ((int)resp.StatusCode == 422 && respJson.Contains("monitora este termo", StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} já existe remotamente, buscando ID...", ufUpper, numero);
                     return await BuscarMonitoramentoExistentePorTermoAsync(numero, ct);
