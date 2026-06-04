@@ -322,7 +322,8 @@ public class EscavadorHttpClient : IEscavadorService
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             JsonElement items = default;
-            if (root.TryGetProperty("data", out var data)) items = data;
+            if (root.TryGetProperty("items", out var itemsKey)) items = itemsKey;
+            else if (root.TryGetProperty("data", out var data)) items = data;
             else if (root.TryGetProperty("monitoramentos", out var mons)) items = mons;
             else
             {
