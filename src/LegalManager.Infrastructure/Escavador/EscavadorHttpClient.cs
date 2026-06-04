@@ -265,6 +265,7 @@ public class EscavadorHttpClient : IEscavadorService
 
             var body = new
             {
+                tipo = "termo",
                 monitorar_em_todos_diarios = true,
                 termo = numero,
                 variacoes,
