@@ -280,6 +280,13 @@ public class EscavadorHttpClient : IEscavadorService
             var respJson = await resp.Content.ReadAsStringAsync(ct);
             if (!resp.IsSuccessStatusCode)
             {
+                // "Você já monitora este termo" — monitoramento existe remotamente mas não temos o ID local.
+                // Busca o monitoramento existente pela listagem para recuperar o ID.
+                if ((int)resp.StatusCode == 422 && respJson.Contains("já monitora"))
+                {
+                    _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} já existe remotamente, buscando ID...", ufUpper, numero);
+                    return await BuscarMonitoramentoExistentePorTermoAsync(numero, ct);
+                }
                 _logger.LogWarning("[Escavador] Falha ao criar monitoramento OAB {Uf}/{Numero}: {S} — {Body}",
                     ufUpper, numero, resp.StatusCode, respJson);
                 throw new HttpRequestException($"Escavador {(int)resp.StatusCode}: {respJson}");
@@ -296,6 +303,48 @@ public class EscavadorHttpClient : IEscavadorService
         catch (Exception ex)
         {
             _logger.LogError(ex, "[Escavador] Erro ao criar monitoramento OAB {Uf}/{Numero}", uf, numero);
+            return null;
+        }
+    }
+
+    private async Task<EscavadorMonitoramentoDto?> BuscarMonitoramentoExistentePorTermoAsync(
+        string termo, CancellationToken ct)
+    {
+        try
+        {
+            var resp = await _http.GetAsync("/api/v1/monitoramentos", ct);
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] Falha ao listar monitoramentos: {S}", resp.StatusCode);
+                return null;
+            }
+            // A API retorna {"data": [...]} ou {"monitoramentos": [...]}
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            JsonElement items = default;
+            if (root.TryGetProperty("data", out var data)) items = data;
+            else if (root.TryGetProperty("monitoramentos", out var mons)) items = mons;
+            else return null;
+
+            foreach (var item in items.EnumerateArray())
+            {
+                var itemTermo = item.TryGetProperty("termo", out var t) ? t.GetString() : null;
+                if (string.Equals(itemTermo, termo, StringComparison.OrdinalIgnoreCase)
+                    && item.TryGetProperty("id", out var idProp)
+                    && idProp.TryGetInt64(out var id))
+                {
+                    var status = item.TryGetProperty("status", out var s) ? s.GetString() : null;
+                    _logger.LogInformation("[Escavador] Monitoramento existente encontrado: id={Id} termo={Termo}", id, termo);
+                    return new EscavadorMonitoramentoDto(id, status);
+                }
+            }
+            _logger.LogWarning("[Escavador] Monitoramento para termo={Termo} não encontrado na listagem", termo);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro ao buscar monitoramento existente para termo={Termo}", termo);
             return null;
         }
     }
