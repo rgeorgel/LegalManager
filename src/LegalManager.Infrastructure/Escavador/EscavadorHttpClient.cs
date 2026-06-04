@@ -284,14 +284,14 @@ public class EscavadorHttpClient : IEscavadorService
                     ufUpper, numero, resp.StatusCode, respJson);
                 throw new HttpRequestException($"Escavador {(int)resp.StatusCode}: {respJson}");
             }
-            var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(respJson, JsonOpts);
-            if (doc?.Data == null)
+            var doc = JsonSerializer.Deserialize<EscavadorMonitoramentoV1Wrapper>(respJson, JsonOpts);
+            if (doc?.Monitoramento == null)
             {
-                _logger.LogWarning("[Escavador] Monitoramento OAB criado (200) mas resposta não contém data.id — Body: {Body}", respJson);
+                _logger.LogWarning("[Escavador] Monitoramento OAB criado (200) mas resposta não contém monitoramento.id — Body: {Body}", respJson);
                 return null;
             }
-            _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} criado com id={Id}", ufUpper, numero, doc.Data.Id);
-            return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
+            _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} criado com id={Id}", ufUpper, numero, doc.Monitoramento.Id);
+            return new EscavadorMonitoramentoDto(doc.Monitoramento.Id, doc.Monitoramento.Status);
         }
         catch (Exception ex)
         {
@@ -439,6 +439,12 @@ public class EscavadorHttpClient : IEscavadorService
     private sealed class EscavadorSingleWrapper<T>
     {
         [JsonPropertyName("data")] public T? Data { get; set; }
+    }
+
+    // Resposta do POST /api/v1/monitoramentos (termo) — chave é "monitoramento", não "data"
+    private sealed class EscavadorMonitoramentoV1Wrapper
+    {
+        [JsonPropertyName("monitoramento")] public MonitoramentoData? Monitoramento { get; set; }
     }
 
     private sealed class EscavadorMeta
