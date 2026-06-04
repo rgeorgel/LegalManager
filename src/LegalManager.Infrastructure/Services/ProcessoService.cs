@@ -139,13 +139,26 @@ public class ProcessoService : IProcessoService
                 {
                     processo.EscavadorMonitoramentoId = mon.Id.ToString();
                     processo.MonitoramentoSemanal = dormante;
+                    processo.Monitorado = true;
+                }
+                else
+                {
+                    // Escavador não encontrou/aceitou o processo — não marca como monitorado
+                    // para evitar estado inconsistente (Monitorado=true sem EscavadorMonitoramentoId).
+                    throw new InvalidOperationException(
+                        $"Não foi possível ativar o monitoramento no Escavador para o processo {processo.NumeroCNJ}. " +
+                        "O processo pode não estar disponível para monitoramento automático.");
                 }
             }
             else if (!dto.Monitorado.Value && processo.Monitorado)
             {
                 await CancelarMonitoramentoEscavadorAsync(processo);
+                processo.Monitorado = false;
             }
-            processo.Monitorado = dto.Monitorado.Value;
+            else
+            {
+                processo.Monitorado = dto.Monitorado.Value;
+            }
         }
 
         if (dto.Status is StatusProcesso.Encerrado or StatusProcesso.Arquivado)

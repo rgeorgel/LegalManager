@@ -101,10 +101,21 @@ public class ProcessosController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProcessoResponseDto>> Update(Guid id, UpdateProcessoDto dto, CancellationToken ct)
     {
-        var existing = await _service.GetByIdAsync(id, ct);
-        var result = await _service.UpdateAsync(id, dto, ct);
-        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, id, existing, result, HttpContext.GetClientIpAddress()), ct);
-        return Ok(result);
+        try
+        {
+            var existing = await _service.GetByIdAsync(id, ct);
+            var result = await _service.UpdateAsync(id, dto, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, id, existing, result, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = "monitoramento_error", message = ex.Message });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPost("{id:guid}/encerrar")]
