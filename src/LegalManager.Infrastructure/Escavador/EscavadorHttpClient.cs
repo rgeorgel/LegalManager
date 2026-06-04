@@ -319,13 +319,17 @@ public class EscavadorHttpClient : IEscavadorService
                 _logger.LogWarning("[Escavador] Falha ao listar monitoramentos: {S}", resp.StatusCode);
                 return null;
             }
-            // A API retorna {"data": [...]} ou {"monitoramentos": [...]}
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             JsonElement items = default;
             if (root.TryGetProperty("data", out var data)) items = data;
             else if (root.TryGetProperty("monitoramentos", out var mons)) items = mons;
-            else return null;
+            else
+            {
+                _logger.LogWarning("[Escavador] GET /monitoramentos: formato inesperado — Body: {Body}",
+                    json.Length > 500 ? json[..500] : json);
+                return null;
+            }
 
             foreach (var item in items.EnumerateArray())
             {
