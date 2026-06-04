@@ -1,10 +1,13 @@
+using LegalManager.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260603210000_AddMissingPublicacaoColumns")]
     public partial class AddMissingPublicacaoColumns : Migration
     {
         /// <inheritdoc />
