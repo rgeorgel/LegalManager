@@ -247,10 +247,9 @@ public class EscavadorHttpClient : IEscavadorService
         try
         {
             var ufUpper = (uf ?? "").ToUpperInvariant();
-            // Variações comuns de como a OAB aparece em publicações: "123456", "123456/SP", "OAB/SP 123456"
-            var variacoes = new List<string>
+            // Máximo 3 variações aceitas pela API. Priorizamos as formas mais comuns em diários.
+            var variacoes = new[]
             {
-                numero,
                 $"{numero}/{ufUpper}",
                 $"OAB/{ufUpper} {numero}",
                 $"OAB {numero}/{ufUpper}"
@@ -266,9 +265,9 @@ public class EscavadorHttpClient : IEscavadorService
 
             var body = new
             {
-                tipo = "TERMO",
+                monitorar_em_todos_diarios = true,
                 termo = numero,
-                variacoes = variacoes.ToArray(),
+                variacoes,
                 termos_auxiliares = termosAuxiliares.ToArray()
             };
             var json = JsonSerializer.Serialize(body);
