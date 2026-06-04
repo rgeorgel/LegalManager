@@ -27,7 +27,7 @@ public class EscavadorHttpClient : IEscavadorService
         string oab, string uf, int pagina = 1, CancellationToken ct = default)
     {
         _logger.LogInformation("[Escavador] Buscando processos por OAB {Oab}/{Uf}", oab, uf);
-        var firstUrl = $"/api/v2/advogado/processos?oab_estado={Uri.EscapeDataString(uf)}&oab_numero={Uri.EscapeDataString(oab)}";
+        var firstUrl = $"/api/v2/advogado/processos?oab_estado={Uri.EscapeDataString(uf)}&oab_numero={Uri.EscapeDataString(oab)}&limit=100";
         return await FetchAllByCursor(firstUrl, ct);
     }
 
@@ -36,7 +36,7 @@ public class EscavadorHttpClient : IEscavadorService
     {
         var limpo = new string(cpfCnpj.Where(char.IsDigit).ToArray());
         _logger.LogInformation("[Escavador] Buscando processos por CPF/CNPJ");
-        var firstUrl = $"/api/v2/envolvido/processos?documento={Uri.EscapeDataString(limpo)}";
+        var firstUrl = $"/api/v2/envolvido/processos?documento={Uri.EscapeDataString(limpo)}&limit=100";
         return await FetchAllByCursor(firstUrl, ct);
     }
 
