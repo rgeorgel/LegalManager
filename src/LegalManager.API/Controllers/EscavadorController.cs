@@ -291,7 +291,10 @@ public class EscavadorController : ControllerBase
             return true;
         }
         var auth = Request.Headers.Authorization.ToString();
-        return string.Equals(auth, $"Bearer {secret}", StringComparison.Ordinal);
+        var match = string.Equals(auth, $"Bearer {secret}", StringComparison.Ordinal);
+        if (!match)
+            Console.Error.WriteLine($"[Escavador] Callback token inválido — recebido: '{auth}'");
+        return match;
     }
 
     private async Task<PlanoTipo> GetTenantPlanoAsync(Guid tenantId)
