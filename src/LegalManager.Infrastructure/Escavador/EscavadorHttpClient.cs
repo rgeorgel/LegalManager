@@ -60,15 +60,16 @@ public class EscavadorHttpClient : IEscavadorService
                 _logger.LogWarning("[Escavador] Falha ao criar monitoramento para {CNJ}: {S} — {Body}", numeroCNJ, resp.StatusCode, json);
                 return null;
             }
-            _logger.LogInformation("[Escavador] Resposta POST monitoramento processo — Body: {Body}",
-                json.Length > 300 ? json[..300] : json);
-            var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(json, JsonOpts);
-            if (doc?.Data == null)
+            // v2 retorna o objeto diretamente na raiz (sem wrapper "data")
+            var doc = JsonSerializer.Deserialize<MonitoramentoProcessoV2Response>(json, JsonOpts);
+            if (doc == null || doc.Id == 0)
             {
-                _logger.LogWarning("[Escavador] Monitoramento processo criado mas resposta não contém data.id — Body: {Body}", json);
+                _logger.LogWarning("[Escavador] Monitoramento processo criado mas resposta não contém id — Body: {Body}",
+                    json.Length > 300 ? json[..300] : json);
                 return null;
             }
-            return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
+            _logger.LogInformation("[Escavador] Monitoramento processo {CNJ} criado com id={Id}", numeroCNJ, doc.Id);
+            return new EscavadorMonitoramentoDto(doc.Id, doc.Status);
         }
         catch (Exception ex)
         {
@@ -559,6 +560,13 @@ public class EscavadorHttpClient : IEscavadorService
     }
 
     private sealed class MonitoramentoData
+    {
+        [JsonPropertyName("id")] public long Id { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+    }
+
+    // Resposta do POST /api/v2/monitoramentos/processos — id na raiz, sem wrapper "data"
+    private sealed class MonitoramentoProcessoV2Response
     {
         [JsonPropertyName("id")] public long Id { get; set; }
         [JsonPropertyName("status")] public string? Status { get; set; }
