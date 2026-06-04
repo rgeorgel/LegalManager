@@ -60,8 +60,14 @@ public class EscavadorHttpClient : IEscavadorService
                 _logger.LogWarning("[Escavador] Falha ao criar monitoramento para {CNJ}: {S} — {Body}", numeroCNJ, resp.StatusCode, json);
                 return null;
             }
+            _logger.LogInformation("[Escavador] Resposta POST monitoramento processo — Body: {Body}",
+                json.Length > 300 ? json[..300] : json);
             var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(json, JsonOpts);
-            if (doc?.Data == null) return null;
+            if (doc?.Data == null)
+            {
+                _logger.LogWarning("[Escavador] Monitoramento processo criado mas resposta não contém data.id — Body: {Body}", json);
+                return null;
+            }
             return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
         }
         catch (Exception ex)
@@ -77,6 +83,12 @@ public class EscavadorHttpClient : IEscavadorService
         try
         {
             var resp = await _http.DeleteAsync($"/api/v2/monitoramentos/processos/{id}", ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("[Escavador] Falha ao remover monitoramento {Id}: {S} — {Body}",
+                    id, resp.StatusCode, body.Length > 200 ? body[..200] : body);
+            }
             return resp.IsSuccessStatusCode;
         }
         catch (Exception ex)
