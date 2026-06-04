@@ -11,9 +11,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Variacoes",
-                table: "TenantOabs");
+            // Variacoes existia no snapshot do EF mas nunca foi criada no banco em fresh installs.
+            migrationBuilder.Sql(@"ALTER TABLE ""TenantOabs"" DROP COLUMN IF EXISTS ""Variacoes"";");
 
             migrationBuilder.AddColumn<long>(
                 name: "EscavadorMonitoramentoId",
