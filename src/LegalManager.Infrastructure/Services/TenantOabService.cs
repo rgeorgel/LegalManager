@@ -226,7 +226,7 @@ public class TenantOabService : ITenantOabService
         oab.SyncError = null;
         try
         {
-            await _escavador.RemoverMonitoramentoAsync(monId);
+            await _escavador.RemoverMonitoramentoTermoAsync(monId);
         }
         catch (Exception ex)
         {

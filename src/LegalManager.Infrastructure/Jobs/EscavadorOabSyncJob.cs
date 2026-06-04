@@ -69,7 +69,7 @@ public class EscavadorOabSyncJob
                     {
                         var oldId = oab.EscavadorMonitoramentoId.Value;
                         oab.EscavadorMonitoramentoId = null;
-                        try { await _escavador.RemoverMonitoramentoAsync(oldId); }
+                        try { await _escavador.RemoverMonitoramentoTermoAsync(oldId); }
                         catch (Exception ex)
                         {
                             _logger.LogWarning(ex, "[EscavadorOabSyncJob] Falha ao remover monitoramento órfão {Id}", oldId);

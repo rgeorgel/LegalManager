@@ -87,6 +87,7 @@ public interface IEscavadorService
         string numeroCNJ, string? frequencia = null, CancellationToken ct = default);
 
     Task<bool> RemoverMonitoramentoAsync(long id, CancellationToken ct = default);
+    Task<bool> RemoverMonitoramentoTermoAsync(long id, CancellationToken ct = default);
 
     Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
         int pagina = 1, CancellationToken ct = default);

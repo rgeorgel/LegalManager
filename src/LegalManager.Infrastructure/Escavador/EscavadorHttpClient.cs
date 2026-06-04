@@ -80,10 +80,21 @@ public class EscavadorHttpClient : IEscavadorService
 
     public async Task<bool> RemoverMonitoramentoAsync(long id, CancellationToken ct = default)
     {
-        _logger.LogInformation("[Escavador] Removendo monitoramento {Id}", id);
+        _logger.LogInformation("[Escavador] Removendo monitoramento processo {Id}", id);
+        return await RemoverAsync($"/api/v2/monitoramentos/processos/{id}", id, ct);
+    }
+
+    public async Task<bool> RemoverMonitoramentoTermoAsync(long id, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Removendo monitoramento termo {Id}", id);
+        return await RemoverAsync($"/api/v1/monitoramentos/{id}", id, ct);
+    }
+
+    private async Task<bool> RemoverAsync(string url, long id, CancellationToken ct)
+    {
         try
         {
-            var resp = await _http.DeleteAsync($"/api/v2/monitoramentos/processos/{id}", ct);
+            var resp = await _http.DeleteAsync(url, ct);
             if (!resp.IsSuccessStatusCode)
             {
                 var body = await resp.Content.ReadAsStringAsync(ct);

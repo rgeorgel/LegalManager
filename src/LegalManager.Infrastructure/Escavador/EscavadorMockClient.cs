@@ -103,6 +103,12 @@ public class EscavadorMockClient : IEscavadorService
         return Task.FromResult(true);
     }
 
+    public Task<bool> RemoverMonitoramentoTermoAsync(long id, CancellationToken ct = default)
+    {
+        _logger.LogWarning("[Escavador MOCK] RemoverMonitoramentoTermoAsync {Id}", id);
+        return Task.FromResult(true);
+    }
+
     public Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
         int pagina = 1, CancellationToken ct = default)
     {
