@@ -78,9 +78,8 @@ export async function apiFetch(path, options = {}) {
     if (contentType.includes('application/json')) {
       try {
         const body = await res.json();
-        errorMsg = body.message || body.title || body.errors
-          ? Object.values(body.errors || {}).flat().join('; ')
-          : errorMsg;
+        errorMsg = body.message || body.title
+          || (body.errors ? Object.values(body.errors).flat().join('; ') : errorMsg);
       } catch {}
     } else {
       const text = await res.text();
