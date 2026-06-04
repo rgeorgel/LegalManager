@@ -285,7 +285,12 @@ public class EscavadorHttpClient : IEscavadorService
                 throw new HttpRequestException($"Escavador {(int)resp.StatusCode}: {respJson}");
             }
             var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(respJson, JsonOpts);
-            if (doc?.Data == null) return null;
+            if (doc?.Data == null)
+            {
+                _logger.LogWarning("[Escavador] Monitoramento OAB criado (200) mas resposta não contém data.id — Body: {Body}", respJson);
+                return null;
+            }
+            _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} criado com id={Id}", ufUpper, numero, doc.Data.Id);
             return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
         }
         catch (Exception ex)
