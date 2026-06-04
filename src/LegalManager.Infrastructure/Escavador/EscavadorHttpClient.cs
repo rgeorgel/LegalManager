@@ -54,12 +54,12 @@ public class EscavadorHttpClient : IEscavadorService
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
             var resp = await _http.SendAsync(req, ct);
+            var json = await resp.Content.ReadAsStringAsync(ct);
             if (!resp.IsSuccessStatusCode)
             {
-                _logger.LogWarning("[Escavador] Falha ao criar monitoramento para {CNJ}: {S}", numeroCNJ, resp.StatusCode);
+                _logger.LogWarning("[Escavador] Falha ao criar monitoramento para {CNJ}: {S} — {Body}", numeroCNJ, resp.StatusCode, json);
                 return null;
             }
-            var json = await resp.Content.ReadAsStringAsync(ct);
             var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(json, JsonOpts);
             if (doc?.Data == null) return null;
             return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
@@ -277,12 +277,13 @@ public class EscavadorHttpClient : IEscavadorService
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
             var resp = await _http.SendAsync(req, ct);
+            var respJson = await resp.Content.ReadAsStringAsync(ct);
             if (!resp.IsSuccessStatusCode)
             {
-                _logger.LogWarning("[Escavador] Falha ao criar monitoramento OAB {Uf}/{Numero}: {S}", ufUpper, numero, resp.StatusCode);
-                return null;
+                _logger.LogWarning("[Escavador] Falha ao criar monitoramento OAB {Uf}/{Numero}: {S} — {Body}",
+                    ufUpper, numero, resp.StatusCode, respJson);
+                throw new HttpRequestException($"Escavador {(int)resp.StatusCode}: {respJson}");
             }
-            var respJson = await resp.Content.ReadAsStringAsync(ct);
             var doc = JsonSerializer.Deserialize<EscavadorSingleWrapper<MonitoramentoData>>(respJson, JsonOpts);
             if (doc?.Data == null) return null;
             return new EscavadorMonitoramentoDto(doc.Data.Id, doc.Data.Status);
