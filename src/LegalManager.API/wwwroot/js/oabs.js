@@ -73,7 +73,7 @@ function render() {
             </td>
             <td>
               <div class="oab-actions">
-                <button class="btn btn-secondary btn-sm" data-action="sincronizar" data-id="${o.id}" title="Recriar monitoramento no Escavador">⟳</button>
+                ${!o.sincronizada ? `<button class="btn btn-secondary btn-sm" data-action="sincronizar" data-id="${o.id}" title="Recriar monitoramento no Escavador">⟳</button>` : ''}
                 <button class="btn btn-secondary btn-sm" data-action="editar" data-id="${o.id}">Editar</button>
                 <button class="btn btn-secondary btn-sm" data-action="remover" data-id="${o.id}">Remover</button>
               </div>
