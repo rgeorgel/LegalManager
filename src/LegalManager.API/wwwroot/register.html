@@ -130,19 +130,17 @@
               <div class="plan-price">R$ 20<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
               <div class="plan-desc">1 usuário · 20 processos · Portal cliente · Financeiro</div>
             </label>
-            <label class="plan-option disabled">
-              <div class="plan-badge" style="background:#64748b;color:#f8fafc">Em breve</div>
-              <input type="radio" name="plano" value="1" disabled>
+            <label class="plan-option" id="planProLabel">
+              <input type="radio" name="plano" value="1">
               <div class="plan-name">Pro</div>
               <div class="plan-price">R$ 50<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
-              <div class="plan-desc">2 usuários · 100 processos · 1 captura · Templates</div>
+              <div class="plan-desc">2 usuários · 40 processos · 1 captura · Templates</div>
             </label>
-            <label class="plan-option disabled">
-              <div class="plan-badge" style="background:#64748b;color:#f8fafc">Em breve</div>
-              <input type="radio" name="plano" value="4" disabled>
+            <label class="plan-option" id="planMaxLabel">
+              <input type="radio" name="plano" value="4">
               <div class="plan-name">Max</div>
               <div class="plan-price">R$ 125<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
-              <div class="plan-desc">5 usuários · 250 processos · 3 capturas · 10 GB</div>
+              <div class="plan-desc">5 usuários · 80 processos · 3 capturas · 10 GB</div>
             </label>
           </div>
         </div>
@@ -202,7 +200,9 @@
     const radios = document.querySelectorAll('input[name="plano"]');
     const labels = {
       0: document.getElementById('planFreeLabel'),
-      3: document.getElementById('planPlusLabel')
+      3: document.getElementById('planPlusLabel'),
+      1: document.getElementById('planProLabel'),
+      4: document.getElementById('planMaxLabel')
     };
 
     function selectPlan(value) {

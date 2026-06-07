@@ -45,7 +45,7 @@ public class AuthService : IAuthService
 
         var planoFinal = beneficio?.Plano ?? dto.Plano;
 
-        if (planoFinal is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise)
+        if (planoFinal is PlanoTipo.Enterprise)
             throw new InvalidOperationException("Este plano não está disponível para cadastro direto.");
 
         var tenant = new Tenant

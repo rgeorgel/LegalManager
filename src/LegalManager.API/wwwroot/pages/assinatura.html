@@ -674,15 +674,15 @@
       btnPlus.className = 'btn btn-primary';
       if (!isAdmin) btnPlus.title = 'Apenas o administrador pode assinar';
 
-      btnPro.textContent = 'Em breve';
-      btnPro.disabled = true;
-      btnPro.className = 'btn btn-secondary';
-      btnPro.title = 'Este plano ainda não está disponível para assinatura';
+      btnPro.textContent = 'Assinar Pro';
+      btnPro.disabled = !isAdmin;
+      btnPro.className = 'btn btn-primary';
+      if (!isAdmin) btnPro.title = 'Apenas o administrador pode assinar';
 
-      btnMax.textContent = 'Em breve';
-      btnMax.disabled = true;
-      btnMax.className = 'btn btn-secondary';
-      btnMax.title = 'Este plano ainda não está disponível para assinatura';
+      btnMax.textContent = 'Assinar Max';
+      btnMax.disabled = !isAdmin;
+      btnMax.className = 'btn btn-outline';
+      if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
 
       dangerZone.style.display = 'none';
     } else if (isPlus) {
@@ -874,13 +874,46 @@
     );
   });
 
-  ['btnPro', 'btnMax'].forEach(id => {
-    const planoMap = { btnPro: 'Pro', btnMax: 'Max' };
-    document.getElementById(id).addEventListener('click', () => {
-      const plano = planoMap[id];
-      if (currentPlano === plano && currentStatus !== 'Cancelado') return;
-      abrirWaitlist(plano);
-    });
+  document.getElementById('btnPro').addEventListener('click', async () => {
+    if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
+    openModal(
+      'Assinar plano Pro',
+      'Você será redirecionado para o checkout seguro. O plano Pro custa R$ 50/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
+      'Ir para o checkout',
+      'btn-primary',
+      async () => {
+        try {
+          const result = await apiFetch('/assinatura/iniciar', {
+            method: 'POST',
+            body: JSON.stringify({ plano: 'Pro', periodo: 'Mensal' })
+          });
+          window.location.href = result.checkoutUrl;
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+        }
+      }
+    );
+  });
+
+  document.getElementById('btnMax').addEventListener('click', async () => {
+    if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
+    openModal(
+      'Assinar plano Max',
+      'Você será redirecionado para o checkout seguro. O plano Max custa R$ 125/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
+      'Ir para o checkout',
+      'btn-primary',
+      async () => {
+        try {
+          const result = await apiFetch('/assinatura/iniciar', {
+            method: 'POST',
+            body: JSON.stringify({ plano: 'Max', periodo: 'Mensal' })
+          });
+          window.location.href = result.checkoutUrl;
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+        }
+      }
+    );
   });
 
   async function loadHistorico() {
