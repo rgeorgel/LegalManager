@@ -853,66 +853,80 @@
     }
   });
 
+  const _precosMensais = { Plus: 20, Pro: 50, Max: 125 };
+
+  async function iniciarCheckout(planoAlvo) {
+    const btn = document.getElementById(`btn${planoAlvo}`);
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Aguarde...';
+
+    let result;
+    try {
+      result = await apiFetch('/assinatura/iniciar', {
+        method: 'POST',
+        body: JSON.stringify({ plano: planoAlvo, periodo: 'Mensal' })
+      });
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      showToast(e.message ?? 'Erro ao iniciar checkout.', false);
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = originalText;
+
+    const precoFull = _precosMensais[planoAlvo] ?? 0;
+    const fmt = v => v.toFixed(2).replace('.', ',');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody  = document.getElementById('modalBody');
+    const modal      = document.getElementById('confirmModal');
+    const confirmBtn = document.getElementById('modalConfirm');
+
+    if (result.prorado && result.credito > 0) {
+      modalTitle.textContent = `Upgrade para ${planoAlvo}`;
+      modalBody.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;color:var(--color-text-muted)">
+            <span>Plano ${planoAlvo}</span><span>R$ ${fmt(precoFull)}/mês</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#16a34a">
+            <span>Crédito (dias não utilizados)</span><span>− R$ ${fmt(result.credito)}</span>
+          </div>
+          <div style="border-top:1px solid var(--color-border);padding-top:8px;display:flex;justify-content:space-between;font-weight:600">
+            <span>Valor hoje</span><span>R$ ${fmt(result.valorProrado)}</span>
+          </div>
+          <div style="color:var(--color-text-muted);font-size:12px;margin-top:4px">A partir do próximo ciclo: R$ ${fmt(precoFull)}/mês</div>
+        </div>`;
+    } else {
+      modalTitle.textContent = `Assinar plano ${planoAlvo}`;
+      modalBody.textContent = `Você será redirecionado para o checkout seguro. O plano ${planoAlvo} custa R$ ${fmt(precoFull)}/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.`;
+    }
+
+    confirmBtn.textContent = 'Ir para o checkout';
+    confirmBtn.className = 'btn btn-primary';
+    modal.style.display = 'flex';
+
+    const closeModal = () => { modal.style.display = 'none'; };
+    document.getElementById('modalCancel').onclick = closeModal;
+    modal.onclick = e => { if (e.target === modal) closeModal(); };
+    confirmBtn.onclick = () => { closeModal(); window.location.href = result.checkoutUrl; };
+  }
+
   document.getElementById('btnPlus').addEventListener('click', async () => {
     if (currentPlano === 'Plus' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Plus',
-      'Você será redirecionado para o checkout seguro. O plano Plus custa R$ 20/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ plano: 'Plus', periodo: 'Mensal' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
-    );
+    await iniciarCheckout('Plus');
   });
 
   document.getElementById('btnPro').addEventListener('click', async () => {
     if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Pro',
-      'Você será redirecionado para o checkout seguro. O plano Pro custa R$ 50/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ plano: 'Pro', periodo: 'Mensal' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
-    );
+    await iniciarCheckout('Pro');
   });
 
   document.getElementById('btnMax').addEventListener('click', async () => {
     if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
-    openModal(
-      'Assinar plano Max',
-      'Você será redirecionado para o checkout seguro. O plano Max custa R$ 125/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.',
-      'Ir para o checkout',
-      'btn-primary',
-      async () => {
-        try {
-          const result = await apiFetch('/assinatura/iniciar', {
-            method: 'POST',
-            body: JSON.stringify({ plano: 'Max', periodo: 'Mensal' })
-          });
-          window.location.href = result.checkoutUrl;
-        } catch (e) {
-          showToast(e.message ?? 'Erro ao iniciar checkout.', false);
-        }
-      }
+    await iniciarCheckout('Max'
     );
   });
 

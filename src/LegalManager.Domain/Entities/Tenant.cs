@@ -17,6 +17,7 @@ public class Tenant
     public string? AbacatePayBillingId { get; set; }
     public string? PeriodoBilling { get; set; }  // "Mensal" | "Anual"
     public DateTime? PlanoExpiraEm { get; set; }
+    public DateTime? BillingCycleStart { get; set; }
     public string? VoucherUtilizado { get; set; }
 
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();

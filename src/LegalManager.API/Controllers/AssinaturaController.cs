@@ -30,9 +30,17 @@ public class AssinaturaController(
     AppDbContext context,
     ITenantContext tenantContext,
     UserManager<Usuario> userManager,
-    IConfiguration config) : ControllerBase
+    IConfiguration config,
+    ILogger<AssinaturaController> logger) : ControllerBase
 {
     private static List<PacoteCreditosDto> _pacotes => PacotesCreditos.Todos;
+
+    private static readonly Dictionary<PlanoTipo, decimal> _precosPorPlano = new()
+    {
+        { PlanoTipo.Plus,  20m },
+        { PlanoTipo.Pro,   50m },
+        { PlanoTipo.Max,  125m }
+    };
 
     [HttpGet]
     public async Task<IActionResult> GetStatus(CancellationToken ct)
@@ -96,23 +104,72 @@ public class AssinaturaController(
         if (admin is null) return Unauthorized();
 
         var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:6600";
-        var returnUrl = $"{frontendUrl}/pages/assinatura.html?checkout=pendente";
+        var returnUrl    = $"{frontendUrl}/pages/assinatura.html?checkout=pendente";
         var completionUrl = $"{frontendUrl}/pages/assinatura.html?checkout=processando";
 
+        // Detecta upgrade elegível para proration
+        var isUpgrade = tenant.Plano != PlanoTipo.Free
+                     && tenant.Plano != planoAlvo
+                     && tenant.BillingCycleStart.HasValue
+                     && tenant.Status == StatusTenant.Ativo
+                     && _precosPorPlano.ContainsKey(tenant.Plano)
+                     && _precosPorPlano.ContainsKey(planoAlvo);
+
         AbacatePayBillingResult result;
+        decimal credito = 0m;
+        decimal valorProrado = 0m;
+
         try
         {
-            result = await abacatePay.CriarBillingAsync(new CriarBillingInput(
-                TenantId: tenant.Id.ToString(),
-                NomeEscritorio: tenant.Nome,
-                Email: admin.Email!,
-                NomeAdmin: admin.Nome,
-                Cnpj: tenant.Cnpj,
-                Periodo: dto.Periodo,
-                ReturnUrl: returnUrl,
-                CompletionUrl: completionUrl,
-                Plano: planoAlvo.ToString()
-            ), ct);
+            if (isUpgrade)
+            {
+                var diasRestantes = Math.Max(0,
+                    (tenant.BillingCycleStart!.Value.AddDays(30) - DateTime.UtcNow).TotalDays);
+                credito = Math.Round((decimal)(diasRestantes / 30.0) * _precosPorPlano[tenant.Plano], 2);
+                valorProrado = Math.Max(1m, _precosPorPlano[planoAlvo] - credito);
+                var valorCentavos = (int)(valorProrado * 100);
+
+                // Cancela billing anterior para evitar cobrança dupla
+                if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId))
+                {
+                    try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
+                    catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} no upgrade", tenant.AbacatePayBillingId); }
+                }
+
+                result = await abacatePay.CriarCheckoutProradoAsync(new CriarCheckoutProradoInput(
+                    TenantId: tenant.Id.ToString(),
+                    NomeEscritorio: tenant.Nome,
+                    Email: admin.Email!,
+                    NomeAdmin: admin.Nome,
+                    Cnpj: tenant.Cnpj,
+                    PlanoAlvo: planoAlvo.ToString(),
+                    ValorProradoCentavos: valorCentavos,
+                    Periodo: dto.Periodo,
+                    ReturnUrl: returnUrl,
+                    CompletionUrl: completionUrl
+                ), ct);
+            }
+            else
+            {
+                // Cancela billing anterior ao renovar após cancelamento
+                if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId) && tenant.Status == StatusTenant.Cancelado)
+                {
+                    try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
+                    catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} antes da renovação", tenant.AbacatePayBillingId); }
+                }
+
+                result = await abacatePay.CriarBillingAsync(new CriarBillingInput(
+                    TenantId: tenant.Id.ToString(),
+                    NomeEscritorio: tenant.Nome,
+                    Email: admin.Email!,
+                    NomeAdmin: admin.Nome,
+                    Cnpj: tenant.Cnpj,
+                    Periodo: dto.Periodo,
+                    ReturnUrl: returnUrl,
+                    CompletionUrl: completionUrl,
+                    Plano: planoAlvo.ToString()
+                ), ct);
+            }
         }
         catch (InvalidOperationException ex)
         {
@@ -123,7 +180,13 @@ public class AssinaturaController(
         tenant.PeriodoBilling = dto.Periodo;
         await context.SaveChangesAsync(ct);
 
-        return Ok(new { checkoutUrl = result.CheckoutUrl });
+        return Ok(new
+        {
+            checkoutUrl  = result.CheckoutUrl,
+            prorado      = isUpgrade,
+            credito      = isUpgrade ? credito : 0m,
+            valorProrado = isUpgrade ? valorProrado : _precosPorPlano.GetValueOrDefault(planoAlvo, 0m)
+        });
     }
 
     [HttpPost("cancelar")]
@@ -145,12 +208,7 @@ public class AssinaturaController(
         if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId))
         {
             try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
-            catch (Exception ex)
-            {
-                Request.HttpContext.RequestServices
-                    .GetRequiredService<ILogger<AssinaturaController>>()
-                    .LogWarning(ex, "Erro ao cancelar billing {Id} no AbacatePay", tenant.AbacatePayBillingId);
-            }
+            catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} no AbacatePay", tenant.AbacatePayBillingId); }
         }
 
         tenant.Status = StatusTenant.Cancelado;
@@ -216,6 +274,7 @@ public class WebhookController(
     AppDbContext context,
     IConfiguration config,
     ICreditoService creditoService,
+    IAbacatePayService abacatePay,
     ILogger<WebhookController> logger) : ControllerBase
 {
     [HttpPost("abacatepay")]
@@ -299,9 +358,14 @@ public class WebhookController(
         tenant.TrialExpiraEm = null;
         tenant.PlanoExpiraEm = null;
         tenant.PeriodoBilling = periodo;
+        tenant.BillingCycleStart = DateTime.UtcNow;
 
         var valor = ExtrairValor(root);
         var billingId = ExtrairBillingId(root);
+        var descricao = tipo == "upgrade_prorado"
+            ? $"Upgrade → {tenant.Plano} {periodo} (prorado)"
+            : $"Assinatura {tenant.Plano} {periodo}";
+
         if (!string.IsNullOrEmpty(billingId))
         {
             context.Faturamentos.Add(new Faturamento
@@ -314,12 +378,50 @@ public class WebhookController(
                 Status = StatusFaturamento.Pago,
                 DataPagamento = DateTime.UtcNow,
                 DataCriacao = DateTime.UtcNow,
-                Descricao = $"Assinatura {tenant.Plano} {periodo}"
+                Descricao = descricao
             });
         }
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Plano {Plano} ativado via webhook para tenant {TenantId}", tenant.Plano, tenantId);
+
+        if (tipo == "upgrade_prorado")
+            await CriarSubscricaoRecorrenteAsync(tenant, periodo, ct);
+    }
+
+    private async Task CriarSubscricaoRecorrenteAsync(Tenant tenant, string periodo, CancellationToken ct)
+    {
+        try
+        {
+            var admin = await context.Users
+                .Where(u => u.TenantId == tenant.Id && u.Perfil == PerfilUsuario.Admin && u.Ativo)
+                .FirstOrDefaultAsync(ct);
+            if (admin is null) return;
+
+            var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:6600";
+
+            var result = await abacatePay.CriarBillingAsync(new CriarBillingInput(
+                TenantId: tenant.Id.ToString(),
+                NomeEscritorio: tenant.Nome,
+                Email: admin.Email!,
+                NomeAdmin: admin.Nome,
+                Cnpj: tenant.Cnpj,
+                Periodo: periodo,
+                ReturnUrl: $"{frontendUrl}/pages/assinatura.html?checkout=pendente",
+                CompletionUrl: $"{frontendUrl}/pages/assinatura.html?checkout=processando",
+                Plano: tenant.Plano.ToString()
+            ), ct);
+
+            tenant.AbacatePayBillingId = result.BillingId;
+            await context.SaveChangesAsync(ct);
+
+            logger.LogInformation("Subscription recorrente criada para tenant {TenantId} após upgrade prorado, plano {Plano}",
+                tenant.Id, tenant.Plano);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao criar subscription recorrente após upgrade prorado para tenant {TenantId}", tenant.Id);
+        }
     }
 
     private async Task HandleCreditosComprados(JsonElement root, Guid tenantId, CancellationToken ct)
