@@ -13,10 +13,10 @@ public static class PlanoRestricoes
     };
     public static int MaxProcessosMonitorados(PlanoTipo plano) => plano switch
     {
-        PlanoTipo.Free => 20,
-        PlanoTipo.Plus => 20,
-        PlanoTipo.Pro => 100,
-        PlanoTipo.Max => 250,
+        PlanoTipo.Free => 10,
+        PlanoTipo.Plus => 10,
+        PlanoTipo.Pro => 40,
+        PlanoTipo.Max => 80,
         _ => 500
     };
     public static int ArmazenamentoLimiteMB(PlanoTipo plano) => plano switch
