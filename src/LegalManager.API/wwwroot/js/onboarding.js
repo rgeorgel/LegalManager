@@ -60,16 +60,50 @@ function showStep(n) {
   document.querySelectorAll('.ob-step').forEach((el, i) => {
     el.style.display = i + 1 === n ? 'block' : 'none';
   });
-  const footers = ['obFooterStep1', 'obFooterStep2', 'obFooterStep3'];
+  const footers = ['obFooterStep1', 'obFooterStep2', 'obFooterStep3', 'obFooterLeitura'];
   footers.forEach((id, i) => {
     const el = document.getElementById(id);
     if (el) el.style.display = i + 1 === n ? 'flex' : 'none';
   });
 }
 
+export async function openReadOnlyModal(numero, uf) {
+  const oabInfoEl = document.getElementById('obOabLeituraInfo');
+  const listaEl = document.getElementById('obListaLeitura');
+
+  if (oabInfoEl) oabInfoEl.textContent = `${numero}/${uf}`;
+  if (listaEl) listaEl.innerHTML = '<div style="color:var(--color-text-muted);font-size:13px">Carregando...</div>';
+
+  document.getElementById('obFecharLeituraBtn')?.addEventListener('click', hideModal, { once: true });
+
+  showStep(4);
+  showModal();
+
+  try {
+    const oabs = await apiFetch('/onboarding/oabs-importadas');
+    if (!listaEl) return;
+    if (!oabs || oabs.length === 0) {
+      listaEl.innerHTML = '<div style="color:var(--color-text-muted);font-size:13px">Nenhuma OAB registrada.</div>';
+      return;
+    }
+    listaEl.innerHTML = oabs.map(o => {
+      const minha = o.numero === numero && o.uf === uf;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--color-border);border-radius:6px;margin-bottom:6px${minha ? ';background:#f0fdf4' : ''}">
+        <span style="font-family:monospace;font-weight:600;min-width:80px">${esc(o.numero)}/${esc(o.uf)}</span>
+        <span style="font-size:12px;color:var(--color-text-muted);flex:1">${esc(o.nomeUsuario)}</span>
+        <span style="font-size:12px;color:var(--color-text-muted)">${o.totalProcessos} processo(s)</span>
+        ${minha ? '<span style="font-size:10px;background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:100px;font-weight:600">Você</span>' : ''}
+      </div>`;
+    }).join('');
+  } catch {
+    if (listaEl) listaEl.innerHTML = '<div style="color:#dc2626;font-size:13px">Erro ao carregar lista.</div>';
+  }
+}
+
 let _marcarCompleto = true;
 let _onImportSuccess = null;
 let _oabResultados = [];
+let _oabAtual = { numero: '', uf: '' };
 
 async function completar() {
   if (_marcarCompleto) {
@@ -116,6 +150,8 @@ async function buscarPorOab() {
     erroEl.textContent = 'Selecione a UF.';
     return;
   }
+
+  _oabAtual = { numero: numeroOAB, uf };
 
   const btn = document.getElementById('obBuscarBtn');
   const loadingEl = document.getElementById('obLoadingSearch');
@@ -256,6 +292,12 @@ async function importar() {
     }
 
     showStep(3);
+    try {
+      await apiFetch('/onboarding/registrar-oab-importada', {
+        method: 'POST',
+        body: JSON.stringify({ numero: _oabAtual.numero, uf: _oabAtual.uf })
+      });
+    } catch {}
     if (_marcarCompleto) {
       try { await apiFetch('/onboarding/completar', { method: 'POST' }); } catch {}
     }

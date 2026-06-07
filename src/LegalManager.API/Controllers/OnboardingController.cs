@@ -56,7 +56,42 @@ public class OnboardingController : ControllerBase
     {
         var usuario = await _context.Users
             .FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
-        return Ok(new OnboardingStatusDto(usuario?.OnboardingImportacaoCompleto ?? false));
+        return Ok(new OnboardingStatusDto(
+            usuario?.OnboardingImportacaoCompleto ?? false,
+            usuario?.OabImportadaNumero,
+            usuario?.OabImportadaUf));
+    }
+
+    [HttpPost("registrar-oab-importada")]
+    public async Task<ActionResult> RegistrarOabImportada(
+        [FromBody] RegistrarOabImportadaDto dto, CancellationToken ct)
+    {
+        var usuario = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
+
+        if (usuario == null) return NotFound();
+        if (usuario.OabImportadaNumero != null) return Ok(); // já registrado
+
+        usuario.OabImportadaNumero = dto.Numero.Trim();
+        usuario.OabImportadaUf = dto.Uf.Trim().ToUpperInvariant();
+        await _context.SaveChangesAsync(ct);
+        return Ok();
+    }
+
+    [HttpGet("oabs-importadas")]
+    public async Task<ActionResult<List<OabImportadaDto>>> OabsImportadas(CancellationToken ct)
+    {
+        var tenantId = _tenantContext.TenantId;
+        var oabs = await _context.Users
+            .Where(u => u.TenantId == tenantId && u.OabImportadaNumero != null)
+            .OrderBy(u => u.Nome)
+            .Select(u => new OabImportadaDto(
+                u.OabImportadaNumero!,
+                u.OabImportadaUf!,
+                u.Nome,
+                _context.Processos.Count(p => p.TenantId == tenantId && p.AdvogadoResponsavelId == u.Id)))
+            .ToListAsync(ct);
+        return Ok(oabs);
     }
 
     [HttpPost("buscar-por-oab")]

@@ -11,6 +11,8 @@ public class Usuario : IdentityUser<Guid>
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public bool OnboardingImportacaoCompleto { get; set; } = false;
+    public string? OabImportadaNumero { get; set; }
+    public string? OabImportadaUf { get; set; }
     public DateTime? UltimoAcessoEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;

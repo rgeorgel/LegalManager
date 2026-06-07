@@ -84,6 +84,7 @@
       <button class="tab-btn active" data-tab="configuracoes">⚙️ Configurações</button>
       <button class="tab-btn" data-tab="usuarios">🔑 Usuários</button>
       <button class="tab-btn" data-tab="feriados">📅 Feriados</button>
+      <button class="tab-btn" data-tab="importacoes">📥 Importações OAB</button>
     </div>
 
     <!-- ===== TAB: CONFIGURAÇÕES ===== -->
@@ -358,6 +359,32 @@
       </div>
     </div><!-- /tab-feriados -->
 
+    <!-- ===== TAB: IMPORTAÇÕES OAB ===== -->
+    <div class="tab-content" id="tab-importacoes">
+      <div class="config-section">
+        <div class="config-section-title">OABs Importadas</div>
+        <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
+          Advogados da equipe que realizaram importação de processos via OAB. Cada usuário pode importar sua OAB uma vez.
+        </p>
+        <div id="oabsLoading" style="color:var(--color-text-muted);font-size:14px">Carregando...</div>
+        <div id="oabsContent" style="display:none">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Número OAB</th>
+                  <th>Estado</th>
+                  <th>Total de processos</th>
+                  <th>Importado por</th>
+                </tr>
+              </thead>
+              <tbody id="oabsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-importacoes -->
+
   </main>
 </div>
 
@@ -403,6 +430,7 @@
   // ============================================================
   let usuariosLoaded = false;
   let feriadosLoaded = false;
+  let oabsLoaded = false;
   let feriadosAll = [];
 
   function switchTab(name) {
@@ -419,6 +447,10 @@
       loadFeriados();
       feriadosLoaded = true;
     }
+    if (name === 'importacoes' && !oabsLoaded) {
+      loadOabsImportadas();
+      oabsLoaded = true;
+    }
   }
 
   document.querySelectorAll('.tab-btn').forEach(btn =>
@@ -428,6 +460,7 @@
   const initialTab = new URLSearchParams(window.location.search).get('tab');
   if (initialTab === 'usuarios') switchTab('usuarios');
   if (initialTab === 'feriados') switchTab('feriados');
+  if (initialTab === 'importacoes') switchTab('importacoes');
 
   // ============================================================
   // CONFIGURAÇÕES
@@ -1043,6 +1076,31 @@
       feriadosAll = feriadosAll.filter(f => f.id !== id);
       renderFeriados();
     } catch (err) { alert(err.message ?? 'Erro ao excluir feriado.'); }
+  }
+
+  // ============================================================
+  // IMPORTAÇÕES OAB
+  // ============================================================
+  async function loadOabsImportadas() {
+    try {
+      const oabs = await apiFetch('/onboarding/oabs-importadas');
+      document.getElementById('oabsLoading').style.display = 'none';
+      document.getElementById('oabsContent').style.display = '';
+      const tbody = document.getElementById('oabsTableBody');
+      if (!oabs.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--color-text-muted)">Nenhuma importação por OAB realizada ainda.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = oabs.map(o => `
+        <tr>
+          <td data-label="Número OAB"><span style="font-family:monospace;font-weight:600">${esc(o.numero)}</span></td>
+          <td data-label="Estado"><span class="badge badge-blue">${esc(o.uf)}</span></td>
+          <td data-label="Total de processos"><strong>${o.totalProcessos}</strong></td>
+          <td data-label="Importado por">${esc(o.nomeUsuario)}</td>
+        </tr>`).join('');
+    } catch {
+      document.getElementById('oabsLoading').textContent = 'Erro ao carregar importações.';
+    }
   }
 
   // ============================================================

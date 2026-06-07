@@ -538,6 +538,17 @@
           <pre id="obResultadoDetalhe" style="display:none;font-size:12px;color:var(--color-text-muted);background:var(--color-bg);padding:8px;border-radius:4px;text-align:left;white-space:pre-wrap"></pre>
         </div>
       </div>
+      <div class="ob-step" id="obStepLeitura" style="display:none">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:16px">
+          <div style="font-size:11px;color:#065f46;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Sua OAB importada</div>
+          <div id="obOabLeituraInfo" style="font-family:monospace;font-size:15px;font-weight:600"></div>
+        </div>
+        <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:12px">
+          A importação por OAB já foi realizada. Não é possível realizar uma nova importação.
+        </p>
+        <p style="font-size:13px;font-weight:600;margin-bottom:8px">OABs importadas pela equipe:</p>
+        <div id="obListaLeitura" style="max-height:240px;overflow-y:auto"></div>
+      </div>
     </div>
     <div class="modal-footer" style="gap:8px">
       <div id="obFooterStep1" style="display:flex;gap:8px;width:100%;justify-content:flex-end">
@@ -557,6 +568,9 @@
       <div id="obFooterStep3" style="display:none;width:100%;justify-content:flex-end">
         <button id="obConcluirBtn" class="btn btn-primary" type="button">Concluir</button>
       </div>
+      <div id="obFooterLeitura" style="display:none;width:100%;justify-content:flex-end">
+        <button id="obFecharLeituraBtn" class="btn btn-secondary" type="button">Fechar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -567,7 +581,7 @@ import { initLayout } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { mascaraCnj } from '/js/mascaras.js';
-import { initOnboardingModal, openOnboardingModal, startDots, stopDots } from '/js/onboarding.js';
+import { initOnboardingModal, openOnboardingModal, openReadOnlyModal, startDots, stopDots } from '/js/onboarding.js';
 
 initLayout();
 
@@ -1069,11 +1083,16 @@ document.getElementById('viewList').addEventListener('click', () => {
 await loadReferenceData();
 loadProcessos();
 
-initOnboardingModal({
-  marcarCompleto: false,
-  onImportSuccess: () => loadProcessos()
-});
-document.getElementById('btnImportarOab').addEventListener('click', openOnboardingModal);
+const oabStatus = await apiFetch('/onboarding/status').catch(() => ({ completo: false, oabImportadaNumero: null }));
+if (oabStatus.oabImportadaNumero && oabStatus.completo) {
+  document.getElementById('btnImportarOab').style.display = 'none';
+} else if (oabStatus.oabImportadaNumero) {
+  document.getElementById('btnImportarOab').addEventListener('click', () =>
+    openReadOnlyModal(oabStatus.oabImportadaNumero, oabStatus.oabImportadaUf));
+} else {
+  initOnboardingModal({ marcarCompleto: false, onImportSuccess: () => loadProcessos() });
+  document.getElementById('btnImportarOab').addEventListener('click', openOnboardingModal);
+}
 
 </script>
 </body>

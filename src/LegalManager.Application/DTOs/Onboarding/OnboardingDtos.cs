@@ -2,7 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LegalManager.Application.DTOs.Onboarding;
 
-public record OnboardingStatusDto(bool Completo);
+public record OnboardingStatusDto(bool Completo, string? OabImportadaNumero, string? OabImportadaUf);
+
+public record RegistrarOabImportadaDto([Required] string Numero, [Required] string Uf);
+
+public record OabImportadaDto(string Numero, string Uf, string NomeUsuario, int TotalProcessos);
 
 public record BuscarPorOabDto(
     [Required] string NumeroOAB,
