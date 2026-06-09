@@ -128,7 +128,13 @@
       "Bash(Select-Object -Last 10)",
       "PowerShell(Remove-Item *)",
       "PowerShell(dotnet clean src/LegalManager.API 2>&1 | Select-Object -Last 3; dotnet build src/LegalManager.API -q 2>&1 | Where-Object { $_ -notmatch \"NU1903\" } | Select-Object -Last 5)",
-      "PowerShell(Get-Process *)"
+      "PowerShell(Get-Process *)",
+      "Bash(Select-Object -Last 80)",
+      "PowerShell(powershell -ExecutionPolicy Bypass -File scripts/check-js.ps1 2>&1 | Select-Object -Last 80)",
+      "Bash(grep -E \"^-.*\\\\.cs$\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(echo \"exit:$?\")",
+      "Bash(grep -i \"\\\\.js$\")"
     ]
   }
 }

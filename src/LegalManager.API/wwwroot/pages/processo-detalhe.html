@@ -76,7 +76,10 @@
     .status-pendente { background:#fef3c7; color:#92400e; font-size:11px; padding:2px 8px; border-radius:4px; }
     .status-vencido  { background:#fee2e2; color:#b91c1c; font-size:11px; padding:2px 8px; border-radius:4px; }
     .status-cancelado{ background:#f3f4f6; color:#6b7280; font-size:11px; padding:2px 8px; border-radius:4px; }
-    @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} }
+    @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} .field-tip-popup{left:auto;right:0;transform:none;} .field-tip-popup::after{left:auto;right:10px;transform:none;} }
+    .field-tip { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:#e5e7eb; color:#6b7280; font-size:10px; font-weight:700; cursor:help; position:relative; flex-shrink:0; user-select:none; vertical-align:middle; margin-left:4px; }
+    .field-tip:hover .field-tip-popup, .field-tip:focus .field-tip-popup { display:block; }
+    .field-tip-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1f2937; color:#f3f4f6; border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; width:280px; line-height:1.55; z-index:300; white-space:normal; box-shadow:0 4px 16px rgba(0,0,0,.2); pointer-events:none; }
     .pdf-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
     .pdf-modal-overlay.open { display:flex; }
     .pdf-modal-content { background:#fff; border-radius:12px; width:90vw; height:90vh; max-width:1400px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.4); position:relative; flex:1; }
@@ -465,7 +468,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Monitorar Andamentos</label>
+            <label>Monitorar Andamentos <span class="field-tip" tabindex="0">?<span class="field-tip-popup">Quando ativo, a Causify consulta automaticamente novos andamentos no DataJud:<br><br>• <strong>Processos ativos recentes</strong>: verificados diariamente às 03h (horário de Brasília)<br>• <strong>Sem andamento há +180 dias</strong>: verificados semanalmente<br>• <strong>Status encerrado ou arquivado</strong>: não são verificados, mesmo se marcados<br><br>Ao detectar novos andamentos, o advogado responsável é notificado por e-mail e no sistema.</span></span></label>
             <select id="eMonitorado" class="form-control">
               <option value="false">Não</option>
               <option value="true">Sim</option>

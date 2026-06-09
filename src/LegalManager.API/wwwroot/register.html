@@ -289,6 +289,10 @@
           plano: planoSelecionado,
           voucher
         });
+        const planNames = { 0: 'Free', 3: 'Plus', 1: 'Pro', 4: 'Max' };
+        if (typeof gtag === 'function') {
+          gtag('event', 'sign_up', { method: planNames[planoSelecionado] ?? 'Free' });
+        }
         window.location.href = '/pages/dashboard.html';
       } catch (err) {
         alertEl.textContent = err.message;

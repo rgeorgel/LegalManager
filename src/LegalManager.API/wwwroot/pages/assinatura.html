@@ -574,6 +574,18 @@
   if (checkoutState === 'pendente') {
     showToast('Aguardando confirmação do pagamento. Isso pode levar alguns instantes.', true);
   } else if (checkoutState === 'processando') {
+    const gaPlan = sessionStorage.getItem('_gaCheckoutPlan');
+    if (gaPlan) {
+      sessionStorage.removeItem('_gaCheckoutPlan');
+      const prices = { Plus: 20, Pro: 50, Max: 125 };
+      if (typeof gtag === 'function') {
+        gtag('event', 'purchase', {
+          value: prices[gaPlan] ?? 0,
+          currency: 'BRL',
+          items: [{ item_name: gaPlan }]
+        });
+      }
+    }
     showToast('Pagamento em processamento! Seu plano será ativado em breve.', true);
   } else if (creditosState === 'pendente') {
     switchTab('creditos');
@@ -911,7 +923,11 @@
     const closeModal = () => { modal.style.display = 'none'; };
     document.getElementById('modalCancel').onclick = closeModal;
     modal.onclick = e => { if (e.target === modal) closeModal(); };
-    confirmBtn.onclick = () => { closeModal(); window.location.href = result.checkoutUrl; };
+    confirmBtn.onclick = () => {
+      closeModal();
+      sessionStorage.setItem('_gaCheckoutPlan', planoAlvo);
+      window.location.href = result.checkoutUrl;
+    };
   }
 
   document.getElementById('btnPlus').addEventListener('click', async () => {

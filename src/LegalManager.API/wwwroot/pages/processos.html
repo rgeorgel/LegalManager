@@ -225,8 +225,14 @@
       color: #4b5563;
       white-space: nowrap;
     }
+    .field-tip { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:#e5e7eb; color:#6b7280; font-size:10px; font-weight:700; cursor:help; position:relative; flex-shrink:0; user-select:none; vertical-align:middle; margin-left:4px; }
+    .field-tip:hover .field-tip-popup, .field-tip:focus .field-tip-popup { display:block; }
+    .field-tip-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1f2937; color:#f3f4f6; border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; width:280px; line-height:1.55; z-index:300; white-space:normal; box-shadow:0 4px 16px rgba(0,0,0,.2); pointer-events:none; }
+    .field-tip-popup::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1f2937; }
     @media(max-width:768px) {
       .processos-grid { grid-template-columns: 1fr; }
+      .field-tip-popup { left:auto; right:0; transform:none; }
+      .field-tip-popup::after { left:auto; right:10px; transform:none; }
     }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
@@ -430,7 +436,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Monitorar Andamentos</label>
+            <label>Monitorar Andamentos <span class="field-tip" tabindex="0">?<span class="field-tip-popup">Quando ativo, a Causify consulta automaticamente novos andamentos no DataJud:<br><br>• <strong>Processos ativos recentes</strong>: verificados diariamente às 03h (horário de Brasília)<br>• <strong>Sem andamento há +180 dias</strong>: verificados semanalmente<br>• <strong>Status encerrado ou arquivado</strong>: não são verificados, mesmo se marcados<br><br>Ao detectar novos andamentos, o advogado responsável é notificado por e-mail e no sistema.</span></span></label>
             <select id="fMonitorado" class="form-control">
               <option value="false">Não</option>
               <option value="true">Sim</option>
