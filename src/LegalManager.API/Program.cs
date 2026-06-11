@@ -312,10 +312,10 @@ app.Use(async (ctx, next) =>
         "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net; " +
         "style-src 'self' 'unsafe-inline' https://client.crisp.chat; " +
         "img-src 'self' data: https:; " +
-        "font-src 'self' data:; " +
+        "font-src 'self' data: https://client.crisp.chat; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +
-        "frame-src 'self' blob:; " +
+        "frame-src 'self' blob: https://www.facebook.com; " +
         "base-uri 'self'; " +
         "object-src 'none';";
     await next();
