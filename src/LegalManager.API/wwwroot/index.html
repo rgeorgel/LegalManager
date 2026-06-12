@@ -598,7 +598,16 @@
     }
     .mobile-menu a:last-child { border-bottom: none; }
     .mobile-menu a:hover { color: var(--text); }
-    .mobile-menu .nav-cta { flex-direction: column; padding-top: 0.5rem; }
+    .mobile-menu a.mobile-menu-cta {
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #0f172a;
+      font-weight: 700;
+      border-radius: 8px;
+      text-align: center;
+      margin-top: 0.25rem;
+      border-bottom: none;
+    }
+    .mobile-menu a.mobile-menu-cta:hover { color: #0f172a; opacity: 0.9; }
 
     @media (max-width: 600px) {
       nav { padding: 0.75rem 1rem; }
@@ -635,10 +644,8 @@
   <a href="#funcionalidades" onclick="closeMobileMenu()">Funcionalidades</a>
   <a href="#planos" onclick="closeMobileMenu()">Planos</a>
   <a href="#como-funciona" onclick="closeMobileMenu()">Como funciona</a>
-  <div class="nav-cta">
-    <a href="/login.html" class="btn btn-ghost" onclick="closeMobileMenu()">Entrar</a>
-    <a href="/register.html" class="btn btn-primary" onclick="closeMobileMenu()">Começar grátis</a>
-  </div>
+  <a href="/login.html" onclick="closeMobileMenu()">Entrar</a>
+  <a href="/register.html" class="mobile-menu-cta" onclick="closeMobileMenu()">Começar grátis</a>
 </div>
 
 <!-- HERO -->

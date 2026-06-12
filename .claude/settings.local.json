@@ -134,7 +134,11 @@
       "Bash(grep -E \"^-.*\\\\.cs$\")",
       "Bash(echo \"exit: $?\")",
       "Bash(echo \"exit:$?\")",
-      "Bash(grep -i \"\\\\.js$\")"
+      "Bash(grep -i \"\\\\.js$\")",
+      "PowerShell(& \"C:\\\\code\\\\personal\\\\LegalManager\\\\scripts\\\\add-meta-pixel.ps1\")",
+      "Bash(python scripts/add-meta-pixel.py)",
+      "Bash(xargs sed -i 's/1631412744787892/2569880286763335/g')",
+      "PowerShell(.\\\\scripts\\\\check-js.ps1)"
     ]
   }
 }
