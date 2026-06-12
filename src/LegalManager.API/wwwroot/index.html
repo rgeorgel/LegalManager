@@ -554,10 +554,59 @@
     footer a { color: var(--text-muted); text-decoration: none; }
     footer a:hover { color: var(--text); }
 
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      width: 24px;
+      height: 2px;
+      background: var(--text-muted);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.98);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      padding: 1rem;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 99;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a:hover { color: var(--text); }
+    .mobile-menu .nav-cta { flex-direction: column; padding-top: 0.5rem; }
+
     @media (max-width: 600px) {
       nav { padding: 0.75rem 1rem; }
       .nav-links { display: none; }
+      .nav-cta { display: none; }
+      .hamburger { display: flex; }
       .plans-grid { grid-template-columns: 1fr; }
+      .nav-logo img { height: 50px; }
     }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
@@ -576,7 +625,21 @@
     <a href="/login.html" class="btn btn-ghost">Entrar</a>
     <a href="/register.html" class="btn btn-primary">Começar grátis</a>
   </div>
+  <button class="hamburger" aria-label="Abrir menu" onclick="toggleMobileMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#funcionalidades" onclick="closeMobileMenu()">Funcionalidades</a>
+  <a href="#planos" onclick="closeMobileMenu()">Planos</a>
+  <a href="#como-funciona" onclick="closeMobileMenu()">Como funciona</a>
+  <div class="nav-cta">
+    <a href="/login.html" class="btn btn-ghost" onclick="closeMobileMenu()">Entrar</a>
+    <a href="/register.html" class="btn btn-primary" onclick="closeMobileMenu()">Começar grátis</a>
+  </div>
+</div>
 
 <!-- HERO -->
 <header class="hero" role="banner">
@@ -1004,6 +1067,20 @@
       a.style.color = a.getAttribute('href') === '#' + current ? 'var(--text)' : '';
     });
   });
+
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const hamburger = document.querySelector('.hamburger');
+    menu.classList.toggle('open');
+    hamburger.classList.toggle('active');
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const hamburger = document.querySelector('.hamburger');
+    menu.classList.remove('open');
+    hamburger.classList.remove('active');
+  }
 </script>
 
 </body>
