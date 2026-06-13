@@ -617,6 +617,40 @@
       .plans-grid { grid-template-columns: 1fr; }
       .nav-logo img { height: 50px; }
     }
+
+    /* Floating CTA — mobile only */
+    #floating-cta {
+      display: none;
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      z-index: 9998;
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.875rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 8px 32px rgba(245,158,11,0.45);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s ease;
+      opacity: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #floating-cta.visible {
+      transform: translateX(-50%) translateY(-15px);
+      opacity: 1;
+      pointer-events: auto;
+      bottom: 0px;
+    }
+    #floating-cta:active {
+      box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+    }
+    @media (min-width: 601px) {
+      #floating-cta { display: none !important; }
+    }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -986,6 +1020,9 @@
   <p style="margin-top:0.5rem; font-size:0.75rem">© 2026 Causify. Todos os direitos reservados.</p>
 </footer>
 
+<!-- Floating CTA — mobile -->
+<a id="floating-cta" href="/register.html" rel="noopener">Criar conta gratuita</a>
+
 <!-- Waitlist modal -->
 <div id="waitlistModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
@@ -1061,6 +1098,34 @@
       btn.textContent = 'Entrar na lista';
     }
   }
+
+  // Floating CTA visibility on mobile
+  (function () {
+    const floatingCta = document.getElementById('floating-cta');
+    const hero = document.querySelector('header.hero');
+    const footer = document.querySelector('footer');
+    let isVisible = false;
+    function updateFloatingCta() {
+      if (!floatingCta || window.innerWidth > 600) {
+        if (floatingCta) floatingCta.style.display = 'none';
+        return;
+      }
+      const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
+      const footerTop = footer ? footer.getBoundingClientRect().top : Infinity;
+      const shouldShow = heroBottom < 0 && footerTop >= window.innerHeight + 60;
+      if (shouldShow && !isVisible) {
+        isVisible = true;
+        floatingCta.style.display = 'flex';
+        requestAnimationFrame(() => floatingCta.classList.add('visible'));
+      } else if (!shouldShow && isVisible) {
+        isVisible = false;
+        floatingCta.classList.remove('visible');
+      }
+    }
+    window.addEventListener('scroll', updateFloatingCta, { passive: true });
+    window.addEventListener('resize', updateFloatingCta, { passive: true });
+    updateFloatingCta();
+  })();
 
   // Smooth active nav link on scroll
   const sections = document.querySelectorAll('section[id]');
