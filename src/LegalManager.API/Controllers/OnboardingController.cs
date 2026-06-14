@@ -561,7 +561,7 @@ public class OnboardingController : ControllerBase
     private async Task SalvarCacheEscavadorAsync(List<EscavadorProcessoDto> processos, CancellationToken ct)
     {
         if (processos.Count == 0) return;
-        var expira = DateTime.UtcNow.AddHours(24);
+        var expira = DateTime.UtcNow.AddHours(72);
         var agora = DateTime.UtcNow;
 
         foreach (var p in processos.Where(p => !string.IsNullOrWhiteSpace(p.JsonBruto)))
