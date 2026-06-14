@@ -39,7 +39,7 @@
     .pagination button:disabled { opacity: .4; cursor: default; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal { background: var(--color-surface); border-radius: 10px; padding: 24px; width: 100%; max-width: 440px; }
+    .modal { background: var(--color-surface); border-radius: 10px; padding: 24px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; }
     .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
     .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
     .detail-section { margin-bottom: 16px; }
@@ -48,6 +48,23 @@
     .users-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
     .users-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
     .users-list-row:last-child { border-bottom: none; }
+    .usage-bar { position: relative; height: 4px; background: #e5e7eb; border-radius: 100px; overflow: hidden; margin-top: 3px; }
+    .usage-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #22c55e; transition: width .2s; }
+    .usage-bar-fill.amber { background: #f59e0b; }
+    .usage-bar-fill.red { background: #ef4444; }
+    .oabs-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
+    .oabs-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
+    .oabs-list-row:last-child { border-bottom: none; }
+    .oabs-list-row.has-error { background: #fef2f2; }
+    .health-section { background: #f8fafc; border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+    .health-section-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+    .health-bar-label { min-width: 110px; color: var(--color-text-muted); }
+    .health-bar-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
+    .health-bar-fill { height: 100%; background: #22c55e; }
+    .health-bar-fill.amber { background: #f59e0b; }
+    .health-bar-fill.red { background: #ef4444; }
+    .health-bar-value { min-width: 90px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -121,7 +138,7 @@
 
   <!-- Modal: Detalhes do Tenant -->
   <div class="modal-overlay" id="detailModal">
-    <div class="modal" style="max-width:520px">
+    <div class="modal">
       <div class="modal-title" id="detailTitle">Detalhes</div>
       <div id="detailContent"></div>
       <div class="modal-footer">
@@ -205,6 +222,74 @@
       if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
       return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
     }
+    function pctColor(pct) {
+      if (pct >= 90) return 'red';
+      if (pct >= 70) return 'amber';
+      return '';
+    }
+    function pctBar(pct, label) {
+      const w = Math.min(100, Math.max(0, pct)).toFixed(0);
+      const cls = pctColor(pct);
+      return `<div class="usage-bar" title="${label} — ${w}%">
+        <div class="usage-bar-fill ${cls}" style="width:${w}%"></div>
+      </div>`;
+    }
+    function fmtMb(mb) {
+      if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
+      return mb + ' MB';
+    }
+    function daysUntil(iso) {
+      if (!iso) return null;
+      const ms = new Date(iso).getTime() - Date.now();
+      return Math.ceil(ms / 86400000);
+    }
+    function countdownBadge(iso, type) {
+      const d = daysUntil(iso);
+      if (d === null) return '';
+      if (d < 0) {
+        return `<span class="badge badge-red" title="${type} venceu há ${-d} dia(s)">vencido há ${-d}d</span>`;
+      }
+      if (d <= 7) {
+        return `<span class="badge badge-red" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
+      }
+      if (d <= 30) {
+        return `<span class="badge badge-amber" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
+      }
+      return `<span class="badge badge-gray" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
+    }
+    function daysAgo(iso) {
+      if (!iso) return 'nunca';
+      const ms = Date.now() - new Date(iso).getTime();
+      const d = Math.floor(ms / 86400000);
+      if (d === 0) {
+        const h = Math.floor(ms / 3600000);
+        if (h === 0) return 'agora';
+        return `há ${h}h`;
+      }
+      if (d === 1) return 'há 1 dia';
+      if (d < 30) return `há ${d} dias`;
+      if (d < 365) return `há ${Math.floor(d / 30)}m`;
+      return `há ${Math.floor(d / 365)}a`;
+    }
+    function paymentBadge(t) {
+      const hasBilling = !!t.abacatePayBillingId;
+      // Plano: Free não tem billing
+      if (t.plano === 'Free') {
+        return '<span class="badge badge-gray" title="Plano Free, sem cobrança">—</span>';
+      }
+      if (!hasBilling) {
+        // Pago ou Plus trial sem billing ainda
+        const isTrial = t.status === 'Trial';
+        if (isTrial) return '<span class="badge badge-blue" title="Em trial, ainda sem billing">trial</span>';
+        return '<span class="badge badge-amber" title="Plano pago sem billing — verifique">⚠ sem billing</span>';
+      }
+      // Tem billing
+      const planoDias = daysUntil(t.planoExpiraEm);
+      if (planoDias !== null && planoDias < 0) {
+        return '<span class="badge badge-red" title="Plano vencido, billing pode estar inadimplente">⚠ vencido</span>';
+      }
+      return '<span class="badge badge-green" title="Billing ativo no AbacatePay">✓ pago</span>';
+    }
 
     async function load() {
       const search = document.getElementById('searchInput').value;
@@ -227,24 +312,39 @@
           document.getElementById('tableBody').innerHTML =
             '<tr><td colspan="11" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum tenant encontrado.</td></tr>';
         } else {
-          document.getElementById('tableBody').innerHTML = data.items.map(t => `
+          document.getElementById('tableBody').innerHTML = data.items.map(t => {
+            const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
+            const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
+            const storageMb = (t.documentoTamanhoBytes || 0) / 1048576;
+            const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
+            return `
             <tr>
               <td style="font-weight:500">${esc(t.nome)}</td>
               <td style="color:var(--color-text-muted);font-size:12px">${esc(t.cnpj ?? '—')}</td>
-              <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
+              <td>
+                <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
+                <div style="margin-top:3px">${paymentBadge(t)}</div>
+              </td>
               <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums">${t.userCount}</td>
               <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
-                  title="${t.monitoradoCount} de ${t.processoCount} processos monitorados">
-                <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total</div>
+                  title="${t.userCount} de ${t.usuariosLimite} usuários permitidos no plano">
+                <div>${t.userCount} / ${t.usuariosLimite}</div>
+                ${pctBar(usuariosPct, 'Usuários')}
+              </td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
+                  title="${t.monitoradoCount} de ${t.monitoradosLimite} monitoramentos permitidos">
+                <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total · ${t.monitoradoCount}/${t.monitoradosLimite} monit.</div>
+                ${pctBar(monitoradosPct, 'Monitorados')}
                 <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
                   <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
                   <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
                 </div>
               </td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap">
-                ${t.documentoCount}
-                ${t.documentoTamanhoBytes > 0 ? `<span style="color:var(--color-text-muted);font-size:11px;margin-left:3px">${fmtBytes(t.documentoTamanhoBytes)}</span>` : ''}
+              <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3"
+                  title="Storage: ${fmtBytes(t.documentoTamanhoBytes)} de ${fmtMb(t.armazenamentoLimiteMB)} permitidos">
+                <div>${t.documentoCount} docs</div>
+                <div style="font-size:11px;color:var(--color-text-muted)">${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}</div>
+                ${pctBar(storagePct, 'Storage')}
               </td>
               <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
                   title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
@@ -255,15 +355,23 @@
                   <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
                   <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
                 </div>
+                ${t.oabComErroSync > 0 ? `<div style="margin-top:3px"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB</span></div>` : ''}
               </td>
-              <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.criadoEm)}</td>
-              <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</td>
+              <td style="color:var(--color-text-muted);font-size:12px;line-height:1.3">
+                <div>${fmtDate(t.criadoEm)}</div>
+                <div style="font-size:11px" title="Último acesso de qualquer usuário do tenant">login: ${daysAgo(t.ultimoAcessoEm)}</div>
+              </td>
+              <td style="line-height:1.3;white-space:nowrap">
+                <div style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</div>
+                <div style="margin-top:2px">${t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano')}</div>
+              </td>
               <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
                 <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
                 <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}')">Plano</button>
                 <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
               </td>
-            </tr>`).join('');
+            </tr>`;
+          }).join('');
         }
 
         const pages = Math.ceil(total / pageSize);
@@ -284,28 +392,50 @@
         document.getElementById('detailTitle').textContent = t.nome;
         const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
         const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
+
+        const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
+        const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
+        const storageMb = (t.documentoTamanhoBytes || 0) / 1048576;
+        const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
+        const barCls = pctColor;
+        const healthBar = (label, valueText, pct) => {
+          const cls = barCls(pct);
+          return `<div class="health-bar">
+            <span class="health-bar-label">${label}</span>
+            <div class="health-bar-track"><div class="health-bar-fill ${cls}" style="width:${Math.min(100, pct).toFixed(0)}%"></div></div>
+            <span class="health-bar-value">${valueText}</span>
+          </div>`;
+        };
+
         document.getElementById('detailContent').innerHTML = `
           <div class="detail-section">
             <div class="detail-row"><span class="detail-label">CNPJ</span><span>${esc(t.cnpj ?? '—')}</span></div>
             <div class="detail-row"><span class="detail-label">Endereço</span><span>${esc(t.endereco ?? '—')}</span></div>
-            <div class="detail-row"><span class="detail-label">Plano</span><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></div>
+            <div class="detail-row"><span class="detail-label">Plano</span>
+              <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
+              <span style="margin-left:6px">${paymentBadge(t)}</span>
+            </div>
             <div class="detail-row"><span class="detail-label">Período</span><span>${esc(t.periodoBilling ?? '—')}</span></div>
             <div class="detail-row"><span class="detail-label">Status</span><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></div>
             <div class="detail-row"><span class="detail-label">Cadastro</span><span>${fmtDate(t.criadoEm)}</span></div>
-            <div class="detail-row"><span class="detail-label">Trial expira</span><span>${fmtDate(t.trialExpiraEm)}</span></div>
-            <div class="detail-row"><span class="detail-label">Plano expira</span><span>${fmtDate(t.planoExpiraEm)}</span></div>
+            <div class="detail-row"><span class="detail-label">Último login</span><span title="${t.ultimoAcessoEm ?? 'nunca'}">${daysAgo(t.ultimoAcessoEm)}</span></div>
+            <div class="detail-row"><span class="detail-label">Trial expira</span>
+              <span>${fmtDate(t.trialExpiraEm)} ${countdownBadge(t.trialExpiraEm, 'Trial')}</span>
+            </div>
+            <div class="detail-row"><span class="detail-label">Plano expira</span>
+              <span>${fmtDate(t.planoExpiraEm)} ${countdownBadge(t.planoExpiraEm, 'Plano')}</span>
+            </div>
             <div class="detail-row"><span class="detail-label">AbacatePay ID</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId ?? '—')}</span></div>
           </div>
+
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
             <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Processos</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
-              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
-                ${t.monitoradoCount} monitorados
-              </div>
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.monitoradoCount} monitorados</div>
               <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap">
-                <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
-                <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+                <span class="badge badge-red" title="Diário">D ${t.monitoradoDiarioCount}</span>
+                <span class="badge badge-blue" title="Semanal">S ${t.monitoradoSemanalCount}</span>
               </div>
             </div>
             <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
@@ -320,7 +450,7 @@
                 <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
                 <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
                 <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
-                <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
+                <span class="badge badge-red" title="Perdida">X ${t.tarefaPerdidaCount}</span>
               </div>
             </div>
             <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
@@ -328,7 +458,35 @@
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.userCount}</div>
             </div>
           </div>
+
+          <div class="health-section">
+            <div class="health-section-title">Saúde · uso do plano</div>
+            ${healthBar('Usuários', `${t.userCount} / ${t.usuariosLimite}`, usuariosPct)}
+            ${healthBar('Monitorados', `${t.monitoradoCount} / ${t.monitoradosLimite}`, monitoradosPct)}
+            ${healthBar('Storage', `${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}`, storagePct)}
+            <div style="margin-top:8px;font-size:12px;color:var(--color-text-muted)">
+              Publicações capturadas no mês: <strong>${t.publicacoesMesAtual}</strong>
+              ${t.oabComErroSync > 0 ? ` · <span style="color:#b91c1c"><strong>${t.oabComErroSync}</strong> OAB(s) com erro de sync</span>` : ''}
+            </div>
+          </div>
+
           <div style="font-size:12px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+            OABs monitoradas (${(t.oabs ?? []).length})
+          </div>
+          <div class="oabs-list">
+            ${(t.oabs ?? []).length === 0
+              ? '<div style="padding:10px;text-align:center;color:var(--color-text-muted)">Nenhuma OAB cadastrada</div>'
+              : t.oabs.map(o => `
+                <div class="oabs-list-row ${o.syncError ? 'has-error' : ''}">
+                  <span style="font-weight:600;min-width:60px">${esc(o.uf)}/${esc(o.numero)}</span>
+                  <span style="flex:1">${esc(o.nome)}</span>
+                  <span class="badge badge-${o.ativo ? 'blue' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span>
+                  <span class="badge badge-${o.sincronizada ? 'green' : 'amber'}" title="${o.sincronizada ? 'Sincronizada com Escavador' : 'Sem ID no Escavador'}">${o.sincronizada ? '✓ sync' : 'pendente'}</span>
+                  ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
+                </div>`).join('')}
+          </div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px">
             Usuários (${t.usuarios.length})
           </div>
           <div class="users-list">
@@ -338,6 +496,7 @@
                 <div class="users-list-row">
                   <span style="flex:1;font-weight:500">${esc(u.nome)}</span>
                   <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
+                  <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${daysAgo(u.ultimoAcessoEm)}</span>
                   <span class="badge badge-${u.ativo ? 'green' : 'gray'}" style="margin-left:4px">${u.perfil}</span>
                 </div>`).join('')}
           </div>`;

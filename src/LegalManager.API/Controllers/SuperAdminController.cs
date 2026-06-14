@@ -1,4 +1,5 @@
 using LegalManager.Application.DTOs.SuperAdmin;
+using LegalManager.Domain;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -139,6 +140,33 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             })
             .ToDictionaryAsync(g => g.TenantId, ct);
 
+        // Último acesso (max de UltimoAcessoEm entre os usuários do tenant)
+        var ultimoAcessoPorTenant = await db.Users
+            .Where(u => tenantIds.Contains(u.TenantId) && u.UltimoAcessoEm != null)
+            .GroupBy(u => u.TenantId)
+            .Select(g => new { TenantId = g.Key, UltimoAcesso = g.Max(u => u.UltimoAcessoEm) })
+            .ToDictionaryAsync(g => g.TenantId, g => (DateTime?)g.UltimoAcesso, ct);
+
+        // OABs por tenant (total e com erro de sync)
+        var oabStats = await db.TenantOabs
+            .Where(o => tenantIds.Contains(o.TenantId))
+            .GroupBy(o => o.TenantId)
+            .Select(g => new
+            {
+                TenantId = g.Key,
+                Total = g.Count(),
+                ComErro = g.Count(o => o.SyncError != null)
+            })
+            .ToDictionaryAsync(g => g.TenantId, ct);
+
+        // Publicações capturadas no mês corrente
+        var inicioMes = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var publicacoesMes = await db.Publicacoes
+            .Where(p => tenantIds.Contains(p.TenantId) && p.CapturaEm >= inicioMes)
+            .GroupBy(p => p.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+
         var tenants = await db.Tenants
             .Where(t => tenantIds.Contains(t.Id))
             .OrderByDescending(t => t.CriadoEm)
@@ -149,6 +177,7 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         {
             var pc = processoCounts.GetValueOrDefault(t.Id);
             var tc = tarefaCounts.GetValueOrDefault(t.Id);
+            var os = oabStats.GetValueOrDefault(t.Id);
             return new TenantListItemDto(
                 t.Id, t.Nome, t.Cnpj, t.Plano.ToString(), t.Status.ToString(),
                 t.CriadoEm,
@@ -164,7 +193,14 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
                 tc?.Pendente ?? 0,
                 tc?.EmAndamento ?? 0,
                 tc?.Concluida ?? 0,
-                tc?.Perdida ?? 0
+                tc?.Perdida ?? 0,
+                PlanoRestricoes.MaxUsuarios(t.Plano),
+                PlanoRestricoes.MaxProcessosMonitorados(t.Plano),
+                PlanoRestricoes.ArmazenamentoLimiteMB(t.Plano),
+                os?.Total ?? 0,
+                os?.ComErro ?? 0,
+                publicacoesMes.GetValueOrDefault(t.Id),
+                ultimoAcessoPorTenant.GetValueOrDefault(t.Id)
             );
         }).ToList();
 
@@ -209,6 +245,26 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             })
             .FirstOrDefaultAsync(ct);
 
+        var ultimoAcesso = await db.Users
+            .Where(u => u.TenantId == id && u.UltimoAcessoEm != null)
+            .MaxAsync(u => (DateTime?)u.UltimoAcessoEm, ct);
+
+        var oabs = await db.TenantOabs
+            .Where(o => o.TenantId == id)
+            .OrderByDescending(o => o.CriadoEm)
+            .Select(o => new TenantOabResumoDto(
+                o.Id, o.Uf, o.Numero, o.Nome, o.Ativo,
+                o.EscavadorMonitoramentoId != null,
+                o.SyncError, o.UltimoSyncEm))
+            .ToListAsync(ct);
+
+        var oabTotal = oabs.Count;
+        var oabComErro = oabs.Count(o => o.SyncError != null);
+
+        var inicioMes = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var publicacoesMesCount = await db.Publicacoes
+            .CountAsync(p => p.TenantId == id && p.CapturaEm >= inicioMes, ct);
+
         var dto = new TenantDetailDto(
             tenant.Id, tenant.Nome, tenant.Cnpj, tenant.Endereco,
             tenant.Plano.ToString(), tenant.PeriodoBilling, tenant.Status.ToString(),
@@ -225,7 +281,15 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             tarefaStats?.EmAndamento ?? 0,
             tarefaStats?.Concluida ?? 0,
             tarefaStats?.Perdida ?? 0,
-            tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm)).ToList()
+            PlanoRestricoes.MaxUsuarios(tenant.Plano),
+            PlanoRestricoes.MaxProcessosMonitorados(tenant.Plano),
+            PlanoRestricoes.ArmazenamentoLimiteMB(tenant.Plano),
+            oabTotal,
+            oabComErro,
+            publicacoesMesCount,
+            ultimoAcesso,
+            tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm)).ToList(),
+            oabs
         );
 
         return Ok(dto);

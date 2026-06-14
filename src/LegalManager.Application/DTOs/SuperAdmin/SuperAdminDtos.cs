@@ -20,7 +20,14 @@ public record TenantListItemDto(
     int TarefaPendenteCount,
     int TarefaEmAndamentoCount,
     int TarefaConcluidaCount,
-    int TarefaPerdidaCount
+    int TarefaPerdidaCount,
+    int UsuariosLimite,
+    int MonitoradosLimite,
+    long ArmazenamentoLimiteMB,
+    int OabCount,
+    int OabComErroSync,
+    int PublicacoesMesAtual,
+    DateTime? UltimoAcessoEm
 );
 
 public record TenantDetailDto(
@@ -47,7 +54,26 @@ public record TenantDetailDto(
     int TarefaEmAndamentoCount,
     int TarefaConcluidaCount,
     int TarefaPerdidaCount,
-    List<TenantUserDto> Usuarios
+    int UsuariosLimite,
+    int MonitoradosLimite,
+    long ArmazenamentoLimiteMB,
+    int OabCount,
+    int OabComErroSync,
+    int PublicacoesMesAtual,
+    DateTime? UltimoAcessoEm,
+    List<TenantUserDto> Usuarios,
+    List<TenantOabResumoDto> Oabs
+);
+
+public record TenantOabResumoDto(
+    Guid Id,
+    string Uf,
+    string Numero,
+    string Nome,
+    bool Ativo,
+    bool Sincronizada,
+    string? SyncError,
+    DateTime? UltimoSyncEm
 );
 
 public record TenantUserDto(
