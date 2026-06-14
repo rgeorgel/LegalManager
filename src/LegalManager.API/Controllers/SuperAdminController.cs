@@ -109,8 +109,15 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         var processoCounts = await db.Processos
             .Where(p => tenantIds.Contains(p.TenantId))
             .GroupBy(p => p.TenantId)
-            .Select(g => new { TenantId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+            .Select(g => new
+            {
+                TenantId = g.Key,
+                Count = g.Count(),
+                Monitorados = g.Count(p => p.Monitorado),
+                MonitoradosDiario = g.Count(p => p.Monitorado && !p.MonitoramentoSemanal),
+                MonitoradosSemanal = g.Count(p => p.Monitorado && p.MonitoramentoSemanal)
+            })
+            .ToDictionaryAsync(g => g.TenantId, ct);
 
         var docStats = await db.Documentos
             .Where(d => tenantIds.Contains(d.TenantId))
@@ -130,16 +137,23 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             .Select(t => t)
             .ToListAsync(ct);
 
-        var items = tenants.Select(t => new TenantListItemDto(
-            t.Id, t.Nome, t.Cnpj, t.Plano.ToString(), t.Status.ToString(),
-            t.CriadoEm,
-            userCounts.GetValueOrDefault(t.Id),
-            t.TrialExpiraEm, t.PlanoExpiraEm,
-            processoCounts.GetValueOrDefault(t.Id),
-            docStats.TryGetValue(t.Id, out var ds) ? ds.Count : 0,
-            docStats.TryGetValue(t.Id, out var dsb) ? dsb.TotalBytes : 0,
-            tarefaCounts.GetValueOrDefault(t.Id)
-        )).ToList();
+        var items = tenants.Select(t =>
+        {
+            var pc = processoCounts.GetValueOrDefault(t.Id);
+            return new TenantListItemDto(
+                t.Id, t.Nome, t.Cnpj, t.Plano.ToString(), t.Status.ToString(),
+                t.CriadoEm,
+                userCounts.GetValueOrDefault(t.Id),
+                t.TrialExpiraEm, t.PlanoExpiraEm,
+                pc?.Count ?? 0,
+                pc?.Monitorados ?? 0,
+                pc?.MonitoradosDiario ?? 0,
+                pc?.MonitoradosSemanal ?? 0,
+                docStats.TryGetValue(t.Id, out var ds) ? ds.Count : 0,
+                docStats.TryGetValue(t.Id, out var dsb) ? dsb.TotalBytes : 0,
+                tarefaCounts.GetValueOrDefault(t.Id)
+            );
+        }).ToList();
 
         return Ok(new { total, page, pageSize, items });
     }
@@ -153,7 +167,17 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
 
         if (tenant == null) return NotFound();
 
-        var processoCount = await db.Processos.CountAsync(p => p.TenantId == id, ct);
+        var processoStats = await db.Processos
+            .Where(p => p.TenantId == id)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Count = g.Count(),
+                Monitorados = g.Count(p => p.Monitorado),
+                MonitoradosDiario = g.Count(p => p.Monitorado && !p.MonitoramentoSemanal),
+                MonitoradosSemanal = g.Count(p => p.Monitorado && p.MonitoramentoSemanal)
+            })
+            .FirstOrDefaultAsync(ct);
         var docResult = await db.Documentos
             .Where(d => d.TenantId == id)
             .GroupBy(_ => 1)
@@ -166,7 +190,10 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             tenant.Plano.ToString(), tenant.PeriodoBilling, tenant.Status.ToString(),
             tenant.CriadoEm, tenant.Usuarios.Count, tenant.TrialExpiraEm, tenant.PlanoExpiraEm,
             tenant.AbacatePayBillingId,
-            processoCount,
+            processoStats?.Count ?? 0,
+            processoStats?.Monitorados ?? 0,
+            processoStats?.MonitoradosDiario ?? 0,
+            processoStats?.MonitoradosSemanal ?? 0,
             docResult?.Count ?? 0,
             docResult?.TotalBytes ?? 0,
             tarefaCount,

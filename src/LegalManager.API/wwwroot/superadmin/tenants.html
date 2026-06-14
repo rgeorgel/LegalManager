@@ -234,7 +234,14 @@
               <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
               <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
               <td style="text-align:right;font-variant-numeric:tabular-nums">${t.userCount}</td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums">${t.processoCount}</td>
+              <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
+                  title="${t.monitoradoCount} de ${t.processoCount} processos monitorados">
+                <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total</div>
+                <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
+                  <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
+                  <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+                </div>
+              </td>
               <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap">
                 ${t.documentoCount}
                 ${t.documentoTamanhoBytes > 0 ? `<span style="color:var(--color-text-muted);font-size:11px;margin-left:3px">${fmtBytes(t.documentoTamanhoBytes)}</span>` : ''}
@@ -284,6 +291,13 @@
             <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Processos</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
+                ${t.monitoradoCount} monitorados
+              </div>
+              <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap">
+                <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
+                <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+              </div>
             </div>
             <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Docs</div>
