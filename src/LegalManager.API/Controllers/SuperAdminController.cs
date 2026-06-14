@@ -128,8 +128,16 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         var tarefaCounts = await db.Tarefas
             .Where(t => tenantIds.Contains(t.TenantId))
             .GroupBy(t => t.TenantId)
-            .Select(g => new { TenantId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+            .Select(g => new
+            {
+                TenantId = g.Key,
+                Count = g.Count(),
+                Pendente = g.Count(t => t.Status == StatusTarefa.Pendente),
+                EmAndamento = g.Count(t => t.Status == StatusTarefa.EmAndamento),
+                Concluida = g.Count(t => t.Status == StatusTarefa.Concluida),
+                Perdida = g.Count(t => t.Status == StatusTarefa.Perdida)
+            })
+            .ToDictionaryAsync(g => g.TenantId, ct);
 
         var tenants = await db.Tenants
             .Where(t => tenantIds.Contains(t.Id))
@@ -140,6 +148,7 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         var items = tenants.Select(t =>
         {
             var pc = processoCounts.GetValueOrDefault(t.Id);
+            var tc = tarefaCounts.GetValueOrDefault(t.Id);
             return new TenantListItemDto(
                 t.Id, t.Nome, t.Cnpj, t.Plano.ToString(), t.Status.ToString(),
                 t.CriadoEm,
@@ -151,7 +160,11 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
                 pc?.MonitoradosSemanal ?? 0,
                 docStats.TryGetValue(t.Id, out var ds) ? ds.Count : 0,
                 docStats.TryGetValue(t.Id, out var dsb) ? dsb.TotalBytes : 0,
-                tarefaCounts.GetValueOrDefault(t.Id)
+                tc?.Count ?? 0,
+                tc?.Pendente ?? 0,
+                tc?.EmAndamento ?? 0,
+                tc?.Concluida ?? 0,
+                tc?.Perdida ?? 0
             );
         }).ToList();
 
@@ -183,7 +196,18 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             .GroupBy(_ => 1)
             .Select(g => new { Count = g.Count(), TotalBytes = g.Sum(d => d.TamanhoBytes) })
             .FirstOrDefaultAsync(ct);
-        var tarefaCount = await db.Tarefas.CountAsync(t => t.TenantId == id, ct);
+        var tarefaStats = await db.Tarefas
+            .Where(t => t.TenantId == id)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Count = g.Count(),
+                Pendente = g.Count(t => t.Status == StatusTarefa.Pendente),
+                EmAndamento = g.Count(t => t.Status == StatusTarefa.EmAndamento),
+                Concluida = g.Count(t => t.Status == StatusTarefa.Concluida),
+                Perdida = g.Count(t => t.Status == StatusTarefa.Perdida)
+            })
+            .FirstOrDefaultAsync(ct);
 
         var dto = new TenantDetailDto(
             tenant.Id, tenant.Nome, tenant.Cnpj, tenant.Endereco,
@@ -196,7 +220,11 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
             processoStats?.MonitoradosSemanal ?? 0,
             docResult?.Count ?? 0,
             docResult?.TotalBytes ?? 0,
-            tarefaCount,
+            tarefaStats?.Count ?? 0,
+            tarefaStats?.Pendente ?? 0,
+            tarefaStats?.EmAndamento ?? 0,
+            tarefaStats?.Concluida ?? 0,
+            tarefaStats?.Perdida ?? 0,
             tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm)).ToList()
         );
 

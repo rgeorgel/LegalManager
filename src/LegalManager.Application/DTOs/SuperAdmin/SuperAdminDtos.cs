@@ -16,7 +16,11 @@ public record TenantListItemDto(
     int MonitoradoSemanalCount,
     int DocumentoCount,
     long DocumentoTamanhoBytes,
-    int TarefaCount
+    int TarefaCount,
+    int TarefaPendenteCount,
+    int TarefaEmAndamentoCount,
+    int TarefaConcluidaCount,
+    int TarefaPerdidaCount
 );
 
 public record TenantDetailDto(
@@ -39,6 +43,10 @@ public record TenantDetailDto(
     int DocumentoCount,
     long DocumentoTamanhoBytes,
     int TarefaCount,
+    int TarefaPendenteCount,
+    int TarefaEmAndamentoCount,
+    int TarefaConcluidaCount,
+    int TarefaPerdidaCount,
     List<TenantUserDto> Usuarios
 );
 
