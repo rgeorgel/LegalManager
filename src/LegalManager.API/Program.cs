@@ -44,6 +44,9 @@ builder.Services.AddDbContext<AppDbContext>((sp, options) =>
 builder.Services.AddIdentity<Usuario, IdentityRole<Guid>>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireDigit = false;
     options.Password.RequiredLength = 8;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
