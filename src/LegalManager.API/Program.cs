@@ -98,6 +98,7 @@ builder.Services.AddScoped<IModeloDocumentoService, ModeloDocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
+builder.Services.AddScoped<TrialRevertJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<EscavadorMovimentacoesPollingJob>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
@@ -355,6 +356,11 @@ RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
     "0 */3 * * *"); // every 3 hours
+
+RecurringJob.AddOrUpdate<TrialRevertJob>(
+    "trial-revert",
+    job => job.ExecutarAsync(),
+    "0 * * * *"); // hourly catch-up for expired trials whose users haven't logged in
 
 RecurringJob.AddOrUpdate<MonitoramentoJob>(
     "monitoramento-processos",

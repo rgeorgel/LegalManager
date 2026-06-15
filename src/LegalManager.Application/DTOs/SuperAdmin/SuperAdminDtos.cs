@@ -89,6 +89,17 @@ public record UpdateTenantPlanoDto(string Plano, string? PeriodoBilling);
 
 public record UpdateTenantStatusDto(string Status);
 
+public record ConcederTrialPlusDto(int Dias, string? Motivo);
+
+public record TenantTrialInfoDto(
+    bool TrialConcedido,
+    int? Dias,
+    DateTime? ConcedidoEm,
+    string? ConcedidoPorNome,
+    DateTime? ExpiraEm,
+    string? Motivo
+);
+
 public record UserListItemDto(
     Guid Id,
     string Nome,

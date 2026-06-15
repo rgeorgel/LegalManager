@@ -173,6 +173,30 @@
         <button class="btn" onclick="closeModal('planoModal')">Cancelar</button>
         <button class="btn btn-primary" id="savePlanoBtn">Salvar</button>
       </div>
+
+      <div id="trialBlock" style="display:none;margin-top:24px;padding-top:20px;border-top:1px dashed var(--color-border)">
+        <div style="font-size:13px;font-weight:600;color:var(--color-text);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+          <span>🎁</span><span>Conceder Trial Plus</span>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:12px">
+          Libera o plano Plus temporariamente. Após o prazo, o tenant volta automaticamente para o plano Free.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duração do trial</label>
+          <select id="trialDias" class="form-control">
+            <option value="15">15 dias</option>
+            <option value="30" selected>30 dias</option>
+            <option value="45">45 dias</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motivo (opcional, máx. 500 caracteres)</label>
+          <textarea id="trialMotivo" class="form-control" rows="3" maxlength="500" placeholder="Ex: Migração do plano Pro, parceria, etc."></textarea>
+        </div>
+        <div class="modal-footer" style="margin-top:12px">
+          <button class="btn btn-primary" id="saveTrialBtn">Conceder Trial Plus</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -324,6 +348,11 @@
               <td>
                 <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
                 <div style="margin-top:3px">${paymentBadge(t)}</div>
+                ${t.trialConcedidoDias && t.trialExpiraEm && new Date(t.trialExpiraEm) > new Date() ? `
+                  <div style="margin-top:3px" title="Trial Plus concedido por superadmin">
+                    <span class="badge badge-blue" style="font-size:10px">🎁 trial plus ${t.trialConcedidoDias}d</span>
+                  </div>
+                ` : ''}
               </td>
               <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
               <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
@@ -367,7 +396,7 @@
               </td>
               <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
                 <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
-                <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}')">Plano</button>
+                <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
                 <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
               </td>
             </tr>`;
@@ -389,6 +418,10 @@
       openModal('detailModal');
       try {
         const t = await saFetch(`/superadmin/tenants/${id}`);
+        let trialInfo = null;
+        try {
+          trialInfo = await saFetch(`/superadmin/tenants/${id}/trial-info`);
+        } catch {}
         document.getElementById('detailTitle').textContent = t.nome;
         const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
         const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
@@ -407,7 +440,7 @@
           </div>`;
         };
 
-        document.getElementById('detailContent').innerHTML = `
+        let html = `
           <div class="detail-section">
             <div class="detail-row"><span class="detail-label">CNPJ</span><span>${esc(t.cnpj ?? '—')}</span></div>
             <div class="detail-row"><span class="detail-label">Endereço</span><span>${esc(t.endereco ?? '—')}</span></div>
@@ -500,15 +533,46 @@
                   <span class="badge badge-${u.ativo ? 'green' : 'gray'}" style="margin-left:4px">${u.perfil}</span>
                 </div>`).join('')}
           </div>`;
+
+        if (trialInfo && trialInfo.trialConcedido) {
+          const diasRestantes = trialInfo.expiraEm ? daysUntil(trialInfo.expiraEm) : null;
+          const badgeDias = diasRestantes === null ? '' :
+            diasRestantes < 0
+              ? `<span class="badge badge-red">expirado há ${-diasRestantes}d</span>`
+              : `<span class="badge badge-${diasRestantes <= 7 ? 'amber' : 'green'}">expira em ${diasRestantes}d</span>`;
+          html += `
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:18px">🎁</span>
+              <strong>SuperAdmin concedeu Trial Plus</strong>
+              <span class="badge badge-blue">${trialInfo.dias} dias</span>
+              ${badgeDias}
+            </div>
+            <div style="color:var(--color-text-muted);font-size:12px;line-height:1.5">
+              <div><strong>Concedido em:</strong> ${fmtDate(trialInfo.concedidoEm)}${trialInfo.concedidoPorNome ? ` por <strong>${esc(trialInfo.concedidoPorNome)}</strong>` : ''}</div>
+              <div><strong>Expira em:</strong> ${fmtDate(trialInfo.expiraEm)}</div>
+              ${trialInfo.motivo ? `<div style="margin-top:4px"><strong>Motivo:</strong> ${esc(trialInfo.motivo)}</div>` : ''}
+            </div>
+          </div>`;
+        }
+
+        document.getElementById('detailContent').innerHTML = html;
       } catch (e) {
         document.getElementById('detailContent').innerHTML = `<p style="color:var(--color-danger)">Erro: ${esc(e.message)}</p>`;
       }
     };
 
-    window.openPlano = function(id, planoAtual, periodoAtual) {
+    window.openPlano = function(id, planoAtual, periodoAtual, statusAtual) {
       currentTenantId = id;
       document.getElementById('novoPlano').value = planoAtual;
       document.getElementById('periodoBilling').value = periodoAtual || '';
+      const trialBlock = document.getElementById('trialBlock');
+      const isFreeActive = planoAtual === 'Free' && statusAtual === 'Ativo';
+      trialBlock.style.display = isFreeActive ? '' : 'none';
+      if (isFreeActive) {
+        document.getElementById('trialDias').value = '30';
+        document.getElementById('trialMotivo').value = '';
+      }
       openModal('planoModal');
     };
 
@@ -522,6 +586,26 @@
             plano: document.getElementById('novoPlano').value,
             periodoBilling: document.getElementById('periodoBilling').value || null
           })
+        });
+        closeModal('planoModal');
+        load();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('saveTrialBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveTrialBtn');
+      const dias = parseInt(document.getElementById('trialDias').value, 10);
+      const motivo = document.getElementById('trialMotivo').value.trim() || null;
+      if (!confirm(`Conceder Trial Plus de ${dias} dias para este tenant? O plano voltará automaticamente para Free após o prazo.`)) return;
+      btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/tenants/${currentTenantId}/trial-plus`, {
+          method: 'PUT',
+          body: JSON.stringify({ dias, motivo })
         });
         closeModal('planoModal');
         load();

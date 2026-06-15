@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace LegalManager.UnitTests;
@@ -98,7 +99,8 @@ public class AssinaturaControllerTests
             ctx,
             tenantMock.Object,
             userManager,
-            config.Object);
+            config.Object,
+            NullLogger<AssinaturaController>.Instance);
     }
 
     [Fact]
@@ -409,7 +411,7 @@ public class WebhookControllerTests
 
     private static WebhookController CreateController(AppDbContext ctx, IConfiguration config, ICreditoService? creditoService = null)
     {
-        return new WebhookController(ctx, config, creditoService ?? CreateCreditoServiceMock().Object, CreateLoggerMock().Object);
+        return new WebhookController(ctx, config, creditoService ?? CreateCreditoServiceMock().Object, Mock.Of<IAbacatePayService>(), CreateLoggerMock().Object);
     }
 
     [Fact]

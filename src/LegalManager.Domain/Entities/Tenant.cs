@@ -20,6 +20,12 @@ public class Tenant
     public DateTime? BillingCycleStart { get; set; }
     public string? VoucherUtilizado { get; set; }
 
+    public Guid? TrialConcedidoPorId { get; set; }
+    public DateTime? TrialConcedidoEm { get; set; }
+    public int? TrialConcedidoDias { get; set; }
+    public string? TrialConcedidoMotivo { get; set; }
+    public Usuario? TrialConcedidoPor { get; set; }
+
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     public ICollection<Contato> Contatos { get; set; } = new List<Contato>();
 }

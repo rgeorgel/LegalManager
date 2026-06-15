@@ -109,7 +109,16 @@ public class AuthService : IAuthService
             ?? throw new InvalidOperationException("Tenant não encontrado.");
 
         if (tenant.Status == StatusTenant.Trial && tenant.TrialExpiraEm < DateTime.UtcNow)
-            throw new UnauthorizedAccessException("Período de trial expirado.");
+        {
+            tenant.Plano = PlanoTipo.Free;
+            tenant.Status = StatusTenant.Ativo;
+            tenant.TrialExpiraEm = null;
+            tenant.TrialConcedidoPorId = null;
+            tenant.TrialConcedidoEm = null;
+            tenant.TrialConcedidoDias = null;
+            tenant.TrialConcedidoMotivo = null;
+            await _context.SaveChangesAsync(ct);
+        }
 
         // Downgrade to Free if Pro subscription expired (cancelled and past billing period)
         if (tenant.PlanoExpiraEm.HasValue && tenant.PlanoExpiraEm.Value < DateTime.UtcNow)

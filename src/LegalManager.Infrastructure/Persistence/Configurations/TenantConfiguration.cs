@@ -12,5 +12,10 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.Nome).HasMaxLength(200).IsRequired();
         builder.Property(t => t.Cnpj).HasMaxLength(18);
         builder.HasIndex(t => t.Cnpj).IsUnique().HasFilter("\"Cnpj\" IS NOT NULL");
+
+        builder.HasOne(t => t.TrialConcedidoPor)
+            .WithMany()
+            .HasForeignKey(t => t.TrialConcedidoPorId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

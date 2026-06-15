@@ -359,6 +359,10 @@ public class WebhookController(
         tenant.PlanoExpiraEm = null;
         tenant.PeriodoBilling = periodo;
         tenant.BillingCycleStart = DateTime.UtcNow;
+        tenant.TrialConcedidoPorId = null;
+        tenant.TrialConcedidoEm = null;
+        tenant.TrialConcedidoDias = null;
+        tenant.TrialConcedidoMotivo = null;
 
         var valor = ExtrairValor(root);
         var billingId = ExtrairBillingId(root);

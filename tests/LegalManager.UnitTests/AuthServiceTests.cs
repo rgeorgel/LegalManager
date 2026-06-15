@@ -206,14 +206,18 @@ var creditoService = CreateCreditoServiceMock();
     }
 
     [Fact]
-    public async Task LoginAsync_DeveLancarUnauthorizedAccessException_QuandoTrialExpirado()
+    public async Task LoginAsync_DeveReverterTrialExpiradoParaFree()
     {
         var ctx = CreateContext();
         var tenant = new Tenant
         {
-            Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Pro,
+            Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Plus,
             Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow.AddDays(-15),
-            TrialExpiraEm = DateTime.UtcNow.AddDays(-5)
+            TrialExpiraEm = DateTime.UtcNow.AddDays(-5),
+            TrialConcedidoPorId = Guid.NewGuid(),
+            TrialConcedidoEm = DateTime.UtcNow.AddDays(-15),
+            TrialConcedidoDias = 30,
+            TrialConcedidoMotivo = "Teste"
         };
         ctx.Tenants.Add(tenant);
 
@@ -227,8 +231,17 @@ var creditoService = CreateCreditoServiceMock();
         var creditoService = CreateCreditoServiceMock();
         var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            service.LoginAsync(new LoginDto("trial@teste.com", "Senha123")));
+        var result = await service.LoginAsync(new LoginDto("trial@teste.com", "Senha123"));
+
+        Assert.Equal("Free", result.Usuario.Plano);
+        var tenantAtualizado = await ctx.Tenants.FindAsync(TenantId);
+        Assert.Equal(PlanoTipo.Free, tenantAtualizado!.Plano);
+        Assert.Equal(StatusTenant.Ativo, tenantAtualizado.Status);
+        Assert.Null(tenantAtualizado.TrialExpiraEm);
+        Assert.Null(tenantAtualizado.TrialConcedidoPorId);
+        Assert.Null(tenantAtualizado.TrialConcedidoEm);
+        Assert.Null(tenantAtualizado.TrialConcedidoDias);
+        Assert.Null(tenantAtualizado.TrialConcedidoMotivo);
     }
 
     [Fact]

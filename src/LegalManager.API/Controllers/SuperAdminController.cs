@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using LegalManager.Application.DTOs.SuperAdmin;
+using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +14,7 @@ namespace LegalManager.API.Controllers;
 [ApiController]
 [Route("api/superadmin")]
 [Authorize(Roles = "SuperAdmin")]
-public class SuperAdminController(AppDbContext db) : ControllerBase
+public class SuperAdminController(AppDbContext db, IAuditService audit) : ControllerBase
 {
     private static readonly Guid SystemTenantId = new("00000000-0000-0000-0000-000000000001");
 
@@ -324,6 +327,80 @@ public class SuperAdminController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync(ct);
 
         return NoContent();
+    }
+
+    [HttpPut("tenants/{id:guid}/trial-plus")]
+    public async Task<IActionResult> ConcederTrialPlus(Guid id, [FromBody] ConcederTrialPlusDto dto, CancellationToken ct)
+    {
+        if (dto.Dias is not (15 or 30 or 45))
+            return BadRequest(new { message = "Dias deve ser 15, 30 ou 45." });
+
+        var tenant = await db.Tenants.FindAsync([id], ct);
+        if (tenant == null || tenant.Id == SystemTenantId) return NotFound();
+
+        if (tenant.Plano != PlanoTipo.Free)
+            return BadRequest(new { message = "Trial Plus só pode ser concedido a tenants no plano Free." });
+
+        if (tenant.Status is StatusTenant.Cancelado or StatusTenant.Suspenso)
+            return BadRequest(new { message = "Tenant não está ativo." });
+
+        var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(superAdminId) || !Guid.TryParse(superAdminId, out var adminGuid))
+            return Unauthorized(new { message = "Identificação do superadmin ausente." });
+
+        var agora = DateTime.UtcNow;
+        var planoAnterior = tenant.Plano;
+        var statusAnterior = tenant.Status;
+        var motivo = string.IsNullOrWhiteSpace(dto.Motivo) ? null : dto.Motivo.Trim();
+
+        tenant.Plano = PlanoTipo.Plus;
+        tenant.Status = StatusTenant.Trial;
+        tenant.TrialExpiraEm = agora.AddDays(dto.Dias);
+        tenant.TrialConcedidoPorId = adminGuid;
+        tenant.TrialConcedidoEm = agora;
+        tenant.TrialConcedidoDias = dto.Dias;
+        tenant.TrialConcedidoMotivo = motivo;
+        tenant.PlanoExpiraEm = null;
+        tenant.AbacatePayBillingId = null;
+        tenant.PeriodoBilling = null;
+        tenant.BillingCycleStart = null;
+
+        await audit.LogAsync(new AuditLogEntry(
+            tenant.Id, adminGuid, "trial-plus-concedido", "Tenant",
+            tenant.Id.ToString(),
+            new { PlanoAnterior = planoAnterior.ToString(), StatusAnterior = statusAnterior.ToString() },
+            new { Dias = dto.Dias, TrialExpiraEm = tenant.TrialExpiraEm, Motivo = motivo },
+            HttpContext.Connection.RemoteIpAddress?.ToString()), ct);
+
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new TenantTrialInfoDto(
+            true, tenant.TrialConcedidoDias, tenant.TrialConcedidoEm,
+            null, tenant.TrialExpiraEm, tenant.TrialConcedidoMotivo));
+    }
+
+    [HttpGet("tenants/{id:guid}/trial-info")]
+    public async Task<IActionResult> GetTrialInfo(Guid id, CancellationToken ct)
+    {
+        var tenant = await db.Tenants.FindAsync([id], ct);
+        if (tenant == null || tenant.Id == SystemTenantId) return NotFound();
+
+        string? concedidoPorNome = null;
+        if (tenant.TrialConcedidoPorId.HasValue)
+        {
+            concedidoPorNome = await db.Users
+                .Where(u => u.Id == tenant.TrialConcedidoPorId.Value)
+                .Select(u => u.Nome)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        return Ok(new TenantTrialInfoDto(
+            tenant.TrialConcedidoPorId.HasValue,
+            tenant.TrialConcedidoDias,
+            tenant.TrialConcedidoEm,
+            concedidoPorNome,
+            tenant.TrialExpiraEm,
+            tenant.TrialConcedidoMotivo));
     }
 
     [HttpGet("users")]
