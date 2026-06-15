@@ -170,8 +170,18 @@ async function buscarPorOab() {
     _oabResultados = processos ?? [];
     loadingEl.style.display = 'none';
     stopDots('search');
-    renderResultados(processos);
-    showStep(2);
+
+    const importarTodos = document.getElementById('obImportarTodos')?.checked;
+
+    if (importarTodos && _oabResultados.length > 0) {
+      renderResultados(processos);
+      document.querySelectorAll('#obListaProcessos input[type=checkbox]:not(:disabled)')
+        .forEach(cb => cb.checked = true);
+      await importar();
+    } else {
+      renderResultados(processos);
+      showStep(2);
+    }
   } catch {
     loadingEl.style.display = 'none';
     stopDots('search');
