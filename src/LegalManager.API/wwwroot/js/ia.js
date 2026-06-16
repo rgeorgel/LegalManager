@@ -45,3 +45,10 @@ export async function gerarResumoProcesso(processoId) {
 export async function listarResumosProcesso(processoId) {
   return apiFetch(`/ia/resumo-processo?processoId=${processoId}`);
 }
+
+export async function setResumoVisivelCliente(resumoId, visivel) {
+  return apiFetch(`/ia/resumo-processo/${resumoId}/visivel-cliente`, {
+    method: 'PATCH',
+    body: JSON.stringify({ visivel })
+  });
+}

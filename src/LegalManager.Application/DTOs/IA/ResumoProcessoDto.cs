@@ -7,5 +7,6 @@ public record ResumoProcessoResponseDto(
     Guid ProcessoId,
     string Conteudo,
     string GeradoPorNome,
-    DateTime GeradoEm
+    DateTime GeradoEm,
+    bool VisivelCliente
 );

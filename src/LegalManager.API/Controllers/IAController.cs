@@ -117,6 +117,25 @@ public class IAController : ControllerBase
         var result = await _resumoService.ListarAsync(processoId, ct);
         return Ok(result);
     }
+
+    public record SetVisivelClienteDto(bool Visivel);
+
+    [HttpPatch("resumo-processo/{id:guid}/visivel-cliente")]
+    public async Task<ActionResult<ResumoProcessoResponseDto>> SetResumoVisivelCliente(
+        Guid id,
+        SetVisivelClienteDto dto,
+        CancellationToken ct)
+    {
+        try
+        {
+            var result = await _resumoService.SetVisivelClienteAsync(id, dto.Visivel, ct);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }
 
 [ApiController]

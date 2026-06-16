@@ -130,6 +130,23 @@ public class PortalClienteService : IPortalClienteService
             .ToListAsync(ct);
     }
 
+    public async Task<IEnumerable<MeuResumoDto>> GetResumosAsync(
+        Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default)
+    {
+        var autorizado = await _context.Processos
+            .AnyAsync(p => p.Id == processoId && p.TenantId == tenantId &&
+                           p.Partes.Any(pt => pt.ContatoId == contatoId), ct);
+
+        if (!autorizado) throw new UnauthorizedAccessException("Acesso negado ao processo.");
+
+        return await _context.ResumosProcesso
+            .Where(r => r.ProcessoId == processoId && r.TenantId == tenantId && r.VisivelCliente)
+            .OrderByDescending(r => r.GeradoEm)
+            .Select(r => new MeuResumoDto(
+                r.Id, r.Conteudo, r.GeradoPor!.UserName ?? "Escritório", r.GeradoEm))
+            .ToListAsync(ct);
+    }
+
     public async Task<AcessoPortalInfoDto> CriarAcessoAsync(
         Guid contatoId, CriarAcessoPortalDto dto, Guid tenantId, CancellationToken ct = default)
     {

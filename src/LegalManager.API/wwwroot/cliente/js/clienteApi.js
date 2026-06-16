@@ -116,6 +116,7 @@ export const portalApi = {
   getMeusProcessos: () => clienteApiFetch('/meus-processos'),
   getProcesso: (id) => clienteApiFetch(`/meus-processos/${id}`),
   getAndamentos: (id) => clienteApiFetch(`/meus-processos/${id}/andamentos`),
+  getResumos: (id) => clienteApiFetch(`/meus-processos/${id}/resumos`),
   getDocumentos: (id) => clienteApiFetch(`/meus-processos/${id}/documentos`),
   uploadDocumento: (processoId, file, tipo = 'Prova', nome = null) => {
     const token = getToken();

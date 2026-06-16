@@ -9,6 +9,7 @@ public interface IPortalClienteService
     Task<IEnumerable<MeuProcessoDto>> GetMeusProcessosAsync(Guid contatoId, Guid tenantId, CancellationToken ct = default);
     Task<MeuProcessoDto?> GetProcessoAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
     Task<IEnumerable<MeuAndamentoDto>> GetAndamentosAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
+    Task<IEnumerable<MeuResumoDto>> GetResumosAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
 
     // Office-side management
     Task<AcessoPortalInfoDto> CriarAcessoAsync(Guid contatoId, CriarAcessoPortalDto dto, Guid tenantId, CancellationToken ct = default);

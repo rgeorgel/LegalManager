@@ -10,6 +10,7 @@ public class ResumoProcessoConfiguration : IEntityTypeConfiguration<ResumoProces
     {
         builder.HasKey(r => r.Id);
         builder.Property(r => r.Conteudo).IsRequired();
+        builder.Property(r => r.VisivelCliente).IsRequired().HasDefaultValue(false);
 
         builder.HasOne(r => r.Processo)
             .WithMany()

@@ -137,6 +137,12 @@
     .md-content table.md-table th { background:#f3f4f6; font-weight:600; color:var(--color-text); }
     .md-content table.md-table tbody tr:nth-child(even) { background:#f9fafb; }
     .md-content table.md-table p { margin:0; }
+    .resumo-shared-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:#dbeafe; color:#1d4ed8; }
+    .resumo-share-btn { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--color-border); background:#fff; color:var(--color-text); border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; transition:background 0.15s, border-color 0.15s, color 0.15s; }
+    .resumo-share-btn:hover { background:var(--color-bg); }
+    .resumo-share-btn.shared { background:#dbeafe; border-color:#93c5fd; color:#1d4ed8; }
+    .resumo-share-btn.shared:hover { background:#bfdbfe; }
+    .resumo-share-btn:disabled { opacity:0.6; cursor:wait; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -893,6 +899,9 @@
           <span style="font-size:13px;color:#166534;flex:1;min-width:180px"><strong>Resumo gerado por IA</strong> — Revise o conteúdo. Este é um resumo automático.</span>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <span id="resumoMeta" style="font-size:12px;color:#166534;font-weight:600;white-space:nowrap"></span>
+            <button type="button" id="resumoShareBtnAtual" class="resumo-share-btn" onclick="toggleResumoCompartilhar('atual')" title="Compartilhar com o cliente">
+              👥 Compartilhar com cliente
+            </button>
             <div class="resumo-view-toggle" role="tablist" aria-label="Modo de visualização do resumo">
               <button type="button" class="resumo-view-btn active" data-view="visual" role="tab" aria-selected="true">👁 Visual</button>
               <button type="button" class="resumo-view-btn" data-view="markdown" role="tab" aria-selected="false">Markdown</button>
@@ -961,7 +970,7 @@
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
-import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso } from '/js/ia.js';
+import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
 
@@ -2344,7 +2353,64 @@ function mostrarResumoNoModal(resumo) {
   document.getElementById('tabResumoAtual').style.display = '';
   ativarTabResumo('atual');
   setResumoView(document.querySelector('#panelResumoAtual [data-view-container]'), 'visual');
+  window._resumoAtual = resumo;
+  updateShareButton('atual', resumo);
 }
+
+function updateShareButton(scope, resumo) {
+  const btn = document.getElementById(scope === 'atual' ? 'resumoShareBtnAtual' : null);
+  if (!btn) return;
+  if (resumo.visivelCliente) {
+    btn.classList.add('shared');
+    btn.textContent = '🚫 Ocultar do cliente';
+    btn.title = 'Ocultar do cliente';
+  } else {
+    btn.classList.remove('shared');
+    btn.textContent = '👥 Compartilhar com cliente';
+    btn.title = 'Compartilhar com o cliente';
+  }
+  btn.dataset.resumoId = resumo.id;
+}
+
+window.toggleResumoCompartilhar = async (scope, index) => {
+  let resumo, btn;
+  if (scope === 'atual') {
+    btn = document.getElementById('resumoShareBtnAtual');
+    const id = btn?.dataset.resumoId;
+    if (!id) return;
+    const r = window._resumosHistorico?.find(x => x.id === id)
+      ?? window._resumoAtual;
+    if (!r) return;
+    resumo = r;
+  } else {
+    const r = window._resumosHistorico?.[index];
+    if (!r) return;
+    resumo = r;
+    btn = document.querySelector(`button.resumo-share-btn[data-resumo-id="${r.id}"]`);
+  }
+
+  if (!btn || !resumo) return;
+  if (btn.disabled) return;
+  const novoVisivel = !resumo.visivelCliente;
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = novoVisivel ? 'Compartilhando…' : 'Ocultando…';
+  try {
+    const atualizado = await setResumoVisivelCliente(resumo.id, novoVisivel);
+    resumo.visivelCliente = atualizado.visivelCliente;
+    await carregarHistoricoResumos();
+    if (window._resumoAtual?.id === atualizado.id) {
+      window._resumoAtual.visivelCliente = atualizado.visivelCliente;
+      updateShareButton('atual', window._resumoAtual);
+    }
+    showAlert(atualizado.visivelCliente ? 'Resumo compartilhado com o cliente.' : 'Resumo ocultado do cliente.', 'success');
+  } catch (err) {
+    btn.textContent = textoOriginal;
+    showAlert(err.message);
+  } finally {
+    btn.disabled = false;
+  }
+};
 
 async function carregarHistoricoResumos() {
   const lista = document.getElementById('resumoHistoricoLista');
@@ -2363,20 +2429,32 @@ async function carregarHistoricoResumos() {
       const borderStyle = isFirst
         ? ';border-color:var(--color-primary);box-shadow:0 0 0 1px var(--color-primary-light)'
         : '';
+      const sharedBadge = r.visivelCliente
+        ? '<span class="resumo-shared-badge" title="Visível para o cliente">👥 Compartilhado</span>'
+        : '';
+      const shareBtn = `<button type="button" class="resumo-share-btn${r.visivelCliente ? ' shared' : ''}" data-resumo-id="${r.id}" onclick="toggleResumoCompartilhar('hist', ${i})" title="${r.visivelCliente ? 'Ocultar do cliente' : 'Compartilhar com o cliente'}">${r.visivelCliente ? '🚫 Ocultar' : '👥 Compartilhar'}</button>`;
 
       const bodyHtml = isFirst
         ? `<div data-view-container="resumoHist-${i}">
-             <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-               <div class="resumo-view-toggle" role="tablist" aria-label="Modo de visualização do resumo">
-                 <button type="button" class="resumo-view-btn active" data-view="visual" role="tab" aria-selected="true">👁 Visual</button>
-                 <button type="button" class="resumo-view-btn" data-view="markdown" role="tab" aria-selected="false">Markdown</button>
+             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+               ${sharedBadge}
+               <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+                 ${shareBtn}
+                 <div class="resumo-view-toggle" role="tablist" aria-label="Modo de visualização do resumo">
+                   <button type="button" class="resumo-view-btn active" data-view="visual" role="tab" aria-selected="true">👁 Visual</button>
+                   <button type="button" class="resumo-view-btn" data-view="markdown" role="tab" aria-selected="false">Markdown</button>
+                 </div>
                </div>
              </div>
              <div data-view-pane="visual" id="resumoHistVisual-${i}" class="md-content" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;font-size:13px;line-height:1.7;max-height:380px;overflow-y:auto"></div>
              <div data-view-pane="markdown" id="resumoHistMarkdown-${i}" style="display:none;background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;font-size:13px;line-height:1.7;white-space:pre-wrap;font-family:Georgia,serif;max-height:380px;overflow-y:auto"></div>
            </div>`
         : `<div style="font-size:13px;line-height:1.6;color:var(--color-text);white-space:pre-wrap;max-height:180px;overflow-y:auto;font-family:Georgia,serif;background:#f9fafb;padding:10px;border-radius:4px">${esc(r.conteudo)}</div>
-           <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px" onclick="verResumoCompleto(${i})">Ver completo</button>`;
+           <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+             ${sharedBadge}
+             ${shareBtn}
+             <button class="btn btn-secondary btn-sm" style="font-size:12px" onclick="verResumoCompleto(${i})">Ver completo</button>
+           </div>`;
 
       return `
         <div style="border:1px solid var(--color-border);border-radius:8px;padding:14px;margin-bottom:12px${borderStyle}">

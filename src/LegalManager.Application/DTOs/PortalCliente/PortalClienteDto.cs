@@ -45,6 +45,13 @@ public record MeuAndamentoDto(
     DateTime CriadoEm
 );
 
+public record MeuResumoDto(
+    Guid Id,
+    string Conteudo,
+    string GeradoPorNome,
+    DateTime GeradoEm
+);
+
 public record CriarAcessoPortalDto(
     [Required][MaxLength(256)] string Email,
     [Required][MinLength(8)] string Senha

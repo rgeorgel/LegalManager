@@ -137,7 +137,8 @@ public class ResumoProcessoService : IResumoProcessoService
             resumo.ProcessoId,
             resumo.Conteudo,
             usuario?.UserName ?? "Usuário",
-            resumo.GeradoEm
+            resumo.GeradoEm,
+            resumo.VisivelCliente
         );
     }
 
@@ -156,7 +157,30 @@ public class ResumoProcessoService : IResumoProcessoService
             r.ProcessoId,
             r.Conteudo,
             r.GeradoPor?.UserName ?? "Usuário",
-            r.GeradoEm
+            r.GeradoEm,
+            r.VisivelCliente
         ));
+    }
+
+    public async Task<ResumoProcessoResponseDto> SetVisivelClienteAsync(Guid resumoId, bool visivel, CancellationToken ct = default)
+    {
+        var tenantId = _tenantContext.TenantId;
+
+        var resumo = await _context.ResumosProcesso
+            .Include(r => r.GeradoPor)
+            .FirstOrDefaultAsync(r => r.Id == resumoId && r.TenantId == tenantId, ct)
+            ?? throw new InvalidOperationException("Resumo não encontrado.");
+
+        resumo.VisivelCliente = visivel;
+        await _context.SaveChangesAsync(ct);
+
+        return new ResumoProcessoResponseDto(
+            resumo.Id,
+            resumo.ProcessoId,
+            resumo.Conteudo,
+            resumo.GeradoPor?.UserName ?? "Usuário",
+            resumo.GeradoEm,
+            resumo.VisivelCliente
+        );
     }
 }

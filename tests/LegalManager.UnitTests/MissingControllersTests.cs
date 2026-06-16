@@ -879,7 +879,7 @@ public class IAControllerTests
     private static Mock<IResumoProcessoService> CreateResumoMock()
     {
         var mock = new Mock<IResumoProcessoService>();
-        var dto = new ResumoProcessoResponseDto(Guid.NewGuid(), Guid.NewGuid(), "Resumo", "Usuário", DateTime.UtcNow);
+        var dto = new ResumoProcessoResponseDto(Guid.NewGuid(), Guid.NewGuid(), "Resumo", "Usuário", DateTime.UtcNow, false);
         mock.Setup(s => s.GerarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(dto);
         mock.Setup(s => s.ListarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))

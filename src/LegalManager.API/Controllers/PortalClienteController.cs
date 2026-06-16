@@ -77,6 +77,15 @@ public class PortalClienteController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("meus-processos/{processoId:guid}/resumos")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<ActionResult<IEnumerable<MeuResumoDto>>> GetResumos(Guid processoId, CancellationToken ct)
+    {
+        var (contatoId, tenantId) = GetContatoTenant();
+        var result = await _service.GetResumosAsync(processoId, contatoId, tenantId, ct);
+        return Ok(result);
+    }
+
     [HttpGet("meus-processos/{processoId:guid}/documentos")]
     [Authorize(Roles = "Cliente")]
     public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetDocumentos(Guid processoId, CancellationToken ct)
