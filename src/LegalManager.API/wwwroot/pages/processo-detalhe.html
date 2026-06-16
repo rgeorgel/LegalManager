@@ -108,6 +108,35 @@
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
     .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
     #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
+    .resumo-view-toggle { display:inline-flex; background:#e5e7eb; border-radius:6px; padding:2px; gap:2px; }
+    .resumo-view-btn { background:transparent; border:none; padding:5px 12px; border-radius:4px; font-size:12px; font-weight:600; color:var(--color-text-muted); cursor:pointer; transition:background 0.15s, color 0.15s; }
+    .resumo-view-btn:hover { color:var(--color-text); }
+    .resumo-view-btn.active { background:#fff; color:var(--color-primary); box-shadow:0 1px 2px rgba(0,0,0,0.08); }
+    .md-content { color:var(--color-text); }
+    .md-content h1, .md-content h2, .md-content h3, .md-content h4, .md-content h5, .md-content h6 { font-weight:600; line-height:1.3; margin:18px 0 10px; color:var(--color-text); }
+    .md-content h1 { font-size:20px; border-bottom:1px solid var(--color-border); padding-bottom:6px; }
+    .md-content h2 { font-size:17px; }
+    .md-content h3 { font-size:15px; }
+    .md-content h4, .md-content h5, .md-content h6 { font-size:14px; }
+    .md-content h1:first-child, .md-content h2:first-child, .md-content h3:first-child { margin-top:0; }
+    .md-content p { margin:10px 0; }
+    .md-content strong { font-weight:600; color:var(--color-text); }
+    .md-content em { font-style:italic; }
+    .md-content ul, .md-content ol { margin:10px 0; padding-left:24px; }
+    .md-content li { margin:4px 0; }
+    .md-content ul { list-style:disc; }
+    .md-content ol { list-style:decimal; }
+    .md-content blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--color-primary); background:var(--color-primary-light); border-radius:0 6px 6px 0; color:var(--color-text); font-style:italic; }
+    .md-content code { background:#f3f4f6; color:#be185d; padding:1px 6px; border-radius:4px; font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size:12.5px; }
+    .md-content pre { background:#1f2937; color:#f9fafb; padding:12px 14px; border-radius:6px; overflow-x:auto; margin:12px 0; }
+    .md-content pre code { background:transparent; color:inherit; padding:0; font-size:12.5px; }
+    .md-content hr { border:none; border-top:1px solid var(--color-border); margin:18px 0; }
+    .md-content a { color:var(--color-primary); text-decoration:underline; }
+    .md-content table.md-table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+    .md-content table.md-table th, .md-content table.md-table td { border:1px solid var(--color-border); padding:8px 12px; vertical-align:top; }
+    .md-content table.md-table th { background:#f3f4f6; font-weight:600; color:var(--color-text); }
+    .md-content table.md-table tbody tr:nth-child(even) { background:#f9fafb; }
+    .md-content table.md-table p { margin:0; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -861,10 +890,19 @@
       <!-- Painel: Resumo Atual -->
       <div id="panelResumoAtual" style="display:none">
         <div style="margin-bottom:12px;padding:10px 14px;background:#f0fdf4;border-radius:6px;border-left:4px solid #16a34a;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-          <span style="font-size:13px;color:#166534"><strong>Resumo gerado por IA</strong> — Revise o conteúdo. Este é um resumo automático.</span>
-          <span id="resumoMeta" style="font-size:12px;color:#166534;font-weight:600;white-space:nowrap"></span>
+          <span style="font-size:13px;color:#166534;flex:1;min-width:180px"><strong>Resumo gerado por IA</strong> — Revise o conteúdo. Este é um resumo automático.</span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span id="resumoMeta" style="font-size:12px;color:#166534;font-weight:600;white-space:nowrap"></span>
+            <div class="resumo-view-toggle" role="tablist" aria-label="Modo de visualização do resumo">
+              <button type="button" class="resumo-view-btn active" data-view="visual" role="tab" aria-selected="true">👁 Visual</button>
+              <button type="button" class="resumo-view-btn" data-view="markdown" role="tab" aria-selected="false">Markdown</button>
+            </div>
+          </div>
         </div>
-        <div id="resumoConteudo" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;max-height:450px;overflow-y:auto"></div>
+        <div data-view-container="resumoConteudo">
+          <div data-view-pane="visual" id="resumoConteudoVisual" class="md-content" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;max-height:450px;overflow-y:auto"></div>
+          <div data-view-pane="markdown" id="resumoConteudoMarkdown" style="display:none;background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;max-height:450px;overflow-y:auto"></div>
+        </div>
       </div>
 
       <!-- Painel: Histórico -->
@@ -925,6 +963,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
+import { renderMarkdown } from '/js/markdown.js';
 
 initLayout();
 
@@ -2276,11 +2315,35 @@ function ativarTabResumo(tab) {
   tabHist.style.borderColor = eHistorico ? 'var(--color-primary)' : '';
 }
 
+function setResumoView(container, view) {
+  if (!container) return;
+  container.querySelectorAll('[data-view-pane]').forEach(p => {
+    p.style.display = p.dataset.viewPane === view ? '' : 'none';
+  });
+  container.querySelectorAll('.resumo-view-btn').forEach(b => {
+    const active = b.dataset.view === view;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.resumo-view-btn');
+  if (!btn) return;
+  const container = btn.closest('[data-view-container]');
+  if (container) setResumoView(container, btn.dataset.view);
+});
+
 function mostrarResumoNoModal(resumo) {
-  document.getElementById('resumoConteudo').textContent = resumo.conteudo;
+  const markdown = resumo.conteudo ?? '';
+  const visualEl = document.getElementById('resumoConteudoVisual');
+  const mdEl = document.getElementById('resumoConteudoMarkdown');
+  mdEl.textContent = markdown;
+  visualEl.innerHTML = renderMarkdown(markdown) || '<p style="color:var(--color-text-muted)">Sem conteúdo.</p>';
   document.getElementById('resumoMeta').textContent = fmtDateTimeResumo(resumo.geradoEm);
   document.getElementById('tabResumoAtual').style.display = '';
   ativarTabResumo('atual');
+  setResumoView(document.querySelector('#panelResumoAtual [data-view-container]'), 'visual');
 }
 
 async function carregarHistoricoResumos() {
@@ -2292,17 +2355,47 @@ async function carregarHistoricoResumos() {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🤖</div><div class="empty-state-text">Nenhum resumo gerado ainda</div></div>';
       return;
     }
-    lista.innerHTML = resumos.map((r, i) => `
-      <div style="border:1px solid var(--color-border);border-radius:8px;padding:14px;margin-bottom:12px${i === 0 ? ';border-color:var(--color-primary)' : ''}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:12px;font-weight:600;color:var(--color-primary)">${i === 0 ? '⭐ Mais recente' : `#${resumos.length - i}`}</span>
-          <span style="font-size:12px;font-weight:600;color:var(--color-text)">${fmtDateTimeResumo(r.geradoEm)}</span>
-        </div>
-        <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:8px">por ${r.geradoPorNome}</div>
-        <div style="font-size:13px;line-height:1.6;color:var(--color-text);white-space:pre-wrap;max-height:180px;overflow-y:auto;font-family:Georgia,serif;background:#f9fafb;padding:10px;border-radius:4px">${r.conteudo}</div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px" onclick="verResumoCompleto(${i})">Ver completo</button>
-      </div>`).join('');
     window._resumosHistorico = resumos;
+
+    lista.innerHTML = resumos.map((r, i) => {
+      const isFirst = i === 0;
+      const headerLabel = isFirst ? '⭐ Mais recente' : `#${resumos.length - i}`;
+      const borderStyle = isFirst
+        ? ';border-color:var(--color-primary);box-shadow:0 0 0 1px var(--color-primary-light)'
+        : '';
+
+      const bodyHtml = isFirst
+        ? `<div data-view-container="resumoHist-${i}">
+             <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+               <div class="resumo-view-toggle" role="tablist" aria-label="Modo de visualização do resumo">
+                 <button type="button" class="resumo-view-btn active" data-view="visual" role="tab" aria-selected="true">👁 Visual</button>
+                 <button type="button" class="resumo-view-btn" data-view="markdown" role="tab" aria-selected="false">Markdown</button>
+               </div>
+             </div>
+             <div data-view-pane="visual" id="resumoHistVisual-${i}" class="md-content" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;font-size:13px;line-height:1.7;max-height:380px;overflow-y:auto"></div>
+             <div data-view-pane="markdown" id="resumoHistMarkdown-${i}" style="display:none;background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:16px;font-size:13px;line-height:1.7;white-space:pre-wrap;font-family:Georgia,serif;max-height:380px;overflow-y:auto"></div>
+           </div>`
+        : `<div style="font-size:13px;line-height:1.6;color:var(--color-text);white-space:pre-wrap;max-height:180px;overflow-y:auto;font-family:Georgia,serif;background:#f9fafb;padding:10px;border-radius:4px">${esc(r.conteudo)}</div>
+           <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px" onclick="verResumoCompleto(${i})">Ver completo</button>`;
+
+      return `
+        <div style="border:1px solid var(--color-border);border-radius:8px;padding:14px;margin-bottom:12px${borderStyle}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:600;color:var(--color-primary)">${headerLabel}</span>
+            <span style="font-size:12px;font-weight:600;color:var(--color-text)">${fmtDateTimeResumo(r.geradoEm)}</span>
+          </div>
+          <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:8px">por ${esc(r.geradoPorNome)}</div>
+          ${bodyHtml}
+        </div>`;
+    }).join('');
+
+    const first = resumos[0];
+    const histVisual = document.getElementById(`resumoHistVisual-0`);
+    const histMd = document.getElementById(`resumoHistMarkdown-0`);
+    if (first && histVisual && histMd) {
+      histMd.textContent = first.conteudo ?? '';
+      histVisual.innerHTML = renderMarkdown(first.conteudo ?? '') || '<p style="color:var(--color-text-muted)">Sem conteúdo.</p>';
+    }
   } catch (err) {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
   }
@@ -2377,7 +2470,7 @@ document.getElementById('resumoConfirmGerar').addEventListener('click', async ()
 });
 
 document.getElementById('resumoCopiar').addEventListener('click', () => {
-  const texto = document.getElementById('resumoConteudo').textContent;
+  const texto = document.getElementById('resumoConteudoMarkdown').textContent;
   navigator.clipboard.writeText(texto).then(() => showAlert('Copiado!', 'success'));
 });
 
