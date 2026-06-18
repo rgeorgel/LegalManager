@@ -9,6 +9,7 @@ const PUBLIC_PAGES = [
   '/aceitar-convite.html',
   '/termos.html',
   '/privacidade.html',
+  '/lp-facebook.html',
 ];
 
 for (const pagePath of PUBLIC_PAGES) {
