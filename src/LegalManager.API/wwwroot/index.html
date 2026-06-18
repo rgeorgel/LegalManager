@@ -2,6 +2,44 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <!-- Traffic redirect: Facebook / Instagram campaigns → lp-facebook.html -->
+  <script>
+    (function () {
+      try {
+        var host = location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') return;
+
+        var path = location.pathname;
+        if (path !== '/' && path !== '/index.html') return;
+
+        var params = new URLSearchParams(location.search);
+        var utmSource = (params.get('utm_source') || '').toLowerCase();
+        var utmMedium = (params.get('utm_medium') || '').toLowerCase();
+        var hasFbclid = params.has('fbclid') || params.has('igclid');
+
+        var referrer = '';
+        try { referrer = document.referrer.toLowerCase(); } catch (e) {}
+        var selfOrigin = (location.origin || '').toLowerCase();
+        var isExternal = referrer && selfOrigin && referrer.indexOf(selfOrigin) !== 0;
+
+        var socialHosts = ['facebook.com', 'instagram.com', 'fb.com', 'fb.me', 'meta.com'];
+        var fromSocialReferrer = false;
+        if (isExternal) {
+          for (var i = 0; i < socialHosts.length; i++) {
+            if (referrer.indexOf(socialHosts[i]) !== -1) { fromSocialReferrer = true; break; }
+          }
+        }
+
+        var socialSources = ['facebook', 'fb', 'instagram', 'ig', 'meta', 'fbads', 'igads'];
+        var fromUtm = socialSources.indexOf(utmSource) !== -1;
+        var fromSocialMedium = utmMedium === 'social' || utmMedium === 'paid_social' || utmMedium === 'cpc';
+
+        if (fromSocialReferrer || hasFbclid || fromUtm || fromSocialMedium) {
+          location.replace('/lp-facebook.html' + location.search + location.hash);
+        }
+      } catch (e) { /* fail silently — never break the page */ }
+    })();
+  </script>
   <!-- Google tag (gtag.js) — only loads in non-local environments -->
   <script>
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
