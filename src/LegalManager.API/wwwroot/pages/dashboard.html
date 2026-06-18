@@ -54,6 +54,7 @@
       gap: 14px;
       margin-bottom: 20px;
     }
+    @media(max-width:560px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
     .stat-card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
@@ -89,7 +90,7 @@
     .trend-bar-d { background:#f87171; border-radius:2px 2px 0 0; flex:1; min-height:2px; }
     .trend-label { font-size:10px; color:var(--color-text-muted); white-space:nowrap; }
     .kpi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-    @media(max-width:480px) { .kpi-row { grid-template-columns:1fr; } }
+    @media(max-width:480px) { .kpi-row { grid-template-columns:1fr 1fr; } }
   </style>
   <style>
     .ob-step { display: none; }
@@ -130,7 +131,7 @@
           </label>
           <div id="obLoadingSearch" class="loading-overlay" style="display:none">
             <div style="text-align:center">
-              <img src="/images/search_process.gif" alt="Buscando processos..." style="width:300px;height:300px">
+              <img src="/images/search_process.gif" alt="Buscando processos..." style="max-width:300px;width:100%;height:auto">
               <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Procurando processos</div>
             </div>
           </div>
@@ -170,7 +171,7 @@
           <button id="obImportarBtn" class="btn btn-primary" type="button">Importar Selecionados</button>
           <div id="obLoadingImport" class="loading-overlay" style="display:none">
             <div style="text-align:center">
-              <img src="/images/loading_processos.gif" alt="Importando..." style="width:300px;height:300px">
+              <img src="/images/loading_processos.gif" alt="Importando..." style="max-width:300px;width:100%;height:auto">
               <div style="color:white;font-size:16px;margin-top:16px;font-weight:500">Importando processos</div>
             </div>
           </div>

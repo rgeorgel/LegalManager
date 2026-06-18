@@ -55,6 +55,7 @@
     .pub-tipo { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:600; background:#eff6ff; color:#1d4ed8; }
     .pub-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:16px; margin-bottom:12px; transition:border-color 0.15s,box-shadow 0.15s; }
     .pub-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow); }
+    .pub-card:active { border-color:var(--color-primary); background:var(--color-bg); }
     .pub-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
     .pub-card-tipo { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .pub-card-meta { font-size:12px; color:var(--color-text-muted); }
@@ -142,5 +143,9 @@
   </main>
 </div>
 <script type="module" src="/js/publicacoes.js"></script>
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  initLayout();
+</script>
 </body>
 </html>

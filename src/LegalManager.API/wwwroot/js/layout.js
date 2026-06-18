@@ -52,7 +52,7 @@ const NAV_GROUPS = [
 const BOTTOM_NAV_ITEMS = [
   { href: '/pages/dashboard.html', icon: '📊', label: 'Dashboard' },
   { href: '/pages/processos.html', icon: '⚖️', label: 'Processos' },
-  { href: '/pages/tarefas.html', icon: '✅', label: 'Tarefas/Prazos' },
+  { href: '/pages/tarefas.html', icon: '✅', label: 'Tarefas' },
   { href: '/pages/agenda.html', icon: '📅', label: 'Agenda' },
   { action: 'menu', icon: '☰', label: 'Menu' },
 ];
@@ -247,13 +247,20 @@ function injectNotificationBell() {
   const headerUser = document.querySelector('.header-user');
   if (!headerUser || document.getElementById('notifBell')) return;
 
+  if (!document.getElementById('notifStyles')) {
+    const s = document.createElement('style');
+    s.id = 'notifStyles';
+    s.textContent = '.notif-item:active { background: #f3f4f6 !important; }';
+    document.head.appendChild(s);
+  }
+
   const bell = document.createElement('div');
   bell.id = 'notifBell';
   bell.style.cssText = 'position:relative;cursor:pointer;padding:6px;display:flex;align-items:center;user-select:none';
   bell.innerHTML = `
     <span style="font-size:18px" title="Alertas">🔔</span>
     <span id="notifBadge" style="display:none;position:absolute;top:2px;right:2px;background:#dc2626;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 4px"></span>
-    <div id="notifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:9999;width:320px;background:#fff;border:1px solid var(--color-border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:400px;overflow-y:auto"></div>
+      <div id="notifDropdown" style="display:none;position:absolute;top:100%;right:0;z-index:9999;width:320px;max-width:calc(100vw - 24px);background:#fff;border:1px solid var(--color-border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:400px;overflow-y:auto"></div>
   `;
   headerUser.insertBefore(bell, headerUser.firstChild);
 

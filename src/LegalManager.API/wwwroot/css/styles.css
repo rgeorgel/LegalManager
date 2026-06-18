@@ -222,7 +222,9 @@ a:active { opacity: 0.7; }
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transition: background 0.12s, transform 0.1s;
 }
+.card:active { background: var(--color-bg); }
 .card-body { padding: 20px; }
 .card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
 
@@ -245,7 +247,9 @@ tbody td {
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
 }
+tbody tr { transition: background 0.12s; }
 tbody tr:hover { background: var(--color-bg); }
+tbody tr:active { background: var(--color-border); }
 tbody tr:last-child td { border-bottom: none; }
 
 /* ── Tabs ────────────────────────────────────────────── */
@@ -458,7 +462,7 @@ tbody tr:last-child td { border-bottom: none; }
 /* ── Responsive — 414px (Large phones) ───────────────── */
 @media (max-width: 414px) {
   .header-logo { font-size: 16px; }
-  .header-user span:not(.header-user-name) { display: none; }
+  .header-tenant { display: none; }
   .page-title { font-size: 20px; }
   .main-content { padding: 14px; }
 }
@@ -490,6 +494,9 @@ tbody tr:last-child td { border-bottom: none; }
 /* ── Responsive — Mobile (<= 768px) ──────────────────── */
 @media (max-width: 768px) {
   .hamburger { display: flex; }
+
+  .header-user-name { display: none; }
+  .header-logo img { height: 55px; }
 
   .app-layout {
     grid-template-columns: 1fr;
