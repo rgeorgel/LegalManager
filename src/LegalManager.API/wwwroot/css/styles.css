@@ -573,6 +573,16 @@ tbody tr:last-child td { border-bottom: none; }
   .filter-bar { flex-direction: column; }
   .filter-bar .form-control { width: 100%; }
 
+  /* Cells with multiple action buttons — stack vertically and fill width */
+  table tbody td[data-label="Ações"]:has(> button:nth-of-type(2)) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  table tbody td[data-label="Ações"]:has(> button:nth-of-type(2)) button {
+    width: 100%;
+  }
+
   .bottom-nav { display: block; }
 }
 

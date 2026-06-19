@@ -97,6 +97,32 @@
     .folder-input-group { display:flex; gap:4px; }
     .folder-input-group input { flex:1; font-size:12px; padding:4px 8px; }
     .folder-input-group button { font-size:12px; padding:4px 8px; }
+
+    /* ── Mobile (<= 768px) ─────────────────────────── */
+    @media (max-width: 768px) {
+      .folder-layout { flex-direction: column; gap: 12px; }
+      .folder-panel { width: 100%; max-height: 260px; }
+      .folder-tree { max-height: 200px; }
+
+      .editor-toolbar { flex-direction: column; align-items: stretch; gap: 6px; }
+      .editor-toolbar button { width: 100%; }
+
+      .pdf-modal-content {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+      }
+      .pdf-modal-header { padding: 10px 12px; gap: 8px; }
+      .pdf-modal-title { font-size: 13px; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pdf-modal-actions { gap: 6px; }
+      .pdf-modal-actions .btn { padding: 6px 10px; font-size: 12px; }
+      .pdf-modal-close { padding: 4px 6px; font-size: 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .folder-tree { max-height: 180px; }
+      .pdf-modal-actions .btn { padding: 5px 8px; font-size: 11px; }
+    }
   </style>
 <script>
     // Crisp.chat - load async to avoid blocking
