@@ -436,7 +436,7 @@
             <span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span>
           </label>
 
-          <button id="submitBtn" type="submit" class="btn-primary">Criar minha conta Plus →</button>
+          <button id="submitBtn" type="submit" class="btn-primary">Criar minha conta →</button>
 
           <div class="form-foot">Sem cartão de crédito · Cancele quando quiser</div>
           <div id="formMsg" class="form-msg" role="status" aria-live="polite"></div>
@@ -654,7 +654,7 @@
     } catch (err) {
       showMsg(err.message || 'Erro ao criar conta. Tente novamente.', 'err');
       btn.disabled = false;
-      btn.textContent = 'Criar conta grátis →';
+      btn.textContent = 'Criar minha conta →';
       track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
     }
   });
