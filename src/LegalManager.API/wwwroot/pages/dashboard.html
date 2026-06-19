@@ -62,6 +62,22 @@
       padding: 18px 20px;
       box-shadow: var(--shadow);
     }
+    a.stat-card-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+    }
+    a.stat-card-link:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+    a.stat-card-link:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
     .stat-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
     .stat-card-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: var(--color-primary); }
     .fin-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
@@ -215,30 +231,30 @@
       <div class="tab-content active" id="tab-dashboard">
         <!-- Operacional -->
         <div class="dashboard-grid">
-          <div class="stat-card">
+          <a class="stat-card stat-card-link" href="/pages/processos.html">
             <div class="stat-card-label">Processos Ativos</div>
             <div class="stat-card-value" id="statProcessos">—</div>
-          </div>
-          <div class="stat-card">
+          </a>
+          <a class="stat-card stat-card-link" href="/pages/contatos.html">
             <div class="stat-card-label">Contatos</div>
             <div class="stat-card-value" id="statContatos">—</div>
-          </div>
-          <div class="stat-card">
+          </a>
+          <a class="stat-card stat-card-link" href="/pages/tarefas.html">
             <div class="stat-card-label">Tarefas Abertas</div>
             <div class="stat-card-value" id="statTarefas">—</div>
-          </div>
-          <div class="stat-card" style="border-color:#fca5a5">
+          </a>
+          <a class="stat-card stat-card-link" href="/pages/tarefas.html" style="border-color:#fca5a5">
             <div class="stat-card-label" style="color:#dc2626">Tarefas Atrasadas</div>
             <div class="stat-card-value" style="color:#dc2626" id="statAtrasadas">—</div>
-          </div>
-          <div class="stat-card">
+          </a>
+          <a class="stat-card stat-card-link" href="/pages/processos.html">
             <div class="stat-card-label">Processos Encerrados</div>
             <div class="stat-card-value" style="font-size:22px" id="statEncerrados">—</div>
-          </div>
-          <div class="stat-card">
+          </a>
+          <a class="stat-card stat-card-link" href="/pages/assinatura.html">
             <div class="stat-card-label">Plano / Status</div>
             <div class="stat-card-value" style="font-size:14px" id="statPlano">—</div>
-          </div>
+          </a>
         </div>
 
         <!-- Financeiro do mês -->
