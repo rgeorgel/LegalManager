@@ -397,15 +397,63 @@
     <div class="wrap">
       <div class="eyebrow">🚀 Pronto em 1 minuto</div>
       <h1>Crie sua conta <span class="hl">agora</span></h1>
-      <p class="sub">Escolha seu plano, preencha nome, e-mail e senha. Você começa a usar em menos de 1 minuto.</p>
+      <p class="sub">Preencha nome, e-mail e senha. O plano Plus já vem selecionado para você começar com tudo.</p>
     </div>
   </header>
 
   <main class="wrap">
 
-    <section aria-labelledby="plans-title">
-      <div class="section-label">1. Escolha seu plano</div>
-      <h2 id="plans-title">Comece grátis ou escolha o plano ideal</h2>
+    <section aria-labelledby="signup-title">
+      <div class="form-card">
+        <div class="section-label">1. Crie sua conta</div>
+        <h2 id="signup-title">Comece em 1 minuto</h2>
+        <p class="sub">Preencha seus dados para acessar agora.</p>
+
+        <form id="signupForm" novalidate>
+          <div class="selected-plan-pill" aria-live="polite">
+            <span class="lbl">Plano:</span>
+            <span class="name" id="selectedPlanName">Plus — R$ 20/mês</span>
+            <span class="change" onclick="document.getElementById('plans-title').scrollIntoView({behavior:'smooth'})">trocar</span>
+          </div>
+
+          <div class="field">
+            <label for="nome">Nome</label>
+            <input id="nome" name="nome" type="text" placeholder="Dr. João Silva" required autocomplete="name">
+          </div>
+
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" placeholder="seu@email.com" required autocomplete="email" inputmode="email">
+          </div>
+
+          <div class="field">
+            <label for="senha">Senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label>
+            <input id="senha" name="senha" type="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+          </div>
+
+          <label class="terms">
+            <input id="aceitoTermos" type="checkbox" required>
+            <span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span>
+          </label>
+
+          <button id="submitBtn" type="submit" class="btn-primary">Criar minha conta Plus →</button>
+
+          <div class="form-foot">Sem cartão de crédito · Cancele quando quiser</div>
+          <div id="formMsg" class="form-msg" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="trust">
+        <div class="trust-item">🔒 SSL · dados criptografados</div>
+        <div class="trust-item">⚖️ Feito para advogados brasileiros</div>
+        <div class="trust-item">🇧🇷 Suporte em português</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="plans-title" id="plans-section">
+      <div class="section-label">2. Prefere outro plano?</div>
+      <h2 id="plans-title">Toque para trocar</h2>
+      <p class="sub" style="margin-bottom:1.25rem">Você pode mudar de plano a qualquer momento depois.</p>
 
       <div class="plans" role="radiogroup" aria-label="Planos disponíveis">
 
@@ -467,53 +515,6 @@
         <span class="dot"></span>
         <span class="dot active"></span>
         <span class="dot"></span>
-      </div>
-    </section>
-
-    <section aria-labelledby="signup-title">
-      <div class="form-card">
-        <div class="section-label">2. Crie sua conta</div>
-        <h2 id="signup-title">Quase lá</h2>
-        <p class="sub">Você pode trocar de plano a qualquer momento.</p>
-
-        <form id="signupForm" novalidate>
-          <div class="selected-plan-pill" aria-live="polite">
-            <span class="lbl">Plano selecionado:</span>
-            <span class="name" id="selectedPlanName">Plus — R$ 20/mês</span>
-            <span class="change" onclick="document.getElementById('plans-title').scrollIntoView({behavior:'smooth'})">trocar</span>
-          </div>
-
-          <div class="field">
-            <label for="nome">Nome</label>
-            <input id="nome" name="nome" type="text" placeholder="Dr. João Silva" required autocomplete="name">
-          </div>
-
-          <div class="field">
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" placeholder="seu@email.com" required autocomplete="email" inputmode="email">
-          </div>
-
-          <div class="field">
-            <label for="senha">Senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label>
-            <input id="senha" name="senha" type="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
-          </div>
-
-          <label class="terms">
-            <input id="aceitoTermos" type="checkbox" required>
-            <span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span>
-          </label>
-
-          <button id="submitBtn" type="submit" class="btn-primary">Criar conta grátis →</button>
-
-          <div class="form-foot">Sem cartão de crédito · Cancele quando quiser</div>
-          <div id="formMsg" class="form-msg" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-
-      <div class="trust">
-        <div class="trust-item">🔒 SSL · dados criptografados</div>
-        <div class="trust-item">⚖️ Feito para advogados brasileiros</div>
-        <div class="trust-item">🇧🇷 Suporte em português</div>
       </div>
     </section>
 
