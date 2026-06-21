@@ -34,7 +34,10 @@
         var fromUtm = socialSources.indexOf(utmSource) !== -1;
         var fromSocialMedium = utmMedium === 'social' || utmMedium === 'paid_social' || utmMedium === 'cpc';
 
-        if (fromSocialReferrer || hasFbclid || fromUtm || fromSocialMedium) {
+        var isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(navigator.userAgent || '');
+        var fromSyndicatedSearch = isExternal && referrer.indexOf('syndicatedsearch.goog') !== -1;
+
+        if (fromSocialReferrer || hasFbclid || fromUtm || fromSocialMedium || (fromSyndicatedSearch && isMobile)) {
           location.replace('/lp-facebook.html' + location.search + location.hash);
         }
       } catch (e) { /* fail silently — never break the page */ }
