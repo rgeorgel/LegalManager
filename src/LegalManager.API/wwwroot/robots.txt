@@ -7,7 +7,58 @@ Sitemap: https://causify.com.br/sitemap.xml
 # Crawl-delay para evitar sobrecarga
 Crawl-delay: 1
 
-# Bloquear assets desnecessários
+# Bloquear assets e áreas privadas
 Disallow: /images/logos/*
 Disallow: /cliente/*
-Disallow: /pages/debug-*
+Disallow: /pages/*
+Disallow: /superadmin/*
+Disallow: /js/*
+
+# Landing page de campanha paga (não indexar)
+Disallow: /lp-facebook.html
+
+# LLMs discovery
+Allow: /llms.txt
+
+# =====================================================
+# AI Bots — explicitamente permitidos (referência)
+# =====================================================
+
+# OpenAI
+User-agent: GPTBot
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Google AI (Gemini, AI Overviews)
+User-agent: Google-Extended
+Allow: /
+
+# Apple Intelligence
+User-agent: Applebot-Extended
+Allow: /
+
+# Common Crawl (usado por muitos LLMs)
+User-agent: CCBot
+Allow: /
+
+# Amazon (Alexa, Rufus)
+User-agent: Amazonbot
+Allow: /
+
+# Meta AI
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Bytespider (TikTok / ByteDance)
+User-agent: Bytespider
+Allow: /

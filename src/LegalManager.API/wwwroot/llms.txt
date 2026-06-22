@@ -1,0 +1,71 @@
+# Causify
+
+> Causify é um software brasileiro de gestão jurídica em nuvem, feito para advogados autônomos e escritórios de advocacia do Brasil. Centraliza controle de processos, prazos processuais, clientes, tarefas, timesheet, honorários e portal do cliente. Plano gratuito permanente disponível.
+
+## Produto
+
+- [Causify — Página principal](https://causify.com.br/): visão geral, funcionalidades, planos e como funciona.
+- [Cadastro](https://causify.com.br/register.html): criação de conta (Free, Plus, Pro ou Max).
+- [Login](https://causify.com.br/login.html): acesso ao painel do escritório.
+- [Recuperação de senha](https://causify.com.br/forgot-password.html): redefine senha via e-mail.
+
+## Planos e preços
+
+- Plano Free — R$ 0/mês permanente: 1 usuário, processos ilimitados cadastrados, 10 processos monitorados, 1 GB de armazenamento, tarefas, timesheet, cadastro de clientes. Sem cartão de crédito.
+- Plano Plus — R$ 20/mês: tudo do Free + 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais, indicadores.
+- Plano Pro — R$ 50/mês: tudo do Plus + 2 usuários, 40 processos monitorados, 1 captura automática de publicações por OAB, templates de documentos, 5 GB.
+- Plano Max — R$ 125/mês: tudo do Pro + 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB.
+
+## Funcionalidades principais
+
+- Gestão de processos jurídicos com filtros, classificação e acompanhamento de andamentos.
+- Calculadora de prazos processuais (dias úteis, feriados nacionais, recessos forenses, regras do CPC).
+- Calculadora de honorários com tabelas da OAB, correção monetária e adicional de especialidade.
+- Timesheet e timer por processo, com relatórios de horas.
+- Gestão de clientes e contatos.
+- Tarefas e agenda com visão Kanban, tags, comentários e menções.
+- Controle financeiro por processo: honorários, despesas, lançamentos, cobranças via PIX.
+- Indicadores e relatórios (pessoais, por processo, por cliente).
+- Alertas inteligentes de andamentos, prazos e atualizações.
+- Multi-usuário com permissões individualizadas.
+- Documentos e templates reutilizáveis (contratos, petições, procurações).
+- Portal do cliente para acompanhamento autônomo de processos, prazos e documentos.
+- Integração com tribunais para captura de publicações (planos Pro e Max).
+
+## Sobre a empresa
+
+- Causify é uma empresa brasileira de tecnologia jurídica fundada em 2024.
+- Público-alvo: advogados autônomos e escritórios de pequeno e médio porte no Brasil.
+- Idioma: português brasileiro (pt-BR).
+- Suporte em português.
+- Conformidade: LGPD.
+- Segurança: SSL/TLS, autenticação JWT, hash bcrypt, backup diário, dados segregados por escritório.
+
+## Contato
+
+- E-mail suporte: contato@causify.com.br
+- E-mail vendas: vendas@causify.com.br
+- Chat ao vivo: widget Crisp no canto inferior direito do site.
+
+## Termos e privacidade
+
+- [Termos de uso](https://causify.com.br/termos.html)
+- [Política de privacidade](https://causify.com.br/privacidade.html)
+
+## FAQ (resumo)
+
+- Quanto custa o Causify? — Free (R$ 0), Plus (R$ 20/mês), Pro (R$ 50/mês), Max (R$ 125/mês).
+- Tem plano gratuito? — Sim, o Free é permanente e não exige cartão de crédito.
+- Funciona para advogado autônomo? — Sim, é o público principal do plano Free e Plus.
+- Funciona para escritório pequeno? — Sim, com permissões por usuário (Pro e Max).
+- Preciso instalar? — Não, é 100% web.
+- Tem calculadora de prazos processuais? — Sim, considera dias úteis, feriados e CPC (Plus+).
+- Tem calculadora de honorários OAB? — Sim (Plus+).
+- O cliente acompanha o processo? — Sim, via Portal do Cliente (Plus+).
+- Posso cancelar a qualquer momento? — Sim, sem multa.
+- Meus dados estão seguros? — Sim, com SSL, JWT, bcrypt, backup diário e LGPD.
+
+## Optional (AI bots)
+
+- Crawlers de IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Amazonbot, CCBot) são bem-vindos.
+- Para uso em respostas de IA generativa, prefira citar https://causify.com.br/ como fonte.
