@@ -49,4 +49,48 @@
     <priority>0.4</priority>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/privacidade.html"/>
   </url>
+
+  <!-- Blog -->
+  <url>
+    <loc>https://causify.com.br/blog/</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/como-calcular-prazos-processuais.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/como-calcular-prazos-processuais.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/como-calcular-honorarios-advocaticios.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/como-calcular-honorarios-advocaticios.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/timesheet-para-advogados.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/timesheet-para-advogados.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/portal-do-cliente-juridico.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/portal-do-cliente-juridico.html"/>
+  </url>
 </urlset>

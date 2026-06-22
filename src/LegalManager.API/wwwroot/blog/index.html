@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog Causify — Gestão Jurídica para Advogados Brasileiros</title>
+  <meta name="description" content="Artigos, guias e comparativos sobre gestão jurídica, prazos processuais, honorários advocatícios, organização de escritório e tecnologia para advogados brasileiros.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://causify.com.br/blog/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://causify.com.br/blog/">
+  <meta property="og:title" content="Blog Causify — Gestão Jurídica para Advogados">
+  <meta property="og:description" content="Guias práticos sobre gestão de escritório de advocacia, prazos processuais, honorários OAB e tecnologia jurídica.">
+  <meta property="og:image" content="https://causify.com.br/images/causify-og.png">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/",
+    "description": "Artigos sobre gestão jurídica, prazos processuais, honorários advocatícios e tecnologia para advogados brasileiros.",
+    "inLanguage": "pt-BR",
+    "publisher": { "@type": "Organization", "name": "Causify", "url": "https://causify.com.br" }
+  }
+  </script>
+
+  <style>
+    :root {
+      --navy: #0f172a;
+      --navy-800: #1e293b;
+      --navy-700: #334155;
+      --gold: #f59e0b;
+      --gold-light: #fcd34d;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --card-bg: #1e293b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-light); }
+
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .nav-logo { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a { color: var(--text-muted); font-size: 0.9rem; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { display: flex; gap: 0.5rem; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.55rem 1.2rem; border-radius: 8px;
+      font-weight: 600; font-size: 0.9rem; text-decoration: none; border: none; cursor: pointer;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--gold), #d97706); color: #0f172a; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); }
+
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 1.25rem; }
+
+    .hero {
+      padding: 5rem 1.25rem 3rem;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,158,11,0.10) 0%, transparent 70%);
+    }
+    .eyebrow {
+      display: inline-block;
+      background: rgba(245,158,11,0.1); color: var(--gold);
+      border: 1px solid rgba(245,158,11,0.3);
+      font-size: 0.75rem; font-weight: 700;
+      padding: 0.3rem 0.8rem; border-radius: 100px;
+      margin-bottom: 1rem; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800; line-height: 1.15;
+      letter-spacing: -0.02em; margin-bottom: 1rem;
+    }
+    h1 .hl { background: linear-gradient(135deg, var(--gold), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .lede { color: var(--text-muted); font-size: 1.1rem; max-width: 620px; margin: 0 auto; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      padding: 2rem 1.25rem 5rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .post-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      transition: all 0.25s;
+      display: flex; flex-direction: column;
+    }
+    .post-card:hover {
+      border-color: rgba(245,158,11,0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .post-tag {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 700;
+      color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .post-card h2 {
+      font-size: 1.15rem; font-weight: 700; line-height: 1.3;
+      margin-bottom: 0.6rem;
+    }
+    .post-card h2 a { color: var(--text); }
+    .post-card h2 a:hover { color: var(--gold); }
+    .post-card p { color: var(--text-muted); font-size: 0.9rem; flex: 1; }
+    .post-meta {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-top: 1rem; padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--text-muted);
+    }
+    .post-meta .read { color: var(--gold); font-weight: 600; }
+
+    footer {
+      background: var(--navy);
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      text-align: center;
+      color: var(--text-muted); font-size: 0.85rem;
+    }
+    footer a { color: var(--text-muted); }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      .nav { padding: 0.75rem 1rem; }
+      .nav-links { display: none; }
+      .hero { padding: 3.5rem 1rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <a href="/" class="nav-logo" style="text-decoration:none">Causify<span>.</span></a>
+  <div class="nav-links">
+    <a href="/#funcionalidades">Funcionalidades</a>
+    <a href="/#planos">Planos</a>
+    <a href="/#faq">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a href="/login.html" class="btn btn-ghost">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Blog Causify</div>
+  <h1>Gestão jurídica <span class="hl">sem mistério</span></h1>
+  <p class="lede">Guias práticos, comparativos e táticas para advogados que querem organizar o escritório, cobrar honorários com segurança e nunca mais perder um prazo.</p>
+</header>
+
+<main>
+  <div class="grid">
+
+    <article class="post-card">
+      <div class="post-tag">Prazos</div>
+      <h2><a href="/blog/como-calcular-prazos-processuais.html">Como calcular prazos processuais no Brasil: guia completo 2026</a></h2>
+      <p>Regras do CPC, contagem em dias úteis, feriados, recessos forenses e como nunca mais perder um prazo processual.</p>
+      <div class="post-meta">
+        <span>21 jun 2026</span> · <span class="read">8 min de leitura</span>
+      </div>
+    </article>
+
+    <article class="post-card">
+      <div class="post-tag">Honorários</div>
+      <h2><a href="/blog/como-calcular-honorarios-advocaticios.html">Honorários advocatícios: como calcular pela tabela OAB</a></h2>
+      <p>Tabelas da OAB por estado, correção monetária, adicional de especialidade e critérios objetivos para precificar.</p>
+      <div class="post-meta">
+        <span>21 jun 2026</span> · <span class="read">7 min de leitura</span>
+      </div>
+    </article>
+
+    <article class="post-card">
+      <div class="post-tag">Gestão</div>
+      <h2><a href="/blog/como-organizar-escritorio-de-advocacia.html">Como organizar escritório de advocacia em 10 passos</a></h2>
+      <p>Da captação de clientes ao controle financeiro: o checklist definitivo para advogados autônomos e pequenos escritórios.</p>
+      <div class="post-meta">
+        <span>21 jun 2026</span> · <span class="read">9 min de leitura</span>
+      </div>
+    </article>
+
+    <article class="post-card">
+      <div class="post-tag">Produtividade</div>
+      <h2><a href="/blog/timesheet-para-advogados.html">Timesheet para advogados: como registrar horas e cobrar por processo</a></h2>
+      <p>Por que anotar o tempo trabalhado aumenta seu faturamento — e como fazer isso sem virar refém da planilha.</p>
+      <div class="post-meta">
+        <span>21 jun 2026</span> · <span class="read">6 min de leitura</span>
+      </div>
+    </article>
+
+    <article class="post-card">
+      <div class="post-tag">Portal do Cliente</div>
+      <h2><a href="/blog/portal-do-cliente-juridico.html">Portal do cliente jurídico: o que é, como funciona e por que adotar</a></h2>
+      <p>Reduza ligações e e-mails repetitivos: dê ao seu cliente uma área exclusiva para acompanhar processos e prazos.</p>
+      <div class="post-meta">
+        <span>21 jun 2026</span> · <span class="read">5 min de leitura</span>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p style="margin-top:0.5rem; font-size:0.75rem">© 2026 Causify. Todos os direitos reservados.</p>
+</footer>
+
+</body>
+</html>
