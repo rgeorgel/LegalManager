@@ -330,6 +330,25 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.Use(async (ctx, next) =>
+{
+    var path = ctx.Request.Path.Value;
+    if (!string.IsNullOrEmpty(path) && path.EndsWith('/') && path != "/")
+    {
+        var wwwroot = ctx.RequestServices.GetService<Microsoft.Extensions.Hosting.IHostEnvironment>()?.ContentRootPath;
+        if (!string.IsNullOrEmpty(wwwroot))
+        {
+            var indexPath = System.IO.Path.Combine(wwwroot, "wwwroot", path.TrimStart('/'), "index.html");
+            if (System.IO.File.Exists(indexPath))
+            {
+                ctx.Response.Redirect(path + "index.html", permanent: false);
+                return;
+            }
+        }
+    }
+    await next();
+});
+
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseRateLimiter();
