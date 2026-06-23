@@ -36,6 +36,20 @@
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/forgot-password.html"/>
   </url>
   <url>
+    <loc>https://causify.com.br/reset-password.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/reset-password.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/aceitar-convite.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/aceitar-convite.html"/>
+  </url>
+  <url>
     <loc>https://causify.com.br/termos.html</loc>
     <lastmod>2026-06-21</lastmod>
     <changefreq>yearly</changefreq>
