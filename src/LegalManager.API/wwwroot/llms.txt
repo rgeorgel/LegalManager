@@ -54,7 +54,7 @@
 
 ## Blog
 
-- [Blog Causify — Gestão jurídica sem mistério](https://causify.com.br/blog/): guias práticos, comparativos e táticas para advogados brasileiros.
+- [Blog Causify — Gestão jurídica sem mistério](https://causify.com.br/blog/index.html): guias práticos, comparativos e táticas para advogados brasileiros.
 - [Como calcular prazos processuais no Brasil: guia completo 2026](https://causify.com.br/blog/como-calcular-prazos-processuais.html): regras do CPC, dias úteis, feriados, recessos forenses.
 - [Honorários advocatícios: como calcular pela tabela OAB](https://causify.com.br/blog/como-calcular-honorarios-advocaticios.html): tabelas por estado, correção monetária, adicional de especialidade.
 - [Como organizar escritório de advocacia em 10 passos](https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html): captação, processos, financeiro, equipe, indicadores.

@@ -704,6 +704,20 @@
     .faq-header { text-align: center; margin-bottom: 3rem; }
     .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
 
+    /* BLOG TEASER */
+    .blog-teaser { background: var(--navy); padding: 5rem 1.5rem; }
+    .blog-header { text-align: center; margin-bottom: 3rem; }
+    .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
+    .blog-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; transition: all 0.3s; display: block; text-decoration: none; color: inherit; position: relative; overflow: hidden; }
+    .blog-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 60%, rgba(245,158,11,0.04)); pointer-events: none; }
+    .blog-card:hover { border-color: rgba(245,158,11,0.4); transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+    .blog-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+    .blog-card h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin-bottom: 0.6rem; color: var(--text); }
+    .blog-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.55; margin-bottom: 1rem; }
+    .blog-cta { color: var(--gold); font-weight: 600; font-size: 0.9rem; }
+    .blog-footer { text-align: center; margin-top: 3rem; }
+    @media (max-width: 560px) { .blog-grid { grid-template-columns: 1fr; } }
+
     .faq-item {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -877,7 +891,7 @@
     <a href="#planos" role="listitem">Planos</a>
     <a href="#como-funciona" role="listitem">Como funciona</a>
     <a href="#faq" role="listitem">FAQ</a>
-    <a href="/blog/" role="listitem">Blog</a>
+    <a href="/blog/index.html" role="listitem">Blog</a>
   </div>
   <div class="nav-cta">
     <a href="/login.html" class="btn btn-ghost">Entrar</a>
@@ -894,7 +908,7 @@
   <a href="#planos" onclick="closeMobileMenu()">Planos</a>
   <a href="#como-funciona" onclick="closeMobileMenu()">Como funciona</a>
   <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
-  <a href="/blog/" onclick="closeMobileMenu()">Blog</a>
+  <a href="/blog/index.html" onclick="closeMobileMenu()">Blog</a>
   <a href="/login.html" onclick="closeMobileMenu()">Entrar</a>
   <a href="/register.html" class="mobile-menu-cta" onclick="closeMobileMenu()">Começar grátis</a>
 </div>
@@ -1285,6 +1299,42 @@
   </div>
 </section>
 
+<!-- BLOG TEASER -->
+<section class="blog-teaser" id="blog" aria-labelledby="blog-teaser-title">
+  <div class="blog-header">
+    <div class="section-label" style="justify-content:center">✦ Blog</div>
+    <h2 id="blog-teaser-title" class="section-title">Conteúdo para advogados</h2>
+    <p class="section-subtitle" style="margin: 0 auto;">Guias práticos, comparativos e táticas para organizar seu escritório.</p>
+  </div>
+  <div class="blog-grid">
+
+    <a class="blog-card" href="/blog/como-calcular-prazos-processuais.html">
+      <span class="blog-tag">Prazos</span>
+      <h3>Como calcular prazos processuais no Brasil</h3>
+      <p>Regras do CPC, dias úteis, feriados e recessos forenses. Nunca mais perca um prazo.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+    <a class="blog-card" href="/blog/como-calcular-honorarios-advocaticios.html">
+      <span class="blog-tag">Honorários</span>
+      <h3>Honorários advocatícios: como calcular pela tabela OAB</h3>
+      <p>Tabelas por estado, correção monetária e adicional de especialidade configurável.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+    <a class="blog-card" href="/blog/como-organizar-escritorio-de-advocacia.html">
+      <span class="blog-tag">Gestão</span>
+      <h3>Como organizar escritório de advocacia em 10 passos</h3>
+      <p>Checklist prático para advogados autônomos e pequenos escritórios.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+  </div>
+  <div class="blog-footer">
+    <a href="/blog/index.html" class="btn btn-outline">Ver todos os artigos</a>
+  </div>
+</section>
+
 <!-- CTA FINAL -->
 <section class="cta-section" aria-labelledby="cta-title">
   <h2 id="cta-title">Pronto para organizar seu escritório?</h2>
@@ -1295,7 +1345,7 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>⚖️ Causify &nbsp;·&nbsp; <a href="/blog/">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="#planos">Planos</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p>⚖️ Causify &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="#planos">Planos</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
   <p style="margin-top:0.5rem; font-size:0.75rem">© 2026 Causify. Todos os direitos reservados.</p>
 </footer>
 

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Blog Causify OG Image</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+  }
+  .stage {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    padding: 80px 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,158,11,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 85% 90%, rgba(59,130,246,0.08) 0%, transparent 60%);
+  }
+  .header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #e2e8f0;
+  }
+  .brand .dot { color: #f59e0b; }
+  .pill-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.4);
+    color: #f59e0b;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 12px 28px;
+    border-radius: 100px;
+    text-transform: uppercase;
+  }
+  .body { position: relative; }
+  h1 {
+    font-size: 76px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: #e2e8f0;
+    max-width: 1020px;
+  }
+  h1 .accent {
+    background: linear-gradient(135deg, #f59e0b, #fcd34d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    margin-top: 24px;
+    font-size: 28px;
+    font-weight: 500;
+    color: #94a3b8;
+    max-width: 900px;
+  }
+  .footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .domain {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(245,158,11,0.10);
+    border: 1px solid rgba(245,158,11,0.35);
+    color: #f59e0b;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 100px;
+  }
+  .corner-deco {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle at 100% 100%, rgba(245,158,11,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="glow"></div>
+    <div class="corner-deco"></div>
+
+    <div class="header">
+      <div class="brand">Causify<span class="dot">.</span></div>
+      <span class="pill-eyebrow">✦ Blog</span>
+    </div>
+
+    <div class="body">
+      <h1>Gestão jurídica <span class="accent">sem mistério</span></h1>
+      <p class="subtitle">Guias práticos, comparativos e táticas para advogados brasileiros.</p>
+    </div>
+
+    <div class="footer">
+      <span class="domain">⚖️ causify.com.br/blog</span>
+    </div>
+  </div>
+</body>
+</html>

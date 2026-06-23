@@ -73,6 +73,13 @@
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/"/>
   </url>
   <url>
+    <loc>https://causify.com.br/blog/index.html</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/index.html"/>
+  </url>
+  <url>
     <loc>https://causify.com.br/blog/como-calcular-prazos-processuais.html</loc>
     <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
