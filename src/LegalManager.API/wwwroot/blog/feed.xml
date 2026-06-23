@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Blog Causify</title>
+    <link>https://causify.com.br/blog/</link>
+    <atom:link href="https://causify.com.br/blog/feed.xml" rel="self" type="application/rss+xml" />
+    <description>Guias práticos sobre gestão de escritório de advocacia, prazos processuais, honorários OAB e tecnologia jurídica para advogados brasileiros.</description>
+    <language>pt-BR</language>
+    <copyright>© 2026 Causify. Todos os direitos reservados.</copyright>
+    <lastBuildDate>Sun, 21 Jun 2026 10:00:00 -0300</lastBuildDate>
+    <image>
+      <url>https://causify.com.br/images/causify-og.png</url>
+      <title>Blog Causify</title>
+      <link>https://causify.com.br/blog/</link>
+    </image>
+
+    <item>
+      <title>Como calcular prazos processuais no Brasil: guia completo 2026</title>
+      <link>https://causify.com.br/blog/como-calcular-prazos-processuais.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/como-calcular-prazos-processuais.html</guid>
+      <pubDate>Sun, 21 Jun 2026 10:00:00 -0300</pubDate>
+      <category>Prazos</category>
+      <description>Regras do CPC, contagem em dias úteis, feriados, recessos forenses e como nunca mais perder um prazo processual.</description>
+    </item>
+
+    <item>
+      <title>Honorários advocatícios: como calcular pela tabela OAB</title>
+      <link>https://causify.com.br/blog/como-calcular-honorarios-advocaticios.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/como-calcular-honorarios-advocaticios.html</guid>
+      <pubDate>Sun, 21 Jun 2026 10:00:00 -0300</pubDate>
+      <category>Honorários</category>
+      <description>Tabelas da OAB por estado, correção monetária, adicional de especialidade e critérios objetivos para precificar.</description>
+    </item>
+
+    <item>
+      <title>Como organizar escritório de advocacia em 10 passos</title>
+      <link>https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html</guid>
+      <pubDate>Sun, 21 Jun 2026 10:00:00 -0300</pubDate>
+      <category>Gestão</category>
+      <description>Da captação de clientes ao controle financeiro: o checklist definitivo para advogados autônomos e pequenos escritórios.</description>
+    </item>
+
+    <item>
+      <title>Timesheet para advogados: como registrar horas e cobrar por processo</title>
+      <link>https://causify.com.br/blog/timesheet-para-advogados.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/timesheet-para-advogados.html</guid>
+      <pubDate>Sun, 21 Jun 2026 10:00:00 -0300</pubDate>
+      <category>Produtividade</category>
+      <description>Por que anotar o tempo trabalhado aumenta seu faturamento — e como fazer isso sem virar refém da planilha.</description>
+    </item>
+
+    <item>
+      <title>Portal do cliente jurídico: o que é, como funciona e por que adotar</title>
+      <link>https://causify.com.br/blog/portal-do-cliente-juridico.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/portal-do-cliente-juridico.html</guid>
+      <pubDate>Sun, 21 Jun 2026 10:00:00 -0300</pubDate>
+      <category>Portal do Cliente</category>
+      <description>Reduza ligações e e-mails repetitivos: dê ao seu cliente uma área exclusiva para acompanhar processos e prazos.</description>
+    </item>
+
+  </channel>
+</rss>
