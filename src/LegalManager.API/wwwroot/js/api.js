@@ -89,5 +89,24 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (res.status === 204) return null;
-  return res.json();
+
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    throw new Error(
+      `Resposta não-JSON do endpoint ${path} (Content-Type: ${contentType || 'vazio'}). ` +
+      `Provavelmente o endpoint não existe e o servidor retornou a página padrão. ` +
+      `Conteúdo recebido: ${text.substring(0, 120)}`
+    );
+  }
+
+  try {
+    return await res.json();
+  } catch (e) {
+    const text = await res.text();
+    throw new Error(
+      `Falha ao parsear JSON do endpoint ${path}: ${e.message}. ` +
+      `Conteúdo recebido: ${text.substring(0, 120)}`
+    );
+  }
 }
