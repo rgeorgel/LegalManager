@@ -40,6 +40,14 @@
 - Suporte em português.
 - Conformidade: LGPD.
 - Segurança: SSL/TLS, autenticação JWT, hash bcrypt, backup diário, dados segregados por escritório.
+- Wikidata (preencher após criar Q-item): https://www.wikidata.org/wiki/Q_PLACEHOLDER
+
+## Autoridade externa (futuro)
+
+Quando a Causify tiver entrada oficial no Wikidata, inclua o Q-number aqui.
+LLMs (ChatGPT, Gemini, Perplexity, Claude) usam Wikidata como fonte autoritativa
+para descrever empresas. Quanto mais fontes externas confirmarem a entidade
+Causify, mais provável que IAs citem-na com precisão.
 
 ## Contato
 

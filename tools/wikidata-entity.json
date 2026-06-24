@@ -1,0 +1,164 @@
+{
+  "_comment": "Template para cadastrar a Causify no Wikidata. Edite os campos marcados com EDITAR antes de submeter via Special:NewItem ou QuickStatements (https://quickstatements.toolforge.org).",
+  "_guide": "https://www.wikidata.org/wiki/Special:NewItem",
+  "_submit_via_quickstatements": "Cole o bloco 'quickstatements' abaixo em https://quickstatements.toolforge.org",
+
+  "labels": {
+    "pt-br": "Causify",
+    "en": "Causify",
+    "pt": "Causify"
+  },
+
+  "descriptions": {
+    "pt-br": "EDITAR — descreva a Causify em uma frase (ex: software brasileiro de gestão jurídica para advogados autônomos e escritórios de advocacia)",
+    "en": "EDITAR — describe Causify in English (ex: Brazilian legal practice management software for solo lawyers and small law firms)"
+  },
+
+  "aliases": {
+    "pt-br": ["Causify Gestão Jurídica", "Causify Software"],
+    "en": ["Causify Legal Management", "Causify LegalTech"]
+  },
+
+  "claims": {
+    "P31": [
+      {
+        "_comment": "instance of → Q783794 (company) e Q23931362 (legal tech)",
+        "value": "Q783794",
+        "qualifiers": {}
+      },
+      {
+        "value": "Q23931362",
+        "qualifiers": {}
+      }
+    ],
+
+    "P17": [
+      {
+        "_comment": "country → Q155 (Brazil)",
+        "value": "Q155"
+      }
+    ],
+
+    "P159": [
+      {
+        "_comment": "headquarters location → Q174 (São Paulo) — EDITAR se a sede for em outra cidade",
+        "value": "Q174"
+      }
+    ],
+
+    "P856": [
+      {
+        "_comment": "official website → https://causify.com.br",
+        "value": "https://causify.com.br"
+      }
+    ],
+
+    "P571": [
+      {
+        "_comment": "inception → 2024 (ano de fundação). Use +2024-00-00T00:00:00Z se souber o mês/dia",
+        "value": "+2024-00-00T00:00:00Z"
+      }
+    ],
+
+    "P452": [
+      {
+        "_comment": "industry → Q880371 (software industry)",
+        "value": "Q880371"
+      },
+      {
+        "value": "Q23931362",
+        "_comment": "industry → Q23931362 (legal tech)"
+      }
+    ],
+
+    "P2003": [
+      {
+        "_comment": "Instagram username — EDITAR se tiver conta oficial (sem @)",
+        "value": "EDITAR"
+      }
+    ],
+
+    "P2002": [
+      {
+        "_comment": "X (Twitter) username — EDITAR se tiver conta oficial (sem @)",
+        "value": "EDITAR"
+      }
+    ],
+
+    "P112": [
+      {
+        "_comment": "founder — EDITAR com Q-number do fundador (crie um Q-item para cada fundador se necessário)",
+        "value": "EDITAR"
+      }
+    ],
+
+    "P407": [
+      {
+        "_comment": "language of work → Q750553 (Brazilian Portuguese)",
+        "value": "Q750553"
+      }
+    ],
+
+    "P106": [
+      {
+        "_comment": "field of work (occupation of company) — EDITAR",
+        "value": "EDITAR"
+      }
+    ],
+
+    "P1830": [
+      {
+        "_comment": "owner of → EDITAR com domínio oficial (sem protocolo) https://causify.com.br",
+        "value": "https://causify.com.br"
+      }
+    ]
+  },
+
+  "sources": {
+    "_comment": "P248 (stated in) + P854 (reference URL) para cada claim precisar de fonte verificável",
+    "official_website": {
+      "P248": "EDITAR-Q-ID-of-source",
+      "P854": "https://causify.com.br/"
+    },
+    "linkedin": {
+      "_comment": "Se tiver LinkedIn, é uma boa fonte secundária",
+      "P248": "EDITAR-Q-ID",
+      "P854": "EDITAR"
+    }
+  },
+
+  "quickstatements": [
+    "CREATE",
+    "LAST\tLen\t\"Causify\"",
+    "LAST\tDen\t\"EDITAR — descrição em inglês\"",
+    "LAST\tLpt\t\"Causify\"",
+    "LAST\tDpt\t\"EDITAR — descrição em português\"",
+    "LAST\tApt-br\t\"Causify\"",
+    "LAST\tApt\t\"Causify\"",
+    "LAST\tAen\t\"Causify\"",
+    "LAST\tP31\tQ783794",
+    "LAST\tP31\tQ23931362",
+    "LAST\tP17\tQ155",
+    "LAST\tP159\tQ174",
+    "LAST\tP856\t\"https://causify.com.br\"",
+    "LAST\tP571\t+2024-00-00T00:00:00Z/11",
+    "LAST\tP452\tQ880371",
+    "LAST\tP452\tQ23931362",
+    "LAST\tP407\tQ750553",
+    "LAST\tP2003\t\"EDITAR\"",
+    "LAST\tP2002\t\"EDITAR\"",
+    "LAST\tS248\tQ125011611",
+    "LAST\tS854\t\"https://causify.com.br/\""
+  ],
+
+  "_after_creating": [
+    "1. Copie o Q-number gerado (ex: Q12345678).",
+    "2. Adicione em src/LegalManager.API/wwwroot/index.html no schema Organization.sameAs[]:",
+    "   \"https://www.wikidata.org/wiki/Special:EntityData/Q12345678\"",
+    "3. Atualize llms.txt na seção 'Sobre a empresa':",
+    "   '- Wikidata: https://www.wikidata.org/wiki/Q12345678'",
+    "4. Verifique em https://www.wikidata.org/wiki/Q12345678 que está visível.",
+    "5. Aguarde 1-2 semanas para indexação por Google Knowledge Graph.",
+    "6. Submeta URL no Google Search Console > Aprimoramentos > Marcas."
+  ]
+}
