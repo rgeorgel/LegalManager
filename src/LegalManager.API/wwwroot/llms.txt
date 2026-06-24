@@ -40,7 +40,7 @@
 - Suporte em português.
 - Conformidade: LGPD.
 - Segurança: SSL/TLS, autenticação JWT, hash bcrypt, backup diário, dados segregados por escritório.
-- Wikidata (preencher após criar Q-item): https://www.wikidata.org/wiki/Q_PLACEHOLDER
+- Wikidata: https://www.wikidata.org/wiki/Q140329326
 
 ## Autoridade externa (futuro)
 

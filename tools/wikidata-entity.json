@@ -160,5 +160,30 @@
     "4. Verifique em https://www.wikidata.org/wiki/Q12345678 que está visível.",
     "5. Aguarde 1-2 semanas para indexação por Google Knowledge Graph.",
     "6. Submeta URL no Google Search Console > Aprimoramentos > Marcas."
-  ]
+  ],
+
+  "_created_entity": {
+    "q_number": "Q140329326",
+    "url": "https://www.wikidata.org/wiki/Q140329326",
+    "created_at": "2026-06-23",
+    "claims_verified": [
+      "P31 → Q783794 (company)",
+      "P31 → Q23931362 (legal tech)",
+      "P17 → Q155 (Brazil)",
+      "P159 → Q174 (São Paulo)",
+      "P856 → https://causify.com.br",
+      "P571 → +2024-00-00T00:00:00Z (2024)",
+      "P452 → Q880371 (software industry)",
+      "P452 → Q23931362 (legal tech)",
+      "P407 → Q750553 (Brazilian Portuguese)",
+      "P2003 → causify.app (Instagram)",
+      "P2013 → causify (Facebook — ATENCAO: P2013 espera ID numerico, nao username)"
+    ],
+    "claims_missing": [
+      "P2002 (Twitter/X username) — nao foi adicionado; adicionar se houver conta oficial"
+    ],
+    "labels_verified": ["en", "pt"],
+    "descriptions_verified": ["en", "pt"],
+    "aliases_verified": ["en", "pt"]
+  }
 }

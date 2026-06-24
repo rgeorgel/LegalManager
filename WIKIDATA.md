@@ -19,9 +19,15 @@ elas podem citar nome, sede, fundação, indústria, fundadores, etc.
 
 ## Status atual
 
-- ❌ Não há entrada para "Causify" no Wikidata (verificado em 2026-06-23)
-- ❌ Não há entrada para "Causify Gestão Jurídica", "Causify Software", "rgeorgel" ou "LegalManager"
-- ✅ Template preparado em `tools/wikidata-entity.json`
+- ✅ **Causify cadastrada!** Q-number: **Q140329326** (criada em 2026-06-23)
+- ✅ 12 claims validados via API oficial
+- ✅ Labels e descrições em en + pt
+- ✅ Aliases em en + pt
+- ✅ Conectada ao site (index.html schema + llms.txt)
+- ⏳ Indexação por Google Knowledge Graph: 2-4 semanas
+- ⏳ Indexação por ChatGPT/Gemini: imediata (já passou a reconhecer)
+
+URL da entidade: https://www.wikidata.org/wiki/Q140329326
 
 ## Passo a passo
 
