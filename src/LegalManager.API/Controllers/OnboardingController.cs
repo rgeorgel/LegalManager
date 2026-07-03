@@ -197,9 +197,10 @@ public class OnboardingController : ControllerBase
                         }
                     }
 
+                    var processoId = Guid.NewGuid();
                     _context.Processos.Add(new Processo
                     {
-                        Id = Guid.NewGuid(),
+                        Id = processoId,
                         TenantId = _tenantContext.TenantId,
                         NumeroCNJ = cnj,
                         Tribunal = nomeTribunal ?? siglaTribunal,
@@ -218,6 +219,10 @@ public class OnboardingController : ControllerBase
                         CriadoEm = DateTime.Now
                     });
                     await _context.SaveChangesAsync(ct);
+
+                    await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, ct);
+                    await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, ct);
+
                     importados++;
 
                     // TODO (5B — Estratégia 3): ao implementar monitoramento de Diários Oficiais,
@@ -657,5 +662,164 @@ public class OnboardingController : ControllerBase
         if (!match.Success) return null;
         return DateTime.TryParseExact(match.Value, "dd/MM/yyyy",
             CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : null;
+    }
+
+    private async Task SalvarPartesEscavadorAsync(string? dadosJson, Guid processoId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dadosJson)) return;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(dadosJson);
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("fontes", out var fontesEl) ||
+                fontesEl.ValueKind != System.Text.Json.JsonValueKind.Array)
+                return;
+
+            var nomesVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var salvouAlguma = false;
+
+            foreach (var fonte in fontesEl.EnumerateArray())
+            {
+                if (!fonte.TryGetProperty("envolvidos", out var envolvidosEl) ||
+                    envolvidosEl.ValueKind != System.Text.Json.JsonValueKind.Array)
+                    continue;
+
+                foreach (var envEl in envolvidosEl.EnumerateArray())
+                {
+                    var nome = JsonStr(envEl, "nome");
+                    if (string.IsNullOrWhiteSpace(nome) || !nomesVistos.Add(nome)) continue;
+
+                    var polo = JsonStr(envEl, "polo") ?? "";
+                    var cpf = JsonStr(envEl, "cpf");
+                    var cnpj = JsonStr(envEl, "cnpj");
+                    var tipoPessoa = cnpj != null ? TipoPessoa.PJ : TipoPessoa.PF;
+
+                    string? oabFormatada = null;
+                    if (envEl.TryGetProperty("oabs", out var oabsEl) &&
+                        oabsEl.ValueKind == System.Text.Json.JsonValueKind.Array &&
+                        oabsEl.GetArrayLength() > 0)
+                    {
+                        var o = oabsEl[0];
+                        var oabUf = JsonStr(o, "uf");
+                        var oabNum = o.TryGetProperty("numero", out var numEl) &&
+                                     numEl.ValueKind == System.Text.Json.JsonValueKind.Number
+                            ? numEl.GetInt32().ToString()
+                            : null;
+                        if (oabNum != null && oabUf != null)
+                            oabFormatada = $"{oabNum}/{oabUf}";
+                    }
+
+                    var contato = await _contatoService.GetByNomeAsync(nome, ct);
+                    if (contato == null)
+                    {
+                        contato = await _contatoService.CreateAsync(new CreateContatoDto(
+                            Tipo: tipoPessoa,
+                            TipoContato: TipoContato.Cliente,
+                            Nome: nome,
+                            CpfCnpj: cpf ?? cnpj,
+                            Oab: oabFormatada,
+                            Email: null,
+                            Telefone: null,
+                            Endereco: null,
+                            Cidade: null,
+                            Estado: null,
+                            Cep: null,
+                            DataNascimento: null,
+                            Observacoes: null,
+                            NotificacaoHabilitada: false,
+                            Tags: null
+                        ), ct);
+                    }
+
+                    _context.ProcessoPartes.Add(new ProcessoParte
+                    {
+                        Id = Guid.NewGuid(),
+                        ProcessoId = processoId,
+                        ContatoId = contato.Id,
+                        TipoParte = MapearPoloEscavador(polo)
+                    });
+                    salvouAlguma = true;
+                }
+            }
+
+            if (salvouAlguma) await _context.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[Import] Falha ao salvar partes Escavador para processo {Id}", processoId);
+        }
+    }
+
+    private async Task SalvarAndamentosEscavadorAsync(
+        string cnj, DateTime? desde, Guid processoId, CancellationToken ct)
+    {
+        try
+        {
+            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde, pagina: 1, ct: ct);
+            if (resultado.Data.Count == 0) return;
+
+            var agora = DateTime.UtcNow;
+            foreach (var mov in resultado.Data)
+            {
+                _context.Andamentos.Add(new Andamento
+                {
+                    Id = Guid.NewGuid(),
+                    ProcessoId = processoId,
+                    TenantId = _tenantContext.TenantId,
+                    Data = mov.Data ?? agora,
+                    Tipo = MapearTipoAndamentoEscavador(mov.Tipo, mov.ConteudoHtml),
+                    Descricao = !string.IsNullOrWhiteSpace(mov.Snippet)
+                        ? mov.Snippet
+                        : ResumirHtmlAndamento(mov.ConteudoHtml),
+                    Fonte = FonteAndamento.Automatico,
+                    CriadoEm = agora
+                });
+            }
+            await _context.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos Escavador para {CNJ}", cnj);
+        }
+    }
+
+    private static TipoParteProcesso MapearPoloEscavador(string polo)
+    {
+        var upper = polo.ToUpperInvariant();
+        if (upper is "ATIVO" || upper.Contains("AUTOR") || upper.Contains("RECLAMANTE") ||
+            upper.Contains("IMPETRANTE") || upper.Contains("REQUERENTE") || upper.Contains("EXEQUENTE"))
+            return TipoParteProcesso.Autor;
+        if (upper is "PASSIVO" || upper.Contains("RÉU") || upper.Contains("REU") ||
+            upper.Contains("RECLAMADO") || upper.Contains("REQUERIDO") || upper.Contains("EXECUTADO"))
+            return TipoParteProcesso.Reu;
+        if (upper.Contains("INTERESSADO"))
+            return TipoParteProcesso.Interessado;
+        return TipoParteProcesso.Terceiro;
+    }
+
+    private static TipoAndamento MapearTipoAndamentoEscavador(string? tipo, string? conteudo)
+    {
+        var texto = ((tipo ?? "") + " " + (conteudo ?? "")).ToLowerInvariant();
+        return texto switch
+        {
+            var s when s.Contains("despacho") => TipoAndamento.Despacho,
+            var s when s.Contains("decis") => TipoAndamento.Decisao,
+            var s when s.Contains("senten") => TipoAndamento.Sentenca,
+            var s when s.Contains("acórd") || s.Contains("acord") => TipoAndamento.Acordao,
+            var s when s.Contains("audiên") || s.Contains("audien") => TipoAndamento.Audiencia,
+            var s when s.Contains("intim") => TipoAndamento.Intimacao,
+            var s when s.Contains("public") => TipoAndamento.Publicacao,
+            var s when s.Contains("petic") => TipoAndamento.Peticao,
+            _ => TipoAndamento.Outro
+        };
+    }
+
+    private static string ResumirHtmlAndamento(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return "Atualização via Escavador";
+        var noTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
+        var compact = System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
+        return compact.Length > 500 ? compact[..500] + "…" : compact;
     }
 }
