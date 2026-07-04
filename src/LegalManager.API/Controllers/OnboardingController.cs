@@ -756,8 +756,15 @@ public class OnboardingController : ControllerBase
     {
         try
         {
-            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde, pagina: 1, ct: ct);
-            if (resultado.Data.Count == 0) return;
+            // Fallback: se dataAjuizamento for null, busca 2 anos atrás para cobrir processos históricos
+            var desdeEfetivo = desde ?? DateTime.UtcNow.AddYears(-2);
+            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desdeEfetivo, pagina: 1, ct: ct);
+            if (resultado.Data.Count == 0)
+            {
+                _logger.LogInformation("[Import] Nenhum andamento retornado pelo Escavador para {CNJ} desde {Desde:yyyy-MM-dd}",
+                    cnj, desdeEfetivo);
+                return;
+            }
 
             var agora = DateTime.UtcNow;
             foreach (var mov in resultado.Data)

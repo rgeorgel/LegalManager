@@ -208,15 +208,21 @@ public class EscavadorHttpClient : IEscavadorService
         try
         {
             var resp = await _http.GetAsync(url, ct);
+            var json = await resp.Content.ReadAsStringAsync(ct);
             if (!resp.IsSuccessStatusCode)
             {
-                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
+                _logger.LogWarning("[Escavador] {S} em GET {Url} — Body: {Body}",
+                    resp.StatusCode, url, json.Length > 500 ? json[..500] : json);
                 return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
             }
-            var json = await resp.Content.ReadAsStringAsync(ct);
             var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<MovimentacaoData>>(json, JsonOpts);
-            if (wrapper == null) return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
-            var data = wrapper.Data?.Select(m => MapMovimentacao(m, "{}")).ToList() ?? [];
+            if (wrapper?.Data == null || wrapper.Data.Count == 0)
+            {
+                _logger.LogInformation("[Escavador] movimentacoes vazio para {Url} — Body: {Body}",
+                    url, json.Length > 500 ? json[..500] : json);
+                return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
+            }
+            var data = wrapper.Data.Select(m => MapMovimentacao(m, "{}")).ToList();
             return new EscavadorPagedResult<EscavadorMovimentacaoDto>(
                 data, data.Count, wrapper.Meta?.CurrentPage ?? 1, wrapper.Meta?.LastPage ?? 1,
                 (wrapper.Meta?.CurrentPage ?? 1) < (wrapper.Meta?.LastPage ?? 1));
