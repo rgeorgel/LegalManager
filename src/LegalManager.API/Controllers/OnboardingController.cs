@@ -752,97 +752,53 @@ public class OnboardingController : ControllerBase
     }
 
     private async Task SalvarAndamentosEscavadorAsync(
-        string cnj, DateTime? desde, Guid processoId, string? dadosJson, CancellationToken ct)
+        string cnj, DateTime? dataAjuizamento, Guid processoId, string? dadosJson, CancellationToken ct)
     {
-        // /api/v2/processos/{CNJ}/movimentacoes retorna 404 sem monitoramento ativo.
-        // Usa publicações DJSP via endpoint de OAB, extraindo o OAB do próprio cache do processo.
         try
         {
-            string? oabNumero = null, oabUf = null;
-            var ate = DateTime.UtcNow;
+            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde: null, pagina: 1, ct: ct);
 
-            if (!string.IsNullOrWhiteSpace(dadosJson))
+            if (resultado.Data.Count == 0)
             {
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(dadosJson);
-                    var root = doc.RootElement;
-
-                    if (root.TryGetProperty("data_ultima_movimentacao", out var ultEl) &&
-                        ultEl.ValueKind == System.Text.Json.JsonValueKind.String &&
-                        DateTime.TryParse(ultEl.GetString(), out var ultMov))
-                        ate = ultMov.AddDays(1);
-
-                    if (root.TryGetProperty("fontes", out var fontesEl) &&
-                        fontesEl.ValueKind == System.Text.Json.JsonValueKind.Array)
-                    {
-                        foreach (var fonte in fontesEl.EnumerateArray())
-                        {
-                            if (oabNumero != null) break;
-                            if (!fonte.TryGetProperty("envolvidos", out var envsEl) ||
-                                envsEl.ValueKind != System.Text.Json.JsonValueKind.Array) continue;
-                            foreach (var env in envsEl.EnumerateArray())
-                            {
-                                if (oabNumero != null) break;
-                                if (!env.TryGetProperty("oabs", out var oabsEl) ||
-                                    oabsEl.ValueKind != System.Text.Json.JsonValueKind.Array ||
-                                    oabsEl.GetArrayLength() == 0) continue;
-                                var o = oabsEl[0];
-                                oabUf = JsonStr(o, "uf");
-                                oabNumero = o.TryGetProperty("numero", out var numEl) &&
-                                            numEl.ValueKind == System.Text.Json.JsonValueKind.Number
-                                    ? numEl.GetInt32().ToString() : null;
-                            }
-                        }
-                    }
-                }
-                catch { /* ignora erro de parse */ }
-            }
-
-            if (string.IsNullOrWhiteSpace(oabNumero) || string.IsNullOrWhiteSpace(oabUf))
-            {
-                _logger.LogInformation("[Import] OAB não encontrado no cache para {CNJ}, andamentos ignorados", cnj);
-                return;
-            }
-
-            var de = desde ?? DateTime.UtcNow.AddYears(-2);
-            var resultado = await _escavador.BuscarPublicacoesPorOabAsync(
-                oabNumero, oabUf, de, ate, pagina: 1, ct: ct);
-
-            var publicacoesDoProcesso = resultado.Data
-                .Where(p => string.Equals(p.NumeroCnj, cnj, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (publicacoesDoProcesso.Count == 0)
-            {
-                _logger.LogInformation("[Import] Nenhuma publicação DJSP para {CNJ} OAB={Oab}/{Uf} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
-                    cnj, oabNumero, oabUf, de, ate);
+                _logger.LogInformation("[Import] Nenhum andamento para {CNJ}", cnj);
                 return;
             }
 
             var agora = DateTime.UtcNow;
-            foreach (var pub in publicacoesDoProcesso)
+            foreach (var mov in resultado.Data)
             {
                 _context.Andamentos.Add(new Andamento
                 {
                     Id = Guid.NewGuid(),
                     ProcessoId = processoId,
                     TenantId = _tenantContext.TenantId,
-                    Data = pub.Data,
-                    Tipo = TipoAndamento.Publicacao,
-                    Descricao = pub.Snippet ?? "Publicação no Diário de Justiça",
+                    Data = mov.Data ?? dataAjuizamento ?? DateTime.UtcNow,
+                    Tipo = MapearTipoAndamento(mov.Tipo, mov.ConteudoHtml),
+                    Descricao = mov.ConteudoHtml ?? mov.Snippet ?? "Movimentação",
                     Fonte = FonteAndamento.Automatico,
                     CriadoEm = agora
                 });
             }
             await _context.SaveChangesAsync(ct);
-            _logger.LogInformation("[Import] {N} andamento(s) (DJSP) salvos para {CNJ} OAB={Oab}/{Uf}",
-                publicacoesDoProcesso.Count, cnj, oabNumero, oabUf);
+            _logger.LogInformation("[Import] {N} andamento(s) salvos para {CNJ}", resultado.Data.Count, cnj);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos para {CNJ}", cnj);
         }
+    }
+
+    private static TipoAndamento MapearTipoAndamento(string? tipo, string? conteudo)
+    {
+        var texto = (conteudo ?? tipo ?? "").ToUpperInvariant();
+        if (texto.Contains("SENTEN")) return TipoAndamento.Sentenca;
+        if (texto.Contains("ACORD")) return TipoAndamento.Acordao;
+        if (texto.Contains("AUDIENC")) return TipoAndamento.Audiencia;
+        if (texto.Contains("INTIM") || texto.Contains("PUBLICAC") || texto.Contains("DJE"))
+            return TipoAndamento.Intimacao;
+        if (texto.Contains("DECIS")) return TipoAndamento.Decisao;
+        if (texto.Contains("PETIC")) return TipoAndamento.Peticao;
+        return TipoAndamento.Despacho;
     }
 
     private static TipoParteProcesso MapearPoloEscavador(string polo)

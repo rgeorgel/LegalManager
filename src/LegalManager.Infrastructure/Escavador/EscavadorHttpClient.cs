@@ -186,10 +186,9 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> ListarMovimentacoesPorProcessoAsync(
         string numeroCNJ, DateTime? desde, int pagina = 1, CancellationToken ct = default)
     {
-        _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ} desde={Desde}", numeroCNJ, desde);
-        var de = desde ?? DateTime.UtcNow.AddDays(-7);
-        var url = $"/api/v2/processos/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?page={pagina}&de={de:yyyy-MM-dd}";
-        return await FetchMovimentacoesPaged(url, ct);
+        _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ}", numeroCNJ);
+        var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?limit=500";
+        return await FetchMovimentacoesV2(url, numeroCNJ, ct);
     }
 
     public async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
@@ -232,6 +231,62 @@ public class EscavadorHttpClient : IEscavadorService
             _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
             return new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false);
         }
+    }
+
+    private async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> FetchMovimentacoesV2(
+        string firstUrl, string numeroCNJ, CancellationToken ct)
+    {
+        var all = new List<EscavadorMovimentacaoDto>();
+        string? nextUrl = firstUrl;
+        const int maxPages = 10;
+        var pageCount = 0;
+
+        while (nextUrl != null && pageCount < maxPages)
+        {
+            try
+            {
+                var resp = await _http.GetAsync(nextUrl, ct);
+                var json = await resp.Content.ReadAsStringAsync(ct);
+                if (!resp.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("[Escavador] {S} em GET {Url} — Body: {Body}",
+                        resp.StatusCode, nextUrl, json.Length > 500 ? json[..500] : json);
+                    break;
+                }
+                var wrapper = JsonSerializer.Deserialize<MovimentacoesV2Response>(json, JsonOpts);
+                if (wrapper?.Items == null || wrapper.Items.Count == 0) break;
+
+                foreach (var item in wrapper.Items)
+                {
+                    all.Add(new EscavadorMovimentacaoDto(
+                        Id: item.Id,
+                        Uuid: string.Empty,
+                        Data: item.Data,
+                        ConteudoHtml: item.Conteudo,
+                        Snippet: item.Conteudo,
+                        Tipo: item.Tipo,
+                        Diario: item.Fonte?.Nome,
+                        DiarioId: null,
+                        DiarioSigla: item.Fonte?.Sigla,
+                        OrigemEstado: null,
+                        Link: null, LinkApi: null, LinkPdf: null, LinkPdfApi: null,
+                        NumeroCnj: numeroCNJ,
+                        JsonBruto: "{}"
+                    ));
+                }
+
+                nextUrl = wrapper.Links?.Next;
+                pageCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[Escavador] Erro em GET {Url}", nextUrl);
+                break;
+            }
+        }
+
+        _logger.LogInformation("[Escavador] {N} movimentacoes obtidas para {CNJ}", all.Count, numeroCNJ);
+        return new EscavadorPagedResult<EscavadorMovimentacaoDto>(all, all.Count, 1, 1, false);
     }
 
     private async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> FetchPublicacoesPaged(
@@ -640,5 +695,31 @@ public class EscavadorHttpClient : IEscavadorService
         [JsonPropertyName("diario")] public string? Diario { get; set; }
         [JsonPropertyName("snippet")] public string? Snippet { get; set; }
         [JsonPropertyName("link_pdf")] public string? LinkPdf { get; set; }
+    }
+
+    private sealed class MovimentacoesV2Response
+    {
+        [JsonPropertyName("items")] public List<MovimentacaoV2Item>? Items { get; set; }
+        [JsonPropertyName("links")] public MovimentacoesV2Links? Links { get; set; }
+    }
+
+    private sealed class MovimentacoesV2Links
+    {
+        [JsonPropertyName("next")] public string? Next { get; set; }
+    }
+
+    private sealed class MovimentacaoV2Item
+    {
+        [JsonPropertyName("id")] public long Id { get; set; }
+        [JsonPropertyName("data")] public DateTime? Data { get; set; }
+        [JsonPropertyName("tipo")] public string? Tipo { get; set; }
+        [JsonPropertyName("conteudo")] public string? Conteudo { get; set; }
+        [JsonPropertyName("fonte")] public MovimentacaoV2Fonte? Fonte { get; set; }
+    }
+
+    private sealed class MovimentacaoV2Fonte
+    {
+        [JsonPropertyName("nome")] public string? Nome { get; set; }
+        [JsonPropertyName("sigla")] public string? Sigla { get; set; }
     }
 }
