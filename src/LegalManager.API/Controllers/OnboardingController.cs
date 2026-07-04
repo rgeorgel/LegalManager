@@ -136,6 +136,13 @@ public class OnboardingController : ControllerBase
         var importados = 0;
         var mensagens = new List<string>();
 
+        // OAB do usuário atual — usada para buscar publicações DJSP ao importar processos Escavador
+        var usuarioOab = await _context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == _tenantContext.UserId)
+            .Select(u => new { u.OabImportadaNumero, u.OabImportadaUf })
+            .FirstOrDefaultAsync(ct);
+
         foreach (var item in dto.Processos.GroupBy(x => x.NumeroCNJ).Select(g => g.First()))
         {
             try
@@ -221,7 +228,8 @@ public class OnboardingController : ControllerBase
                     await _context.SaveChangesAsync(ct);
 
                     await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, ct);
-                    await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, ct);
+                    await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, cache?.DadosJson,
+                        usuarioOab?.OabImportadaNumero, usuarioOab?.OabImportadaUf, ct);
 
                     importados++;
 
@@ -752,42 +760,65 @@ public class OnboardingController : ControllerBase
     }
 
     private async Task SalvarAndamentosEscavadorAsync(
-        string cnj, DateTime? desde, Guid processoId, CancellationToken ct)
+        string cnj, DateTime? desde, Guid processoId, string? dadosJson, string? oabNumero, string? oabUf, CancellationToken ct)
     {
+        // /api/v2/processos/{CNJ}/movimentacoes retorna 404 para processos não monitorados.
+        // Publicações DJSP são acessíveis via endpoint de OAB sem necessidade de monitoramento.
+        if (string.IsNullOrWhiteSpace(oabNumero) || string.IsNullOrWhiteSpace(oabUf)) return;
         try
         {
-            // Fallback: se dataAjuizamento for null, busca 2 anos atrás para cobrir processos históricos
-            var desdeEfetivo = desde ?? DateTime.UtcNow.AddYears(-2);
-            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desdeEfetivo, pagina: 1, ct: ct);
-            if (resultado.Data.Count == 0)
+            var de = desde ?? DateTime.UtcNow.AddYears(-2);
+            var ate = DateTime.UtcNow;
+
+            // Estreitar a janela de busca com data_ultima_movimentacao do cache para reduzir resultados
+            if (!string.IsNullOrWhiteSpace(dadosJson))
             {
-                _logger.LogInformation("[Import] Nenhum andamento retornado pelo Escavador para {CNJ} desde {Desde:yyyy-MM-dd}",
-                    cnj, desdeEfetivo);
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(dadosJson);
+                    if (doc.RootElement.TryGetProperty("data_ultima_movimentacao", out var ultEl) &&
+                        ultEl.ValueKind == System.Text.Json.JsonValueKind.String &&
+                        DateTime.TryParse(ultEl.GetString(), out var ultMov))
+                        ate = ultMov.AddDays(1);
+                }
+                catch { /* ignora erro de parse do cache */ }
+            }
+
+            var resultado = await _escavador.BuscarPublicacoesPorOabAsync(
+                oabNumero, oabUf, de, ate, pagina: 1, ct: ct);
+
+            var publicacoesDoProcesso = resultado.Data
+                .Where(p => string.Equals(p.NumeroCnj, cnj, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (publicacoesDoProcesso.Count == 0)
+            {
+                _logger.LogInformation("[Import] Nenhuma publicação DJSP para {CNJ} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
+                    cnj, de, ate);
                 return;
             }
 
             var agora = DateTime.UtcNow;
-            foreach (var mov in resultado.Data)
+            foreach (var pub in publicacoesDoProcesso)
             {
                 _context.Andamentos.Add(new Andamento
                 {
                     Id = Guid.NewGuid(),
                     ProcessoId = processoId,
                     TenantId = _tenantContext.TenantId,
-                    Data = mov.Data ?? agora,
-                    Tipo = MapearTipoAndamentoEscavador(mov.Tipo, mov.ConteudoHtml),
-                    Descricao = !string.IsNullOrWhiteSpace(mov.Snippet)
-                        ? mov.Snippet
-                        : ResumirHtmlAndamento(mov.ConteudoHtml),
+                    Data = pub.Data,
+                    Tipo = TipoAndamento.Publicacao,
+                    Descricao = pub.Snippet ?? "Publicação no Diário de Justiça",
                     Fonte = FonteAndamento.Automatico,
                     CriadoEm = agora
                 });
             }
             await _context.SaveChangesAsync(ct);
+            _logger.LogInformation("[Import] {N} andamento(s) (DJSP) salvos para {CNJ}", publicacoesDoProcesso.Count, cnj);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos Escavador para {CNJ}", cnj);
+            _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos para {CNJ}", cnj);
         }
     }
 
@@ -805,28 +836,4 @@ public class OnboardingController : ControllerBase
         return TipoParteProcesso.Terceiro;
     }
 
-    private static TipoAndamento MapearTipoAndamentoEscavador(string? tipo, string? conteudo)
-    {
-        var texto = ((tipo ?? "") + " " + (conteudo ?? "")).ToLowerInvariant();
-        return texto switch
-        {
-            var s when s.Contains("despacho") => TipoAndamento.Despacho,
-            var s when s.Contains("decis") => TipoAndamento.Decisao,
-            var s when s.Contains("senten") => TipoAndamento.Sentenca,
-            var s when s.Contains("acórd") || s.Contains("acord") => TipoAndamento.Acordao,
-            var s when s.Contains("audiên") || s.Contains("audien") => TipoAndamento.Audiencia,
-            var s when s.Contains("intim") => TipoAndamento.Intimacao,
-            var s when s.Contains("public") => TipoAndamento.Publicacao,
-            var s when s.Contains("petic") => TipoAndamento.Peticao,
-            _ => TipoAndamento.Outro
-        };
-    }
-
-    private static string ResumirHtmlAndamento(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return "Atualização via Escavador";
-        var noTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
-        var compact = System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
-        return compact.Length > 500 ? compact[..500] + "…" : compact;
-    }
 }
