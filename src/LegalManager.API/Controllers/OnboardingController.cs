@@ -136,13 +136,6 @@ public class OnboardingController : ControllerBase
         var importados = 0;
         var mensagens = new List<string>();
 
-        // OAB do usuário atual — usada para buscar publicações DJSP ao importar processos Escavador
-        var usuarioOab = await _context.Users
-            .AsNoTracking()
-            .Where(u => u.Id == _tenantContext.UserId)
-            .Select(u => new { u.OabImportadaNumero, u.OabImportadaUf })
-            .FirstOrDefaultAsync(ct);
-
         foreach (var item in dto.Processos.GroupBy(x => x.NumeroCNJ).Select(g => g.First()))
         {
             try
@@ -228,8 +221,7 @@ public class OnboardingController : ControllerBase
                     await _context.SaveChangesAsync(ct);
 
                     await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, ct);
-                    await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, cache?.DadosJson,
-                        usuarioOab?.OabImportadaNumero, usuarioOab?.OabImportadaUf, ct);
+                    await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, cache?.DadosJson, ct);
 
                     importados++;
 
@@ -760,30 +752,60 @@ public class OnboardingController : ControllerBase
     }
 
     private async Task SalvarAndamentosEscavadorAsync(
-        string cnj, DateTime? desde, Guid processoId, string? dadosJson, string? oabNumero, string? oabUf, CancellationToken ct)
+        string cnj, DateTime? desde, Guid processoId, string? dadosJson, CancellationToken ct)
     {
-        // /api/v2/processos/{CNJ}/movimentacoes retorna 404 para processos não monitorados.
-        // Publicações DJSP são acessíveis via endpoint de OAB sem necessidade de monitoramento.
-        if (string.IsNullOrWhiteSpace(oabNumero) || string.IsNullOrWhiteSpace(oabUf)) return;
+        // /api/v2/processos/{CNJ}/movimentacoes retorna 404 sem monitoramento ativo.
+        // Usa publicações DJSP via endpoint de OAB, extraindo o OAB do próprio cache do processo.
         try
         {
-            var de = desde ?? DateTime.UtcNow.AddYears(-2);
+            string? oabNumero = null, oabUf = null;
             var ate = DateTime.UtcNow;
 
-            // Estreitar a janela de busca com data_ultima_movimentacao do cache para reduzir resultados
             if (!string.IsNullOrWhiteSpace(dadosJson))
             {
                 try
                 {
                     using var doc = System.Text.Json.JsonDocument.Parse(dadosJson);
-                    if (doc.RootElement.TryGetProperty("data_ultima_movimentacao", out var ultEl) &&
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("data_ultima_movimentacao", out var ultEl) &&
                         ultEl.ValueKind == System.Text.Json.JsonValueKind.String &&
                         DateTime.TryParse(ultEl.GetString(), out var ultMov))
                         ate = ultMov.AddDays(1);
+
+                    if (root.TryGetProperty("fontes", out var fontesEl) &&
+                        fontesEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        foreach (var fonte in fontesEl.EnumerateArray())
+                        {
+                            if (oabNumero != null) break;
+                            if (!fonte.TryGetProperty("envolvidos", out var envsEl) ||
+                                envsEl.ValueKind != System.Text.Json.JsonValueKind.Array) continue;
+                            foreach (var env in envsEl.EnumerateArray())
+                            {
+                                if (oabNumero != null) break;
+                                if (!env.TryGetProperty("oabs", out var oabsEl) ||
+                                    oabsEl.ValueKind != System.Text.Json.JsonValueKind.Array ||
+                                    oabsEl.GetArrayLength() == 0) continue;
+                                var o = oabsEl[0];
+                                oabUf = JsonStr(o, "uf");
+                                oabNumero = o.TryGetProperty("numero", out var numEl) &&
+                                            numEl.ValueKind == System.Text.Json.JsonValueKind.Number
+                                    ? numEl.GetInt32().ToString() : null;
+                            }
+                        }
+                    }
                 }
-                catch { /* ignora erro de parse do cache */ }
+                catch { /* ignora erro de parse */ }
             }
 
+            if (string.IsNullOrWhiteSpace(oabNumero) || string.IsNullOrWhiteSpace(oabUf))
+            {
+                _logger.LogInformation("[Import] OAB não encontrado no cache para {CNJ}, andamentos ignorados", cnj);
+                return;
+            }
+
+            var de = desde ?? DateTime.UtcNow.AddYears(-2);
             var resultado = await _escavador.BuscarPublicacoesPorOabAsync(
                 oabNumero, oabUf, de, ate, pagina: 1, ct: ct);
 
@@ -793,8 +815,8 @@ public class OnboardingController : ControllerBase
 
             if (publicacoesDoProcesso.Count == 0)
             {
-                _logger.LogInformation("[Import] Nenhuma publicação DJSP para {CNJ} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
-                    cnj, de, ate);
+                _logger.LogInformation("[Import] Nenhuma publicação DJSP para {CNJ} OAB={Oab}/{Uf} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
+                    cnj, oabNumero, oabUf, de, ate);
                 return;
             }
 
@@ -814,7 +836,8 @@ public class OnboardingController : ControllerBase
                 });
             }
             await _context.SaveChangesAsync(ct);
-            _logger.LogInformation("[Import] {N} andamento(s) (DJSP) salvos para {CNJ}", publicacoesDoProcesso.Count, cnj);
+            _logger.LogInformation("[Import] {N} andamento(s) (DJSP) salvos para {CNJ} OAB={Oab}/{Uf}",
+                publicacoesDoProcesso.Count, cnj, oabNumero, oabUf);
         }
         catch (Exception ex)
         {
