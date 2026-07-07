@@ -769,22 +769,64 @@
     @media (prefers-reduced-motion: no-preference) {
       .features { position: relative; }
 
-      /* Cards slide in from alternating sides; transitions handle both directions */
       .feature-card {
+        transform: perspective(900px) rotateX(12deg) translateY(50px) scale(.94);
+        transform-origin: center top;
         opacity: 0;
-        transition: opacity 0.7s ease, transform 0.7s cubic-bezier(.16,1,.3,1);
+        animation: feature-boot 0.7s cubic-bezier(.16,1,.3,1) both;
         will-change: transform, opacity;
       }
-      .features-grid .feature-card:nth-child(odd)  { transform: translateX(90px); }
-      .features-grid .feature-card:nth-child(even) { transform: translateX(-90px); }
-
-      /* JS adds .is-in when card enters viewport; removing it reverses the animation */
-      .feature-card.is-in {
-        opacity: 1;
-        transform: translateX(0);
+      .feature-icon {
+        transform: scale(0) rotate(-180deg);
+        animation: feature-icon-boot 0.6s cubic-bezier(.34,1.56,.64,1) 0.1s both;
+        will-change: transform;
       }
 
-      /* Cursor spotlight (continuous) */
+      @keyframes feature-boot {
+        to {
+          opacity: 1;
+          transform: perspective(900px) rotateX(0) translateY(0) scale(1);
+        }
+      }
+      @keyframes feature-icon-boot {
+        to { transform: scale(1) rotate(0); }
+      }
+
+      /* Diagonal stagger (assumes 3-col layout on desktop; harmless on other layouts) */
+      .features-grid .feature-card:nth-child(1)  { animation-delay: 0.00s; }
+      .features-grid .feature-card:nth-child(2)  { animation-delay: 0.07s; }
+      .features-grid .feature-card:nth-child(3)  { animation-delay: 0.14s; }
+      .features-grid .feature-card:nth-child(4)  { animation-delay: 0.07s; }
+      .features-grid .feature-card:nth-child(5)  { animation-delay: 0.14s; }
+      .features-grid .feature-card:nth-child(6)  { animation-delay: 0.21s; }
+      .features-grid .feature-card:nth-child(7)  { animation-delay: 0.14s; }
+      .features-grid .feature-card:nth-child(8)  { animation-delay: 0.21s; }
+      .features-grid .feature-card:nth-child(9)  { animation-delay: 0.28s; }
+      .features-grid .feature-card:nth-child(10) { animation-delay: 0.21s; }
+      .features-grid .feature-card:nth-child(11) { animation-delay: 0.28s; }
+      .features-grid .feature-card:nth-child(12) { animation-delay: 0.35s; }
+
+      /* Network connectors overlay */
+      .feature-network {
+        position: absolute; inset: 0;
+        pointer-events: none;
+        overflow: visible;
+        z-index: 1;
+      }
+      .feature-network path {
+        fill: none;
+        stroke: var(--gold);
+        stroke-width: 1;
+        stroke-opacity: 0;
+        stroke-dasharray: 200;
+        stroke-linecap: round;
+        animation: network-draw 1.2s ease-out 0.6s forwards;
+      }
+      @keyframes network-draw {
+        to { stroke-dashoffset: -200; stroke-opacity: 0.25; }
+      }
+
+      /* Cursor spotlight */
       .features::after {
         content: '';
         position: absolute; inset: 0;
@@ -798,20 +840,19 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .feature-card {
+      .feature-card, .feature-icon {
         opacity: 1 !important;
         transform: none !important;
-        transition: none !important;
+        animation: none !important;
       }
-      .features::after { display: none; }
+      .feature-network, .features::after { display: none; }
     }
 
-    /* Mobile fallback: keep slide but skip spotlight */
+    /* Mobile fallback: keep entrance but skip icon, network, spotlight */
     @media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
-      .features::after { display: none; }
-      .feature-card { transition-duration: 0.4s; }
-      .features-grid .feature-card:nth-child(odd)  { transform: translateX(60px); }
-      .features-grid .feature-card:nth-child(even) { transform: translateX(-60px); }
+      .feature-card { animation-duration: 0.4s; }
+      .feature-icon { animation: none; transform: none; }
+      .feature-network, .features::after { display: none; }
     }
 
     /* PRICING */
@@ -1814,7 +1855,7 @@
     }
   })();
 
-  // Features section — side-slide cards (bidirectional) + cursor spotlight
+  // Features section — scramble titles, network connectors, cursor spotlight
   (function () {
     const section = document.getElementById('funcionalidades');
     if (!section) return;
@@ -1822,31 +1863,139 @@
     if (!motionOk) return;
 
     const finePointer = window.matchMedia('(pointer: fine)').matches;
-    const cards = section.querySelectorAll('.feature-card');
+    const isSmallScreen = window.matchMedia('(max-width: 600px)').matches;
+    const grid = section.querySelector('.features-grid');
+    const cards = grid ? Array.from(grid.querySelectorAll('.feature-card')) : [];
 
-    // -- 1. Bidirectional side-slide via IntersectionObserver -----------
-    // Forward scroll: card enters viewport → .is-in added → slides to center
-    // Backward scroll: card exits viewport top → .is-in removed → slides back to side
-    if (cards.length && 'IntersectionObserver' in window) {
-      const io = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-in');
-          } else {
-            // Only reverse if the card has scrolled past the top (rect.top < 0).
-            // Cards still below the fold (rect.top > 0) stay hidden — they haven't
-            // been revealed yet, so there's nothing to reverse.
-            const rect = entry.boundingClientRect;
-            if (rect.top < 0) entry.target.classList.remove('is-in');
+    // -- 1. Title scramble -----------------------------------------------
+    if (!isSmallScreen && cards.length && 'IntersectionObserver' in window) {
+      const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+      const scramble = (el, final, duration) => {
+        const len = final.length;
+        const start = performance.now();
+        let raf;
+        // Preserve semantics: aria-label has the real title
+        if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', final);
+        const tick = (now) => {
+          const t = Math.min(1, (now - start) / duration);
+          const settled = Math.floor(t * len);
+          let out = '';
+          for (let i = 0; i < len; i++) {
+            out += i < settled
+              ? final[i]
+              : CHARS[Math.floor(Math.random() * CHARS.length)];
           }
+          el.textContent = out;
+          if (t < 1) raf = requestAnimationFrame(tick);
+          else el.textContent = final;
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+      };
+      const STAGGER = 70;
+      const SCRAMBLE_DURATION = 400;
+      const SCRAMBLE_DELAY_AFTER_BOOT = 100;
+      let cancelled = false;
+      const io1 = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting || cancelled) return;
+          cancelled = true;
+          cards.forEach((card, i) => {
+            const h3 = card.querySelector('h3');
+            if (!h3) return;
+            const final = h3.textContent;
+            const startAt = (i * STAGGER) + SCRAMBLE_DELAY_AFTER_BOOT;
+            setTimeout(() => {
+              if (!cancelled) scramble(h3, final, SCRAMBLE_DURATION);
+            }, startAt);
+          });
+          io1.disconnect();
         });
-      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-      cards.forEach(c => io.observe(c));
+      }, { threshold: 0.15 });
+      io1.observe(section);
     }
 
-    // -- 2. Cursor spotlight (continuous) -------------------------------
-    if (finePointer) {
-      let active = false, raf = null;
+    // -- 2. Network connectors ------------------------------------------
+    if (!isSmallScreen && grid && cards.length) {
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const wrap = document.createElement('div');
+      wrap.className = 'feature-network';
+      wrap.setAttribute('aria-hidden', 'true');
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      wrap.appendChild(svg);
+      // grid needs position:relative for absolute child — handled by JS
+      const computedPos = getComputedStyle(grid).position;
+      if (computedPos === 'static') grid.style.position = 'relative';
+      grid.appendChild(wrap);
+
+      let observer = null;
+      const drawLines = () => {
+        if (observer) { observer.disconnect(); observer = null; }
+        svg.innerHTML = '';
+        const w = grid.offsetWidth;
+        const h = grid.offsetHeight;
+        if (!w || !h) return;
+        svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+        svg.setAttribute('preserveAspectRatio', 'none');
+        const base = grid.getBoundingClientRect();
+        const centers = cards.map(c => {
+          const r = c.getBoundingClientRect();
+          return {
+            x: r.left - base.left + r.width / 2,
+            y: r.top - base.top + r.height / 2
+          };
+        });
+        const cols = Math.max(1, Math.round(w / 320));
+        for (let i = 0; i < cards.length; i++) {
+          const a = centers[i];
+          if (!a) continue;
+          // right neighbor
+          if ((i + 1) % cols !== 0 && centers[i + 1]) {
+            const b = centers[i + 1];
+            const mx = (a.x + b.x) / 2;
+            const p = document.createElementNS(svgNS, 'path');
+            p.setAttribute('d', 'M' + a.x + ',' + a.y + ' C' + mx + ',' + a.y + ' ' + mx + ',' + b.y + ' ' + b.x + ',' + b.y);
+            svg.appendChild(p);
+          }
+          // below neighbor
+          if (centers[i + cols]) {
+            const b = centers[i + cols];
+            const my = (a.y + b.y) / 2;
+            const p = document.createElementNS(svgNS, 'path');
+            p.setAttribute('d', 'M' + a.x + ',' + a.y + ' C' + a.x + ',' + my + ' ' + b.x + ',' + my + ' ' + b.x + ',' + b.y);
+            svg.appendChild(p);
+          }
+        }
+        // Restart animation by re-cloning nodes (CSS animation is one-shot)
+        Array.from(svg.querySelectorAll('path')).forEach(p => {
+          p.style.animation = 'none';
+          // force reflow
+          void p.getBoundingClientRect();
+          p.style.animation = '';
+        });
+      };
+
+      // Draw after fonts/layout settle
+      requestAnimationFrame(() => requestAnimationFrame(drawLines));
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(drawLines, 150);
+      });
+      // Reposition on scroll in case of sticky/fixed ancestor issues
+      window.addEventListener('scroll', () => {
+        // throttled implicitly by browser, no need for rAF here
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(drawLines, 100);
+      }, { passive: true });
+    }
+
+    // -- 3. Cursor spotlight --------------------------------------------
+    if (finePointer && section) {
+      let active = false;
+      let raf = null;
       section.addEventListener('mousemove', (e) => {
         const r = section.getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * 100;
