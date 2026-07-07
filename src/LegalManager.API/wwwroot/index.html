@@ -420,7 +420,7 @@
       font-size: 1.25rem; font-weight: 700; color: var(--text);
       display: flex; align-items: center; gap: 0.5rem;
     }
-    .nav-logo img { height: 100px; }
+    .nav-logo img { height: 50px; }
     .nav-logo span { color: var(--gold); }
 
     .nav-links { display: flex; align-items: center; gap: 2rem; }
@@ -466,7 +466,7 @@
       min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 8rem 1.5rem 5rem;
-      position: relative; overflow: hidden;
+      position: relative;
     }
 
     .hero::before {
@@ -505,7 +505,7 @@
     .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
     .hero-social-proof {
-      margin-top: 4rem;
+      margin-top: 3rem;
       display: flex; align-items: center; justify-content: center; gap: 2rem;
       flex-wrap: wrap;
     }
@@ -517,6 +517,130 @@
     .proof-label { font-size: 0.8rem; color: var(--text-muted); }
 
     .proof-divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* SHOWCASE — horizontal scroll driven by vertical scroll */
+    .showcase {
+      position: relative;
+      background: var(--navy);
+    }
+
+    .showcase-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      padding: 3rem 0;
+    }
+
+    .showcase-header {
+      text-align: center;
+      padding: 0 1.5rem;
+      margin-bottom: 2rem;
+      flex-shrink: 0;
+    }
+
+    .showcase-track-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent 0, #000 5vw, #000 calc(100% - 5vw), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 5vw, #000 calc(100% - 5vw), transparent 100%);
+    }
+
+    .showcase-track {
+      display: flex;
+      gap: 1.5rem;
+      padding: 0 5vw;
+      will-change: transform;
+    }
+
+    .showcase-card {
+      flex: 0 0 auto;
+      width: clamp(320px, 55vw, 480px);
+      aspect-ratio: 16 / 10;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.55),
+                  0 0 0 1px rgba(245, 158, 11, 0.06);
+      background: #0f172a;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .showcase-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.65),
+                  0 0 0 1px rgba(245, 158, 11, 0.18);
+    }
+
+    .showcase-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .showcase-card figcaption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 2.5rem 1rem 0.9rem;
+      background: linear-gradient(to top,
+        rgba(15, 23, 42, 0.95) 0%,
+        rgba(15, 23, 42, 0.75) 55%,
+        rgba(15, 23, 42, 0) 100%);
+      color: var(--text);
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .showcase-card figcaption span {
+      display: block;
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 0.78rem;
+      margin-top: 0.2rem;
+    }
+
+    .showcase-progress {
+      flex-shrink: 0;
+      margin: 1.5rem auto 0;
+      width: min(80%, 360px);
+      height: 3px;
+      background: rgba(51, 65, 85, 0.6);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .showcase-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 999px;
+      transition: width 0.05s linear;
+    }
+    .showcase-hint {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 600px) {
+      .showcase-sticky { padding: 2rem 0; }
+      .showcase-card { width: clamp(280px, 78vw, 420px); }
+      .showcase-card figcaption { font-size: 0.85rem; padding-bottom: 0.7rem; }
+    }
 
     /* FEATURES */
     section { padding: 5rem 1.5rem; }
@@ -843,7 +967,6 @@
       .nav-cta { display: none; }
       .hamburger { display: flex; }
       .plans-grid { grid-template-columns: 1fr; }
-      .nav-logo img { height: 50px; }
     }
 
     /* Floating CTA — mobile only */
@@ -942,6 +1065,43 @@
     </div>
   </div>
 </header>
+
+<!-- SHOWCASE — horizontal scroll driven by vertical scroll -->
+<section class="showcase" id="showcase" aria-label="Conheça os módulos do Causify">
+  <div class="showcase-sticky">
+    <div class="showcase-header">
+      <div class="section-label" style="justify-content:center">✦ Conheça o Causify</div>
+      <h2 class="section-title">Todos os módulos em uma só plataforma</h2>
+      <p class="section-subtitle" style="margin: 0.5rem auto 0;">Continue rolando para explorar cada módulo.</p>
+    </div>
+    <div class="showcase-track-wrap">
+      <div class="showcase-track" id="showcaseTrack">
+        <figure class="showcase-card">
+          <img src="/images/dashboard_2.png" alt="Dashboard principal do Causify" loading="lazy" width="1200" height="780">
+          <figcaption>Dashboard<span>Visão geral do escritório</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="/images/calculadora_prazos_1.png" alt="Calculadora de prazos processuais" loading="lazy" width="1200" height="780">
+          <figcaption>Calculadora de Prazos<span>Dias úteis e feriados</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="/images/calculadora_honorarios_1.png" alt="Calculadora de honorários advocatícios" loading="lazy" width="1200" height="780">
+          <figcaption>Calculadora de Honorários<span>Tabelas OAB e correção</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="/images/financeiro_1.png" alt="Controle financeiro por processo" loading="lazy" width="1200" height="780">
+          <figcaption>Controle Financeiro<span>Honorários, despesas e PIX</span></figcaption>
+        </figure>
+        <figure class="showcase-card">
+          <img src="/images/dashboard_1.png" alt="Dashboard visão geral do escritório" loading="lazy" width="1200" height="780">
+          <figcaption>Visão Geral<span>Indicadores e tarefas</span></figcaption>
+        </figure>
+      </div>
+    </div>
+    <div class="showcase-progress" aria-hidden="true"><div class="showcase-progress-bar" id="showcaseProgress"></div></div>
+    <div class="showcase-hint">Role para o lado →</div>
+  </div>
+</section>
 
 <main>
   <!-- FUNCIONALIDADES -->
@@ -1483,6 +1643,74 @@
     menu.classList.remove('open');
     hamburger.classList.remove('active');
   }
+
+  // Showcase — vertical scroll drives horizontal translation
+  (function () {
+    const section = document.getElementById('showcase');
+    const track = document.getElementById('showcaseTrack');
+    const progressBar = document.getElementById('showcaseProgress');
+    if (!section || !track) return;
+
+    function measure() {
+      const card = track.querySelector('.showcase-card');
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
+      if (!card) return { travel: 0 };
+
+      const cardWidth = card.getBoundingClientRect().width;
+      // Symmetric padding so first card is centered at progress=0
+      // and last card is centered at progress=1
+      const sidePadding = Math.max(24, (viewportW - cardWidth) / 2);
+      track.style.paddingLeft = sidePadding + 'px';
+      track.style.paddingRight = sidePadding + 'px';
+
+      const trackW = track.scrollWidth;
+      const travel = Math.max(0, trackW - viewportW);
+      // Section height = travel + 100vh so vertical scroll = horizontal travel (1:1)
+      const height = travel > 0 ? travel + viewportH : viewportH;
+      section.style.height = height + 'px';
+      return { travel };
+    }
+
+    let travel = measure().travel;
+
+    function update() {
+      const rect = section.getBoundingClientRect();
+      const sectionTopAbs = window.scrollY + rect.top;
+      const sectionH = section.offsetHeight;
+      const viewportH = window.innerHeight;
+      const scrollable = Math.max(1, sectionH - viewportH);
+      // Scrolled = scroll since sticky pinned (NOT since section entered viewport).
+      // This way progress hits 1 exactly when sticky releases, eliminating dead scroll.
+      const scrolled = Math.max(0, Math.min(scrollable, window.scrollY - sectionTopAbs));
+      const progress = scrollable > 0 ? scrolled / scrollable : 0;
+      track.style.transform = 'translate3d(' + (-progress * travel) + 'px, 0, 0)';
+      if (progressBar) progressBar.style.width = (progress * 100) + '%';
+    }
+
+    function onResize() {
+      travel = measure().travel;
+      update();
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(onResize, 100);
+    });
+    window.addEventListener('scroll', update, { passive: true });
+
+    const imgs = track.querySelectorAll('img');
+    let pending = imgs.length;
+    if (pending === 0) { onResize(); }
+    else {
+      imgs.forEach(img => {
+        if (img.complete) { if (--pending === 0) onResize(); }
+        else img.addEventListener('load', () => { if (--pending === 0) onResize(); }, { once: true });
+        img.addEventListener('error', () => { if (--pending === 0) onResize(); }, { once: true });
+      });
+    }
+  })();
 </script>
 
 </body>
