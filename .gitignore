@@ -48,6 +48,10 @@ coverage-html/
 .opencode/
 .claude/settings.local.json
 
+# Temporary HTML references (drag-and-dropped imports)
+Gestão_de_Honorarios_*.html
+*Honorarios*Pagamentos*.html
+
 # Frontend tests (Playwright)
 tests/frontend/node_modules/
 tests/frontend/playwright-report/
