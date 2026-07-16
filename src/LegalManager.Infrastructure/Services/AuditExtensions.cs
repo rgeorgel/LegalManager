@@ -58,4 +58,7 @@ public static class AuditEntities
     public const string Usuario = "Usuario";
     public const string Documento = "Documento";
     public const string Configuracao = "Configuracao";
+    public const string ContratoHonorario = "ContratoHonorario";
+    public const string ParcelaHonorario = "ParcelaHonorario";
+    public const string ConfiguracaoHonorario = "ConfiguracaoHonorario";
 }
