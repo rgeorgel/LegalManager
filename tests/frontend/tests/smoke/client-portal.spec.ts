@@ -27,6 +27,7 @@ const CLIENT_AUTH_PAGES = [
   '/cliente/dashboard.html',
   '/cliente/processos.html',
   '/cliente/processo-detalhe.html',
+  '/cliente/honorarios.html',
 ];
 
 for (const pagePath of CLIENT_AUTH_PAGES) {
