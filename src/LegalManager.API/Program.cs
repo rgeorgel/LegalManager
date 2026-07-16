@@ -120,6 +120,8 @@ builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
 builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
 builder.Services.AddScoped<SeedService>();
+builder.Services.AddScoped<IHonorarioService, HonorarioService>();
+builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioService>();
 
 if (builder.Configuration.GetValue<bool>("Escavador:UseMock"))
 {
