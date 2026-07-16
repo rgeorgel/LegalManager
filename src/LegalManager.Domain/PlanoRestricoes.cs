@@ -29,6 +29,8 @@ public static class PlanoRestricoes
     };
     public static bool PermiteFinanceiro(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteIndicadores(PlanoTipo plano) => plano != PlanoTipo.Free;
+    public static bool PermiteHonorariosContratos(PlanoTipo plano) =>
+        plano is PlanoTipo.Plus or PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;
     public static bool PermiteCalculadoraPrazos(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermitePortalCliente(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteCapturacaoPublicacoes(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;

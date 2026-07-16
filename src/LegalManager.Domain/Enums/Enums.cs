@@ -67,6 +67,16 @@ public enum TipoDocumento { Peticao, Decisao, Contrato, Prova, Modelo, Outro }
 
 public enum TipoIndice { IPCA, IGPM, TJSP }
 
+public enum FormaPagamentoContrato { AVista = 1, Parcelado = 2, EntradaParcelado = 3 }
+
+public enum PeriodicidadeParcela { Mensal = 1, Quinzenal = 2, Semanal = 3, Semestral = 4 }
+
+public enum StatusContratoHonorario { Ativo = 1, Suspenso = 2, Quitado = 3, Inadimplente = 4, Encerrado = 5, Distratado = 6 }
+
+public enum StatusParcelaHonorario { Pendente = 1, Pago = 2, Vencido = 3, Cancelado = 4 }
+
+public enum EventoContratoHonorario { Criado = 1, Alterado = 2, ParcelaPaga = 3, ParcelaCancelada = 4, Suspenso = 5, Reativado = 6, Distratado = 7, Renegociado = 8 }
+
 public static class CategoriaLancamento
 {
     public const string Honorario = "Honorario";

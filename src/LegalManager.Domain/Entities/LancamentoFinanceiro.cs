@@ -8,6 +8,8 @@ public class LancamentoFinanceiro
     public Guid TenantId { get; set; }
     public Guid? ProcessoId { get; set; }
     public Guid? ContatoId { get; set; }
+    public Guid? ContratoHonorarioId { get; set; }
+    public Guid? ParcelaHonorarioId { get; set; }
     public TipoLancamento Tipo { get; set; }
     public string Categoria { get; set; } = string.Empty;
     public decimal Valor { get; set; }
@@ -20,4 +22,6 @@ public class LancamentoFinanceiro
     public Tenant Tenant { get; set; } = null!;
     public Processo? Processo { get; set; }
     public Contato? Contato { get; set; }
+    public ContratoHonorario? ContratoHonorario { get; set; }
+    public ParcelaHonorario? ParcelaHonorario { get; set; }
 }

@@ -54,6 +54,10 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
     public DbSet<ResumoProcesso> ResumosProcesso => Set<ResumoProcesso>();
     public DbSet<ProcessoImportacaoCache> ProcessosImportacaoCache => Set<ProcessoImportacaoCache>();
+    public DbSet<ContratoHonorario> ContratosHonorarios => Set<ContratoHonorario>();
+    public DbSet<ParcelaHonorario> ParcelasHonorarios => Set<ParcelaHonorario>();
+    public DbSet<ConfiguracaoHonorario> ConfiguracoesHonorarios => Set<ConfiguracaoHonorario>();
+    public DbSet<HistoricoContratoHonorario> HistoricosContratoHonorario => Set<HistoricoContratoHonorario>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
