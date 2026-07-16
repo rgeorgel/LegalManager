@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Configurações Honorários</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .form-section { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:18px 20px; margin-bottom:14px; box-shadow:var(--shadow); }
+    .form-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--color-text-muted); margin-bottom:12px; }
+    .form-group { margin-bottom:12px; }
+    .form-label { font-size:12px; font-weight:700; color:var(--color-text); margin-bottom:5px; display:block; }
+    .form-control { width:100%; padding:9px 12px; border:1.5px solid var(--color-border); border-radius:8px; font-size:14px; background:#FAFBFD; }
+    .form-control:focus { outline:none; border-color:var(--color-text); background:#fff; }
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-hint { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    @media (max-width: 720px) { .form-grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">⚙ Configurações — Honorários</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-secondary" href="/pages/honorarios-contratos.html">← Voltar</a>
+        </div>
+      </div>
+
+      <p style="color:var(--color-text-muted);font-size:13px;margin-bottom:18px">
+        Dados exibidos nos extratos de honorários e relatórios, e regras de encargos por atraso.
+      </p>
+
+      <form id="form" autocomplete="off">
+
+        <div class="form-section">
+          <div class="form-section-title">Dados do Escritório</div>
+          <div class="form-group">
+            <label class="form-label">Nome do Escritório</label>
+            <input type="text" id="nomeEscritorio" class="form-control">
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Advogado Responsável</label>
+              <input type="text" id="advogadoResponsavel" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">OAB</label>
+              <input type="text" id="oab" class="form-control" placeholder="OAB/SP 000.000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Endereço</label>
+            <input type="text" id="endereco" class="form-control">
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Telefone</label>
+              <input type="tel" id="telefone" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-mail</label>
+              <input type="email" id="email" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">URL do Logo</label>
+            <input type="url" id="logoUrl" class="form-control" placeholder="https://...">
+            <div class="form-hint">Aparecerá no cabeçalho dos extratos de honorários.</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Meta e Encargos Padrão</div>
+          <div class="form-group">
+            <label class="form-label">Meta Mensal de Honorários (R$)</label>
+            <input type="number" id="metaMensalPadrao" class="form-control" step="0.01" min="0" value="0">
+            <div class="form-hint">Aparece no dashboard de honorários. 0 = não exibir meta.</div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Multa Padrão (% por atraso)</label>
+              <input type="number" id="percentualMultaDefault" class="form-control" step="0.01" min="0" max="100" value="2">
+              <div class="form-hint">Padrão 2% (incidência única).</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Juros Mensal Padrão (% a.m.)</label>
+              <input type="number" id="percentualJurosMensalDefault" class="form-control" step="0.01" min="0" max="100" value="1.5">
+              <div class="form-hint">Padrão 1,5% a.m. pro rata die.</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dias de Aviso de Vencimento</label>
+            <input type="number" id="diasAvisoVencimento" class="form-control" min="0" value="3">
+            <div class="form-hint">Para uso futuro em notificações automáticas.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary" style="flex:1" id="btnSalvar">💾 Salvar Configurações</button>
+        </div>
+
+      </form>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { getConfiguracao, salvarConfiguracao, notify } from '/js/honorarios.js';
+    initLayout();
+
+    async function carregar() {
+      const c = await getConfiguracao();
+      if (!c) return;
+      document.getElementById('nomeEscritorio').value = c.nomeEscritorio ?? c.NomeEscritorio ?? '';
+      document.getElementById('advogadoResponsavel').value = c.advogadoResponsavel ?? c.AdvogadoResponsavel ?? '';
+      document.getElementById('oab').value = c.oab ?? c.OAB ?? '';
+      document.getElementById('endereco').value = c.endereco ?? c.Endereco ?? '';
+      document.getElementById('telefone').value = c.telefone ?? c.Telefone ?? '';
+      document.getElementById('email').value = c.email ?? c.Email ?? '';
+      document.getElementById('logoUrl').value = c.logoUrl ?? c.LogoUrl ?? '';
+      document.getElementById('metaMensalPadrao').value = c.metaMensalPadrao ?? c.MetaMensalPadrao ?? 0;
+      document.getElementById('percentualMultaDefault').value = ((c.percentualMultaDefault ?? c.PercentualMultaDefault) * 100).toFixed(2);
+      document.getElementById('percentualJurosMensalDefault').value = ((c.percentualJurosMensalDefault ?? c.PercentualJurosMensalDefault) * 100).toFixed(2);
+      document.getElementById('diasAvisoVencimento').value = c.diasAvisoVencimento ?? c.DiasAvisoVencimento ?? 3;
+    }
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+      try {
+        await salvarConfiguracao({
+          nomeEscritorio: document.getElementById('nomeEscritorio').value || null,
+          advogadoResponsavel: document.getElementById('advogadoResponsavel').value || null,
+          oab: document.getElementById('oab').value || null,
+          endereco: document.getElementById('endereco').value || null,
+          telefone: document.getElementById('telefone').value || null,
+          email: document.getElementById('email').value || null,
+          logoUrl: document.getElementById('logoUrl').value || null,
+          metaMensalPadrao: parseFloat(document.getElementById('metaMensalPadrao').value) || 0,
+          percentualMultaDefault: (parseFloat(document.getElementById('percentualMultaDefault').value) || 0) / 100,
+          percentualJurosMensalDefault: (parseFloat(document.getElementById('percentualJurosMensalDefault').value) || 0) / 100,
+          diasAvisoVencimento: parseInt(document.getElementById('diasAvisoVencimento').value) || 3,
+        });
+        notify('✅ Configurações salvas!');
+      } catch (ex) {
+        alert('Erro: ' + (ex.message || 'Falha ao salvar'));
+      }
+      btn.disabled = false;
+    });
+
+    await carregar();
+  </script>
+</body>
+</html>

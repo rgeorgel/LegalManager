@@ -21,6 +21,7 @@ export function initLayout(activePage) {
     <nav class="portal-nav-links" id="navLinks">
       <a href="/cliente/dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>Início</a>
       <a href="/cliente/processos.html" ${activePage === 'processos' ? 'class="active"' : ''}>Meus Processos</a>
+      <a href="/cliente/honorarios.html" ${activePage === 'honorarios' ? 'class="active"' : ''}>Honorários</a>
     </nav>
     <div class="portal-nav-user">
       <span>${escapeHtml(user.nome)}</span>

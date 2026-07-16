@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Detalhes do Contrato de Honorários</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .hp-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+    .hp-card { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+    .hp-card .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); }
+    .hp-card .val { font-size:18px; font-weight:700; margin-top:6px; }
+
+    .ci { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
+    .ci-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; font-size:13px; color:var(--color-text-muted); }
+    .ci-grid b { color:var(--color-text); }
+
+    table.pc { width:100%; border-collapse:collapse; font-size:13px; }
+    table.pc th { background:var(--color-border); color:var(--color-text); padding:9px 8px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+    table.pc td { padding:10px 8px; border-bottom:1px solid var(--color-border); vertical-align:middle; }
+    table.pc tr:last-child td { border-bottom:none; }
+    table.pc tr:hover td { background:#FAFBFD; }
+
+    .status-pago     { background:#d1fae5; color:#057a55; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:600; }
+    .status-pendente { background:#fef3c7; color:#92400e; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:600; }
+    .status-vencido  { background:#fee2e2; color:#b91c1c; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:600; }
+    .status-cancelado{ background:#f3f4f6; color:#6b7280; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:600; }
+
+    .juros-row { font-size:11px; color:#dc2626; margin-top:2px; font-weight:600; }
+
+    .alert-danger { background:#fff5f5; border:1px solid #fecaca; color:#b91c1c; padding:12px 14px; border-radius:10px; font-size:13px; line-height:1.6; margin-bottom:14px; }
+    .badge-sm { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-ok { background:#d1fae5; color:#059669; }
+    .badge-err { background:#fee2e2; color:#dc2626; }
+    .badge-warn { background:#fef3c7; color:#b45309; }
+    .badge-muted { background:#f1f3f8; color:#6b7a99; }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(10,18,36,.55); z-index:200; align-items:flex-end; justify-content:center; backdrop-filter:blur(2px); }
+    .modal-overlay.open { display:flex; animation:fadein .15s; }
+    @keyframes fadein { from { opacity:0; } to { opacity:1; } }
+    .modal { background:#fff; border-radius:18px 18px 0 0; padding:22px 18px 32px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; animation:slideup .2s; }
+    @keyframes slideup { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+    .modal h2 { font-size:18px; font-weight:700; margin-bottom:14px; color:var(--color-text); }
+    .modal .x { float:right; background:var(--color-border); border:none; width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:18px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title" id="pageTitle">📄 Detalhes do Contrato</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-secondary" href="/pages/honorarios-contratos.html">← Voltar</a>
+          <a class="btn btn-primary" id="btnEditar" href="#">✏️ Editar</a>
+          <button class="btn btn-secondary" id="btnExtrato">📑 Extrato PDF</button>
+          <button class="btn btn-danger" id="btnExcluir">🗑 Excluir</button>
+        </div>
+      </div>
+
+      <div id="statusBotoes" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+      <div id="alertAtraso"></div>
+
+      <div id="cabecalho"></div>
+
+      <div class="hp-kpi" id="kpiTotais"></div>
+
+      <div class="hp-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:700">Parcelas</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="pc">
+            <thead>
+              <tr>
+                <th>Nº</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Pago em</th><th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="corpoParcelas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hp-card" style="margin-top:14px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px">Histórico</div>
+        <div id="historico"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modalPagar">
+    <div class="modal">
+      <button class="x" onclick="document.getElementById('modalPagar').classList.remove('open')">×</button>
+      <h2>💰 Registrar Pagamento</h2>
+      <div id="modalPagarBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalCancelar">
+    <div class="modal" style="max-width:440px">
+      <button class="x" onclick="document.getElementById('modalCancelar').classList.remove('open')">×</button>
+      <h2>Cancelar Parcela</h2>
+      <div class="form-group">
+        <label class="form-label">Motivo</label>
+        <textarea id="motivoCancelar" class="form-control" rows="3" placeholder="Descreva o motivo..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="document.getElementById('modalCancelar').classList.remove('open')">Voltar</button>
+        <button class="btn btn-danger" id="btnConfirmarCancelar" style="flex:1">Cancelar Parcela</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalDistrato">
+    <div class="modal" style="max-width:440px">
+      <button class="x" onclick="document.getElementById('modalDistrato').classList.remove('open')">×</button>
+      <h2>✖ Distratar Contrato</h2>
+      <div class="form-group">
+        <label class="form-label">Motivo do distrato *</label>
+        <textarea id="motivoDistrato" class="form-control" rows="3" placeholder="Descreva o motivo..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="document.getElementById('modalDistrato').classList.remove('open')">Voltar</button>
+        <button class="btn btn-danger" id="btnConfirmarDistrato" style="flex:1">Confirmar Distrato</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import {
+      brl, fmtDate, escapeHtml, notify, getQueryParam, once,
+      getContrato, listarParcelas, pagarParcela, cancelarParcela, estornarParcela,
+      suspenderContrato, reativarContrato, distratoContrato, listarHistorico,
+      excluirContrato, abrirExtratoPdf,
+      STATUS_CONTRATO_LABELS, STATUS_PARCELA_LABELS, mapForma
+    } from '/js/honorarios.js';
+    initLayout();
+
+    let contrato = null;
+    let parcelaEmCancelamento = null;
+
+    const id = getQueryParam('id');
+    if (!id) {
+      document.querySelector('.main-content').innerHTML = '<div class="empty">❌ ID do contrato não informado.</div>';
+    } else {
+      bootstrap();
+    }
+
+    async function bootstrap() {
+      await carregar();
+      document.getElementById('btnEditar').href = `/pages/honorarios-contrato-novo.html?id=${id}`;
+      document.getElementById('btnExtrato').addEventListener('click', () => abrirExtratoPdf(id));
+      document.getElementById('btnExcluir').addEventListener('click', confirmarExcluir);
+
+      // Listeners dos MODAIS — anexados UMA ÚNICA VEZ (estavam dentro de renderStatus
+      // e acumulavam a cada carregar(), causando POSTs duplicados).
+      once(document.getElementById('btnConfirmarDistrato'), 'click', async () => {
+        const motivo = document.getElementById('motivoDistrato').value.trim();
+        if (!motivo) { alert('Informe o motivo.'); return; }
+        try {
+          const r = await distratoContrato(id, motivo);
+          if (r === null) return; // 402
+          document.getElementById('modalDistrato').classList.remove('open');
+          notify('✅ Contrato distratado.');
+          await carregar();
+        } catch (e) {
+          notify('Erro: ' + e.message);
+        }
+      });
+    }
+
+    async function carregar() {
+      const c = await getContrato(id);
+      if (!c) {
+        document.querySelector('.main-content').innerHTML = '<div class="empty">❌ Contrato não encontrado.</div>';
+        return;
+      }
+      contrato = c;
+      document.title = `Causify — ${c.nomeContato ?? c.NomeContato}`;
+      document.getElementById('pageTitle').textContent = `📄 ${c.nomeContato ?? c.NomeContato}`;
+      renderCabecalho(c);
+      renderKpis(c);
+      renderStatus(c);
+      await renderParcelas();
+      await renderHistorico();
+    }
+
+    function renderCabecalho(c) {
+      const st = c.status ?? c.Status;
+      const info = STATUS_CONTRATO_LABELS[st] ?? { cls: 'badge-muted', label: st };
+      const el = document.getElementById('cabecalho');
+      el.innerHTML = `
+        <div class="ci" style="border-left:4px solid var(--color-border)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+            <div style="min-width:0">
+              <div style="font-weight:700;font-size:16px">${escapeHtml(c.nomeContato ?? c.NomeContato)}</div>
+              <div style="font-size:13px;color:var(--color-text-muted);margin-top:2px">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</div>
+            </div>
+            <span class="badge-sm ${info.cls}">${info.label}</span>
+          </div>
+          <div class="ci-grid">
+            ${(c.cpfCnpj ?? c.CpfCnpj) ? `<div><b>CPF/CNPJ:</b> ${escapeHtml(c.cpfCnpj ?? c.CpfCnpj)}</div>` : ''}
+            <div><b>Forma:</b> ${mapForma(c.formaPagamento ?? c.FormaPagamento)}</div>
+            <div><b>Tipo Cobrança:</b> ${escapeHtml(c.tipoCobranca ?? c.TipoCobranca)}</div>
+            <div><b>Data Início:</b> ${fmtDate(c.dataInicio ?? c.DataInicio)}</div>
+            ${(c.objeto ?? c.Objeto) ? `<div style="grid-column:1/-1"><b>Serviço:</b> ${escapeHtml(c.objeto ?? c.Objeto)}</div>` : ''}
+            ${(c.numeroProcesso ?? c.NumeroProcesso) ? `<div style="grid-column:1/-1"><b>Processo:</b> ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</div>` : ''}
+            <div style="grid-column:1/-1"><b>Encargos:</b> Multa ${((c.percentualMulta ?? c.PercentualMulta) * 100).toFixed(0)}% + Juros ${((c.percentualJurosMensal ?? c.PercentualJurosMensal) * 100).toFixed(1)}%/mês</div>
+            ${(c.observacoes ?? c.Observacoes) ? `<div style="grid-column:1/-1"><b>Observações:</b> ${escapeHtml(c.observacoes ?? c.Observacoes)}</div>` : ''}
+          </div>
+        </div>
+      `;
+      const emAtraso = c.valorEmAtraso ?? c.ValorEmAtraso;
+      document.getElementById('alertAtraso').innerHTML = (emAtraso > 0) ? `
+        <div class="alert-danger">
+          <b>⚠️ Encargos de Atraso Incidentes:</b><br>
+          Multa: <b>${((c.percentualMulta ?? c.PercentualMulta) * 100).toFixed(0)}%</b> (incidência única sobre cada parcela em atraso)<br>
+          Juros de Mora: <b>${((c.percentualJurosMensal ?? c.PercentualJurosMensal) * 100).toFixed(1)}% ao mês</b> pro rata die<br>
+          Total atualizado em atraso: <b>${brl(emAtraso)}</b>
+        </div>
+      ` : '';
+    }
+
+    function renderKpis(c) {
+      const el = document.getElementById('kpiTotais');
+      el.innerHTML = `
+        <div class="hp-card"><div class="lbl">Total Contrato</div><div class="val">${brl(c.valorTotal ?? c.ValorTotal)}</div></div>
+        <div class="hp-card"><div class="lbl">Pago</div><div class="val" style="color:#059669">${brl(c.valorPago ?? c.ValorPago)}</div></div>
+        <div class="hp-card"><div class="lbl">Pendente</div><div class="val" style="color:#b45309">${brl(c.valorPendente ?? c.ValorPendente)}</div></div>
+        <div class="hp-card" style="border-color:#fca5a5"><div class="lbl" style="color:#dc2626">Em Atraso</div><div class="val" style="color:#dc2626">${brl(c.valorEmAtraso ?? c.ValorEmAtraso)}</div></div>
+      `;
+    }
+
+    function renderStatus(c) {
+      const el = document.getElementById('statusBotoes');
+      const st = c.status ?? c.Status;
+      let html = '';
+      if (st === 'Ativo' || st === 'Inadimplente') {
+        html += '<button class="btn btn-secondary btn-sm" id="btnSuspender">⏸ Suspender</button>';
+      }
+      if (st === 'Suspenso') {
+        html += '<button class="btn btn-secondary btn-sm" id="btnReativar">▶ Reativar</button>';
+      }
+      if (st === 'Distratado') {
+        html += '<button class="btn btn-warning btn-sm" id="btnReativar" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a">↩ Reverter Distrato</button>';
+      }
+      if (st !== 'Distratado' && st !== 'Encerrado') {
+        html += '<button class="btn btn-danger btn-sm" id="btnDistratar">✖ Distratar</button>';
+      }
+      el.innerHTML = html;
+      el.querySelector('#btnSuspender')?.addEventListener('click', async () => {
+        if (!confirm('Suspender este contrato?')) return;
+        await suspenderContrato(id);
+        notify('✅ Contrato suspenso.');
+        carregar();
+      });
+      el.querySelector('#btnReativar')?.addEventListener('click', async () => {
+        const revertendoDistrato = st === 'Distratado';
+        if (revertendoDistrato && !confirm('Reverter o distrato e reativar este contrato? O motivo do distrato será removido.')) return;
+        await reativarContrato(id);
+        notify(revertendoDistrato ? '↩ Distrato revertido. Contrato reativado.' : '✅ Contrato reativado.');
+        carregar();
+      });
+      el.querySelector('#btnDistratar')?.addEventListener('click', () => {
+        document.getElementById('modalDistrato').classList.add('open');
+      });
+      // (listener do btnConfirmarDistrato removido — agora está em bootstrap())
+    }
+
+    async function renderParcelas() {
+      const resp = await listarParcelas(id);
+      const parcelas = resp?.parcelas ?? resp?.Parcelas ?? [];
+      const totalParc = parcelas.filter(p => !(p.isEntrada ?? p.IsEntrada)).length;
+      const tbody = document.getElementById('corpoParcelas');
+      if (!parcelas.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--color-text-muted)">Nenhuma parcela</td></tr>';
+        return;
+      }
+      tbody.innerHTML = parcelas.map(p => {
+        const st = p.status ?? p.Status;
+        const info = STATUS_PARCELA_LABELS[st] ?? { cls: 'status-cancelado', label: st };
+        const num = (p.isEntrada ?? p.IsEntrada) ? `Entrada${p.numero ? '' : ''}` : `${p.numero ?? p.Numero}/${totalParc}`;
+        const jurosMulta = p.jurosMulta ?? p.JurosMulta;
+        const valorFinal = (p.isEntrada ?? p.IsEntrada) && st === 'Pago' ? (p.valorPago ?? p.ValorPago)
+          : (st === 'Pago' ? (p.valorPago ?? p.ValorPago) : (p.valorAtualizado ?? p.ValorAtualizado ?? p.valorOriginal ?? p.ValorOriginal));
+        const acoes = (st === 'Pago' || st === 'Cancelado')
+          ? (st === 'Pago'
+            ? `<button class="btn btn-secondary btn-sm" onclick="window._estornar('${p.id ?? p.Id}')">↺ Estornar</button>`
+            : '<span style="color:var(--color-text-muted)">—</span>')
+          : `<button class="btn btn-primary btn-sm" onclick="window._pagar('${p.id ?? p.Id}')">Registrar</button>
+             <button class="btn btn-secondary btn-sm" onclick="window._cancelar('${p.id ?? p.Id}')" style="margin-left:4px">Cancelar</button>`;
+        return `
+          <tr>
+            <td style="font-weight:700">${num}</td>
+            <td>${fmtDate(p.vencimento ?? p.Vencimento)}</td>
+            <td>
+              <div style="font-weight:700">${brl(p.valorOriginal ?? p.ValorOriginal)}</div>
+              ${jurosMulta ? `<div class="juros-row">+ ${brl(jurosMulta)} (multa+juros)</div>` : ''}
+              ${st === 'Pago' && (p.valorPago ?? p.ValorPago) != null && (p.valorPago ?? p.ValorPago) !== (p.valorOriginal ?? p.ValorOriginal) ? `<div style="font-size:11px;color:var(--color-text-muted)">Pago: ${brl(p.valorPago ?? p.ValorPago)}</div>` : ''}
+            </td>
+            <td><span class="${info.cls}">${info.label}</span></td>
+            <td>${fmtDate(p.dataPagamento ?? p.DataPagamento)}</td>
+            <td>${acoes}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function renderHistorico() {
+      const items = await listarHistorico(id);
+      const el = document.getElementById('historico');
+      if (!items || !items.length) {
+        el.innerHTML = '<div style="padding:12px;color:var(--color-text-muted);font-size:13px">Sem eventos registrados.</div>';
+        return;
+      }
+      el.innerHTML = items.map(h => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--color-border);font-size:13px">
+          <div><b>${escapeHtml(h.descricao ?? h.Descricao)}</b></div>
+          <div style="color:var(--color-text-muted);font-size:11px;margin-top:2px">
+            ${fmtDate(h.criadoEm ?? h.CriadoEm)} · ${h.nomeUsuario ? escapeHtml(h.nomeUsuario) : 'Sistema'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window._pagar = (parcelaId) => {
+      const respData = window._ultimasParcelas ?? [];
+      const p = respData.find(x => (x.id ?? x.Id) === parcelaId);
+      const totalParc = respData.filter(x => !(x.isEntrada ?? x.IsEntrada)).length;
+      const label = (p?.isEntrada ?? p?.IsEntrada) ? 'Entrada' : `${p?.numero ?? p?.Numero}/${totalParc}`;
+
+      const v = (p.valorOriginal ?? p.ValorOriginal);
+      const valorAtu = p.valorAtualizado ?? p.ValorAtualizado ?? v;
+      const jurosMulta = p.jurosMulta ?? p.JurosMulta;
+      const hoje = new Date();
+      const dt = hoje.toISOString().slice(0, 10);
+      document.getElementById('modalPagarBody').innerHTML = `
+        <div style="background:var(--color-border);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span>${(p?.isEntrada ?? p?.IsEntrada) ? 'Entrada' : 'Parcela'}:</span><b>${label}</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Vencimento:</span><b>${fmtDate(p.vencimento ?? p.Vencimento)}</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Valor original:</span><b>${brl(v)}</b></div>
+        </div>
+        ${jurosMulta && jurosMulta > 0 ? `
+          <div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#b91c1c">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">⚠ Encargos de Atraso</div>
+            <div style="display:flex;justify-content:space-between"><span>Total atualizado:</span><b>${brl(valorAtu)}</b></div>
+          </div>
+        ` : ''}
+        <div class="form-group">
+          <label class="form-label">Data do Pagamento</label>
+          <input id="pgDt" type="date" class="form-control" value="${dt}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Recebido (R$)</label>
+          <input id="pgVl" type="number" step="0.01" min="0" class="form-control" value="${valorAtu.toFixed(2)}">
+          <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Edite se recebeu valor diferente do atualizado.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observação (opcional)</label>
+          <input id="pgObs" type="text" class="form-control" placeholder="Ex: Pago via PIX">
+        </div>
+        <button class="btn btn-primary" id="btnConfirmarPagamento" style="width:100%;margin-top:8px">✅ Confirmar Pagamento</button>
+      `;
+      document.getElementById('modalPagar').classList.add('open');
+      document.getElementById('btnConfirmarPagamento').addEventListener('click', async () => {
+        const dataPg = document.getElementById('pgDt').value;
+        const valorPg = parseFloat(document.getElementById('pgVl').value);
+        const obs = document.getElementById('pgObs').value || null;
+        if (!dataPg) { alert('Informe a data'); return; }
+        if (!valorPg || valorPg <= 0) { alert('Informe o valor'); return; }
+        await pagarParcela(id, parcelaId, { dataPagamento: dataPg, valorPago: valorPg, observacao: obs });
+        document.getElementById('modalPagar').classList.remove('open');
+        notify('✅ Pagamento registrado!');
+        await carregar();
+      });
+    };
+
+    window._cancelar = (parcelaId) => {
+      parcelaEmCancelamento = parcelaId;
+      document.getElementById('motivoCancelar').value = '';
+      document.getElementById('modalCancelar').classList.add('open');
+    };
+
+    document.getElementById('btnConfirmarCancelar').addEventListener('click', async () => {
+      const motivo = document.getElementById('motivoCancelar').value.trim();
+      if (!motivo) { alert('Informe o motivo'); return; }
+      await cancelarParcela(id, parcelaEmCancelamento, motivo);
+      document.getElementById('modalCancelar').classList.remove('open');
+      notify('Parcela cancelada.');
+      await carregar();
+    });
+
+    window._estornar = async (parcelaId) => {
+      if (!confirm('Estornar este pagamento? O lançamento financeiro será removido.')) return;
+      await estornarParcela(id, parcelaId);
+      notify('Pagamento estornado.');
+      await carregar();
+    };
+
+    function confirmarExcluir() {
+      if (!confirm('Excluir este contrato? Esta ação é definitiva (marca como Encerrado).')) return;
+      (async () => {
+        await excluirContrato(id);
+        notify('Contrato encerrado.');
+        setTimeout(() => window.location.href = '/pages/honorarios-contratos.html', 800);
+      })();
+    }
+
+    // Guardar últimas parcelas para o modal
+    const origListar = listarParcelas;
+    const observer = new MutationObserver(() => {});
+    async function atualizarParcelasCache() {
+      const r = await origListar(id);
+      window._ultimasParcelas = r?.parcelas ?? r?.Parcelas ?? [];
+    }
+    await atualizarParcelasCache();
+    setInterval(atualizarParcelasCache, 2000);
+  </script>
+</body>
+</html>

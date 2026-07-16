@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Novo Contrato</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .form-section { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:18px 20px; margin-bottom:14px; box-shadow:var(--shadow); }
+    .form-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--color-text-muted); margin-bottom:12px; }
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-grid-2 > div { min-width:0; }
+    .form-group { margin-bottom:12px; }
+    .form-label { font-size:12px; font-weight:700; color:var(--color-text); margin-bottom:5px; display:block; }
+    .form-control { width:100%; padding:9px 12px; border:1.5px solid var(--color-border); border-radius:8px; font-size:14px; background:#FAFBFD; }
+    .form-control:focus { outline:none; border-color:var(--color-text); background:#fff; }
+    textarea.form-control { resize:vertical; min-height:70px; }
+    .preview-hint { font-size:12px; color:var(--color-text-muted); margin-top:6px; background:var(--color-border); border-radius:8px; padding:8px 10px; }
+    .alert-warn { background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:10px 14px; border-radius:10px; font-size:13px; margin-top:10px; }
+    @media (max-width: 720px) { .form-grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title" id="pageTitle">+ Novo Contrato de Honorários</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn-secondary" href="/pages/honorarios-contratos.html">← Voltar</a>
+        </div>
+      </div>
+
+      <form id="form" autocomplete="off">
+
+        <div class="form-section">
+          <div class="form-section-title">Cliente e Processo</div>
+          <div class="form-grid-2">
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Cliente *</label>
+              <select id="contatoId" class="form-control" required>
+                <option value="">Selecione um cliente...</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Processo (opcional)</label>
+              <select id="processoId" class="form-control">
+                <option value="">Sem processo vinculado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Contrato</div>
+          <div class="form-group">
+            <label class="form-label">Objeto / Tipo de Serviço *</label>
+            <input type="text" id="objeto" class="form-control" placeholder="Ex: Consultoria Tributária, Defesa em Auto de Infração" required>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Valor Total (R$) *</label>
+              <input type="number" id="valorTotal" class="form-control" step="0.01" min="0.01" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data de Início *</label>
+              <input type="date" id="dataInicio" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Forma de Pagamento *</label>
+              <select id="formaPagamento" class="form-control" required>
+                <option value="AVista">À Vista</option>
+                <option value="Parcelado">Parcelado</option>
+                <option value="EntradaParcelado">Entrada + Parcelamento do Saldo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo de Cobrança *</label>
+              <select id="tipoCobranca" class="form-control" required>
+                <option value="Boleto/PIX">Boleto / PIX</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cessão">Cessão</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" id="secAvista">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Data de Vencimento *</label>
+              <input type="date" id="dataPrimeiraParcela" class="form-control">
+            </div>
+          </div>
+          <div class="preview-hint" id="hintAvista"></div>
+        </div>
+
+        <div class="form-section" id="secEntrada" style="display:none">
+          <div class="form-section-title" style="margin-bottom:8px">💰 Entrada</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Valor da Entrada (R$) *</label>
+              <input type="number" id="valorEntrada" class="form-control" step="0.01" min="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vencimento da Entrada *</label>
+              <input type="date" id="vencimentoEntrada" class="form-control">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Forma de Pagamento da Entrada *</label>
+              <select id="entradaCobranca" class="form-control">
+                <option value="Boleto/PIX">Boleto / PIX</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Dinheiro">Dinheiro</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" id="secParcelamento" style="display:none">
+          <div class="form-section-title" style="margin-bottom:8px">📅 Parcelamento</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" id="lblNp">Nº de Parcelas *</label>
+              <input type="number" id="numeroParcelas" class="form-control" min="1" max="120" value="12">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Periodicidade *</label>
+              <select id="periodicidade" class="form-control">
+                <option value="Mensal">Mensal</option>
+                <option value="Quinzenal">Quinzenal</option>
+                <option value="Semanal">Semanal</option>
+                <option value="Semestral">Semestral</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="lblD1">Data da 1ª Parcela *</label>
+            <input type="date" id="dataPrimeiraParcelaParc" class="form-control">
+          </div>
+          <div class="preview-hint" id="hintParc">Preencha os campos acima para visualizar as parcelas.</div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Encargos por Atraso (opcional)</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Multa (%)</label>
+              <input type="number" id="percentualMulta" class="form-control" step="0.01" min="0" max="100" value="2">
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Padrão: 2% (incidência única)</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Juros Mensal (% a.m.)</label>
+              <input type="number" id="percentualJuros" class="form-control" step="0.01" min="0" max="100" value="1.5">
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Padrão: 1,5% a.m. pro rata die</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Observações (opcional)</div>
+          <textarea id="observacoes" class="form-control" rows="3" placeholder="Notas sobre o contrato..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" style="flex:1" id="btnSalvar">💾 Salvar Contrato</button>
+        </div>
+
+      </form>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import {
+      brl, fmtDateInput, notify, escapeHtml, getQueryParam,
+      getContatos, getProcessos,
+      getContrato, criarContrato, atualizarContrato
+    } from '/js/honorarios.js';
+    initLayout();
+
+    const id = getQueryParam('id');
+    let contatoSelecionado = null;
+    let processoSelecionado = null;
+
+    function hojeISO() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    document.getElementById('dataInicio').value = hojeISO();
+    document.getElementById('dataPrimeiraParcela').value = hojeISO();
+    document.getElementById('dataPrimeiraParcelaParc').value = addMonths(hojeISO(), 1);
+    document.getElementById('vencimentoEntrada').value = hojeISO();
+
+    function addMonths(iso, months) {
+      const d = new Date(iso);
+      d.setMonth(d.getMonth() + months);
+      return d.toISOString().slice(0, 10);
+    }
+
+    async function carregarContatos() {
+      const sel = document.getElementById('contatoId');
+      try {
+        const r = await getContatos();
+        const items = r?.items ?? r?.Items ?? r ?? [];
+        const opt = items.map(c => `<option value="${c.id ?? c.Id}">${escapeHtml(c.nome ?? c.Nome)}${c.cpfCnpj ?? c.CpfCnpj ? ' — ' + escapeHtml(c.cpfCnpj ?? c.CpfCnpj) : ''}</option>`).join('');
+        sel.innerHTML = '<option value="">Selecione um cliente...</option>' + opt;
+        if (contatoSelecionado) sel.value = contatoSelecionado;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Erro ao carregar</option>';
+      }
+    }
+
+    async function carregarProcessos() {
+      const sel = document.getElementById('processoId');
+      try {
+        const r = await getProcessos();
+        const items = r?.items ?? r?.Items ?? r ?? [];
+        sel.innerHTML = '<option value="">Sem processo vinculado</option>' + items.map(p => `<option value="${p.id ?? p.Id}">${escapeHtml(p.numeroCNJ ?? p.NumeroCNJ)}</option>`).join('');
+        if (processoSelecionado) sel.value = processoSelecionado;
+      } catch (e) {
+        sel.innerHTML = '<option value="">Sem processos disponíveis</option>';
+      }
+    }
+
+    function toggleForma() {
+      const f = document.getElementById('formaPagamento').value;
+      const secAvista = document.getElementById('secAvista');
+      const secEntrada = document.getElementById('secEntrada');
+      const secParc = document.getElementById('secParcelamento');
+      secAvista.style.display = (f === 'AVista') ? '' : 'none';
+      secEntrada.style.display = (f === 'EntradaParcelado') ? '' : 'none';
+      secParc.style.display = (f === 'Parcelado' || f === 'EntradaParcelado') ? '' : 'none';
+
+      const lblNp = document.getElementById('lblNp');
+      const np = document.getElementById('numeroParcelas');
+      if (f === 'EntradaParcelado') { lblNp.textContent = 'Nº de Parcelas do Saldo *'; np.min = '1'; }
+      else { lblNp.textContent = 'Nº de Parcelas *'; np.min = '2'; }
+      preview();
+    }
+
+    function preview() {
+      const f = document.getElementById('formaPagamento').value;
+      const valTot = parseFloat(document.getElementById('valorTotal').value) || 0;
+      if (f === 'AVista') {
+        const dv = document.getElementById('dataPrimeiraParcela').value;
+        document.getElementById('hintAvista').textContent = valTot > 0 && dv ? `1 parcela de ${brl(valTot)} — vencimento ${fmtDateInput(dv)}.` : '';
+        return;
+      }
+      const np = parseInt(document.getElementById('numeroParcelas').value) || 0;
+      const d1 = document.getElementById('dataPrimeiraParcelaParc').value;
+      const period = document.getElementById('periodicidade').value;
+      let entradaTxt = '';
+      let base = valTot;
+      if (f === 'EntradaParcelado') {
+        const ev = parseFloat(document.getElementById('valorEntrada').value) || 0;
+        const evenc = document.getElementById('vencimentoEntrada').value;
+        base = Math.max(valTot - ev, 0);
+        entradaTxt = ev ? `Entrada: ${brl(ev)}${evenc ? ` em ${fmtDateInput(evenc)}` : ''}. Saldo: ${brl(base)}. ` : '';
+      }
+      if (!base || !d1 || !np) {
+        document.getElementById('hintParc').textContent = entradaTxt || 'Preencha os campos acima para visualizar as parcelas.';
+        return;
+      }
+      const periodLabel = { Mensal: 'mensal', Quinzenal: 'quinzenal', Semanal: 'semanal', Semestral: 'semestral' }[period] || period;
+      document.getElementById('hintParc').textContent = `${entradaTxt}${np}× de ${brl(base / np)} — ${periodLabel} — 1ª em ${fmtDateInput(d1)}.`;
+    }
+
+    document.getElementById('formaPagamento').addEventListener('change', toggleForma);
+    ['valorTotal', 'numeroParcelas', 'dataPrimeiraParcelaParc', 'valorEntrada', 'vencimentoEntrada'].forEach(id =>
+      document.getElementById(id).addEventListener('input', preview));
+    document.getElementById('periodicidade').addEventListener('change', preview);
+
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSalvar');
+      btn.disabled = true;
+
+      const f = document.getElementById('formaPagamento').value;
+      const isAvista = f === 'AVista';
+      const isParcelado = f === 'Parcelado';
+      const isEntrada = f === 'EntradaParcelado';
+
+      const common = {
+        contatoId: document.getElementById('contatoId').value,
+        processoId: document.getElementById('processoId').value || null,
+        objeto: document.getElementById('objeto').value.trim(),
+        valorTotal: parseFloat(document.getElementById('valorTotal').value),
+        formaPagamento: isAvista ? 1 : isParcelado ? 2 : 3,
+        tipoCobranca: document.getElementById('tipoCobranca').value,
+        observacoes: document.getElementById('observacoes').value.trim() || null,
+        percentualMulta: (parseFloat(document.getElementById('percentualMulta').value) || 2) / 100,
+        percentualJurosMensal: (parseFloat(document.getElementById('percentualJuros').value) || 1.5) / 100,
+        dataInicio: document.getElementById('dataInicio').value,
+        dataFim: null,
+      };
+
+      if (!common.contatoId) { alert('Selecione um cliente'); btn.disabled = false; return; }
+      if (!common.objeto) { alert('Descreva o objeto'); btn.disabled = false; return; }
+      if (!common.valorTotal || common.valorTotal <= 0) { alert('Informe o valor total'); btn.disabled = false; return; }
+      if (!common.dataInicio) { alert('Informe a data de início'); btn.disabled = false; return; }
+
+      let data;
+      if (isAvista) {
+        data = {
+          ...common,
+          periodicidade: null,
+          numeroParcelas: null,
+          dataPrimeiraParcela: document.getElementById('dataPrimeiraParcela').value,
+          valorEntrada: null,
+          vencimentoEntrada: null,
+        };
+      } else if (isParcelado) {
+        data = {
+          ...common,
+          periodicidade: parseInt({ Mensal: 1, Quinzenal: 2, Semanal: 3, Semestral: 4 }[document.getElementById('periodicidade').value]),
+          numeroParcelas: parseInt(document.getElementById('numeroParcelas').value),
+          dataPrimeiraParcela: document.getElementById('dataPrimeiraParcelaParc').value,
+          valorEntrada: null,
+          vencimentoEntrada: null,
+        };
+      } else {
+        data = {
+          ...common,
+          periodicidade: parseInt({ Mensal: 1, Quinzenal: 2, Semanal: 3, Semestral: 4 }[document.getElementById('periodicidade').value]),
+          numeroParcelas: parseInt(document.getElementById('numeroParcelas').value),
+          dataPrimeiraParcela: document.getElementById('dataPrimeiraParcelaParc').value,
+          valorEntrada: parseFloat(document.getElementById('valorEntrada').value),
+          vencimentoEntrada: document.getElementById('vencimentoEntrada').value,
+        };
+      }
+
+      const isEdit = !!id;
+      try {
+        const result = isEdit
+          ? await atualizarContrato(id, { ...data, dataFim: null })
+          : await criarContrato(data);
+        notify(isEdit ? '✅ Contrato atualizado!' : '✅ Contrato cadastrado!');
+        setTimeout(() => window.location.href = `/pages/honorarios-contrato-detalhe.html?id=${result.id ?? result.Id}`, 600);
+      } catch (ex) {
+        alert('Erro: ' + (ex.message || 'Falha ao salvar'));
+        btn.disabled = false;
+      }
+    });
+
+    (async () => {
+      await Promise.all([carregarContatos(), carregarProcessos()]);
+      if (id) {
+        document.getElementById('pageTitle').textContent = '✏️ Editar Contrato';
+        const c = await getContrato(id);
+        if (c) {
+          contatoSelecionado = c.contatoId ?? c.ContatoId;
+          processoSelecionado = c.processoId ?? c.ProcessoId ?? '';
+          document.getElementById('contatoId').value = contatoSelecionado;
+          document.getElementById('processoId').value = processoSelecionado;
+          document.getElementById('objeto').value = c.objeto ?? c.Objeto ?? '';
+          document.getElementById('valorTotal').value = c.valorTotal ?? c.ValorTotal;
+          document.getElementById('formaPagamento').value = mapFormaInv(c.formaPagamento ?? c.FormaPagamento);
+          document.getElementById('tipoCobranca').value = c.tipoCobranca ?? c.TipoCobranca ?? 'Boleto/PIX';
+          document.getElementById('observacoes').value = c.observacoes ?? c.Observacoes ?? '';
+          document.getElementById('dataInicio').value = (c.dataInicio ?? c.DataInicio ?? '').slice(0, 10);
+          document.getElementById('percentualMulta').value = ((c.percentualMulta ?? c.PercentualMulta) * 100).toFixed(2);
+          document.getElementById('percentualJuros').value = ((c.percentualJurosMensal ?? c.PercentualJurosMensal) * 100).toFixed(2);
+          const np = c.numeroParcelas ?? c.NumeroParcelas;
+          const d1 = c.dataPrimeiraParcela ?? c.DataPrimeiraParcela;
+          if (np) document.getElementById('numeroParcelas').value = np;
+          if (d1) document.getElementById('dataPrimeiraParcelaParc').value = d1.slice(0, 10);
+          if (d1 && (c.formaPagamento ?? c.FormaPagamento) === 1) document.getElementById('dataPrimeiraParcela').value = d1.slice(0, 10);
+          const ve = c.valorEntrada ?? c.ValorEntrada;
+          if (ve) document.getElementById('valorEntrada').value = ve;
+          const vencE = c.vencimentoEntrada ?? c.VencimentoEntrada;
+          if (vencE) document.getElementById('vencimentoEntrada').value = vencE.slice(0, 10);
+          const per = c.periodicidade ?? c.Periodicidade;
+          if (per) document.getElementById('periodicidade').value = mapPeriodicidade(per);
+          toggleForma();
+        }
+      } else {
+        toggleForma();
+      }
+      preview();
+    })();
+
+    function mapFormaInv(v) {
+      if (typeof v === 'string') return v;
+      return ['', 'AVista', 'Parcelado', 'EntradaParcelado'][v] ?? 'AVista';
+    }
+    function mapPeriodicidade(v) {
+      if (typeof v === 'string') return v;
+      return ['', 'Mensal', 'Quinzenal', 'Semanal', 'Semestral'][v] ?? 'Mensal';
+    }
+  </script>
+</body>
+</html>

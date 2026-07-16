@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Honorários Contratos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .hp-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:18px; }
+    .hp-card { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+    .hp-card .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); }
+    .hp-card .val { font-size:20px; font-weight:700; margin-top:6px; }
+    .hp-card .sub { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+
+    .hp-evo { display:flex; align-items:flex-end; gap:6px; height:140px; padding:10px 0 22px; border-bottom:1px solid var(--color-border); }
+    .hp-evo-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
+    .hp-evo-bar { width:100%; max-width:42px; min-height:4px; background:linear-gradient(180deg,#E4C878,#C9A84C); border-radius:5px 5px 0 0; }
+    .hp-evo-lbl { font-size:11px; color:var(--color-text-muted); font-weight:600; margin-top:5px; }
+    .hp-evo-val { font-size:10px; color:var(--color-text-muted); }
+
+    .hp-meta-bar { height:24px; background:var(--color-border); border-radius:7px; overflow:hidden; position:relative; margin-top:8px; }
+    .hp-meta-fill { height:100%; background:linear-gradient(90deg,#059669,#10b981); border-radius:6px; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; transition:width .4s; }
+    .hp-meta-fill.pending { background:linear-gradient(90deg,#C9A84C,#E2C06A); }
+    .hp-meta-pct { font-size:11px; font-weight:700; color:#fff; }
+
+    .ci { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px; margin-bottom:10px; border-left:4px solid var(--color-border); box-shadow:var(--shadow); }
+    .ci.ng { border-left-color:#dc2626; }
+    .ci.ok { border-left-color:#059669; }
+    .ci.mu { border-left-color:#6b7280; }
+    .ci-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .ci-name { font-size:16px; font-weight:700; }
+    .ci-sub { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+    .ci-nums { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px 14px; margin-top:10px; font-size:12px; }
+    .ci-nums .cl { color:var(--color-text-muted); font-size:10px; text-transform:uppercase; letter-spacing:.3px; }
+    .ci-nums .cv { font-weight:700; font-size:14px; margin-top:3px; }
+    .ci-nums .cv.danger { color:#dc2626; }
+    .prog { height:5px; background:var(--color-border); border-radius:3px; margin-top:10px; overflow:hidden; }
+    .prog-fill { height:100%; background:linear-gradient(90deg,#C9A84C,#E2C06A); border-radius:3px; }
+
+    .badge-sm { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-ok { background:#d1fae5; color:#059669; }
+    .badge-err { background:#fee2e2; color:#dc2626; }
+    .badge-warn { background:#fef3c7; color:#b45309; }
+    .badge-muted { background:#f1f3f8; color:#6b7a99; }
+    .badge-proc { background:#ede9fe; color:#7c3aed; }
+
+    .filter-bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+    .filter-bar select, .filter-bar input { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); background:#fff; font-size:13px; }
+
+    .empty { text-align:center; padding:38px 16px; color:var(--color-text-muted); }
+    .empty p { margin-bottom:14px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">💼 Honorários Contratos</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" id="btnConfig">⚙ Configurações</button>
+          <a class="btn btn-primary" href="/pages/honorarios-contrato-novo.html">+ Novo Contrato</a>
+        </div>
+      </div>
+
+      <div id="dashTiles" class="hp-kpi"></div>
+
+      <div class="hp-card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="lbl">📊 Evolução de Pagamentos (6 meses)</div>
+        </div>
+        <div id="dashEvo"></div>
+      </div>
+
+      <div class="hp-card" style="margin-bottom:14px">
+        <div class="lbl">🎯 Meta Mensal</div>
+        <div id="dashMeta"></div>
+      </div>
+
+      <div class="hp-card" style="margin-bottom:14px" id="dashInadimplentesCard">
+        <div class="lbl">🔴 Clientes em Atraso</div>
+        <div id="dashInadimplentes"></div>
+      </div>
+
+      <div class="hp-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700">Contratos</div>
+        </div>
+        <div class="filter-bar">
+          <select id="filtroStatus">
+            <option value="">Todos</option>
+            <option value="Ativo">🟢 Ativos</option>
+            <option value="Inadimplente">🔴 Em Atraso</option>
+            <option value="Quitado">✔ Quitados</option>
+            <option value="Suspenso">⏸ Suspensos</option>
+            <option value="Distratado">✖ Distratados</option>
+            <option value="Encerrado">◆ Encerrados</option>
+          </select>
+          <input type="text" id="filtroBusca" placeholder="Buscar por cliente, nº ou objeto..." style="flex:1;min-width:200px">
+        </div>
+        <div id="lista"></div>
+        <div id="paginacao" style="display:flex;justify-content:center;gap:6px;margin-top:14px"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import {
+      brl, fmtDate, escapeHtml, notify, pick,
+      listarContratos, getDashboard,
+      mapForma, statusContrato, STATUS_CONTRATO_LABELS
+    } from '/js/honorarios.js';
+    initLayout();
+
+    const PAGE_SIZE = 50;
+    let pageState = { page: 1, status: '', busca: '' };
+
+    const fmtStatus = (s) => STATUS_CONTRATO_LABELS[s] ?? { cls: 'badge-muted', label: s };
+
+    async function renderDashboard() {
+      const tiles = document.getElementById('dashTiles');
+      tiles.innerHTML = '<div class="hp-card"><div class="lbl">Carregando...</div></div>';
+      const d = await getDashboard();
+      if (!d) {
+        tiles.innerHTML = '';
+        return;
+      }
+      const totalReceber = pick(d, 'totalAReceber', 0);
+      const totalAtraso = pick(d, 'totalEmAtraso', 0);
+      const recebidoMes = pick(d, 'recebidoNoMes', 0);
+      const atrasados = pick(d, 'contratosAtrasados', 0);
+      const ativos = pick(d, 'contratosAtivos', 0);
+      const quitados = pick(d, 'contratosQuitados', 0);
+      tiles.innerHTML = `
+        <div class="hp-card">
+          <div class="lbl">Total a Receber</div>
+          <div class="val">${brl(totalReceber)}</div>
+          <div class="sub">${ativos} ativos · ${quitados} quitados</div>
+        </div>
+        <div class="hp-card" style="border-color:#fca5a5">
+          <div class="lbl" style="color:#dc2626">Em Atraso</div>
+          <div class="val" style="color:#dc2626">${brl(totalAtraso)}</div>
+          <div class="sub">${atrasados} contrato(s) com parcelas vencidas</div>
+        </div>
+        <div class="hp-card">
+          <div class="lbl" style="color:#059669">Recebido no Mês</div>
+          <div class="val" style="color:#059669">${brl(recebidoMes)}</div>
+          <div class="sub">Pago em honorários no mês atual</div>
+        </div>
+        <div class="hp-card" style="border-color:#fde68a">
+          <div class="lbl" style="color:#b45309">Contratos Atrasados</div>
+          <div class="val" style="color:#b45309">${atrasados}</div>
+          <div class="sub">Requerem atenção</div>
+        </div>
+      `;
+      renderEvolucao(pick(d, 'evolucao6Meses', []) ?? []);
+      renderMeta({
+        metaMensal: pick(d, 'metaMensal', null),
+        alcancadoMes: pick(d, 'alcancadoMes', 0),
+      });
+      renderInadimplentes(pick(d, 'inadimplentes', []) ?? []);
+    }
+
+    function renderEvolucao(meses) {
+      const el = document.getElementById('dashEvo');
+      const max = Math.max(...meses.map(m => pick(m, 'total', 0)), 1);
+      if (!meses.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--color-text-muted)">—</div>'; return; }
+      el.innerHTML = `<div class="hp-evo">` + meses.map(m => {
+        const total = pick(m, 'total', 0);
+        const h = Math.max((total / max) * 100, total > 0 ? 4 : 0);
+        return `
+          <div class="hp-evo-col">
+            <div class="hp-evo-val">${total > 0 ? brl(total).replace('R$', '').trim() : ''}</div>
+            <div class="hp-evo-bar" style="height:${h}%"></div>
+            <div class="hp-evo-lbl">${escapeHtml(pick(m, 'label', ''))}</div>
+          </div>
+        `;
+      }).join('') + `</div>`;
+    }
+
+    function renderMeta(d) {
+      const el = document.getElementById('dashMeta');
+      const meta = d.metaMensal;
+      const rec = d.alcancadoMes ?? 0;
+      if (!meta || meta <= 0) {
+        el.innerHTML = `<div style="padding:10px;color:var(--color-text-muted);font-size:13px">Defina uma meta em <a href="/pages/honorarios-config.html">Configurações</a> para acompanhar.</div>`;
+        return;
+      }
+      const pct = Math.min((rec / meta) * 100, 100);
+      const reached = rec >= meta;
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+          <span>Meta: <b>${brl(meta)}</b></span>
+          <span>Atual: <b style="color:${reached ? '#059669' : '#b45309'}">${brl(rec)}</b> (${pct.toFixed(0)}%)</span>
+        </div>
+        <div class="hp-meta-bar">
+          <div class="hp-meta-fill ${reached ? '' : 'pending'}" style="width:${pct}%">
+            ${pct > 12 ? `<span class="hp-meta-pct">${pct.toFixed(0)}%</span>` : ''}
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--color-text-muted);margin-top:6px;text-align:right">
+          ${reached ? '✅ Meta atingida!' : `Faltam <b>${brl(meta - rec)}</b> para atingir a meta`}
+        </div>
+      `;
+    }
+
+    function renderInadimplentes(items) {
+      const el = document.getElementById('dashInadimplentes');
+      if (!items.length) {
+        el.innerHTML = '<div style="text-align:center;padding:14px;color:#059669">✅ Nenhum contrato em atraso</div>';
+        return;
+      }
+      el.innerHTML = items.map(i => `
+        <a href="/pages/honorarios-contrato-detalhe.html?id=${i.contratoId}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-border);text-decoration:none;color:inherit">
+          <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-weight:700">
+            ${escapeHtml((i.nomeContato || '?').charAt(0).toUpperCase())}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(i.nomeContato)}</div>
+            <div style="font-size:11px;color:var(--color-text-muted)">${(i.parcelasVencidas ?? 0)} parcela(s) vencida(s)</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700;color:#dc2626;font-size:14px">${brl(i.valorEmAtraso)}</div>
+            <div style="font-size:10px;color:var(--color-text-muted)">em atraso</div>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    async function carregarLista() {
+      const el = document.getElementById('lista');
+      el.innerHTML = '<span style="color:var(--color-text-muted)">Carregando...</span>';
+      const dados = await listarContratos(pageState);
+      if (!dados) { el.innerHTML = '<div class="empty">❌ Erro ao carregar contratos.</div>'; return; }
+      const items = dados.items ?? dados.Items ?? [];
+      const total = dados.total ?? dados.Total ?? 0;
+      if (!items.length) {
+        el.innerHTML = `
+          <div class="empty">
+            <div style="font-size:30px;margin-bottom:10px">📋</div>
+            <p>Nenhum contrato encontrado.</p>
+            <a class="btn btn-primary" href="/pages/honorarios-contrato-novo.html">+ Criar primeiro contrato</a>
+          </div>
+        `;
+        return;
+      }
+      el.innerHTML = items.map(c => renderCard(c)).join('');
+      renderPaginacao(total);
+    }
+
+    function renderCard(c) {
+      const st = statusContrato(c);
+      const cls = (st === 'Inadimplente') ? 'ng' : (st === 'Quitado' || st === 'Encerrado' || st === 'Distratado') ? 'mu' : (st === 'Suspenso') ? 'mu' : 'ok';
+      const info = fmtStatus(st);
+      const aReceber = (c.valorPendente ?? c.ValorPendente ?? 0) + (c.valorEmAtraso ?? c.ValorEmAtraso ?? 0);
+      const totalParc = c.totalParcelas ?? c.TotalParcelas ?? 0;
+      const pagas = c.parcelasPagas ?? c.ParcelasPagas ?? 0;
+      const prog = totalParc > 0 ? (pagas / totalParc * 100) : 0;
+      const proxVenc = c.proximoVencimento ? fmtDate(c.proximoVencimento) : `${pagas}/${totalParc}`;
+      return `
+        <div class="ci ${cls}">
+          <div class="ci-top">
+            <div style="min-width:0;flex:1">
+              <div class="ci-name">${escapeHtml(c.nomeContato ?? c.NomeContato)}</div>
+              <div class="ci-sub">
+                <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
+                ${c.numeroProcesso || c.NumeroProcesso ? `<span class="badge-sm badge-proc" title="Processo">⚖ ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</span>` : ''}
+                ${c.objeto || c.Objeto ? `· ${escapeHtml((c.objeto ?? c.Objeto).slice(0, 80))}` : ''}
+              </div>
+            </div>
+            <span class="badge-sm ${info.cls}">${info.label}</span>
+          </div>
+          <div class="ci-nums">
+            <div><div class="cl">Total</div><div class="cv">${brl(c.valorTotal ?? c.ValorTotal)}</div></div>
+            <div><div class="cl">A Receber</div><div class="cv ${st === 'Inadimplente' ? 'danger' : ''}">${brl(aReceber)}</div></div>
+            <div><div class="cl">Pago</div><div class="cv">${brl(c.valorPago ?? c.ValorPago)}</div></div>
+            <div><div class="cl">Forma</div><div class="cv" style="font-size:12px">${mapForma(c.formaPagamento ?? c.FormaPagamento)}</div></div>
+          </div>
+          <div class="prog"><div class="prog-fill" style="width:${prog.toFixed(0)}%"></div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${c.id ?? c.Id}">📄 Ver</a>
+            <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${c.id ?? c.Id}">✏️ Editar</a>
+            <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${c.id ?? c.Id}')">📑 Extrato</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPaginacao(total) {
+      const el = document.getElementById('paginacao');
+      const totalPgs = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (totalPgs <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML = `
+        <button class="btn btn-secondary btn-sm" ${pageState.page <= 1 ? 'disabled' : ''} id="pgPrev">‹</button>
+        <span style="padding:8px 12px;color:var(--color-text-muted);font-size:13px">Página ${pageState.page} de ${totalPgs}</span>
+        <button class="btn btn-secondary btn-sm" ${pageState.page >= totalPgs ? 'disabled' : ''} id="pgNext">›</button>
+      `;
+      document.getElementById('pgPrev')?.addEventListener('click', () => { pageState.page--; carregarLista(); });
+      document.getElementById('pgNext')?.addEventListener('click', () => { pageState.page++; carregarLista(); });
+    }
+
+    document.getElementById('filtroStatus').addEventListener('change', e => {
+      pageState.status = e.target.value === 'Inadimplente' ? 'Inadimplente' : e.target.value;
+      pageState.page = 1;
+      carregarLista();
+    });
+    let buscaTimer;
+    document.getElementById('filtroBusca').addEventListener('input', e => {
+      clearTimeout(buscaTimer);
+      const v = e.target.value;
+      buscaTimer = setTimeout(() => {
+        pageState.busca = v;
+        pageState.page = 1;
+        carregarLista();
+      }, 300);
+    });
+
+    document.getElementById('btnConfig').addEventListener('click', () => {
+      window.location.href = '/pages/honorarios-config.html';
+    });
+
+    window._extratoPdf = async (id) => {
+      const mod = await import('/js/honorarios.js');
+      await mod.abrirExtratoPdf(id);
+    };
+
+    (async () => {
+      await renderDashboard();
+      await carregarLista();
+    })();
+  </script>
+</body>
+</html>

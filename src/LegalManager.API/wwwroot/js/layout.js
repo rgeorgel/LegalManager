@@ -29,7 +29,8 @@ const NAV_GROUPS = [
   {
     label: 'Financeiro',
     items: [
-      { href: '/pages/financeiro.html',    label: '💰 Financeiro', plus: true },
+      { href: '/pages/financeiro.html',                 label: '💰 Financeiro', plus: true },
+      { href: '/pages/honorarios-contratos.html',       label: '💼 Honorários Contratos', plus: true },
     ],
   },
   {
