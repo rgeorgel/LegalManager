@@ -11,12 +11,29 @@ public static class ExtratoHonorarioPdfRenderer
     private const string CorGold = "#c9a84c";
     private const string CorMuted = "#5f5e5a";
 
+    private const string LogoPadraoRelativePath = "images/causify-logo-3B-claro.png";
+
     private static readonly HttpClient LogoHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(4)
     };
 
-    private static byte[]? CarregarLogo(string? logoUrl)
+    private static byte[]? _logoPadraoCache;
+
+    private static bool ImagemDecodificavel(byte[] bytes)
+    {
+        try
+        {
+            QuestPDF.Infrastructure.Image.FromBinaryData(bytes);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static byte[]? CarregarLogoRemoto(string? logoUrl)
     {
         if (string.IsNullOrWhiteSpace(logoUrl)) return null;
         if (!logoUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
@@ -24,7 +41,8 @@ public static class ExtratoHonorarioPdfRenderer
             return null;
         try
         {
-            return LogoHttpClient.GetByteArrayAsync(logoUrl).GetAwaiter().GetResult();
+            var bytes = LogoHttpClient.GetByteArrayAsync(logoUrl).GetAwaiter().GetResult();
+            return ImagemDecodificavel(bytes) ? bytes : null;
         }
         catch
         {
@@ -32,11 +50,33 @@ public static class ExtratoHonorarioPdfRenderer
         }
     }
 
-    public static byte[] Renderizar(ExtratoPdfDadosDto d)
+    private static byte[]? CarregarLogoPadrao(string? webRootPath)
+    {
+        if (_logoPadraoCache != null) return _logoPadraoCache;
+        if (string.IsNullOrWhiteSpace(webRootPath)) return null;
+        try
+        {
+            var caminho = Path.Combine(webRootPath, LogoPadraoRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(caminho)) return null;
+            var bytes = File.ReadAllBytes(caminho);
+            if (!ImagemDecodificavel(bytes)) return null;
+            _logoPadraoCache = bytes;
+            return bytes;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static byte[]? CarregarLogo(string? logoUrl, string? webRootPath) =>
+        CarregarLogoRemoto(logoUrl) ?? CarregarLogoPadrao(webRootPath);
+
+    public static byte[] Renderizar(ExtratoPdfDadosDto d, string? webRootPath = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
-        var logoBytes = CarregarLogo(d.LogoUrl);
+        var logoBytes = CarregarLogo(d.LogoUrl, webRootPath);
 
         var document = Document.Create(container =>
         {

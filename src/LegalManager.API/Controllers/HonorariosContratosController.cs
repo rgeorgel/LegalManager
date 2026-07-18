@@ -173,13 +173,14 @@ public class HonorariosContratosController(IHonorarioService service, ITenantCon
     }
 
     [HttpPost("{id:guid}/extrato/pdf")]
-    public async Task<IActionResult> GerarExtrato(Guid id, [FromBody] ExtratoPdfRequestDto? dto, CancellationToken ct)
+    public async Task<IActionResult> GerarExtrato(Guid id, [FromBody] ExtratoPdfRequestDto? dto,
+        [FromServices] Microsoft.AspNetCore.Hosting.IWebHostEnvironment env, CancellationToken ct)
     {
         if (CheckPlano() is { } err) return err;
         try
         {
             var dados = await service.ObterDadosExtratoAsync(id, tenantContext.TenantId, dto, ct);
-            var bytes = LegalManager.API.Reports.ExtratoHonorarioPdfRenderer.Renderizar(dados);
+            var bytes = LegalManager.API.Reports.ExtratoHonorarioPdfRenderer.Renderizar(dados, env.WebRootPath);
             var filename = $"extrato-honorarios-{DateTime.Now:yyyyMMdd-HHmmss}.pdf";
             return File(bytes, "application/pdf", filename);
         }

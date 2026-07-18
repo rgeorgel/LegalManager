@@ -146,8 +146,9 @@ public class PortalClienteHonorariosController(AppDbContext db) : ControllerBase
         try
         {
             var svc = HttpContext.RequestServices.GetRequiredService<IHonorarioService>();
+            var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
             var dados = await svc.ObterDadosExtratoAsync(id, tenantId, dto, ct);
-            var bytes = LegalManager.API.Reports.ExtratoHonorarioPdfRenderer.Renderizar(dados);
+            var bytes = LegalManager.API.Reports.ExtratoHonorarioPdfRenderer.Renderizar(dados, env.WebRootPath);
             return File(bytes, "application/pdf", $"extrato-honorarios-{DateTime.Now:yyyyMMdd}.pdf");
         }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
