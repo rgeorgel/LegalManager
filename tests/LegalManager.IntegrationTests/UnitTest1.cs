@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Modelos;
@@ -6,10 +9,15 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 
 namespace LegalManager.IntegrationTests;
@@ -633,5 +641,66 @@ public class SeedServiceIntegrationTests
 
         var service = CreateService(ctx);
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.GerarDadosDemoAsync(tenantId));
+    }
+}
+
+// ─── Impersonação Integration ──────────────────────────────────────────────────
+
+public class ImpersonacaoIntegrationTests
+{
+    private static AuthService CreateAuthService(AppDbContext ctx)
+    {
+        var storeMock = new Mock<IUserStore<Usuario>>();
+        var userManagerMock = new Mock<UserManager<Usuario>>(storeMock.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+        var configMock = new Mock<IConfiguration>();
+        var sectionMock = new Mock<IConfigurationSection>();
+        sectionMock.Setup(s => s["Key"]).Returns("meu-secret-key-minimo-32-caracteres-p");
+        sectionMock.Setup(s => s["Issuer"]).Returns("LegalManager");
+        sectionMock.Setup(s => s["Audience"]).Returns("LegalManager");
+        configMock.Setup(c => c.GetSection("Jwt")).Returns(sectionMock.Object);
+
+        return new AuthService(userManagerMock.Object, configMock.Object, new Mock<IEmailService>().Object, new Mock<ICreditoService>().Object, ctx);
+    }
+
+    [Fact]
+    public async Task Impersonacao_PropagaClaimsParaTenantContextEAuditoria()
+    {
+        var (ctx, tenant, usuarioAlvo) = await TestHelpers.SeedTenantAsync();
+        var superAdminId = Guid.NewGuid();
+
+        var authService = CreateAuthService(ctx);
+        var authResponse = await authService.ImpersonarAsync(superAdminId, "Super Admin", usuarioAlvo.Id);
+
+        // Valida o token exatamente como o middleware JwtBearer faz em produção (Program.cs),
+        // que remapeia claims curtas como "sub" para ClaimTypes.NameIdentifier por padrão.
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "LegalManager",
+            ValidAudience = "LegalManager",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("meu-secret-key-minimo-32-caracteres-p"))
+        };
+        var principal = new JwtSecurityTokenHandler().ValidateToken(authResponse.AccessToken, validationParameters, out _);
+
+        var httpContextAccessorMock = new Mock<IHttpContextAccessor>();
+        httpContextAccessorMock.Setup(a => a.HttpContext).Returns(new DefaultHttpContext { User = principal });
+
+        var tenantContext = new TenantContext(httpContextAccessorMock.Object);
+
+        Assert.Equal(tenant.Id, tenantContext.TenantId);
+        Assert.Equal(usuarioAlvo.Id, tenantContext.UserId);
+        Assert.Equal(superAdminId, tenantContext.ImpersonadoPorId);
+
+        var auditService = new AuditService(ctx, tenantContext);
+        await auditService.LogAsync(tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Contato, Guid.NewGuid()));
+
+        var log = await ctx.AuditLogs.OrderByDescending(a => a.CriadoEm).FirstAsync();
+        Assert.Equal(tenant.Id, log.TenantId);
+        Assert.Equal(usuarioAlvo.Id, log.UsuarioId);
+        Assert.Equal(superAdminId, log.ImpersonadoPorId);
     }
 }

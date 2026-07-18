@@ -1,5 +1,5 @@
 import { isLoggedIn, logout, getUser } from './auth.js';
-import { apiFetch } from './api.js';
+import { apiFetch, getImpersonationInfo } from './api.js';
 
 const NAV_GROUPS = [
   {
@@ -87,6 +87,46 @@ export function initLayout() {
   injectBottomNav();
   setupMobileMenu();
   injectNotificationBell();
+  injectImpersonationBanner();
+}
+
+function injectImpersonationBanner() {
+  const existing = document.getElementById('impersonationBanner');
+  const info = getImpersonationInfo();
+
+  if (!info) {
+    existing?.remove();
+    document.body.classList.remove('impersonating');
+    return;
+  }
+
+  if (existing) return;
+
+  if (!document.getElementById('impersonationStyles')) {
+    const s = document.createElement('style');
+    s.id = 'impersonationStyles';
+    s.textContent = `
+      #impersonationBanner {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+        background: #b91c1c; color: #fff; font-size: 13px;
+        padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 12px;
+      }
+      body.impersonating .app-layout { margin-top: 36px; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  const user = getUser();
+  const banner = document.createElement('div');
+  banner.id = 'impersonationBanner';
+  banner.innerHTML = `
+    <span>🔴 Você está impersonando <strong>${esc(user?.nome ?? '')}</strong> (${esc(user?.nomeEscritorio ?? '')}) como SuperAdmin ${esc(info.adminNome)}</span>
+    <button id="endImpersonationBtn" class="btn btn-sm" style="background:#fff;color:#b91c1c;border:none;padding:2px 10px;border-radius:4px;cursor:pointer;font-weight:600">Encerrar impersonação</button>
+  `;
+  document.body.prepend(banner);
+  document.body.classList.add('impersonating');
+
+  document.getElementById('endImpersonationBtn')?.addEventListener('click', () => logout());
 }
 
 function injectSidebarNav() {

@@ -46,6 +46,8 @@ public static class AuditActions
     public const string Login = "LOGIN";
     public const string Logout = "LOGOUT";
     public const string Access = "ACCESS";
+    public const string ImpersonationStart = "IMPERSONATION_START";
+    public const string ImpersonationEnd = "IMPERSONATION_END";
 }
 
 public static class AuditEntities

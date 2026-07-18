@@ -12,4 +12,5 @@ public class AuditLog
     public string? DadosNovos { get; set; }
     public string? IpAddress { get; set; }
     public DateTime CriadoEm { get; set; }
+    public Guid? ImpersonadoPorId { get; set; }
 }

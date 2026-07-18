@@ -8,6 +8,8 @@ public class RefreshToken
     public DateTime ExpiresAt { get; set; }
     public bool Revogado { get; set; }
     public DateTime CriadoEm { get; set; }
+    public Guid? ImpersonadoPorId { get; set; }
 
     public Usuario Usuario { get; set; } = null!;
+    public Usuario? ImpersonadoPor { get; set; }
 }

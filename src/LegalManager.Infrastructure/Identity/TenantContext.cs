@@ -11,6 +11,7 @@ public class TenantContext : ITenantContext
     public Guid UserId { get; }
     public string UserRole { get; }
     public PlanoTipo Plano { get; }
+    public Guid? ImpersonadoPorId { get; }
 
     public TenantContext(IHttpContextAccessor httpContextAccessor)
     {
@@ -19,5 +20,6 @@ public class TenantContext : ITenantContext
         UserId = Guid.Parse(user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? Guid.Empty.ToString());
         UserRole = user?.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
         Plano = Enum.TryParse<PlanoTipo>(user?.FindFirstValue("plano"), out var plano) ? plano : PlanoTipo.Free;
+        ImpersonadoPorId = Guid.TryParse(user?.FindFirstValue("impersonadoPorId"), out var impersonadoPorId) ? impersonadoPorId : null;
     }
 }

@@ -25,6 +25,35 @@ export function isLoggedIn() {
   return !!getToken();
 }
 
+export function consumeImpersonationHandoff() {
+  const raw = localStorage.getItem('impersonation_handoff');
+  if (!raw) return;
+  localStorage.removeItem('impersonation_handoff');
+
+  try {
+    const data = JSON.parse(raw);
+    if (Date.now() - data.ts > 30000) return;
+    setSession(data);
+  } catch {}
+}
+
+// Executado na avaliação do módulo (não dentro de uma função) para garantir que a sessão
+// já esteja em sessionStorage antes de qualquer verificação isLoggedIn() feita pela página
+// que importa este módulo — inclusive checagens inline que rodam antes de initLayout().
+consumeImpersonationHandoff();
+
+export function getImpersonationInfo() {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    return payload.impersonadoPorId ? { adminNome: payload.impersonadoPorNome || 'SuperAdmin' } : null;
+  } catch {
+    return null;
+  }
+}
+
 async function refreshTokenIfNeeded() {
   const rt = sessionStorage.getItem('refresh_token');
   if (!rt) return false;

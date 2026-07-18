@@ -6,9 +6,12 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -26,11 +29,29 @@ public class TrialConcedidoTests
         return new AppDbContext(options);
     }
 
+    private static AuthService CreateAuthService(AppDbContext ctx)
+    {
+        var storeMock = new Mock<IUserStore<Usuario>>();
+        var userManagerMock = new Mock<UserManager<Usuario>>(storeMock.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+        var configMock = new Mock<IConfiguration>();
+        var sectionMock = new Mock<IConfigurationSection>();
+        sectionMock.Setup(s => s["Key"]).Returns("meu-secret-key-minimo-32-caracteres-p");
+        sectionMock.Setup(s => s["Issuer"]).Returns("LegalManager");
+        sectionMock.Setup(s => s["Audience"]).Returns("LegalManager");
+        configMock.Setup(c => c.GetSection("Jwt")).Returns(sectionMock.Object);
+
+        var emailServiceMock = new Mock<IEmailService>();
+        var creditoServiceMock = new Mock<ICreditoService>();
+
+        return new AuthService(userManagerMock.Object, configMock.Object, emailServiceMock.Object, creditoServiceMock.Object, ctx);
+    }
+
     private static SuperAdminController CreateController(AppDbContext ctx, Guid superAdminId, out Mock<IAuditService> auditMock)
     {
         auditMock = new Mock<IAuditService>();
-        var controller = new SuperAdminController(ctx, auditMock.Object);
-        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, superAdminId.ToString()) };
+        var controller = new SuperAdminController(ctx, auditMock.Object, CreateAuthService(ctx));
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, superAdminId.ToString()), new Claim("nome", "Super Admin") };
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test")) }

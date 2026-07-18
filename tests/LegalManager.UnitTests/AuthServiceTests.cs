@@ -622,6 +622,193 @@ var creditoService = CreateCreditoServiceMock();
         var updatedConvite = await ctx.ConvitesUsuario.FindAsync(convite.Id);
         Assert.True(updatedConvite!.Usado);
     }
+
+    private static Usuario CreateAlvoUsuario(AppDbContext ctx, Guid tenantId, bool ativo = true, PerfilUsuario perfil = PerfilUsuario.Admin)
+    {
+        var usuario = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Email = "alvo@teste.com", UserName = "alvo@teste.com",
+            Nome = "Usuário Alvo", Perfil = perfil, Ativo = ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Users.Add(usuario);
+        ctx.SaveChanges();
+        return usuario;
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_DeveRetornarTokenDoUsuarioAlvo_QuandoValido()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var alvo = CreateAlvoUsuario(ctx, tenant.Id);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var superAdminId = Guid.NewGuid();
+        var result = await service.ImpersonarAsync(superAdminId, "Super Admin", alvo.Id);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.AccessToken);
+        Assert.NotNull(result.RefreshToken);
+        Assert.Equal(alvo.Id, result.Usuario.Id);
+        Assert.Equal(tenant.Id, result.Usuario.TenantId);
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_DeveLancarExcecao_QuandoUsuarioAlvoDesativado()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var alvo = CreateAlvoUsuario(ctx, tenant.Id, ativo: false);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_DeveLancarExcecao_QuandoUsuarioAlvoESuperAdmin()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var alvo = CreateAlvoUsuario(ctx, tenant.Id, perfil: PerfilUsuario.SuperAdmin);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_DeveLancarExcecao_QuandoTenantAlvoESystemTenant()
+    {
+        var ctx = CreateContext();
+        var alvo = CreateAlvoUsuario(ctx, LegalManager.Domain.TenantConstants.SystemTenantId);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_DeveLancarExcecao_QuandoUsuarioAlvoNaoExiste()
+    {
+        var ctx = CreateContext();
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_TokenGeradoContemClaimsImpersonadoPorIdENome()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var alvo = CreateAlvoUsuario(ctx, tenant.Id);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var superAdminId = Guid.NewGuid();
+        var result = await service.ImpersonarAsync(superAdminId, "Super Admin", alvo.Id);
+
+        var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+        Assert.Equal(superAdminId.ToString(), parsed.Claims.First(c => c.Type == "impersonadoPorId").Value);
+        Assert.Equal("Super Admin", parsed.Claims.First(c => c.Type == "impersonadoPorNome").Value);
+    }
+
+    [Fact]
+    public async Task ImpersonarAsync_TokenGeradoTemExpiracaoCurta()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var alvo = CreateAlvoUsuario(ctx, tenant.Id);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var result = await service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id);
+
+        var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+        var minutosAteExpirar = (parsed.ValidTo - DateTime.UtcNow).TotalMinutes;
+        Assert.InRange(minutosAteExpirar, 13, 16);
+    }
+
+    [Fact]
+    public async Task LoginAsync_TokenNormalNaoContemClaimImpersonadoPorId()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var user = new Usuario { Id = UserId, TenantId = TenantId, Email = "semimpersonacao@teste.com", UserName = "semimpersonacao@teste.com", Nome = "User", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var result = await service.LoginAsync(new LoginDto("semimpersonacao@teste.com", "Senha123"));
+
+        var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+        Assert.DoesNotContain(parsed.Claims, c => c.Type == "impersonadoPorId");
+        var expiraEmMinutos = (parsed.ValidTo - DateTime.UtcNow).TotalMinutes;
+        Assert.InRange(expiraEmMinutos, 55, 61);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_DevePropagarImpersonadoPorId_QuandoTokenDeImpersonacao()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var user = new Usuario { Id = UserId, TenantId = TenantId, Email = "refreshimp@teste.com", UserName = "refreshimp@teste.com", Nome = "Refresh Imp", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(user);
+
+        var superAdminId = Guid.NewGuid();
+        var superAdmin = new Usuario { Id = superAdminId, TenantId = LegalManager.Domain.TenantConstants.SystemTenantId, Email = "sa@teste.com", UserName = "sa@teste.com", Nome = "Super Admin Original", Perfil = PerfilUsuario.SuperAdmin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(superAdmin);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(), UsuarioId = UserId, Token = "token-impersonado-123",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(30), CriadoEm = DateTime.UtcNow, Revogado = false,
+            ImpersonadoPorId = superAdminId
+        };
+        ctx.RefreshTokens.Add(refreshToken);
+        await ctx.SaveChangesAsync();
+
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var result = await service.RefreshTokenAsync("token-impersonado-123");
+
+        var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+        Assert.Equal(superAdminId.ToString(), parsed.Claims.First(c => c.Type == "impersonadoPorId").Value);
+        Assert.Equal("Super Admin Original", parsed.Claims.First(c => c.Type == "impersonadoPorNome").Value);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_NaoDevePropagarClaim_QuandoTokenNormal()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var user = new Usuario { Id = UserId, TenantId = TenantId, Email = "refreshnormal@teste.com", UserName = "refreshnormal@teste.com", Nome = "Refresh Normal", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(user);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(), UsuarioId = UserId, Token = "token-normal-456",
+            ExpiresAt = DateTime.UtcNow.AddDays(7), CriadoEm = DateTime.UtcNow, Revogado = false
+        };
+        ctx.RefreshTokens.Add(refreshToken);
+        await ctx.SaveChangesAsync();
+
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+
+        var result = await service.RefreshTokenAsync("token-normal-456");
+
+        var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+        Assert.DoesNotContain(parsed.Claims, c => c.Type == "impersonadoPorId");
+    }
 }
 
 public class JwtGenerationTests

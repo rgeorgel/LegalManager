@@ -32,7 +32,8 @@ public class AuditService : IAuditService
             DadosAnteriores = entry.DadosAnteriores != null ? JsonSerializer.Serialize(entry.DadosAnteriores, _jsonOptions) : null,
             DadosNovos = entry.DadosNovos != null ? JsonSerializer.Serialize(entry.DadosNovos, _jsonOptions) : null,
             IpAddress = entry.IpAddress,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            ImpersonadoPorId = _tenantContext.ImpersonadoPorId
         };
 
         _context.AuditLogs.Add(log);

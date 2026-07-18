@@ -150,7 +150,17 @@ public class AuthService : IAuthService
         token.Usuario.UltimoAcessoEm = DateTime.UtcNow;
 
         var tenant = await _context.Tenants.FindAsync([token.Usuario.TenantId], ct)!;
-        return await GerarAuthResponseAsync(token.Usuario, tenant!, ct);
+
+        string? impersonadoPorNome = null;
+        if (token.ImpersonadoPorId.HasValue)
+        {
+            impersonadoPorNome = await _context.Users
+                .Where(u => u.Id == token.ImpersonadoPorId.Value)
+                .Select(u => u.Nome)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        return await GerarAuthResponseAsync(token.Usuario, tenant!, ct, token.ImpersonadoPorId, impersonadoPorNome);
     }
 
     public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
@@ -249,10 +259,36 @@ public class AuthService : IAuthService
         return await GerarAuthResponseAsync(usuario, convite.Tenant, ct);
     }
 
-    private async Task<AuthResponseDto> GerarAuthResponseAsync(Usuario usuario, Tenant tenant, CancellationToken ct)
+    public async Task<AuthResponseDto> ImpersonarAsync(
+        Guid superAdminId, string superAdminNome, Guid targetUserId, CancellationToken ct = default)
     {
-        var accessToken = GerarJwt(usuario, tenant);
-        var refreshToken = await CriarRefreshTokenAsync(usuario.Id, ct);
+        var targetUser = await _context.Users.FindAsync([targetUserId], ct)
+            ?? throw new InvalidOperationException("Usuário não encontrado.");
+
+        if (!targetUser.Ativo)
+            throw new InvalidOperationException("Usuário desativado.");
+
+        if (targetUser.Perfil == PerfilUsuario.SuperAdmin)
+            throw new InvalidOperationException("Não é possível impersonar um SuperAdmin.");
+
+        if (targetUser.TenantId == TenantConstants.SystemTenantId)
+            throw new InvalidOperationException("Tenant inválido para impersonação.");
+
+        var tenant = await _context.Tenants.FindAsync([targetUser.TenantId], ct)
+            ?? throw new InvalidOperationException("Tenant não encontrado.");
+
+        return await GerarAuthResponseAsync(targetUser, tenant, ct, superAdminId, superAdminNome);
+    }
+
+    private async Task<AuthResponseDto> GerarAuthResponseAsync(
+        Usuario usuario, Tenant tenant, CancellationToken ct,
+        Guid? impersonadoPorId = null, string? impersonadoPorNome = null)
+    {
+        var accessTokenTtl = impersonadoPorId.HasValue ? TimeSpan.FromMinutes(15) : TimeSpan.FromHours(1);
+        var refreshTokenTtl = impersonadoPorId.HasValue ? TimeSpan.FromMinutes(30) : TimeSpan.FromDays(7);
+
+        var accessToken = GerarJwt(usuario, tenant, impersonadoPorId, impersonadoPorNome, accessTokenTtl);
+        var refreshToken = await CriarRefreshTokenAsync(usuario.Id, ct, impersonadoPorId, refreshTokenTtl);
 
         return new AuthResponseDto(
             accessToken,
@@ -262,42 +298,53 @@ public class AuthService : IAuthService
         );
     }
 
-    private string GerarJwt(Usuario usuario, Tenant tenant)
+    private string GerarJwt(
+        Usuario usuario, Tenant tenant,
+        Guid? impersonadoPorId = null, string? impersonadoPorNome = null, TimeSpan? ttl = null)
     {
         var jwtSettings = _config.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, usuario.Email!),
-            new Claim("tenantId", tenant.Id.ToString()),
-            new Claim(ClaimTypes.Role, usuario.Perfil.ToString()),
-            new Claim("nome", usuario.Nome),
-            new Claim("plano", tenant.Plano.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, usuario.Email!),
+            new("tenantId", tenant.Id.ToString()),
+            new(ClaimTypes.Role, usuario.Perfil.ToString()),
+            new("nome", usuario.Nome),
+            new("plano", tenant.Plano.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        if (impersonadoPorId.HasValue)
+        {
+            claims.Add(new Claim("impersonadoPorId", impersonadoPorId.Value.ToString()));
+            if (!string.IsNullOrEmpty(impersonadoPorNome))
+                claims.Add(new Claim("impersonadoPorNome", impersonadoPorNome));
+        }
 
         var token = new JwtSecurityToken(
             issuer: jwtSettings["Issuer"],
             audience: jwtSettings["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.Add(ttl ?? TimeSpan.FromHours(1)),
             signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private async Task<RefreshToken> CriarRefreshTokenAsync(Guid usuarioId, CancellationToken ct)
+    private async Task<RefreshToken> CriarRefreshTokenAsync(
+        Guid usuarioId, CancellationToken ct, Guid? impersonadoPorId = null, TimeSpan? ttl = null)
     {
         var token = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UsuarioId = usuarioId,
             Token = GenerateSecureToken(),
-            ExpiresAt = DateTime.UtcNow.AddDays(7),
-            CriadoEm = DateTime.UtcNow
+            ExpiresAt = DateTime.UtcNow.Add(ttl ?? TimeSpan.FromDays(7)),
+            CriadoEm = DateTime.UtcNow,
+            ImpersonadoPorId = impersonadoPorId
         };
 
         _context.RefreshTokens.Add(token);

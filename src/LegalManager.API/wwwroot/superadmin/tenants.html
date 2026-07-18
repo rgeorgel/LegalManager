@@ -225,9 +225,10 @@
 
   <script type="module">
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
-    import { saFetch } from '/superadmin/js/superAdminApi.js';
+    import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
 
     initAdminLayout();
+    window.impersonarUsuario = impersonarUsuario;
 
     const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
     const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
@@ -531,6 +532,9 @@
                   <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
                   <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${daysAgo(u.ultimoAcessoEm)}</span>
                   <span class="badge badge-${u.ativo ? 'green' : 'gray'}" style="margin-left:4px">${u.perfil}</span>
+                  ${u.ativo && u.perfil !== 'SuperAdmin'
+                    ? `<button class="action-btn" style="margin-left:6px" onclick="impersonarUsuario('${u.id}','${esc(u.nome).replace(/'/g, "\\'")}')">Entrar como</button>`
+                    : ''}
                 </div>`).join('')}
           </div>`;
 

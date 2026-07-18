@@ -90,3 +90,22 @@ export async function saFetch(path, options = {}) {
   if (res.status === 204) return null;
   return res.json();
 }
+
+export async function impersonarUsuario(userId, nome) {
+  if (!confirm(`Você irá acessar o sistema como ${nome}. Continuar?`)) return;
+
+  const newTab = window.open('', '_blank');
+
+  try {
+    const data = await saFetch(`/superadmin/users/${userId}/impersonate`, { method: 'POST' });
+    localStorage.setItem('impersonation_handoff', JSON.stringify({ ...data, ts: Date.now() }));
+    if (newTab) {
+      newTab.location.href = '/pages/dashboard.html';
+    } else {
+      alert('O navegador bloqueou a nova aba. Permita pop-ups para este site e tente novamente.');
+    }
+  } catch (err) {
+    newTab?.close();
+    alert(`Erro ao iniciar impersonação: ${err.message}`);
+  }
+}

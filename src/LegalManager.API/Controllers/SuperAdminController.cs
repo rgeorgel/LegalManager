@@ -14,9 +14,9 @@ namespace LegalManager.API.Controllers;
 [ApiController]
 [Route("api/superadmin")]
 [Authorize(Roles = "SuperAdmin")]
-public class SuperAdminController(AppDbContext db, IAuditService audit) : ControllerBase
+public class SuperAdminController(AppDbContext db, IAuditService audit, AuthService authService) : ControllerBase
 {
-    private static readonly Guid SystemTenantId = new("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid SystemTenantId = TenantConstants.SystemTenantId;
 
     private static readonly Dictionary<string, decimal> PlanoPrices = new()
     {
@@ -439,6 +439,28 @@ public class SuperAdminController(AppDbContext db, IAuditService audit) : Contro
             .ToListAsync(ct);
 
         return Ok(new { total, page, pageSize, items = users });
+    }
+
+    [HttpPost("users/{userId:guid}/impersonate")]
+    public async Task<IActionResult> Impersonate(Guid userId, CancellationToken ct)
+    {
+        var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(superAdminId) || !Guid.TryParse(superAdminId, out var adminGuid))
+            return Unauthorized(new { message = "Identificação do superadmin ausente." });
+
+        var adminNome = User.FindFirstValue("nome") ?? "SuperAdmin";
+
+        try
+        {
+            var result = await authService.ImpersonarAsync(adminGuid, adminNome, userId, ct);
+
+            await audit.LogAsync(new AuditLogEntry(
+                result.Usuario.TenantId, adminGuid, AuditActions.ImpersonationStart, AuditEntities.Usuario,
+                userId.ToString(), null, new { UsuarioAlvo = result.Usuario.Email }, HttpContext.GetClientIpAddress()), ct);
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpGet("waitlist")]

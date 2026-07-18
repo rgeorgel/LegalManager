@@ -76,10 +76,11 @@
               <th>Ativo</th>
               <th>Último acesso</th>
               <th>Cadastro</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
+            <tr><td colspan="9" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -94,9 +95,10 @@
 
   <script type="module">
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
-    import { saFetch } from '/superadmin/js/superAdminApi.js';
+    import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
 
     initAdminLayout();
+    window.impersonarUsuario = impersonarUsuario;
 
     const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
     const PERFIL_COLORS = { Admin: 'blue', Advogado: 'amber', Colaborador: 'gray', Cliente: 'green' };
@@ -120,14 +122,14 @@
       if (ativo !== '') params.set('ativo', ativo);
 
       document.getElementById('tableBody').innerHTML =
-        '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>';
+        '<tr><td colspan="9" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>';
       try {
         const data = await saFetch(`/superadmin/users?${params}`);
         total = data.total;
 
         if (data.items.length === 0) {
           document.getElementById('tableBody').innerHTML =
-            '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum usuário encontrado.</td></tr>';
+            '<tr><td colspan="9" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum usuário encontrado.</td></tr>';
         } else {
           document.getElementById('tableBody').innerHTML = data.items.map(u => `
             <tr>
@@ -143,6 +145,9 @@
               </td>
               <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(u.ultimoAcessoEm)}</td>
               <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(u.criadoEm)}</td>
+              <td>${u.ativo && u.perfil !== 'SuperAdmin'
+                ? `<button class="action-btn" onclick="impersonarUsuario('${u.id}','${esc(u.nome).replace(/'/g, "\\'")}')">Entrar como</button>`
+                : ''}</td>
             </tr>`).join('');
         }
 
@@ -152,7 +157,7 @@
         document.getElementById('nextBtn').disabled = page >= pages;
       } catch (e) {
         document.getElementById('tableBody').innerHTML =
-          `<tr><td colspan="8" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+          `<tr><td colspan="9" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
       }
     }
 

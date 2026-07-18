@@ -8,4 +8,5 @@ public interface ITenantContext
     Guid UserId { get; }
     string UserRole { get; }
     PlanoTipo Plano { get; }
+    Guid? ImpersonadoPorId { get; }
 }

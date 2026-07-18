@@ -64,8 +64,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Logout(RefreshTokenDto dto, [FromServices] ITenantContext tenantContext, CancellationToken ct)
     {
         await _authService.LogoutAsync(dto.RefreshToken, ct);
+        var acao = tenantContext.ImpersonadoPorId.HasValue ? AuditActions.ImpersonationEnd : AuditActions.Logout;
         await _audit.LogAsync(new AuditLogEntry(
-            tenantContext.TenantId, tenantContext.UserId, AuditActions.Logout, "Auth",
+            tenantContext.TenantId, tenantContext.UserId, acao, "Auth",
             null, null, null, HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
