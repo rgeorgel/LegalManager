@@ -25,6 +25,7 @@ public class Tenant
     public int? TrialConcedidoDias { get; set; }
     public string? TrialConcedidoMotivo { get; set; }
     public Usuario? TrialConcedidoPor { get; set; }
+    public bool TrialGratisBoasVindasVisualizado { get; set; } = false;
 
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     public ICollection<Contato> Contatos { get; set; } = new List<Contato>();

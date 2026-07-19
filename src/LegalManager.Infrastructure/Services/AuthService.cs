@@ -43,10 +43,13 @@ public class AuthService : IAuthService
             ? null
             : await AplicarVoucherAsync(dto.Voucher, ct);
 
-        var planoFinal = beneficio?.Plano ?? dto.Plano;
+        var ganhaTrialBoasVindas = beneficio is null && dto.Plano == PlanoTipo.Free;
+        var planoFinal = beneficio?.Plano ?? (ganhaTrialBoasVindas ? PlanoTipo.Plus : dto.Plano);
 
         if (planoFinal is PlanoTipo.Enterprise)
             throw new InvalidOperationException("Este plano não está disponível para cadastro direto.");
+
+        var agora = DateTime.UtcNow;
 
         var tenant = new Tenant
         {
@@ -54,21 +57,22 @@ public class AuthService : IAuthService
             Nome = dto.NomeEscritorio,
             Cnpj = dto.Cnpj,
             Plano = planoFinal,
-            Status = beneficio != null ? StatusTenant.Ativo
-                : planoFinal == PlanoTipo.Free ? StatusTenant.Ativo
-                : StatusTenant.Trial,
-            CriadoEm = DateTime.UtcNow,
+            Status = beneficio != null ? StatusTenant.Ativo : StatusTenant.Trial,
+            CriadoEm = agora,
             TrialExpiraEm = beneficio != null ? null
-                : planoFinal == PlanoTipo.Free ? null
-                : DateTime.UtcNow.AddDays(10),
+                : ganhaTrialBoasVindas ? agora.AddDays(TrialGratisConstants.DiasTrialBoasVindasFree)
+                : agora.AddDays(10),
             PlanoExpiraEm = beneficio?.PlanoExpiraEm,
+            TrialConcedidoEm = ganhaTrialBoasVindas ? agora : null,
+            TrialConcedidoDias = ganhaTrialBoasVindas ? TrialGratisConstants.DiasTrialBoasVindasFree : null,
+            TrialConcedidoMotivo = ganhaTrialBoasVindas ? TrialGratisConstants.MotivoTrialBoasVindasFree : null,
             VoucherUtilizado = beneficio != null ? dto.Voucher!.Trim().ToLowerInvariant() : null
         };
 
         _context.Tenants.Add(tenant);
         await _context.SaveChangesAsync(ct);
 
-        await _creditoService.InicializarCreditosPadraoAsync(tenant.Id, dto.Plano, ct);
+        await _creditoService.InicializarCreditosPadraoAsync(tenant.Id, planoFinal, ct);
 
         var usuario = new Usuario
         {

@@ -94,13 +94,18 @@ public class AssinaturaControllerTests
         var tenantMock = CreateTenantContextMock(tenantId);
         var config = CreateConfigMock(frontendUrl);
         var userManager = CreateUserManager(admin);
-        return new AssinaturaController(
+        var controller = new AssinaturaController(
             abacatePay ?? Mock.Of<IAbacatePayService>(),
             ctx,
             tenantMock.Object,
             userManager,
             config.Object,
             NullLogger<AssinaturaController>.Instance);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        return controller;
     }
 
     [Fact]
@@ -135,6 +140,121 @@ public class AssinaturaControllerTests
         var controller = CreateController(ctx, tenantId);
         var result = await controller.GetHistorico(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task GetTrialBoasVindasStatus_ReturnsNotFound_WhenTenantMissing()
+    {
+        using var ctx = CreateContext();
+        var controller = CreateController(ctx, Guid.NewGuid());
+        var result = await controller.GetTrialBoasVindasStatus(CancellationToken.None);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task GetTrialBoasVindasStatus_ReturnsExibirTrue_WhenTrialAutomaticoElegivel()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Cnpj = "123", CriadoEm = DateTime.UtcNow,
+            Plano = PlanoTipo.Plus, Status = StatusTenant.Trial,
+            TrialExpiraEm = DateTime.UtcNow.AddDays(15),
+            TrialConcedidoEm = DateTime.UtcNow, TrialConcedidoDias = 15,
+            TrialConcedidoMotivo = LegalManager.Domain.TrialGratisConstants.MotivoTrialBoasVindasFree,
+            TrialGratisBoasVindasVisualizado = false
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+        var result = await controller.GetTrialBoasVindasStatus(CancellationToken.None);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<TrialGratisBoasVindasStatusDto>(ok.Value);
+        Assert.True(dto.Exibir);
+        Assert.InRange(dto.DiasRestantes, 14, 15);
+    }
+
+    [Fact]
+    public async Task GetTrialBoasVindasStatus_ReturnsExibirFalse_WhenJaVisualizado()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Cnpj = "123", CriadoEm = DateTime.UtcNow,
+            Plano = PlanoTipo.Plus, Status = StatusTenant.Trial,
+            TrialExpiraEm = DateTime.UtcNow.AddDays(15),
+            TrialConcedidoDias = 15,
+            TrialConcedidoMotivo = LegalManager.Domain.TrialGratisConstants.MotivoTrialBoasVindasFree,
+            TrialGratisBoasVindasVisualizado = true
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+        var result = await controller.GetTrialBoasVindasStatus(CancellationToken.None);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<TrialGratisBoasVindasStatusDto>(ok.Value);
+        Assert.False(dto.Exibir);
+    }
+
+    [Fact]
+    public async Task GetTrialBoasVindasStatus_ReturnsExibirFalse_WhenTrialConcedidoManualmenteComoSuperAdmin()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Cnpj = "123", CriadoEm = DateTime.UtcNow,
+            Plano = PlanoTipo.Plus, Status = StatusTenant.Trial,
+            TrialExpiraEm = DateTime.UtcNow.AddDays(15),
+            TrialConcedidoPorId = Guid.NewGuid(),
+            TrialConcedidoDias = 15,
+            TrialConcedidoMotivo = "Concedido manualmente pelo suporte",
+            TrialGratisBoasVindasVisualizado = false
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+        var result = await controller.GetTrialBoasVindasStatus(CancellationToken.None);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var dto = Assert.IsType<TrialGratisBoasVindasStatusDto>(ok.Value);
+        Assert.False(dto.Exibir);
+    }
+
+    [Fact]
+    public async Task MarcarTrialBoasVindasVisualizado_ReturnsNotFound_WhenTenantMissing()
+    {
+        using var ctx = CreateContext();
+        var controller = CreateController(ctx, Guid.NewGuid());
+        var result = await controller.MarcarTrialBoasVindasVisualizado(CancellationToken.None);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task MarcarTrialBoasVindasVisualizado_MarcaFlagETornaNaoElegivel()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Cnpj = "123", CriadoEm = DateTime.UtcNow,
+            Plano = PlanoTipo.Plus, Status = StatusTenant.Trial,
+            TrialExpiraEm = DateTime.UtcNow.AddDays(15),
+            TrialConcedidoDias = 15,
+            TrialConcedidoMotivo = LegalManager.Domain.TrialGratisConstants.MotivoTrialBoasVindasFree,
+            TrialGratisBoasVindasVisualizado = false
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+
+        var postResult = await controller.MarcarTrialBoasVindasVisualizado(CancellationToken.None);
+        Assert.IsType<NoContentResult>(postResult);
+
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.True(tenant!.TrialGratisBoasVindasVisualizado);
+
+        var statusResult = await controller.GetTrialBoasVindasStatus(CancellationToken.None);
+        var ok = Assert.IsType<OkObjectResult>(statusResult);
+        var dto = Assert.IsType<TrialGratisBoasVindasStatusDto>(ok.Value);
+        Assert.False(dto.Exibir);
     }
 
     [Fact]

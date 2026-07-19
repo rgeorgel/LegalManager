@@ -1,5 +1,6 @@
 using System.Text.Json;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -58,6 +59,38 @@ public class AssinaturaController(
             criadoEm = tenant.CriadoEm,
             temBilling = tenant.AbacatePayBillingId != null
         });
+    }
+
+    [HttpGet("trial-boas-vindas")]
+    public async Task<IActionResult> GetTrialBoasVindasStatus(CancellationToken ct)
+    {
+        Response.Headers.CacheControl = "no-store";
+
+        var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        var elegivel = tenant.Status == StatusTenant.Trial
+            && tenant.Plano == PlanoTipo.Plus
+            && tenant.TrialConcedidoPorId == null
+            && tenant.TrialConcedidoMotivo == TrialGratisConstants.MotivoTrialBoasVindasFree
+            && !tenant.TrialGratisBoasVindasVisualizado;
+
+        var diasRestantes = tenant.TrialExpiraEm.HasValue
+            ? Math.Max(0, (int)Math.Ceiling((tenant.TrialExpiraEm.Value - DateTime.UtcNow).TotalDays))
+            : 0;
+
+        return Ok(new TrialGratisBoasVindasStatusDto(elegivel, diasRestantes, tenant.TrialExpiraEm));
+    }
+
+    [HttpPost("trial-boas-vindas/visualizado")]
+    public async Task<IActionResult> MarcarTrialBoasVindasVisualizado(CancellationToken ct)
+    {
+        var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        tenant.TrialGratisBoasVindasVisualizado = true;
+        await context.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     [HttpGet("historico")]
@@ -542,6 +575,7 @@ public class WebhookController(
 
 public record IniciarCheckoutDto(string Periodo, string Plano = "Pro");
 public record ComprarCreditosDto(string PacoteId);
+public record TrialGratisBoasVindasStatusDto(bool Exibir, int DiasRestantes, DateTime? TrialExpiraEm);
 
 public static class PacotesCreditos
 {

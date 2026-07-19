@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using LegalManager.Application.DTOs.Auth;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
@@ -107,7 +108,58 @@ public class AuthServiceTests
         Assert.Equal("Admin Nome", result.Usuario.Nome);
         Assert.Equal("admin@novo.com", result.Usuario.Email);
         Assert.Equal(PerfilUsuario.Admin.ToString(), result.Usuario.Perfil);
-        creditoService.Verify(c => c.InicializarCreditosPadraoAsync(It.IsAny<Guid>(), PlanoTipo.Free, It.IsAny<CancellationToken>()), Times.Once);
+        creditoService.Verify(c => c.InicializarCreditosPadraoAsync(It.IsAny<Guid>(), PlanoTipo.Plus, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RegisterTenantAsync_PlanoFree_DeveConcederTrialPlus15Dias()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        var config = CreateConfig();
+        var emailService = CreateEmailServiceMock();
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+
+        var dto = new RegisterTenantDto("Escritório Free", null, "Admin", "free@teste.com", "Senha123!", PlanoTipo.Free);
+
+        var result = await service.RegisterTenantAsync(dto);
+
+        var tenant = await ctx.Tenants.FirstAsync(t => t.Id == result.Usuario.TenantId);
+        Assert.Equal(PlanoTipo.Plus, tenant.Plano);
+        Assert.Equal(StatusTenant.Trial, tenant.Status);
+        Assert.NotNull(tenant.TrialExpiraEm);
+        Assert.True(tenant.TrialExpiraEm.Value > DateTime.UtcNow.AddDays(14.9)
+                 && tenant.TrialExpiraEm.Value < DateTime.UtcNow.AddDays(15.1));
+        Assert.Null(tenant.TrialConcedidoPorId);
+        Assert.Equal(15, tenant.TrialConcedidoDias);
+        Assert.Equal(TrialGratisConstants.MotivoTrialBoasVindasFree, tenant.TrialConcedidoMotivo);
+        Assert.False(tenant.TrialGratisBoasVindasVisualizado);
+        creditoService.Verify(c => c.InicializarCreditosPadraoAsync(It.IsAny<Guid>(), PlanoTipo.Plus, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RegisterTenantAsync_PlanoPagoEscolhidoDireto_NaoDeveMarcarComoTrialBoasVindas()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        var config = CreateConfig();
+        var emailService = CreateEmailServiceMock();
+        var creditoService = CreateCreditoServiceMock();
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+
+        var dto = new RegisterTenantDto("Escritório Plus", null, "Admin", "plus@teste.com", "Senha123!", PlanoTipo.Plus);
+
+        var result = await service.RegisterTenantAsync(dto);
+
+        var tenant = await ctx.Tenants.FirstAsync(t => t.Id == result.Usuario.TenantId);
+        Assert.Equal(PlanoTipo.Plus, tenant.Plano);
+        Assert.Equal(StatusTenant.Trial, tenant.Status);
+        Assert.NotNull(tenant.TrialExpiraEm);
+        Assert.True(tenant.TrialExpiraEm.Value > DateTime.UtcNow.AddDays(9.9)
+                 && tenant.TrialExpiraEm.Value < DateTime.UtcNow.AddDays(10.1));
+        Assert.Null(tenant.TrialConcedidoDias);
+        Assert.Null(tenant.TrialConcedidoMotivo);
     }
 
     [Fact]

@@ -115,6 +115,31 @@
 </head>
 <body>
 
+  <!-- Modal: Trial gratuito de boas-vindas (Plus por 15 dias) -->
+  <div class="modal-overlay" id="trialBoasVindasOverlay">
+    <div class="modal" style="max-width:480px;width:100%">
+      <div class="modal-header">
+        <span class="modal-title">🎉 Você ganhou 15 dias do Plus!</span>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:14px;color:var(--color-text-muted);font-size:14px">
+          Para você conhecer todo o potencial da Causify, liberamos o plano
+          <strong style="color:#f59e0b">Plus</strong> gratuitamente por
+          <strong id="tbvDiasRestantes">15</strong> dias. Veja o que você ganhou:
+        </p>
+        <ul id="tbvListaFeatures" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:14px"></ul>
+        <p style="margin-top:14px;font-size:12px;color:var(--color-text-muted)">
+          Ao final do período, seu escritório volta automaticamente para o plano Free —
+          sem cobrança, sem cartão de crédito necessário.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <a href="/pages/assinatura.html" class="btn btn-secondary">Ver detalhes do plano</a>
+        <button id="tbvFecharBtn" class="btn btn-primary" type="button">Entendi, começar a usar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal de Onboarding: Importar Processos por OAB -->
   <div class="modal-overlay" id="onboardingOverlay">
     <div class="modal" style="max-width:560px;width:100%">
@@ -401,6 +426,7 @@
     import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
     import { apiFetch, isLoggedIn } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
+    import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -409,7 +435,7 @@
 
     initLayout();
     initOnboardingModal();
-    initOnboarding();
+    initTrialBoasVindasModal(() => initOnboarding());
 
     const free = isPlanoFree();
 
