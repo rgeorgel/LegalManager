@@ -52,6 +52,7 @@ builder.Services.AddIdentity<Usuario, IdentityRole<Guid>>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<AppDbContext>()
+.AddErrorDescriber<LegalManager.Infrastructure.Identity.PortugueseIdentityErrorDescriber>()
 .AddDefaultTokenProviders();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
