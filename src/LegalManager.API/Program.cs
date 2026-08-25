@@ -80,6 +80,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
+builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
 builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();

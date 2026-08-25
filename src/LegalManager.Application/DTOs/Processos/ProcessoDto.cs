@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.Processos;
@@ -32,7 +33,12 @@ public record CreateProcessoDto(
     string? Sistema = null,
     string? Formato = null,
     int? NivelSigilo = null,
-    DateTime? UltimaAtualizacaoDataJud = null
+    DateTime? UltimaAtualizacaoDataJud = null,
+    // Partes brutas (nome/cpf/cnpj/oab/polo) vindas do preview de busca DataJud no cadastro
+    // manual, ainda não resolvidas em Contato. Resolvidas apenas aqui, no Salvar — nunca na
+    // busca/preview — para não criar Contatos órfãos de buscas canceladas (ver
+    // docs/features/busca-processo-cadastro-manual.md, Fase 1, item 3).
+    List<TribunalParte>? PartesDataJud = null
 );
 
 public record ProcessoParteDto(

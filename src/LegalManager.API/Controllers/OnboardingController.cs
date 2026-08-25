@@ -29,6 +29,7 @@ public class OnboardingController : ControllerBase
     private readonly IEscavadorService _escavador;
     private readonly IProcessoService _processoService;
     private readonly IContatoService _contatoService;
+    private readonly IContatoResolverService _contatoResolver;
     private readonly ILogger<OnboardingController> _logger;
 
     public OnboardingController(
@@ -39,6 +40,7 @@ public class OnboardingController : ControllerBase
         IEscavadorService escavador,
         IProcessoService processoService,
         IContatoService contatoService,
+        IContatoResolverService contatoResolver,
         ILogger<OnboardingController> logger)
     {
         _context = context;
@@ -48,6 +50,7 @@ public class OnboardingController : ControllerBase
         _escavador = escavador;
         _processoService = processoService;
         _contatoService = contatoService;
+        _contatoResolver = contatoResolver;
         _logger = logger;
     }
 
@@ -342,50 +345,6 @@ public class OnboardingController : ControllerBase
         return resultado;
     }
 
-    private async Task<List<ProcessoParteDto>> ResolverPartesDataJudAsync(
-        List<TribunalParte> partes, CancellationToken ct)
-    {
-        var resultado = new List<ProcessoParteDto>();
-
-        foreach (var parte in partes)
-        {
-            if (string.IsNullOrWhiteSpace(parte.Nome)) continue;
-
-            var contato = await _contatoService.GetByNomeAsync(parte.Nome, ct);
-            if (contato == null)
-            {
-                var tipoPessoa = !string.IsNullOrEmpty(parte.Cpf)
-                    ? TipoPessoa.PF
-                    : !string.IsNullOrEmpty(parte.Cnpj)
-                        ? TipoPessoa.PJ
-                        : TipoPessoa.PF;
-
-                contato = await _contatoService.CreateAsync(new CreateContatoDto(
-                    Tipo: tipoPessoa,
-                    TipoContato: TipoContato.Cliente,
-                    Nome: parte.Nome,
-                    CpfCnpj: parte.Cpf ?? parte.Cnpj,
-                    Oab: parte.OAB,
-                    Email: null,
-                    Telefone: null,
-                    Endereco: null,
-                    Cidade: null,
-                    Estado: null,
-                    Cep: null,
-                    DataNascimento: null,
-                    Observacoes: null,
-                    NotificacaoHabilitada: false,
-                    Tags: null
-                ), ct);
-            }
-
-            var tipoParte = MapearPoloDataJud(parte.Polo);
-            resultado.Add(new ProcessoParteDto(contato.Id, tipoParte));
-        }
-
-        return resultado;
-    }
-
     private static TipoParteProcesso MapearPolo(string polo)
     {
         var upper = polo.ToUpperInvariant();
@@ -397,19 +356,6 @@ public class OnboardingController : ControllerBase
             upper.Contains("RÉU") || upper.Contains("REU") ||
             upper.Contains("RECLAMADO") || upper.Contains("INDICIADO") ||
             upper.Contains("REQUERIDO"))
-            return TipoParteProcesso.Reu;
-        if (upper.Contains("INTERESSADO"))
-            return TipoParteProcesso.Interessado;
-        return TipoParteProcesso.Terceiro;
-    }
-
-    private static TipoParteProcesso MapearPoloDataJud(string? polo)
-    {
-        if (string.IsNullOrWhiteSpace(polo)) return TipoParteProcesso.Terceiro;
-        var upper = polo.ToUpperInvariant();
-        if (upper.Contains("AUTOR") || upper.Contains("RECLAMANTE") || upper.Contains("IMPETRANTE") || upper.Contains("REQUERENTE") || upper.Contains("EXEQUENTE"))
-            return TipoParteProcesso.Autor;
-        if (upper.Contains("RÉU") || upper.Contains("REU") || upper.Contains("RECLAMADO") || upper.Contains("INDICIADO") || upper.Contains("REQUERIDO") || upper.Contains("EXECUTADO"))
             return TipoParteProcesso.Reu;
         if (upper.Contains("INTERESSADO"))
             return TipoParteProcesso.Interessado;
@@ -496,7 +442,7 @@ public class OnboardingController : ControllerBase
         if (!resultado.Encontrado) return null;
 
         var partesDto = resultado.Partes != null
-            ? await ResolverPartesDataJudAsync(resultado.Partes.ToList(), ct)
+            ? await _contatoResolver.ResolverPartesDataJudAsync(resultado.Partes, ct)
             : new List<ProcessoParteDto>();
 
         return new CreateProcessoDto(

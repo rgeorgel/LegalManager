@@ -26,6 +26,7 @@ public class ProcessosController : ControllerBase
     private readonly ITenantContext _tenantContext;
     private readonly EsajTjspProcessosAdapter _esaj;
     private readonly AppDbContext _context;
+    private readonly IContatoResolverService _contatoResolver;
 
     public ProcessosController(
         IProcessoService service,
@@ -33,7 +34,8 @@ public class ProcessosController : ControllerBase
         IAuditService audit,
         ITenantContext tenantContext,
         EsajTjspProcessosAdapter esaj,
-        AppDbContext context)
+        AppDbContext context,
+        IContatoResolverService contatoResolver)
     {
         _service = service;
         _monitoramento = monitoramento;
@@ -41,6 +43,7 @@ public class ProcessosController : ControllerBase
         _tenantContext = tenantContext;
         _esaj = esaj;
         _context = context;
+        _contatoResolver = contatoResolver;
     }
 
     [HttpGet]
@@ -95,6 +98,26 @@ public class ProcessosController : ControllerBase
     {
         var result = await _service.CreateAsync(dto, ct);
         await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Processo, result.Id, null, dto), ct);
+
+        // Resolução/criação de Contato a partir de Partes encontradas na busca DataJud (preview)
+        // acontece só aqui, no Salvar — nunca durante a busca — para não criar Contatos órfãos
+        // caso o usuário busque e cancele o modal (docs/features/busca-processo-cadastro-manual.md).
+        if (dto.PartesDataJud is { Count: > 0 })
+        {
+            var jaVinculadas = new HashSet<Guid>((dto.Partes ?? []).Select(p => p.ContatoId));
+            var resolvidas = await _contatoResolver.ResolverPartesDataJudAsync(dto.PartesDataJud, ct);
+            var adicionouAlguma = false;
+            foreach (var parte in resolvidas)
+            {
+                if (!jaVinculadas.Add(parte.ContatoId)) continue; // já vinculada manualmente ou duplicada na própria busca
+                await _service.AdicionarParteAsync(result.Id, parte.ContatoId, parte.TipoParte.ToString(), ct);
+                adicionouAlguma = true;
+            }
+
+            if (adicionouAlguma)
+                result = await _service.GetByIdAsync(result.Id, ct) ?? result;
+        }
+
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 

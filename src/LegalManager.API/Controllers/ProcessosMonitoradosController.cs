@@ -41,6 +41,15 @@ public class ProcessosMonitoradosController(
             assuntos = result.Assuntos,
             dataAjuizamento = result.DataAjuizamento,
             grau = result.Grau,
+            valorCausa = result.ValorCaixa,
+            siglaTribunal = result.SiglaTribunal,
+            partes = result.Partes?.Select(p => new {
+                nome = p.Nome,
+                cpf = p.Cpf,
+                cnpj = p.Cnpj,
+                oab = p.OAB,
+                polo = p.Polo
+            }),
             movimentos = result.Movimentos?.Select(m => new {
                 descricao = m.Descricao,
                 data = m.Data,
