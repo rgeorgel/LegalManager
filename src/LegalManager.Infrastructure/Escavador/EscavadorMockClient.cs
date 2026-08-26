@@ -185,6 +185,26 @@ public class EscavadorMockClient : IEscavadorService
         return Task.FromResult(result);
     }
 
+    public Task<EscavadorProcessoDto?> BuscarCapaPorNumeroCnjAsync(
+        string numeroCNJ, CancellationToken ct = default)
+    {
+        _logger.LogWarning("[Escavador MOCK] BuscarCapaPorNumeroCnjAsync CNJ={CNJ} — retornando dados fictícios", numeroCNJ);
+        EscavadorProcessoDto? dto = new(
+            Id: 0,
+            Numero: numeroCNJ,
+            SiglaTribunal: "TJSP",
+            NomeTribunal: "Tribunal de Justiça de São Paulo",
+            Vara: "1ª Vara Cível",
+            Comarca: "São Paulo",
+            Classe: "PROCEDIMENTO COMUM CÍVEL",
+            Assuntos: "Responsabilidade Civil / Indenização por Dano Moral",
+            DataAjuizamento: DateTime.UtcNow.AddYears(-1),
+            JsonBruto: "{}",
+            ValorCausa: 10000m
+        );
+        return Task.FromResult(dto);
+    }
+
     public Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
         string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
     {

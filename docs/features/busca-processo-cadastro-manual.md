@@ -105,3 +105,48 @@ Além disso, o próprio código já tem a lógica de **resolver/criar Contatos a
 | 1 | Resolver Partes na busca ou só no Salvar? | Só no Salvar (evita Contatos órfãos de buscas canceladas) — ver seção 4, item 3 |
 | 2 | Implementar Fase 2 (fallback Escavador) desde já ou só sob demanda? | Só sob demanda — medir primeiro quantos cadastros manuais o DataJud não resolve antes de pagar por um fallback |
 | 3 | UI: sobrescrever campos já preenchidos manualmente ao clicar em "Usar partes encontradas"? | Não — só adicionar partes novas, nunca sobrescrever o que o usuário já digitou (mesmo princípio já usado nos campos `readonly` de Vara/Classe hoje) |
+
+---
+
+## 8. Fase 3 — Capa via Escavador no fallback (implementado, endpoint não confirmado)
+
+A Fase 2 acima entregou o fallback Escavador via `ListarMovimentacoesPorProcessoAsync`
+(`GET /api/v2/processos/numero_cnj/{cnj}/movimentacoes`), que só devolve a lista de
+movimentações — nenhum campo de capa (classe/vara/tribunal/valor da causa/assuntos). Em
+produção, Ricardo confirmou que o fallback funciona (o processo é encontrado, movimentações
+aparecem), mas a tela de preview mostra "N/A" em todos esses campos porque o backend sempre
+retornava `null` para eles nesse branch.
+
+Esta fase fecha esse gap adicionando uma **segunda chamada Escavador**, disparada apenas
+dentro do mesmo branch (DataJud não encontrou **e** o Escavador já confirmou o processo via
+movimentações):
+
+- Novo método `IEscavadorService.BuscarCapaPorNumeroCnjAsync(numeroCNJ, ct)`, implementado em
+  `EscavadorHttpClient` reaproveitando **exatamente** o parser já usado por `BuscarPorOabAsync`/
+  `BuscarPorCpfCnpjAsync` (`MapProcesso` + `ProcessoData`/`FonteData`/`CapaData`/
+  `UnidadeOrigemRef`) — nenhum DTO novo foi criado, só um novo campo `ValorCausa` em
+  `EscavadorProcessoDto` (a busca em massa nunca precisou dele, mas a capa parseia
+  `capa.valor_causa.valor` do mesmo jeito).
+- `ProcessosMonitoradosController.Search`: quando o fallback por movimentações encontra o
+  processo, chama também `BuscarCapaPorNumeroCnjAsync` e, se vier um resultado não-nulo,
+  preenche `tribunal`/`vara`/`classe`/`assuntos`/`valorCausa`/`siglaTribunal` na resposta (hoje
+  forçados `null`). Se a chamada de capa falhar ou devolver `null`, a resposta continua
+  idêntica à de antes desta mudança (`encontrado=true` via movimentações, capa `null`) — a
+  falha da capa nunca derruba o resultado que já funcionava.
+
+> ⚠️ **ENDPOINT NÃO CONFIRMADO — precisa validação em produção.** O endpoint chamado,
+> `GET /api/v2/processos/numero_cnj/{cnj}` (sem o sufixo `/movimentacoes`), é uma inferência
+> por convenção REST e pelo item "Capa de um processo por CNJ — R$ 0,05" já catalogado em
+> [`docs/processos/escavador-fluxo-e-custos.md`](../processos/escavador-fluxo-e-custos.md) —
+> **nunca foi testado contra a API real**. Este ambiente de desenvolvimento não tem acesso ao
+> Escavador; só o servidor de produção do Ricardo tem. Se o endpoint ou o shape da resposta
+> estiver errado, `BuscarCapaPorNumeroCnjAsync` simplesmente não encontra `numero_cnj` no JSON
+> e retorna `null` (falha graciosa, documentada em código) — o pior caso é a tela continuar
+> mostrando "N/A" como já mostra hoje, nunca uma quebra.
+>
+> **Como validar:** repetir o mesmo teste que já confirmou o fallback de movimentações — buscar
+> no cadastro manual um CNJ que o DataJud não encontre mas que exista no Escavador, e conferir
+> nos logs do container (`docker logs`, grep pelo CNJ) se aparece
+> `[Escavador] Buscando capa do processo CNJ=...` seguido de sucesso (sem o warning de "resposta
+> sem numero_cnj") — e se a tela passa a mostrar tribunal/vara/classe/valor da causa em vez de
+> "N/A".

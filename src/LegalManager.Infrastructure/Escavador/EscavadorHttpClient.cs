@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -189,6 +190,47 @@ public class EscavadorHttpClient : IEscavadorService
         _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ}", numeroCNJ);
         var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?limit=500";
         return await FetchMovimentacoesV2(url, numeroCNJ, ct);
+    }
+
+    // ATENÇÃO — endpoint NÃO CONFIRMADO contra a API real do Escavador (ver doc completa em
+    // IEscavadorService.BuscarCapaPorNumeroCnjAsync). É um palpite por convenção REST (a chamada
+    // de movimentações usa .../numero_cnj/{cnj}/movimentacoes, então a capa "deveria" estar na
+    // raiz do mesmo recurso, .../numero_cnj/{cnj}) e pelo item de custo já documentado em
+    // docs/processos/escavador-fluxo-e-custos.md. Precisa ser validado rodando ao vivo no
+    // ambiente do Ricardo — se o endpoint ou o shape da resposta estiver errado, o
+    // JsonSerializer.Deserialize abaixo simplesmente não preenche numero_cnj e o método retorna
+    // null (falha graciosa, nunca lança).
+    public async Task<EscavadorProcessoDto?> BuscarCapaPorNumeroCnjAsync(
+        string numeroCNJ, CancellationToken ct = default)
+    {
+        _logger.LogInformation("[Escavador] Buscando capa do processo CNJ={CNJ}", numeroCNJ);
+        var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}";
+        try
+        {
+            var resp = await _http.GetAsync(url, ct);
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            if (!resp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[Escavador] {S} em GET {Url} (capa) — Body: {Body}",
+                    resp.StatusCode, url, json.Length > 500 ? json[..500] : json);
+                return null;
+            }
+            var processoData = JsonSerializer.Deserialize<ProcessoData>(json, JsonOpts);
+            if (processoData == null || string.IsNullOrWhiteSpace(processoData.NumeroCnj))
+            {
+                _logger.LogWarning(
+                    "[Escavador] Capa do processo {CNJ}: resposta sem numero_cnj (endpoint/shape " +
+                    "pode estar incorreto — ver comentário em BuscarCapaPorNumeroCnjAsync) — Body: {Body}",
+                    numeroCNJ, json.Length > 300 ? json[..300] : json);
+                return null;
+            }
+            return MapProcesso(processoData, json);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Escavador] Erro em GET {Url} (capa)", url);
+            return null;
+        }
     }
 
     public async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
@@ -553,8 +595,19 @@ public class EscavadorHttpClient : IEscavadorService
             Classe: capa?.Classe,
             Assuntos: capa?.Assunto,
             DataAjuizamento: r.DataInicio,
-            JsonBruto: jsonBruto
+            JsonBruto: jsonBruto,
+            ValorCausa: ParseValorCausa(capa?.ValorCausa?.Valor)
         );
+    }
+
+    // Real API returns valor as a string ("2510.3800"), ver ValorCausaRef — parse defensivo,
+    // nunca lança (formato inesperado só resulta em valorCausa null, igual hoje).
+    private static decimal? ParseValorCausa(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return null;
+        return decimal.TryParse(valor, NumberStyles.Number, CultureInfo.InvariantCulture, out var d)
+            ? d
+            : null;
     }
 
     private static EscavadorCallbackDto MapCallback(CallbackData r) => new(
