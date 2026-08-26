@@ -241,8 +241,27 @@
     const pageSize = 20;
     let total = 0;
     let currentTenantId = null;
-    let sortBy = 'cadastro';
-    let sortDir = 'desc';
+    // Ordenação persistida em localStorage (sobrevive a atualização de página e reabertura do
+    // navegador) -- validado contra os mesmos valores aceitos pelo backend (GetTenants), caindo
+    // no default de hoje (cadastro desc) se o valor salvo for inválido ou o storage não puder ser
+    // lido (ex: modo privado em alguns navegadores).
+    const SORT_STORAGE_KEY = 'superadmin.tenants.sort';
+    function loadSavedSort() {
+      try {
+        const raw = localStorage.getItem(SORT_STORAGE_KEY);
+        if (!raw) return null;
+        const saved = JSON.parse(raw);
+        if (!['nome', 'cadastro', 'ultimoAcesso'].includes(saved.sortBy)) return null;
+        if (!['asc', 'desc'].includes(saved.sortDir)) return null;
+        return saved;
+      } catch { return null; }
+    }
+    function saveSort() {
+      try { localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({ sortBy, sortDir })); } catch {}
+    }
+    const savedSort = loadSavedSort();
+    let sortBy = savedSort?.sortBy ?? 'cadastro';
+    let sortDir = savedSort?.sortDir ?? 'desc';
 
     function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—'; }
@@ -690,6 +709,7 @@
           sortDir = 'asc';
         }
         page = 1;
+        saveSort();
         updateSortIndicators();
         load();
       });
