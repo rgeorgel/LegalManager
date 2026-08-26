@@ -366,7 +366,7 @@
               <div class="input-with-search">
                 <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
                 <div class="searchable-select-wrap tribunal-embed">
-                  <input type="text" id="fTribunal" placeholder="Ex: TJSP" autocomplete="off">
+                  <input type="text" id="fTribunal" placeholder="Ex: TJSP" autocomplete="off" value="TJSP">
                   <ul class="searchable-select-list" id="tribunalList"></ul>
                 </div>
                 <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
@@ -684,6 +684,15 @@ const TRIBUNAIS = [
 const tribunalInput = document.getElementById('fTribunal');
 const tribunalList = document.getElementById('tribunalList');
 
+// O campo vem pré-preenchido com 'TJSP' (maioria dos clientes é de SP) só como conveniência
+// visual/de digitação. Ele NUNCA deve forçar o backend a restringir a busca a um tribunal
+// específico enquanto for só o valor padrão intocado — a busca por CNJ já infere o tribunal
+// certo sozinha (DataJudAdapter.InferirTribunal) para qualquer processo, TJSP ou não. Se
+// forçássemos 'tribunal=TJSP' sempre, um CNJ de outro tribunal (TRF/TRT/outro estado) passaria
+// a "não encontrado" por engano. Só passamos a honrar o campo depois que o usuário de fato
+// interage com ele (digita ou escolhe da lista) — nesse ponto é uma escolha real, não default.
+let tribunalTouched = false;
+
 function renderTribunalList(filter = '') {
   const filtered = TRIBUNAIS.filter(t => t.toLowerCase().includes(filter.toLowerCase()));
   tribunalList.innerHTML = filtered.map(t => `<li data-value="${t}">${t}</li>`).join('');
@@ -691,11 +700,12 @@ function renderTribunalList(filter = '') {
 }
 
 tribunalInput.addEventListener('focus', () => renderTribunalList(tribunalInput.value));
-tribunalInput.addEventListener('input', () => renderTribunalList(tribunalInput.value));
+tribunalInput.addEventListener('input', () => { tribunalTouched = true; renderTribunalList(tribunalInput.value); });
 
 tribunalList.addEventListener('click', (e) => {
   if (e.target.tagName === 'LI') {
     tribunalInput.value = e.target.dataset.value;
+    tribunalTouched = true;
     tribunalList.classList.remove('open');
   }
 });
@@ -765,7 +775,10 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
   btn.disabled = true;
 
   try {
-    const tribunal = tribunalInput.value.trim();
+    // Só envia `tribunal=` quando o usuário de fato escolheu um (ver comentário acima do
+    // dropdown) -- caso contrário deixa a busca inferir o tribunal certo sozinha a partir
+    // do próprio CNJ, mesmo com o campo mostrando 'TJSP' como valor padrão na tela.
+    const tribunal = tribunalTouched ? tribunalInput.value.trim() : '';
     const url = tribunal
       ? `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}&tribunal=${encodeURIComponent(tribunal)}`
       : `/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`;
@@ -1134,6 +1147,7 @@ function readForm() {
 function resetModal() {
   editingId = null;
   lastSearchResult = null; // evita que um resultado de busca anterior (não salvo) vaze para outro cadastro
+  tribunalTouched = false; // volta a valer o default 'TJSP' visual sem forçar a busca a esse tribunal
   document.getElementById('modalTitle').textContent = 'Novo Processo';
   document.getElementById('statusGroup').style.display = 'none';
   document.getElementById('processoForm').reset();
