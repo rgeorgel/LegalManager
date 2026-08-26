@@ -102,8 +102,7 @@ public class ProcessosMonitoradosControllerTests
         Assert.Equal(JsonValueKind.Null, root.GetProperty("partes").ValueKind);
     }
 
-    [Fact]
-    public async Task Search_DataJudNaoEncontrado_EscavadorEncontra_UsaFallback()
+    private static Mock<IEscavadorService> CreateEscavadorMockComMovimentacoes()
     {
         var escavadorMock = new Mock<IEscavadorService>();
         escavadorMock
@@ -117,6 +116,17 @@ public class ProcessosMonitoradosControllerTests
                         "0000001-00.2024.8.26.0100", "{}")
                 ],
                 1, 1, 1, false));
+        return escavadorMock;
+    }
+
+    [Fact]
+    public async Task Search_DataJudNaoEncontrado_EscavadorEncontra_CapaIndisponivel_UsaFallbackSemCapa()
+    {
+        // BuscarCapaPorNumeroCnjAsync não é configurado (endpoint pode estar errado, ver
+        // IEscavadorService.BuscarCapaPorNumeroCnjAsync) — o Mock loose retorna null por padrão,
+        // igual a uma falha real da chamada de capa. O resultado via movimentações não pode ser
+        // afetado por isso.
+        var escavadorMock = CreateEscavadorMockComMovimentacoes();
 
         var controller = CreateController(SemHitsJson, escavadorMock.Object);
 
@@ -134,10 +144,57 @@ public class ProcessosMonitoradosControllerTests
         Assert.Equal(1, movimentos.GetArrayLength());
         Assert.Equal("Juntada de petição.", movimentos[0].GetProperty("descricao").GetString());
         Assert.Equal("Movimentação", movimentos[0].GetProperty("tipoNome").GetString());
-        // Escavador não devolve classe/vara/tribunal/partes/valorCausa nesse endpoint — limitação
-        // documentada em docs/features/busca-processo-cadastro-manual.md, Fase 2.
+        // Sem capa disponível, a resposta continua igual à de antes desta mudança — campos null,
+        // nunca derruba o resultado (movimentações) que já funcionava.
         Assert.Equal(JsonValueKind.Null, root.GetProperty("tribunal").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("vara").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("classe").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("assuntos").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("valorCausa").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("siglaTribunal").ValueKind);
         Assert.Equal(JsonValueKind.Null, root.GetProperty("partes").ValueKind);
+    }
+
+    [Fact]
+    public async Task Search_DataJudNaoEncontrado_EscavadorEncontra_CapaDisponivel_PreencheCapaNaResposta()
+    {
+        var escavadorMock = CreateEscavadorMockComMovimentacoes();
+        escavadorMock
+            .Setup(e => e.BuscarCapaPorNumeroCnjAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorProcessoDto(
+                Id: 0,
+                Numero: "0000001-00.2024.8.26.0100",
+                SiglaTribunal: "TJSP",
+                NomeTribunal: "Tribunal de Justiça de São Paulo",
+                Vara: "1ª Vara Cível",
+                Comarca: "São Paulo",
+                Classe: "PROCEDIMENTO COMUM CÍVEL",
+                Assuntos: "Indenização por Dano Moral",
+                DataAjuizamento: new DateTime(2024, 1, 10),
+                ValorCausa: 15000.50m));
+
+        var controller = CreateController(SemHitsJson, escavadorMock.Object);
+
+        var result = await controller.Search("0000001-00.2024.8.26.0100", null, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = JsonSerializer.Serialize(ok.Value);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        Assert.True(root.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("escavador", root.GetProperty("fonte").GetString());
+        Assert.Equal(1, root.GetProperty("movimentosCount").GetInt32());
+        Assert.Equal("Tribunal de Justiça de São Paulo", root.GetProperty("tribunal").GetString());
+        Assert.Equal("1ª Vara Cível", root.GetProperty("vara").GetString());
+        Assert.Equal("PROCEDIMENTO COMUM CÍVEL", root.GetProperty("classe").GetString());
+        Assert.Equal("Indenização por Dano Moral", root.GetProperty("assuntos").GetString());
+        Assert.Equal(15000.50m, root.GetProperty("valorCausa").GetDecimal());
+        Assert.Equal("TJSP", root.GetProperty("siglaTribunal").GetString());
+        // Movimentações continuam vindo do endpoint de movimentações, não da capa.
+        var movimentos = root.GetProperty("movimentos");
+        Assert.Equal(1, movimentos.GetArrayLength());
+        Assert.Equal("Juntada de petição.", movimentos[0].GetProperty("descricao").GetString());
     }
 
     [Fact]

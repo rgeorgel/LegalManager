@@ -12,7 +12,8 @@ public record EscavadorProcessoDto(
     string? Classe,
     string? Assuntos,
     DateTime? DataAjuizamento,
-    string? JsonBruto = null
+    string? JsonBruto = null,
+    decimal? ValorCausa = null
 );
 
 public record EscavadorMonitoramentoDto(long Id, string? Status);
@@ -125,4 +126,23 @@ public interface IEscavadorService
     /// </summary>
     Task<EscavadorMonitoramentoDto?> CriarMonitoramentoOabAsync(
         string uf, string numero, string? nomeAdvogado, CancellationToken ct = default);
+
+    /// <summary>
+    /// Busca a "capa" do processo (classe/vara/tribunal/valor da causa/assuntos) por CNJ.
+    /// Usado pelo fallback Escavador da busca manual (docs/features/busca-processo-cadastro-manual.md)
+    /// quando o DataJud não encontra o processo E <see cref="ListarMovimentacoesPorProcessoAsync"/> já
+    /// confirmou que o Escavador o conhece — essa segunda chamada preenche os campos que o endpoint de
+    /// movimentações não traz.
+    ///
+    /// ATENÇÃO — endpoint NÃO CONFIRMADO: GET /api/v2/processos/numero_cnj/{cnj} (sem o sufixo
+    /// /movimentacoes) é uma inferência por convenção REST da própria API (a chamada de
+    /// movimentações já usa .../numero_cnj/{cnj}/movimentacoes) e pelo item "Capa de um processo
+    /// por CNJ — R$ 0,05" documentado em docs/processos/escavador-fluxo-e-custos.md, mas NUNCA foi
+    /// testado contra a API real — este ambiente de desenvolvimento não tem acesso a ela. Precisa
+    /// ser validado rodando ao vivo no ambiente do Ricardo antes de confiar cegamente no resultado.
+    /// Retorna null em qualquer falha (404, endpoint incorreto, timeout, erro de rede) — nunca
+    /// lança exceção, para nunca derrubar o resultado (via movimentações) que já funciona.
+    /// </summary>
+    Task<EscavadorProcessoDto?> BuscarCapaPorNumeroCnjAsync(
+        string numeroCNJ, CancellationToken ct = default);
 }

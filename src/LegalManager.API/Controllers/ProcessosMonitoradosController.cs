@@ -78,20 +78,28 @@ public class ProcessosMonitoradosController(
                     "Processo CNJ {CNJ} não encontrado no DataJud; encontrado via Escavador (fallback pago, {N} movimentações)",
                     formatted, escavadorResult.Data.Count);
 
+                // Segunda chamada, só disparada aqui (já confirmado que o Escavador conhece o
+                // processo): busca a capa (classe/vara/tribunal/valorCausa/assuntos), que o
+                // endpoint de movimentações não traz. Endpoint ainda NÃO CONFIRMADO ao vivo — ver
+                // doc completa em IEscavadorService.BuscarCapaPorNumeroCnjAsync. Se falhar/retornar
+                // null, a resposta segue igual à de hoje (campos null) — nunca derruba o resultado
+                // já obtido via movimentações.
+                var capa = await escavador.BuscarCapaPorNumeroCnjAsync(formatted, ct);
+
                 return Ok(new
                 {
                     numeroCNJ = formatted,
                     encontrado = true,
                     fonte = "escavador",
-                    tribunal = (string?)null,
-                    vara = (string?)null,
+                    tribunal = capa?.NomeTribunal,
+                    vara = capa?.Vara,
                     movimentosCount = escavadorResult.Data.Count,
-                    classe = (string?)null,
-                    assuntos = (string?)null,
+                    classe = capa?.Classe,
+                    assuntos = capa?.Assuntos,
                     dataAjuizamento = (DateTime?)null,
                     grau = (string?)null,
-                    valorCausa = (decimal?)null,
-                    siglaTribunal = (string?)null,
+                    valorCausa = capa?.ValorCausa,
+                    siglaTribunal = capa?.SiglaTribunal,
                     partes = (object?)null,
                     movimentos = escavadorResult.Data.Select(m => new {
                         descricao = !string.IsNullOrWhiteSpace(m.Snippet) ? m.Snippet : ResumirHtml(m.ConteudoHtml),
