@@ -664,6 +664,10 @@ function showMovimentacoes(event, hasMovimentos) {
   document.body.appendChild(modal);
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
+// onclick="" no HTML só enxerga o escopo global -- <script type="module"> não expõe suas
+// declarações em window automaticamente (mesmo padrão já usado em goPage/editProcesso/
+// openEncerrar abaixo). Sem isso, o clique falha com "showMovimentacoes is not defined".
+window.showMovimentacoes = showMovimentacoes;
 
 // Tribunal searchable dropdown
 const TRIBUNAIS = [
