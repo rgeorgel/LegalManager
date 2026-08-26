@@ -65,6 +65,11 @@
     .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
     .process-preview .preview-tribunal { font-weight:600; }
     .process-preview .preview-vara { margin-top:4px; }
+    .partes-found-preview { margin-top:8px; padding:10px 12px; border:1px solid #bfdbfe; background:#eff6ff; border-radius:6px; font-size:13px; display:none; }
+    .partes-found-preview .partes-found-title { font-weight:600; margin-bottom:6px; color:#1e40af; }
+    .partes-found-preview ul { margin:0 0 8px 18px; padding:0; }
+    .partes-found-preview li { margin-bottom:2px; }
+    .parte-row .parte-datajud-hint { font-size:11px; color:#6b7280; margin-top:2px; }
     .cnj-row { display:flex; gap:8px; align-items:center; }
     .cnj-row .cnj-input-wrap { flex:1; }
     .cnj-row-labels { display:flex; gap:8px; align-items:baseline; margin-bottom:6px; }
@@ -369,6 +374,11 @@
             </div>
           </div>
           <div id="processPreview" class="process-preview"></div>
+          <div id="partesFoundPreview" class="partes-found-preview">
+            <div class="partes-found-title">Partes encontradas na busca</div>
+            <ul id="partesFoundList"></ul>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnUsarPartes">Usar partes encontradas</button>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -692,6 +702,43 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Preview das partes encontradas na busca DataJud + botão "Usar partes encontradas".
+// As partes só são resolvidas/criadas como Contato no Salvar (ver readForm/partesDataJud) —
+// nunca aqui, para não gerar Contatos órfãos de buscas canceladas.
+function renderPartesFoundPreview(partes) {
+  const box = document.getElementById('partesFoundPreview');
+  const list = document.getElementById('partesFoundList');
+  if (!partes || !partes.length) {
+    box.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = partes.map(p => `<li>${esc(p.nome)}${p.polo ? ' — ' + esc(p.polo) : ''}</li>`).join('');
+  box.style.display = 'block';
+}
+
+function nomesPartesNoFormulario() {
+  return [...document.querySelectorAll('.parte-row')].map(row => {
+    if (row.dataset.parteDataJud) {
+      try { return JSON.parse(row.dataset.parteDataJud).nome || ''; } catch { return ''; }
+    }
+    const opt = row.querySelector('.parte-contato')?.selectedOptions?.[0];
+    if (!opt || !opt.value) return '';
+    return opt.textContent.replace(/\s*\([^)]*\)\s*$/, '');
+  }).map(n => n.trim().toLowerCase()).filter(Boolean);
+}
+
+document.getElementById('btnUsarPartes').addEventListener('click', () => {
+  const partes = (lastSearchResult && lastSearchResult.partes) || [];
+  const existentes = new Set(nomesPartesNoFormulario());
+  partes.forEach(p => {
+    const nomeNorm = (p.nome || '').trim().toLowerCase();
+    if (!nomeNorm || existentes.has(nomeNorm)) return; // já presente no formulário — evita duplicar em clique duplo
+    addParteRow('', 'Autor', p);
+    existentes.add(nomeNorm);
+  });
+});
+
 // Buscar dados do processo (preview)
 document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
   const input = document.getElementById('fNumeroCNJ');
@@ -703,12 +750,14 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
     preview.className = 'process-preview nao-encontrado';
     preview.innerHTML = 'Digite um número de processo.';
     preview.style.display = 'block';
+    renderPartesFoundPreview(null);
     return;
   }
 
   preview.className = 'process-preview loading';
   preview.innerHTML = 'Buscando...';
   preview.style.display = 'block';
+  renderPartesFoundPreview(null);
   btn.disabled = true;
 
   try {
@@ -730,6 +779,11 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
       if (result.classe) document.getElementById('fClasse').value = result.classe;
       if (assuntosStr) document.getElementById('fAssuntos').value = assuntosStr;
       if (dataAjuizamento) document.getElementById('fDataAjuizamento').value = dataAjuizamento;
+      const fValorCausa = document.getElementById('fValorCausa');
+      if (result.valorCausa != null && !fValorCausa.value) fValorCausa.value = result.valorCausa;
+      const fTribunalInput = document.getElementById('fTribunal');
+      if (result.siglaTribunal && !fTribunalInput.value) fTribunalInput.value = result.siglaTribunal;
+      renderPartesFoundPreview(result.partes);
     } else {
       preview.className = 'process-preview nao-encontrado';
       preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>
@@ -936,27 +990,59 @@ window.openEncerrar = id => {
   modalEncerrar.classList.add('open');
 };
 
-function addParteRow(contatoId = '', tipoParte = 'Autor') {
+// Mesma heurística de OnboardingController/ContatoResolverService.MapearPolo, usada aqui só
+// para sugerir o tipo de parte na tela — quem decide de fato o TipoParte gravado é o backend,
+// a partir do Polo bruto enviado em partesDataJud (ver ContatoResolverService.cs).
+function mapearPoloParaTipo(polo) {
+  if (!polo) return 'Terceiro';
+  const upper = polo.toUpperCase();
+  if (/AUTOR|RECLAMANTE|IMPETRANTE|REQUERENTE|EXEQUENTE/.test(upper)) return 'Autor';
+  if (/R[EÉ]U|RECLAMADO|INDICIADO|REQUERIDO|EXECUTADO/.test(upper)) return 'Reu';
+  if (/INTERESSADO/.test(upper)) return 'Interessado';
+  return 'Terceiro';
+}
+
+function addParteRow(contatoId = '', tipoParte = 'Autor', parteDataJud = null) {
   const container = document.getElementById('partesContainer');
   const div = document.createElement('div');
   div.className = 'form-row parte-row';
   div.style.marginBottom = '8px';
+  if (parteDataJud) div.dataset.parteDataJud = JSON.stringify(parteDataJud);
+  const tipoSugerido = parteDataJud ? mapearPoloParaTipo(parteDataJud.polo) : tipoParte;
+  const opcaoDataJud = parteDataJud
+    ? `<option value="__datajud__" selected>${esc(parteDataJud.nome)} (via busca)</option>`
+    : '';
   div.innerHTML = `
     <div class="form-group" style="flex:2">
       <select class="form-control parte-contato">
         <option value="">Selecionar contato...</option>
+        ${opcaoDataJud}
         ${contatos.map(c => `<option value="${c.id}" ${c.id === contatoId ? 'selected' : ''}>${c.nome} (${c.tipoPessoa || c.tipo})</option>`).join('')}
       </select>
+      ${parteDataJud ? '<div class="parte-datajud-hint">Dados da busca — o contato será localizado ou criado ao salvar.</div>' : ''}
     </div>
     <div class="form-group">
-      <select class="form-control parte-tipo">
-        ${['Autor','Reu','Interessado','Terceiro'].map(t => `<option value="${t}" ${t === tipoParte ? 'selected' : ''}>${t === 'Reu' ? 'Réu' : t}</option>`).join('')}
+      <select class="form-control parte-tipo" ${parteDataJud ? 'disabled title="Definido automaticamente a partir do polo encontrado na busca"' : ''}>
+        ${['Autor','Reu','Interessado','Terceiro'].map(t => `<option value="${t}" ${t === tipoSugerido ? 'selected' : ''}>${t === 'Reu' ? 'Réu' : t}</option>`).join('')}
       </select>
     </div>
     <div class="form-group" style="flex:0">
       <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.parte-row').remove()">✕</button>
     </div>`;
   container.appendChild(div);
+
+  if (parteDataJud) {
+    // Se o usuário trocar a seleção para um contato real já cadastrado, a linha deixa de ser
+    // "bruta" e passa a se comportar como um vínculo manual normal (enviado em `partes`).
+    const sel = div.querySelector('.parte-contato');
+    sel.addEventListener('change', () => {
+      if (sel.value !== '__datajud__') {
+        delete div.dataset.parteDataJud;
+        div.querySelector('.parte-tipo').disabled = false;
+        div.querySelector('.parte-datajud-hint')?.remove();
+      }
+    });
+  }
 }
 
 document.getElementById('btnAddParte').addEventListener('click', () => addParteRow());
@@ -979,10 +1065,26 @@ function fillForm(p) {
 }
 
 function readForm() {
-  const partes = [...document.querySelectorAll('.parte-row')].map(row => ({
-    contatoId: row.querySelector('.parte-contato').value,
-    tipoParte: row.querySelector('.parte-tipo').value
-  })).filter(p => p.contatoId);
+  const parteRows = [...document.querySelectorAll('.parte-row')];
+
+  const partes = parteRows
+    .filter(row => !row.dataset.parteDataJud)
+    .map(row => ({
+      contatoId: row.querySelector('.parte-contato').value,
+      tipoParte: row.querySelector('.parte-tipo').value
+    }))
+    .filter(p => p.contatoId && p.contatoId !== '__datajud__');
+
+  // Partes brutas vindas do preview de busca DataJud (ainda sem Contato vinculado) — resolvidas/
+  // criadas apenas no backend, no Salvar (ver CreateProcessoDto.PartesDataJud e
+  // ContatoResolverService). Só se aplica ao cadastro (não existe em UpdateProcessoDto).
+  const partesDataJudRaw = !editingId
+    ? parteRows
+        .filter(row => row.dataset.parteDataJud)
+        .map(row => { try { return JSON.parse(row.dataset.parteDataJud); } catch { return null; } })
+        .filter(Boolean)
+    : [];
+  const partesDataJud = partesDataJudRaw.length ? partesDataJudRaw : null;
 
   const andamentos = (!editingId && lastSearchResult && lastSearchResult.movimentos)
     ? lastSearchResult.movimentos.map(m => ({
@@ -1016,6 +1118,7 @@ function readForm() {
     monitorado: document.getElementById('fMonitorado').value === 'true',
     observacoes: document.getElementById('fObservacoes').value || null,
     partes,
+    partesDataJud,
     andamentos,
     ...dataJudData
   };
@@ -1023,6 +1126,7 @@ function readForm() {
 
 function resetModal() {
   editingId = null;
+  lastSearchResult = null; // evita que um resultado de busca anterior (não salvo) vaze para outro cadastro
   document.getElementById('modalTitle').textContent = 'Novo Processo';
   document.getElementById('statusGroup').style.display = 'none';
   document.getElementById('processoForm').reset();
@@ -1030,6 +1134,7 @@ function resetModal() {
   document.getElementById('partesContainer').innerHTML = '';
   document.getElementById('modalAlert').style.display = 'none';
   document.getElementById('processPreview').style.display = 'none';
+  renderPartesFoundPreview(null);
 }
 
 document.getElementById('btnNovo').addEventListener('click', () => { resetModal(); modal.classList.add('open'); });
