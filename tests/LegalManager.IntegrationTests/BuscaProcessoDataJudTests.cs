@@ -125,6 +125,7 @@ public class BuscaProcessoDataJudTests
         // instead, which serializes via reflection and isn't gated by that restriction.
         var body = JsonSerializer.SerializeToElement(ok.Value!);
         Assert.True(body.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("datajud", body.GetProperty("fonte").GetString());
         Assert.Equal("TJSP", body.GetProperty("siglaTribunal").GetString());
         Assert.Equal(15000.50m, body.GetProperty("valorCausa").GetDecimal());
 
