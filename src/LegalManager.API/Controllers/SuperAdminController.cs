@@ -78,6 +78,8 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
         [FromQuery] string? search,
         [FromQuery] string? status,
         [FromQuery] string? plano,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
@@ -95,14 +97,61 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
         if (!string.IsNullOrWhiteSpace(plano) && Enum.TryParse<PlanoTipo>(plano, true, out var planoEnum))
             query = query.Where(t => t.Plano == planoEnum);
 
+        var normalizedSortBy = sortBy?.Trim().ToLowerInvariant();
+        if (normalizedSortBy is not ("nome" or "cadastro" or "ultimoacesso"))
+            normalizedSortBy = "cadastro";
+
+        var ascending = string.Equals(sortDir?.Trim(), "asc", StringComparison.OrdinalIgnoreCase);
+
         var total = await query.CountAsync(ct);
 
-        var tenantIds = await query
-            .OrderByDescending(t => t.CriadoEm)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => t.Id)
-            .ToListAsync(ct);
+        // Dicionário só é pré-preenchido quando o sort é por ultimoAcesso (ver abaixo);
+        // nos demais casos é computado depois, como já era feito, restrito à página atual.
+        Dictionary<Guid, DateTime?>? ultimoAcessoPorTenant = null;
+        List<Guid> tenantIds;
+
+        if (normalizedSortBy == "ultimoacesso")
+        {
+            // Ordenar por um agregado (MAX de UltimoAcessoEm por tenant) exige calcular o
+            // agregado para TODO o conjunto filtrado antes do Skip/Take -- não dá pra paginar
+            // primeiro e agregar depois, como é feito para colunas diretas do Tenant.
+            var ultimoAcessoAgg = db.Users
+                .Where(u => u.UltimoAcessoEm != null)
+                .GroupBy(u => u.TenantId)
+                .Select(g => new { TenantId = g.Key, UltimoAcesso = g.Max(u => u.UltimoAcessoEm) });
+
+            var joined = query
+                .GroupJoin(ultimoAcessoAgg, t => t.Id, a => a.TenantId, (t, agg) => new { Tenant = t, Agg = agg })
+                .SelectMany(
+                    x => x.Agg.DefaultIfEmpty(),
+                    (x, agg) => new { x.Tenant.Id, UltimoAcesso = agg != null ? agg.UltimoAcesso : null });
+
+            // Tenants sem nenhum acesso (UltimoAcesso null) sempre por último, seja asc ou desc --
+            // "nunca acessou" não é nem o mais recente nem o mais antigo, é desconhecido.
+            var ordered = ascending
+                ? joined.OrderBy(x => x.UltimoAcesso == null).ThenBy(x => x.UltimoAcesso)
+                : joined.OrderBy(x => x.UltimoAcesso == null).ThenByDescending(x => x.UltimoAcesso);
+
+            var pagedJoined = await ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            tenantIds = pagedJoined.Select(x => x.Id).ToList();
+            ultimoAcessoPorTenant = pagedJoined.ToDictionary(x => x.Id, x => x.UltimoAcesso);
+        }
+        else
+        {
+            var orderedTenants = normalizedSortBy == "nome"
+                ? (ascending ? query.OrderBy(t => t.Nome) : query.OrderByDescending(t => t.Nome))
+                : (ascending ? query.OrderBy(t => t.CriadoEm) : query.OrderByDescending(t => t.CriadoEm));
+
+            tenantIds = await orderedTenants
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => t.Id)
+                .ToListAsync(ct);
+        }
 
         var userCounts = await db.Users
             .Where(u => tenantIds.Contains(u.TenantId))
@@ -143,8 +192,10 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
             })
             .ToDictionaryAsync(g => g.TenantId, ct);
 
-        // Último acesso (max de UltimoAcessoEm entre os usuários do tenant)
-        var ultimoAcessoPorTenant = await db.Users
+        // Último acesso (max de UltimoAcessoEm entre os usuários do tenant).
+        // Quando o sort é por ultimoAcesso, isso já foi calculado acima (para o conjunto
+        // filtrado inteiro, antes do Skip/Take) -- reaproveita em vez de recalcular.
+        ultimoAcessoPorTenant ??= await db.Users
             .Where(u => tenantIds.Contains(u.TenantId) && u.UltimoAcessoEm != null)
             .GroupBy(u => u.TenantId)
             .Select(g => new { TenantId = g.Key, UltimoAcesso = g.Max(u => u.UltimoAcessoEm) })
@@ -170,11 +221,12 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
             .Select(g => new { TenantId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
 
-        var tenants = await db.Tenants
+        // A ordem de exibição já foi decidida por tenantIds acima (nome/cadastro/ultimoAcesso);
+        // reordenar aqui de novo por CriadoEm bagunçaria a página quando o sort não for cadastro.
+        var tenantsById = await db.Tenants
             .Where(t => tenantIds.Contains(t.Id))
-            .OrderByDescending(t => t.CriadoEm)
-            .Select(t => t)
-            .ToListAsync(ct);
+            .ToDictionaryAsync(t => t.Id, ct);
+        var tenants = tenantIds.Select(id => tenantsById[id]).ToList();
 
         var items = tenants.Select(t =>
         {
