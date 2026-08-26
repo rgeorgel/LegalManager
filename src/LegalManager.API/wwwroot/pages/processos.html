@@ -771,7 +771,10 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
       const dataAjuizamento = result.dataAjuizamento ? new Date(result.dataAjuizamento).toLocaleDateString('pt-BR') : null;
       const assuntosStr = result.assuntos ? result.assuntos.join(', ') : '';
       preview.className = 'process-preview encontrado';
-      preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
+      const fonteBadge = result.fonte === 'escavador'
+        ? '<span class="badge badge-blue" style="margin-left:6px" title="Encontrado via Escavador — busca paga usada como alternativa porque o DataJud (gratuito) ainda não indexou este processo">via Escavador (busca paga)</span>'
+        : '<span class="badge badge-gray" style="margin-left:6px">via DataJud</span>';
+      preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span>${fonteBadge}<br>
         <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
         <span class="preview-vara">Classe: ${esc(result.classe ?? 'N/A')} | Data: ${esc(dataAjuizamento ?? 'N/A')}</span><br>
         <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) | <a href="#" onclick="showMovimentacoes(event)" style="color:#15803d;text-decoration:underline">Ver andamentos</a></span>`;

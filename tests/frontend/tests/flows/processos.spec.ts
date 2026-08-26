@@ -66,6 +66,7 @@ const PARTES_ENCONTRADAS = [
 const SEARCH_RESPONSE_ENCONTRADO = {
   numeroCNJ: '1234567-89.2024.8.26.0100',
   encontrado: true,
+  fonte: 'datajud',
   tribunal: 'Tribunal de Justiça de São Paulo',
   vara: '3ª Vara Cível',
   movimentosCount: 2,
@@ -77,6 +78,29 @@ const SEARCH_RESPONSE_ENCONTRADO = {
   siglaTribunal: 'TJSP',
   partes: PARTES_ENCONTRADAS,
   movimentos: [],
+};
+
+// Fallback Escavador (Fase 2): DataJud não encontrou o processo (recente demais, ainda não
+// indexado) e o Escavador encontrou movimentações. tribunal/vara/classe/partes/valorCausa
+// vêm null -- limitação aceita do endpoint de movimentações do Escavador (não devolve capa
+// do processo), ver docs/features/busca-processo-cadastro-manual.md, Fase 2.
+const SEARCH_RESPONSE_ESCAVADOR_FALLBACK = {
+  numeroCNJ: '1234567-89.2024.8.26.0100',
+  encontrado: true,
+  fonte: 'escavador',
+  tribunal: null,
+  vara: null,
+  movimentosCount: 1,
+  classe: null,
+  assuntos: null,
+  dataAjuizamento: null,
+  grau: null,
+  valorCausa: null,
+  siglaTribunal: null,
+  partes: null,
+  movimentos: [
+    { descricao: 'Juntada de petição.', data: '2026-08-20T00:00:00', tipoNome: 'Movimentação', codigoCNJ: null, orgaoJulgador: null },
+  ],
 };
 
 async function mockSearch(page: Page, response: unknown = SEARCH_RESPONSE_ENCONTRADO) {
@@ -112,6 +136,26 @@ test('busca CNJ preenche valor da causa e tribunal quando vazios, e mostra parte
   await expect(preview.locator('li')).toHaveCount(2);
   await expect(preview).toContainText('João da Silva');
   await expect(preview).toContainText('Empresa XYZ Ltda');
+});
+
+test('busca CNJ encontrada via fallback Escavador mostra badge de busca paga', async ({ adminPage: page }) => {
+  await mockSearch(page, SEARCH_RESPONSE_ESCAVADOR_FALLBACK);
+  await abrirNovoProcesso(page);
+  await buscarEEsperarEncontrado(page);
+
+  const preview = page.locator('#processPreview');
+  await expect(preview).toContainText('via Escavador (busca paga)');
+  await expect(preview).not.toContainText('via DataJud');
+});
+
+test('busca CNJ encontrada via DataJud mostra badge de fonte gratuita', async ({ adminPage: page }) => {
+  await mockSearch(page); // SEARCH_RESPONSE_ENCONTRADO (fonte: 'datajud')
+  await abrirNovoProcesso(page);
+  await buscarEEsperarEncontrado(page);
+
+  const preview = page.locator('#processPreview');
+  await expect(preview).toContainText('via DataJud');
+  await expect(preview).not.toContainText('busca paga');
 });
 
 test('busca CNJ não sobrescreve valor da causa e tribunal já preenchidos manualmente', async ({ adminPage: page }) => {

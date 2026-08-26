@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using LegalManager.API.Controllers;
+using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,8 @@ namespace LegalManager.UnitTests;
 
 /// <summary>
 /// Cobre o enriquecimento de GET /api/processos-monitorados/search com partes/valorCausa/
-/// siglaTribunal (docs/features/busca-processo-cadastro-manual.md, Fase 1, item 1).
+/// siglaTribunal (docs/features/busca-processo-cadastro-manual.md, Fase 1, item 1) e o
+/// fallback Escavador quando o DataJud não encontra o processo (Fase 2, item A).
 /// Usa um HttpMessageHandler falso (mesmo padrão de TribunalAdapterTests) para nunca bater
 /// na API pública do DataJud durante os testes.
 /// </summary>
@@ -24,8 +26,9 @@ public class ProcessosMonitoradosControllerTests
         return new DataJudAdapter(httpClient, logger);
     }
 
-    private static ProcessosMonitoradosController CreateController(string responseJson) =>
-        new(CreateAdapter(responseJson), Mock.Of<ILogger<ProcessosMonitoradosController>>());
+    private static ProcessosMonitoradosController CreateController(
+        string responseJson, IEscavadorService? escavador = null) =>
+        new(CreateAdapter(responseJson), Mock.Of<ILogger<ProcessosMonitoradosController>>(), escavador);
 
     private const string HitComPartesJson = """
     {
@@ -69,6 +72,7 @@ public class ProcessosMonitoradosControllerTests
         var root = doc.RootElement;
 
         Assert.True(root.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("datajud", root.GetProperty("fonte").GetString());
         Assert.Equal("TJSP", root.GetProperty("siglaTribunal").GetString());
         Assert.Equal(15000.50m, root.GetProperty("valorCausa").GetDecimal());
 
@@ -82,7 +86,7 @@ public class ProcessosMonitoradosControllerTests
     }
 
     [Fact]
-    public async Task Search_ProcessoNaoEncontrado_PartesNulo()
+    public async Task Search_ProcessoNaoEncontrado_SemEscavador_PartesNulo()
     {
         var controller = CreateController(SemHitsJson);
 
@@ -94,6 +98,68 @@ public class ProcessosMonitoradosControllerTests
         var root = doc.RootElement;
 
         Assert.False(root.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("datajud", root.GetProperty("fonte").GetString());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("partes").ValueKind);
+    }
+
+    [Fact]
+    public async Task Search_DataJudNaoEncontrado_EscavadorEncontra_UsaFallback()
+    {
+        var escavadorMock = new Mock<IEscavadorService>();
+        escavadorMock
+            .Setup(e => e.ListarMovimentacoesPorProcessoAsync(
+                It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorPagedResult<EscavadorMovimentacaoDto>(
+                [
+                    new EscavadorMovimentacaoDto(
+                        1, "uuid-1", new DateTime(2026, 8, 20), "<p>Juntada de petição.</p>", null,
+                        "Movimentação", null, null, null, null, null, null, null, null,
+                        "0000001-00.2024.8.26.0100", "{}")
+                ],
+                1, 1, 1, false));
+
+        var controller = CreateController(SemHitsJson, escavadorMock.Object);
+
+        var result = await controller.Search("0000001-00.2024.8.26.0100", null, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = JsonSerializer.Serialize(ok.Value);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        Assert.True(root.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("escavador", root.GetProperty("fonte").GetString());
+        Assert.Equal(1, root.GetProperty("movimentosCount").GetInt32());
+        var movimentos = root.GetProperty("movimentos");
+        Assert.Equal(1, movimentos.GetArrayLength());
+        Assert.Equal("Juntada de petição.", movimentos[0].GetProperty("descricao").GetString());
+        Assert.Equal("Movimentação", movimentos[0].GetProperty("tipoNome").GetString());
+        // Escavador não devolve classe/vara/tribunal/partes/valorCausa nesse endpoint — limitação
+        // documentada em docs/features/busca-processo-cadastro-manual.md, Fase 2.
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("tribunal").ValueKind);
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("partes").ValueKind);
+    }
+
+    [Fact]
+    public async Task Search_DataJudNaoEncontrado_EscavadorTambemNaoEncontra_EncontradoFalse()
+    {
+        var escavadorMock = new Mock<IEscavadorService>();
+        escavadorMock
+            .Setup(e => e.ListarMovimentacoesPorProcessoAsync(
+                It.IsAny<string>(), It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false));
+
+        var controller = CreateController(SemHitsJson, escavadorMock.Object);
+
+        var result = await controller.Search("0000001-00.2024.8.26.0100", null, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = JsonSerializer.Serialize(ok.Value);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        Assert.False(root.GetProperty("encontrado").GetBoolean());
+        Assert.Equal("datajud", root.GetProperty("fonte").GetString());
         Assert.Equal(JsonValueKind.Null, root.GetProperty("partes").ValueKind);
     }
 
