@@ -325,6 +325,7 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
             tenant.Plano.ToString(), tenant.PeriodoBilling, tenant.Status.ToString(),
             tenant.CriadoEm, tenant.Usuarios.Count, tenant.TrialExpiraEm, tenant.PlanoExpiraEm,
             tenant.AbacatePayBillingId,
+            tenant.StripeSubscriptionId,
             processoStats?.Count ?? 0,
             processoStats?.Monitorados ?? 0,
             processoStats?.MonitoradosDiario ?? 0,
@@ -414,6 +415,7 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
         tenant.TrialConcedidoMotivo = motivo;
         tenant.PlanoExpiraEm = null;
         tenant.AbacatePayBillingId = null;
+        tenant.StripeSubscriptionId = null;
         tenant.PeriodoBilling = null;
         tenant.BillingCycleStart = null;
 

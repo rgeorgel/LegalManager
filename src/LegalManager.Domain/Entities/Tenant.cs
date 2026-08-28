@@ -14,7 +14,9 @@ public class Tenant
     public DateTime CriadoEm { get; set; }
     public DateTime? TrialExpiraEm { get; set; }
 
-    public string? AbacatePayBillingId { get; set; }
+    public string? AbacatePayBillingId { get; set; } // legado — descontinuado, ver StripeSubscriptionId
+    public string? StripeCustomerId { get; set; }
+    public string? StripeSubscriptionId { get; set; }
     public string? PeriodoBilling { get; set; }  // "Mensal" | "Anual"
     public DateTime? PlanoExpiraEm { get; set; }
     public DateTime? BillingCycleStart { get; set; }

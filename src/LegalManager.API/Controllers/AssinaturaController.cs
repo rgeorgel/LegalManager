@@ -1,4 +1,3 @@
-using System.Text.Json;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
@@ -10,6 +9,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
+using StripeCheckoutSession = Stripe.Checkout.Session;
 
 namespace LegalManager.API.Controllers;
 
@@ -27,7 +28,7 @@ public record PacoteCreditosDto(
 [Route("api/assinatura")]
 [Authorize]
 public class AssinaturaController(
-    IAbacatePayService abacatePay,
+    IStripeService stripe,
     AppDbContext context,
     ITenantContext tenantContext,
     UserManager<Usuario> userManager,
@@ -57,7 +58,7 @@ public class AssinaturaController(
             planoExpiraEm = tenant.PlanoExpiraEm,
             trialExpiraEm = tenant.TrialExpiraEm,
             criadoEm = tenant.CriadoEm,
-            temBilling = tenant.AbacatePayBillingId != null
+            temBilling = tenant.StripeSubscriptionId != null
         });
     }
 
@@ -140,86 +141,133 @@ public class AssinaturaController(
         var returnUrl    = $"{frontendUrl}/pages/assinatura.html?checkout=pendente";
         var completionUrl = $"{frontendUrl}/pages/assinatura.html?checkout=processando";
 
-        // Detecta upgrade elegível para proration
-        var isUpgrade = tenant.Plano != PlanoTipo.Free
-                     && tenant.Plano != planoAlvo
-                     && tenant.BillingCycleStart.HasValue
-                     && tenant.Status == StatusTenant.Ativo
-                     && _precosPorPlano.ContainsKey(tenant.Plano)
-                     && _precosPorPlano.ContainsKey(planoAlvo);
+        // Tenant com assinatura Stripe já vigente: upgrade/downgrade é feito por proration
+        // in-place (sem novo checkout) — só entra no cálculo de PREVIEW aqui; a cobrança de
+        // fato só acontece quando o admin confirmar em /assinatura/confirmar-upgrade.
+        var podeAtualizarInPlace = !string.IsNullOrEmpty(tenant.StripeSubscriptionId)
+                                && tenant.Plano != planoAlvo
+                                && _precosPorPlano.ContainsKey(tenant.Plano)
+                                && _precosPorPlano.ContainsKey(planoAlvo);
 
-        AbacatePayBillingResult result;
-        decimal credito = 0m;
-        decimal valorProrado = 0m;
+        if (podeAtualizarInPlace)
+        {
+            var diasRestantes = tenant.BillingCycleStart.HasValue
+                ? Math.Max(0, (tenant.BillingCycleStart.Value.AddDays(30) - DateTime.UtcNow).TotalDays)
+                : 0;
+            var credito = Math.Round((decimal)(diasRestantes / 30.0) * _precosPorPlano[tenant.Plano], 2);
+            var valorProrado = Math.Max(1m, _precosPorPlano[planoAlvo] - credito);
 
+            return Ok(new
+            {
+                requerConfirmacao = true,
+                prorado = true,
+                credito,
+                valorProrado,
+                planoAlvo = planoAlvo.ToString(),
+                periodo = dto.Periodo
+            });
+        }
+
+        StripeCheckoutResultDto result;
         try
         {
-            if (isUpgrade)
-            {
-                var diasRestantes = Math.Max(0,
-                    (tenant.BillingCycleStart!.Value.AddDays(30) - DateTime.UtcNow).TotalDays);
-                credito = Math.Round((decimal)(diasRestantes / 30.0) * _precosPorPlano[tenant.Plano], 2);
-                valorProrado = Math.Max(1m, _precosPorPlano[planoAlvo] - credito);
-                var valorCentavos = (int)(valorProrado * 100);
-
-                // Cancela billing anterior para evitar cobrança dupla
-                if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId))
-                {
-                    try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
-                    catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} no upgrade", tenant.AbacatePayBillingId); }
-                }
-
-                result = await abacatePay.CriarCheckoutProradoAsync(new CriarCheckoutProradoInput(
-                    TenantId: tenant.Id.ToString(),
-                    NomeEscritorio: tenant.Nome,
-                    Email: admin.Email!,
-                    NomeAdmin: admin.Nome,
-                    Cnpj: tenant.Cnpj,
-                    PlanoAlvo: planoAlvo.ToString(),
-                    ValorProradoCentavos: valorCentavos,
-                    Periodo: dto.Periodo,
-                    ReturnUrl: returnUrl,
-                    CompletionUrl: completionUrl
-                ), ct);
-            }
-            else
-            {
-                // Cancela billing anterior ao renovar após cancelamento
-                if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId) && tenant.Status == StatusTenant.Cancelado)
-                {
-                    try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
-                    catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} antes da renovação", tenant.AbacatePayBillingId); }
-                }
-
-                result = await abacatePay.CriarBillingAsync(new CriarBillingInput(
-                    TenantId: tenant.Id.ToString(),
-                    NomeEscritorio: tenant.Nome,
-                    Email: admin.Email!,
-                    NomeAdmin: admin.Nome,
-                    Cnpj: tenant.Cnpj,
-                    Periodo: dto.Periodo,
-                    ReturnUrl: returnUrl,
-                    CompletionUrl: completionUrl,
-                    Plano: planoAlvo.ToString()
-                ), ct);
-            }
+            var checkout = await stripe.CriarCheckoutAssinaturaAsync(new CriarCheckoutAssinaturaInput(
+                TenantId: tenant.Id.ToString(),
+                StripeCustomerId: tenant.StripeCustomerId,
+                NomeEscritorio: tenant.Nome,
+                Email: admin.Email!,
+                NomeAdmin: admin.Nome,
+                Cnpj: tenant.Cnpj,
+                Plano: planoAlvo.ToString(),
+                Periodo: dto.Periodo,
+                ReturnUrl: returnUrl,
+                CompletionUrl: completionUrl
+            ), ct);
+            result = new StripeCheckoutResultDto(checkout.CheckoutUrl, checkout.CustomerId);
         }
-        catch (InvalidOperationException ex)
+        catch (StripeException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            logger.LogError(ex, "Erro ao criar checkout de assinatura Stripe para tenant {TenantId}", tenant.Id);
+            return BadRequest(new { message = "Não foi possível iniciar o checkout. Tente novamente em instantes." });
         }
 
-        tenant.AbacatePayBillingId = result.BillingId;
+        tenant.StripeCustomerId = result.CustomerId;
         tenant.PeriodoBilling = dto.Periodo;
         await context.SaveChangesAsync(ct);
 
         return Ok(new
         {
-            checkoutUrl  = result.CheckoutUrl,
-            prorado      = isUpgrade,
-            credito      = isUpgrade ? credito : 0m,
-            valorProrado = isUpgrade ? valorProrado : _precosPorPlano.GetValueOrDefault(planoAlvo, 0m)
+            requerConfirmacao = false,
+            checkoutUrl = result.CheckoutUrl,
+            prorado = false,
+            valorProrado = _precosPorPlano.GetValueOrDefault(planoAlvo, 0m)
         });
+    }
+
+    /// <summary>
+    /// Confirma um upgrade/downgrade de plano para um tenant que já tem assinatura Stripe
+    /// ativa. A cobrança prorada acontece aqui, no cartão já salvo — sem redirect.
+    /// </summary>
+    [HttpPost("confirmar-upgrade")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ConfirmarUpgrade([FromBody] IniciarCheckoutDto dto, CancellationToken ct)
+    {
+        var planoAlvo = dto.Plano?.ToLowerInvariant() switch
+        {
+            "plus" => PlanoTipo.Plus,
+            "max"  => PlanoTipo.Max,
+            _      => PlanoTipo.Pro
+        };
+
+        var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        if (string.IsNullOrEmpty(tenant.StripeSubscriptionId))
+            return BadRequest(new { message = "Tenant não possui assinatura ativa para atualizar." });
+
+        if (tenant.Plano == planoAlvo)
+            return BadRequest(new { message = $"Você já possui uma assinatura {planoAlvo} ativa." });
+
+        StripeAtualizarAssinaturaResult atualizado;
+        try
+        {
+            atualizado = await stripe.AtualizarAssinaturaAsync(new AtualizarAssinaturaInput(
+                tenant.StripeSubscriptionId, planoAlvo.ToString(), dto.Periodo), ct);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogError(ex, "Erro ao atualizar assinatura Stripe {Id} para tenant {TenantId}",
+                tenant.StripeSubscriptionId, tenant.Id);
+            return BadRequest(new { message = "Não foi possível processar o upgrade. Tente novamente em instantes." });
+        }
+
+        tenant.Plano = planoAlvo;
+        tenant.Status = StatusTenant.Ativo;
+        tenant.PlanoExpiraEm = null;
+        tenant.PeriodoBilling = dto.Periodo;
+        tenant.StripeSubscriptionId = atualizado.SubscriptionId;
+
+        if (atualizado.ValorCobradoImediato > 0)
+        {
+            context.Faturamentos.Add(new Faturamento
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenant.Id,
+                BillingId = atualizado.SubscriptionId,
+                Periodo = dto.Periodo,
+                Valor = atualizado.ValorCobradoImediato,
+                Status = StatusFaturamento.Pago,
+                DataPagamento = DateTime.UtcNow,
+                DataCriacao = DateTime.UtcNow,
+                Descricao = $"Upgrade → {planoAlvo} {dto.Periodo} (prorated)"
+            });
+        }
+
+        await context.SaveChangesAsync(ct);
+        logger.LogInformation("Upgrade confirmado para tenant {TenantId}: plano {Plano}, cobrado R$ {Valor}",
+            tenant.Id, planoAlvo, atualizado.ValorCobradoImediato);
+
+        return Ok(new { plano = planoAlvo.ToString(), valorCobrado = atualizado.ValorCobradoImediato, status = atualizado.Status });
     }
 
     [HttpPost("cancelar")]
@@ -232,17 +280,14 @@ public class AssinaturaController(
         if (tenant.Plano == PlanoTipo.Free)
             return BadRequest(new { message = "Você já está no plano Free." });
 
-        // Calcula a data de expiração com base no período
-        var expiraEm = tenant.PeriodoBilling == "Anual"
-            ? DateTime.UtcNow.AddYears(1).Date    // simplificação: próximo ciclo anual
-            : DateTime.UtcNow.AddMonths(1).Date;  // próximo ciclo mensal
+        DateTime? expiraEm = null;
+        if (!string.IsNullOrEmpty(tenant.StripeSubscriptionId))
+            expiraEm = await stripe.CancelarAssinaturaAsync(tenant.StripeSubscriptionId, ct);
 
-        // Cancela no AbacatePay se houver billing ativo
-        if (!string.IsNullOrEmpty(tenant.AbacatePayBillingId))
-        {
-            try { await abacatePay.CancelarBillingAsync(tenant.AbacatePayBillingId, ct); }
-            catch (Exception ex) { logger.LogWarning(ex, "Erro ao cancelar billing {Id} no AbacatePay", tenant.AbacatePayBillingId); }
-        }
+        // Fallback caso a Stripe não retorne a data (ex.: subscription já removida lá)
+        expiraEm ??= tenant.PeriodoBilling == "Anual"
+            ? DateTime.UtcNow.AddYears(1).Date
+            : DateTime.UtcNow.AddMonths(1).Date;
 
         tenant.Status = StatusTenant.Cancelado;
         tenant.PlanoExpiraEm = expiraEm;
@@ -276,28 +321,37 @@ public class AssinaturaController(
         var returnUrl = $"{frontendUrl}/pages/assinatura.html?creditos=pendente";
         var completionUrl = $"{frontendUrl}/pages/assinatura.html?creditos=processando";
 
-        AbacatePayBillingResult result;
+        StripeCheckoutResult result;
         try
         {
-            result = await abacatePay.CriarCheckoutUnicoAsync(new CriarCheckoutUnicoInput(
+            result = await stripe.CriarCheckoutAvulsoAsync(new CriarCheckoutAvulsoInput(
                 TenantId: tenant.Id.ToString(),
+                StripeCustomerId: tenant.StripeCustomerId,
                 Email: admin.Email!,
                 NomeAdmin: admin.Nome,
                 Cnpj: tenant.Cnpj,
-                PacoteId: pacote.Id,
-                PacoteNome: pacote.Nome,
+                ReferenciaId: pacote.Id,
+                Nome: $"Causify — Créditos IA {pacote.Nome}",
+                Descricao: $"Pacote de créditos de IA — {pacote.Nome}",
                 ValorCentavos: (int)(pacote.Valor * 100),
+                Tipo: "creditos_ia",
                 ReturnUrl: returnUrl,
                 CompletionUrl: completionUrl
             ), ct);
         }
-        catch (InvalidOperationException ex)
+        catch (StripeException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            logger.LogError(ex, "Erro ao criar checkout de créditos Stripe para tenant {TenantId}", tenant.Id);
+            return BadRequest(new { message = "Não foi possível iniciar o checkout. Tente novamente em instantes." });
         }
+
+        tenant.StripeCustomerId = result.CustomerId;
+        await context.SaveChangesAsync(ct);
 
         return Ok(new { checkoutUrl = result.CheckoutUrl });
     }
+
+    private record StripeCheckoutResultDto(string CheckoutUrl, string CustomerId);
 }
 
 // Webhook — sem autenticação JWT
@@ -307,163 +361,116 @@ public class WebhookController(
     AppDbContext context,
     IConfiguration config,
     ICreditoService creditoService,
-    IAbacatePayService abacatePay,
     ILogger<WebhookController> logger) : ControllerBase
 {
-    [HttpPost("abacatepay")]
+    [HttpPost("stripe")]
     [AllowAnonymous]
-    public async Task<IActionResult> AbacatePay(
-        [FromQuery] string? secret,
-        CancellationToken ct)
+    public async Task<IActionResult> Stripe(CancellationToken ct)
     {
-        // Verifica secret na query string
-        var expectedSecret = config["AbacatePay:WebhookSecret"];
-        if (!string.IsNullOrEmpty(expectedSecret) && secret != expectedSecret)
-        {
-            logger.LogWarning("Webhook AbacatePay recebido com secret inválido.");
-            return Unauthorized();
-        }
-
-        // Lê o body raw para verificação de assinatura
         Request.EnableBuffering();
         using var reader = new StreamReader(Request.Body, leaveOpen: true);
         var rawBody = await reader.ReadToEndAsync(ct);
         Request.Body.Position = 0;
 
-        // Verifica HMAC se houver header de assinatura
-        var assinaturaHeader = Request.Headers["X-Webhook-Signature"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(assinaturaHeader) && !string.IsNullOrEmpty(expectedSecret))
+        var webhookSecret = config["Stripe:WebhookSecret"];
+        var signatureHeader = Request.Headers["Stripe-Signature"].FirstOrDefault();
+
+        Event stripeEvent;
+        try
         {
-            if (!AbacatePayService.VerificarAssinatura(rawBody, assinaturaHeader, expectedSecret))
-            {
-                logger.LogWarning("Webhook AbacatePay com assinatura HMAC inválida.");
-                return Unauthorized();
-            }
+            // throwOnApiVersionMismatch: false — só usamos campos estáveis do payload,
+            // não vale a pena rejeitar o evento por causa da versão de API da conta Stripe.
+            stripeEvent = string.IsNullOrEmpty(webhookSecret)
+                ? EventUtility.ParseEvent(rawBody, throwOnApiVersionMismatch: false)
+                : StripeService.ConstruirEventoWebhook(rawBody, signatureHeader ?? "", webhookSecret);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Webhook Stripe com assinatura inválida.");
+            return Unauthorized();
         }
 
-        using var doc = JsonDocument.Parse(rawBody);
-        var root = doc.RootElement;
+        logger.LogInformation("Webhook Stripe recebido: {Event}", stripeEvent.Type);
 
-        var eventType = root.TryGetProperty("event", out var ev) ? ev.GetString() : null;
-        logger.LogInformation("Webhook AbacatePay recebido: {Event}", eventType);
-
-        switch (eventType)
+        switch (stripeEvent.Type)
         {
-            case "checkout.completed":
-            case "billing.paid":
-            case "subscription.completed":
-            case "subscription.renewed":
-                await HandlePagamentoConfirmado(root, ct);
+            case "checkout.session.completed":
+                await HandleCheckoutCompletedAsync(stripeEvent, ct);
                 break;
 
-            case "subscription.cancelled":
-                await HandleSubscriptionCancelada(root, ct);
+            case "invoice.paid":
+                await HandleInvoicePaidAsync(stripeEvent, ct);
+                break;
+
+            case "customer.subscription.deleted":
+                await HandleSubscriptionDeletedAsync(stripeEvent, ct);
                 break;
 
             default:
-                logger.LogInformation("Evento AbacatePay ignorado: {Event}", eventType);
+                logger.LogInformation("Evento Stripe ignorado: {Event}", stripeEvent.Type);
                 break;
         }
 
         return Ok();
     }
 
-    private async Task HandlePagamentoConfirmado(JsonElement root, CancellationToken ct)
+    private async Task HandleCheckoutCompletedAsync(Event stripeEvent, CancellationToken ct)
     {
-        var tenantId = ExtrairTenantId(root);
-        if (tenantId == null) return;
+        if (stripeEvent.Data.Object is not StripeCheckoutSession session) return;
 
-        var tipo = ExtrairMetadata(root, "tipo");
-        if (tipo == "creditos_ia")
+        if (!session.Metadata.TryGetValue("tenantId", out var tenantIdStr) || !Guid.TryParse(tenantIdStr, out var tenantId))
         {
-            await HandleCreditosComprados(root, tenantId.Value, ct);
+            logger.LogWarning("checkout.session.completed sem tenantId em metadata: {SessionId}", session.Id);
             return;
         }
 
-        var tenant = await context.Tenants.FindAsync([tenantId.Value], ct);
+        var tenant = await context.Tenants.FindAsync([tenantId], ct);
         if (tenant is null) return;
 
-        var periodo = ExtrairMetadata(root, "periodo") ?? tenant.PeriodoBilling ?? "Mensal";
+        if (session.Mode == "payment" && session.Metadata.GetValueOrDefault("tipo") == "creditos_ia")
+        {
+            await HandleCreditosCompradosAsync(session, tenant.Id, ct);
+            return;
+        }
 
-        var planoStr = ExtrairMetadata(root, "plano");
-        tenant.Plano = planoStr switch { "Plus" => PlanoTipo.Plus, "Max" => PlanoTipo.Max, _ => PlanoTipo.Pro };
+        if (session.Mode != "subscription" || string.IsNullOrEmpty(session.SubscriptionId)) return;
+
+        var plano = session.Metadata.GetValueOrDefault("plano");
+        var periodo = session.Metadata.GetValueOrDefault("periodo") ?? tenant.PeriodoBilling ?? "Mensal";
+
+        tenant.Plano = plano switch { "Plus" => PlanoTipo.Plus, "Max" => PlanoTipo.Max, _ => PlanoTipo.Pro };
         tenant.Status = StatusTenant.Ativo;
         tenant.TrialExpiraEm = null;
         tenant.PlanoExpiraEm = null;
         tenant.PeriodoBilling = periodo;
         tenant.BillingCycleStart = DateTime.UtcNow;
+        tenant.StripeCustomerId = session.CustomerId;
+        tenant.StripeSubscriptionId = session.SubscriptionId;
         tenant.TrialConcedidoPorId = null;
         tenant.TrialConcedidoEm = null;
         tenant.TrialConcedidoDias = null;
         tenant.TrialConcedidoMotivo = null;
 
-        var valor = ExtrairValor(root);
-        var billingId = ExtrairBillingId(root);
-        var descricao = tipo == "upgrade_prorado"
-            ? $"Upgrade → {tenant.Plano} {periodo} (prorado)"
-            : $"Assinatura {tenant.Plano} {periodo}";
-
-        if (!string.IsNullOrEmpty(billingId))
+        context.Faturamentos.Add(new Faturamento
         {
-            context.Faturamentos.Add(new Faturamento
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenant.Id,
-                BillingId = billingId,
-                Periodo = periodo,
-                Valor = valor,
-                Status = StatusFaturamento.Pago,
-                DataPagamento = DateTime.UtcNow,
-                DataCriacao = DateTime.UtcNow,
-                Descricao = descricao
-            });
-        }
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            BillingId = session.SubscriptionId,
+            Periodo = periodo,
+            Valor = (session.AmountTotal ?? 0) / 100m,
+            Status = StatusFaturamento.Pago,
+            DataPagamento = DateTime.UtcNow,
+            DataCriacao = DateTime.UtcNow,
+            Descricao = $"Assinatura {tenant.Plano} {periodo}"
+        });
 
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Plano {Plano} ativado via webhook para tenant {TenantId}", tenant.Plano, tenantId);
-
-        if (tipo == "upgrade_prorado")
-            await CriarSubscricaoRecorrenteAsync(tenant, periodo, ct);
+        logger.LogInformation("Plano {Plano} ativado via webhook Stripe para tenant {TenantId}", tenant.Plano, tenant.Id);
     }
 
-    private async Task CriarSubscricaoRecorrenteAsync(Tenant tenant, string periodo, CancellationToken ct)
+    private async Task HandleCreditosCompradosAsync(StripeCheckoutSession session, Guid tenantId, CancellationToken ct)
     {
-        try
-        {
-            var admin = await context.Users
-                .Where(u => u.TenantId == tenant.Id && u.Perfil == PerfilUsuario.Admin && u.Ativo)
-                .FirstOrDefaultAsync(ct);
-            if (admin is null) return;
-
-            var frontendUrl = config["App:FrontendUrl"] ?? "http://localhost:6600";
-
-            var result = await abacatePay.CriarBillingAsync(new CriarBillingInput(
-                TenantId: tenant.Id.ToString(),
-                NomeEscritorio: tenant.Nome,
-                Email: admin.Email!,
-                NomeAdmin: admin.Nome,
-                Cnpj: tenant.Cnpj,
-                Periodo: periodo,
-                ReturnUrl: $"{frontendUrl}/pages/assinatura.html?checkout=pendente",
-                CompletionUrl: $"{frontendUrl}/pages/assinatura.html?checkout=processando",
-                Plano: tenant.Plano.ToString()
-            ), ct);
-
-            tenant.AbacatePayBillingId = result.BillingId;
-            await context.SaveChangesAsync(ct);
-
-            logger.LogInformation("Subscription recorrente criada para tenant {TenantId} após upgrade prorado, plano {Plano}",
-                tenant.Id, tenant.Plano);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Erro ao criar subscription recorrente após upgrade prorado para tenant {TenantId}", tenant.Id);
-        }
-    }
-
-    private async Task HandleCreditosComprados(JsonElement root, Guid tenantId, CancellationToken ct)
-    {
-        var pacoteId = ExtrairMetadata(root, "pacoteId");
+        var pacoteId = session.Metadata.GetValueOrDefault("referenciaId");
         var pacote = PacotesCreditos.Todos.FirstOrDefault(p => p.Id == pacoteId);
         if (pacote is null)
         {
@@ -473,103 +480,71 @@ public class WebhookController(
 
         await creditoService.AdicionarCreditosCompradosAsync(tenantId, pacote.CreditosTraducao, pacote.CreditosPeca, ct);
 
-        var valor = ExtrairValor(root);
-        var billingId = ExtrairBillingId(root);
-        if (!string.IsNullOrEmpty(billingId))
+        context.Faturamentos.Add(new Faturamento
         {
-            context.Faturamentos.Add(new Faturamento
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                BillingId = billingId,
-                Periodo = $"Pacote {pacote.Nome}",
-                Valor = valor > 0 ? valor : pacote.Valor,
-                Status = StatusFaturamento.Pago,
-                DataPagamento = DateTime.UtcNow,
-                DataCriacao = DateTime.UtcNow,
-                Descricao = $"Créditos IA — {pacote.Nome} ({pacote.CreditosTraducao + pacote.CreditosPeca} créditos)"
-            });
-            await context.SaveChangesAsync(ct);
-        }
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            BillingId = session.Id,
+            Periodo = $"Pacote {pacote.Nome}",
+            Valor = (session.AmountTotal ?? 0) / 100m,
+            Status = StatusFaturamento.Pago,
+            DataPagamento = DateTime.UtcNow,
+            DataCriacao = DateTime.UtcNow,
+            Descricao = $"Créditos IA — {pacote.Nome} ({pacote.CreditosTraducao + pacote.CreditosPeca} créditos)"
+        });
+        await context.SaveChangesAsync(ct);
 
-        logger.LogInformation("Créditos IA adicionados via webhook para tenant {TenantId}, pacote {Pacote}", tenantId, pacote.Nome);
+        logger.LogInformation("Créditos IA adicionados via webhook Stripe para tenant {TenantId}, pacote {Pacote}", tenantId, pacote.Nome);
     }
 
-    private async Task HandleSubscriptionCancelada(JsonElement root, CancellationToken ct)
+    private async Task HandleInvoicePaidAsync(Event stripeEvent, CancellationToken ct)
     {
-        var tenantId = ExtrairTenantId(root);
-        if (tenantId == null) return;
+        if (stripeEvent.Data.Object is not Invoice invoice) return;
 
-        var tenant = await context.Tenants.FindAsync([tenantId.Value], ct);
-        if (tenant is null || tenant.PlanoExpiraEm.HasValue) return;
+        // Renovação automática de ciclo. A cobrança inicial (subscription_create) já foi
+        // registrada em checkout.session.completed, e a de upgrade (subscription_update) já
+        // foi registrada em ConfirmarUpgrade — aqui só tratamos o ciclo recorrente normal.
+        if (invoice.BillingReason != "subscription_cycle") return;
 
-        // Se não foi cancelado pela UI (sem PlanoExpiraEm), expira no fim do período
-        var expiraEm = tenant.PeriodoBilling == "Anual"
-            ? DateTime.UtcNow.AddYears(1).Date
-            : DateTime.UtcNow.AddMonths(1).Date;
+        var subscriptionId = invoice.Parent?.SubscriptionDetails?.SubscriptionId;
+        if (string.IsNullOrEmpty(subscriptionId)) return;
 
-        tenant.Status = StatusTenant.Cancelado;
-        tenant.PlanoExpiraEm = expiraEm;
+        var tenant = await context.Tenants.FirstOrDefaultAsync(t => t.StripeSubscriptionId == subscriptionId, ct);
+        if (tenant is null) return;
+
+        tenant.Status = StatusTenant.Ativo;
+        tenant.PlanoExpiraEm = null;
+        tenant.BillingCycleStart = DateTime.UtcNow;
+
+        context.Faturamentos.Add(new Faturamento
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            BillingId = subscriptionId,
+            Periodo = tenant.PeriodoBilling ?? "Mensal",
+            Valor = invoice.AmountPaid / 100m,
+            Status = StatusFaturamento.Pago,
+            DataPagamento = DateTime.UtcNow,
+            DataCriacao = DateTime.UtcNow,
+            Descricao = $"Renovação {tenant.Plano} {tenant.PeriodoBilling}"
+        });
 
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Assinatura cancelada via webhook para tenant {TenantId}, expira em {Data}", tenantId, expiraEm);
+        logger.LogInformation("Renovação registrada via webhook Stripe para tenant {TenantId}", tenant.Id);
     }
 
-    private static JsonElement? ExtrairDataObject(JsonElement root)
+    private async Task HandleSubscriptionDeletedAsync(Event stripeEvent, CancellationToken ct)
     {
-        var data = root.GetProperty("data");
-        foreach (var key in new[] { "checkout", "billing", "subscription" })
-            if (data.TryGetProperty(key, out var obj))
-                return obj;
-        return null;
-    }
+        if (stripeEvent.Data.Object is not Subscription subscription) return;
 
-    private static Guid? ExtrairTenantId(JsonElement root)
-    {
-        try
-        {
-            var obj = ExtrairDataObject(root);
-            if (obj is null) return null;
-            var metadata = obj.Value.GetProperty("metadata");
-            if (metadata.TryGetProperty("tenantId", out var tid) &&
-                Guid.TryParse(tid.GetString(), out var guid))
-                return guid;
-        }
-        catch { }
-        return null;
-    }
+        var tenant = await context.Tenants.FirstOrDefaultAsync(t => t.StripeSubscriptionId == subscription.Id, ct);
+        if (tenant is null) return;
 
-    private static string? ExtrairMetadata(JsonElement root, string key)
-    {
-        try
-        {
-            var obj = ExtrairDataObject(root);
-            if (obj is null) return null;
-            var metadata = obj.Value.GetProperty("metadata");
-            return metadata.TryGetProperty(key, out var val) ? val.GetString() : null;
-        }
-        catch { return null; }
-    }
+        tenant.Status = StatusTenant.Cancelado;
+        tenant.PlanoExpiraEm ??= DateTime.UtcNow;
 
-    private static decimal ExtrairValor(JsonElement root)
-    {
-        try
-        {
-            var obj = ExtrairDataObject(root);
-            if (obj is null) return 0;
-            return obj.Value.GetProperty("amount").GetInt32() / 100m;
-        }
-        catch { return 0; }
-    }
-
-    private static string? ExtrairBillingId(JsonElement root)
-    {
-        try
-        {
-            var obj = ExtrairDataObject(root);
-            return obj?.GetProperty("id").GetString();
-        }
-        catch { return null; }
+        await context.SaveChangesAsync(ct);
+        logger.LogInformation("Assinatura Stripe {SubscriptionId} encerrada para tenant {TenantId}", subscription.Id, tenant.Id);
     }
 }
 
