@@ -142,7 +142,10 @@ public class StripeService : IStripeService
         {
             Mode = "payment",
             Customer = customerId,
-            PaymentMethodTypes = new List<string> { "card", "pix" },
+            // Não fixamos PaymentMethodTypes: a Stripe usa o que estiver ativado em
+            // Dashboard → Settings → Payment methods para a conta/moeda. Forçar "pix" aqui
+            // quebra a criação da sessão com StripeException se o método não estiver
+            // habilitado na conta (ex.: contas de teste recém-criadas vêm só com card).
             LineItems = new List<SessionLineItemOptions>
             {
                 new()
