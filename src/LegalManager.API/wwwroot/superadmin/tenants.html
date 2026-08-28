@@ -322,7 +322,7 @@
       return `há ${Math.floor(d / 365)}a`;
     }
     function paymentBadge(t) {
-      const hasBilling = !!t.abacatePayBillingId;
+      const hasBilling = !!(t.stripeSubscriptionId || t.abacatePayBillingId);
       // Plano: Free não tem billing
       if (t.plano === 'Free') {
         return '<span class="badge badge-gray" title="Plano Free, sem cobrança">—</span>';
@@ -485,7 +485,8 @@
             <div class="detail-row"><span class="detail-label">Plano expira</span>
               <span>${fmtDate(t.planoExpiraEm)} ${countdownBadge(t.planoExpiraEm, 'Plano')}</span>
             </div>
-            <div class="detail-row"><span class="detail-label">AbacatePay ID</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId ?? '—')}</span></div>
+            <div class="detail-row"><span class="detail-label">Stripe Subscription ID</span><span style="font-size:11px;font-family:monospace">${esc(t.stripeSubscriptionId ?? '—')}</span></div>
+            ${t.abacatePayBillingId ? `<div class="detail-row"><span class="detail-label">AbacatePay ID (legado)</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId)}</span></div>` : ''}
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">

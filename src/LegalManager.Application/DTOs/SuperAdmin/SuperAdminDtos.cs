@@ -43,6 +43,7 @@ public record TenantDetailDto(
     DateTime? TrialExpiraEm,
     DateTime? PlanoExpiraEm,
     string? AbacatePayBillingId,
+    string? StripeSubscriptionId,
     int ProcessoCount,
     int MonitoradoCount,
     int MonitoradoDiarioCount,

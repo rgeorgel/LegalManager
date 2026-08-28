@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Stripe;
 
 namespace LegalManager.UnitTests;
 
@@ -43,33 +44,45 @@ public class AssinaturaControllerTests
         return mock;
     }
 
-    private static Mock<IAbacatePayService> CreateAbacatePayServiceMock(string? billingId = null, string? checkoutUrl = null, Exception? exception = null, bool throwOnCancelar = false)
+    private static Mock<IStripeService> CreateStripeServiceMock(
+        string? customerId = null,
+        string? checkoutUrl = null,
+        Exception? checkoutException = null,
+        DateTime? cancelamentoExpiraEm = null,
+        decimal valorCobradoImediato = 30m,
+        Exception? atualizarException = null)
     {
-        var mock = new Mock<IAbacatePayService>();
-        if (exception != null)
+        var mock = new Mock<IStripeService>();
+
+        if (checkoutException != null)
         {
-            mock.Setup(s => s.CriarBillingAsync(It.IsAny<CriarBillingInput>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
-            mock.Setup(s => s.CriarCheckoutUnicoAsync(It.IsAny<CriarCheckoutUnicoInput>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(exception);
+            mock.Setup(s => s.CriarCheckoutAssinaturaAsync(It.IsAny<CriarCheckoutAssinaturaInput>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(checkoutException);
+            mock.Setup(s => s.CriarCheckoutAvulsoAsync(It.IsAny<CriarCheckoutAvulsoInput>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(checkoutException);
         }
         else
         {
-            mock.Setup(s => s.CriarBillingAsync(It.IsAny<CriarBillingInput>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new AbacatePayBillingResult(billingId ?? "billing_123", checkoutUrl ?? "https://checkout.test"));
-            mock.Setup(s => s.CriarCheckoutUnicoAsync(It.IsAny<CriarCheckoutUnicoInput>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new AbacatePayBillingResult(billingId ?? "billing_123", checkoutUrl ?? "https://checkout.test"));
+            mock.Setup(s => s.CriarCheckoutAssinaturaAsync(It.IsAny<CriarCheckoutAssinaturaInput>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new StripeCheckoutResult("cs_123", checkoutUrl ?? "https://checkout.test", customerId ?? "cus_123"));
+            mock.Setup(s => s.CriarCheckoutAvulsoAsync(It.IsAny<CriarCheckoutAvulsoInput>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new StripeCheckoutResult("cs_456", checkoutUrl ?? "https://checkout.test", customerId ?? "cus_123"));
         }
-        if (throwOnCancelar)
+
+        if (atualizarException != null)
         {
-            mock.Setup(s => s.CancelarBillingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new InvalidOperationException("Payment error"));
+            mock.Setup(s => s.AtualizarAssinaturaAsync(It.IsAny<AtualizarAssinaturaInput>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(atualizarException);
         }
         else
         {
-            mock.Setup(s => s.CancelarBillingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+            mock.Setup(s => s.AtualizarAssinaturaAsync(It.IsAny<AtualizarAssinaturaInput>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new StripeAtualizarAssinaturaResult("sub_123", "active", valorCobradoImediato));
         }
+
+        mock.Setup(s => s.CancelarAssinaturaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cancelamentoExpiraEm);
+
         return mock;
     }
 
@@ -87,7 +100,7 @@ public class AssinaturaControllerTests
     private static AssinaturaController CreateController(
         AppDbContext ctx,
         Guid tenantId,
-        IAbacatePayService? abacatePay = null,
+        IStripeService? stripe = null,
         Usuario? admin = null,
         string? frontendUrl = null)
     {
@@ -95,7 +108,7 @@ public class AssinaturaControllerTests
         var config = CreateConfigMock(frontendUrl);
         var userManager = CreateUserManager(admin);
         var controller = new AssinaturaController(
-            abacatePay ?? Mock.Of<IAbacatePayService>(),
+            stripe ?? Mock.Of<IStripeService>(),
             ctx,
             tenantMock.Object,
             userManager,
@@ -106,6 +119,12 @@ public class AssinaturaControllerTests
             HttpContext = new DefaultHttpContext()
         };
         return controller;
+    }
+
+    private static JsonElement AsJson(object? value)
+    {
+        var json = JsonSerializer.Serialize(value);
+        return JsonDocument.Parse(json).RootElement;
     }
 
     [Fact]
@@ -316,30 +335,128 @@ public class AssinaturaControllerTests
     }
 
     [Fact]
-    public async Task IniciarCheckout_ReturnsOk_WhenSuccess()
+    public async Task IniciarCheckout_ReturnsCheckoutUrl_WhenNovaAssinatura()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
         var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
-        var abacatePay = CreateAbacatePayServiceMock("billing_123", "https://checkout.test");
-        var controller = CreateController(ctx, tenantId, abacatePay.Object, admin);
+        var stripe = CreateStripeServiceMock(checkoutUrl: "https://checkout.test");
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
         var result = await controller.IniciarCheckout(new IniciarCheckoutDto("Mensal"), CancellationToken.None);
-        Assert.IsType<OkObjectResult>(result);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = AsJson(ok.Value);
+        Assert.Equal("https://checkout.test", json.GetProperty("checkoutUrl").GetString());
+        Assert.False(json.GetProperty("requerConfirmacao").GetBoolean());
+
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal("cus_123", tenant!.StripeCustomerId);
     }
 
     [Fact]
-    public async Task IniciarCheckout_ReturnsBadRequest_WhenAbacatePayThrows()
+    public async Task IniciarCheckout_ReturnsBadRequest_WhenStripeThrows()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
         var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
-        var abacatePay = CreateAbacatePayServiceMock(exception: new InvalidOperationException("Payment error"));
-        var controller = CreateController(ctx, tenantId, abacatePay.Object, admin);
+        var stripe = CreateStripeServiceMock(checkoutException: new StripeException("Payment error"));
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
         var result = await controller.IniciarCheckout(new IniciarCheckoutDto("Mensal"), CancellationToken.None);
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task IniciarCheckout_ReturnsRequerConfirmacao_WhenUpgradeComAssinaturaAtiva()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal",
+            StripeSubscriptionId = "sub_123", BillingCycleStart = DateTime.UtcNow.AddDays(-10)
+        });
+        await ctx.SaveChangesAsync();
+        var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
+        var stripe = CreateStripeServiceMock();
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
+
+        var result = await controller.IniciarCheckout(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = AsJson(ok.Value);
+        Assert.True(json.GetProperty("requerConfirmacao").GetBoolean());
+        Assert.True(json.GetProperty("prorado").GetBoolean());
+        stripe.Verify(s => s.CriarCheckoutAssinaturaAsync(It.IsAny<CriarCheckoutAssinaturaInput>(), It.IsAny<CancellationToken>()), Times.Never);
+        stripe.Verify(s => s.AtualizarAssinaturaAsync(It.IsAny<AtualizarAssinaturaInput>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ConfirmarUpgrade_ReturnsNotFound_WhenTenantMissing()
+    {
+        using var ctx = CreateContext();
+        var controller = CreateController(ctx, Guid.NewGuid());
+        var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task ConfirmarUpgrade_ReturnsBadRequest_WhenSemAssinaturaAtiva()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+        var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ConfirmarUpgrade_ReturnsOk_AtualizaPlanoECriaFaturamento()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
+        });
+        await ctx.SaveChangesAsync();
+        var stripe = CreateStripeServiceMock(valorCobradoImediato: 42.5m);
+        var controller = CreateController(ctx, tenantId, stripe.Object);
+
+        var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = AsJson(ok.Value);
+        Assert.Equal("Max", json.GetProperty("plano").GetString());
+        Assert.Equal(42.5m, json.GetProperty("valorCobrado").GetDecimal());
+
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Max, tenant!.Plano);
+        Assert.Equal("sub_123", tenant.StripeSubscriptionId);
+        Assert.Single(ctx.Faturamentos.Where(f => f.TenantId == tenantId));
+    }
+
+    [Fact]
+    public async Task ConfirmarUpgrade_ReturnsBadRequest_WhenStripeThrows()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
+        });
+        await ctx.SaveChangesAsync();
+        var stripe = CreateStripeServiceMock(atualizarException: new StripeException("Card declined"));
+        var controller = CreateController(ctx, tenantId, stripe.Object);
+
+        var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
@@ -365,27 +482,28 @@ public class AssinaturaControllerTests
     }
 
     [Fact]
-    public async Task Cancelar_ReturnsOk_WhenProWithBilling()
+    public async Task Cancelar_ReturnsOk_WhenProComAssinaturaStripe()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
+        var expiraEm = DateTime.UtcNow.AddDays(20);
         ctx.Tenants.Add(new Tenant
         {
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
-            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", AbacatePayBillingId = "billing_123"
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
         });
         await ctx.SaveChangesAsync();
-        var abacatePay = CreateAbacatePayServiceMock();
-        var controller = CreateController(ctx, tenantId, abacatePay.Object);
+        var stripe = CreateStripeServiceMock(cancelamentoExpiraEm: expiraEm);
+        var controller = CreateController(ctx, tenantId, stripe.Object);
         var result = await controller.Cancelar(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
         var tenant = await ctx.Tenants.FindAsync(tenantId);
         Assert.Equal(StatusTenant.Cancelado, tenant!.Status);
-        Assert.NotNull(tenant.PlanoExpiraEm);
+        Assert.Equal(expiraEm, tenant.PlanoExpiraEm);
     }
 
     [Fact]
-    public async Task Cancelar_ReturnsOk_WhenProWithoutBilling()
+    public async Task Cancelar_ReturnsOk_WhenProSemAssinaturaStripe()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
@@ -398,28 +516,28 @@ public class AssinaturaControllerTests
         var controller = CreateController(ctx, tenantId);
         var result = await controller.Cancelar(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.NotNull(tenant!.PlanoExpiraEm);
     }
 
     [Fact]
-    public async Task Cancelar_ReturnsOk_WhenAbacatePayThrows()
+    public async Task Cancelar_ReturnsOk_WhenStripeNaoRetornaData()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant
         {
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
-            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", AbacatePayBillingId = "billing_123"
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
         });
         await ctx.SaveChangesAsync();
-        var abacatePay = CreateAbacatePayServiceMock(throwOnCancelar: true);
-        var controller = CreateController(ctx, tenantId, abacatePay.Object);
-        var logger = new Mock<ILogger<AssinaturaController>>();
-        var serviceProviderMock = new Mock<IServiceProvider>();
-        serviceProviderMock.Setup(s => s.GetService(typeof(ILogger<AssinaturaController>))).Returns(logger.Object);
-        var httpContext = new DefaultHttpContext { RequestServices = serviceProviderMock.Object };
-        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+        var stripe = CreateStripeServiceMock(cancelamentoExpiraEm: null);
+        var controller = CreateController(ctx, tenantId, stripe.Object);
         var result = await controller.Cancelar(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(StatusTenant.Cancelado, tenant!.Status);
+        Assert.NotNull(tenant.PlanoExpiraEm);
     }
 
     [Fact]
@@ -465,22 +583,22 @@ public class AssinaturaControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
         var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
-        var abacatePay = CreateAbacatePayServiceMock("billing_123", "https://checkout.test");
-        var controller = CreateController(ctx, tenantId, abacatePay.Object, admin);
+        var stripe = CreateStripeServiceMock(checkoutUrl: "https://checkout.test");
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
         var result = await controller.ComprarCreditos(new ComprarCreditosDto("basico"), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
 
     [Fact]
-    public async Task ComprarCreditos_ReturnsBadRequest_WhenAbacatePayThrows()
+    public async Task ComprarCreditos_ReturnsBadRequest_WhenStripeThrows()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
         var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
-        var abacatePay = CreateAbacatePayServiceMock(exception: new InvalidOperationException("Payment error"));
-        var controller = CreateController(ctx, tenantId, abacatePay.Object, admin);
+        var stripe = CreateStripeServiceMock(checkoutException: new StripeException("Payment error"));
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
         var result = await controller.ComprarCreditos(new ComprarCreditosDto("basico"), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -504,12 +622,11 @@ public class WebhookControllerTests
         return mock;
     }
 
-    private static Mock<IConfiguration> CreateConfigMock(string? webhookSecret = null)
+    // Sem Stripe:WebhookSecret configurado -> o controller usa EventUtility.ParseEvent
+    // (sem checar assinatura), o que evita ter que calcular HMAC real nos testes.
+    private static Mock<IConfiguration> CreateConfigMock()
     {
-        var mock = new Mock<IConfiguration>();
-        if (webhookSecret != null)
-            mock.Setup(c => c["AbacatePay:WebhookSecret"]).Returns(webhookSecret);
-        return mock;
+        return new Mock<IConfiguration>();
     }
 
     private static Mock<ILogger<WebhookController>> CreateLoggerMock()
@@ -517,136 +634,180 @@ public class WebhookControllerTests
         return new Mock<ILogger<WebhookController>>();
     }
 
-    private static DefaultHttpContext CreateHttpContext(string body, string? signature = null)
+    private static DefaultHttpContext CreateHttpContext(string body)
     {
         var context = new DefaultHttpContext();
         var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(body));
         stream.Position = 0;
         context.Request.Body = stream;
         context.Request.ContentType = "application/json";
-        if (signature != null)
-            context.Request.Headers["X-Webhook-Signature"] = signature;
         return context;
     }
 
     private static WebhookController CreateController(AppDbContext ctx, IConfiguration config, ICreditoService? creditoService = null)
     {
-        return new WebhookController(ctx, config, creditoService ?? CreateCreditoServiceMock().Object, Mock.Of<IAbacatePayService>(), CreateLoggerMock().Object);
+        return new WebhookController(ctx, config, creditoService ?? CreateCreditoServiceMock().Object, CreateLoggerMock().Object);
     }
 
     [Fact]
-    public async Task AbacatePay_ReturnsUnauthorized_WhenSecretInvalid()
-    {
-        using var ctx = CreateContext();
-        var controller = CreateController(ctx, CreateConfigMock("correct-secret").Object);
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext("{}", "wrong-secret") };
-        var result = await controller.AbacatePay("wrong-secret", CancellationToken.None);
-        Assert.IsType<UnauthorizedResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_ReturnsOk_WhenUnknownEvent()
-    {
-        using var ctx = CreateContext();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext("""{"event":"unknown.event","data":{}}""") };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_ReturnsOk_WhenNoSecretRequired()
+    public async Task Stripe_ReturnsOk_WhenUnknownEvent()
     {
         using var ctx = CreateContext();
         var controller = CreateController(ctx, CreateConfigMock().Object);
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext("""{"event":"test"}""") };
-        var result = await controller.AbacatePay(null, CancellationToken.None);
+        var body = """{"id":"evt_1","object":"event","type":"payment_intent.created","data":{"object":{"id":"pi_1","object":"payment_intent"}}}""";
+        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
+        var result = await controller.Stripe(CancellationToken.None);
         Assert.IsType<OkResult>(result);
     }
 
     [Fact]
-    public async Task AbacatePay_HandlesCheckoutCompleted_UpdatesTenantToPro()
+    public async Task Stripe_HandlesCheckoutSessionCompleted_AtivaAssinatura()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = $$"""
         {
-            @event = "checkout.completed",
-            data = new
-            {
-                checkout = new
-                {
-                    id = "checkout_123",
-                    amount = 8990,
-                    metadata = new { tenantId = tenantId.ToString() }
-                }
-            }
-        });
+          "id": "evt_1", "object": "event", "type": "checkout.session.completed",
+          "data": { "object": {
+            "id": "cs_123", "object": "checkout.session", "mode": "subscription",
+            "customer": "cus_123", "subscription": "sub_123", "amount_total": 5000,
+            "metadata": { "tenantId": "{{tenantId}}", "plano": "Pro", "periodo": "Mensal" }
+          } }
+        }
+        """;
         controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
+        var result = await controller.Stripe(CancellationToken.None);
         Assert.IsType<OkResult>(result);
         var tenant = await ctx.Tenants.FindAsync(tenantId);
         Assert.Equal(PlanoTipo.Pro, tenant!.Plano);
         Assert.Equal(StatusTenant.Ativo, tenant.Status);
+        Assert.Equal("sub_123", tenant.StripeSubscriptionId);
+        Assert.Equal("cus_123", tenant.StripeCustomerId);
+        Assert.Single(ctx.Faturamentos.Where(f => f.TenantId == tenantId));
     }
 
     [Fact]
-    public async Task AbacatePay_HandlesCreditosIA_CallsCreditoService()
+    public async Task Stripe_HandlesCheckoutSessionCompleted_CreditosIA_CallsCreditoService()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
         var creditoMock = CreateCreditoServiceMock();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object, creditoMock.Object);
-        var body = JsonSerializer.Serialize(new
+        var controller = CreateController(ctx, CreateConfigMock().Object, creditoMock.Object);
+        var body = $$"""
         {
-            @event = "checkout.completed",
-            data = new
-            {
-                checkout = new
-                {
-                    id = "checkout_123",
-                    amount = 2990,
-                    metadata = new { tenantId = tenantId.ToString(), tipo = "creditos_ia", pacoteId = "basico" }
-                }
-            }
-        });
+          "id": "evt_2", "object": "event", "type": "checkout.session.completed",
+          "data": { "object": {
+            "id": "cs_456", "object": "checkout.session", "mode": "payment",
+            "customer": "cus_123", "amount_total": 2990,
+            "metadata": { "tenantId": "{{tenantId}}", "tipo": "creditos_ia", "referenciaId": "basico" }
+          } }
+        }
+        """;
         controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
+        var result = await controller.Stripe(CancellationToken.None);
         Assert.IsType<OkResult>(result);
         creditoMock.Verify(s => s.AdicionarCreditosCompradosAsync(tenantId, 20, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task AbacatePay_HandlesSubscriptionCancelled_UpdatesTenantStatus()
+    public async Task Stripe_HandlesCheckoutSessionCompleted_Gracefully_WhenTenantIdAusente()
+    {
+        using var ctx = CreateContext();
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = """
+        {
+          "id": "evt_3", "object": "event", "type": "checkout.session.completed",
+          "data": { "object": {
+            "id": "cs_789", "object": "checkout.session", "mode": "subscription",
+            "customer": "cus_123", "subscription": "sub_123", "amount_total": 5000,
+            "metadata": {}
+          } }
+        }
+        """;
+        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
+        var result = await controller.Stripe(CancellationToken.None);
+        Assert.IsType<OkResult>(result);
+    }
+
+    [Fact]
+    public async Task Stripe_HandlesInvoicePaid_RegistraRenovacao()
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
         ctx.Tenants.Add(new Tenant
         {
             Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
-            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal"
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
         });
         await ctx.SaveChangesAsync();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = """
         {
-            @event = "subscription.cancelled",
-            data = new
-            {
-                subscription = new
-                {
-                    id = "sub_123",
-                    metadata = new { tenantId = tenantId.ToString() }
-                }
-            }
-        });
+          "id": "evt_4", "object": "event", "type": "invoice.paid",
+          "data": { "object": {
+            "id": "in_123", "object": "invoice", "billing_reason": "subscription_cycle", "amount_paid": 5000,
+            "parent": { "type": "subscription_details", "subscription_details": { "subscription": "sub_123" } }
+          } }
+        }
+        """;
         controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
+        var result = await controller.Stripe(CancellationToken.None);
+        Assert.IsType<OkResult>(result);
+        Assert.Single(ctx.Faturamentos.Where(f => f.TenantId == tenantId));
+    }
+
+    [Fact]
+    public async Task Stripe_IgnoraInvoicePaid_QuandoNaoForRenovacaoDeCiclo()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = """
+        {
+          "id": "evt_5", "object": "event", "type": "invoice.paid",
+          "data": { "object": {
+            "id": "in_456", "object": "invoice", "billing_reason": "subscription_create", "amount_paid": 5000,
+            "parent": { "type": "subscription_details", "subscription_details": { "subscription": "sub_123" } }
+          } }
+        }
+        """;
+        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
+        var result = await controller.Stripe(CancellationToken.None);
+        Assert.IsType<OkResult>(result);
+        Assert.Empty(ctx.Faturamentos.Where(f => f.TenantId == tenantId));
+    }
+
+    [Fact]
+    public async Task Stripe_HandlesSubscriptionDeleted_CancelaTenant()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = """
+        {
+          "id": "evt_6", "object": "event", "type": "customer.subscription.deleted",
+          "data": { "object": { "id": "sub_123", "object": "subscription", "status": "canceled" } }
+        }
+        """;
+        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
+        var result = await controller.Stripe(CancellationToken.None);
         Assert.IsType<OkResult>(result);
         var tenant = await ctx.Tenants.FindAsync(tenantId);
         Assert.Equal(StatusTenant.Cancelado, tenant!.Status);
@@ -654,148 +815,18 @@ public class WebhookControllerTests
     }
 
     [Fact]
-    public async Task AbacatePay_HandlesBillingPaid_UpdatesTenant()
+    public async Task Stripe_HandlesSubscriptionDeleted_Gracefully_WhenTenantNaoEncontrado()
     {
         using var ctx = CreateContext();
-        var tenantId = Guid.NewGuid();
-        ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, Cnpj = "123", CriadoEm = DateTime.UtcNow });
-        await ctx.SaveChangesAsync();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
+        var controller = CreateController(ctx, CreateConfigMock().Object);
+        var body = """
         {
-            @event = "billing.paid",
-            data = new
-            {
-                billing = new
-                {
-                    id = "billing_123",
-                    amount = 8990,
-                    metadata = new { tenantId = tenantId.ToString(), periodo = "Anual" }
-                }
-            }
-        });
+          "id": "evt_7", "object": "event", "type": "customer.subscription.deleted",
+          "data": { "object": { "id": "sub_desconhecida", "object": "subscription", "status": "canceled" } }
+        }
+        """;
         controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-        var tenant = await ctx.Tenants.FindAsync(tenantId);
-        Assert.Equal(PlanoTipo.Pro, tenant!.Plano);
-        Assert.Equal(StatusTenant.Ativo, tenant.Status);
-    }
-
-    [Fact]
-    public async Task AbacatePay_HandlesSubscriptionRenewed_UpdatesTenant()
-    {
-        using var ctx = CreateContext();
-        var tenantId = Guid.NewGuid();
-        ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
-        await ctx.SaveChangesAsync();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
-        {
-            @event = "subscription.renewed",
-            data = new
-            {
-                subscription = new
-                {
-                    id = "sub_renewed",
-                    amount = 8990,
-                    metadata = new { tenantId = tenantId.ToString() }
-                }
-            }
-        });
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_ReturnsUnauthorized_WhenHmacSignatureInvalid()
-    {
-        using var ctx = CreateContext();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext("""{"event":"checkout.completed"}""", "invalid-hmac-signature") };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<UnauthorizedResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_HandlesEventWithNoData_Gracefully()
-    {
-        using var ctx = CreateContext();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext("""{"event":"checkout.completed"}""") };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_HandlesEventWithNoTenantId_Gracefully()
-    {
-        using var ctx = CreateContext();
-        ctx.Tenants.Add(new Tenant { Id = Guid.NewGuid(), Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, Cnpj = "123", CriadoEm = DateTime.UtcNow });
-        await ctx.SaveChangesAsync();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
-        {
-            @event = "checkout.completed",
-            data = new
-            {
-                checkout = new
-                {
-                    id = "checkout_123",
-                    amount = 8990,
-                    metadata = new { }
-                }
-            }
-        });
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_HandlesSubscriptionCancelled_WhenTenantNotFound()
-    {
-        using var ctx = CreateContext();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object);
-        var body = JsonSerializer.Serialize(new
-        {
-            @event = "subscription.cancelled",
-            data = new
-            {
-                subscription = new
-                {
-                    id = "sub_123",
-                    metadata = new { tenantId = Guid.NewGuid().ToString() }
-                }
-            }
-        });
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
-        Assert.IsType<OkResult>(result);
-    }
-
-    [Fact]
-    public async Task AbacatePay_HandlesCreditosIA_WhenTenantNotFound()
-    {
-        using var ctx = CreateContext();
-        var creditoMock = CreateCreditoServiceMock();
-        var controller = CreateController(ctx, CreateConfigMock("secret123").Object, creditoMock.Object);
-        var body = JsonSerializer.Serialize(new
-        {
-            @event = "checkout.completed",
-            data = new
-            {
-                checkout = new
-                {
-                    id = "checkout_123",
-                    amount = 2990,
-                    metadata = new { tenantId = Guid.NewGuid().ToString(), tipo = "creditos_ia", pacoteId = "basico" }
-                }
-            }
-        });
-        controller.ControllerContext = new ControllerContext { HttpContext = CreateHttpContext(body) };
-        var result = await controller.AbacatePay("secret123", CancellationToken.None);
+        var result = await controller.Stripe(CancellationToken.None);
         Assert.IsType<OkResult>(result);
     }
 }

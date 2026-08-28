@@ -52,9 +52,8 @@ services:
       OciStorage__BucketName: ${OCI_BUCKET_NAME:-legal-manager-docs}
       OciStorage__AccessKey: ${OCI_ACCESS_KEY:-}
       OciStorage__SecretKey: ${OCI_SECRET_KEY:-}
-      AbacatePay__ApiKey: ${ABACATEPAY_API_KEY:-}
-      AbacatePay__WebhookSecret: ${ABACATEPAY_WEBHOOK_SECRET:-}
-      AbacatePay__BaseUrl: ${ABACATEPAY_BASE_URL:-https://api.abacatepay.com/v2}
+      Stripe__ApiKey: ${STRIPE_API_KEY:-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
       IA__Provider: ${IA_PROVIDER:-Anthropic}
       IA__ApiKey: ${IA_API_KEY:-}
       IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}

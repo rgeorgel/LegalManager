@@ -229,6 +229,7 @@ public class TrialConcedidoTests
             Status = StatusTenant.Ativo,
             CriadoEm = DateTime.UtcNow,
             AbacatePayBillingId = "billing_xyz",
+            StripeSubscriptionId = "sub_xyz",
             PeriodoBilling = "Mensal",
             BillingCycleStart = DateTime.UtcNow.AddDays(-10),
             PlanoExpiraEm = DateTime.UtcNow.AddDays(20)
@@ -241,6 +242,7 @@ public class TrialConcedidoTests
         var atualizado = await ctx.Tenants.FindAsync(tenantId);
         Assert.Equal(PlanoTipo.Plus, atualizado!.Plano);
         Assert.Null(atualizado.AbacatePayBillingId);
+        Assert.Null(atualizado.StripeSubscriptionId);
         Assert.Null(atualizado.PeriodoBilling);
         Assert.Null(atualizado.BillingCycleStart);
         Assert.Null(atualizado.PlanoExpiraEm);

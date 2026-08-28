@@ -131,6 +131,7 @@ public class AuthService : IAuthService
             tenant.Status = StatusTenant.Ativo;
             tenant.PlanoExpiraEm = null;
             tenant.AbacatePayBillingId = null;
+            tenant.StripeSubscriptionId = null;
             tenant.PeriodoBilling = null;
             await _context.SaveChangesAsync(ct);
         }

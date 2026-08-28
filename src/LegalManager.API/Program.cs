@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
 using Serilog;
+using Stripe;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -212,13 +213,16 @@ builder.Services.AddHttpClient("Anthropic", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-builder.Services.AddHttpClient<IAbacatePayService, AbacatePayService>(client =>
+builder.Services.AddHttpClient("Stripe", client =>
 {
-    var baseUrl = builder.Configuration["AbacatePay:BaseUrl"] ?? "https://api.abacatepay.com/v1";
-    if (!baseUrl.EndsWith('/')) baseUrl += '/';
-    client.BaseAddress = new Uri(baseUrl);
-    var apiKey = builder.Configuration["AbacatePay:ApiKey"] ?? "";
-    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IStripeService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var apiKey = builder.Configuration["Stripe:ApiKey"] ?? "";
+    var stripeClient = new StripeClient(apiKey, httpClient: new SystemNetHttpClient(httpClientFactory.CreateClient("Stripe")));
+    return new StripeService(stripeClient, sp.GetRequiredService<ILogger<StripeService>>());
 });
 
 builder.Services.AddHttpClient("BCB", c =>
