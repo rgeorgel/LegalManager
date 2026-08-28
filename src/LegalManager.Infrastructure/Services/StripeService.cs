@@ -76,7 +76,10 @@ public class StripeService : IStripeService
             {
                 new() { Id = itemId, Price = novoPriceId }
             },
-            ProrationBehavior = "create_prorations",
+            // "create_prorations" só fatura no próximo ciclo — para cobrar a diferença
+            // agora (no cartão já salvo) é preciso "always_invoice".
+            // https://docs.stripe.com/api/subscriptions/update#update_subscription-proration_behavior
+            ProrationBehavior = "always_invoice",
             Metadata = new Dictionary<string, string>
             {
                 ["plano"] = input.PlanoAlvo,

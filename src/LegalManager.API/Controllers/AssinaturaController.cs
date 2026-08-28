@@ -241,6 +241,18 @@ public class AssinaturaController(
             return BadRequest(new { message = "Não foi possível processar o upgrade. Tente novamente em instantes." });
         }
 
+        if (atualizado.Status != "active")
+        {
+            // O preço da assinatura na Stripe já foi trocado (Subscription.Update troca o
+            // item independente do pagamento), mas a cobrança falhou/ficou pendente — não
+            // liberamos o novo plano até confirmar. TODO: tratar isso via webhook
+            // customer.subscription.updated/invoice.payment_failed para reconciliar depois.
+            logger.LogWarning(
+                "Upgrade Stripe para tenant {TenantId} não confirmado (status {Status}) — plano local mantido em {Plano}",
+                tenant.Id, atualizado.Status, tenant.Plano);
+            return BadRequest(new { message = "O pagamento não foi confirmado. Verifique os dados do cartão e tente novamente." });
+        }
+
         tenant.Plano = planoAlvo;
         tenant.Status = StatusTenant.Ativo;
         tenant.PlanoExpiraEm = null;

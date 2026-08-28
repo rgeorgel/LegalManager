@@ -993,6 +993,24 @@
     );
   });
 
+  document.getElementById('btnCancelar').addEventListener('click', () => {
+    openModal(
+      'Cancelar assinatura',
+      document.getElementById('dangerDesc').textContent,
+      'Cancelar assinatura',
+      'btn-danger',
+      async () => {
+        try {
+          const result = await apiFetch('/assinatura/cancelar', { method: 'POST' });
+          showToast(result.message ?? 'Assinatura cancelada.', true);
+          setTimeout(() => window.location.reload(), 1200);
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao cancelar assinatura.', false);
+        }
+      }
+    );
+  });
+
   async function loadHistorico() {
     try {
       const items = await apiFetch('/assinatura/historico');

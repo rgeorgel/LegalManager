@@ -50,7 +50,8 @@ public class AssinaturaControllerTests
         Exception? checkoutException = null,
         DateTime? cancelamentoExpiraEm = null,
         decimal valorCobradoImediato = 30m,
-        Exception? atualizarException = null)
+        Exception? atualizarException = null,
+        string atualizarStatus = "active")
     {
         var mock = new Mock<IStripeService>();
 
@@ -77,7 +78,7 @@ public class AssinaturaControllerTests
         else
         {
             mock.Setup(s => s.AtualizarAssinaturaAsync(It.IsAny<AtualizarAssinaturaInput>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new StripeAtualizarAssinaturaResult("sub_123", "active", valorCobradoImediato));
+                .ReturnsAsync(new StripeAtualizarAssinaturaResult("sub_123", atualizarStatus, valorCobradoImediato));
         }
 
         mock.Setup(s => s.CancelarAssinaturaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -458,6 +459,28 @@ public class AssinaturaControllerTests
 
         var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ConfirmarUpgrade_ReturnsBadRequest_ENaoAtualizaPlano_WhenPagamentoNaoConfirmado()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo,
+            Cnpj = "123", CriadoEm = DateTime.UtcNow, PeriodoBilling = "Mensal", StripeSubscriptionId = "sub_123"
+        });
+        await ctx.SaveChangesAsync();
+        var stripe = CreateStripeServiceMock(atualizarStatus: "past_due");
+        var controller = CreateController(ctx, tenantId, stripe.Object);
+
+        var result = await controller.ConfirmarUpgrade(new IniciarCheckoutDto("Mensal", "Max"), CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Pro, tenant!.Plano);
+        Assert.Empty(ctx.Faturamentos.Where(f => f.TenantId == tenantId));
     }
 
     [Fact]
