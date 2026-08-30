@@ -365,9 +365,24 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
+var hangfireDashboardUser = builder.Configuration["Hangfire:DashboardUser"] ?? "admin";
+var hangfireDashboardPassword = builder.Configuration["Hangfire:DashboardPassword"];
+if (string.IsNullOrEmpty(hangfireDashboardPassword))
+{
+    if (app.Environment.IsDevelopment())
+    {
+        hangfireDashboardPassword = "dev-only-change-in-prod";
+    }
+    else
+    {
+        throw new InvalidOperationException(
+            "Configuração 'Hangfire:DashboardPassword' é obrigatória fora do ambiente de desenvolvimento.");
+    }
+}
+
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new HangfireAuthorizationFilter() }
+    Authorization = new[] { new HangfireAuthorizationFilter(hangfireDashboardUser, hangfireDashboardPassword) }
 });
 
 app.Use(async (ctx, next) =>
