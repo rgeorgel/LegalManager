@@ -52,10 +52,8 @@ public class AlertasJob
             .ToListAsync();
 
         var hojeStr = hoje.ToString("yyyyMMdd");
-        var vencemHoje = new[] { 0 };
-        var proximosDias = new[] { 1, 3, 5 };
-        var candidatas = tarefas.Where(t =>
-            t.Prazo!.Value.Date < hoje.AddDays(6)).ToList();
+        var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
+        var candidatas = tarefas.Where(t => t.Prazo!.Value.Date < hoje.AddDays(6)).ToList();
 
         var grupos = candidatas
             .GroupBy(t => new { t.TenantId, t.DestinatarioId, t.DestinatarioNome, t.DestinatarioEmail })
@@ -66,12 +64,11 @@ public class AlertasJob
             try
             {
                 var itens = new List<ResumoTarefaItem>();
-                var tarefasVisiveis = new List<(Guid Id, string Titulo, DateTime Prazo, int Dias)>();
 
                 foreach (var t in grupo)
                 {
                     var diasPrazo = (t.Prazo!.Value.Date - hoje).Days;
-                    if (diasPrazo > 5) continue;
+                    if (diasPrazo >= 0 && !janelasFuturas.Contains(diasPrazo)) continue;
 
                     var ehAtrasada = diasPrazo < 0;
                     if (ehAtrasada)
@@ -83,7 +80,6 @@ public class AlertasJob
                     }
 
                     itens.Add(new ResumoTarefaItem(t.Titulo, t.Prazo!.Value, diasPrazo));
-                    tarefasVisiveis.Add((t.Id, t.Titulo, t.Prazo!.Value, diasPrazo));
                 }
 
                 if (itens.Count == 0) continue;
