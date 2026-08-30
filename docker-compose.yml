@@ -46,7 +46,7 @@ services:
       Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@legalmanager.com.br}
       Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}
       Hangfire__DashboardUser: ${HANGFIRE_DASHBOARD_USER:-admin}
-      Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:-admin}
+      Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:?HANGFIRE_DASHBOARD_PASSWORD is required}
       OciStorage__Namespace: ${OCI_NAMESPACE:-}
       OciStorage__Region: ${OCI_REGION:-sa-saopaulo-1}
       OciStorage__BucketName: ${OCI_BUCKET_NAME:-legal-manager-docs}
