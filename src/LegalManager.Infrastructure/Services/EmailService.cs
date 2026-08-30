@@ -184,6 +184,122 @@ public class EmailService : IEmailService
         await EnviarAsync(CriarMensagem(email, $"🚨 Tarefa atrasada: {tituloTarefa}", html));
     }
 
+    public async Task EnviarResumoTarefasAsync(string email, string nomeUsuario,
+        IReadOnlyList<ResumoTarefaItem> itens, CancellationToken ct = default)
+    {
+        var atrasadas = itens.Where(i => i.Dias < 0).OrderBy(i => i.Dias).ToList();
+        var hoje = itens.Where(i => i.Dias == 0).ToList();
+        var futuras = itens.Where(i => i.Dias > 0).OrderBy(i => i.Dias).ToList();
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Resumo diário de tarefas</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+            """);
+
+        sb.Append($"""
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
+                <p>Você tem <strong>{itens.Count}</strong> tarefa(s) que precisam de atenção hoje.</p>
+            """);
+
+        if (atrasadas.Count > 0)
+        {
+            sb.Append("""
+                <h3 style="color:#b91c1c;margin:24px 0 8px;border-bottom:1px solid #fecaca;padding-bottom:4px">🚨 Atrasadas</h3>
+                <table style="width:100%;border-collapse:collapse">
+            """);
+            foreach (var t in atrasadas)
+            {
+                sb.Append($"""
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
+                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
+                        <div style="color:#b91c1c;font-size:13px;margin-top:2px">
+                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToLocalTime():dd/MM/yyyy}
+                        </div>
+                      </td>
+                    </tr>
+                """);
+            }
+            sb.Append("</table>");
+        }
+
+        if (hoje.Count > 0)
+        {
+            sb.Append("""
+                <h3 style="color:#d97706;margin:24px 0 8px;border-bottom:1px solid #fde68a;padding-bottom:4px">⏰ Vencem hoje</h3>
+                <table style="width:100%;border-collapse:collapse">
+            """);
+            foreach (var t in hoje)
+            {
+                sb.Append($"""
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
+                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
+                        <div style="color:#d97706;font-size:13px;margin-top:2px">
+                          vence hoje · {t.Prazo.ToLocalTime():dd/MM/yyyy HH:mm}
+                        </div>
+                      </td>
+                    </tr>
+                """);
+            }
+            sb.Append("</table>");
+        }
+
+        if (futuras.Count > 0)
+        {
+            var grupos = futuras.GroupBy(i => i.Dias).OrderBy(g => g.Key).ToList();
+            foreach (var grupo in grupos)
+            {
+                var dias = grupo.Key;
+                var label = dias == 1 ? "Vence amanhã" : $"Vence em {dias} dia(s)";
+                sb.Append($"""
+                    <h3 style="color:#1e40af;margin:24px 0 8px;border-bottom:1px solid #dbeafe;padding-bottom:4px">📅 {label}</h3>
+                    <table style="width:100%;border-collapse:collapse">
+                """);
+                foreach (var t in grupo)
+                {
+                    sb.Append($"""
+                        <tr>
+                          <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
+                            <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
+                            <div style="color:#6b7280;font-size:13px;margin-top:2px">
+                              {t.Prazo.ToLocalTime():dd/MM/yyyy HH:mm}
+                            </div>
+                          </td>
+                        </tr>
+                    """);
+                }
+                sb.Append("</table>");
+            }
+        }
+
+        sb.Append($"""
+                <p style="text-align:center;margin:28px 0 8px">
+                  <a href="{_config["App:FrontendUrl"]}/pages/tarefas.html"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver todas as tarefas
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Você recebe este resumo uma vez por dia. Para mudar suas preferências, acesse Configurações &gt; Alertas.
+                </p>
+              </div>
+            </div>
+            """);
+
+        var html = sb.ToString();
+        var total = itens.Count;
+        var assunto = total == 1
+            ? "1 tarefa para você — Causify"
+            : $"{total} tarefas para você — Causify";
+        await EnviarAsync(CriarMensagem(email, assunto, html));
+    }
+
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
         DateTime dataHora, string? local, CancellationToken ct = default)
     {
