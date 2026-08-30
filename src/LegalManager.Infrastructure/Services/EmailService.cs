@@ -152,6 +152,38 @@ public class EmailService : IEmailService
         await EnviarAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {tituloTarefa}", html));
     }
 
+    public async Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa,
+        DateTime prazo, int diasAtraso, CancellationToken ct = default)
+    {
+        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy");
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#7f1d1d;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#fecaca;margin:4px 0 0">Tarefa atrasada</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#b91c1c;margin-top:0">🚨 Tarefa atrasada há {diasAtraso} dia(s)</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
+                <p>A tarefa <strong>"{System.Net.WebUtility.HtmlEncode(tituloTarefa)}"</strong> venceu em <strong>{prazoStr}</strong> e ainda não foi concluída.</p>
+                <p style="background:#fef2f2;border-left:4px solid #b91c1c;padding:12px 16px;margin:20px 0;color:#7f1d1d;border-radius:4px">
+                  Esta tarefa está aberta há {diasAtraso} dia(s) após o prazo. Recomendamos concluir ou reagendar.
+                </p>
+                <p style="text-align:center;margin:24px 0">
+                  <a href="{_config["App:FrontendUrl"]}/pages/tarefas.html"
+                     style="background:#b91c1c;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver tarefa
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Você recebe este aviso porque a tarefa continua pendente após o vencimento.
+                </p>
+              </div>
+            </div>
+            """;
+        await EnviarAsync(CriarMensagem(email, $"🚨 Tarefa atrasada: {tituloTarefa}", html));
+    }
+
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
         DateTime dataHora, string? local, CancellationToken ct = default)
     {

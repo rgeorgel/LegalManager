@@ -43,7 +43,7 @@ public enum TipoTarefa { Tarefa, Prazo }
 
 public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }
 
-public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento }
+public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada }
 
 public enum TipoPublicacao { Prazo, Audiencia, Decisao, Despacho, Intimacao, Outro }
 

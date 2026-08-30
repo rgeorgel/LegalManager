@@ -726,7 +726,7 @@ public class NotificacoesControllerAdditionalTests
     [Fact]
     public async Task GetPreferencias_RetornsOk()
     {
-        var prefs = new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true);
+        var prefs = new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true, true, true);
         var prefsSvc = new Mock<IPreferenciasNotificacaoService>();
         prefsSvc.Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(prefs);
@@ -739,8 +739,8 @@ public class NotificacoesControllerAdditionalTests
     [Fact]
     public async Task AtualizarPreferencias_RetornsOk()
     {
-        var dto = new AtualizarPreferenciasDto(true, false, true, false, true, false, true, false, true, false);
-        var prefs = new PreferenciasNotificacaoDto(true, false, true, false, true, false, true, false, true, false);
+        var dto = new AtualizarPreferenciasDto(true, false, true, false, true, false, true, false, true, false, true, false);
+        var prefs = new PreferenciasNotificacaoDto(true, false, true, false, true, false, true, false, true, false, true, false);
         var prefsSvc = new Mock<IPreferenciasNotificacaoService>();
         prefsSvc.Setup(s => s.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), dto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(prefs);

@@ -3,6 +3,8 @@ namespace LegalManager.Application.DTOs.Notificacoes;
 public record PreferenciasNotificacaoDto(
     bool TarefasInApp,
     bool TarefasEmail,
+    bool TarefasAtrasadasInApp,
+    bool TarefasAtrasadasEmail,
     bool EventosInApp,
     bool EventosEmail,
     bool PrazosInApp,
@@ -16,6 +18,8 @@ public record PreferenciasNotificacaoDto(
 public record AtualizarPreferenciasDto(
     bool TarefasInApp,
     bool TarefasEmail,
+    bool TarefasAtrasadasInApp,
+    bool TarefasAtrasadasEmail,
     bool EventosInApp,
     bool EventosEmail,
     bool PrazosInApp,

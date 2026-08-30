@@ -20,6 +20,8 @@ public class PreferenciasNotificacaoService(AppDbContext db) : IPreferenciasNoti
 
         prefs.TarefasInApp = dto.TarefasInApp;
         prefs.TarefasEmail = dto.TarefasEmail;
+        prefs.TarefasAtrasadasInApp = dto.TarefasAtrasadasInApp;
+        prefs.TarefasAtrasadasEmail = dto.TarefasAtrasadasEmail;
         prefs.EventosInApp = dto.EventosInApp;
         prefs.EventosEmail = dto.EventosEmail;
         prefs.PrazosInApp = dto.PrazosInApp;
@@ -40,6 +42,7 @@ public class PreferenciasNotificacaoService(AppDbContext db) : IPreferenciasNoti
         return tipo switch
         {
             "Tarefas" or "PrazoTarefa" => prefs.TarefasInApp,
+            "TarefaAtrasada"           => prefs.TarefasAtrasadasInApp,
             "Eventos" or "PrazoEvento"  => prefs.EventosInApp,
             "Prazos"                    => prefs.PrazosInApp,
             "Publicacoes" or "NovoAndamento" => prefs.PublicacoesInApp,
@@ -54,6 +57,7 @@ public class PreferenciasNotificacaoService(AppDbContext db) : IPreferenciasNoti
         return tipo switch
         {
             "Tarefas" or "PrazoTarefa" => prefs.TarefasEmail,
+            "TarefaAtrasada"           => prefs.TarefasAtrasadasEmail,
             "Eventos" or "PrazoEvento"  => prefs.EventosEmail,
             "Prazos"                    => prefs.PrazosEmail,
             "Publicacoes" or "NovoAndamento" => prefs.PublicacoesEmail,
@@ -84,6 +88,7 @@ public class PreferenciasNotificacaoService(AppDbContext db) : IPreferenciasNoti
 
     private static PreferenciasNotificacaoDto ToDto(PreferenciasNotificacao p) => new(
         p.TarefasInApp, p.TarefasEmail,
+        p.TarefasAtrasadasInApp, p.TarefasAtrasadasEmail,
         p.EventosInApp, p.EventosEmail,
         p.PrazosInApp, p.PrazosEmail,
         p.PublicacoesInApp, p.PublicacoesEmail,

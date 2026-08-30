@@ -492,9 +492,9 @@ public class NotificacoesControllerTests
     {
         var mock = new Mock<IPreferenciasNotificacaoService>();
         mock.Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true));
+            .ReturnsAsync(new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true, true, true));
         mock.Setup(s => s.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<AtualizarPreferenciasDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true));
+            .ReturnsAsync(new PreferenciasNotificacaoDto(true, true, true, true, true, true, true, true, true, true, true, true));
         return mock;
     }
 

@@ -562,4 +562,147 @@ public class AlertasJobTests
         Assert.NotNull(notif);
         Assert.NotEqual("/pages/tarefas.html", notif.Url);
     }
+
+    [Fact]
+    public async Task ExecutarAsync_DeveAlertarCriadorQuandoResponsavelIdNulo()
+    {
+        var (ctx, tenantId, criadorId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Tarefa sem responsavel",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Media,
+            Prazo = hoje, ResponsavelId = null,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = criadorId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, criadorId, "PrazoTarefa")).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, criadorId, "PrazoTarefa")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarAlertaPrazoTarefaAsync(
+            "resp@test.com", "Responsável", "Tarefa sem responsavel", hoje, 0), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_DeveAlertarTarefaAtrasada()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        var prazo = hoje.AddDays(-3);
+        var tarefaId = Guid.NewGuid();
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = tarefaId, TenantId = tenantId, Titulo = "Tarefa Atrasada",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Alta,
+            Prazo = prazo, ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "TarefaAtrasada")).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "TarefaAtrasada")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarAlertaTarefaAtrasadaAsync(
+            "resp@test.com", "Responsável", "Tarefa Atrasada", prazo, 3), Times.Once);
+
+        var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n =>
+            n.Tipo == TipoNotificacao.TarefaAtrasada && n.Url != null && n.Url.Contains(tarefaId.ToString()));
+        Assert.NotNull(notif);
+        Assert.Contains("atrasada há 3 dia", notif.Titulo, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_NaoDeveAlertarTarefaAtrasada_QuandoConcluida()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Concluida antes",
+            Status = StatusTarefa.Concluida, Prioridade = PrioridadeTarefa.Media,
+            Prazo = hoje.AddDays(-3), ResponsavelId = responsavelId,
+            ConcluidaEm = hoje.AddDays(-1),
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarAlertaTarefaAtrasadaAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<DateTime>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_NaoDeveAlertarTarefaAtrasada_QuandoPerdida()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Perdida",
+            Status = StatusTarefa.Perdida, Prioridade = PrioridadeTarefa.Media,
+            Prazo = hoje.AddDays(-3), ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>())).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarAlertaTarefaAtrasadaAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<DateTime>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_TarefaAtrasada_NaoDeveReenviarEmailNoMesmoDia()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = DateTime.UtcNow.Date;
+        var prazo = hoje.AddDays(-2);
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Atrasada dedup",
+            Status = StatusTarefa.Pendente, Prioridade = PrioridadeTarefa.Media,
+            Prazo = prazo, ResponsavelId = responsavelId,
+            CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "TarefaAtrasada")).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "TarefaAtrasada")).ReturnsAsync(true);
+
+        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarAlertaTarefaAtrasadaAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<DateTime>(), It.IsAny<int>()), Times.Once);
+    }
 }

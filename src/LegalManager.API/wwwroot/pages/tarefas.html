@@ -285,7 +285,7 @@
 
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
-import { apiFetch } from '/js/api.js';
+import { apiFetch, getUser } from '/js/api.js';
 
 initLayout();
 
@@ -525,6 +525,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         status: document.getElementById('fStatus').value,
         prazo: prazoVal || null,
         processoId: processoVal,
+        responsavelId: getUser()?.id || null,
         tags
       })});
     } else {
@@ -534,6 +535,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prioridade: document.getElementById('fPrioridade').value,
         prazo: prazoVal || null,
         processoId: processoVal,
+        responsavelId: getUser()?.id || null,
         tags
       })});
     }

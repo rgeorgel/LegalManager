@@ -8,6 +8,8 @@ public class PreferenciasNotificacao
 
     public bool TarefasInApp { get; set; } = true;
     public bool TarefasEmail { get; set; } = true;
+    public bool TarefasAtrasadasInApp { get; set; } = true;
+    public bool TarefasAtrasadasEmail { get; set; } = true;
     public bool EventosInApp { get; set; } = true;
     public bool EventosEmail { get; set; } = true;
     public bool PrazosInApp { get; set; } = true;

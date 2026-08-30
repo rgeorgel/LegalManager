@@ -29,7 +29,7 @@ public class TarefaService : ITarefaService
             TenantId = _tenantContext.TenantId,
             Titulo = dto.Titulo,
             Descricao = dto.Descricao,
-            ResponsavelId = dto.ResponsavelId,
+            ResponsavelId = dto.ResponsavelId ?? _tenantContext.UserId,
             CriadoPorId = _tenantContext.UserId,
             Prazo = prazoCalculado.HasValue && dto.Prazo.HasValue
                 ? prazoCalculado.Value.Date.Add(dto.Prazo.Value.TimeOfDay)

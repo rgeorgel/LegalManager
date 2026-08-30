@@ -26,6 +26,7 @@ public class AlertasJob
     {
         var now = DateTime.UtcNow.Date;
         await AlertarTarefasAsync(now);
+        await AlertarTarefasAtrasadasAsync(now);
         await AlertarEventosAsync(now);
         await AlertarTrialExpirandoAsync(now);
         await AlertarPrazosProcessuaisAsync(now);
@@ -43,18 +44,18 @@ public class AlertasJob
                 .Where(t => t.Prazo.HasValue &&
                             t.Prazo.Value.Date == dataAlvo &&
                             t.Status != StatusTarefa.Concluida &&
-                            t.Status != StatusTarefa.Cancelada &&
-                            t.ResponsavelId.HasValue)
+                            t.Status != StatusTarefa.Cancelada)
                 .Select(t => new
                 {
                     t.Id,
                     t.TenantId,
                     t.Titulo,
                     t.Prazo,
-                    t.ResponsavelId,
-                    ResponsavelNome = t.Responsavel!.Nome,
-                    ResponsavelEmail = t.Responsavel!.Email
+                    DestinatarioId = t.ResponsavelId ?? t.CriadoPorId,
+                    DestinatarioNome = t.ResponsavelId.HasValue ? t.Responsavel!.Nome : t.CriadoPor!.Nome,
+                    DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email
                 })
+                .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
                 .ToListAsync();
 
             foreach (var tarefa in tarefas)
@@ -62,26 +63,26 @@ public class AlertasJob
                 try
                 {
                     var chave = $"tarefa-{tarefa.Id}-{dias}d-{hoje:yyyyMMdd}";
-                    var permiteEmail = await _prefs.PermiteEmailAsync(tarefa.TenantId, tarefa.ResponsavelId!.Value, "PrazoTarefa");
-                    var permiteInApp = await _prefs.PermiteInAppAsync(tarefa.TenantId, tarefa.ResponsavelId!.Value, "PrazoTarefa");
+                    var permiteEmail = await _prefs.PermiteEmailAsync(tarefa.TenantId, tarefa.DestinatarioId, "PrazoTarefa");
+                    var permiteInApp = await _prefs.PermiteInAppAsync(tarefa.TenantId, tarefa.DestinatarioId, "PrazoTarefa");
 
-                    if (permiteEmail && !string.IsNullOrEmpty(tarefa.ResponsavelEmail))
+                    if (permiteEmail && !string.IsNullOrEmpty(tarefa.DestinatarioEmail))
                     {
                         var chaveEmail = $"email-tarefa-{tarefa.Id}-{dias}d-{hoje:yyyyMMdd}";
                         var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
                         if (!emailJaEnviado)
                         {
                             await _emailService.EnviarAlertaPrazoTarefaAsync(
-                                tarefa.ResponsavelEmail, tarefa.ResponsavelNome,
+                                tarefa.DestinatarioEmail, tarefa.DestinatarioNome,
                                 tarefa.Titulo, tarefa.Prazo!.Value, dias);
                             _context.Notificacoes.Add(new Domain.Entities.Notificacao
                             {
                                 Id = Guid.NewGuid(),
                                 TenantId = tarefa.TenantId,
-                                UsuarioId = tarefa.ResponsavelId!.Value,
+                                UsuarioId = tarefa.DestinatarioId,
                                 Tipo = TipoNotificacao.PrazoTarefa,
                                 Titulo = $"Email tarefa {tarefa.Titulo}",
-                                Mensagem = $"Email enviado para {tarefa.ResponsavelEmail}",
+                                Mensagem = $"Email enviado para {tarefa.DestinatarioEmail}",
                                 Lida = false,
                                 CriadaEm = DateTime.UtcNow,
                                 ChaveDedup = chaveEmail
@@ -97,7 +98,7 @@ public class AlertasJob
                             ? $"A tarefa \"{tarefa.Titulo}\" vence hoje."
                             : $"A tarefa \"{tarefa.Titulo}\" vence em {dias} dia(s).";
                         await CriarNotificacaoAsync(
-                            tarefa.TenantId, tarefa.ResponsavelId!.Value,
+                            tarefa.TenantId, tarefa.DestinatarioId,
                             TipoNotificacao.PrazoTarefa, titulo, msg,
                             $"/pages/tarefas.html?abrirId={tarefa.Id}", chave);
                     }
@@ -106,6 +107,78 @@ public class AlertasJob
                 {
                     _logger.LogError(ex, "Erro ao alertar tarefa {Titulo}", tarefa.Titulo);
                 }
+            }
+        }
+    }
+
+    private async Task AlertarTarefasAtrasadasAsync(DateTime hoje)
+    {
+        var tarefas = await _context.Tarefas
+            .Where(t => t.Prazo.HasValue &&
+                        t.Prazo.Value.Date < hoje &&
+                        t.Status != StatusTarefa.Concluida &&
+                        t.Status != StatusTarefa.Cancelada &&
+                        t.Status != StatusTarefa.Perdida)
+            .Select(t => new
+            {
+                t.Id,
+                t.TenantId,
+                t.Titulo,
+                t.Prazo,
+                DestinatarioId = t.ResponsavelId ?? t.CriadoPorId,
+                DestinatarioNome = t.ResponsavelId.HasValue ? t.Responsavel!.Nome : t.CriadoPor!.Nome,
+                DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email
+            })
+            .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
+            .ToListAsync();
+
+        foreach (var tarefa in tarefas)
+        {
+            try
+            {
+                var diasAtraso = (int)(hoje - tarefa.Prazo!.Value.Date).TotalDays;
+                var chave = $"tarefa-atrasada-{tarefa.Id}-{hoje:yyyyMMdd}";
+                var permiteEmail = await _prefs.PermiteEmailAsync(tarefa.TenantId, tarefa.DestinatarioId, "TarefaAtrasada");
+                var permiteInApp = await _prefs.PermiteInAppAsync(tarefa.TenantId, tarefa.DestinatarioId, "TarefaAtrasada");
+
+                if (permiteEmail && !string.IsNullOrEmpty(tarefa.DestinatarioEmail))
+                {
+                    var chaveEmail = $"email-tarefa-atrasada-{tarefa.Id}-{hoje:yyyyMMdd}";
+                    var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                    if (!emailJaEnviado)
+                    {
+                        await _emailService.EnviarAlertaTarefaAtrasadaAsync(
+                            tarefa.DestinatarioEmail, tarefa.DestinatarioNome,
+                            tarefa.Titulo, tarefa.Prazo!.Value, diasAtraso);
+                        _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                        {
+                            Id = Guid.NewGuid(),
+                            TenantId = tarefa.TenantId,
+                            UsuarioId = tarefa.DestinatarioId,
+                            Tipo = TipoNotificacao.TarefaAtrasada,
+                            Titulo = $"Email tarefa atrasada {tarefa.Titulo}",
+                            Mensagem = $"Email enviado para {tarefa.DestinatarioEmail}",
+                            Lida = false,
+                            CriadaEm = DateTime.UtcNow,
+                            ChaveDedup = chaveEmail
+                        });
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (permiteInApp)
+                {
+                    var titulo = $"Tarefa atrasada há {diasAtraso} dia(s)";
+                    var msg = $"A tarefa \"{tarefa.Titulo}\" venceu há {diasAtraso} dia(s) e ainda está pendente.";
+                    await CriarNotificacaoAsync(
+                        tarefa.TenantId, tarefa.DestinatarioId,
+                        TipoNotificacao.TarefaAtrasada, titulo, msg,
+                        $"/pages/tarefas.html?abrirId={tarefa.Id}", chave);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao alertar tarefa atrasada {Titulo}", tarefa.Titulo);
             }
         }
     }
