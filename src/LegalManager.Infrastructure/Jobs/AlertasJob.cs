@@ -22,13 +22,14 @@ public class AlertasJob
         _logger = logger;
     }
 
-    public async Task ExecutarAsync()
+    public Task ExecutarAsync() => ExecutarAsync(BrasiliaTime.Hoje);
+
+    public async Task ExecutarAsync(DateTime hoje)
     {
-        var now = DateTime.UtcNow.Date;
-        await AlertarTarefasAsync(now);
-        await AlertarEventosAsync(now);
-        await AlertarTrialExpirandoAsync(now);
-        await AlertarPrazosProcessuaisAsync(now);
+        await AlertarTarefasAsync(hoje);
+        await AlertarEventosAsync(hoje);
+        await AlertarTrialExpirandoAsync(hoje);
+        await AlertarPrazosProcessuaisAsync(hoje);
     }
 
     private async Task AlertarTarefasAsync(DateTime hoje)

@@ -7,6 +7,7 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Jobs;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.Infrastructure.Storage;
@@ -398,7 +399,8 @@ app.Use(async (ctx, next) =>
 RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
-    "0 */3 * * *"); // every 3 hours
+    "0 */3 * * *",
+    new RecurringJobOptions { TimeZone = BrasiliaTime.Tz }); // every 3 hours starting at midnight Brasília time (00:00, 03:00, 06:00, ... BRT)
 
 RecurringJob.AddOrUpdate<TrialRevertJob>(
     "trial-revert",
