@@ -54,7 +54,9 @@ public class AlertasJob
 
         var hojeStr = hoje.ToString("yyyyMMdd");
         var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
-        var candidatas = tarefas.Where(t => t.Prazo!.Value.Date < hoje.AddDays(6)).ToList();
+        const int limiteDiasAtraso = 5;
+        var candidatas = tarefas.Where(t => t.Prazo!.Value.Date < hoje.AddDays(6) &&
+                                             t.Prazo!.Value.Date >= hoje.AddDays(-limiteDiasAtraso)).ToList();
 
         var grupos = candidatas
             .GroupBy(t => new { t.TenantId, t.DestinatarioId, t.DestinatarioNome, t.DestinatarioEmail })

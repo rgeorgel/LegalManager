@@ -452,6 +452,37 @@ public class AlertasJobTests
     }
 
     [Fact]
+    public async Task ExecutarAsync_NaoDeveNotificarTarefaAtrasadaApos5Dias()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.AddRange(
+            new Tarefa { Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Limite (5d atrasada)", Status = StatusTarefa.Pendente, Prazo = hoje.AddDays(-5), ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId },
+            new Tarefa { Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Muito atrasada (6d)", Status = StatusTarefa.Pendente, Prazo = hoje.AddDays(-6), ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId },
+            new Tarefa { Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Muito atrasada (20d)", Status = StatusTarefa.Pendente, Prazo = hoje.AddDays(-20), ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId }
+        );
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
+                l.Count == 1 &&
+                l[0].Titulo == "Limite (5d atrasada)" &&
+                l[0].Dias == -5)),
+            Times.Once);
+
+        var notifs = await ctx.Notificacoes
+            .Where(n => n.Tipo == TipoNotificacao.PrazoTarefa && n.UsuarioId == responsavelId)
+            .ToListAsync();
+        Assert.Single(notifs);
+        Assert.DoesNotContain("Muito atrasada", notifs[0].Mensagem);
+    }
+
+    [Fact]
     public async Task ExecutarAsync_NaoDeveIncluirTarefaAtrasada_QuandoConcluida()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
