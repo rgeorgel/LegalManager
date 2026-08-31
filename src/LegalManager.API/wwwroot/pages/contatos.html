@@ -86,6 +86,10 @@
     .pdf-modal-close:hover { background:var(--color-border); color:var(--color-text); }
     .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
     #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
+    th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+    th.sortable:hover { color: var(--color-primary); }
+    .sort-indicator { display: inline-block; margin-left: 4px; font-size: 10px; color: var(--color-text-muted); opacity: 0.7; }
+    th.sortable.active .sort-indicator { opacity: 1; color: var(--color-primary); }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -138,6 +142,9 @@
           <option value="Perito">Perito</option>
           <option value="Outro">Outro</option>
         </select>
+        <select id="filtTag" class="form-control" style="width:auto">
+          <option value="">Todas as tags</option>
+        </select>
       </div>
 
       <div id="alertMsg" class="alert" style="display:none"></div>
@@ -147,12 +154,12 @@
           <table>
             <thead>
               <tr>
-                <th>Nome</th>
-                <th>Tipo</th>
-                <th>Categoria</th>
-                <th>CPF/CNPJ</th>
-                <th>E-mail</th>
-                <th>Telefone</th>
+                <th class="sortable" data-sort="nome">Nome<span class="sort-indicator" data-indicator="nome"></span></th>
+                <th class="sortable" data-sort="tipo">Tipo<span class="sort-indicator" data-indicator="tipo"></span></th>
+                <th class="sortable" data-sort="tipoContato">Categoria<span class="sort-indicator" data-indicator="tipoContato"></span></th>
+                <th class="sortable" data-sort="cpfCnpj">CPF/CNPJ<span class="sort-indicator" data-indicator="cpfCnpj"></span></th>
+                <th class="sortable" data-sort="email">E-mail<span class="sort-indicator" data-indicator="email"></span></th>
+                <th class="sortable" data-sort="telefone">Telefone<span class="sort-indicator" data-indicator="telefone"></span></th>
                 <th>Tags</th>
                 <th>Ações</th>
               </tr>
@@ -460,6 +467,47 @@
     let editingId = null;
     let atendimentoContatoId = null;
 
+    // ── Estado persistido (sort + tag + página) ─────────────────────────────
+    // Persistido em localStorage para sobreviver a F5 e reabertura do navegador.
+    // Escopo mantido pequeno de propósito — não persiste busca/tipo/categoria
+    // para não confundir o usuário com resultados inesperados ao voltar.
+    const STATE_KEY = 'contatos.listState';
+    const VALID_SORT_BY = new Set(['nome', 'tipo', 'tipoContato', 'cpfCnpj', 'email', 'telefone']);
+    const VALID_SORT_DIR = new Set(['asc', 'desc']);
+
+    function loadListState() {
+      try {
+        const raw = localStorage.getItem(STATE_KEY);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || typeof s !== 'object') return null;
+        const sortBy = VALID_SORT_BY.has(s.sortBy) ? s.sortBy : 'nome';
+        const sortDir = VALID_SORT_DIR.has(s.sortDir) ? s.sortDir : 'asc';
+        const tag = typeof s.tag === 'string' ? s.tag : '';
+        const page = Number.isInteger(s.page) && s.page > 0 ? s.page : 1;
+        return { sortBy, sortDir, tag, page };
+      } catch { return null; }
+    }
+    function saveListState() {
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tag: currentTag, page: currentPage })); } catch {}
+    }
+    let knownTags = new Set();
+
+    const initialState = loadListState();
+    let currentSortBy = initialState?.sortBy ?? 'nome';
+    let currentSortDir = initialState?.sortDir ?? 'asc';
+    let currentTag = initialState?.tag ?? '';
+    currentPage = initialState?.page ?? 1;
+
+    function updateSortIndicators() {
+      document.querySelectorAll('th.sortable').forEach(th => {
+        const indicator = th.querySelector('.sort-indicator');
+        const isActive = th.dataset.sort === currentSortBy;
+        th.classList.toggle('active', isActive);
+        if (indicator) indicator.textContent = isActive ? (currentSortDir === 'asc' ? '▲' : '▼') : '';
+      });
+    }
+
     const modal = document.getElementById('modalContato');
     const modalAtend = document.getElementById('modalAtendimento');
     const alertMsg = document.getElementById('alertMsg');
@@ -476,12 +524,39 @@
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px">Carregando...</td></tr>';
 
       try {
-        const result = await getContatos({ ...currentFilters, page: currentPage });
+        const result = await getContatos({
+          ...currentFilters,
+          tag: currentTag || undefined,
+          sortBy: currentSortBy,
+          sortDir: currentSortDir,
+          page: currentPage
+        });
         renderTable(result.items);
         renderPagination(result.totalPages, result.page);
+        collectKnownTags(result.items);
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-danger)">${err.message}</td></tr>`;
       }
+    }
+
+    function collectKnownTags(items) {
+      let added = false;
+      for (const c of items) {
+        for (const t of (c.tags || [])) {
+          if (t && !knownTags.has(t)) { knownTags.add(t); added = true; }
+        }
+      }
+      if (added) renderTagFilter();
+    }
+
+    function renderTagFilter() {
+      const sel = document.getElementById('filtTag');
+      if (!sel) return;
+      const previous = currentTag;
+      const tags = [...knownTags].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      sel.innerHTML = '<option value="">Todas as tags</option>' +
+        tags.map(t => `<option value="${t.replace(/"/g, '&quot;')}">${t}</option>`).join('');
+      sel.value = previous && knownTags.has(previous) ? previous : '';
     }
 
     function renderTable(items) {
@@ -709,6 +784,36 @@
         }, 300);
       });
     });
+
+    document.getElementById('filtTag').addEventListener('change', (e) => {
+      currentTag = e.target.value || '';
+      currentPage = 1;
+      saveListState();
+      loadContatos();
+    });
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (!VALID_SORT_BY.has(col)) return;
+        if (currentSortBy === col) {
+          currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSortBy = col;
+          currentSortDir = 'asc';
+        }
+        currentPage = 1;
+        saveListState();
+        updateSortIndicators();
+        loadContatos();
+      });
+    });
+
+    updateSortIndicators();
+    if (currentTag) {
+      const sel = document.getElementById('filtTag');
+      if (sel) sel.value = currentTag;
+    }
 
     // ── Portal do Cliente ─────────────────────────────────
     const modalPortal = document.getElementById('modalPortal');

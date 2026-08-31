@@ -35,13 +35,25 @@ public class ContatosController : ControllerBase
         [FromQuery] bool? ativo,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
         CancellationToken ct = default)
     {
+        var allowedSortBy = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nome", "tipo", "tipoContato", "cpfCnpj", "email", "telefone" };
+        var allowedSortDir = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asc", "desc" };
+
+        var normalizedSortBy = sortBy?.Trim();
+        if (normalizedSortBy != null && !allowedSortBy.Contains(normalizedSortBy)) normalizedSortBy = null;
+
+        var normalizedSortDir = sortDir?.Trim().ToLowerInvariant();
+        if (normalizedSortDir != null && !allowedSortDir.Contains(normalizedSortDir)) normalizedSortDir = null;
+
         var filtro = new ContatoFiltroDto(
             busca,
             tipoContato != null && Enum.TryParse<Domain.Enums.TipoContato>(tipoContato, true, out var tc) ? tc : null,
             tipo != null && Enum.TryParse<Domain.Enums.TipoPessoa>(tipo, true, out var tp) ? tp : null,
-            tag, ativo, page, pageSize);
+            tag, ativo, page, pageSize,
+            normalizedSortBy, normalizedSortDir);
 
         var result = await _service.GetAllAsync(filtro, ct);
         return Ok(result);

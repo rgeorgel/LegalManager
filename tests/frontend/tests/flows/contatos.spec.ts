@@ -52,3 +52,106 @@ test('busca de contatos filtra a lista', async ({ adminPage: page }) => {
     expect(rows).toBe(0);
   }
 });
+
+test('filtro de tags está presente na barra de filtros', async ({ adminPage: page }) => {
+  await page.goto('/pages/contatos.html');
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  await expect(page.locator('#filtTag')).toBeVisible({ timeout: 5_000 });
+  // Deve começar com "Todas as tags"
+  const firstOption = await page.locator('#filtTag option').first().textContent();
+  expect(firstOption?.trim()).toBe('Todas as tags');
+});
+
+test('clicar em coluna ordenável dispara request com sortBy e sortDir', async ({ adminPage: page }) => {
+  await page.goto('/pages/contatos.html');
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  // Limpa qualquer estado persistido de testes anteriores
+  await page.evaluate(() => localStorage.removeItem('contatos.listState'));
+  await page.reload();
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  const sortRequest = page.waitForRequest(
+    (req) => req.url().includes('/api/contatos') && req.url().includes('sortBy=nome'),
+    { timeout: 5_000 }
+  );
+  await page.locator('th.sortable[data-sort="nome"]').click();
+  const req = await sortRequest;
+  expect(req.url()).toContain('sortBy=nome');
+  expect(req.url()).toContain('sortDir=asc');
+
+  // Segundo clique na mesma coluna deve inverter direção
+  const descRequest = page.waitForRequest(
+    (req) => req.url().includes('sortDir=desc'),
+    { timeout: 5_000 }
+  );
+  await page.locator('th.sortable[data-sort="nome"]').click();
+  const req2 = await descRequest;
+  expect(req2.url()).toContain('sortBy=nome');
+  expect(req2.url()).toContain('sortDir=desc');
+});
+
+test('ordenação persiste após reload da página', async ({ adminPage: page }) => {
+  await page.goto('/pages/contatos.html');
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  await page.evaluate(() => localStorage.removeItem('contatos.listState'));
+  await page.reload();
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  // Clica em "E-mail" (coluna diferente) — deve ir para asc
+  await page.locator('th.sortable[data-sort="email"]').click();
+  await page.waitForResponse(
+    (res) => res.url().includes('/api/contatos') && res.url().includes('sortBy=email'),
+    { timeout: 5_000 }
+  );
+
+  // Reload preserva estado (coluna ativa + indicador + localStorage)
+  await page.reload();
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  const active = await page.locator('th.sortable[data-sort="email"].active').count();
+  expect(active).toBe(1);
+  const indicator = await page.locator('th.sortable[data-sort="email"] .sort-indicator').textContent();
+  expect(indicator?.trim()).toBe('▲');
+
+  // Próxima requisição após reload deve trazer sortBy=email+sortDir=asc
+  const reqAfterReload = page.waitForRequest(
+    (req) => req.url().includes('/api/contatos') && req.url().includes('sortBy=email') && req.url().includes('sortDir=asc'),
+    { timeout: 5_000 }
+  );
+  // Dispara uma nova busca para forçar reload da lista
+  await page.locator('#filtBusca').fill('');
+  await page.locator('#filtBusca').press('Tab').catch(() => {});
+  const req = await reqAfterReload;
+  expect(req.url()).toContain('sortBy=email');
+  expect(req.url()).toContain('sortDir=asc');
+});
+
+test('filtro de tag é enviado ao backend', async ({ adminPage: page }) => {
+  await page.goto('/pages/contatos.html');
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
+
+  await page.evaluate(() => localStorage.removeItem('contatos.listState'));
+
+  // Intercepta próxima request
+  const tagReq = page.waitForRequest(
+    (req) => req.url().includes('/api/contatos') && req.url().includes('tag='),
+    { timeout: 8_000 }
+  );
+
+  // Injeta uma opção manualmente (simula tags já carregadas) e dispara change
+  await page.evaluate(() => {
+    const sel = document.getElementById('filtTag') as HTMLSelectElement;
+    const opt = document.createElement('option');
+    opt.value = 'vip';
+    opt.textContent = 'vip';
+    sel.appendChild(opt);
+    sel.value = 'vip';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  const req = await tagReq;
+  expect(req.url()).toContain('tag=vip');
+});

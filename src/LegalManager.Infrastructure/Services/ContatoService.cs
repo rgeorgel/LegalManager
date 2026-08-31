@@ -130,7 +130,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
 
         var total = await query.CountAsync(ct);
         var items = await query
-            .OrderBy(c => c.Nome)
+            .ApplySort(filtro.SortBy, filtro.SortDir)
             .Skip((filtro.Page - 1) * filtro.PageSize)
             .Take(filtro.PageSize)
             .ToListAsync(ct);
@@ -206,4 +206,48 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
     private static ContatoListItemDto MapToListItem(Contato c) => new(
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Email, c.Telefone,
         c.Ativo, c.Tags.Select(t => t.Tag).ToList());
+}
+
+internal static class ContatoServiceSortExtensions
+{
+    private static readonly HashSet<string> AllowedSortBy = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nome", "tipo", "tipoContato", "cpfCnpj", "email", "telefone"
+    };
+
+    public static IQueryable<Contato> ApplySort(this IQueryable<Contato> query, string? sortBy, string? sortDir)
+    {
+        var key = (sortBy ?? string.Empty).Trim();
+        var ascending = !string.Equals(sortDir, "desc", StringComparison.OrdinalIgnoreCase);
+
+        if (string.IsNullOrEmpty(key) || !AllowedSortBy.Contains(key))
+            return ascending
+                ? query.OrderBy(c => c.Nome == null).ThenBy(c => c.Nome)
+                : query.OrderByDescending(c => c.Nome);
+
+        return key.ToLowerInvariant() switch
+        {
+            "nome" => ascending
+                ? query.OrderBy(c => c.Nome == null).ThenBy(c => c.Nome)
+                : query.OrderByDescending(c => c.Nome),
+            "tipo" => ascending
+                ? query.OrderBy(c => c.Tipo)
+                : query.OrderByDescending(c => c.Tipo),
+            "tipocontato" => ascending
+                ? query.OrderBy(c => c.TipoContato)
+                : query.OrderByDescending(c => c.TipoContato),
+            "cpfcnpj" => ascending
+                ? query.OrderBy(c => c.CpfCnpj == null).ThenBy(c => c.CpfCnpj)
+                : query.OrderByDescending(c => c.CpfCnpj),
+            "email" => ascending
+                ? query.OrderBy(c => c.Email == null).ThenBy(c => c.Email)
+                : query.OrderByDescending(c => c.Email),
+            "telefone" => ascending
+                ? query.OrderBy(c => c.Telefone == null).ThenBy(c => c.Telefone)
+                : query.OrderByDescending(c => c.Telefone),
+            _ => ascending
+                ? query.OrderBy(c => c.Nome == null).ThenBy(c => c.Nome)
+                : query.OrderByDescending(c => c.Nome)
+        };
+    }
 }

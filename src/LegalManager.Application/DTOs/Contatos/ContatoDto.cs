@@ -79,7 +79,9 @@ public record ContatoFiltroDto(
     string? Tag,
     bool? Ativo,
     int Page = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    string? SortBy = null,
+    string? SortDir = null
 );
 
 public record CreateAtendimentoDto(

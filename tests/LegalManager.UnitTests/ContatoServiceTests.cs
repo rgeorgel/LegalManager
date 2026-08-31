@@ -350,4 +350,136 @@ public class ContatoServiceTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateAsync(Guid.NewGuid(), dto));
     }
+
+    private static Contato MakeContato(
+        Guid tenantId, string nome, TipoPessoa tipo, TipoContato tipoContato,
+        string? cpfCnpj = null, string? email = null, string? telefone = null)
+    {
+        return new Contato
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Nome = nome,
+            Tipo = tipo,
+            TipoContato = tipoContato,
+            CpfCnpj = cpfCnpj,
+            Email = email,
+            Telefone = telefone,
+            Ativo = true,
+            CriadoEm = DateTime.UtcNow
+        };
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortByNomeAsc_RetornaEmOrdemAlfabetica()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "Carlos", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "Ana", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "Beatriz", TipoPessoa.PF, TipoContato.Cliente));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "nome", "asc"));
+
+        Assert.Equal(new[] { "Ana", "Beatriz", "Carlos" }, result.Items.Select(i => i.Nome));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortByNomeDesc_RetornaEmOrdemInversa()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "Carlos", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "Ana", TipoPessoa.PF, TipoContato.Cliente));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "nome", "desc"));
+
+        Assert.Equal(new[] { "Carlos", "Ana" }, result.Items.Select(i => i.Nome));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortByEmailAsc_NullNoFim()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "SemEmail1", TipoPessoa.PF, TipoContato.Cliente, email: null),
+            MakeContato(tenant.Id, "Bruno", TipoPessoa.PF, TipoContato.Cliente, email: "bruno@x.com"),
+            MakeContato(tenant.Id, "Ana", TipoPessoa.PF, TipoContato.Cliente, email: "ana@x.com"));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "email", "asc"));
+
+        var nomes = result.Items.Select(i => i.Nome).ToList();
+        Assert.Equal("Ana", nomes[0]);
+        Assert.Equal("Bruno", nomes[1]);
+        Assert.Equal("SemEmail1", nomes[2]);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortByTipoContato_OrdenaPorEnum()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "A-Perito", TipoPessoa.PF, TipoContato.Perito),
+            MakeContato(tenant.Id, "A-Cliente", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "A-Testemunha", TipoPessoa.PF, TipoContato.Testemunha));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "tipoContato", "asc"));
+
+        Assert.Equal(TipoContato.Cliente, result.Items.First().TipoContato);
+        Assert.Equal(TipoContato.Perito, result.Items.Last().TipoContato);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortInvalido_CaiNoDefaultNomeAsc()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "Carlos", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "Ana", TipoPessoa.PF, TipoContato.Cliente));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "campo-inexistente", "asc"));
+
+        Assert.Equal(new[] { "Ana", "Carlos" }, result.Items.Select(i => i.Nome));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SortByCpfCnpj_NullsOrdenadosComoVazio()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "SemDoc", TipoPessoa.PF, TipoContato.Cliente, cpfCnpj: null),
+            MakeContato(tenant.Id, "ComDoc", TipoPessoa.PF, TipoContato.Cliente, cpfCnpj: "999"));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "cpfCnpj", "asc"));
+
+        Assert.Equal("ComDoc", result.Items.First().Nome);
+        Assert.Equal("SemDoc", result.Items.Last().Nome);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DefaultSemSort_RetornaPorNomeAsc()
+    {
+        var (ctx, tenant, _) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(
+            MakeContato(tenant.Id, "Zelia", TipoPessoa.PF, TipoContato.Cliente),
+            MakeContato(tenant.Id, "Alberto", TipoPessoa.PF, TipoContato.Cliente));
+        await ctx.SaveChangesAsync();
+
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null));
+
+        Assert.Equal(new[] { "Alberto", "Zelia" }, result.Items.Select(i => i.Nome));
+    }
 }

@@ -70,7 +70,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        var result = await controller.GetAll(null, null, null, null, null, 1, 20, CancellationToken.None);
+        var result = await controller.GetAll(null, null, null, null, null, 1, 20, null, null, CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -84,7 +84,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll("busca", "Cliente", "PF", "tag1", true, 2, 50, CancellationToken.None);
+        await controller.GetAll("busca", "Cliente", "PF", "tag1", true, 2, 50, "nome", "asc", CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ContatoFiltroDto>(f =>
@@ -94,7 +94,9 @@ public class ContatosControllerTests
                 f.Tag == "tag1" &&
                 f.Ativo == true &&
                 f.Page == 2 &&
-                f.PageSize == 50),
+                f.PageSize == 50 &&
+                f.SortBy == "nome" &&
+                f.SortDir == "asc"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -107,10 +109,54 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll(null, "InvalidTipoContato", "InvalidTipo", null, null, 1, 20, CancellationToken.None);
+        await controller.GetAll(null, "InvalidTipoContato", "InvalidTipo", null, null, 1, 20, null, null, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ContatoFiltroDto>(f => f.TipoContato == null && f.Tipo == null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("email", "DESC")]
+    [InlineData("  nome  ", "asc")]
+    [InlineData("telefone", null)]
+    public async Task GetAll_WithSortParams_NormalizesAndForwards(string sortBy, string? sortDir)
+    {
+        var service = CreateContatoServiceMock();
+        var portalService = CreatePortalServiceMock();
+        var tenantContext = CreateTenantContextMock();
+        var audit = CreateAuditServiceMock();
+        var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
+
+        await controller.GetAll(null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
+
+        var expectedDir = string.IsNullOrEmpty(sortDir) ? null : sortDir.Trim().ToLowerInvariant();
+        service.Verify(s => s.GetAllAsync(
+            It.Is<ContatoFiltroDto>(f =>
+                f.SortBy == sortBy.Trim() &&
+                f.SortDir == expectedDir),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("campo-invalido", null, true, null)]
+    [InlineData("DROP TABLE", null, true, null)]
+    [InlineData("nome", "sentido-invalido", false, null)]
+    [InlineData("nome; DROP TABLE", null, true, null)]
+    [InlineData("email", "DESC", false, "desc")]
+    public async Task GetAll_WithSortParams_NullsOutOnlyInvalidField(string? sortBy, string? sortDir, bool expectSortByNull, string? expectedSortDir)
+    {
+        var service = CreateContatoServiceMock();
+        var portalService = CreatePortalServiceMock();
+        var tenantContext = CreateTenantContextMock();
+        var audit = CreateAuditServiceMock();
+        var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
+
+        await controller.GetAll(null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
+
+        var expectedSortBy = expectSortByNull ? null : sortBy!.Trim();
+        service.Verify(s => s.GetAllAsync(
+            It.Is<ContatoFiltroDto>(f => f.SortBy == expectedSortBy && f.SortDir == expectedSortDir),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

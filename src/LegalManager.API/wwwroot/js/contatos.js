@@ -7,6 +7,8 @@ export async function getContatos(filtro = {}) {
   if (filtro.tipo) params.set('tipo', filtro.tipo);
   if (filtro.tag) params.set('tag', filtro.tag);
   if (filtro.ativo !== undefined) params.set('ativo', filtro.ativo);
+  if (filtro.sortBy) params.set('sortBy', filtro.sortBy);
+  if (filtro.sortDir) params.set('sortDir', filtro.sortDir);
   params.set('page', filtro.page || 1);
   params.set('pageSize', filtro.pageSize || 20);
   return apiFetch(`/contatos?${params}`);
