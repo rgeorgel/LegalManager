@@ -124,10 +124,21 @@ public class EmailService : IEmailService
     {
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#e02424">Seu trial está terminando</h2>
-              <p>O período de teste de <strong>{nomeEscritorio}</strong> expira em <strong>{diasRestantes} dia(s)</strong>.</p>
-              <p>Assine um plano para continuar usando o Causify.</p>
-              <p><a href="{_config["App:FrontendUrl"]}/planos" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Ver planos</a></p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Período de teste</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#e02424;margin-top:0">Seu trial está terminando</h2>
+                <p>O período de teste de <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> expira em <strong>{diasRestantes} dia(s)</strong>.</p>
+                <p>Assine um plano para continuar usando o Causify.</p>
+                <p style="text-align:center;margin:24px 0">
+                  <a href="{_config["App:FrontendUrl"]}/planos"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver planos
+                  </a>
+                </p>
+              </div>
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, $"Seu período de teste termina em {diasRestantes} dia(s)", html));
