@@ -90,6 +90,13 @@
     const alert = document.getElementById('alert');
     const btn = document.getElementById('submitBtn');
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('contaExcluida') === '1') {
+      alert.className = 'alert alert-success';
+      alert.textContent = 'Sua conta foi excluída com sucesso.';
+      alert.style.display = 'block';
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       alert.style.display = 'none';

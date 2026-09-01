@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +21,18 @@ public class ConfiguracoesController : ControllerBase
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
     private readonly UserManager<Usuario> _userManager;
+    private readonly IAuditService _audit;
 
-    public ConfiguracoesController(AppDbContext context, ITenantContext tenantContext, UserManager<Usuario> userManager)
+    public ConfiguracoesController(
+        AppDbContext context,
+        ITenantContext tenantContext,
+        UserManager<Usuario> userManager,
+        IAuditService audit)
     {
         _context = context;
         _tenantContext = tenantContext;
         _userManager = userManager;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -133,6 +141,74 @@ public class ConfiguracoesController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("conta")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ExcluirConta([FromBody] ExcluirContaDto dto, CancellationToken ct)
+    {
+        var tenant = await _context.Tenants.FindAsync([_tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        if (_tenantContext.ImpersonadoPorId is not null)
+            return BadRequest(new { message = "Não é possível excluir a conta durante uma sessão de impersonação." });
+
+        var assinaturaAtiva =
+            tenant.Plano != PlanoTipo.Free
+            && tenant.Status != StatusTenant.Trial
+            && tenant.Status != StatusTenant.Cancelado;
+
+        if (assinaturaAtiva)
+        {
+            return BadRequest(new
+            {
+                message = "Para excluir sua conta é necessário cancelar a assinatura ativa primeiro."
+            });
+        }
+
+        var usuario = await _userManager.GetUserAsync(User);
+        if (usuario is null) return Unauthorized();
+
+        var senhaOk = await _userManager.CheckPasswordAsync(usuario, dto.Senha);
+        if (!senhaOk)
+            return BadRequest(new { message = "Senha incorreta." });
+
+        var dadosAnteriores = new
+        {
+            tenant.Nome,
+            tenant.Plano,
+            tenant.Status,
+            tenant.Cnpj,
+            tenant.StripeCustomerId,
+            tenant.StripeSubscriptionId,
+            tenant.PlanoExpiraEm,
+            tenant.TrialExpiraEm,
+            Usuarios = await _context.Users
+                .Where(u => u.TenantId == tenant.Id)
+                .Select(u => new { u.Id, u.Nome, u.Email, u.Perfil })
+                .ToListAsync(ct)
+        };
+
+        await _audit.LogAsync(_tenantContext.CreateEntry(
+            AuditActions.Delete,
+            "Tenant",
+            tenant.Id,
+            dadosAnteriores,
+            null,
+            HttpContext.GetClientIpAddress()), ct);
+
+        var usuariosTenant = await _context.Users
+            .Where(u => u.TenantId == tenant.Id)
+            .ToListAsync(ct);
+        foreach (var u in usuariosTenant)
+        {
+            await _userManager.DeleteAsync(u);
+        }
+
+        _context.Tenants.Remove(tenant);
+        await _context.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
 }
 
 public record UpdateConfiguracoesDto(
@@ -147,3 +223,5 @@ public record AlterarSenhaDto(
 );
 
 public record UpgradePlanoDto([Required] string Plano);
+
+public record ExcluirContaDto([Required] string Senha);

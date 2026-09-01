@@ -488,9 +488,9 @@
 
       </div>
 
-      <!-- Zona de cancelamento (só para Pro) -->
+      <!-- Zona de cancelamento (Pro/Plus/Max; em trial exibe aviso informativo) -->
       <div class="danger-zone" id="dangerZone" style="display:none">
-        <div class="danger-title">Cancelar assinatura</div>
+        <div class="danger-title" id="dangerTitle">Cancelar assinatura</div>
         <div class="danger-desc" id="dangerDesc">
           Ao cancelar, você continuará com acesso Pro até o fim do período atual. Após isso, o escritório será movido para o plano Free automaticamente.
         </div>
@@ -668,6 +668,7 @@
     const isPro  = currentPlano === 'Pro';
     const isMax  = currentPlano === 'Max';
     const isCancelado = data?.status === 'Cancelado';
+    const isTrial = data?.status === 'Trial';
 
     const cardFree = document.getElementById('cardFree');
     const cardPlus = document.getElementById('cardPlus');
@@ -678,6 +679,9 @@
     const btnPro   = document.getElementById('btnPro');
     const btnMax   = document.getElementById('btnMax');
     const dangerZone = document.getElementById('dangerZone');
+    const dangerTitle = document.getElementById('dangerTitle');
+    const dangerDesc = document.getElementById('dangerDesc');
+    const btnCancelar = document.getElementById('btnCancelar');
 
     cardFree.classList.toggle('current', isFree);
     cardPlus.classList.toggle('current', isPlus);
@@ -692,6 +696,32 @@
       b.className = `plan-top-badge ${cls}`;
       b.textContent = text;
       card.appendChild(b);
+    }
+
+    function renderCancelZone({ trial = false, planoLabel }) {
+      if (trial && isAdmin) {
+        dangerTitle.textContent = 'Sem assinatura para cancelar';
+        dangerDesc.innerHTML =
+          `<strong>Você está no período de trial.</strong> ` +
+          `Não há nenhuma assinatura ativa para cancelar — ao final deste período, sua conta retorna automaticamente ao plano gratuito, sem qualquer cobrança.`;
+        btnCancelar.textContent = 'Entendi';
+        btnCancelar.className = 'btn btn-secondary';
+        btnCancelar.dataset.trial = '1';
+        dangerZone.style.display = '';
+      } else if (trial) {
+        dangerZone.style.display = 'none';
+      } else if (!isCancelado && isAdmin) {
+        dangerTitle.textContent = 'Cancelar assinatura';
+        const expiraEm = new Date(Date.now() + 30 * 86400000);
+        dangerDesc.textContent =
+          `Ao cancelar, você continuará com acesso ${planoLabel} até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
+        btnCancelar.textContent = 'Cancelar assinatura';
+        btnCancelar.className = 'btn btn-danger';
+        delete btnCancelar.dataset.trial;
+        dangerZone.style.display = '';
+      } else {
+        dangerZone.style.display = 'none';
+      }
     }
 
     if (isFree) {
@@ -740,14 +770,7 @@
       btnMax.className = 'btn btn-outline';
       if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
 
-      if (!isCancelado && isAdmin) {
-        const expiraEm = new Date(Date.now() + 30 * 86400000);
-        document.getElementById('dangerDesc').textContent =
-          `Ao cancelar, você continuará com acesso Plus até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
-        dangerZone.style.display = '';
-      } else {
-        dangerZone.style.display = 'none';
-      }
+      renderCancelZone({ trial: isTrial, planoLabel: 'Plus' });
     } else if (isPro) {
       addBadge(cardPro, 'Plano atual', 'current-badge');
       addBadge(cardMax, 'Recomendado', 'popular-badge');
@@ -769,14 +792,7 @@
       btnMax.className = 'btn btn-primary';
       if (!isAdmin) btnMax.title = 'Apenas o administrador pode assinar';
 
-      if (!isCancelado && isAdmin) {
-        const expiraEm = new Date(Date.now() + 30 * 86400000);
-        document.getElementById('dangerDesc').textContent =
-          `Ao cancelar, você continuará com acesso Pro até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
-        dangerZone.style.display = '';
-      } else {
-        dangerZone.style.display = 'none';
-      }
+      renderCancelZone({ trial: isTrial, planoLabel: 'Pro' });
     } else {
       // Max
       addBadge(cardMax, 'Plano atual', 'current-badge');
@@ -797,14 +813,7 @@
       btnMax.disabled = isCancelado ? !isAdmin : true;
       btnMax.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
 
-      if (!isCancelado && isAdmin) {
-        const expiraEm = new Date(Date.now() + 30 * 86400000);
-        document.getElementById('dangerDesc').textContent =
-          `Ao cancelar, você continuará com acesso Max até aproximadamente ${expiraEm.toLocaleDateString('pt-BR')} (fim do período atual). Após isso, o escritório será movido para o plano Free automaticamente.`;
-        dangerZone.style.display = '';
-      } else {
-        dangerZone.style.display = 'none';
-      }
+      renderCancelZone({ trial: isTrial, planoLabel: 'Max' });
     }
   }
 
@@ -990,6 +999,36 @@
   document.getElementById('btnMax').addEventListener('click', async () => {
     if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
     await iniciarCheckout('Max'
+    );
+  });
+
+  document.getElementById('btnCancelar').addEventListener('click', () => {
+    const btn = document.getElementById('btnCancelar');
+    if (btn.dataset.trial === '1') {
+      openModal(
+        'Você está no período de trial',
+        'Não há nenhuma assinatura ativa para cancelar — ao final deste período, sua conta retorna automaticamente ao plano gratuito, sem qualquer cobrança.\n\nSe preferir encerrar o uso do sistema agora, vá em Configurações → Zona de Perigo para excluir a conta.',
+        'Ir para Configurações',
+        'btn-primary',
+        () => { window.location.href = '/pages/configuracoes.html'; }
+      );
+      return;
+    }
+
+    openModal(
+      'Cancelar assinatura',
+      'Tem certeza que deseja cancelar sua assinatura? Você continuará com acesso ao plano atual até o fim do ciclo vigente. Após isso, o escritório será movido automaticamente para o plano Free.',
+      'Sim, cancelar',
+      'btn-danger',
+      async () => {
+        try {
+          await apiFetch('/assinatura/cancelar', { method: 'POST' });
+          showToast('Assinatura cancelada com sucesso.', true);
+          setTimeout(() => window.location.reload(), 1200);
+        } catch (e) {
+          showToast(e.message ?? 'Erro ao cancelar assinatura.', false);
+        }
+      }
     );
   });
 

@@ -277,6 +277,13 @@ public class AssinaturaController(
         var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
         if (tenant is null) return NotFound();
 
+        if (tenant.Status == StatusTenant.Trial)
+            return BadRequest(new
+            {
+                message = "Você está no período de trial. Não há nenhuma assinatura ativa para cancelar — ao final deste período, sua conta retorna automaticamente ao plano gratuito, sem qualquer cobrança.",
+                motivo = "trial"
+            });
+
         if (tenant.Plano == PlanoTipo.Free)
             return BadRequest(new { message = "Você já está no plano Free." });
 

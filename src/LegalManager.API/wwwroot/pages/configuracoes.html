@@ -69,6 +69,14 @@
     .process-preview .preview-tribunal { font-weight:600; }
     .process-preview .preview-vara { margin-top:4px; }
 
+    .danger-zone { border-color: var(--color-danger); border-width: 2px; background: #fef2f2; }
+    .danger-zone-title { color: var(--color-danger); border-bottom-color: #fecaca; }
+    .danger-zone-callout { padding:14px 16px; border-radius:8px; font-size:14px; line-height:1.5; margin-bottom:16px; }
+    .danger-zone-callout.info { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; }
+    .danger-zone-callout.warning { background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
+    .danger-zone-callout.danger { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; }
+    .danger-zone-callout strong { font-weight:600; }
+
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -245,6 +253,12 @@
           </div>
           <div id="catMsg" class="alert" style="display:none;margin-top:8px"></div>
         </div>
+      </div>
+
+      <!-- Zona de perigo — exclusão de conta (apenas Admin) -->
+      <div class="config-section danger-zone" id="dangerZoneSection" style="display:none">
+        <div class="config-section-title danger-zone-title">⚠️ Zona de Perigo</div>
+        <div id="dangerZoneContent"></div>
       </div>
 
     </div><!-- /tab-configuracoes -->
@@ -435,9 +449,43 @@
   </div>
 </div>
 
+<!-- Modal Excluir Conta -->
+<div class="modal-overlay" id="modalExcluirConta">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title" style="color:var(--color-danger)">⚠️ Excluir conta permanentemente</span>
+      <button class="modal-close" id="modalExcluirContaClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalExcluirAlert" class="alert alert-error" style="display:none"></div>
+      <p style="font-size:14px;color:var(--color-text);line-height:1.5;margin-bottom:16px">
+        Esta ação é <strong>irreversível</strong>. Ao excluir a conta:
+      </p>
+      <ul style="font-size:14px;color:var(--color-text);line-height:1.7;margin:0 0 16px 20px;padding:0">
+        <li>Todos os processos, contatos e tarefas serão removidos</li>
+        <li>Todos os lançamentos financeiros e documentos serão apagados</li>
+        <li>Todos os usuários do escritório perderão o acesso</li>
+        <li>Esta ação não pode ser desfeita</li>
+      </ul>
+      <div class="form-group">
+        <label class="form-label">Digite sua senha para confirmar *</label>
+        <input type="password" id="excluirSenha" class="form-control" autocomplete="current-password" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Digite <strong>EXCLUIR</strong> para confirmar *</label>
+        <input type="text" id="excluirConfirmacao" class="form-control" placeholder="EXCLUIR" required>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnExcluirCancelar">Cancelar</button>
+      <button class="btn btn-danger" id="btnExcluirConfirmar">Excluir conta definitivamente</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initLayout, isPlanoFree } from '/js/layout.js';
-  import { apiFetch } from '/js/api.js';
+  import { apiFetch, clearSession } from '/js/api.js';
   import { getUser } from '/js/auth.js';
   import { mascaraCpfCnpj } from '/js/mascaras.js';
 
@@ -531,6 +579,7 @@
         document.getElementById('cNome').value = config.nome;
         document.getElementById('cCnpj').value = config.cnpj ?? '';
         document.getElementById('cEndereco').value = config.endereco ?? '';
+        renderDangerZone(config, dias);
       }
     } catch (e) { console.error(e); }
   }
@@ -1121,6 +1170,122 @@
       document.getElementById('oabsLoading').textContent = 'Erro ao carregar importações.';
     }
   }
+
+  // ============================================================
+  // DANGER ZONE — Exclusão de conta
+  // ============================================================
+  function renderDangerZone(config, diasTrial) {
+    const section = document.getElementById('dangerZoneSection');
+    const content = document.getElementById('dangerZoneContent');
+    section.style.display = '';
+
+    const plano = config.plano;
+    const status = config.status;
+    const isFree = plano === 'Free';
+    const isTrial = status === 'Trial';
+    const isCancelado = status === 'Cancelado';
+    const assinaturaAtiva = !isFree && !isTrial && !isCancelado;
+
+    let html = '';
+
+    if (isTrial) {
+      html += `<div class="danger-zone-callout info">
+        <strong>Você está no período de trial.</strong><br>
+        Não há nenhuma assinatura ativa para cancelar — ao final deste período, sua conta retorna automaticamente ao plano gratuito, sem qualquer cobrança.
+        ${diasTrial !== null ? `<br><strong>Restam ${diasTrial} dia(s)</strong> de trial.` : ''}
+      </div>
+      <p style="font-size:14px;color:var(--color-text);line-height:1.5;margin-bottom:16px">
+        Caso queira encerrar o uso do sistema antes do fim do trial, você pode excluir a conta abaixo. Esta ação é permanente.
+      </p>`;
+    } else if (assinaturaAtiva) {
+      html += `<div class="danger-zone-callout warning">
+        <strong>Existe uma assinatura ativa neste escritório.</strong><br>
+        Para excluir a conta é necessário cancelar a assinatura primeiro. Após o cancelamento e o fim do ciclo vigente, você poderá excluir a conta aqui.
+      </div>
+      <p style="font-size:14px;color:var(--color-text);line-height:1.5;margin-bottom:16px">
+        Vá até a página <strong>Assinatura</strong> para cancelar o plano atual.
+      </p>`;
+    } else if (isCancelado) {
+      html += `<div class="danger-zone-callout info">
+        <strong>Assinatura cancelada.</strong><br>
+        Você ainda tem acesso aos recursos do plano atual até o fim do ciclo vigente. Depois disso, a conta retorna automaticamente ao plano gratuito.
+      </div>
+      <p style="font-size:14px;color:var(--color-text);line-height:1.5;margin-bottom:16px">
+        Se preferir encerrar o uso do sistema agora, você pode excluir a conta abaixo.
+      </p>`;
+    } else {
+      html += `<p style="font-size:14px;color:var(--color-text);line-height:1.5;margin-bottom:16px">
+        Você está no plano gratuito. Caso queira encerrar o uso do sistema, você pode excluir a conta abaixo. Esta ação é permanente e remove todos os dados do escritório.
+      </p>`;
+    }
+
+    if (!assinaturaAtiva) {
+      html += `<div id="dangerZoneMsg" class="alert" style="display:none"></div>
+        <button class="btn btn-danger" id="btnAbrirExcluirConta">Excluir minha conta</button>`;
+    }
+
+    content.innerHTML = html;
+
+    if (!assinaturaAtiva) {
+      document.getElementById('btnAbrirExcluirConta').addEventListener('click', abrirModalExcluir);
+    }
+  }
+
+  const modalExcluirConta = document.getElementById('modalExcluirConta');
+  function abrirModalExcluir() {
+    document.getElementById('excluirSenha').value = '';
+    document.getElementById('excluirConfirmacao').value = '';
+    document.getElementById('modalExcluirAlert').style.display = 'none';
+    modalExcluirConta.classList.add('open');
+    setTimeout(() => document.getElementById('excluirSenha').focus(), 50);
+  }
+
+  function fecharModalExcluir() {
+    modalExcluirConta.classList.remove('open');
+  }
+
+  [document.getElementById('modalExcluirContaClose'), document.getElementById('btnExcluirCancelar')].forEach(el =>
+    el.addEventListener('click', fecharModalExcluir));
+
+  modalExcluirConta.addEventListener('click', e => {
+    if (e.target === modalExcluirConta) fecharModalExcluir();
+  });
+
+  document.getElementById('btnExcluirConfirmar').addEventListener('click', async () => {
+    const senha = document.getElementById('excluirSenha').value;
+    const confirmacao = document.getElementById('excluirConfirmacao').value.trim();
+    const alertEl = document.getElementById('modalExcluirAlert');
+    const btn = document.getElementById('btnExcluirConfirmar');
+
+    alertEl.style.display = 'none';
+
+    if (!senha) {
+      alertEl.textContent = 'Digite sua senha.';
+      alertEl.style.display = 'block';
+      return;
+    }
+    if (confirmacao !== 'EXCLUIR') {
+      alertEl.textContent = 'Digite EXCLUIR (em maiúsculas) para confirmar.';
+      alertEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Excluindo...';
+    try {
+      await apiFetch('/configuracoes/conta', {
+        method: 'DELETE',
+        body: JSON.stringify({ senha })
+      });
+      clearSession();
+      window.location.href = '/login.html?contaExcluida=1';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Excluir conta definitivamente';
+      alertEl.textContent = err.message ?? 'Erro ao excluir conta.';
+      alertEl.style.display = 'block';
+    }
+  });
 
   // ============================================================
   // INIT
