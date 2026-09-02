@@ -244,4 +244,198 @@ public class FinanceiroServiceTests
         Assert.Equal(5, page3.Items.Count());
         Assert.Equal(25, page1.Total);
     }
+
+    [Fact]
+    public async Task PagarAsync_QuandoVinculadoAParcela_DeveMarcarParcelaComoPaga()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var contatoId = Guid.NewGuid();
+        ctx.Contatos.Add(new Contato
+        {
+            Id = contatoId, TenantId = tenantId, Nome = "Cliente", Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente, CriadoEm = DateTime.UtcNow, Ativo = true
+        });
+
+        var contratoId = Guid.NewGuid();
+        var contrato = new ContratoHonorario
+        {
+            Id = contratoId, TenantId = tenantId, ContatoId = contatoId,
+            NumeroContrato = "HON-2026/0001", Objeto = "X", ValorTotal = 2000m,
+            FormaPagamento = FormaPagamentoContrato.Parcelado,
+            Periodicidade = PeriodicidadeParcela.Mensal, NumeroParcelas = 2,
+            DataPrimeiraParcela = DateTime.UtcNow.Date.AddDays(15),
+            PercentualMulta = 0.02m, PercentualJurosMensal = 0.015m,
+            TipoCobranca = "Boleto/PIX", Status = StatusContratoHonorario.Ativo,
+            CriadoPorId = Guid.NewGuid(), DataInicio = DateTime.UtcNow.Date.AddDays(15)
+        };
+        ctx.ContratosHonorarios.Add(contrato);
+
+        var parcelaId = Guid.NewGuid();
+        var parcela = new ParcelaHonorario
+        {
+            Id = parcelaId, TenantId = tenantId, ContratoId = contratoId,
+            Numero = 1, IsEntrada = false, Vencimento = DateTime.UtcNow.Date.AddDays(15),
+            ValorOriginal = 1000m, Status = StatusParcelaHonorario.Pendente
+        };
+        ctx.ParcelasHonorarios.Add(parcela);
+        parcela.Contrato = contrato;
+
+        var lancId = Guid.NewGuid();
+        ctx.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = lancId, TenantId = tenantId, Tipo = TipoLancamento.Receita,
+            Categoria = "Honorario", Valor = 1000m,
+            DataVencimento = DateTime.UtcNow.Date.AddDays(15),
+            ContratoHonorarioId = contratoId, ParcelaHonorarioId = parcelaId,
+            Status = StatusLancamento.Pendente
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        var dataPg = new DateTime(2026, 9, 1);
+        await service.PagarAsync(lancId, tenantId, dataPg);
+
+        var lanc = await ctx.LancamentosFinanceiros.FindAsync(lancId);
+        Assert.Equal(StatusLancamento.Pago, lanc!.Status);
+        Assert.Equal(dataPg, lanc.DataPagamento);
+
+        var parcAtualizada = await ctx.ParcelasHonorarios.FindAsync(parcelaId);
+        Assert.Equal(StatusParcelaHonorario.Pago, parcAtualizada!.Status);
+        Assert.Equal(dataPg, parcAtualizada.DataPagamento);
+        Assert.Equal(1000m, parcAtualizada.ValorPago);
+        Assert.Equal(lancId, parcAtualizada.LancamentoFinanceiroId);
+    }
+
+    [Fact]
+    public async Task PagarAsync_QuandoUltimaParcela_DeveMarcarContratoComoQuitado()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var contatoId = Guid.NewGuid();
+        ctx.Contatos.Add(new Contato
+        {
+            Id = contatoId, TenantId = tenantId, Nome = "Cliente", Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente, CriadoEm = DateTime.UtcNow, Ativo = true
+        });
+
+        var contratoId = Guid.NewGuid();
+        var parcelaId = Guid.NewGuid();
+        var contrato = new ContratoHonorario
+        {
+            Id = contratoId, TenantId = tenantId, ContatoId = contatoId,
+            NumeroContrato = "HON-2026/0002", Objeto = "X", ValorTotal = 1000m,
+            FormaPagamento = FormaPagamentoContrato.AVista,
+            Periodicidade = null, NumeroParcelas = null,
+            DataPrimeiraParcela = DateTime.UtcNow.Date.AddDays(30),
+            PercentualMulta = 0.02m, PercentualJurosMensal = 0.015m,
+            TipoCobranca = "Boleto/PIX", Status = StatusContratoHonorario.Ativo,
+            CriadoPorId = Guid.NewGuid(), DataInicio = DateTime.UtcNow.Date.AddDays(30)
+        };
+        var parcela = new ParcelaHonorario
+        {
+            Id = parcelaId, TenantId = tenantId, ContratoId = contratoId,
+            Numero = 1, IsEntrada = true, Vencimento = DateTime.UtcNow.Date.AddDays(30),
+            ValorOriginal = 1000m, Status = StatusParcelaHonorario.Pendente
+        };
+        ctx.ContratosHonorarios.Add(contrato);
+        ctx.ParcelasHonorarios.Add(parcela);
+        parcela.Contrato = contrato;
+
+        var lancId = Guid.NewGuid();
+        ctx.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = lancId, TenantId = tenantId, Tipo = TipoLancamento.Receita,
+            Categoria = "Honorario", Valor = 1000m,
+            DataVencimento = DateTime.UtcNow.Date.AddDays(30),
+            ContratoHonorarioId = contratoId, ParcelaHonorarioId = parcelaId,
+            Status = StatusLancamento.Pendente
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        await service.PagarAsync(lancId, tenantId, DateTime.UtcNow.Date);
+
+        var contratoAtualizado = await ctx.ContratosHonorarios.FindAsync(contratoId);
+        Assert.Equal(StatusContratoHonorario.Quitado, contratoAtualizado!.Status);
+    }
+
+    [Fact]
+    public async Task CancelarAsync_QuandoLancamentoVinculadoAParcelaPaga_DeveVoltarParcelaParaPendente()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var contatoId = Guid.NewGuid();
+        ctx.Contatos.Add(new Contato
+        {
+            Id = contatoId, TenantId = tenantId, Nome = "Cliente", Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente, CriadoEm = DateTime.UtcNow, Ativo = true
+        });
+
+        var contratoId = Guid.NewGuid();
+        var contrato = new ContratoHonorario
+        {
+            Id = contratoId, TenantId = tenantId, ContatoId = contatoId,
+            NumeroContrato = "HON-2026/0003", Objeto = "X", ValorTotal = 1000m,
+            FormaPagamento = FormaPagamentoContrato.AVista,
+            Periodicidade = null, NumeroParcelas = null,
+            DataPrimeiraParcela = DateTime.UtcNow.Date.AddDays(30),
+            PercentualMulta = 0.02m, PercentualJurosMensal = 0.015m,
+            TipoCobranca = "Boleto/PIX", Status = StatusContratoHonorario.Quitado,
+            CriadoPorId = Guid.NewGuid(), DataInicio = DateTime.UtcNow.Date.AddDays(30)
+        };
+        var parcelaId = Guid.NewGuid();
+        var parcela = new ParcelaHonorario
+        {
+            Id = parcelaId, TenantId = tenantId, ContratoId = contratoId,
+            Numero = 1, IsEntrada = true, Vencimento = DateTime.UtcNow.Date.AddDays(30),
+            ValorOriginal = 1000m, Status = StatusParcelaHonorario.Pago,
+            DataPagamento = DateTime.UtcNow.Date, ValorPago = 1000m
+        };
+        ctx.ContratosHonorarios.Add(contrato);
+        ctx.ParcelasHonorarios.Add(parcela);
+        parcela.Contrato = contrato;
+
+        var lancId = Guid.NewGuid();
+        ctx.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = lancId, TenantId = tenantId, Tipo = TipoLancamento.Receita,
+            Categoria = "Honorario", Valor = 1000m,
+            DataVencimento = DateTime.UtcNow.Date.AddDays(30),
+            DataPagamento = DateTime.UtcNow.Date,
+            ContratoHonorarioId = contratoId, ParcelaHonorarioId = parcelaId,
+            Status = StatusLancamento.Pago
+        });
+        parcela.LancamentoFinanceiroId = lancId;
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        await service.CancelarAsync(lancId, tenantId);
+
+        var parc = await ctx.ParcelasHonorarios.FindAsync(parcelaId);
+        Assert.Equal(StatusParcelaHonorario.Pendente, parc!.Status);
+        Assert.Null(parc.DataPagamento);
+        Assert.Null(parc.ValorPago);
+        Assert.Null(parc.LancamentoFinanceiroId);
+
+        var contratoAtualizado = await ctx.ContratosHonorarios.FindAsync(contratoId);
+        Assert.Equal(StatusContratoHonorario.Ativo, contratoAtualizado!.Status);
+    }
+
+    [Fact]
+    public async Task PagarAsync_QuandoLancamentoSemParcela_NaoDeveLancarExcecao()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var lancId = Guid.NewGuid();
+        ctx.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = lancId, TenantId = tenantId, Tipo = TipoLancamento.Receita,
+            Categoria = "Custas", Valor = 500m, DataVencimento = DateTime.UtcNow.AddDays(5),
+            Status = StatusLancamento.Pendente
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        await service.PagarAsync(lancId, tenantId, DateTime.UtcNow);
+
+        var lanc = await ctx.LancamentosFinanceiros.FindAsync(lancId);
+        Assert.Equal(StatusLancamento.Pago, lanc!.Status);
+    }
 }

@@ -95,8 +95,11 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
             .FirstOrDefaultAsync(l => l.Id == id && l.TenantId == tenantId, ct)
             ?? throw new KeyNotFoundException("Lançamento não encontrado.");
 
+        var dataPg = dataPagamento ?? DateTime.UtcNow;
         lancamento.Status = StatusLancamento.Pago;
-        lancamento.DataPagamento = dataPagamento ?? DateTime.UtcNow;
+        lancamento.DataPagamento = dataPg;
+
+        await SincronizarParcelaHonorarioAoPagarAsync(lancamento, dataPg, ct);
         await db.SaveChangesAsync(ct);
     }
 
@@ -107,7 +110,66 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
             ?? throw new KeyNotFoundException("Lançamento não encontrado.");
 
         lancamento.Status = StatusLancamento.Cancelado;
+
+        await SincronizarParcelaHonorarioAoCancelarAsync(lancamento, ct);
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SincronizarParcelaHonorarioAoPagarAsync(LancamentoFinanceiro lancamento, DateTime dataPagamento, CancellationToken ct)
+    {
+        if (!lancamento.ParcelaHonorarioId.HasValue) return;
+
+        var parcela = await db.ParcelasHonorarios
+            .Include(p => p.Contrato).ThenInclude(c => c.Parcelas)
+            .FirstOrDefaultAsync(p => p.Id == lancamento.ParcelaHonorarioId.Value
+                && p.TenantId == lancamento.TenantId, ct);
+        if (parcela == null || parcela.Status == StatusParcelaHonorario.Cancelado) return;
+
+        if (parcela.Status != StatusParcelaHonorario.Pago)
+        {
+            parcela.Status = StatusParcelaHonorario.Pago;
+            parcela.DataPagamento = dataPagamento;
+            parcela.ValorPago = lancamento.Valor;
+        }
+        parcela.LancamentoFinanceiroId = lancamento.Id;
+
+        RecalcularStatusContrato(parcela.Contrato);
+    }
+
+    private async Task SincronizarParcelaHonorarioAoCancelarAsync(LancamentoFinanceiro lancamento, CancellationToken ct)
+    {
+        if (!lancamento.ParcelaHonorarioId.HasValue) return;
+
+        var parcela = await db.ParcelasHonorarios
+            .Include(p => p.Contrato).ThenInclude(c => c.Parcelas)
+            .FirstOrDefaultAsync(p => p.Id == lancamento.ParcelaHonorarioId.Value
+                && p.TenantId == lancamento.TenantId, ct);
+        if (parcela == null) return;
+
+        if (parcela.Status == StatusParcelaHonorario.Pago && parcela.LancamentoFinanceiroId == lancamento.Id)
+        {
+            parcela.Status = StatusParcelaHonorario.Pendente;
+            parcela.DataPagamento = null;
+            parcela.ValorPago = null;
+            parcela.LancamentoFinanceiroId = null;
+            RecalcularStatusContrato(parcela.Contrato);
+        }
+    }
+
+    private static void RecalcularStatusContrato(ContratoHonorario c)
+    {
+        if (c.Status == StatusContratoHonorario.Distratado || c.Status == StatusContratoHonorario.Encerrado)
+            return;
+
+        var parcelas = c.Parcelas.Where(p => p.Status != StatusParcelaHonorario.Cancelado).ToList();
+        if (parcelas.Count == 0) return;
+
+        var todasPagas = parcelas.All(p => p.Status == StatusParcelaHonorario.Pago);
+        var temVencida = parcelas.Any(p => p.Status != StatusParcelaHonorario.Pago && p.Vencimento.Date < DateTime.UtcNow.Date);
+
+        if (todasPagas) c.Status = StatusContratoHonorario.Quitado;
+        else if (temVencida) c.Status = StatusContratoHonorario.Inadimplente;
+        else c.Status = StatusContratoHonorario.Ativo;
     }
 
     public async Task<ResumoFinanceiroCompletoDto> GetResumoCompletoAsync(Guid tenantId, int ano, int mes, CancellationToken ct = default)
