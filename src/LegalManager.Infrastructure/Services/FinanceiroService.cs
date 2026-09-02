@@ -20,12 +20,11 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
         if (status.HasValue) q = q.Where(l => l.Status == status.Value);
         if (processoId.HasValue) q = q.Where(l => l.ProcessoId == processoId.Value);
         if (contatoId.HasValue) q = q.Where(l => l.ContatoId == contatoId.Value);
-        if (ano.HasValue) q = q.Where(l => l.DataVencimento.Year == ano.Value);
-        if (mes.HasValue) q = q.Where(l => l.DataVencimento.Month == mes.Value);
+        if (ano.HasValue || mes.HasValue) q = AplicarFiltroPeriodo(q, ano, mes);
 
         var total = await q.CountAsync(ct);
         var items = await q
-            .OrderByDescending(l => l.DataVencimento)
+            .OrderByDescending(l => l.Status == StatusLancamento.Pago ? l.DataPagamento : l.DataVencimento)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(l => new LancamentoDto(
                 l.Id, l.Tipo, l.Categoria, l.Valor, l.Descricao,
@@ -36,6 +35,35 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
             .ToListAsync(ct);
 
         return new LancamentosPagedDto(items, total);
+    }
+
+    private static IQueryable<LancamentoFinanceiro> AplicarFiltroPeriodo(IQueryable<LancamentoFinanceiro> q, int? ano, int? mes)
+    {
+        if (!ano.HasValue && !mes.HasValue) return q;
+
+        if (ano.HasValue && mes.HasValue)
+        {
+            var a = ano.Value;
+            var m = mes.Value;
+            return q.Where(l =>
+                (l.Status == StatusLancamento.Pago && l.DataPagamento != null &&
+                    l.DataPagamento.Value.Year == a && l.DataPagamento.Value.Month == m) ||
+                (l.Status == StatusLancamento.Pendente &&
+                    l.DataVencimento.Year == a && l.DataVencimento.Month == m));
+        }
+
+        if (ano.HasValue)
+        {
+            var a = ano.Value;
+            return q.Where(l =>
+                (l.Status == StatusLancamento.Pago && l.DataPagamento != null && l.DataPagamento.Value.Year == a) ||
+                (l.Status == StatusLancamento.Pendente && l.DataVencimento.Year == a));
+        }
+
+        var me = mes!.Value;
+        return q.Where(l =>
+            (l.Status == StatusLancamento.Pago && l.DataPagamento != null && l.DataPagamento.Value.Month == me) ||
+            (l.Status == StatusLancamento.Pendente && l.DataVencimento.Month == me));
     }
 
     public async Task<LancamentoDto?> GetByIdAsync(Guid id, Guid tenantId, CancellationToken ct = default)
@@ -183,11 +211,22 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
     {
         var q = db.LancamentosFinanceiros
             .AsNoTracking()
-            .Where(l => l.TenantId == tenantId &&
-                        l.Status != StatusLancamento.Cancelado &&
-                        l.DataVencimento.Year == ano);
+            .Where(l => l.TenantId == tenantId && l.Status != StatusLancamento.Cancelado);
 
-        if (mes.HasValue) q = q.Where(l => l.DataVencimento.Month == mes.Value);
+        if (mes.HasValue)
+        {
+            q = q.Where(l =>
+                (l.Status == StatusLancamento.Pago && l.DataPagamento != null &&
+                    l.DataPagamento.Value.Year == ano && l.DataPagamento.Value.Month == mes.Value) ||
+                (l.Status == StatusLancamento.Pendente &&
+                    l.DataVencimento.Year == ano && l.DataVencimento.Month == mes.Value));
+        }
+        else
+        {
+            q = q.Where(l =>
+                (l.Status == StatusLancamento.Pago && l.DataPagamento != null && l.DataPagamento.Value.Year == ano) ||
+                (l.Status == StatusLancamento.Pendente && l.DataVencimento.Year == ano));
+        }
 
         var now = DateTime.UtcNow.Date;
         var lancamentos = await q.ToListAsync(ct);

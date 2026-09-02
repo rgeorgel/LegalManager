@@ -104,8 +104,8 @@ public class IndicadoresServiceTests
         var (ctx, tenantId) = await SeedAsync();
         var now = DateTime.UtcNow;
         ctx.LancamentosFinanceiros.AddRange(
-            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 5000m, DataVencimento = new DateTime(now.Year, now.Month, 5), Status = StatusLancamento.Pago },
-            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Despesa, Categoria = "SW", Valor = 1000m, DataVencimento = new DateTime(now.Year, now.Month, 10), Status = StatusLancamento.Pago }
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 5000m, DataVencimento = new DateTime(now.Year, now.Month, 5), DataPagamento = new DateTime(now.Year, now.Month, 5), Status = StatusLancamento.Pago },
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Despesa, Categoria = "SW", Valor = 1000m, DataVencimento = new DateTime(now.Year, now.Month, 10), DataPagamento = new DateTime(now.Year, now.Month, 10), Status = StatusLancamento.Pago }
         );
         await ctx.SaveChangesAsync();
 

@@ -85,23 +85,28 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
 
         var now = DateTime.UtcNow.Date;
 
-        // Agrupa por DataVencimento (mês do lançamento), não DataPagamento
+        // Critério unificado: lançamentos pagos contam por DataPagamento,
+        // lançamentos pendentes contam por DataVencimento.
         var receitasMes = await q
             .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pago &&
-                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
+                        l.DataPagamento != null &&
+                        l.DataPagamento >= inicioMes && l.DataPagamento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var despesasMes = await q
             .Where(l => l.Tipo == TipoLancamento.Despesa && l.Status == StatusLancamento.Pago &&
-                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
+                        l.DataPagamento != null &&
+                        l.DataPagamento >= inicioMes && l.DataPagamento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var receitasPendentes = await q
-            .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente)
+            .Where(l => l.Tipo == TipoLancamento.Receita && l.Status == StatusLancamento.Pendente &&
+                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var despesasPendentes = await q
-            .Where(l => l.Tipo == TipoLancamento.Despesa && l.Status == StatusLancamento.Pendente)
+            .Where(l => l.Tipo == TipoLancamento.Despesa && l.Status == StatusLancamento.Pendente &&
+                        l.DataVencimento >= inicioMes && l.DataVencimento < fimMes)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
         var receitasVencidas = await q
@@ -114,12 +119,13 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
                         l.DataVencimento < now)
             .SumAsync(l => (decimal?)l.Valor ?? 0, ct);
 
-        // Gráfico: últimos 6 meses agrupados por DataVencimento
+        // Gráfico: últimos 6 meses agrupados por DataPagamento (para pagos)
         var seisMesesAtras = inicioMes.AddMonths(-5);
         var lancamentos = await q
             .Where(l => l.Status == StatusLancamento.Pago &&
-                        l.DataVencimento >= seisMesesAtras && l.DataVencimento < fimMes)
-            .Select(l => new { l.Tipo, l.Valor, l.DataVencimento })
+                        l.DataPagamento != null &&
+                        l.DataPagamento >= seisMesesAtras && l.DataPagamento < fimMes)
+            .Select(l => new { l.Tipo, l.Valor, l.DataPagamento })
             .ToListAsync(ct);
 
         var ultimos6 = Enumerable.Range(0, 6)
@@ -127,11 +133,11 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
             .Select(m => new MesFinanceiroDto(
                 m.ToString("MMM/yy", new System.Globalization.CultureInfo("pt-BR")),
                 lancamentos.Where(l => l.Tipo == TipoLancamento.Receita &&
-                    l.DataVencimento.Year == m.Year &&
-                    l.DataVencimento.Month == m.Month).Sum(l => l.Valor),
+                    l.DataPagamento!.Value.Year == m.Year &&
+                    l.DataPagamento.Value.Month == m.Month).Sum(l => l.Valor),
                 lancamentos.Where(l => l.Tipo == TipoLancamento.Despesa &&
-                    l.DataVencimento.Year == m.Year &&
-                    l.DataVencimento.Month == m.Month).Sum(l => l.Valor)))
+                    l.DataPagamento!.Value.Year == m.Year &&
+                    l.DataPagamento.Value.Month == m.Month).Sum(l => l.Valor)))
             .ToList();
 
         return new FinanceiroIndicadoresDto(

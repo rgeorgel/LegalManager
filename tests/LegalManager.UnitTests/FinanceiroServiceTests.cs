@@ -208,8 +208,8 @@ public class FinanceiroServiceTests
         var (ctx, tenantId) = await SeedTenantAsync();
         var now = DateTime.UtcNow;
         ctx.LancamentosFinanceiros.AddRange(
-            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 5000m, DataVencimento = new DateTime(now.Year, now.Month, 10), Status = StatusLancamento.Pago },
-            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Despesa, Categoria = "SW", Valor = 1000m, DataVencimento = new DateTime(now.Year, now.Month, 15), Status = StatusLancamento.Pago }
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 5000m, DataVencimento = new DateTime(now.Year, now.Month, 10), DataPagamento = new DateTime(now.Year, now.Month, 10), Status = StatusLancamento.Pago },
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Despesa, Categoria = "SW", Valor = 1000m, DataVencimento = new DateTime(now.Year, now.Month, 15), DataPagamento = new DateTime(now.Year, now.Month, 15), Status = StatusLancamento.Pago }
         );
         await ctx.SaveChangesAsync();
 
@@ -437,5 +437,62 @@ public class FinanceiroServiceTests
 
         var lanc = await ctx.LancamentosFinanceiros.FindAsync(lancId);
         Assert.Equal(StatusLancamento.Pago, lanc!.Status);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_LancamentoPago_DeveAparecerNoMesDaDataPagamento_NaoNoVencimento()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var vencSet = new DateTime(2026, 9, 10);
+        var pagAgo = new DateTime(2026, 8, 8);
+        ctx.LancamentosFinanceiros.Add(
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 810.50m, DataVencimento = vencSet, DataPagamento = pagAgo, Status = StatusLancamento.Pago }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+
+        var emSet = await service.GetAllAsync(tenantId, null, null, null, null, 1, 50, 9, 2026);
+        var emAgo = await service.GetAllAsync(tenantId, null, null, null, null, 1, 50, 8, 2026);
+
+        Assert.Empty(emSet.Items);
+        Assert.Single(emAgo.Items);
+        Assert.Equal(810.50m, emAgo.Items.First().Valor);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_LancamentoPendente_DeveAparecerNoMesDoVencimento()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var vencSet = new DateTime(2026, 9, 10);
+        ctx.LancamentosFinanceiros.Add(
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 810.50m, DataVencimento = vencSet, Status = StatusLancamento.Pendente }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        var emSet = await service.GetAllAsync(tenantId, null, null, null, null, 1, 50, 9, 2026);
+        var emAgo = await service.GetAllAsync(tenantId, null, null, null, null, 1, 50, 8, 2026);
+
+        Assert.Single(emSet.Items);
+        Assert.Empty(emAgo.Items);
+    }
+
+    [Fact]
+    public async Task GetResumoCompletoAsync_DeveContarReceitasPagasPelaDataPagamento()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        ctx.LancamentosFinanceiros.AddRange(
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 810.50m, DataVencimento = new DateTime(2026, 9, 10), DataPagamento = new DateTime(2026, 8, 8), Status = StatusLancamento.Pago },
+            new LancamentoFinanceiro { Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoLancamento.Receita, Categoria = "H", Valor = 1000m, DataVencimento = new DateTime(2026, 9, 5), DataPagamento = new DateTime(2026, 9, 5), Status = StatusLancamento.Pago }
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        var resumoSet = await service.GetResumoCompletoAsync(tenantId, 2026, 9);
+        var resumoAgo = await service.GetResumoCompletoAsync(tenantId, 2026, 8);
+
+        Assert.Equal(1000m, resumoSet.Mes.TotalReceitas);
+        Assert.Equal(810.50m, resumoAgo.Mes.TotalReceitas);
     }
 }
