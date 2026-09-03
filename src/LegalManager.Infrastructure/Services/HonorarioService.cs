@@ -57,7 +57,9 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
                 }
             }
 
-            if (atrasoCount > 0)
+            if (atrasoCount > 0
+                && c.Status != StatusContratoHonorario.Encerrado
+                && c.Status != StatusContratoHonorario.Distratado)
             {
                 contratosAtrasados++;
                 inadimplentes.Add(new InadimplenteResumoDto(

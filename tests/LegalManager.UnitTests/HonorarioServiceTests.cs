@@ -319,6 +319,44 @@ public class HonorarioServiceTests
     }
 
     [Fact]
+    public async Task Dashboard_NaoIncluiContratosEncerradosOuDistratados_NaListaInadimplentes()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+
+        // Contrato ATIVO com parcela vencida (deve aparecer nos inadimplentes)
+        var ativoVencendo = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "Ativo vencido", 1000m, FormaPagamentoContrato.AVista,
+            null, null, DateTime.UtcNow.Date.AddDays(-30), null, null, null, null, "Boleto/PIX", null,
+            DateTime.UtcNow.Date.AddDays(-30), null
+        ));
+
+        // Contrato ENCERRADO com parcela vencida (NÃO deve aparecer)
+        var encerrado = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "Encerrado vencido", 2000m, FormaPagamentoContrato.AVista,
+            null, null, DateTime.UtcNow.Date.AddDays(-60), null, null, null, null, "Boleto/PIX", null,
+            DateTime.UtcNow.Date.AddDays(-60), null
+        ));
+        await service.ExcluirAsync(encerrado.Id, tenantId, usuarioId);
+
+        // Contrato DISTRATADO com parcela vencida (NÃO deve aparecer)
+        var distratado = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "Distratado vencido", 3000m, FormaPagamentoContrato.AVista,
+            null, null, DateTime.UtcNow.Date.AddDays(-90), null, null, null, null, "Boleto/PIX", null,
+            DateTime.UtcNow.Date.AddDays(-90), null
+        ));
+        await service.DistratoAsync(distratado.Id, tenantId, usuarioId, "teste");
+
+        var dash = await service.GetDashboardAsync(tenantId);
+        Assert.NotNull(dash);
+
+        var inadimplentes = dash!.Inadimplentes.ToList();
+        Assert.Single(inadimplentes);
+        Assert.Equal(ativoVencendo.Id, inadimplentes[0].ContratoId);
+        Assert.Equal(1, dash.ContratosAtrasados);
+    }
+
+    [Fact]
     public async Task GerarParcelas_ArredondamentoCorreto()
     {
         // 100 dividido em 3 = 33.33, 33.33, 33.34
