@@ -57,9 +57,10 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
                 }
             }
 
-            if (atrasoCount > 0
-                && c.Status != StatusContratoHonorario.Encerrado
-                && c.Status != StatusContratoHonorario.Distratado)
+            var contratoEncerrado = c.Status == StatusContratoHonorario.Encerrado
+                || c.Status == StatusContratoHonorario.Distratado;
+
+            if (atrasoCount > 0 && !contratoEncerrado)
             {
                 contratosAtrasados++;
                 inadimplentes.Add(new InadimplenteResumoDto(
@@ -73,7 +74,8 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             }
 
             totalPendente += pendente;
-            totalAtraso += atraso;
+            if (!contratoEncerrado)
+                totalAtraso += atraso;
         }
 
         var evolucao = await CalcularEvolucao6MesesAsync(tenantId, ct);

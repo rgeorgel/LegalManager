@@ -354,6 +354,10 @@ public class HonorarioServiceTests
         Assert.Single(inadimplentes);
         Assert.Equal(ativoVencendo.Id, inadimplentes[0].ContratoId);
         Assert.Equal(1, dash.ContratosAtrasados);
+
+        var valorAtivo = inadimplentes[0].ValorEmAtraso;
+        Assert.Equal(valorAtivo, dash.TotalEmAtraso);
+        Assert.NotEqual(2 * valorAtivo, dash.TotalEmAtraso);
     }
 
     [Fact]
