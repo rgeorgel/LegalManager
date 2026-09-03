@@ -495,4 +495,74 @@ public class FinanceiroServiceTests
         Assert.Equal(1000m, resumoSet.Mes.TotalReceitas);
         Assert.Equal(810.50m, resumoAgo.Mes.TotalReceitas);
     }
+
+    [Fact]
+    public async Task GetResumoCompletoAsync_DeveIncluirParcelasHonorariosPendentesEmAReceberEVencidas()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var hoje = DateTime.UtcNow.Date;
+
+        var contratoId = Guid.NewGuid();
+        ctx.ContratosHonorarios.Add(new ContratoHonorario
+        {
+            Id = contratoId, TenantId = tenantId,
+            NumeroContrato = "HON-TEST", Objeto = "X",
+            ValorTotal = 4000m, FormaPagamento = FormaPagamentoContrato.Parcelado,
+            Periodicidade = PeriodicidadeParcela.Mensal, NumeroParcelas = 4,
+            DataPrimeiraParcela = hoje.AddMonths(-3),
+            Status = StatusContratoHonorario.Ativo,
+            DataInicio = hoje.AddMonths(-3),
+            PercentualMulta = 0.02m, PercentualJurosMensal = 0.015m,
+            TipoCobranca = "Boleto", CriadoEm = DateTime.UtcNow
+        });
+
+        // 3 parcelas vencidas (meses -3, -2, -1)
+        for (int i = 0; i < 3; i++)
+        {
+            ctx.ParcelasHonorarios.Add(new ParcelaHonorario
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId, ContratoId = contratoId, Numero = i + 1,
+                Vencimento = hoje.AddMonths(-(3 - i)), ValorOriginal = 1000m,
+                Status = StatusParcelaHonorario.Pendente, CriadoEm = DateTime.UtcNow
+            });
+        }
+        // 1 parcela a vencer (mês +1)
+        ctx.ParcelasHonorarios.Add(new ParcelaHonorario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, ContratoId = contratoId, Numero = 4,
+            Vencimento = hoje.AddMonths(1), ValorOriginal = 1000m,
+            Status = StatusParcelaHonorario.Pendente, CriadoEm = DateTime.UtcNow
+        });
+
+        // contrato Encerrado — deve ser IGNORADO mesmo com parcela pendente
+        var contratoEncId = Guid.NewGuid();
+        ctx.ContratosHonorarios.Add(new ContratoHonorario
+        {
+            Id = contratoEncId, TenantId = tenantId, NumeroContrato = "HON-ENC",
+            Objeto = "Y", ValorTotal = 5000m, FormaPagamento = FormaPagamentoContrato.AVista,
+            Status = StatusContratoHonorario.Encerrado,
+            DataInicio = hoje.AddMonths(-3), PercentualMulta = 0.02m, PercentualJurosMensal = 0.015m,
+            TipoCobranca = "Boleto", CriadoEm = DateTime.UtcNow
+        });
+        ctx.ParcelasHonorarios.Add(new ParcelaHonorario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, ContratoId = contratoEncId, Numero = 1,
+            Vencimento = hoje.AddMonths(-2), ValorOriginal = 5000m,
+            Status = StatusParcelaHonorario.Pendente, CriadoEm = DateTime.UtcNow
+        });
+
+        await ctx.SaveChangesAsync();
+
+        var service = new FinanceiroService(ctx);
+        var resumo = await service.GetResumoCompletoAsync(tenantId, hoje.Year, hoje.Month);
+
+        // Ano (acumulado): 4 parcelas ativas (4 × 1000 = 4000), 3 vencidas (3000).
+        // Os R$ 5000 do contrato Encerrado são IGNORADOS.
+        Assert.Equal(4000m, resumo.Ano.ReceitasPendentes);
+        Assert.Equal(3000m, resumo.Ano.ReceitasVencidas);
+
+        // Mês atual: nenhuma parcela vence no mês corrente
+        Assert.Equal(0m, resumo.Mes.ReceitasPendentes);
+        Assert.Equal(0m, resumo.Mes.ReceitasVencidas);
+    }
 }

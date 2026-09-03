@@ -240,6 +240,33 @@ public class FinanceiroService(AppDbContext db) : IFinanceiroService
         var receitasVencidas = receitas.Where(l => l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < now).Sum(l => l.Valor);
         var despesasVencidas = despesas.Where(l => l.Status == StatusLancamento.Pendente && l.DataVencimento.Date < now).Sum(l => l.Valor);
 
+        var contratosAtivosIds = await db.ContratosHonorarios
+            .AsNoTracking()
+            .Where(c => c.TenantId == tenantId
+                && c.Status != StatusContratoHonorario.Encerrado
+                && c.Status != StatusContratoHonorario.Distratado)
+            .Select(c => c.Id)
+            .ToListAsync(ct);
+
+        var qParcelas = db.ParcelasHonorarios
+            .AsNoTracking()
+            .Where(p => p.TenantId == tenantId
+                && contratosAtivosIds.Contains(p.ContratoId)
+                && p.Status != StatusParcelaHonorario.Pago
+                && p.Status != StatusParcelaHonorario.Cancelado);
+
+        if (mes.HasValue)
+            qParcelas = qParcelas.Where(p => p.Vencimento.Year == ano && p.Vencimento.Month == mes.Value);
+        else
+            qParcelas = qParcelas.Where(p => p.Vencimento.Year == ano);
+
+        var parcelasPendentes = await qParcelas
+            .Select(p => new { p.ValorOriginal, p.Vencimento })
+            .ToListAsync(ct);
+
+        receitasPendentes += parcelasPendentes.Sum(p => p.ValorOriginal);
+        receitasVencidas += parcelasPendentes.Where(p => p.Vencimento.Date < now).Sum(p => p.ValorOriginal);
+
         return new ResumoFinanceiroDto(
             totalReceitas, totalDespesas, totalReceitas - totalDespesas,
             receitasPendentes, despesasPendentes, receitasVencidas, despesasVencidas);
