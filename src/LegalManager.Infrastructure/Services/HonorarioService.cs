@@ -73,9 +73,11 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
                 ));
             }
 
-            totalPendente += pendente;
             if (!contratoEncerrado)
+            {
+                totalPendente += pendente;
                 totalAtraso += atraso;
+            }
         }
 
         var evolucao = await CalcularEvolucao6MesesAsync(tenantId, ct);

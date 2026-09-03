@@ -358,6 +358,10 @@ public class HonorarioServiceTests
         var valorAtivo = inadimplentes[0].ValorEmAtraso;
         Assert.Equal(valorAtivo, dash.TotalEmAtraso);
         Assert.NotEqual(2 * valorAtivo, dash.TotalEmAtraso);
+
+        // TotalAReceber não deve incluir dívida de contratos Encerrados/Distratados
+        Assert.True(dash.TotalAReceber > 0);
+        Assert.True(dash.TotalAReceber < 2 * valorAtivo);
     }
 
     [Fact]
