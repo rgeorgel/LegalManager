@@ -410,25 +410,54 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         p.Observacao = dto.Observacao;
         p.Status = StatusParcelaHonorario.Pago;
 
-        // Gerar LancamentoFinanceiro
-        var lancamento = new LancamentoFinanceiro
+        // Reutiliza Lancamento pré-existente (criado manualmente via UI do Financeiro)
+        // para evitar duplicação. Critérios: mesmo tenant, sem ParcelaHonorarioId,
+        // Pendente, Honorário, mesmo vencimento e valor próximo (tolerância R$ 1).
+        var dataVenc = p.Vencimento.Date;
+        var candidatos = await db.LancamentosFinanceiros
+            .Where(l => l.TenantId == tenantId
+                && l.ParcelaHonorarioId == null
+                && l.Status == StatusLancamento.Pendente
+                && l.Categoria == CategoriaLancamento.Honorario
+                && l.DataVencimento.Date == dataVenc
+                && l.Valor >= dto.ValorPago - 1.0m
+                && l.Valor <= dto.ValorPago + 1.0m)
+            .ToListAsync(ct);
+        var lancamentoExistente = candidatos
+            .OrderBy(l => Math.Abs(l.Valor - dto.ValorPago))
+            .FirstOrDefault();
+
+        LancamentoFinanceiro lancamento;
+        if (lancamentoExistente != null)
         {
-            Id = Guid.NewGuid(),
-            TenantId = tenantId,
-            Tipo = TipoLancamento.Receita,
-            Categoria = CategoriaLancamento.Honorario,
-            Valor = dto.ValorPago,
-            Descricao = $"Parcela {(p.IsEntrada ? "Entrada" : $"{p.Numero}/{c.NumeroParcelas}")} - {c.NumeroContrato}" + (c.Objeto != null ? $" - {Truncar(c.Objeto, 60)}" : ""),
-            DataVencimento = p.Vencimento,
-            DataPagamento = dto.DataPagamento,
-            Status = StatusLancamento.Pago,
-            ProcessoId = c.ProcessoId,
-            ContatoId = c.ContatoId,
-            ContratoHonorarioId = c.Id,
-            ParcelaHonorarioId = p.Id,
-            CriadoEm = DateTime.UtcNow
-        };
-        db.LancamentosFinanceiros.Add(lancamento);
+            lancamentoExistente.Status = StatusLancamento.Pago;
+            lancamentoExistente.DataPagamento = dto.DataPagamento;
+            lancamentoExistente.Valor = dto.ValorPago;
+            lancamentoExistente.ParcelaHonorarioId = p.Id;
+            lancamentoExistente.Descricao = $"Parcela {(p.IsEntrada ? "Entrada" : $"{p.Numero}/{c.NumeroParcelas}")} - {c.NumeroContrato}" + (c.Objeto != null ? $" - {Truncar(c.Objeto, 60)}" : "");
+            lancamento = lancamentoExistente;
+        }
+        else
+        {
+            lancamento = new LancamentoFinanceiro
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Tipo = TipoLancamento.Receita,
+                Categoria = CategoriaLancamento.Honorario,
+                Valor = dto.ValorPago,
+                Descricao = $"Parcela {(p.IsEntrada ? "Entrada" : $"{p.Numero}/{c.NumeroParcelas}")} - {c.NumeroContrato}" + (c.Objeto != null ? $" - {Truncar(c.Objeto, 60)}" : ""),
+                DataVencimento = p.Vencimento,
+                DataPagamento = dto.DataPagamento,
+                Status = StatusLancamento.Pago,
+                ProcessoId = c.ProcessoId,
+                ContatoId = c.ContatoId,
+                ContratoHonorarioId = c.Id,
+                ParcelaHonorarioId = p.Id,
+                CriadoEm = DateTime.UtcNow
+            };
+            db.LancamentosFinanceiros.Add(lancamento);
+        }
         p.LancamentoFinanceiroId = lancamento.Id;
 
         RecalcularStatus(c);

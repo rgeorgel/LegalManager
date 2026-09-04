@@ -175,6 +175,111 @@ public class HonorarioServiceTests
     }
 
     [Fact]
+    public async Task QuitarParcela_ReutilizaLancamentoPendenteExistente_AoInvésDeDuplicar()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var vencimento = DateTime.UtcNow.Date;
+
+        var contrato = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "X", 1000m, FormaPagamentoContrato.AVista,
+            null, null, vencimento, null, null, null, null, "Boleto/PIX", null,
+            vencimento, null
+        ));
+        var parcela = (await service.ListarParcelasAsync(contrato.Id, tenantId)).Parcelas.First();
+
+        // Lancamento manual pré-existente (criado via UI do Financeiro)
+        var manualId = Guid.NewGuid();
+        db.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = manualId, TenantId = tenantId,
+            Tipo = TipoLancamento.Receita, Categoria = CategoriaLancamento.Honorario,
+            Valor = 1000m, Descricao = "Pagamento - cliente 1/1",
+            DataVencimento = vencimento, Status = StatusLancamento.Pendente,
+            CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.QuitarParcelaAsync(contrato.Id, parcela.Id, tenantId,
+            new QuitarParcelaDto(DateTime.UtcNow.Date, 1000m, null));
+
+        // Deve haver APENAS 1 Lancamento (o manual reaproveitado), não 2
+        Assert.Single(await db.LancamentosFinanceiros.ToListAsync());
+        var reused = await db.LancamentosFinanceiros.FirstAsync();
+        Assert.Equal(manualId, reused.Id);
+        Assert.Equal(StatusLancamento.Pago, reused.Status);
+        Assert.Equal(parcela.Id, reused.ParcelaHonorarioId);
+    }
+
+    [Fact]
+    public async Task QuitarParcela_ToleranciaValor_AceitaDiferencaAteUmReal()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var vencimento = DateTime.UtcNow.Date;
+
+        var contrato = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "X", 1000m, FormaPagamentoContrato.AVista,
+            null, null, vencimento, null, null, null, null, "Boleto/PIX", null,
+            vencimento, null
+        ));
+        var parcela = (await service.ListarParcelasAsync(contrato.Id, tenantId)).Parcelas.First();
+
+        // Lancamento manual com valor R$ 0,50 menor (dentro da tolerância)
+        var manualId = Guid.NewGuid();
+        db.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = manualId, TenantId = tenantId,
+            Tipo = TipoLancamento.Receita, Categoria = CategoriaLancamento.Honorario,
+            Valor = 999.50m, Descricao = "Pagamento",
+            DataVencimento = vencimento, Status = StatusLancamento.Pendente,
+            CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.QuitarParcelaAsync(contrato.Id, parcela.Id, tenantId,
+            new QuitarParcelaDto(DateTime.UtcNow.Date, 1000m, null));
+
+        // Deve reaproveitar o manual (1 total, não 2)
+        Assert.Single(await db.LancamentosFinanceiros.ToListAsync());
+        var reused = await db.LancamentosFinanceiros.FirstAsync();
+        Assert.Equal(manualId, reused.Id);
+        Assert.Equal(1000m, reused.Valor); // atualizado para o valor real pago
+    }
+
+    [Fact]
+    public async Task QuitarParcela_ForaTolerancia_CriaNovoLancamento()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var vencimento = DateTime.UtcNow.Date;
+
+        var contrato = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            contatoId, null, null, "X", 1000m, FormaPagamentoContrato.AVista,
+            null, null, vencimento, null, null, null, null, "Boleto/PIX", null,
+            vencimento, null
+        ));
+        var parcela = (await service.ListarParcelasAsync(contrato.Id, tenantId)).Parcelas.First();
+
+        // Lancamento manual com valor R$ 50 diferente (fora da tolerância de R$ 1)
+        db.LancamentosFinanceiros.Add(new LancamentoFinanceiro
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId,
+            Tipo = TipoLancamento.Receita, Categoria = CategoriaLancamento.Honorario,
+            Valor = 950m, Descricao = "Outro",
+            DataVencimento = vencimento, Status = StatusLancamento.Pendente,
+            CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await service.QuitarParcelaAsync(contrato.Id, parcela.Id, tenantId,
+            new QuitarParcelaDto(DateTime.UtcNow.Date, 1000m, null));
+
+        // 2 Lancamentos: o manual fica intacto, e um novo é criado
+        Assert.Equal(2, await db.LancamentosFinanceiros.CountAsync());
+    }
+
+    [Fact]
     public async Task QuitarParcelas_Todas_MarcaContratoQuitado()
     {
         var (db, service, _, tenantId, contatoId) = CriarContexto();
