@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview - Email Trial Expirando</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f3f4f6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .toolbar {
+      max-width: 600px;
+      margin: 0 auto 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toolbar button {
+      padding: 8px 14px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .toolbar button:hover { background: #f9fafb; }
+    .device-toggle { display: flex; gap: 4px; }
+    .device-toggle button.active {
+      background: #1a56db;
+      color: #fff;
+      border-color: #1a56db;
+    }
+    .email-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: max-width 0.2s;
+    }
+    .email-wrapper.mobile { max-width: 380px; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong style="font-size:14px;color:#374151">Preview: Trial Expirando (Gustavo)</strong>
+    <div class="device-toggle">
+      <button class="active" data-device="desktop" onclick="setDevice('desktop')">Desktop</button>
+      <button data-device="mobile" onclick="setDevice('mobile')">Mobile</button>
+    </div>
+  </div>
+
+  <div class="email-wrapper" id="email">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+        <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+        <p style="color:#94a3b8;margin:4px 0 0">Período de teste</p>
+      </div>
+      <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+        <h2 style="color:#b45309;margin-top:0">Seu período de teste está terminando</h2>
+        <p>Olá! O período de teste de <strong>Gustavo</strong> termina em <strong>3 dia(s)</strong>.</p>
+        <p style="background:#ecfdf5;border-left:4px solid #10b981;padding:12px 16px;margin:20px 0;color:#065f46;border-radius:4px">
+          <strong>Boa notícia:</strong> você <strong>não perderá o acesso</strong> à sua conta. Ao final do trial, o escritório será movido automaticamente para o <strong>plano Free</strong>, e você poderá continuar utilizando o Causify com os recursos essenciais.
+        </p>
+        <p>Se quiser manter os recursos avançados, veja abaixo o que muda entre o plano Free e o <strong>plano Plus</strong>:</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+          <thead>
+            <tr style="background:#f9fafb">
+              <th style="text-align:left;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Recurso</th>
+              <th style="text-align:center;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;width:80px">Free</th>
+              <th style="text-align:center;padding:12px 16px;font-size:13px;color:#1a56db;font-weight:700;border-bottom:1px solid #e5e7eb;width:80px;background:#eff6ff">Plus</th>
+            </tr>
+          </thead>
+          <tbody style="font-size:14px;color:#1f2937">
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Usuários</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">1</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Processos monitorados</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">10</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">20</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Armazenamento</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1 GB</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">2 GB</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Módulo Financeiro</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Honorários e Contratos</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Indicadores e relatórios</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Calculadora de prazos</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+              <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px">Portal do Cliente</td>
+              <td style="text-align:center;padding:10px 16px;color:#b91c1c">✕</td>
+              <td style="text-align:center;padding:10px 16px;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="text-align:center;margin:28px 0 8px">
+          <a href="/pages/assinatura.html?from=trial"
+            style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+            Manter plano Plus
+          </a>
+        </p>
+        <p style="text-align:center;margin:8px 0 0">
+          <a href="/pages/assinatura.html?from=trial"
+            style="color:#6b7280;font-size:13px;text-decoration:underline">
+            Continuar com o plano Free
+          </a>
+        </p>
+
+        <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+          Se decidir permanecer no plano Free, nenhum dado será apagado. Você poderá fazer upgrade a qualquer momento.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setDevice(device) {
+      const wrapper = document.getElementById('email');
+      const buttons = document.querySelectorAll('.device-toggle button');
+      buttons.forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      wrapper.classList.toggle('mobile', device === 'mobile');
+    }
+  </script>
+</body>
+</html>

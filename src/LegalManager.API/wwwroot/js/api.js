@@ -96,7 +96,8 @@ export async function apiFetch(path, options = {}) {
       res = await fetch(`${API_BASE}${path}`, { ...options, headers, body });
     } else {
       clearSession();
-      window.location.href = '/login.html';
+      const back = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login.html?redirect=${back}`;
       throw new Error('Unauthorized');
     }
   }

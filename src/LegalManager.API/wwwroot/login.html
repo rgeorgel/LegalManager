@@ -84,7 +84,15 @@
   <script type="module">
     import { login, isLoggedIn } from '/js/auth.js';
 
-    if (isLoggedIn()) window.location.href = '/pages/dashboard.html';
+    function getSafeRedirect() {
+      const r = new URLSearchParams(window.location.search).get('redirect');
+      if (!r) return '/pages/dashboard.html';
+      // Só aceita caminhos internos que começam com / (evita open redirect)
+      if (/^\/[a-zA-Z0-9_\-/?&=.%]*$/.test(r)) return r;
+      return '/pages/dashboard.html';
+    }
+
+    if (isLoggedIn()) window.location.href = getSafeRedirect();
 
     const form = document.getElementById('loginForm');
     const alert = document.getElementById('alert');
@@ -108,7 +116,7 @@
           document.getElementById('email').value,
           document.getElementById('senha').value
         );
-        window.location.href = '/pages/dashboard.html';
+        window.location.href = getSafeRedirect();
       } catch (err) {
         alert.textContent = err.message;
         alert.style.display = 'block';

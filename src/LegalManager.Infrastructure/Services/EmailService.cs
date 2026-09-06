@@ -122,6 +122,8 @@ public class EmailService : IEmailService
 
     public async Task EnviarTrialExpirandoAsync(string email, string nomeEscritorio, int diasRestantes, CancellationToken ct = default)
     {
+        var frontendUrl = _config["App:FrontendUrl"];
+        var linkAssinatura = $"{frontendUrl}/pages/assinatura.html?from=trial";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
@@ -129,14 +131,80 @@ public class EmailService : IEmailService
                 <p style="color:#94a3b8;margin:4px 0 0">Período de teste</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-                <h2 style="color:#e02424;margin-top:0">Seu trial está terminando</h2>
-                <p>O período de teste de <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> expira em <strong>{diasRestantes} dia(s)</strong>.</p>
-                <p>Assine um plano para continuar usando o Causify.</p>
-                <p style="text-align:center;margin:24px 0">
-                  <a href="{_config["App:FrontendUrl"]}/planos"
+                <h2 style="color:#b45309;margin-top:0">Seu período de teste está terminando</h2>
+                <p>Olá! O período de teste de <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> termina em <strong>{diasRestantes} dia(s)</strong>.</p>
+                <p style="background:#ecfdf5;border-left:4px solid #10b981;padding:12px 16px;margin:20px 0;color:#065f46;border-radius:4px">
+                  <strong>Boa notícia:</strong> você <strong>não perderá o acesso</strong> à sua conta. Ao final do trial, o escritório será movido automaticamente para o <strong>plano Free</strong>, e você poderá continuar utilizando o Causify com os recursos essenciais.
+                </p>
+                <p>Se quiser manter os recursos avançados, veja abaixo o que muda entre o plano Free e o <strong>plano Plus</strong>:</p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+                  <thead>
+                    <tr style="background:#f9fafb">
+                      <th style="text-align:left;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Recurso</th>
+                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;width:80px">Free</th>
+                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#1a56db;font-weight:700;border-bottom:1px solid #e5e7eb;width:80px;background:#eff6ff">Plus</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size:14px;color:#1f2937">
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Usuários</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">1</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Processos monitorados</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">10</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">20</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Armazenamento</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1 GB</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">2 GB</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Módulo Financeiro</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Honorários e Contratos</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Indicadores e relatórios</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Calculadora de prazos</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
+                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 16px">Portal do Cliente</td>
+                      <td style="text-align:center;padding:10px 16px;color:#b91c1c">✕</td>
+                      <td style="text-align:center;padding:10px 16px;background:#eff6ff;color:#047857;font-weight:600">✓</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <p style="text-align:center;margin:28px 0 8px">
+                  <a href="{linkAssinatura}"
                      style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
-                    Ver planos
+                    Manter plano Plus
                   </a>
+                </p>
+                <p style="text-align:center;margin:8px 0 0">
+                  <a href="{linkAssinatura}"
+                     style="color:#6b7280;font-size:13px;text-decoration:underline">
+                    Continuar com o plano Free
+                  </a>
+                </p>
+
+                <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+                  Se decidir permanecer no plano Free, nenhum dado será apagado. Você poderá fazer upgrade a qualquer momento.
                 </p>
               </div>
             </div>

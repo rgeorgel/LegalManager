@@ -72,7 +72,8 @@ export function isPlanoPlus() {
 
 export function initLayout() {
   if (!isLoggedIn()) {
-    window.location.href = '/login.html';
+    const back = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/login.html?redirect=${back}`;
     return;
   }
 

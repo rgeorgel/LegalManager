@@ -170,7 +170,8 @@ export async function abrirExtratoPdf(id) {
   if (resp.status === 401) {
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('refresh_token');
-    window.location.href = '/login.html';
+    const back = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/login.html?redirect=${back}`;
     return;
   }
   if (!resp.ok) {
