@@ -398,6 +398,67 @@ public class EmailService : IEmailService
         await EnviarAsync(CriarMensagem(email, $"Evento amanhã: {tituloEvento}", html));
     }
 
+    public async Task EnviarResumoEventosAsync(string email, string nomeUsuario,
+        IReadOnlyList<ResumoEventoItem> itens, CancellationToken ct = default)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Eventos de amanhã</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+            """);
+        sb.Append($"""
+                <h2 style="color:#dc2626;margin-top:0">📅 Você tem {itens.Count} evento(s) amanhã</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
+                <p>Confira abaixo a agenda do dia seguinte:</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+                  <thead>
+                    <tr style="background:#f9fafb">
+                      <th style="text-align:left;padding:10px 14px;font-size:12px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;width:90px">Horário</th>
+                      <th style="text-align:left;padding:10px 14px;font-size:12px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Evento</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size:14px;color:#1f2937">
+            """);
+        foreach (var ev in itens.OrderBy(e => e.DataHora))
+        {
+            var localLinha = string.IsNullOrEmpty(ev.Local) ? "" : $"<div style=\"color:#6b7280;font-size:13px;margin-top:2px\">📍 {System.Net.WebUtility.HtmlEncode(ev.Local)}</div>";
+            sb.Append($"""
+                    <tr>
+                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#1e40af;vertical-align:top">{ev.DataHora.ToLocalTime():HH:mm}</td>
+                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6">
+                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(ev.Titulo)}</div>
+                        {localLinha}
+                      </td>
+                    </tr>
+            """);
+        }
+        sb.Append("""
+                  </tbody>
+                </table>
+                <p style="text-align:center;margin:28px 0 8px">
+                  <a href="https://localhost:5123/pages/agenda.html"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver agenda
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Você recebe este aviso porque tem evento(s) cadastrados para amanhã.
+                </p>
+              </div>
+            </div>
+            """);
+
+        var html = sb.ToString().Replace("https://localhost:5123", _config["App:FrontendUrl"]!);
+        var assunto = itens.Count == 1
+            ? $"Evento amanhã — Causify"
+            : $"{itens.Count} eventos amanhã — Causify";
+        await EnviarAsync(CriarMensagem(email, assunto, html));
+    }
+
     public async Task EnviarNovoAndamentoAsync(string email, string nomeUsuario,
         string numeroCNJ, string descricaoAndamento, CancellationToken ct = default)
     {

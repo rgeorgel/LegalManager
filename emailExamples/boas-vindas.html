@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Bem-vindo ao Causify — Preview</title>
+  <style>
+    body { margin:0; padding:24px; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; }
+    .email-wrapper { max-width:600px; margin:0 auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .email-wrapper.mobile { max-width:380px; }
+    .toolbar { max-width:600px; margin:0 auto 16px; display:flex; justify-content:space-between; }
+    .toolbar button { padding:6px 12px; border:1px solid #d1d5db; background:#fff; border-radius:6px; cursor:pointer; }
+    .toolbar button.active { background:#1a56db; color:#fff; border-color:#1a56db; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>Bem-vindo ao Causify</strong>
+    <button onclick="document.querySelector('.email-wrapper').classList.toggle('mobile')">Toggle mobile</button>
+  </div>
+  <div class="email-wrapper">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+      <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+        <h1 style="color:#fff;font-size:22px;margin:0">⚖️ Causify</h1>
+        <p style="color:#94a3b8;margin:4px 0 0;font-size:14px">Sistema de Gestão Jurídica</p>
+      </div>
+      <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+        <h2 style="color:#1a56db;margin-top:0">Bem-vindo ao Causify!</h2>
+        <p>Olá, <strong>Gustavo Mendes</strong>!</p>
+        <p>O escritório <strong>Mendes &amp; Associados Advocacia</strong> foi cadastrado com sucesso. Guarde os dados abaixo para acessar o sistema:</p>
+        <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0">
+          <p style="margin:0 0 12px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Seus dados de acesso</p>
+          <p style="margin:4px 0"><strong>E-mail (login):</strong> gustavo@mendesadvocacia.com.br</p>
+          <p style="margin:4px 0"><strong>Plano:</strong> Período de teste ativo até 06/10/2026</p>
+        </div>
+        <p style="text-align:center;margin:28px 0">
+          <a href="http://localhost:5123" style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">Acessar o sistema</a>
+        </p>
+        <p style="color:#6b7280;font-size:12px;margin-top:24px">
+          Se tiver dúvidas, acesse a central de ajuda ou responda este e-mail.<br>
+          Não compartilhe suas credenciais.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

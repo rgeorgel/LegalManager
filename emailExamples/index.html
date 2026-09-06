@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Causify — Email Templates</title>
+  <style>
+    body { margin:0; padding:32px; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#1f2937; }
+    .container { max-width:880px; margin:0 auto; }
+    h1 { margin:0 0 4px; font-size:24px; }
+    .subtitle { color:#6b7280; margin:0 0 24px; }
+    table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    th { text-align:left; padding:12px 16px; background:#1e2a3b; color:#fff; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.05em; }
+    th:first-child { width:30% }
+    td { padding:14px 16px; border-bottom:1px solid #f3f4f6; vertical-align:top; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#f9fafb; }
+    .name { font-weight:600; color:#1a56db; text-decoration:none; }
+    .trigger { color:#374151; font-size:14px; }
+    .meta { color:#6b7280; font-size:13px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+    .badge.ok { background:#d1fae5; color:#065f46; }
+    .badge.unused { background:#f3f4f6; color:#6b7280; }
+    .badge.client { background:#dbeafe; color:#1e40af; }
+    .badge.user { background:#ede9fe; color:#6d28d9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚖️ Causify — Email Templates</h1>
+    <p class="subtitle">Previews visuais de todos os emails transacionais enviados pelo sistema.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Template</th>
+          <th>Quando é enviado</th>
+          <th>Destinatário</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a class="name" href="boas-vindas.html">boas-vindas.html</a><div class="meta">EnviarBoasVindasAsync</div></td>
+          <td class="trigger">Logo após o cadastro do escritório. Inclui credenciais e data de expiração do plano/trial.</td>
+          <td><span class="badge user">Admin</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="convite-usuario.html">convite-usuario.html</a><div class="meta">EnviarConviteUsuarioAsync</div></td>
+          <td class="trigger">Quando um admin convida um novo usuário para o escritório.</td>
+          <td><span class="badge user">Novo usuário</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="redefinicao-senha.html">redefinicao-senha.html</a><div class="meta">EnviarResetSenhaAsync</div></td>
+          <td class="trigger">Quando o usuário solicita redefinição de senha. Link válido por 1h.</td>
+          <td><span class="badge user">Qualquer</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="trial-expirando.html">trial-expirando.html</a><div class="meta">EnviarTrialExpirandoAsync</div></td>
+          <td class="trigger">Job diário envia aos admins quando o trial expira em 7, 3 ou 1 dia(s).</td>
+          <td><span class="badge user">Admin</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="alerta-prazo-tarefa.html">alerta-prazo-tarefa.html</a><div class="meta">EnviarAlertaPrazoTarefaAsync</div></td>
+          <td class="trigger">Aviso individual de prazo de tarefa próximo do vencimento.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge unused">Definido, não chamado</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="alerta-tarefa-atrasada.html">alerta-tarefa-atrasada.html</a><div class="meta">EnviarAlertaTarefaAtrasadaAsync</div></td>
+          <td class="trigger">Aviso de tarefa que venceu e continua pendente.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge unused">Definido, não chamado</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="resumo-tarefas.html">resumo-tarefas.html</a><div class="meta">EnviarResumoTarefasAsync</div></td>
+          <td class="trigger">Resumo diário com tarefas atrasadas, de hoje e próximas (job matinal).</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="alerta-evento.html">alerta-evento.html</a><div class="meta">EnviarAlertaEventoAsync</div></td>
+          <td class="trigger">Template legado de evento único — mantido para reuso futuro.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge unused">Não usado pelo job</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="resumo-eventos.html">resumo-eventos.html</a><div class="meta">EnviarResumoEventosAsync</div></td>
+          <td class="trigger">Job agrupa eventos de amanhã por destinatário e envia um único email por usuário/dia.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="novo-andamento.html">novo-andamento.html</a><div class="meta">EnviarNovoAndamentoAsync</div></td>
+          <td class="trigger">Quando o monitoramento captura novo andamento processual.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="alerta-prazo-processual.html">alerta-prazo-processual.html</a><div class="meta">EnviarAlertaPrazoProcessualAsync</div></td>
+          <td class="trigger">Job diário alerta prazos processuais próximos do vencimento.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="acesso-portal.html">acesso-portal.html</a><div class="meta">EnviarAcessoPortalAsync</div></td>
+          <td class="trigger">Quando o escritório libera/cria acesso do cliente ao Portal.</td>
+          <td><span class="badge client">Cliente</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="nova-publicacao.html">nova-publicacao.html</a><div class="meta">EnviarNovaPublicacaoAsync</div></td>
+          <td class="trigger">Quando uma nova publicação é capturada para um processo monitorado.</td>
+          <td><span class="badge user">Usuário</span></td>
+          <td><span class="badge unused">Definido, não chamado</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="andamento-traduzido.html">andamento-traduzido.html</a><div class="meta">EnviarAndamentoTraduzidoAsync</div></td>
+          <td class="trigger">Envio opcional de andamento traduzido por IA para o cliente (opt-in).</td>
+          <td><span class="badge client">Cliente</span></td>
+          <td><span class="badge ok">Em uso</span></td>
+        </tr>
+        <tr>
+          <td><a class="name" href="cobranca.html">cobranca.html</a><div class="meta">EnviarCobrancaAsync</div></td>
+          <td class="trigger">Cobrança de honorários ao cliente, com QR Code PIX.</td>
+          <td><span class="badge client">Cliente</span></td>
+          <td><span class="badge unused">Definido, não chamado</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="subtitle" style="margin-top:24px;font-size:13px">
+      <strong>Legenda:</strong> os itens marcados como <em>“Definido, não chamado”</em> existem no EmailService mas nenhum caller os invoca atualmente — candidatos para próxima implementação.
+    </p>
+  </div>
+</body>
+</html>

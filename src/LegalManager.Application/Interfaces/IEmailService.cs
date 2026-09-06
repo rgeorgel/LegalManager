@@ -6,6 +6,12 @@ public record ResumoTarefaItem(
     int Dias  // > 0 = dias restantes até o prazo; < 0 = dias atrasada; 0 = vence hoje
 );
 
+public record ResumoEventoItem(
+    string Titulo,
+    DateTime DataHora,
+    string? Local
+);
+
 public interface IEmailService
 {
     Task EnviarBoasVindasAsync(string email, string nomeAdmin, string nomeEscritorio, string plano, DateTime? expiraEm, CancellationToken ct = default);
@@ -16,6 +22,7 @@ public interface IEmailService
     Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa, DateTime prazo, int diasAtraso, CancellationToken ct = default);
     Task EnviarResumoTarefasAsync(string email, string nomeUsuario, IReadOnlyList<ResumoTarefaItem> itens, CancellationToken ct = default);
     Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento, DateTime dataHora, string? local, CancellationToken ct = default);
+    Task EnviarResumoEventosAsync(string email, string nomeUsuario, IReadOnlyList<ResumoEventoItem> itens, CancellationToken ct = default);
     Task EnviarNovoAndamentoAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoAndamento, CancellationToken ct = default);
     Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoPrazo, DateTime dataFinal, int diasRestantes, CancellationToken ct = default);
     Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario, string numeroCNJ, CancellationToken ct = default);

@@ -159,50 +159,65 @@ public class AlertasJob
             })
             .ToListAsync();
 
-        foreach (var evento in eventos)
+        var grupos = eventos
+            .GroupBy(e => new { e.TenantId, e.ResponsavelId, e.ResponsavelNome, e.ResponsavelEmail })
+            .ToList();
+
+        foreach (var grupo in grupos)
         {
+            var key = grupo.Key;
+            if (key.ResponsavelId is null) continue;
+
             try
             {
-                var chave = $"evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
-                var permiteEmail = await _prefs.PermiteEmailAsync(evento.TenantId, evento.ResponsavelId!.Value, "PrazoEvento");
-                var permiteInApp = await _prefs.PermiteInAppAsync(evento.TenantId, evento.ResponsavelId!.Value, "PrazoEvento");
+                var permiteEmail = await _prefs.PermiteEmailAsync(key.TenantId, key.ResponsavelId.Value, "PrazoEvento");
+                var permiteInApp = await _prefs.PermiteInAppAsync(key.TenantId, key.ResponsavelId.Value, "PrazoEvento");
 
-                if (permiteEmail && !string.IsNullOrEmpty(evento.ResponsavelEmail))
+                // Dedup por usuário + dia — garante no máximo 1 email por destinatário por execução,
+                // independente de quantos eventos ele tenha amanhã ou de quantas vezes o job rodar.
+                var chaveDigest = $"eventos-{key.ResponsavelId}-1d-{hoje:yyyyMMdd}";
+                var digestJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveDigest);
+
+                if (permiteEmail && !string.IsNullOrEmpty(key.ResponsavelEmail) && !digestJaEnviado)
+                {
+                    var itens = grupo
+                        .Select(e => new ResumoEventoItem(e.Titulo, e.DataHora, e.Local))
+                        .ToList();
+                    await _emailService.EnviarResumoEventosAsync(
+                        key.ResponsavelEmail, key.ResponsavelNome, itens);
+
+                    _context.Notificacoes.Add(new Domain.Entities.Notificacao
                     {
-                        var chaveEmail = $"email-evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
-                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
-                        if (!emailJaEnviado)
-                        {
-                            await _emailService.EnviarAlertaEventoAsync(
-                                evento.ResponsavelEmail, evento.ResponsavelNome,
-                                evento.Titulo, evento.DataHora, evento.Local);
-                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
-                            {
-                                Id = Guid.NewGuid(),
-                                TenantId = evento.TenantId,
-                                UsuarioId = evento.ResponsavelId!.Value,
-                                Tipo = TipoNotificacao.PrazoEvento,
-                                Titulo = $"Email evento {evento.Titulo}",
-                                Mensagem = $"Email enviado para {evento.ResponsavelEmail}",
-                                Lida = false,
-                                CriadaEm = DateTime.UtcNow,
-                                ChaveDedup = chaveEmail
-                            });
-                            await _context.SaveChangesAsync();
-                        }
-                    }
+                        Id = Guid.NewGuid(),
+                        TenantId = key.TenantId,
+                        UsuarioId = key.ResponsavelId.Value,
+                        Tipo = TipoNotificacao.PrazoEvento,
+                        Titulo = $"Email eventos amanhã ({itens.Count})",
+                        Mensagem = $"Email enviado para {key.ResponsavelEmail}",
+                        Lida = false,
+                        CriadaEm = DateTime.UtcNow,
+                        ChaveDedup = chaveDigest
+                    });
+                    await _context.SaveChangesAsync();
+                }
 
                 if (permiteInApp)
-                    await CriarNotificacaoAsync(
-                        evento.TenantId, evento.ResponsavelId!.Value,
-                        TipoNotificacao.PrazoEvento,
-                        "Evento amanhã",
-                        $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToLocalTime():HH:mm}.",
-                        "/pages/agenda.html", chave);
+                {
+                    foreach (var evento in grupo)
+                    {
+                        var chaveInApp = $"evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
+                        await CriarNotificacaoAsync(
+                            evento.TenantId, evento.ResponsavelId!.Value,
+                            TipoNotificacao.PrazoEvento,
+                            "Evento amanhã",
+                            $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToLocalTime():HH:mm}.",
+                            "/pages/agenda.html", chaveInApp);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao alertar evento {Titulo}", evento.Titulo);
+                _logger.LogError(ex, "Erro ao alertar eventos do responsável {ResponsavelId}", key.ResponsavelId);
             }
         }
     }
