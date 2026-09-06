@@ -98,10 +98,24 @@ public class EmailService : IEmailService
     {
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#1a56db">Você foi convidado!</h2>
-              <p>Você recebeu um convite para acessar o <strong>{nomeEscritorio}</strong> no Causify.</p>
-              <p><a href="{linkConvite}" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Aceitar convite</a></p>
-              <p style="color:#666;font-size:12px">Link válido por 7 dias.</p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Convite para o escritório</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#1a56db;margin-top:0">Você foi convidado!</h2>
+                <p>Você recebeu um convite para acessar <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> no Causify.</p>
+                <p>Clique no botão abaixo para aceitar o convite e criar sua senha de acesso:</p>
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{linkConvite}"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Aceitar convite
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+                  Link válido por <strong>7 dias</strong>. Se expirar, peça um novo convite ao administrador do escritório.
+                </p>
+              </div>
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, $"Convite para {nomeEscritorio}", html));
@@ -111,10 +125,24 @@ public class EmailService : IEmailService
     {
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#1a56db">Redefinição de senha</h2>
-              <p>Clique no botão abaixo para redefinir sua senha:</p>
-              <p><a href="{linkReset}" style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">Redefinir senha</a></p>
-              <p style="color:#666;font-size:12px">Link válido por 1 hora. Se não foi você, ignore este e-mail.</p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Redefinição de senha</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#1a56db;margin-top:0">Redefinição de senha</h2>
+                <p>Recebemos um pedido de redefinição de senha para sua conta.</p>
+                <p>Clique no botão abaixo para escolher uma nova senha:</p>
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{linkReset}"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Redefinir senha
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+                  Link válido por <strong>1 hora</strong>. Se não foi você quem solicitou, ignore este e-mail com segurança.
+                </p>
+              </div>
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, "Redefinição de senha — Causify", html));
@@ -464,16 +492,27 @@ public class EmailService : IEmailService
     {
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#1a56db">⚖️ Novo andamento processual</h2>
-              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
-              <p>O processo <strong>{numeroCNJ}</strong> recebeu um novo andamento:</p>
-              <blockquote style="border-left:4px solid #1a56db;padding:8px 16px;margin:16px 0;color:#374151">
-                {System.Net.WebUtility.HtmlEncode(descricaoAndamento)}
-              </blockquote>
-              <p><a href="{_config["App:FrontendUrl"]}/pages/processos.html"
-                    style="background:#1a56db;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
-                Ver processo
-              </a></p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Novo andamento processual</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#1a56db;margin-top:0">⚖️ Novo andamento capturado</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
+                <p>O processo <strong>{System.Net.WebUtility.HtmlEncode(numeroCNJ)}</strong> recebeu um novo andamento:</p>
+                <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:20px 0;color:#374151;font-size:14px;line-height:1.5;border-left:4px solid #1a56db">
+                  {System.Net.WebUtility.HtmlEncode(descricaoAndamento)}
+                </div>
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{_config["App:FrontendUrl"]}/pages/processos.html"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver processo
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Você recebe este aviso porque monitora este processo no Causify.
+                </p>
+              </div>
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, $"Novo andamento — {numeroCNJ}", html));
@@ -486,14 +525,42 @@ public class EmailService : IEmailService
         var urgencia = diasRestantes == 0 ? "hoje" : $"em {diasRestantes} dia(s)";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-              <h2 style="color:#dc2626">⏰ Prazo processual vencendo {urgencia}</h2>
-              <p>Olá, <strong>{nomeUsuario}</strong>!</p>
-              <p>Processo: <strong>{numeroCNJ}</strong></p>
-              <p>Prazo: <strong>{descricaoPrazo}</strong> — vence em <strong>{dataFinal:dd/MM/yyyy}</strong>.</p>
-              <p><a href="{_config["App:FrontendUrl"]}/pages/prazos.html"
-                    style="background:#dc2626;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px">
-                Ver prazos
-              </a></p>
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Prazo processual</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#dc2626;margin-top:0">⏰ Prazo processual vencendo {urgencia}</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
+                <p>Um prazo processual está próximo do vencimento:</p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+                  <tbody style="font-size:14px;color:#1f2937">
+                    <tr>
+                      <td style="padding:12px 16px;border-bottom:1px solid #f3f4f6;background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;width:40%">Processo</td>
+                      <td style="padding:12px 16px;border-bottom:1px solid #f3f4f6">{System.Net.WebUtility.HtmlEncode(numeroCNJ)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:12px 16px;border-bottom:1px solid #f3f4f6;background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Prazo</td>
+                      <td style="padding:12px 16px;border-bottom:1px solid #f3f4f6">{System.Net.WebUtility.HtmlEncode(descricaoPrazo)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:12px 16px;background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Vencimento</td>
+                      <td style="padding:12px 16px;color:#dc2626;font-weight:600">{dataFinal:dd/MM/yyyy}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{_config["App:FrontendUrl"]}/pages/prazos.html"
+                     style="background:#dc2626;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Ver prazos
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px">
+                  Você recebe este aviso porque acompanha este prazo no Causify.
+                </p>
+              </div>
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, $"Prazo vencendo {urgencia}: {descricaoPrazo}", html));
