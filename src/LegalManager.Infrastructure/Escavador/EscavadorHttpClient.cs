@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LegalManager.Application.Interfaces;
+using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Escavador;
@@ -27,6 +29,9 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorOabAsync(
         string oab, string uf, int pagina = 1, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarPorOabAsync));
+        activity?.SetTag("escavador.oab", oab);
+        activity?.SetTag("escavador.uf", uf);
         _logger.LogInformation("[Escavador] Buscando processos por OAB {Oab}/{Uf}", oab, uf);
         var firstUrl = $"/api/v2/advogado/processos?oab_estado={Uri.EscapeDataString(uf)}&oab_numero={Uri.EscapeDataString(oab)}&limit=100";
         return await FetchAllByCursor(firstUrl, ct);
@@ -35,6 +40,8 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorCpfCnpjAsync(
         string cpfCnpj, int pagina = 1, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarPorCpfCnpjAsync));
+        activity?.SetTag("escavador.documento.tamanho", cpfCnpj.Length);
         var limpo = new string(cpfCnpj.Where(char.IsDigit).ToArray());
         _logger.LogInformation("[Escavador] Buscando processos por CPF/CNPJ");
         var firstUrl = $"/api/v2/envolvido/processos?documento={Uri.EscapeDataString(limpo)}&limit=100";
@@ -44,6 +51,8 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoAsync(
         string numeroCNJ, string? frequencia = null, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(CriarMonitoramentoAsync));
+        activity?.SetTag("escavador.cnj", numeroCNJ);
         _logger.LogInformation("[Escavador] Criando monitoramento para {CNJ} frequencia={F}", numeroCNJ, frequencia ?? "diaria");
         try
         {
@@ -81,12 +90,16 @@ public class EscavadorHttpClient : IEscavadorService
 
     public async Task<bool> RemoverMonitoramentoAsync(long id, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(RemoverMonitoramentoAsync));
+        activity?.SetTag("escavador.monitoramento_id", id);
         _logger.LogInformation("[Escavador] Removendo monitoramento processo {Id}", id);
         return await RemoverAsync($"/api/v2/monitoramentos/processos/{id}", id, ct);
     }
 
     public async Task<bool> RemoverMonitoramentoTermoAsync(long id, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(RemoverMonitoramentoTermoAsync));
+        activity?.SetTag("escavador.monitoramento_id", id);
         _logger.LogInformation("[Escavador] Removendo monitoramento termo {Id}", id);
         return await RemoverAsync($"/api/v1/monitoramentos/{id}", id, ct);
     }
@@ -114,13 +127,16 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
         int pagina = 1, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(ListarCallbacksPendentesAsync));
         var url = $"/api/v2/callbacks?page={pagina}";
         return await FetchCallbacksPaged(url, ct);
     }
 
     public async Task MarcarCallbacksRecebidosAsync(IEnumerable<long> ids, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(MarcarCallbacksRecebidosAsync));
         var lista = ids.ToList();
+        activity?.SetTag("escavador.callbacks_count", lista.Count);
         if (lista.Count == 0) return;
         _logger.LogInformation("[Escavador] Marcando {N} callbacks como recebidos", lista.Count);
         try
@@ -142,6 +158,8 @@ public class EscavadorHttpClient : IEscavadorService
 
     public async Task MarcarCallbackRecebidoAsync(string uuid, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(MarcarCallbackRecebidoAsync));
+        activity?.SetTag("escavador.callback_uuid", uuid);
         if (string.IsNullOrWhiteSpace(uuid)) return;
         _logger.LogInformation("[Escavador] Marcando callback uuid={Uuid} como recebido", uuid);
         try
@@ -164,6 +182,8 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorMovimentacaoDto?> BuscarMovimentacoesPorUuidAsync(
         string uuid, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarMovimentacoesPorUuidAsync));
+        activity?.SetTag("escavador.uuid", uuid);
         _logger.LogInformation("[Escavador] Buscando movimentacao uuid={Uuid}", uuid);
         try
         {
@@ -187,6 +207,8 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> ListarMovimentacoesPorProcessoAsync(
         string numeroCNJ, DateTime? desde, int pagina = 1, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(ListarMovimentacoesPorProcessoAsync));
+        activity?.SetTag("escavador.cnj", numeroCNJ);
         _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ}", numeroCNJ);
         var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?limit=500";
         return await FetchMovimentacoesV2(url, numeroCNJ, ct);
@@ -203,6 +225,8 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorProcessoDto?> BuscarCapaPorNumeroCnjAsync(
         string numeroCNJ, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarCapaPorNumeroCnjAsync));
+        activity?.SetTag("escavador.cnj", numeroCNJ);
         _logger.LogInformation("[Escavador] Buscando capa do processo CNJ={CNJ}", numeroCNJ);
         var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}";
         try
@@ -236,6 +260,9 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
         string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarPublicacoesPorOabAsync));
+        activity?.SetTag("escavador.oab", oab);
+        activity?.SetTag("escavador.uf", uf);
         _logger.LogInformation("[Escavador] Buscando publicacoes OAB {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
             uf, oab, de, ate);
         var url = $"/api/v1/oab/{Uri.EscapeDataString(uf.ToUpperInvariant())}/{Uri.EscapeDataString(oab)}/publicacoes" +
@@ -370,6 +397,9 @@ public class EscavadorHttpClient : IEscavadorService
     public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoOabAsync(
         string uf, string numero, string? nomeAdvogado, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(CriarMonitoramentoOabAsync));
+        activity?.SetTag("escavador.oab", numero);
+        activity?.SetTag("escavador.uf", uf);
         _logger.LogInformation("[Escavador] Criando monitoramento OAB {Uf}/{Numero}", uf, numero);
         try
         {

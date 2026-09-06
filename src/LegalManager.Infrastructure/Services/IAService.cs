@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using LegalManager.Application.Interfaces;
+using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Configuration;
 
 namespace LegalManager.Infrastructure.Services;
@@ -28,6 +30,8 @@ public class IAService : IIAService
 
     public async Task<string> TraduzirTextoAsync(string texto, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Ia.StartActivity(nameof(TraduzirTextoAsync));
+        activity?.SetTag("gen_ai.operation", "translation");
         var prompt = $"""
             Você é um assistente jurídico brasileiro. Traduza o seguinte andamento processual para uma linguagem clara, simples e não técnica, como se o advogado estivesse explicando diretamente ao cliente. Não use termos jurídicos sem explicação. Inclua o que aconteceu e qual é o próximo passo esperado, se houver.
             
@@ -41,6 +45,9 @@ public class IAService : IIAService
 
     public async Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Ia.StartActivity(nameof(GerarPecaJuridicaAsync));
+        activity?.SetTag("gen_ai.operation", "generation");
+        activity?.SetTag("gen_ai.pecas.tipo", tipoPeca);
         var prompt = $$$"""
             Você é um especialista em elaboração de peças jurídicas brasileiras.
 
@@ -141,6 +148,9 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
     public async Task<(LegalManager.Domain.Enums.TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa)> ClassificarPublicacaoAsync(
         string conteudo, string? numeroCNJ = null, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Ia.StartActivity(nameof(ClassificarPublicacaoAsync));
+        activity?.SetTag("gen_ai.operation", "classification");
+        activity?.SetTag("gen_ai.cnj", numeroCNJ ?? string.Empty);
         var prompt = $$$"""
             Você é um assistente jurídico brasileiro. Classifique a seguinte publicação processual e indique se é urgente.
 
@@ -169,6 +179,8 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
 
     public async Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Ia.StartActivity(nameof(GerarResumoProcessoAsync));
+        activity?.SetTag("gen_ai.operation", "summarization");
         var prompt = $"""
             Você é um assistente jurídico brasileiro especializado em análise de processos.
 
@@ -195,6 +207,8 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
 
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Ia.StartActivity(nameof(BuscarJurisprudenciaAsync));
+        activity?.SetTag("gen_ai.operation", "jurisprudence_search");
         var prompt = $$$"""
             Você é um assistente jurídico brasileiro. Forneça um resumo de jurisprudência relevante sobre o tema: {{{tema}}}
 

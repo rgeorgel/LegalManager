@@ -1,13 +1,19 @@
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using Hangfire;
 using Hangfire.PostgreSql;
+using LegalManager.API.Middleware;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Jobs;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.Infrastructure.Storage;
@@ -21,19 +27,80 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
 using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 using Stripe;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-Serilog.Log.Logger = new LoggerConfiguration()
+var loggerConfig = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .CreateLogger();
+    .WriteTo.Console();
 
+// Exporta logs estruturados para o Pydantic Logfire via OTLP/HTTP.
+// Habilitado somente quando Logfire:Enabled=true e um Token for fornecido
+// (token lido de appsettings/env, nunca embutido no código).
+var logfireSection = builder.Configuration.GetSection("Logfire");
+var logfireEnabled = logfireSection.GetValue<bool>("Enabled");
+var logfireToken = logfireSection["Token"];
+var logfireEndpoint = logfireSection["Endpoint"] ?? "https://logfire-us.pydantic.dev/v1/logs";
+var logfireServiceName = logfireSection["ServiceName"] ?? "causify-api";
+var logfireServiceVersion = logfireSection["ServiceVersion"] ?? "1.0.0";
+
+if (logfireEnabled && !string.IsNullOrWhiteSpace(logfireToken))
+{
+    loggerConfig.WriteTo.OpenTelemetry(opts =>
+    {
+        opts.Endpoint = logfireEndpoint;
+        opts.Protocol = OtlpProtocol.HttpProtobuf;
+        opts.Headers = new Dictionary<string, string>
+        {
+            ["Authorization"] = $"Bearer {logfireToken}"
+        };
+        opts.ResourceAttributes = new Dictionary<string, object>
+        {
+            ["service.name"] = logfireServiceName,
+            ["service.version"] = logfireServiceVersion,
+            ["deployment.environment"] = builder.Environment.EnvironmentName
+        };
+    });
+}
+
+Serilog.Log.Logger = loggerConfig.CreateLogger();
 builder.Host.UseSerilog();
+
+// OpenTelemetry tracing → envia spans ao Pydantic Logfire via OTLP/HTTP.
+// Mesma flag/endpoint/token do sink de logs para manter config única.
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r
+        .AddService(serviceName: Telemetry.ServiceName, serviceVersion: logfireServiceVersion)
+        .AddAttributes(new KeyValuePair<string, object>[]
+        {
+            new("deployment.environment", builder.Environment.EnvironmentName)
+        }))
+    .WithTracing(tracing =>
+    {
+        tracing.AddSource(Telemetry.Escavador.Name);
+        tracing.AddSource(Telemetry.Ia.Name);
+        tracing.AddSource(Telemetry.Stripe.Name);
+        tracing.AddSource(Telemetry.Hangfire.Name);
+        tracing.AddSource(Telemetry.Tribunais.Name);
+        tracing.AddAspNetCoreInstrumentation(o => o.RecordException = true);
+        tracing.AddHttpClientInstrumentation();
+        tracing.AddEntityFrameworkCoreInstrumentation();
+
+        if (logfireEnabled && !string.IsNullOrWhiteSpace(logfireToken))
+        {
+            tracing.AddOtlpExporter(opts =>
+            {
+                opts.Endpoint = new Uri(logfireEndpoint.Replace("/v1/logs", "/v1/traces"));
+                opts.Protocol = OtlpExportProtocol.HttpProtobuf;
+                opts.Headers = $"Authorization=Bearer {logfireToken}";
+            });
+        }
+    });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -158,6 +225,7 @@ builder.Services.AddHttpClient<DataJudAdapter>(client =>
         client.DefaultRequestHeaders.Add("Authorization", $"APIKey {apiKey}");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddScoped<ITribunalAdapter>(sp => sp.GetRequiredService<DataJudAdapter>());
 
 builder.Services.AddHttpClient<TjspDjeAdapter>(client =>
 {
@@ -309,7 +377,28 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(opts =>
+{
+    opts.EnrichDiagnosticContext = (diag, http) =>
+    {
+        if (http.User?.Identity?.IsAuthenticated == true)
+        {
+            diag.Set("UserId", http.User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? string.Empty);
+            diag.Set("TenantId", http.User.FindFirstValue("tenantId") ?? string.Empty);
+            diag.Set("UserRole", http.User.FindFirstValue(System.Security.Claims.ClaimTypes.Role) ?? string.Empty);
+            diag.Set("UserEmail", http.User.FindFirstValue(System.Security.Claims.ClaimTypes.Email) ?? string.Empty);
+            diag.Set("Plano", http.User.FindFirstValue("plano") ?? string.Empty);
+        }
+        diag.Set("ClientIp", http.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+        diag.Set("CorrelationId", http.Response.Headers["X-Correlation-Id"].ToString());
+        var activity = System.Diagnostics.Activity.Current;
+        if (activity is not null)
+        {
+            diag.Set("TraceId", activity.TraceId.ToString());
+            diag.Set("SpanId", activity.SpanId.ToString());
+        }
+    };
+});
 
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
@@ -365,6 +454,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<RequestEnrichmentMiddleware>();
 
 var hangfireDashboardUser = builder.Configuration["Hangfire:DashboardUser"] ?? "admin";
 var hangfireDashboardPassword = builder.Configuration["Hangfire:DashboardPassword"];

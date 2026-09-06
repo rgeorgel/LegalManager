@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -30,6 +32,8 @@ public class EscavadorOabSyncJob
 
     public async Task ExecutarAsync()
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(EscavadorOabSyncJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "escavador-oab-sync");
         _logger.LogInformation("[EscavadorOabSyncJob] Iniciando sincronização de OABs");
 
         // Itera tenants e chama SincronizarTodasAsync de cada um (service já é tenant-scoped)

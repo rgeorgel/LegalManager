@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,8 @@ public class DjeJob
 
     public async Task ExecutarAsync(CancellationToken ct)
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(DjeJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "captura-dje");
         _logger.LogInformation("[DjeJob] Iniciando monitoramento de publicações.");
 
         var adapters = _adapters.ToList();

@@ -67,6 +67,11 @@ services:
       Escavador__CallbackSecret: ${ESCAVADOR_CALLBACK_SECRET:-}
       SuperAdmin__Email: ${SUPERADMIN_EMAIL:-superadmin@causify.internal}
       SuperAdmin__Password: ${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD is required}
+      Logfire__Enabled: ${LOGFIRE_ENABLED:-false}
+      Logfire__Token: ${LOGFIRE_TOKEN:-}
+      Logfire__Endpoint: ${LOGFIRE_ENDPOINT:-https://logfire-us.pydantic.dev/v1/logs}
+      Logfire__ServiceName: ${LOGFIRE_SERVICE_NAME:-causify-api}
+      Logfire__ServiceVersion: ${LOGFIRE_SERVICE_VERSION:-1.0.0}
     depends_on:
       postgres:
         condition: service_healthy

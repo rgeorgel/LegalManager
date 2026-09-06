@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using LegalManager.Application.Interfaces;
+using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using Stripe.Checkout;
@@ -25,6 +27,9 @@ public class StripeService : IStripeService
 
     public async Task<StripeCheckoutResult> CriarCheckoutAssinaturaAsync(CriarCheckoutAssinaturaInput input, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Stripe.StartActivity(nameof(CriarCheckoutAssinaturaAsync));
+        activity?.SetTag("stripe.operation", "checkout.subscription.create");
+        activity?.SetTag("stripe.tenant_id", input.TenantId);
         var customerId = await ObterOuCriarClienteAsync(
             input.StripeCustomerId, input.NomeAdmin, input.Email, input.Cnpj, input.TenantId, ct);
 
@@ -64,6 +69,9 @@ public class StripeService : IStripeService
 
     public async Task<StripeAtualizarAssinaturaResult> AtualizarAssinaturaAsync(AtualizarAssinaturaInput input, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Stripe.StartActivity(nameof(AtualizarAssinaturaAsync));
+        activity?.SetTag("stripe.operation", "subscription.update");
+        activity?.SetTag("stripe.subscription_id", input.SubscriptionId);
         var subscriptionService = new SubscriptionService(_stripeClient);
         var subscription = await subscriptionService.GetAsync(input.SubscriptionId, cancellationToken: ct);
         var itemId = subscription.Items.Data[0].Id;
@@ -100,6 +108,9 @@ public class StripeService : IStripeService
 
     public async Task<DateTime?> CancelarAssinaturaAsync(string subscriptionId, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Stripe.StartActivity(nameof(CancelarAssinaturaAsync));
+        activity?.SetTag("stripe.operation", "subscription.cancel");
+        activity?.SetTag("stripe.subscription_id", subscriptionId);
         var subscriptionService = new SubscriptionService(_stripeClient);
         try
         {
@@ -124,6 +135,9 @@ public class StripeService : IStripeService
 
     public async Task<StripeCheckoutResult> CriarCheckoutAvulsoAsync(CriarCheckoutAvulsoInput input, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Stripe.StartActivity(nameof(CriarCheckoutAvulsoAsync));
+        activity?.SetTag("stripe.operation", "checkout.one_off.create");
+        activity?.SetTag("stripe.tenant_id", input.TenantId);
         var customerId = await ObterOuCriarClienteAsync(
             input.StripeCustomerId, input.NomeAdmin, input.Email, input.Cnpj, input.TenantId, ct);
 

@@ -2,8 +2,10 @@ using System.Text.Json;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Services;
 
@@ -11,12 +13,14 @@ public class AuditService : IAuditService
 {
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
+    private readonly ILogger<AuditService> _logger;
     private static readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = false };
 
-    public AuditService(AppDbContext context, ITenantContext tenantContext)
+    public AuditService(AppDbContext context, ITenantContext tenantContext, ILogger<AuditService> logger)
     {
         _context = context;
         _tenantContext = tenantContext;
+        _logger = logger;
     }
 
     public async Task LogAsync(AuditLogEntry entry, CancellationToken ct = default)
@@ -38,6 +42,11 @@ public class AuditService : IAuditService
 
         _context.AuditLogs.Add(log);
         await _context.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Audit {Acao} {Entidade}#{EntidadeId} por Usuario={UsuarioId} Tenant={TenantId} Ip={Ip}",
+            entry.Acao, entry.Entidade, entry.EntidadeId ?? "-",
+            entry.UsuarioId, entry.TenantId, entry.IpAddress ?? "-");
     }
 
     public async Task<IEnumerable<AuditLogResponseDto>> GetByEntityAsync(string entity, Guid entityId, CancellationToken ct = default)

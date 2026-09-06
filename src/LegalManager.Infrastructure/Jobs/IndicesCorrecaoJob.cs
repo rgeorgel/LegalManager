@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,6 +25,8 @@ public class IndicesCorrecaoJob
 
     public async Task ExecutarAsync()
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(IndicesCorrecaoJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "indices-correcao-mensal");
         _logger.LogInformation("[IndicesCorrecaoJob] Iniciando atualização de índices.");
         await AtualizarBcbAsync(433, TipoIndice.IPCA);
         await AtualizarBcbAsync(189, TipoIndice.IGPM);

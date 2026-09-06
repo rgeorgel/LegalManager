@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using LegalManager.Application.DTOs.Onboarding;
 using LegalManager.Application.Interfaces;
+using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -51,6 +53,8 @@ public class DataJudAdapter : ITribunalAdapter
 
     public async Task<TribunalConsultaResult> ConsultarAsync(string numeroCNJ, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Tribunais.StartActivity(nameof(ConsultarAsync));
+        activity?.SetTag("tribunal.cnj", numeroCNJ);
         var tribKey = InferirTribunal(numeroCNJ);
         if (tribKey == null)
             return ResultadoVazio();
@@ -61,6 +65,9 @@ public class DataJudAdapter : ITribunalAdapter
     public async Task<TribunalConsultaResult> ConsultarPorTribunalAsync(
         string numeroCNJ, string tribunal, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Tribunais.StartActivity(nameof(ConsultarPorTribunalAsync));
+        activity?.SetTag("tribunal.cnj", numeroCNJ);
+        activity?.SetTag("tribunal.sigla", tribunal);
         if (!TribunalIndex.TryGetValue(tribunal.Trim(), out var idx))
             return ResultadoVazio();
 
@@ -212,6 +219,9 @@ public class DataJudAdapter : ITribunalAdapter
     public async Task<List<ProcessoOabPreviewDto>> BuscarPorOabAsync(
         string numeroOAB, string uf, CancellationToken ct = default)
     {
+        using var activity = Telemetry.Tribunais.StartActivity(nameof(BuscarPorOabAsync));
+        activity?.SetTag("tribunal.oab", numeroOAB);
+        activity?.SetTag("tribunal.uf", uf);
         if (!TribunaisPorUF.TryGetValue(uf.Trim(), out var tribunais))
             return [];
 

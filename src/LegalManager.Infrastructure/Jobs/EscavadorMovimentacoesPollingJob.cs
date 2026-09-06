@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +37,8 @@ public class EscavadorMovimentacoesPollingJob
 
     public async Task ExecutarAsync()
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(EscavadorMovimentacoesPollingJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "escavador-movimentacoes-polling");
         _logger.LogInformation("[EscavadorPolling] Iniciando polling de movimentações");
 
         var processos = await _context.Processos

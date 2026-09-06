@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Text.Json;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +31,8 @@ public class MonitoramentoJob
 
     public async Task ExecutarAsync()
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(MonitoramentoJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "monitoramento-processos");
         _logger.LogInformation("[MonitoramentoJob] Iniciando monitoramento automático.");
         var agora = DateTime.Now;
 

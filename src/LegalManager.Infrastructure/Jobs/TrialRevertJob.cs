@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,6 +20,8 @@ public class TrialRevertJob
 
     public async Task ExecutarAsync()
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(TrialRevertJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "trial-revert");
         var agora = DateTime.UtcNow;
         var systemTenantId = new Guid("00000000-0000-0000-0000-000000000001");
 

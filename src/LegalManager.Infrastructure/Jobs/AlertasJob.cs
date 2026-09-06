@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,8 @@ public class AlertasJob
 
     public async Task ExecutarAsync(DateTime hoje)
     {
+        using var activity = Telemetry.Hangfire.StartActivity($"{nameof(AlertasJob)}.{nameof(ExecutarAsync)}");
+        activity?.SetTag("job.cron", "alertas-diarios");
         await AlertarTarefasAsync(hoje);
         await AlertarEventosAsync(hoje);
         await AlertarTrialExpirandoAsync(hoje);
