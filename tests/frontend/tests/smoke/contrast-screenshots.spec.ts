@@ -1,7 +1,7 @@
 import { test, expect } from '../../fixtures';
 
 test.describe('Contrast em dark themes', () => {
-  for (const preset of ['dark', 'dracula', 'cyberpunk']) {
+  for (const preset of ['dark', 'dracula', 'cyberpunk', 'synthwave', 'matrix']) {
     test(`preset "${preset}" tem contraste legível em honorarios/processos/agenda + logo transparente`, async ({ adminPage: page, request }) => {
       const loginRes = await request.post('/api/auth/login', {
         data: {

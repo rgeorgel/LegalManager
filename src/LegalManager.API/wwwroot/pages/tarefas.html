@@ -71,10 +71,19 @@
     .kanban-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; align-items:start; }
     .kanban-col { background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; min-height:300px; }
     .kanban-col-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-    .kanban-col-title { font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em; }
-    .kanban-col-title.status-pendente   { color: var(--kanban-pendente, #374151); }
-    .kanban-col-title.status-andamento  { color: var(--kanban-andamento, #1d4ed8); }
-    .kanban-col-title.status-concluida  { color: var(--kanban-concluida, #057a55); }
+    .kanban-col-title { font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em; background:transparent; }
+    /* Prefixo "kanban-" evita colidir com .status-pendente/.status-concluida
+       (badges da aba Lista, linhas acima) — como essas classes também têm
+       background, o título do Kanban herdava o fundo claro do badge e
+       ficava ilegível nos temas escuros. */
+    .kanban-col-title.kanban-status-pendente   { color: var(--kanban-pendente, #374151); }
+    .kanban-col-title.kanban-status-andamento  { color: var(--kanban-andamento, #1d4ed8); }
+    .kanban-col-title.kanban-status-concluida  { color: var(--kanban-concluida, #057a55); }
+    /* Ícones SVG com stroke="currentColor" (em vez de emoji colorido) para
+       herdar a cor do tema em qualquer preset — emojis como ✅/⏳ trazem
+       arte colorida fixa (ex: fundo esverdeado) que fica ilegível em temas
+       escuros. */
+    .kanban-col-icon { vertical-align: -2px; margin-right: 2px; }
     .kanban-col-count { background:var(--color-border); color:var(--color-text-muted); font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
     .kanban-items { display:flex; flex-direction:column; gap:8px; min-height:100px; }
     .kanban-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; cursor:grab; user-select:none; transition:box-shadow .15s; }
@@ -182,21 +191,21 @@
       <div class="kanban-board" id="board">
         <div class="kanban-col" data-status="Pendente">
           <div class="kanban-col-header">
-            <span class="kanban-col-title status-pendente">⏳ Pendente</span>
+            <span class="kanban-col-title kanban-status-pendente"><svg class="kanban-col-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Pendente</span>
             <span class="kanban-col-count" id="count-Pendente">0</span>
           </div>
           <div class="kanban-items" id="col-Pendente"></div>
         </div>
         <div class="kanban-col" data-status="EmAndamento">
           <div class="kanban-col-header">
-            <span class="kanban-col-title status-andamento">🔄 Em Andamento</span>
+            <span class="kanban-col-title kanban-status-andamento"><svg class="kanban-col-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 2.5V6h-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Em Andamento</span>
             <span class="kanban-col-count" id="count-EmAndamento">0</span>
           </div>
           <div class="kanban-items" id="col-EmAndamento"></div>
         </div>
         <div class="kanban-col" data-status="Concluida">
           <div class="kanban-col-header">
-            <span class="kanban-col-title status-concluida">✅ Concluída</span>
+            <span class="kanban-col-title kanban-status-concluida"><svg class="kanban-col-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.25" stroke="currentColor" stroke-width="1.5"/><path d="M5.2 8.3l1.9 1.9 3.7-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Concluída</span>
             <span class="kanban-col-count" id="count-Concluida">0</span>
           </div>
           <div class="kanban-items" id="col-Concluida"></div>
