@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using LegalManager.Application.DTOs.Auth;
+using LegalManager.Application.DTOs.Tenants;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
@@ -295,11 +296,20 @@ public class AuthService : IAuthService
         var accessToken = GerarJwt(usuario, tenant, impersonadoPorId, impersonadoPorNome, accessTokenTtl);
         var refreshToken = await CriarRefreshTokenAsync(usuario.Id, ct, impersonadoPorId, refreshTokenTtl);
 
+        var tema = new TenantThemeDto(
+            tenant.PrimaryColor,
+            tenant.SidebarColor,
+            tenant.AccentColor,
+            tenant.LayoutMode,
+            tenant.LogoUrl,
+            tenant.CustomCss
+        );
+
         return new AuthResponseDto(
             accessToken,
             refreshToken.Token,
             refreshToken.ExpiresAt,
-            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm)
+            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm, tema)
         );
     }
 

@@ -22,6 +22,12 @@ public class Tenant
     public DateTime? BillingCycleStart { get; set; }
     public string? VoucherUtilizado { get; set; }
 
+    public string? PrimaryColor { get; set; }
+    public string? SidebarColor { get; set; }
+    public string? AccentColor { get; set; }
+    public string? LayoutMode { get; set; }
+    public string? CustomCss { get; set; }
+
     public Guid? TrialConcedidoPorId { get; set; }
     public DateTime? TrialConcedidoEm { get; set; }
     public int? TrialConcedidoDias { get; set; }

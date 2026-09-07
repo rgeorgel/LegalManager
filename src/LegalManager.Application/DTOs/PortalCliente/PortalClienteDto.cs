@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LegalManager.Application.DTOs.Tenants;
 using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.PortalCliente;
@@ -19,7 +20,8 @@ public record ClientePerfilDto(
     Guid ContatoId,
     string Nome,
     string Email,
-    string? Telefone
+    string? Telefone,
+    TenantThemeDto? Tema
 );
 
 public record MeuProcessoDto(

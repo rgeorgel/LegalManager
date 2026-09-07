@@ -8,12 +8,18 @@ export function setSession(data) {
   sessionStorage.setItem('access_token', data.accessToken);
   sessionStorage.setItem('refresh_token', data.refreshToken);
   sessionStorage.setItem('user', JSON.stringify(data.usuario));
+  if (data.usuario && data.usuario.tema !== undefined) {
+    sessionStorage.setItem('tenant_theme', JSON.stringify(data.usuario.tema));
+  } else if (data.perfil && data.perfil.tema !== undefined) {
+    sessionStorage.setItem('tenant_theme', JSON.stringify(data.perfil.tema));
+  }
 }
 
 export function clearSession() {
   sessionStorage.removeItem('access_token');
   sessionStorage.removeItem('refresh_token');
   sessionStorage.removeItem('user');
+  sessionStorage.removeItem('tenant_theme');
 }
 
 export function getUser() {
@@ -61,7 +67,11 @@ async function refreshTokenIfNeeded() {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: { refreshToken: rt }
+      // fetch() não serializa objetos automaticamente — sem o JSON.stringify
+      // o servidor recebia "[object Object]" como body, refresh falhava
+      // silenciosamente, clearSession era chamado e o usuário perdia
+      // sessionStorage (incluindo tenant_theme) sem entender por quê.
+      body: JSON.stringify({ refreshToken: rt })
     });
     if (res.ok) {
       const data = await res.json();
@@ -103,17 +113,29 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (!res.ok) {
-    let errorMsg = `HTTP ${res.status}`;
+    let errorMsg = '';
     const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       try {
         const body = await res.json();
         errorMsg = body.message || body.title
-          || (body.errors ? Object.values(body.errors).flat().join('; ') : errorMsg);
+          || (body.errors ? Object.values(body.errors).flat().join('; ') : '');
       } catch {}
     } else {
-      const text = await res.text();
-      errorMsg = text.substring(0, 200);
+      const text = (await res.text() || '').trim();
+      if (text) errorMsg = text.substring(0, 200);
+    }
+    // [Authorize(Roles = ...)] retorna 403/401 com corpo vazio, deixando
+    // o usuário sem entender por que a ação falhou. Adiciona dica contextual.
+    if (!errorMsg) {
+      const hint = res.status === 401
+        ? 'Sessão expirada. Faça login novamente.'
+        : res.status === 403
+          ? 'Seu usuário não tem permissão para esta ação.'
+          : res.status === 404
+            ? 'Recurso não encontrado.'
+            : `HTTP ${res.status}`;
+      errorMsg = hint;
     }
     throw new Error(errorMsg);
   }

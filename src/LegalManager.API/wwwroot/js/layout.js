@@ -1,5 +1,6 @@
 import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch, getImpersonationInfo } from './api.js';
+import { applyTenantTheme, getStoredTheme } from './theme.js';
 
 const NAV_GROUPS = [
   {
@@ -45,6 +46,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/pages/alertas.html',          label: '🔔 Alertas' },
       { href: '/pages/configuracoes.html',  label: '⚙️ Configurações' },
+      { href: '/pages/tema.html',            label: '🎨 Tema', plus: true },
       { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
     ],
   },
@@ -78,6 +80,8 @@ export function initLayout() {
   }
 
   const user = getUser();
+
+  applyTenantTheme(getStoredTheme() || user?.tema);
 
   document.querySelector('.header-user-name').textContent = user?.nome ?? '';
   document.querySelector('.header-tenant').textContent = user?.nomeEscritorio ?? '';

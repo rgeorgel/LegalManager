@@ -1,6 +1,7 @@
 const API_BASE = '/api/portal';
 const TOKEN_KEY = 'cliente_token';
 const USER_KEY = 'cliente_user';
+const THEME_KEY = 'cliente_tenant_theme';
 
 export function getToken() {
   return sessionStorage.getItem(TOKEN_KEY);
@@ -9,11 +10,15 @@ export function getToken() {
 export function setSession(data) {
   sessionStorage.setItem(TOKEN_KEY, data.accessToken);
   sessionStorage.setItem(USER_KEY, JSON.stringify(data.perfil));
+  if (data.perfil && data.perfil.tema !== undefined) {
+    sessionStorage.setItem(THEME_KEY, JSON.stringify(data.perfil.tema));
+  }
 }
 
 export function clearSession() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(THEME_KEY);
 }
 
 export function getUser() {

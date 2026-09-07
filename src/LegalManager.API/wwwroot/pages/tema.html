@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Tema</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .theme-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .theme-card h3 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .color-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .color-row input[type=color] {
+      width: 56px;
+      height: 40px;
+      padding: 2px;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--color-surface);
+    }
+    .color-row input[type=text] {
+      flex: 1;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .logo-preview {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed var(--color-border);
+      border-radius: 6px;
+      text-align: center;
+      background: var(--color-bg);
+      min-height: 60px;
+    }
+    .logo-preview img {
+      max-height: 48px;
+      max-width: 100%;
+    }
+    .logo-preview .empty {
+      color: var(--color-text-muted);
+      font-size: 13px;
+    }
+    .theme-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .theme-locked {
+      padding: 24px;
+      text-align: center;
+      background: var(--color-primary-light);
+      border-radius: var(--radius);
+      color: var(--color-primary-dark);
+    }
+    .theme-locked a {
+      font-weight: 600;
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background: var(--color-surface);
+      color: var(--color-text);
+      resize: vertical;
+    }
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .preset-card {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+      font-family: inherit;
+    }
+    .preset-card:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-1px);
+    }
+    .preset-card:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+    .preset-card.active {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary-light);
+    }
+    .preset-preview {
+      display: flex;
+      height: 36px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+    .preset-preview-sidebar { flex: 0 0 30%; }
+    .preset-preview-primary { flex: 1; }
+    .preset-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-text);
+    }
+    .preset-description {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">🎨 Tema do Escritório</h1>
+      <p class="page-subtitle">Personalize a aparência visual do seu portal.</p>
+    </div>
+
+    <div id="lockedMessage" class="theme-locked" style="display:none">
+      A personalização de tema está disponível a partir do plano <strong>Plus</strong>.
+      <br><br>
+      <a href="/pages/assinatura.html">Fazer upgrade →</a>
+    </div>
+
+    <div id="themeForm" style="display:none">
+      <div class="config-section">
+        <div class="config-section-title">Temas predefinidos</div>
+        <p style="font-size:13px;color:var(--color-text-muted);margin-bottom:14px">
+          Escolha um ponto de partida. Após aplicar, ajuste cores na seção
+          <strong>Personalizar</strong> abaixo e clique em <strong>Salvar tema</strong>.
+        </p>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+
+      <div class="config-section-title" style="margin-top:24px">Personalizar</div>
+
+      <div class="theme-grid">
+        <div class="theme-card">
+          <h3>Cor Primária</h3>
+          <div class="color-row">
+            <input type="color" id="primaryColorPicker">
+            <input type="text" id="primaryColor" class="form-control" placeholder="#1a56db" maxlength="7">
+          </div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:8px">
+            Botões, links e destaques.
+          </div>
+        </div>
+
+        <div class="theme-card">
+          <h3>Cor da Sidebar</h3>
+          <div class="color-row">
+            <input type="color" id="sidebarColorPicker">
+            <input type="text" id="sidebarColor" class="form-control" placeholder="#1e2a3b" maxlength="7">
+          </div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:8px">
+            Menu lateral e cabeçalho.
+          </div>
+        </div>
+
+        <div class="theme-card">
+          <h3>Cor de Destaque</h3>
+          <div class="color-row">
+            <input type="color" id="accentColorPicker">
+            <input type="text" id="accentColor" class="form-control" placeholder="#057a55" maxlength="7">
+          </div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-top:8px">
+            Acentos secundários.
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section" style="margin-top:24px">
+        <div class="config-section-title">Logo do Escritório</div>
+        <div class="logo-preview" id="logoPreview">
+          <span class="empty">Carregando...</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" id="logoFile" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none">
+          <button class="btn btn-secondary" id="btnSelecionarLogo">Selecionar imagem</button>
+          <button class="btn btn-secondary" id="btnRemoverLogo" style="display:none">Remover logo</button>
+          <span style="font-size:12px;color:var(--color-text-muted)">PNG, JPG, SVG ou WebP. Máximo 2 MB.</span>
+        </div>
+      </div>
+
+      <div class="config-section" style="margin-top:24px">
+        <div class="config-section-title">Layout</div>
+        <div class="form-group" style="max-width:300px">
+          <label class="form-label">Densidade da interface</label>
+          <select id="layoutMode" class="form-control">
+            <option value="default">Padrão</option>
+            <option value="compact">Compacto</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="config-section" style="margin-top:24px">
+        <div class="config-section-title">CSS personalizado <span style="font-size:12px;color:var(--color-text-muted);font-weight:400">(opcional, plano Pro+)</span></div>
+        <p style="font-size:13px;color:var(--color-text-muted);margin-bottom:8px">
+          Sobrescreva estilos específicos. Propriedades perigosas (expression, behavior, javascript:, @import, url()) são removidas automaticamente.
+        </p>
+        <textarea id="customCss" placeholder="/* Ex: .header-logo img { border-radius: 8px; } */"></textarea>
+      </div>
+
+      <div class="theme-actions">
+        <button class="btn btn-primary" id="btnSalvar">Salvar tema</button>
+        <button class="btn btn-secondary" id="btnVisualizar">Visualizar sem salvar</button>
+        <button class="btn btn-secondary" id="btnResetar">Restaurar padrão</button>
+        <span id="themeMsg" class="alert" style="display:none;margin-left:auto"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { applyTenantTheme, resetTenantTheme, sanitizeHex } from '/js/theme.js';
+  import { PRESETS, findPresetByTheme } from '/js/presets.js';
+
+  initLayout();
+
+  const form = document.getElementById('themeForm');
+  const locked = document.getElementById('lockedMessage');
+  const msg = document.getElementById('themeMsg');
+
+  let currentTheme = null;
+  let currentLogo = null;
+
+  const presetGrid = document.getElementById('presetGrid');
+
+  function renderPresets() {
+    presetGrid.innerHTML = '';
+    for (const preset of PRESETS) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'preset-card';
+      card.dataset.presetId = preset.id;
+      card.setAttribute('aria-label', `Aplicar tema ${preset.name}`);
+      card.innerHTML = `
+        <div class="preset-preview">
+          <div class="preset-preview-sidebar" style="background:${preset.sidebarColor}"></div>
+          <div class="preset-preview-primary" style="background:${preset.primaryColor}"></div>
+        </div>
+        <div class="preset-name">${escapeHtml(preset.name)}</div>
+        <div class="preset-description">${escapeHtml(preset.description)}</div>
+      `;
+      card.addEventListener('click', () => applyPreset(preset));
+      presetGrid.appendChild(card);
+    }
+  }
+
+  function applyPreset(preset) {
+    document.getElementById('primaryColor').value = preset.primaryColor;
+    document.getElementById('primaryColorPicker').value = preset.primaryColor;
+    document.getElementById('sidebarColor').value = preset.sidebarColor;
+    document.getElementById('sidebarColorPicker').value = preset.sidebarColor;
+    document.getElementById('accentColor').value = preset.accentColor;
+    document.getElementById('accentColorPicker').value = preset.accentColor;
+    document.getElementById('layoutMode').value = preset.layoutMode;
+    document.getElementById('customCss').value = preset.customCss || '';
+
+    // Aplica preview imediato para o usuário ver o efeito antes de salvar
+    applyTenantTheme({
+      primaryColor: preset.primaryColor,
+      sidebarColor: preset.sidebarColor,
+      accentColor: preset.accentColor,
+      layoutMode: preset.layoutMode,
+      customCss: preset.customCss,
+    });
+
+    showAlert(`Tema "${preset.name}" aplicado (clique em Salvar para persistir).`, 'success');
+  }
+
+  function highlightActivePreset() {
+    const active = findPresetByTheme(currentTheme);
+    presetGrid.querySelectorAll('.preset-card').forEach(card => {
+      card.classList.toggle('active', active && card.dataset.presetId === active.id);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function showAlert(text, type = 'success') {
+    msg.className = `alert alert-${type}`;
+    msg.textContent = text;
+    msg.style.display = 'block';
+  }
+  function hideAlert() { msg.style.display = 'none'; }
+
+  async function carregar() {
+    try {
+      const theme = await apiFetch('/tenants/current/theme');
+      currentTheme = theme || {};
+      currentLogo = currentTheme.logoUrl || null;
+      populate(theme);
+      renderPresets();
+      highlightActivePreset();
+      if (isPlanoFree()) {
+        form.style.display = 'none';
+        locked.style.display = 'block';
+      } else {
+        form.style.display = 'block';
+        locked.style.display = 'none';
+      }
+    } catch (e) {
+      showAlert('Erro ao carregar tema: ' + e.message, 'error');
+    }
+  }
+
+  function populate(t) {
+    const pc = sanitizeHex(t?.primaryColor) || '#1a56db';
+    const sc = sanitizeHex(t?.sidebarColor) || '#1e2a3b';
+    const ac = sanitizeHex(t?.accentColor) || '#057a55';
+
+    document.getElementById('primaryColor').value = pc;
+    document.getElementById('primaryColorPicker').value = pc;
+    document.getElementById('sidebarColor').value = sc;
+    document.getElementById('sidebarColorPicker').value = sc;
+    document.getElementById('accentColor').value = ac;
+    document.getElementById('accentColorPicker').value = ac;
+    document.getElementById('layoutMode').value = t?.layoutMode || 'default';
+    document.getElementById('customCss').value = t?.customCss || '';
+
+    renderLogo(currentLogo);
+    document.getElementById('btnRemoverLogo').style.display = currentLogo ? 'inline-block' : 'none';
+  }
+
+  function renderLogo(url) {
+    const el = document.getElementById('logoPreview');
+    if (url) {
+      el.innerHTML = `<img src="${url}" alt="Logo atual">`;
+    } else {
+      el.innerHTML = '<span class="empty">Sem logo personalizado</span>';
+    }
+  }
+
+  function bindColorPair(textId, pickerId) {
+    const textInput = document.getElementById(textId);
+    const picker = document.getElementById(pickerId);
+    picker.addEventListener('input', () => { textInput.value = picker.value; });
+    textInput.addEventListener('input', () => {
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(textInput.value)) picker.value = textInput.value;
+    });
+  }
+  bindColorPair('primaryColor', 'primaryColorPicker');
+  bindColorPair('sidebarColor', 'sidebarColorPicker');
+  bindColorPair('accentColor', 'accentColorPicker');
+
+  function collectTheme() {
+    return {
+      primaryColor: document.getElementById('primaryColor').value.trim() || null,
+      sidebarColor: document.getElementById('sidebarColor').value.trim() || null,
+      accentColor: document.getElementById('accentColor').value.trim() || null,
+      layoutMode: document.getElementById('layoutMode').value,
+      customCss: document.getElementById('customCss').value || null,
+    };
+  }
+
+  document.getElementById('btnVisualizar').addEventListener('click', () => {
+    const t = { ...currentTheme, ...collectTheme(), logoUrl: currentLogo };
+    applyTenantTheme(t);
+  });
+
+  document.getElementById('btnResetar').addEventListener('click', async () => {
+    if (!confirm('Restaurar o tema padrão do Causify?')) return;
+    try {
+      await apiFetch('/tenants/current/theme', { method: 'PUT', body: JSON.stringify({
+        primaryColor: '#1a56db',
+        sidebarColor: '#1e2a3b',
+        accentColor: '#057a55',
+        layoutMode: 'default',
+        customCss: '',
+      })});
+      sessionStorage.removeItem('tenant_theme');
+      resetTenantTheme();
+      await carregar();
+      showAlert('Tema restaurado.', 'success');
+    } catch (e) {
+      showAlert('Erro: ' + e.message, 'error');
+    }
+  });
+
+  document.getElementById('btnSalvar').addEventListener('click', async () => {
+    hideAlert();
+    const body = collectTheme();
+    try {
+      const updated = await apiFetch('/tenants/current/theme', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
+      currentTheme = { ...currentTheme, ...updated, customCss: body.customCss };
+      sessionStorage.setItem('tenant_theme', JSON.stringify(currentTheme));
+      applyTenantTheme(currentTheme);
+      highlightActivePreset();
+      showAlert('Tema salvo com sucesso.', 'success');
+    } catch (e) {
+      showAlert('Erro ao salvar: ' + e.message, 'error');
+    }
+  });
+
+  document.getElementById('btnSelecionarLogo').addEventListener('click', () => {
+    document.getElementById('logoFile').click();
+  });
+
+  document.getElementById('logoFile').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showAlert('Logo deve ter no máximo 2 MB.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const res = await apiFetch('/tenants/current/logo', {
+          method: 'POST',
+          body: JSON.stringify({
+            base64: reader.result,
+            contentType: file.type,
+          })
+        });
+        currentLogo = res.logoUrl;
+        currentTheme = { ...currentTheme, logoUrl: res.logoUrl };
+        sessionStorage.setItem('tenant_theme', JSON.stringify(currentTheme));
+        renderLogo(res.logoUrl);
+        document.getElementById('btnRemoverLogo').style.display = 'inline-block';
+        applyTenantTheme(currentTheme);
+        showAlert('Logo atualizado.', 'success');
+      } catch (err) {
+        showAlert('Erro no upload: ' + err.message, 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('btnRemoverLogo').addEventListener('click', async () => {
+    if (!confirm('Remover logo personalizado?')) return;
+    try {
+      await apiFetch('/tenants/current/logo', { method: 'DELETE' });
+      currentLogo = null;
+      currentTheme = { ...currentTheme, logoUrl: null };
+      sessionStorage.setItem('tenant_theme', JSON.stringify(currentTheme));
+      renderLogo(null);
+      document.getElementById('btnRemoverLogo').style.display = 'none';
+      applyTenantTheme(currentTheme);
+      showAlert('Logo removido.', 'success');
+    } catch (e) {
+      showAlert('Erro: ' + e.message, 'error');
+    }
+  });
+
+  carregar();
+</script>
+</body>
+</html>

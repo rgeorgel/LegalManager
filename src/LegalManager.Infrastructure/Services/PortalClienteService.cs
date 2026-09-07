@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using LegalManager.Application.DTOs.PortalCliente;
+using LegalManager.Application.DTOs.Tenants;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
@@ -52,7 +53,22 @@ public class PortalClienteService : IPortalClienteService
         return new PortalAuthResponseDto(
             token,
             expires,
-            new ClientePerfilDto(acesso.Id, acesso.ContatoId, acesso.Contato.Nome, acesso.Email, acesso.Contato.Telefone));
+            new ClientePerfilDto(
+                acesso.Id,
+                acesso.ContatoId,
+                acesso.Contato.Nome,
+                acesso.Email,
+                acesso.Contato.Telefone,
+                new TenantThemeDto(
+                    acesso.Tenant.PrimaryColor,
+                    acesso.Tenant.SidebarColor,
+                    acesso.Tenant.AccentColor,
+                    acesso.Tenant.LayoutMode,
+                    acesso.Tenant.LogoUrl,
+                    acesso.Tenant.CustomCss
+                )
+            )
+        );
     }
 
     public async Task<ClientePerfilDto> GetPerfilAsync(Guid acessoId, CancellationToken ct = default)
@@ -62,7 +78,7 @@ public class PortalClienteService : IPortalClienteService
             .FirstOrDefaultAsync(a => a.Id == acessoId, ct)
             ?? throw new KeyNotFoundException("Acesso não encontrado.");
 
-        return new ClientePerfilDto(acesso.Id, acesso.ContatoId, acesso.Contato.Nome, acesso.Email, acesso.Contato.Telefone);
+        return new ClientePerfilDto(acesso.Id, acesso.ContatoId, acesso.Contato.Nome, acesso.Email, acesso.Contato.Telefone, null);
     }
 
     public async Task<IEnumerable<MeuProcessoDto>> GetMeusProcessosAsync(

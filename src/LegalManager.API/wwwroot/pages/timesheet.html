@@ -61,7 +61,10 @@
     /* Modal overlay */
     .modal-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.5); align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
-    .modal-card { background:#fff; border-radius:var(--radius); padding:28px; width:min(480px,95vw); max-height:90vh; overflow-y:auto; }
+    .modal-card { background:#fff; border-radius:var(--radius); padding:28px; width:min(600px,95vw); max-height:90vh; overflow-x:hidden; overflow-y:auto; }
+    #formManual .form-group { min-width:0; }
+    #formManual input.form-control { min-width:0; }
+    @media (max-width: 480px) { #formManual > div[style*="grid-template-columns"] { grid-template-columns:1fr; } }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -121,7 +124,7 @@
     <div class="modal-card">
       <h2 style="margin:0 0 20px">Lançamento Manual</h2>
       <form id="formManual">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
           <div class="form-group">
             <label class="form-label">Início *</label>
             <input id="mInicio" type="datetime-local" class="form-control" required>

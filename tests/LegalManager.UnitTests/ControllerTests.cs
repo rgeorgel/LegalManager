@@ -284,9 +284,9 @@ public class PortalClienteControllerTests
     {
         var mock = new Mock<IPortalClienteService>();
         mock.Setup(s => s.LoginAsync(It.IsAny<LoginPortalDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PortalAuthResponseDto("token", DateTime.UtcNow.AddDays(7), new ClientePerfilDto(Guid.NewGuid(), Guid.NewGuid(), "Cliente", "test@test.com", null)));
+            .ReturnsAsync(new PortalAuthResponseDto("token", DateTime.UtcNow.AddDays(7), new ClientePerfilDto(Guid.NewGuid(), Guid.NewGuid(), "Cliente", "test@test.com", null, null)));
         mock.Setup(s => s.GetPerfilAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ClientePerfilDto(Guid.NewGuid(), Guid.NewGuid(), "Cliente", "test@test.com", null));
+            .ReturnsAsync(new ClientePerfilDto(Guid.NewGuid(), Guid.NewGuid(), "Cliente", "test@test.com", null, null));
         mock.Setup(s => s.GetMeusProcessosAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Empty<MeuProcessoDto>());
         mock.Setup(s => s.GetProcessoAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))

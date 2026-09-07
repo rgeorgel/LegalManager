@@ -39,11 +39,16 @@ async function fetchClientSession(request: APIRequestContext): Promise<ClientSes
 }
 
 async function injectAdmin(ctx: BrowserContext, s: AdminSession) {
+  // addInitScript roda em CADA navegação. Para não sobrescrever mudanças
+  // feitas pelo próprio usuário (ex.: tema salvo em /pages/tema.html),
+  // só populamos sessionStorage na primeira carga de cada contexto.
   await ctx.addInitScript(
     ({ at, rt, user }) => {
+      if (sessionStorage.getItem('access_token')) return;
       sessionStorage.setItem('access_token', at);
       sessionStorage.setItem('refresh_token', rt);
       sessionStorage.setItem('user', JSON.stringify(user));
+      if (user.tema) sessionStorage.setItem('tenant_theme', JSON.stringify(user.tema));
     },
     { at: s.accessToken, rt: s.refreshToken, user: s.usuario },
   );

@@ -642,3 +642,9 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
 .empty-state-text { font-size: 16px; margin-bottom: 8px; }
+
+/* ── Tenant theme ───────────────────────────────────── */
+.header-logo img { max-height: 40px; width: auto; }
+body.theme-compact .app-layout { gap: 12px; }
+body.theme-compact .stat-card { padding: 14px 16px; }
+body.theme-compact .dashboard-grid { gap: 10px; }

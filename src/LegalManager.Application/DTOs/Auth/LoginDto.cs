@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using LegalManager.Application.DTOs.Tenants;
 
 namespace LegalManager.Application.DTOs.Auth;
 
@@ -22,7 +23,8 @@ public record UsuarioInfoDto(
     Guid TenantId,
     string NomeEscritorio,
     string Plano,
-    DateTime? UltimoAcessoEm
+    DateTime? UltimoAcessoEm,
+    TenantThemeDto? Tema
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

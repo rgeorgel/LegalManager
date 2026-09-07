@@ -1,4 +1,5 @@
 import { getUser, logout, isLoggedIn } from './clienteApi.js';
+import { applyTenantTheme, getStoredTheme } from '/js/theme.js';
 
 export function requireAuth() {
   if (!isLoggedIn()) {
@@ -11,6 +12,8 @@ export function requireAuth() {
 export function initLayout(activePage) {
   const user = requireAuth();
   if (!user) return null;
+
+  applyTenantTheme(getStoredTheme() || user?.tema);
 
   const navEl = document.getElementById('portalNav');
   if (!navEl) return user;

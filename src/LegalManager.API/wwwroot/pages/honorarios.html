@@ -55,6 +55,10 @@
       --hc-gold-dim: rgba(201,168,76,0.15);
       --hc-navy: #0f2744;
       --hc-navy2: #162f52;
+      /* Texto sobre fundo claro/superfície (não sobre fundo navy) — precisa
+         clarear em temas escuros. Presets dark/dracula sobrescrevem esta
+         variável via customCss; nos demais temas segue igual a --hc-navy. */
+      --hc-navy-text: var(--hc-navy);
       --hc-r: 8px;
     }
 
@@ -207,7 +211,7 @@
     .hc-met-v { font-size: 22px; font-weight: 700; }
     .hc-met-s { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
     .hc-met.feat { border: 1px solid var(--hc-gold); background: var(--color-surface); }
-    .hc-met.feat .hc-met-v { font-size: 28px; color: var(--hc-navy); }
+    .hc-met.feat .hc-met-v { font-size: 28px; color: var(--hc-navy-text); }
     .hc-met.suc { background: #eaf3de; }
     .hc-met.suc .hc-met-v, .hc-met.suc .hc-met-l { color: #3b6d11; }
     .hc-met.info { background: #e6f1fb; }
@@ -290,7 +294,7 @@
     .hc-hcard .hc-cli { font-size: 12px; font-weight: 600; color: var(--hc-gold); margin-bottom: 2px; }
     .hc-hcard .hc-tipo { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .hc-hcard .hc-area { font-size: 11px; color: var(--color-text-muted); margin-bottom: 8px; }
-    .hc-hcard .hc-val { font-size: 20px; font-weight: 700; color: var(--hc-navy); }
+    .hc-hcard .hc-val { font-size: 20px; font-weight: 700; color: var(--hc-navy-text); }
     .hc-hcard .hc-sub { font-size: 10px; color: var(--color-text-muted); margin-top: 2px; }
     .hc-hcard .hc-btns { display: flex; gap: 6px; margin-top: 10px; }
     .hc-hcard .hc-btns button {
@@ -355,7 +359,7 @@
       border-bottom: 2px solid var(--hc-gold);
     }
     .hc-proposta-firma { text-align: right; }
-    .hc-proposta-firma h2 { font-size: 15px; font-weight: 700; color: var(--hc-navy); letter-spacing: .03em; }
+    .hc-proposta-firma h2 { font-size: 15px; font-weight: 700; color: var(--hc-navy-text); letter-spacing: .03em; }
     .hc-proposta-firma p { font-size: 11px; color: var(--color-text-muted); }
     .hc-proposta-titulo {
       font-size: 15px;
@@ -364,7 +368,7 @@
       letter-spacing: .06em;
       margin: 8px 0 4px;
       text-transform: uppercase;
-      color: var(--hc-navy);
+      color: var(--hc-navy-text);
     }
     .hc-proposta-sub { text-align: center; font-size: 12px; color: var(--color-text-muted); margin-bottom: 18px; }
     .p-sec { margin-bottom: 14px; }
@@ -916,7 +920,7 @@
       <div class="hc-proplist-item">
         <span class="hc-proplist-badge">${i+1}</span>
         <span style="flex:1"><strong>${it.tipo}</strong> <span style="color:var(--color-text-muted)">(${it.modeLabel})</span></span>
-        <span style="font-weight:700;color:var(--hc-navy)">${brl(it.adj)}</span>
+        <span style="font-weight:700;color:var(--hc-navy-text)">${brl(it.adj)}</span>
         <button onclick="hcRemoveProposalItem(${it.id})" style="background:none;border:none;cursor:pointer;color:var(--color-text-muted);font-size:15px;line-height:1;padding:0 2px" title="Remover">✕</button>
       </div>`).join("");
     const total=hcProposalItems.reduce((s,it)=>s+it.adj,0);
@@ -925,7 +929,7 @@
       ${rows}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid var(--color-border)">
         <span style="font-size:12px;color:var(--color-text-muted)">Total combinado</span>
-        <span style="font-weight:700;color:var(--hc-navy);font-size:16px">${brl(total)}</span>
+        <span style="font-weight:700;color:var(--hc-navy-text);font-size:16px">${brl(total)}</span>
       </div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <button class="btn btn-sm btn-gold" onclick="hcGerarProposta();document.querySelectorAll('.hc-tab')[3].click()">Ver Proposta →</button>

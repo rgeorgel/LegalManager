@@ -640,11 +640,11 @@
       const statusEl = document.getElementById('statusInfo');
       if (data.status === 'Trial' && data.trialExpiraEm) {
         const dias = data.trialExpiraEm ? Math.max(0, Math.ceil((new Date(data.trialExpiraEm) - Date.now()) / 86400000)) : 0;
-        statusEl.innerHTML = `<span style="color:#1e40af">Trial — ${dias} dia(s) restante(s)</span>`;
+        statusEl.innerHTML = `<span style="color:var(--color-primary)">Trial — ${dias} dia(s) restante(s)</span>`;
         badge.className = 'assin-badge trial';
       } else if (data.status === 'Cancelado' && data.planoExpiraEm) {
         const expira = data.planoExpiraEm ? new Date(data.planoExpiraEm).toLocaleDateString('pt-BR') : '–';
-        statusEl.innerHTML = `<span style="color:#dc2626">Cancelado — acesso ${currentPlano} até ${expira}</span>`;
+        statusEl.innerHTML = `<span style="color:var(--color-danger)">Cancelado — acesso ${currentPlano} até ${expira}</span>`;
       } else if (data.periodo && (currentPlano === 'Pro' || currentPlano === 'Plus' || currentPlano === 'Max')) {
         statusEl.textContent = `${data.periodo} · Ativo`;
       } else {
