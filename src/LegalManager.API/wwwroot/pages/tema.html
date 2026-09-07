@@ -157,6 +157,24 @@
       margin-top: 3px;
       line-height: 1.4;
     }
+    .preset-group-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+      margin: 18px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .preset-group-title:first-child { margin-top: 0; }
+    .preset-group-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-border);
+    }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -195,7 +213,10 @@
           Escolha um ponto de partida. Após aplicar, ajuste cores na seção
           <strong>Personalizar</strong> abaixo e clique em <strong>Salvar tema</strong>.
         </p>
-        <div class="preset-grid" id="presetGrid"></div>
+        <div class="preset-group-title">☀️ Temas claros</div>
+        <div class="preset-grid" id="presetGridLight"></div>
+        <div class="preset-group-title">🌙 Temas escuros</div>
+        <div class="preset-grid" id="presetGridDark"></div>
       </div>
 
       <div class="config-section-title" style="margin-top:24px">Personalizar</div>
@@ -292,10 +313,12 @@
   let currentTheme = null;
   let currentLogo = null;
 
-  const presetGrid = document.getElementById('presetGrid');
+  const presetGridLight = document.getElementById('presetGridLight');
+  const presetGridDark = document.getElementById('presetGridDark');
 
   function renderPresets() {
-    presetGrid.innerHTML = '';
+    presetGridLight.innerHTML = '';
+    presetGridDark.innerHTML = '';
     for (const preset of PRESETS) {
       const card = document.createElement('button');
       card.type = 'button';
@@ -311,7 +334,7 @@
         <div class="preset-description">${escapeHtml(preset.description)}</div>
       `;
       card.addEventListener('click', () => applyPreset(preset));
-      presetGrid.appendChild(card);
+      (preset.dark ? presetGridDark : presetGridLight).appendChild(card);
     }
   }
 
@@ -339,7 +362,7 @@
 
   function highlightActivePreset() {
     const active = findPresetByTheme(currentTheme);
-    presetGrid.querySelectorAll('.preset-card').forEach(card => {
+    document.querySelectorAll('#presetGridLight .preset-card, #presetGridDark .preset-card').forEach(card => {
       card.classList.toggle('active', active && card.dataset.presetId === active.id);
     });
   }
