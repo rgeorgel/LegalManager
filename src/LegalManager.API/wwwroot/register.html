@@ -266,6 +266,7 @@
   <script type="module">
     import { register } from '/js/auth.js';
     import { mascaraCpfCnpj } from '/js/mascaras.js';
+    import { getAttributionPayload } from '/js/utm.js';
 
     document.getElementById('cnpj').addEventListener('input', (e) => mascaraCpfCnpj(e.target));
 
@@ -399,7 +400,8 @@
           email: document.getElementById('email').value,
           senha: document.getElementById('senha').value,
           plano: planoSelecionado,
-          voucher
+          voucher,
+          ...getAttributionPayload()
         });
         const planNames = { 0: 'Free', 3: 'Plus', 1: 'Pro', 4: 'Max' };
         if (typeof gtag === 'function') {

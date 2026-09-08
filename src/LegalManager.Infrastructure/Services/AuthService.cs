@@ -84,7 +84,15 @@ public class AuthService : IAuthService
             UserName = dto.Email,
             Perfil = PerfilUsuario.Admin,
             Ativo = true,
-            CriadoEm = DateTime.UtcNow
+            CriadoEm = DateTime.UtcNow,
+            OrigemCadastro = DerivarOrigemCadastro(dto),
+            UtmSource = NullIfBlank(dto.UtmSource),
+            UtmMedium = NullIfBlank(dto.UtmMedium),
+            UtmCampaign = NullIfBlank(dto.UtmCampaign),
+            Referrer = NullIfBlank(dto.Referrer),
+            LandingPage = NullIfBlank(dto.LandingPage),
+            Fbclid = NullIfBlank(dto.Fbclid),
+            Gclid = NullIfBlank(dto.Gclid)
         };
 
         var result = await _userManager.CreateAsync(usuario, dto.Senha);
@@ -391,6 +399,28 @@ public class AuthService : IAuthService
         var meses = section.GetValue<int>("MesesGratuitos");
 
         return new VoucherBeneficio(planoTipo, DateTime.UtcNow.AddMonths(meses));
+    }
+
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string DerivarOrigemCadastro(RegisterTenantDto dto)
+    {
+        var source = (dto.UtmSource ?? string.Empty).Trim().ToLowerInvariant();
+        var medium = (dto.UtmMedium ?? string.Empty).Trim().ToLowerInvariant();
+        var hasGclid = !string.IsNullOrWhiteSpace(dto.Gclid);
+        var hasFbclid = !string.IsNullOrWhiteSpace(dto.Fbclid);
+        var hasReferrer = !string.IsNullOrWhiteSpace(dto.Referrer);
+
+        if (hasGclid || source.Contains("google")) return "google_ads";
+        if (hasFbclid || source is "facebook" or "fb" or "instagram" or "ig" or "meta") return "facebook_ads";
+        if (hasReferrer && (string.IsNullOrEmpty(source) || medium is "cpc" or "paid" or "ppc"))
+            return "indicacao";
+        if (!string.IsNullOrEmpty(source) && !string.IsNullOrEmpty(medium))
+            return $"{source}_{medium}";
+        if (!string.IsNullOrEmpty(source)) return source;
+        if (hasReferrer) return "referral";
+        return "direto";
     }
 
     private record VoucherBeneficio(PlanoTipo Plano, DateTime PlanoExpiraEm);

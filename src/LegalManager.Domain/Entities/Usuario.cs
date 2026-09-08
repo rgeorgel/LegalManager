@@ -15,6 +15,15 @@ public class Usuario : IdentityUser<Guid>
     public string? OabImportadaUf { get; set; }
     public DateTime? UltimoAcessoEm { get; set; }
 
+    public string? OrigemCadastro { get; set; }
+    public string? UtmSource { get; set; }
+    public string? UtmMedium { get; set; }
+    public string? UtmCampaign { get; set; }
+    public string? Referrer { get; set; }
+    public string? LandingPage { get; set; }
+    public string? Fbclid { get; set; }
+    public string? Gclid { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

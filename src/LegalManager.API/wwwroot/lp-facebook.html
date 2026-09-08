@@ -534,6 +534,7 @@
 
 <script type="module">
   import { register } from '/js/auth.js';
+  import { getAttributionPayload } from '/js/utm.js';
 
   const LP_VARIANT = 'C';
   const PLAN_LABELS = { '0': 'Free — R$ 0/mês', '3': 'Plus — R$ 20/mês', '1': 'Pro — R$ 50/mês' };
@@ -646,7 +647,8 @@
         email,
         senha,
         plano: parseInt(plano, 10),
-        voucher: null
+        voucher: null,
+        ...getAttributionPayload()
       });
       track('lp_signup_success', { plano });
       if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_C_' + plano });
