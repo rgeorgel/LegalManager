@@ -1,5 +1,5 @@
 import { isAuthenticated, getAdminUser, clearSession, saFetch } from './superAdminApi.js';
-import { applyTenantTheme } from '/js/theme.js';
+import { applyTenantTheme, getStoredTheme } from '/js/theme.js';
 
 const NAV_GROUPS = [
   {
@@ -35,7 +35,7 @@ export function initAdminLayout() {
   if (nameEl) nameEl.textContent = user?.nome ?? 'Super Admin';
   if (tenantEl) tenantEl.textContent = 'Super Admin';
 
-  applyTenantTheme(user?.tema);
+  applyTenantTheme(getStoredTheme() || user?.tema);
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     clearSession();

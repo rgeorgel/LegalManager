@@ -27,7 +27,7 @@
     .sort-indicator { display: inline-block; margin-left: 3px; }
     .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
     .data-table tr:last-child td { border-bottom: none; }
-    .data-table tr:hover td { background: #f9fafb; }
+    .data-table tr:hover td { background: var(--color-bg); }
     .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
     .badge-green { background: #dcfce7; color: #15803d; }
     .badge-amber { background: #fef3c7; color: #92400e; }
@@ -59,7 +59,8 @@
     .oabs-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
     .oabs-list-row:last-child { border-bottom: none; }
     .oabs-list-row.has-error { background: #fef2f2; }
-    .health-section { background: #f8fafc; border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+    .health-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+    .detail-stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px; text-align: center; }
     .health-section-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
     .health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
     .health-bar-label { min-width: 110px; color: var(--color-text-muted); }
@@ -490,7 +491,7 @@
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+            <div class="detail-stat-card">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Processos</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
               <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.monitoradoCount} monitorados</div>
@@ -499,12 +500,12 @@
                 <span class="badge badge-blue" title="Semanal">S ${t.monitoradoSemanalCount}</span>
               </div>
             </div>
-            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+            <div class="detail-stat-card">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Docs</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.documentoCount}</div>
               <div style="font-size:11px;color:var(--color-text-muted);margin-top:1px">${fmtBytes(t.documentoTamanhoBytes)}</div>
             </div>
-            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+            <div class="detail-stat-card">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Tarefas</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.tarefaCount}</div>
               <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap">
@@ -514,7 +515,7 @@
                 <span class="badge badge-red" title="Perdida">X ${t.tarefaPerdidaCount}</span>
               </div>
             </div>
-            <div style="background:#f8fafc;border:1px solid var(--color-border);border-radius:8px;padding:10px;text-align:center">
+            <div class="detail-stat-card">
               <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Usuários</div>
               <div style="font-size:22px;font-weight:700;margin-top:4px">${t.userCount}</div>
             </div>
