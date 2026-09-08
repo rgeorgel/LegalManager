@@ -153,7 +153,8 @@ export function resetTenantTheme() {
 
 export async function fetchTenantTheme() {
   try {
-    const token = sessionStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token')
+      || sessionStorage.getItem('sa_access_token');
     if (!token) return null;
     const res = await fetch('/api/tenants/current/theme', {
       headers: { 'Authorization': `Bearer ${token}` }

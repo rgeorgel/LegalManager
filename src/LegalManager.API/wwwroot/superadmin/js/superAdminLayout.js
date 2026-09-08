@@ -1,4 +1,5 @@
 import { isAuthenticated, getAdminUser, clearSession, saFetch } from './superAdminApi.js';
+import { applyTenantTheme } from '/js/theme.js';
 
 const NAV_GROUPS = [
   {
@@ -15,6 +16,10 @@ const NAV_GROUPS = [
   {
     label: 'Growth',
     items: [{ href: '/superadmin/waitlist.html', label: '📋 Waitlist' }]
+  },
+  {
+    label: 'Sistema',
+    items: [{ href: '/superadmin/tema.html', label: '🎨 Tema' }]
   }
 ];
 
@@ -29,6 +34,8 @@ export function initAdminLayout() {
   const tenantEl = document.querySelector('.header-tenant');
   if (nameEl) nameEl.textContent = user?.nome ?? 'Super Admin';
   if (tenantEl) tenantEl.textContent = 'Super Admin';
+
+  applyTenantTheme(user?.tema);
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     clearSession();

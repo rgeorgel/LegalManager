@@ -30,7 +30,7 @@ public class TenantsThemeController : ControllerBase
     }
 
     [HttpPut("current/theme")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<TenantThemeDto>> UpdateTheme(
         [FromBody] UpdateTenantThemeDto dto,
         CancellationToken ct)
@@ -47,7 +47,7 @@ public class TenantsThemeController : ControllerBase
     }
 
     [HttpPost("current/logo")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> UploadLogo(
         [FromBody] UploadLogoDto dto,
         [FromServices] IStorageService storage,
@@ -104,7 +104,7 @@ public class TenantsThemeController : ControllerBase
     }
 
     [HttpDelete("current/logo")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> RemoveLogo(CancellationToken ct)
     {
         var permite = await _service.PermitePersonalizacaoAsync(_tenantContext.Plano, ct);
