@@ -355,6 +355,32 @@ public class AssinaturaControllerTests
     }
 
     [Fact]
+    public async Task IniciarCheckout_ReturnsCheckoutUrl_WhenTrialContrataPlanoAtual()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Test", Plano = PlanoTipo.Plus, Status = StatusTenant.Trial,
+            TrialExpiraEm = DateTime.UtcNow.AddDays(15), Cnpj = "123", CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+        var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
+        var stripe = CreateStripeServiceMock(checkoutUrl: "https://checkout.test");
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin);
+
+        var result = await controller.IniciarCheckout(new IniciarCheckoutDto("Mensal", "Plus"), CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var json = AsJson(ok.Value);
+        Assert.Equal("https://checkout.test", json.GetProperty("checkoutUrl").GetString());
+        Assert.False(json.GetProperty("requerConfirmacao").GetBoolean());
+        stripe.Verify(s => s.CriarCheckoutAssinaturaAsync(
+            It.Is<CriarCheckoutAssinaturaInput>(input => input.Plano == "Plus"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task IniciarCheckout_ReturnsBadRequest_WhenStripeThrows()
     {
         using var ctx = CreateContext();

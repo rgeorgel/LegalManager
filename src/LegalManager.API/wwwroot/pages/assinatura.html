@@ -756,9 +756,9 @@
       btnFree.disabled = true;
       btnFree.className = 'btn btn-secondary';
 
-      btnPlus.textContent = isCancelado ? 'Renovar Plus' : 'Plano atual';
-      btnPlus.disabled = isCancelado ? !isAdmin : true;
-      btnPlus.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
+      btnPlus.textContent = isTrial ? 'Assinar Plus' : (isCancelado ? 'Renovar Plus' : 'Plano atual');
+      btnPlus.disabled = (isTrial || isCancelado) ? !isAdmin : true;
+      btnPlus.className = (isTrial || isCancelado) ? 'btn btn-primary' : 'btn btn-secondary';
 
       btnPro.textContent = 'Fazer upgrade para Pro';
       btnPro.disabled = !isAdmin;
@@ -783,9 +783,9 @@
       btnPlus.disabled = true;
       btnPlus.className = 'btn btn-secondary';
 
-      btnPro.textContent = isCancelado ? 'Renovar assinatura' : 'Plano atual';
-      btnPro.disabled = isCancelado ? !isAdmin : true;
-      btnPro.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
+      btnPro.textContent = isTrial ? 'Assinar Pro' : (isCancelado ? 'Renovar assinatura' : 'Plano atual');
+      btnPro.disabled = (isTrial || isCancelado) ? !isAdmin : true;
+      btnPro.className = (isTrial || isCancelado) ? 'btn btn-primary' : 'btn btn-secondary';
 
       btnMax.textContent = 'Fazer upgrade para Max';
       btnMax.disabled = !isAdmin;
@@ -809,9 +809,9 @@
       btnPro.disabled = true;
       btnPro.className = 'btn btn-secondary';
 
-      btnMax.textContent = isCancelado ? 'Renovar assinatura' : 'Plano atual';
-      btnMax.disabled = isCancelado ? !isAdmin : true;
-      btnMax.className = isCancelado ? 'btn btn-primary' : 'btn btn-secondary';
+      btnMax.textContent = isTrial ? 'Assinar Max' : (isCancelado ? 'Renovar assinatura' : 'Plano atual');
+      btnMax.disabled = (isTrial || isCancelado) ? !isAdmin : true;
+      btnMax.className = (isTrial || isCancelado) ? 'btn btn-primary' : 'btn btn-secondary';
 
       renderCancelZone({ trial: isTrial, planoLabel: 'Max' });
     }
@@ -987,19 +987,18 @@
   }
 
   document.getElementById('btnPlus').addEventListener('click', async () => {
-    if (currentPlano === 'Plus' && currentStatus !== 'Cancelado') return;
+    if (currentPlano === 'Plus' && currentStatus === 'Ativo') return;
     await iniciarCheckout('Plus');
   });
 
   document.getElementById('btnPro').addEventListener('click', async () => {
-    if (currentPlano === 'Pro' && currentStatus !== 'Cancelado') return;
+    if (currentPlano === 'Pro' && currentStatus === 'Ativo') return;
     await iniciarCheckout('Pro');
   });
 
   document.getElementById('btnMax').addEventListener('click', async () => {
-    if (currentPlano === 'Max' && currentStatus !== 'Cancelado') return;
-    await iniciarCheckout('Max'
-    );
+    if (currentPlano === 'Max' && currentStatus === 'Ativo') return;
+    await iniciarCheckout('Max');
   });
 
   document.getElementById('btnCancelar').addEventListener('click', () => {
