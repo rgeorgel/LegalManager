@@ -116,6 +116,15 @@ function injectImpersonationBanner() {
         background: #b91c1c; color: #fff; font-size: 13px;
         padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 12px;
       }
+      #endImpersonationBtn {
+        background: #fff !important;
+        color: #b91c1c !important;
+        border: none !important;
+        padding: 2px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+      }
       body.impersonating .app-layout { margin-top: 36px; }
     `;
     document.head.appendChild(s);
@@ -126,7 +135,7 @@ function injectImpersonationBanner() {
   banner.id = 'impersonationBanner';
   banner.innerHTML = `
     <span>🔴 Você está impersonando <strong>${esc(user?.nome ?? '')}</strong> (${esc(user?.nomeEscritorio ?? '')}) como SuperAdmin ${esc(info.adminNome)}</span>
-    <button id="endImpersonationBtn" class="btn btn-sm" style="background:#fff;color:#b91c1c;border:none;padding:2px 10px;border-radius:4px;cursor:pointer;font-weight:600">Encerrar impersonação</button>
+    <button id="endImpersonationBtn" class="btn btn-sm">Encerrar impersonação</button>
   `;
   document.body.prepend(banner);
   document.body.classList.add('impersonating');
