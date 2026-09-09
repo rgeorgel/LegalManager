@@ -540,6 +540,17 @@ public class TenantImportService : ITenantImportService
             usuario.AccessFailedCount = 0;
         }
 
+        if (entity is Notificacao notificacao)
+        {
+            // ChaveDedup tem uma unique index GLOBAL (não escopada por TenantId — ver
+            // NotificacaoConfiguration) e embute o Id original (pré-remapeamento) do
+            // usuário/entidade de origem (ex.: "digest-tarefas-{usuarioId}-{data}").
+            // Reimportá-la como veio pode colidir com uma chave já existente no ambiente
+            // de destino (violação de unique constraint) e, mesmo sem colisão, faria o
+            // AlertasJob do destino tratar alertas futuros legítimos como já enviados.
+            notificacao.ChaveDedup = null;
+        }
+
         return entity;
     }
 
