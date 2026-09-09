@@ -198,6 +198,26 @@ public class TenantExportService : ITenantExportService
             _anonymizer.AnonymizeInPlace(row);
             rows.Add(EntityToDict(row));
         }
+
+        if (spec.JsonKey == "AspNetUserRoles" && rawRows.Count > 0)
+        {
+            // RoleId é gerado independentemente em cada ambiente (o seed de roles cria
+            // um novo Guid quando a role ainda não existe), então não é estável entre
+            // ambientes. Anota o nome da role para o import resolver o Id correto no
+            // ambiente de destino em vez de reusar este Id, que não existirá lá.
+            var roleIdProp = spec.EntityType.GetProperty("RoleId")!;
+            var roleIds = rawRows.Select(r => (Guid)roleIdProp.GetValue(r)!).Distinct().ToList();
+            var roleNames = await _db.Roles.AsNoTracking()
+                .Where(r => roleIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, r => r.Name, ct);
+
+            for (var i = 0; i < rawRows.Count; i++)
+            {
+                var roleId = (Guid)roleIdProp.GetValue(rawRows[i])!;
+                rows[i]["RoleName"] = roleNames.TryGetValue(roleId, out var name) ? name : null;
+            }
+        }
+
         return rows;
     }
 

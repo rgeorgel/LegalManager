@@ -67,6 +67,27 @@ export async function importarTenant(tenantId, file, options) {
   return body;
 }
 
+export async function excluirTenant(tenantId, confirmation) {
+  const token = getToken();
+  const res = await fetch(`/api/superadmin/tenants/${tenantId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ confirmation }),
+  });
+
+  let body = null;
+  const text = await res.text();
+  try { body = text ? JSON.parse(text) : null; } catch { body = { message: text }; }
+
+  if (!res.ok) {
+    throw new Error(body?.message || `HTTP ${res.status}`);
+  }
+  return body;
+}
+
 export function formatarResultadoImport(result) {
   if (!result) return '';
   const linhas = [];

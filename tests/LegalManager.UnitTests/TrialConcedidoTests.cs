@@ -52,7 +52,8 @@ public class TrialConcedidoTests
         auditMock = new Mock<IAuditService>();
         var exportMock = new Mock<ITenantExportService>();
         var importMock = new Mock<ITenantImportService>();
-        var controller = new SuperAdminController(ctx, auditMock.Object, CreateAuthService(ctx), exportMock.Object, importMock.Object);
+        var deletionMock = new Mock<ITenantDeletionService>();
+        var controller = new SuperAdminController(ctx, auditMock.Object, CreateAuthService(ctx), exportMock.Object, importMock.Object, deletionMock.Object);
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, superAdminId.ToString()), new Claim("nome", "Super Admin") };
         controller.ControllerContext = new ControllerContext
         {

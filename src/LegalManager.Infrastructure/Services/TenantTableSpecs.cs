@@ -65,12 +65,18 @@ internal static class TenantTableSpecs
         new("PecasGeradas",             typeof(PecaGerada),                   TenantFilterKind.TenantId),
         new("ResumosProcesso",          typeof(ResumoProcesso),               TenantFilterKind.TenantId),
 
-        new("Documentos",               typeof(Documento),                    TenantFilterKind.TenantId),
-        new("LancamentosFinanceiros",   typeof(LancamentoFinanceiro),         TenantFilterKind.TenantId),
-
+        // ContratosHonorario/ParcelasHonorario precisam vir antes de Documentos e
+        // LancamentosFinanceiros: Documento.ContratoId e LancamentoFinanceiro.
+        // ContratoHonorarioId/ParcelaHonorarioId referenciam essas tabelas. A ordem aqui
+        // também é usada (revertida) como ordem de DELETE no wipe — nessa direção,
+        // LancamentosFinanceiros precisa ser apagado antes de ContratosHonorario/
+        // ParcelasHonorario, senão o Postgres bloqueia o DELETE por violação de FK.
         new("ContratosHonorario",       typeof(ContratoHonorario),            TenantFilterKind.TenantId),
         new("ParcelasHonorario",        typeof(ParcelaHonorario),             TenantFilterKind.TenantId),
         new("HistoricosContratoHonorario", typeof(HistoricoContratoHonorario),TenantFilterKind.TenantId),
+
+        new("Documentos",               typeof(Documento),                    TenantFilterKind.TenantId),
+        new("LancamentosFinanceiros",   typeof(LancamentoFinanceiro),         TenantFilterKind.TenantId),
 
         new("Atendimentos",             typeof(Atendimento),                  TenantFilterKind.TenantId),
 
@@ -85,10 +91,13 @@ internal static class TenantTableSpecs
         new("AspNetUserTokens",  typeof(IdentityUserToken<Guid>), nameof(IdentityUserToken<Guid>.UserId)),
     };
 
+    // "Usuarios" já é o primeiro item de ExportOrder — não duplicar aqui. Duplicá-lo fazia
+    // essa entrada extra virar a PRIMEIRA da lista revertida (TableKeysForDeletionReversed),
+    // apagando AspNetUsers antes de Tarefas/Processos/etc., que referenciam o usuário por FK
+    // (ex.: Tarefas.CriadoPorId) — violando a constraint no DELETE.
     public static readonly List<string> TableKeysForDeletion = ExportOrder
         .Select(s => s.JsonKey)
         .Concat(IdentityJoinTables.Select(s => s.JsonKey))
-        .Concat(new[] { "Usuarios" })
         .ToList();
 
     public static readonly List<string> TableKeysForDeletionReversed = TableKeysForDeletion

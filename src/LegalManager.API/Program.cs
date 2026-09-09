@@ -197,6 +197,7 @@ builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioS
 builder.Services.AddSingleton<TenantAnonymizer>();
 builder.Services.AddScoped<ITenantExportService, TenantExportService>();
 builder.Services.AddScoped<ITenantImportService, TenantImportService>();
+builder.Services.AddScoped<ITenantDeletionService, TenantDeletionService>();
 
 if (builder.Configuration.GetValue<bool>("Escavador:UseMock"))
 {

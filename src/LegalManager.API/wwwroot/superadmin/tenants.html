@@ -301,10 +301,43 @@
     </div>
   </div>
 
+  <!-- Modal: Excluir tenant -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-title">Excluir <span id="deleteTenantNome"></span></div>
+
+      <div style="background:#fee2e2;border:2px solid #dc2626;color:#7f1d1d;border-radius:6px;padding:12px 14px;font-size:13px;margin-bottom:14px;line-height:1.6">
+        <strong>⚠ Esta ação é PERMANENTE e IRREVERSÍVEL.</strong>
+        <div style="margin-top:6px">
+          Todo o conteúdo deste tenant será apagado para sempre: contatos, processos,
+          andamentos, tarefas, documentos, financeiro, contratos e parcelas de honorário,
+          usuários e configurações. Não existe backup automático nem forma de desfazer
+          esta operação depois de confirmada.
+        </div>
+        <div style="margin-top:6px">
+          Se precisar apenas de uma cópia dos dados antes de excluir, use
+          <strong>Exportar</strong> primeiro.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Digite o nome do tenant para confirmar a exclusão</label>
+        <input type="text" id="deleteConfirmation" class="form-control" placeholder='Digite exatamente "Nome do Escritório"'>
+      </div>
+
+      <div id="deleteMsg" style="display:none;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;line-height:1.5"></div>
+
+      <div class="modal-footer">
+        <button class="btn" onclick="closeDeleteModal()">Cancelar</button>
+        <button class="btn btn-danger" id="deleteConfirmBtn" style="background:#dc2626;color:white;border-color:#dc2626">Excluir permanentemente</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
-    import { exportarTenant, importarTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
+    import { exportarTenant, importarTenant, excluirTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
 
     initAdminLayout();
     window.impersonarUsuario = impersonarUsuario;
@@ -515,6 +548,7 @@
                 <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
                 <button class="action-btn" onclick="exportarTenantDireto('${t.id}', '${esc(t.nome).replace(/'/g, "\\'")}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
                 <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
+                <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Excluir este tenant e todos os seus dados permanentemente">Excluir</button>
               </td>
             </tr>`;
           }).join('');
@@ -671,6 +705,16 @@
               <button class="action-btn" onclick="exportarTenantDireto('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬇ Exportar JSON</button>
               <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬆ Importar (substituir)</button>
             </div>
+          </div>
+
+          <div style="background:var(--color-surface);border:1px solid #dc2626;border-radius:8px;padding:12px 14px;margin-top:16px;font-size:13px">
+            <div style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+              Zona de perigo
+            </div>
+            <div style="color:var(--color-text-muted);font-size:12px;margin-bottom:10px;line-height:1.5">
+              Exclui este tenant e todos os seus dados permanentemente. Não pode ser desfeito.
+            </div>
+            <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">🗑 Excluir tenant</button>
           </div>`;
 
         if (trialInfo && trialInfo.trialConcedido) {
@@ -894,6 +938,67 @@
         msg.style.border = '1px solid #fecaca';
         msg.style.color = '#7f1d1d';
         msg.style.whiteSpace = 'pre-line';
+        msg.textContent = 'Erro: ' + e.message;
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    let deleteTenantId = null;
+    let deleteTenantNome = null;
+
+    window.openDeleteModal = function(id, nome) {
+      deleteTenantId = id;
+      deleteTenantNome = nome;
+      document.getElementById('deleteTenantNome').textContent = nome;
+      document.getElementById('deleteConfirmation').value = '';
+      const msg = document.getElementById('deleteMsg');
+      msg.style.display = 'none';
+      msg.textContent = '';
+      openModal('deleteModal');
+    };
+
+    window.closeDeleteModal = function() {
+      closeModal('deleteModal');
+      deleteTenantId = null;
+      deleteTenantNome = null;
+    };
+
+    document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('deleteConfirmBtn');
+      const confirmInput = document.getElementById('deleteConfirmation');
+      const msg = document.getElementById('deleteMsg');
+
+      msg.style.display = 'none';
+      msg.textContent = '';
+
+      const typed = confirmInput.value.trim();
+      if (typed !== deleteTenantNome) {
+        msg.style.background = '#fef3c7';
+        msg.style.border = '1px solid #fde68a';
+        msg.style.color = '#92400e';
+        msg.textContent = `Confirmação inválida. Digite exatamente "${deleteTenantNome}".`;
+        msg.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Excluindo...';
+
+      try {
+        await excluirTenant(deleteTenantId, typed);
+        const nomeExcluido = deleteTenantNome;
+        closeDeleteModal();
+        closeModal('detailModal');
+        showToast(`Tenant "${nomeExcluido}" excluído permanentemente.`);
+        load();
+      } catch (e) {
+        msg.style.background = '#fee2e2';
+        msg.style.border = '1px solid #fecaca';
+        msg.style.color = '#7f1d1d';
         msg.textContent = 'Erro: ' + e.message;
         msg.style.display = 'block';
       } finally {

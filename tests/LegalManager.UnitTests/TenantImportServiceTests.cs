@@ -187,6 +187,104 @@ public class TenantImportServiceTests
     }
 
     [Fact]
+    public async Task ImportAsync_WipeTenantComCicloParcelaLancamento_NaoFalha()
+    {
+        // Regressão: ParcelaHonorario.LancamentoFinanceiroId <-> LancamentoFinanceiro.
+        // ParcelaHonorarioId formam um ciclo de FK genuíno (preenchido por
+        // FinanceiroService/HonorarioService ao registrar um pagamento). No Postgres real,
+        // apagar o tenant destino com esse ciclo populado bloqueava o DELETE por violação
+        // de FK, independente da ordem das tabelas — era preciso zerar um dos lados antes.
+        // EF InMemory não valida FK, então este teste cobre a execução do código (sem
+        // exceptions); a ordem de DELETE em si é coberta por TenantTableSpecsTests.
+        using var sourceCtx = CreateContext(nameof(ImportAsync_WipeTenantComCicloParcelaLancamento_NaoFalha) + "-src");
+        var source = SeedTenant(sourceCtx);
+        sourceCtx.Contatos.Add(new Contato
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            Nome = "Do Source",
+            Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente,
+            CriadoEm = DateTime.UtcNow,
+            Ativo = true
+        });
+        await sourceCtx.SaveChangesAsync();
+
+        var exportService = new TenantExportService(sourceCtx, new TenantAnonymizer(), NullLogger<TenantExportService>.Instance);
+        var exportResult = await exportService.ExportAsync(source.Id);
+
+        using var targetCtx = CreateContext(nameof(ImportAsync_WipeTenantComCicloParcelaLancamento_NaoFalha) + "-tgt");
+        var target = SeedTenant(targetCtx, "Destino");
+        var user = new Usuario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = target.Id,
+            Nome = "Adv",
+            Email = "adv@destino.com",
+            UserName = "adv@destino.com",
+            Perfil = PerfilUsuario.Admin,
+            Ativo = true,
+            CriadoEm = DateTime.UtcNow
+        };
+        var contato = new Contato
+        {
+            Id = Guid.NewGuid(),
+            TenantId = target.Id,
+            Nome = "Cliente Antigo",
+            Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente,
+            CriadoEm = DateTime.UtcNow,
+            Ativo = true
+        };
+        var contrato = new ContratoHonorario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = target.Id,
+            ContatoId = contato.Id,
+            NumeroContrato = "C-OLD",
+            ValorTotal = 1000m,
+            FormaPagamento = FormaPagamentoContrato.Parcelado,
+            CriadoPorId = user.Id,
+            DataInicio = DateTime.UtcNow,
+            CriadoEm = DateTime.UtcNow
+        };
+        var lancamento = new LancamentoFinanceiro
+        {
+            Id = Guid.NewGuid(),
+            TenantId = target.Id,
+            ContratoHonorarioId = contrato.Id
+        };
+        var parcela = new ParcelaHonorario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = target.Id,
+            ContratoId = contrato.Id,
+            Numero = 1,
+            Vencimento = DateTime.UtcNow,
+            ValorOriginal = 1000m,
+            LancamentoFinanceiroId = lancamento.Id
+        };
+        lancamento.ParcelaHonorarioId = parcela.Id;
+
+        targetCtx.Users.Add(user);
+        targetCtx.Contatos.Add(contato);
+        targetCtx.ContratosHonorarios.Add(contrato);
+        targetCtx.LancamentosFinanceiros.Add(lancamento);
+        targetCtx.ParcelasHonorarios.Add(parcela);
+        await targetCtx.SaveChangesAsync();
+
+        var importService = new TenantImportService(targetCtx, new TenantAnonymizer(), CreatePasswordHasher(), NullLogger<TenantImportService>.Instance);
+        using var stream = new MemoryStream(exportResult.Payload);
+        await importService.ImportAsync(
+            new TenantImportRequest(target.Id, TenantImportMode.Replace, stream, "export.json"),
+            CancellationToken.None);
+
+        Assert.False(await targetCtx.ParcelasHonorarios.AnyAsync(p => p.Id == parcela.Id));
+        Assert.False(await targetCtx.LancamentosFinanceiros.AnyAsync(l => l.Id == lancamento.Id));
+        Assert.False(await targetCtx.ContratosHonorarios.AnyAsync(c => c.Id == contrato.Id));
+    }
+
+    [Fact]
     public async Task ImportAsync_UsuarioPasswordHashResetado()
     {
         using var sourceCtx = CreateContext(nameof(ImportAsync_UsuarioPasswordHashResetado) + "-src");
@@ -223,6 +321,109 @@ public class TenantImportServiceTests
         Assert.NotEqual(sourceUser.PasswordHash, importedUser.PasswordHash);
         Assert.NotNull(importedUser.PasswordHash);
         Assert.NotEmpty(importedUser.PasswordHash);
+    }
+
+    [Fact]
+    public async Task ImportAsync_PreservaEnumsDatasEDecimais()
+    {
+        // Regressão: Dictionary<string, object?> desserializado do JSON entrega cada valor
+        // como JsonElement, que não implementa IConvertible. Convert.ToInt32/ToDateTime/
+        // ToDecimal (usados por ConvertValue) falhavam silenciosamente para esse tipo — o
+        // catch em DictToEntity engolia a exceção e a propriedade ficava com o valor
+        // default: status de Tarefa/Processo/ContratoHonorario resetava para o primeiro
+        // valor do enum, datas (Prazo, DataInicio/Fim) viravam null, e decimais (ValorTotal)
+        // viravam 0. Só Guid "funcionava", por acidente, via Guid.Parse(raw.ToString()).
+        using var sourceCtx = CreateContext(nameof(ImportAsync_PreservaEnumsDatasEDecimais) + "-src");
+        var source = SeedTenant(sourceCtx);
+        var sourceUser = new Usuario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            Nome = "Advogado",
+            Email = "adv@origem.com",
+            UserName = "adv@origem.com",
+            Perfil = PerfilUsuario.Admin,
+            Ativo = true,
+            CriadoEm = DateTime.UtcNow
+        };
+        var sourceContato = new Contato
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            Nome = "Cliente Origem",
+            Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente,
+            CriadoEm = DateTime.UtcNow,
+            Ativo = true
+        };
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            NumeroCNJ = "0001234-56.2024.8.26.0100",
+            AreaDireito = AreaDireito.Civil,
+            Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Encerrado,
+            CriadoEm = DateTime.UtcNow
+        };
+        var prazo = new DateTime(2027, 3, 15, 0, 0, 0, DateTimeKind.Utc);
+        var tarefa = new Tarefa
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            Titulo = "Recurso",
+            CriadoPorId = sourceUser.Id,
+            Status = StatusTarefa.Concluida,
+            Prioridade = PrioridadeTarefa.Alta,
+            Tipo = TipoTarefa.Prazo,
+            Prazo = prazo,
+            CriadoEm = DateTime.UtcNow
+        };
+        var dataInicioContrato = new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc);
+        var contrato = new ContratoHonorario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = source.Id,
+            ContatoId = sourceContato.Id,
+            NumeroContrato = "C-001",
+            ValorTotal = 12345.67m,
+            FormaPagamento = FormaPagamentoContrato.Parcelado,
+            Status = StatusContratoHonorario.Quitado,
+            CriadoPorId = sourceUser.Id,
+            DataInicio = dataInicioContrato,
+            CriadoEm = DateTime.UtcNow
+        };
+        sourceCtx.Users.Add(sourceUser);
+        sourceCtx.Contatos.Add(sourceContato);
+        sourceCtx.Processos.Add(processo);
+        sourceCtx.Tarefas.Add(tarefa);
+        sourceCtx.ContratosHonorarios.Add(contrato);
+        await sourceCtx.SaveChangesAsync();
+
+        var exportService = new TenantExportService(sourceCtx, new TenantAnonymizer(), NullLogger<TenantExportService>.Instance);
+        var exportResult = await exportService.ExportAsync(source.Id);
+
+        using var targetCtx = CreateContext(nameof(ImportAsync_PreservaEnumsDatasEDecimais) + "-tgt");
+        var target = SeedTenant(targetCtx, "Destino");
+        await targetCtx.SaveChangesAsync();
+
+        var importService = new TenantImportService(targetCtx, new TenantAnonymizer(), CreatePasswordHasher(), NullLogger<TenantImportService>.Instance);
+        using var stream = new MemoryStream(exportResult.Payload);
+        await importService.ImportAsync(
+            new TenantImportRequest(target.Id, TenantImportMode.Replace, stream, "export.json"),
+            CancellationToken.None);
+
+        var importedProcesso = await targetCtx.Processos.FirstAsync(p => p.TenantId == target.Id);
+        Assert.Equal(StatusProcesso.Encerrado, importedProcesso.Status);
+
+        var importedTarefa = await targetCtx.Tarefas.FirstAsync(t => t.TenantId == target.Id);
+        Assert.Equal(StatusTarefa.Concluida, importedTarefa.Status);
+        Assert.Equal(prazo, importedTarefa.Prazo);
+
+        var importedContrato = await targetCtx.ContratosHonorarios.FirstAsync(c => c.TenantId == target.Id);
+        Assert.Equal(StatusContratoHonorario.Quitado, importedContrato.Status);
+        Assert.Equal(12345.67m, importedContrato.ValorTotal);
+        Assert.Equal(dataInicioContrato, importedContrato.DataInicio);
     }
 
     [Fact]

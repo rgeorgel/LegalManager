@@ -39,6 +39,8 @@ public class TenantImportService : ITenantImportService
         _logger = logger;
     }
 
+    public Task WipeTenantDataAsync(Guid tenantId, CancellationToken ct = default) => WipeTenantAsync(tenantId, ct);
+
     public async Task<TenantImportOutcome> ImportAsync(
         TenantImportRequest request,
         CancellationToken ct = default)
@@ -191,6 +193,8 @@ public class TenantImportService : ITenantImportService
             .Select(u => u.Id)
             .ToListAsync(ct);
 
+        await BreakParcelaLancamentoCycleAsync(tenantId, ct);
+
         foreach (var jsonKey in TenantTableSpecs.TableKeysForDeletionReversed)
         {
             ct.ThrowIfCancellationRequested();
@@ -208,6 +212,25 @@ public class TenantImportService : ITenantImportService
                 await DeleteIdentityJoinAsync(identitySpec, userIds, ct);
             }
         }
+    }
+
+    /// <summary>
+    /// ParcelaHonorario.LancamentoFinanceiroId e LancamentoFinanceiro.ParcelaHonorarioId
+    /// formam um ciclo de FK genuíno (ver FinanceiroService/HonorarioService, que
+    /// preenchem as duas direções ao registrar um pagamento). Nenhuma ordem de DELETE
+    /// resolve um ciclo — é preciso zerar um dos lados antes de apagar qualquer uma das
+    /// duas tabelas, senão o Postgres bloqueia o DELETE por violação de FK independente
+    /// da ordem escolhida.
+    /// </summary>
+    private async Task BreakParcelaLancamentoCycleAsync(Guid tenantId, CancellationToken ct)
+    {
+        var parcelas = await _db.ParcelasHonorarios
+            .Where(p => p.TenantId == tenantId && p.LancamentoFinanceiroId != null)
+            .ToListAsync(ct);
+        if (parcelas.Count == 0) return;
+
+        foreach (var parcela in parcelas) parcela.LancamentoFinanceiroId = null;
+        await _db.SaveChangesAsync(ct);
     }
 
     private async Task DeleteByTenantIdAsync(TenantTableSpec spec, Guid tenantId, CancellationToken ct)
@@ -360,9 +383,34 @@ public class TenantImportService : ITenantImportService
     {
         if (rows.Count == 0) return 0;
 
+        // RoleId não é estável entre ambientes (cada ambiente gera seu próprio Guid ao
+        // fazer seed das roles). O export anota o nome da role em "RoleName" — resolvemos
+        // aqui para o Id real da role no ambiente de destino, em vez de reusar o Id de
+        // origem, que não existe na tabela AspNetRoles daqui e violaria a FK.
+        Dictionary<string, Guid>? roleIdByName = null;
+        if (spec.JsonKey == "AspNetUserRoles")
+        {
+            roleIdByName = await _db.Roles.AsNoTracking()
+                .Where(r => r.Name != null)
+                .ToDictionaryAsync(r => r.Name!, r => r.Id, StringComparer.OrdinalIgnoreCase, ct);
+        }
+
         var entities = new List<object>(rows.Count);
         foreach (var row in rows)
         {
+            if (roleIdByName is not null)
+            {
+                var roleName = row.TryGetValue("RoleName", out var rn) ? rn?.ToString()
+                    : row.TryGetValue("roleName", out rn) ? rn?.ToString() : null;
+                if (roleName is null || !roleIdByName.TryGetValue(roleName, out var targetRoleId))
+                {
+                    // role sem correspondente por nome no ambiente de destino — não há
+                    // Id seguro para usar, então a atribuição desta role é ignorada.
+                    continue;
+                }
+                row["RoleId"] = targetRoleId;
+            }
+
             var entity = DictToEntity(row, spec.EntityType, targetTenantId: Guid.Empty, spec: null, idRemap, committedIds, pendingPatches);
             if (entity is null) continue;
             entities.Add(entity);
@@ -565,6 +613,60 @@ public class TenantImportService : ITenantImportService
     private static object? ConvertValue(object? raw, Type targetType)
     {
         if (raw is null) return null;
+
+        // O import desserializa "Dictionary<string, object?>" a partir do JSON, então todo
+        // valor chega como JsonElement — não como int/decimal/bool/DateTime nativos.
+        // JsonElement não implementa IConvertible, então Convert.ToXxx/ChangeType (usados
+        // abaixo) lançam exceção silenciosamente engolida pelo catch em DictToEntity,
+        // deixando a propriedade com o valor default. Isso mascarava status (enum),
+        // datas e valores decimais inteiros após o import — o Guid só "funcionava" por
+        // acidente, pois Guid.Parse(raw.ToString()) tolera o ToString() de um JsonElement
+        // string. Extraímos o valor primitivo do JsonElement explicitamente aqui.
+        if (raw is JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Null) return null;
+
+            var underlying = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+            if (underlying == typeof(string)) return element.ValueKind == JsonValueKind.String ? element.GetString() : element.GetRawText();
+            if (underlying.IsEnum)
+            {
+                if (element.ValueKind == JsonValueKind.String)
+                {
+                    var s = element.GetString();
+                    if (s != null && Enum.TryParse(underlying, s, true, out var enumVal)) return enumVal;
+                }
+                return Enum.ToObject(underlying, element.GetInt32());
+            }
+            if (underlying == typeof(Guid)) return Guid.Parse(element.GetString()!);
+            if (underlying == typeof(DateTime))
+            {
+                var dt = element.GetDateTime();
+                return dt.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dt, DateTimeKind.Utc) : dt;
+            }
+            if (underlying == typeof(DateTimeOffset)) return element.GetDateTimeOffset();
+            if (underlying == typeof(decimal)) return element.GetDecimal();
+            if (underlying == typeof(bool)) return element.ValueKind == JsonValueKind.True || (element.ValueKind != JsonValueKind.False && element.GetBoolean());
+            if (underlying == typeof(int)) return element.GetInt32();
+            if (underlying == typeof(long)) return element.GetInt64();
+            if (underlying == typeof(double)) return element.GetDouble();
+            if (underlying == typeof(float)) return element.GetSingle();
+            if (underlying == typeof(short)) return element.GetInt16();
+            if (underlying == typeof(byte)) return element.GetByte();
+
+            // Tipo não mapeado explicitamente: cai para o texto bruto e deixa o restante
+            // do método (abaixo) tentar Convert.ChangeType normalmente.
+            raw = element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Number => element.GetRawText(),
+                _ => element.GetRawText(),
+            };
+            if (raw is null) return null;
+        }
+
         if (targetType == raw.GetType()) return raw;
 
         if (targetType == typeof(string)) return raw.ToString();

@@ -19,7 +19,8 @@ public class SuperAdminController(
     IAuditService audit,
     AuthService authService,
     ITenantExportService exportService,
-    ITenantImportService importService) : ControllerBase
+    ITenantImportService importService,
+    ITenantDeletionService deletionService) : ControllerBase
 {
     private static readonly Guid SystemTenantId = TenantConstants.SystemTenantId;
 
@@ -692,6 +693,42 @@ public class SuperAdminController(
                         rowsImported = result.RowsImported,
                         rowsByTable = result.RowsByTable
                     },
+                    HttpContext.GetClientIpAddress()), ct);
+            }
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("tenants/{id:guid}")]
+    public async Task<IActionResult> DeleteTenant(Guid id, [FromBody] DeleteTenantRequestDto? dto, CancellationToken ct)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id && t.Id != SystemTenantId, ct);
+        if (tenant is null) return NotFound(new { message = "Tenant não encontrado." });
+
+        if (string.IsNullOrWhiteSpace(dto?.Confirmation) || !dto.Confirmation.Equals(tenant.Nome, StringComparison.Ordinal))
+            return BadRequest(new { message = $"Confirmação inválida. Digite exatamente o nome do tenant '{tenant.Nome}' para prosseguir." });
+
+        try
+        {
+            var result = await deletionService.DeleteTenantAsync(id, ct);
+
+            var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(superAdminId, out var adminGuid))
+            {
+                await audit.LogAsync(new AuditLogEntry(
+                    id, adminGuid, "DELETE", "Tenant", id.ToString(),
+                    new { tenantNome = result.TenantNome },
+                    null,
                     HttpContext.GetClientIpAddress()), ct);
             }
 
