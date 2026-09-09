@@ -1,6 +1,7 @@
 import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch, getImpersonationInfo } from './api.js';
 import { applyTenantTheme, getStoredTheme } from './theme.js';
+import { injectTarefasWidget } from './tarefas-widget.js';
 
 const NAV_GROUPS = [
   {
@@ -93,6 +94,10 @@ export function initLayout() {
   setupMobileMenu();
   injectNotificationBell();
   injectImpersonationBanner();
+
+  // Menu flutuante de tarefas: disponível a partir do plano Plus (mesma
+  // regra de acesso do quadro Kanban em tarefas.html).
+  if (!isPlanoFree()) injectTarefasWidget();
 }
 
 function injectImpersonationBanner() {
