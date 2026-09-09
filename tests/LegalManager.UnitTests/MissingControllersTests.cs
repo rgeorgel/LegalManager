@@ -700,7 +700,7 @@ public class ConfiguracoesControllerTests
     public async Task GetConfiguracoes_ReturnsNotFound_QuandoTenantNaoExiste()
     {
         using var ctx = CreateContext();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.GetConfiguracoes(CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -713,7 +713,7 @@ public class ConfiguracoesControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
 
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.GetConfiguracoes(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
@@ -722,7 +722,7 @@ public class ConfiguracoesControllerTests
     public async Task UpdateConfiguracoes_ReturnsNotFound_QuandoTenantNaoExiste()
     {
         using var ctx = CreateContext();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.UpdateConfiguracoes(new UpdateConfiguracoesDto("Nome", null, null), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -735,7 +735,7 @@ public class ConfiguracoesControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
 
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.UpdateConfiguracoes(new UpdateConfiguracoesDto("Novo Nome", "12.345.678/0001-99", "Rua Teste"), CancellationToken.None);
         Assert.IsType<NoContentResult>(result);
     }
@@ -745,7 +745,7 @@ public class ConfiguracoesControllerTests
     {
         using var ctx = CreateContext();
         var tenantId = Guid.NewGuid();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId, PlanoTipo.Pro).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId, PlanoTipo.Pro).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.GetUso(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
@@ -754,7 +754,7 @@ public class ConfiguracoesControllerTests
     public async Task Upgrade_ReturnsNotFound_QuandoTenantNaoExiste()
     {
         using var ctx = CreateContext();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.Upgrade(new UpgradePlanoDto("Pro"), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -767,7 +767,7 @@ public class ConfiguracoesControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
 
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.Upgrade(new UpgradePlanoDto("PlanoInvalido"), CancellationToken.None);
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -780,7 +780,7 @@ public class ConfiguracoesControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
 
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.Upgrade(new UpgradePlanoDto("Pro"), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
@@ -789,7 +789,7 @@ public class ConfiguracoesControllerTests
     public async Task Cancelar_ReturnsNotFound_QuandoTenantNaoExiste()
     {
         using var ctx = CreateContext();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.Cancelar(CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -802,7 +802,7 @@ public class ConfiguracoesControllerTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow });
         await ctx.SaveChangesAsync();
 
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(tenantId).Object, CreateUserManagerMock().Object, Mock.Of<IAuditService>());
         var result = await controller.Cancelar(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
@@ -811,7 +811,7 @@ public class ConfiguracoesControllerTests
     public async Task AlterarSenha_ReturnsUnauthorized_QuandoUsuarioNulo()
     {
         using var ctx = CreateContext();
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(null).Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(null).Object, Mock.Of<IAuditService>());
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         var result = await controller.AlterarSenha(new AlterarSenhaDto("atual123", "nova12345"));
         Assert.IsType<UnauthorizedResult>(result);
@@ -822,7 +822,7 @@ public class ConfiguracoesControllerTests
     {
         using var ctx = CreateContext();
         var user = new Usuario { Id = Guid.NewGuid(), Nome = "U", Email = "u@u.com", UserName = "u@u.com", Ativo = true, CriadoEm = DateTime.UtcNow };
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(user, false).Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(user, false).Object, Mock.Of<IAuditService>());
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         var result = await controller.AlterarSenha(new AlterarSenhaDto("errada", "nova12345"));
         Assert.IsType<BadRequestObjectResult>(result);
@@ -833,7 +833,7 @@ public class ConfiguracoesControllerTests
     {
         using var ctx = CreateContext();
         var user = new Usuario { Id = Guid.NewGuid(), Nome = "U", Email = "u@u.com", UserName = "u@u.com", Ativo = true, CriadoEm = DateTime.UtcNow };
-        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(user, true).Object);
+        var controller = new ConfiguracoesController(ctx, CreateTenantMock(Guid.NewGuid()).Object, CreateUserManagerMock(user, true).Object, Mock.Of<IAuditService>());
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         var result = await controller.AlterarSenha(new AlterarSenhaDto("atual123", "nova12345"));
         Assert.IsType<NoContentResult>(result);

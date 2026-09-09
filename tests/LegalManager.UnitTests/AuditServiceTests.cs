@@ -5,6 +5,7 @@ using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LegalManager.UnitTests;
@@ -64,7 +65,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var entry = new AuditLogEntry(
             tenant.Id,
@@ -94,7 +95,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var dadosAnteriores = new { Nome = "Antigo", Email = "antigo@teste.com" };
         var dadosNovos = new { Nome = "Novo", Email = "novo@teste.com" };
@@ -117,7 +118,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var entry = new AuditLogEntry(
             tenant.Id, usuario.Id, AuditActions.Delete, AuditEntities.Processo,
@@ -137,7 +138,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var entityId = Guid.NewGuid();
 
@@ -159,7 +160,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var outroTenantId = Guid.NewGuid();
         var entityId = Guid.NewGuid();
@@ -180,7 +181,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         for (int i = 0; i < 25; i++)
         {
@@ -211,7 +212,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var cutoff = DateTime.UtcNow.AddHours(-1);
 
@@ -231,7 +232,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var cutoff = DateTime.UtcNow.AddHours(-1);
 
@@ -251,7 +252,7 @@ public class AuditServiceTests
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
         var tenantCtx = CreateTenantContext(tenant.Id, usuario.Id);
-        var service = new AuditService(ctx, tenantCtx);
+        var service = new AuditService(ctx, tenantCtx, Mock.Of<ILogger<AuditService>>());
 
         var entityId = Guid.NewGuid();
 

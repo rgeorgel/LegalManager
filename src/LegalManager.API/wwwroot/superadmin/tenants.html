@@ -228,12 +228,99 @@
     </div>
   </div>
 
+  <!-- Modal: Importar dados para este tenant -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal" style="max-width:580px">
+      <div class="modal-title">Importar dados para <span id="importTenantNome"></span></div>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:14px;line-height:1.5">
+        <strong>Anonimização aplicada.</strong> Emails do arquivo são
+        automaticamente substituídos por <code style="background:#fff;padding:1px 5px;border-radius:3px">*@causify-replica.com</code>
+        e telefones por <code style="background:#fff;padding:1px 5px;border-radius:3px">+5511900000000</code>.
+        Todas as senhas de usuários são resetadas para
+        <code style="background:#fff;padding:1px 5px;border-radius:3px">Causify@Replic@2026!</code>.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Modo de import</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
+            <input type="radio" name="importMode" id="importModeReplace" value="replace" checked style="margin-top:3px">
+            <div>
+              <div style="font-weight:500">Substituir dados deste tenant</div>
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
+                Apaga todos os dados do tenant atual e importa o arquivo no lugar. Destrutivo.
+              </div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
+            <input type="radio" name="importMode" id="importModeNew" value="new" style="margin-top:3px">
+            <div>
+              <div style="font-weight:500">Criar um tenant novo a partir do arquivo</div>
+              <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
+                Cria um tenant novo (plano Free, sem billing) com os dados do arquivo. Não toca no tenant atual.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="importReplaceGroup">
+        <div style="background:#fee2e2;border:1px solid #fecaca;color:#7f1d1d;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:10px;line-height:1.5">
+          <strong>⚠ Operação destrutiva.</strong> Todos os dados atuais deste tenant
+          (contatos, processos, tarefas, documentos, financeiro, honorários,
+          usuários e configurações) serão <strong>apagados permanentemente</strong>
+          e substituídos pelo conteúdo do arquivo.
+        </div>
+        <label class="form-label">Digite o nome do tenant para confirmar</label>
+        <input type="text" id="importConfirmation" class="form-control" placeholder='Digite exatamente "Nome do Escritório"'>
+      </div>
+
+      <div class="form-group" id="importNewGroup" style="display:none">
+        <label class="form-label">Nome do novo tenant</label>
+        <input type="text" id="importNewName" class="form-control" placeholder="Ex: Escritório X [replica]" maxlength="200">
+        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
+          Será criado com plano Free, status Ativo e sem dados de billing.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Arquivo JSON exportado</label>
+        <input type="file" id="importFile" accept=".json,application/json" class="form-control">
+        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
+          Apenas arquivos gerados pelo botão "Exportar" deste painel.
+        </div>
+      </div>
+
+      <div id="importMsg" style="display:none;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;line-height:1.5"></div>
+
+      <div class="modal-footer">
+        <button class="btn" onclick="closeImportModal()">Cancelar</button>
+        <button class="btn btn-danger" id="importConfirmBtn" style="background:#dc2626;color:white;border-color:#dc2626">Importar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
+    import { exportarTenant, importarTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
 
     initAdminLayout();
     window.impersonarUsuario = impersonarUsuario;
+    window.exportarTenantDireto = async function(id, nome) {
+      const btn = event?.target;
+      const original = btn?.textContent;
+      try {
+        if (btn) { btn.disabled = true; btn.textContent = 'Baixando...'; }
+        const filename = await exportarTenant(id);
+        showToast(`Exportação concluída: ${filename}`);
+      } catch (e) {
+        alert('Erro ao exportar: ' + e.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = original ?? 'Exportar'; }
+      }
+    };
 
     const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
     const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
@@ -426,6 +513,8 @@
                 <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
                 <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
                 <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
+                <button class="action-btn" onclick="exportarTenantDireto('${t.id}', '${esc(t.nome).replace(/'/g, "\\'")}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
+                <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
               </td>
             </tr>`;
           }).join('');
@@ -566,6 +655,24 @@
                 </div>`).join('')}
           </div>`;
 
+        html += `
+          <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;margin-top:16px;font-size:13px">
+            <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+              Dados do tenant · exportar / importar
+            </div>
+            <div style="color:var(--color-text-muted);font-size:12px;margin-bottom:10px;line-height:1.5">
+              Exporte todos os dados deste tenant (anonimizados: emails viram
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">*@causify-replica.com</code>,
+              telefones viram
+              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">+551190000XXXX</code>)
+              e importe em outro ambiente para reproduzir bugs de produção.
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="action-btn" onclick="exportarTenantDireto('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬇ Exportar JSON</button>
+              <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬆ Importar (substituir)</button>
+            </div>
+          </div>`;
+
         if (trialInfo && trialInfo.trialConcedido) {
           const diasRestantes = trialInfo.expiraEm ? daysUntil(trialInfo.expiraEm) : null;
           const badgeDias = diasRestantes === null ? '' :
@@ -655,9 +762,161 @@
       openModal('statusModal');
     };
 
+    let importTenantId = null;
+    let importTenantNome = null;
+
+    function getImportMode() {
+      const replaceRadio = document.getElementById('importModeReplace');
+      return replaceRadio && replaceRadio.checked ? 'replace' : 'new';
+    }
+
+    function syncImportModeUi() {
+      const mode = getImportMode();
+      const replaceGroup = document.getElementById('importReplaceGroup');
+      const newGroup = document.getElementById('importNewGroup');
+      const btn = document.getElementById('importConfirmBtn');
+      if (mode === 'replace') {
+        replaceGroup.style.display = '';
+        newGroup.style.display = 'none';
+        btn.textContent = 'Importar e substituir';
+      } else {
+        replaceGroup.style.display = 'none';
+        newGroup.style.display = '';
+        btn.textContent = 'Criar tenant e importar';
+      }
+    }
+
+    window.openImportModal = function(id, nome) {
+      importTenantId = id;
+      importTenantNome = nome;
+      document.getElementById('importTenantNome').textContent = nome;
+      document.getElementById('importFile').value = '';
+      document.getElementById('importConfirmation').value = '';
+      document.getElementById('importNewName').value = '';
+      const msg = document.getElementById('importMsg');
+      msg.style.display = 'none';
+      msg.textContent = '';
+      document.getElementById('importModeReplace').checked = true;
+      syncImportModeUi();
+      openModal('importModal');
+    };
+
+    window.closeImportModal = function() {
+      closeModal('importModal');
+      importTenantId = null;
+      importTenantNome = null;
+    };
+
+    document.getElementById('importConfirmBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('importConfirmBtn');
+      const fileInput = document.getElementById('importFile');
+      const confirmInput = document.getElementById('importConfirmation');
+      const newNameInput = document.getElementById('importNewName');
+      const msg = document.getElementById('importMsg');
+
+      msg.style.display = 'none';
+      msg.textContent = '';
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        msg.style.background = '#fef3c7';
+        msg.style.border = '1px solid #fde68a';
+        msg.style.color = '#92400e';
+        msg.textContent = 'Selecione um arquivo JSON.';
+        msg.style.display = 'block';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      if (file.size > 500 * 1024 * 1024) {
+        msg.style.background = '#fee2e2';
+        msg.style.border = '1px solid #fecaca';
+        msg.style.color = '#7f1d1d';
+        msg.textContent = 'Arquivo maior que 500 MB.';
+        msg.style.display = 'block';
+        return;
+      }
+
+      const mode = getImportMode();
+      let confirmation = null;
+      let newTenantName = null;
+
+      if (mode === 'replace') {
+        const typed = confirmInput.value.trim();
+        if (typed !== importTenantNome) {
+          msg.style.background = '#fef3c7';
+          msg.style.border = '1px solid #fde68a';
+          msg.style.color = '#92400e';
+          msg.textContent = `Confirmação inválida. Digite exatamente "${importTenantNome}".`;
+          msg.style.display = 'block';
+          return;
+        }
+        confirmation = typed;
+      } else {
+        const name = newNameInput.value.trim();
+        if (!name) {
+          msg.style.background = '#fef3c7';
+          msg.style.border = '1px solid #fde68a';
+          msg.style.color = '#92400e';
+          msg.textContent = 'Informe o nome do novo tenant.';
+          msg.style.display = 'block';
+          return;
+        }
+        if (name.length > 200) {
+          msg.style.background = '#fef3c7';
+          msg.style.border = '1px solid #fde68a';
+          msg.style.color = '#92400e';
+          msg.textContent = 'Nome do tenant deve ter no máximo 200 caracteres.';
+          msg.style.display = 'block';
+          return;
+        }
+        newTenantName = name;
+      }
+
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Importando...';
+
+      try {
+        const result = await importarTenant(importTenantId, file, {
+          mode,
+          confirmation,
+          newTenantName
+        });
+        msg.style.background = '#dcfce7';
+        msg.style.border = '1px solid #bbf7d0';
+        msg.style.color = '#15803d';
+        msg.style.whiteSpace = 'pre-line';
+        msg.textContent = 'Importação concluída com sucesso!\n\n' + formatarResultadoImport(result);
+        msg.style.display = 'block';
+        load();
+      } catch (e) {
+        msg.style.background = '#fee2e2';
+        msg.style.border = '1px solid #fecaca';
+        msg.style.color = '#7f1d1d';
+        msg.style.whiteSpace = 'pre-line';
+        msg.textContent = 'Erro: ' + e.message;
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#15803d;color:white;padding:12px 18px;border-radius:8px;font-size:14px;z-index:2000;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:380px';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    }
+
     document.getElementById('novoStatus').addEventListener('change', e => {
       const msg = document.getElementById('statusModalMsg');
       msg.style.display = (e.target.value === 'Suspenso' || e.target.value === 'Cancelado') ? '' : 'none';
+    });
+
+    document.querySelectorAll('input[name="importMode"]').forEach(r => {
+      r.addEventListener('change', syncImportModeUi);
     });
 
     document.getElementById('saveStatusBtn').addEventListener('click', async () => {

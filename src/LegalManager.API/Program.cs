@@ -194,6 +194,9 @@ builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
 builder.Services.AddScoped<SeedService>();
 builder.Services.AddScoped<IHonorarioService, HonorarioService>();
 builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioService>();
+builder.Services.AddSingleton<TenantAnonymizer>();
+builder.Services.AddScoped<ITenantExportService, TenantExportService>();
+builder.Services.AddScoped<ITenantImportService, TenantImportService>();
 
 if (builder.Configuration.GetValue<bool>("Escavador:UseMock"))
 {

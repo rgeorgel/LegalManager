@@ -46,7 +46,9 @@ public class ImpersonacaoTests
     private static SuperAdminController CreateController(AppDbContext ctx, Guid superAdminId, out Mock<IAuditService> auditMock)
     {
         auditMock = new Mock<IAuditService>();
-        var controller = new SuperAdminController(ctx, auditMock.Object, CreateAuthService(ctx));
+        var exportMock = new Mock<ITenantExportService>();
+        var importMock = new Mock<ITenantImportService>();
+        var controller = new SuperAdminController(ctx, auditMock.Object, CreateAuthService(ctx), exportMock.Object, importMock.Object);
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, superAdminId.ToString()),

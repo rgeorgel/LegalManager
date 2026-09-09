@@ -52,7 +52,23 @@ cd tests/frontend && npx playwright test tests/smoke
 | `wwwroot/js/` | Módulos JS (ES Modules, sem bundler) |
 | `wwwroot/pages/` | Páginas do portal admin (requer auth) |
 | `wwwroot/cliente/` | Portal do cliente (auth separada) |
+| `wwwroot/superadmin/` | Painel super admin (auth separada, perfil SuperAdmin) |
 | `wwwroot/css/` | Estilos globais |
+
+## Export / Import de Tenant (Super Admin)
+
+Painel `/superadmin/tenants.html` (e detail modal) oferece botões **Exportar** e **Importar (substituir)** para replicar um tenant em outro ambiente (ex.: debug de produção).
+
+- **Endpoint**: `GET /api/superadmin/tenants/{id}/export` → arquivo JSON
+- **Endpoint**: `POST /api/superadmin/tenants/{id}/import` (multipart `file` + `confirmation` = nome do tenant)
+- **Anonimização automática**: emails → `*@causify-replica.com`, telefones → `+5511900000000`
+- **Senhas resetadas** para `Causify@Replic@2026!` em todos os usuários importados
+- **Documentos no OCI**: apenas metadata (ObjectKey) — arquivos binários não viajam no export
+- **Wipe automático**: import apaga todos os dados do tenant destino antes de inserir
+- **Auditoria**: cada operação registra `AuditLog` com `EXPORT`/`IMPORT` em `TenantData`
+- **Senhas no export**: nunca — apenas reset no import
+- Não exporta: `WaitlistEntries`, `RefreshTokens`, `AuditLogs`, `ProcessosImportacaoCache`, `Tenant` do sistema
+- Teste E2E: `tests/frontend/tests/flows/tenant-export-import.spec.ts` (precisa de `TEST_SUPERADMIN_TENANT_ORIGEM` e `TEST_SUPERADMIN_TENANT_DESTINO`)
 
 ## Autenticação
 
@@ -67,6 +83,11 @@ cd tests/frontend && npx playwright test tests/smoke
 - Resposta: `{ accessToken, perfil }`
 - sessionStorage: `cliente_token`, `cliente_user`
 - Sem token → redireciona para `/cliente/index.html`
+
+**Painel Super Admin:**
+- Login: mesmo endpoint `POST /api/auth/login` mas requer perfil `SuperAdmin` na resposta
+- sessionStorage: `sa_access_token`, `sa_refresh_token`, `sa_user`
+- Sem token ou perfil errado → redireciona para `/superadmin/login.html`
 
 ## Backend
 

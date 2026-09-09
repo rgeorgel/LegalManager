@@ -14,7 +14,12 @@ namespace LegalManager.API.Controllers;
 [ApiController]
 [Route("api/superadmin")]
 [Authorize(Roles = "SuperAdmin")]
-public class SuperAdminController(AppDbContext db, IAuditService audit, AuthService authService) : ControllerBase
+public class SuperAdminController(
+    AppDbContext db,
+    IAuditService audit,
+    AuthService authService,
+    ITenantExportService exportService,
+    ITenantImportService importService) : ControllerBase
 {
     private static readonly Guid SystemTenantId = TenantConstants.SystemTenantId;
 
@@ -590,5 +595,115 @@ public class SuperAdminController(AppDbContext db, IAuditService audit, AuthServ
         await db.SaveChangesAsync(ct);
 
         return NoContent();
+    }
+
+    [HttpGet("tenants/{id:guid}/export")]
+    [RequestSizeLimit(500_000_000)]
+    public async Task<IActionResult> ExportTenant(Guid id, CancellationToken ct)
+    {
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id && t.Id != SystemTenantId, ct);
+        if (tenant is null) return NotFound(new { message = "Tenant não encontrado." });
+
+        try
+        {
+            var result = await exportService.ExportAsync(id, ct);
+
+            var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(superAdminId, out var adminGuid))
+            {
+                await audit.LogAsync(new AuditLogEntry(
+                    id, adminGuid, "EXPORT", "TenantData", id.ToString(),
+                    null,
+                    new { totalRows = result.TotalRows, rowsByTable = result.RowsByTable },
+                    HttpContext.GetClientIpAddress()), ct);
+            }
+
+            return File(result.Payload, result.ContentType, result.FileName);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("tenants/{id:guid}/import")]
+    [RequestSizeLimit(500_000_000)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 500_000_000)]
+    public async Task<IActionResult> ImportTenant(
+        Guid id,
+        IFormFile file,
+        [FromForm] string? mode,
+        [FromForm] string? confirmation,
+        [FromForm] string? newTenantName,
+        CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "Arquivo não enviado." });
+
+        var importMode = (mode ?? "replace").Equals("new", StringComparison.OrdinalIgnoreCase)
+            ? TenantImportMode.CreateNew
+            : TenantImportMode.Replace;
+
+        if (importMode == TenantImportMode.Replace)
+        {
+            var tenant = await db.Tenants.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == id && t.Id != SystemTenantId, ct);
+            if (tenant is null) return NotFound(new { message = "Tenant não encontrado." });
+
+            if (string.IsNullOrWhiteSpace(confirmation) || !confirmation.Equals(tenant.Nome, StringComparison.Ordinal))
+                return BadRequest(new { message = $"Confirmação inválida. Digite exatamente o nome do tenant '{tenant.Nome}' para prosseguir." });
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(newTenantName))
+                return BadRequest(new { message = "Informe o nome do novo tenant." });
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var result = await importService.ImportAsync(
+                new TenantImportRequest(
+                    TargetTenantId: importMode == TenantImportMode.Replace ? id : null,
+                    Mode: importMode,
+                    Payload: stream,
+                    FileName: file.FileName,
+                    NewTenantName: newTenantName
+                ),
+                ct);
+
+            var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(superAdminId, out var adminGuid))
+            {
+                await audit.LogAsync(new AuditLogEntry(
+                    result.TargetTenantId, adminGuid, "IMPORT", "TenantData", result.TargetTenantId.ToString(),
+                    new { sourceTenantId = id, mode = importMode.ToString() },
+                    new
+                    {
+                        mode = importMode.ToString(),
+                        targetTenantId = result.TargetTenantId,
+                        tenantNome = result.TenantNome,
+                        tablesImported = result.TablesImported,
+                        rowsImported = result.RowsImported,
+                        rowsByTable = result.RowsByTable
+                    },
+                    HttpContext.GetClientIpAddress()), ct);
+            }
+
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 }
