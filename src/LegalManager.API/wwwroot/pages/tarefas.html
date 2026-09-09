@@ -291,6 +291,7 @@
     <div class="modal-body" id="modalDetalheBody"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="modalDetalheFechar">Fechar</button>
+      <button class="btn btn-primary" id="modalDetalheEditar">Editar</button>
     </div>
   </div>
 </div>
@@ -711,7 +712,10 @@ document.addEventListener('click', async e => {
   }
 });
 
+let detalheAtualId = null;
+
 function showDetailModal(t) {
+  detalheAtualId = t.id;
   const prazo = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
   const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') : '';
   const descricao = t.descricao
@@ -734,6 +738,16 @@ document.getElementById('modalDetalheClose').addEventListener('click', () => {
 });
 document.getElementById('modalDetalheFechar').addEventListener('click', () => {
   document.getElementById('modalDetalhe').style.display = 'none';
+});
+document.getElementById('modalDetalheEditar').addEventListener('click', async () => {
+  const id = detalheAtualId;
+  if (!id) return;
+  document.getElementById('modalDetalhe').style.display = 'none';
+  try {
+    await openEditModal(id);
+  } catch (err) {
+    alert('Erro ao carregar tarefa para edição: ' + err.message);
+  }
 });
 document.getElementById('modalDetalhe').addEventListener('click', e => {
   if (e.target === e.currentTarget) document.getElementById('modalDetalhe').style.display = 'none';
