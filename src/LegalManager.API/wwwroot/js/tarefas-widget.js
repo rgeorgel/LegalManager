@@ -257,12 +257,21 @@ function injectStyles() {
   s.id = 'tarefasWidgetStyles';
   s.textContent = `
     .tw { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 950; display: flex; align-items: center; }
+    /* Usa o par --color-sidebar/--color-sidebar-text (não --color-primary)
+       porque esse é o único par de cores no design system com contraste
+       garantido em qualquer tema — inclusive nos temas escuros predefinidos,
+       onde --color-primary costuma ser uma cor viva/clara (ciano, rosa neon
+       etc.) pensada para texto SOBRE fundo escuro, não como fundo com texto
+       em cima. O !important é necessário porque os temas escuros aplicam
+       'button { color: inherit !important; }' globalmente (ver presets.js).
+       Cuidado: sem crase aqui dentro — este bloco inteiro é um template
+       literal de JS, uma crase literal fecharia a string prematuramente. */
     .tw-toggle {
       display: flex; flex-direction: column; align-items: center; gap: 8px; width: 34px;
-      background: var(--color-primary); color: #fff; border: none; cursor: pointer;
+      background: var(--color-sidebar); color: var(--color-sidebar-text) !important; border: none; cursor: pointer;
       border-radius: 10px 0 0 10px; padding: 12px 7px; box-shadow: var(--shadow-md);
     }
-    .tw-toggle:hover { background: var(--color-primary-dark); }
+    .tw-toggle:hover { filter: brightness(1.2); }
     .tw-toggle-icon { font-size: 15px; line-height: 1; }
     /* Texto na vertical (o writing-mode fica só nesse <span> folha, não no
        container flex — misturar writing-mode com o eixo do flex container
@@ -292,8 +301,8 @@ function injectStyles() {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       padding: 10px 12px; border-bottom: 1px solid var(--color-border); font-size: 13px; color: var(--color-text);
     }
-    .tw-panel-close { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--color-text-muted); padding: 4px; line-height: 1; }
-    .tw-panel-close:hover { color: var(--color-text); }
+    .tw-panel-close { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--color-text-muted) !important; padding: 4px; line-height: 1; }
+    .tw-panel-close:hover { color: var(--color-text) !important; }
     .tw-panel-body { flex: 1; overflow-y: auto; padding: 10px 12px; }
     .tw-panel-footer { padding: 8px 12px; border-top: 1px solid var(--color-border); text-align: center; }
     .tw-panel-footer a { font-size: 12px; font-weight: 600; }
@@ -310,13 +319,22 @@ function injectStyles() {
     .tw-overdue { color: var(--color-danger); font-weight: 600; }
     .tw-atrasada { background: #fde8e8; color: var(--color-danger); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
     .tw-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+    /* Os !important abaixo existem pelo mesmo motivo do .tw-toggle acima:
+       sobreviver ao 'button { color: inherit !important; }' que os temas
+       escuros aplicam globalmente. --color-primary-light/-dark também foram
+       trocados por --color-primary puro (texto) sobre fundo transparente —
+       aquele par depende de sombreamento calculado a partir da cor primária
+       do tenant (ver theme.js/shadeForPrimary) e podia render um azul-escuro
+       sobre azul-escuro nos temas escuros. --color-primary já é usado como
+       cor de texto em vários lugares do app (links, hovers) então é seguro
+       aqui também. */
     .tw-btn { font-size: 11px; font-weight: 600; border-radius: 6px; padding: 4px 8px; cursor: pointer; border: 1px solid transparent; }
-    .tw-btn-advance { background: var(--color-primary-light); color: var(--color-primary-dark); }
-    .tw-btn-advance:hover { background: var(--color-primary); color: #fff; }
-    .tw-btn-done { background: var(--color-success); color: #fff; margin-left: auto; }
+    .tw-btn-advance { background: transparent; border-color: var(--color-primary); color: var(--color-primary) !important; }
+    .tw-btn-advance:hover { filter: brightness(1.3); }
+    .tw-btn-done { background: var(--color-success); color: #fff !important; margin-left: auto; }
     .tw-btn-done:hover { opacity: .88; }
-    .tw-btn-back { background: none; border-color: var(--color-border); color: var(--color-text-muted); }
-    .tw-btn-back:hover { background: var(--color-bg); }
+    .tw-btn-back { background: none; border-color: var(--color-border); color: var(--color-text-muted) !important; }
+    .tw-btn-back:hover { background: var(--color-border); }
     .tw-more { text-align: center; margin-top: 4px; }
     .tw-more a { font-size: 11px; }
 
