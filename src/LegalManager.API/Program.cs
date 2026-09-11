@@ -515,7 +515,7 @@ RecurringJob.AddOrUpdate<DjeJob>(
 RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     "indices-correcao-mensal",
     job => job.ExecutarAsync(),
-    "0 6 15 * *"); // dia 15 de cada mês às 06:00 UTC — IPCA e IGP-M já publicados
+    "0 6 1,11,21 * *"); // dias 1, 11 e 21 de cada mês às 06:00 UTC (~a cada 10 dias) — reduz a janela de defasagem em relação à publicação da BCB
 
 // Escavador: modo configurável (Webhook | Polling | Hybrid).
 // Webhook é primário; polling é backstop para Hybrid/Polling.
