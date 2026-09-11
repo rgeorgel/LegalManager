@@ -2,6 +2,7 @@ import { isLoggedIn, logout, getUser } from './auth.js';
 import { apiFetch, getImpersonationInfo } from './api.js';
 import { applyTenantTheme, getStoredTheme } from './theme.js';
 import { injectTarefasWidget } from './tarefas-widget.js';
+import { injectTourWidget, resumeTourIfActive } from './tour.js';
 
 const NAV_GROUPS = [
   {
@@ -98,6 +99,14 @@ export function initLayout() {
   // Menu flutuante de tarefas: disponível a partir do plano Plus (mesma
   // regra de acesso do quadro Kanban em tarefas.html).
   if (!isPlanoFree()) injectTarefasWidget();
+
+  // Widget flutuante do tutorial guiado — disponível para todos os planos.
+  injectTourWidget();
+
+  // Retoma um tour guiado em andamento (se o passo atual for desta página).
+  // Roda por último: pode precisar destacar elementos injetados acima
+  // (menu, widget de tarefas etc.).
+  resumeTourIfActive();
 }
 
 function injectImpersonationBanner() {

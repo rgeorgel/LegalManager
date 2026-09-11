@@ -254,7 +254,7 @@
       <!-- Tab: Dashboard -->
       <div class="tab-content active" id="tab-dashboard">
         <!-- Operacional -->
-        <div class="dashboard-grid">
+        <div class="dashboard-grid" data-tour="dashboard-stats">
           <a class="stat-card stat-card-link" href="/pages/processos.html">
             <div class="stat-card-label">Processos Ativos</div>
             <div class="stat-card-value" id="statProcessos">—</div>
@@ -282,7 +282,7 @@
         </div>
 
         <!-- Financeiro do mês -->
-        <div id="finSection" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:28px;margin-bottom:20px;position:relative;overflow:hidden">
+        <div id="finSection" data-tour="dashboard-financeiro" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:28px;margin-bottom:20px;position:relative;overflow:hidden">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
             <div style="font-weight:700;font-size:15px">💰 Financeiro (mês atual)</div>
             <a href="/pages/financeiro.html" style="font-size:13px;color:#1a56db">Ver detalhe →</a>
@@ -426,6 +426,7 @@
     import { apiFetch, isLoggedIn } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
+    import { autoStartGeneralTour } from '/js/tour.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -434,7 +435,10 @@
 
     initLayout();
     initOnboardingModal();
-    initTrialBoasVindasModal(() => initOnboarding());
+    // Encadeado: trial de boas-vindas → onboarding (importar por OAB) → tour
+    // geral. Cada etapa só aparece se a anterior foi concluída/pulada e a
+    // própria etapa ainda não tiver sido vista, evitando empilhar modais.
+    initTrialBoasVindasModal(() => initOnboarding(() => autoStartGeneralTour()));
 
     const free = isPlanoFree();
 

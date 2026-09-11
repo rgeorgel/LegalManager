@@ -31,13 +31,19 @@ export function stopDots(key) {
   if (DOTS_TXT[key]) { clearInterval(DOTS_TXT[key]); DOTS_TXT[key] = null; }
 }
 
-export async function initOnboarding() {
+// onDone (opcional): chamado quando o fluxo de onboarding termina — seja por
+// já estar completo (modal nem chega a abrir), seja por Pular/Concluir no
+// modal. Usado para encadear o início automático do tutorial guiado logo
+// após o onboarding, sem empilhar dois modais de primeiro acesso.
+export async function initOnboarding(onDone) {
   try {
     const status = await apiFetch('/onboarding/status');
-    if (status.completo) return;
+    if (status.completo) { onDone?.(); return; }
+    _afterClose = onDone ?? null;
     showModal();
   } catch {
     // silently fail — onboarding is non-critical
+    onDone?.();
   }
 }
 
@@ -102,6 +108,7 @@ export async function openReadOnlyModal(numero, uf) {
 
 let _marcarCompleto = true;
 let _onImportSuccess = null;
+let _afterClose = null;
 let _oabResultados = [];
 let _oabAtual = { numero: '', uf: '' };
 
@@ -110,6 +117,9 @@ async function completar() {
     try { await apiFetch('/onboarding/completar', { method: 'POST' }); } catch {}
   }
   hideModal();
+  const afterClose = _afterClose;
+  _afterClose = null;
+  afterClose?.();
 }
 
 export function initOnboardingModal(opts = {}) {

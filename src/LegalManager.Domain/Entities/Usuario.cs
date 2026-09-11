@@ -15,6 +15,11 @@ public class Usuario : IdentityUser<Guid>
     public string? OabImportadaUf { get; set; }
     public DateTime? UltimoAcessoEm { get; set; }
 
+    // Array JSON com os ids dos tutoriais guiados (product tour) já concluídos
+    // pelo usuário, ex: ["geral","processos"]. Um único campo em vez de uma
+    // coluna por tour evita migration a cada novo tutorial adicionado.
+    public string? ToursConcluidos { get; set; }
+
     public string? OrigemCadastro { get; set; }
     public string? UtmSource { get; set; }
     public string? UtmMedium { get; set; }

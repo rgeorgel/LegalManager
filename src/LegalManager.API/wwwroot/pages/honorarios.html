@@ -493,7 +493,7 @@
           <div>
             <div class="hc-card">
               <div class="hc-section-title">Tipo de Serviço</div>
-              <div class="hc-mode-btns">
+              <div class="hc-mode-btns" data-tour="honorarios-calc-modo">
                 <button id="hc-tj" class="hc-mode-btn on" onclick="hcSetMode('j',this)">⚖️ Judicial</button>
                 <button id="hc-te" class="hc-mode-btn" onclick="hcSetMode('e',this)">📋 Extrajudicial</button>
               </div>
@@ -905,10 +905,10 @@
       ${corrInfoHtml}${hcSt.par==="o"?'<div class="hc-hint" style="margin-top:6px">Conforme art. 22, §3º, Lei 8.906/94 (EOAB)</div>':""}
     </div>
     <div class="hc-act-row">
-      <button class="btn btn-secondary btn-sm" onclick="hcSaveHist(this)">+ Histórico</button>
+      <button class="btn btn-secondary btn-sm" onclick="hcSaveHist(this)" data-tour="honorarios-btn-historico">+ Histórico</button>
       <button class="btn btn-secondary btn-sm" onclick="hcSaveCmp('A')">Salvar Cen. A</button>
       <button class="btn btn-secondary btn-sm" onclick="hcSaveCmp('B')">Salvar Cen. B</button>
-      <button class="btn btn-sm btn-gold" onclick="hcAddToProposal()">+ Adicionar à Proposta</button>
+      <button class="btn btn-sm btn-gold" onclick="hcAddToProposal()" data-tour="honorarios-btn-proposta">+ Adicionar à Proposta</button>
     </div>
     ${hcRenderProposalItemsInline()}`;
   }
