@@ -2,6 +2,7 @@ using System.Security.Claims;
 using LegalManager.Application.DTOs.SuperAdmin;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
+using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
@@ -32,6 +33,26 @@ public class SuperAdminController(
         ["Max"] = 299m,
         ["Enterprise"] = 499m
     };
+
+    // Valores do preset "Padrão" (id: default) em wwwroot/js/presets.js — é o que o botão
+    // "Restaurar padrão" de tema.html grava no tenant. Comparar contra null/whitespace não
+    // funciona porque o reset PREENCHE essas colunas com esses valores em vez de limpá-las.
+    private const string TemaPadraoPrimaryColor = "#1a56db";
+    private const string TemaPadraoSidebarColor = "#1e2a3b";
+    private const string TemaPadraoAccentColor = "#057a55";
+    private const string TemaPadraoLayoutMode = "default";
+
+    private static bool IsTemaCustomizado(Tenant t)
+    {
+        bool DifereDoPadrao(string? valor, string padrao) =>
+            !string.IsNullOrWhiteSpace(valor) && !string.Equals(valor.Trim(), padrao, StringComparison.OrdinalIgnoreCase);
+
+        return DifereDoPadrao(t.PrimaryColor, TemaPadraoPrimaryColor)
+            || DifereDoPadrao(t.SidebarColor, TemaPadraoSidebarColor)
+            || DifereDoPadrao(t.AccentColor, TemaPadraoAccentColor)
+            || DifereDoPadrao(t.LayoutMode, TemaPadraoLayoutMode)
+            || !string.IsNullOrWhiteSpace(t.CustomCss);
+    }
 
     [HttpGet("metrics")]
     public async Task<IActionResult> GetMetrics(CancellationToken ct)
@@ -227,6 +248,25 @@ public class SuperAdminController(
             .Select(g => new { TenantId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
 
+        // Adoção de módulos: honorários/contratos, calculadora de prazos e calculadora de honorários.
+        var honorarioContratosCounts = await db.ContratosHonorarios
+            .Where(c => tenantIds.Contains(c.TenantId))
+            .GroupBy(c => c.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+
+        var calculadoraPrazosCounts = await db.CalculosPrazo
+            .Where(c => tenantIds.Contains(c.TenantId))
+            .GroupBy(c => c.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+
+        var calculadoraHonorariosCounts = await db.HonorariosCalculos
+            .Where(c => tenantIds.Contains(c.TenantId))
+            .GroupBy(c => c.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
+
         // A ordem de exibição já foi decidida por tenantIds acima (nome/cadastro/ultimoAcesso);
         // reordenar aqui de novo por CriadoEm bagunçaria a página quando o sort não for cadastro.
         var tenantsById = await db.Tenants
@@ -239,6 +279,7 @@ public class SuperAdminController(
             var pc = processoCounts.GetValueOrDefault(t.Id);
             var tc = tarefaCounts.GetValueOrDefault(t.Id);
             var os = oabStats.GetValueOrDefault(t.Id);
+            var temaCustomizado = IsTemaCustomizado(t);
             return new TenantListItemDto(
                 t.Id, t.Nome, t.Cnpj, t.Plano.ToString(), t.Status.ToString(),
                 t.CriadoEm,
@@ -261,7 +302,11 @@ public class SuperAdminController(
                 os?.Total ?? 0,
                 os?.ComErro ?? 0,
                 publicacoesMes.GetValueOrDefault(t.Id),
-                ultimoAcessoPorTenant.GetValueOrDefault(t.Id)
+                ultimoAcessoPorTenant.GetValueOrDefault(t.Id),
+                temaCustomizado,
+                honorarioContratosCounts.GetValueOrDefault(t.Id),
+                calculadoraPrazosCounts.GetValueOrDefault(t.Id),
+                calculadoraHonorariosCounts.GetValueOrDefault(t.Id)
             );
         }).ToList();
 
@@ -326,6 +371,10 @@ public class SuperAdminController(
         var publicacoesMesCount = await db.Publicacoes
             .CountAsync(p => p.TenantId == id && p.CapturaEm >= inicioMes, ct);
 
+        var honorarioContratosCount = await db.ContratosHonorarios.CountAsync(c => c.TenantId == id, ct);
+        var calculadoraPrazosCount = await db.CalculosPrazo.CountAsync(c => c.TenantId == id, ct);
+        var calculadoraHonorariosCount = await db.HonorariosCalculos.CountAsync(c => c.TenantId == id, ct);
+
         var dto = new TenantDetailDto(
             tenant.Id, tenant.Nome, tenant.Cnpj, tenant.Endereco,
             tenant.Plano.ToString(), tenant.PeriodoBilling, tenant.Status.ToString(),
@@ -351,7 +400,11 @@ public class SuperAdminController(
             publicacoesMesCount,
             ultimoAcesso,
             tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm)).ToList(),
-            oabs
+            oabs,
+            IsTemaCustomizado(tenant),
+            honorarioContratosCount,
+            calculadoraPrazosCount,
+            calculadoraHonorariosCount
         );
 
         return Ok(dto);
@@ -468,6 +521,8 @@ public class SuperAdminController(
         [FromQuery] string? search,
         [FromQuery] Guid? tenantId,
         [FromQuery] bool? ativo,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 30,
         CancellationToken ct = default)
@@ -488,8 +543,28 @@ public class SuperAdminController(
 
         var total = await query.CountAsync(ct);
 
+        var normalizedSortBy = sortBy?.Trim().ToLowerInvariant();
+        if (normalizedSortBy is not ("nome" or "email" or "escritorio" or "plano" or "perfil" or "ativo" or "ultimoacesso" or "cadastro"))
+            normalizedSortBy = "cadastro";
+
+        var ascending = string.Equals(sortDir?.Trim(), "asc", StringComparison.OrdinalIgnoreCase);
+
+        query = normalizedSortBy switch
+        {
+            "nome" => ascending ? query.OrderBy(u => u.Nome) : query.OrderByDescending(u => u.Nome),
+            "email" => ascending ? query.OrderBy(u => u.Email) : query.OrderByDescending(u => u.Email),
+            "escritorio" => ascending ? query.OrderBy(u => u.Tenant.Nome) : query.OrderByDescending(u => u.Tenant.Nome),
+            "plano" => ascending ? query.OrderBy(u => u.Tenant.Plano) : query.OrderByDescending(u => u.Tenant.Plano),
+            "perfil" => ascending ? query.OrderBy(u => u.Perfil) : query.OrderByDescending(u => u.Perfil),
+            "ativo" => ascending ? query.OrderBy(u => u.Ativo) : query.OrderByDescending(u => u.Ativo),
+            // Nunca acessou (null) sempre por último, tanto asc quanto desc.
+            "ultimoacesso" => ascending
+                ? query.OrderBy(u => u.UltimoAcessoEm == null).ThenBy(u => u.UltimoAcessoEm)
+                : query.OrderBy(u => u.UltimoAcessoEm == null).ThenByDescending(u => u.UltimoAcessoEm),
+            _ => ascending ? query.OrderBy(u => u.CriadoEm) : query.OrderByDescending(u => u.CriadoEm)
+        };
+
         var users = await query
-            .OrderByDescending(u => u.CriadoEm)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(u => new UserListItemDto(

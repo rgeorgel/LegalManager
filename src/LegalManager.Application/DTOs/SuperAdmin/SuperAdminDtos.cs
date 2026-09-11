@@ -27,7 +27,11 @@ public record TenantListItemDto(
     int OabCount,
     int OabComErroSync,
     int PublicacoesMesAtual,
-    DateTime? UltimoAcessoEm
+    DateTime? UltimoAcessoEm,
+    bool TemaCustomizado,
+    int HonorarioContratosCount,
+    int CalculadoraPrazosCount,
+    int CalculadoraHonorariosCount
 );
 
 public record TenantDetailDto(
@@ -63,7 +67,11 @@ public record TenantDetailDto(
     int PublicacoesMesAtual,
     DateTime? UltimoAcessoEm,
     List<TenantUserDto> Usuarios,
-    List<TenantOabResumoDto> Oabs
+    List<TenantOabResumoDto> Oabs,
+    bool TemaCustomizado,
+    int HonorarioContratosCount,
+    int CalculadoraPrazosCount,
+    int CalculadoraHonorariosCount
 );
 
 public record TenantOabResumoDto(

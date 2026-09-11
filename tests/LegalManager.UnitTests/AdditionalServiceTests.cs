@@ -754,33 +754,42 @@ public class NotificacoesControllerAdditionalTests
 
 public class PrazosControllerAdditionalTests
 {
+    private static AppDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new AppDbContext(options);
+    }
+
     private static PrazosController CreateController(PlanoTipo plano = PlanoTipo.Pro)
     {
         var tenant = new Mock<ITenantContext>();
         tenant.Setup(t => t.TenantId).Returns(Guid.NewGuid());
+        tenant.Setup(t => t.UserId).Returns(Guid.NewGuid());
         tenant.Setup(t => t.Plano).Returns(plano);
-        return new PrazosController(tenant.Object);
+        return new PrazosController(CreateContext(), tenant.Object);
     }
 
     [Fact]
-    public void Calcular_DiasCorridos_ReturnsCorrectDataFinal()
+    public async Task Calcular_DiasCorridos_ReturnsCorrectDataFinal()
     {
         var ctrl = CreateController();
         var inicio = new DateTime(2025, 1, 6); // segunda-feira
         var dto = new CalcularPrazoDto(inicio, 10, TipoCalculo.DiasCorridos);
-        var result = ctrl.Calcular(dto);
+        var result = await ctrl.Calcular(dto, CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(result);
         var res = Assert.IsType<CalcularPrazoResultDto>(ok.Value);
         Assert.Equal(inicio.AddDays(10), res.DataFinal);
     }
 
     [Fact]
-    public void Calcular_DiasUteis_SkipsWeekends()
+    public async Task Calcular_DiasUteis_SkipsWeekends()
     {
         var ctrl = CreateController();
         var sexta = new DateTime(2025, 1, 3); // sexta-feira
         var dto = new CalcularPrazoDto(sexta, 1, TipoCalculo.DiasUteis);
-        var result = ctrl.Calcular(dto);
+        var result = await ctrl.Calcular(dto, CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(result);
         var res = Assert.IsType<CalcularPrazoResultDto>(ok.Value);
         Assert.Equal(DayOfWeek.Monday, res.DataFinal.DayOfWeek);

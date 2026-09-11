@@ -22,6 +22,9 @@
     .filters input { flex: 1; min-width: 200px; }
     .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
     .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); white-space: nowrap; }
+    .data-table th.sortable { cursor: pointer; user-select: none; }
+    .data-table th.sortable:hover { color: var(--color-text); }
+    .sort-indicator { display: inline-block; margin-left: 3px; }
     .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background: var(--color-bg); }
@@ -68,14 +71,14 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th>Escritório</th>
-              <th>Plano</th>
-              <th>Perfil</th>
-              <th>Ativo</th>
-              <th>Último acesso</th>
-              <th>Cadastro</th>
+              <th class="sortable" data-sort="nome">Nome<span class="sort-indicator" data-indicator="nome"></span></th>
+              <th class="sortable" data-sort="email">E-mail<span class="sort-indicator" data-indicator="email"></span></th>
+              <th class="sortable" data-sort="escritorio">Escritório<span class="sort-indicator" data-indicator="escritorio"></span></th>
+              <th class="sortable" data-sort="plano">Plano<span class="sort-indicator" data-indicator="plano"></span></th>
+              <th class="sortable" data-sort="perfil">Perfil<span class="sort-indicator" data-indicator="perfil"></span></th>
+              <th class="sortable" data-sort="ativo">Ativo<span class="sort-indicator" data-indicator="ativo"></span></th>
+              <th class="sortable" data-sort="ultimoAcesso">Último acesso<span class="sort-indicator" data-indicator="ultimoAcesso"></span></th>
+              <th class="sortable" data-sort="cadastro">Cadastro<span class="sort-indicator" data-indicator="cadastro"></span></th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -107,6 +110,27 @@
     const pageSize = 30;
     let total = 0;
 
+    const SORTABLE_COLUMNS = ['nome', 'email', 'escritorio', 'plano', 'perfil', 'ativo', 'ultimoAcesso', 'cadastro'];
+    // Ordenação persistida em localStorage, mesmo padrão usado em tenants.html -- cai no default
+    // (cadastro desc) se o valor salvo for inválido ou o storage não puder ser lido.
+    const SORT_STORAGE_KEY = 'superadmin.users.sort';
+    function loadSavedSort() {
+      try {
+        const raw = localStorage.getItem(SORT_STORAGE_KEY);
+        if (!raw) return null;
+        const saved = JSON.parse(raw);
+        if (!SORTABLE_COLUMNS.includes(saved.sortBy)) return null;
+        if (!['asc', 'desc'].includes(saved.sortDir)) return null;
+        return saved;
+      } catch { return null; }
+    }
+    function saveSort() {
+      try { localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({ sortBy, sortDir })); } catch {}
+    }
+    const savedSort = loadSavedSort();
+    let sortBy = savedSort?.sortBy ?? 'cadastro';
+    let sortDir = savedSort?.sortDir ?? 'desc';
+
     function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDate(iso) {
       if (!iso) return '—';
@@ -117,7 +141,7 @@
     async function load() {
       const search = document.getElementById('searchInput').value;
       const ativo = document.getElementById('ativoFilter').value;
-      const params = new URLSearchParams({ page, pageSize });
+      const params = new URLSearchParams({ page, pageSize, sortBy, sortDir });
       if (search) params.set('search', search);
       if (ativo !== '') params.set('ativo', ativo);
 
@@ -170,6 +194,29 @@
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => { page = 1; load(); }, 350);
     });
+
+    function updateSortIndicators() {
+      document.querySelectorAll('.sort-indicator').forEach(el => {
+        el.textContent = el.dataset.indicator === sortBy ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      });
+    }
+
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sort;
+        if (sortBy === col) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortBy = col;
+          sortDir = 'asc';
+        }
+        page = 1;
+        saveSort();
+        updateSortIndicators();
+        load();
+      });
+    });
+    updateSortIndicators();
 
     load();
   </script>

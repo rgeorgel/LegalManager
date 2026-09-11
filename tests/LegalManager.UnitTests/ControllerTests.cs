@@ -553,39 +553,48 @@ public class NotificacoesControllerTests
 
 public class PrazosControllerTests
 {
+    private static AppDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new AppDbContext(options);
+    }
+
     private static PrazosController CreateController(PlanoTipo plano = PlanoTipo.Free)
     {
         var tenant = new Mock<ITenantContext>();
         tenant.Setup(t => t.TenantId).Returns(Guid.NewGuid());
+        tenant.Setup(t => t.UserId).Returns(Guid.NewGuid());
         tenant.Setup(t => t.Plano).Returns(plano);
-        return new PrazosController(tenant.Object);
+        return new PrazosController(CreateContext(), tenant.Object);
     }
 
     [Fact]
-    public void Calcular_Returns402_WhenFreePlan()
+    public async Task Calcular_Returns402_WhenFreePlan()
     {
         var controller = CreateController(PlanoTipo.Free);
         var dto = new CalcularPrazoDto(DateTime.UtcNow, 5, TipoCalculo.DiasUteis);
-        var result = controller.Calcular(dto);
+        var result = await controller.Calcular(dto, CancellationToken.None);
         var objectResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(402, objectResult.StatusCode);
     }
 
     [Fact]
-    public void Calcular_ReturnsOk_WhenProPlan()
+    public async Task Calcular_ReturnsOk_WhenProPlan()
     {
         var controller = CreateController(PlanoTipo.Pro);
         var dto = new CalcularPrazoDto(DateTime.UtcNow, 5, TipoCalculo.DiasUteis);
-        var result = controller.Calcular(dto);
+        var result = await controller.Calcular(dto, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
 
     [Fact]
-    public void Calcular_ReturnsOk_WhenPlusPlan()
+    public async Task Calcular_ReturnsOk_WhenPlusPlan()
     {
         var controller = CreateController(PlanoTipo.Plus);
         var dto = new CalcularPrazoDto(DateTime.UtcNow, 10, TipoCalculo.DiasCorridos);
-        var result = controller.Calcular(dto);
+        var result = await controller.Calcular(dto, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
 }
