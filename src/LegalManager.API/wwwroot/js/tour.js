@@ -557,12 +557,20 @@ function injectWidgetStyles() {
     /* ── Widget flutuante "Tutorial" (lateral direita) ── */
     .tour-widget { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 940; display: flex; align-items: center; }
     .tour-widget.stacked { transform: translateY(-50%) translateY(130px); }
+    /* Usa var(--color-sidebar)/var(--color-sidebar-text) em vez de
+       --color-primary + #fff: nos temas escuros --color-primary costuma ser
+       uma cor viva/clara (ciano, verde neon etc.) pensada para texto SOBRE
+       fundo escuro, não como fundo de botão; e os temas escuros aplicam
+       'button { color: inherit !important; }' globalmente, que anularia o
+       "color: #fff" mesmo se o fundo continuasse ok. --color-sidebar/-text é
+       o único par do design system com contraste garantido em qualquer tema
+       (mesma correção aplicada ao widget de tarefas — ver tarefas-widget.js). */
     .tour-widget-toggle {
       display: flex; flex-direction: column; align-items: center; gap: 8px; width: 34px;
-      background: var(--color-primary); color: #fff; border: none; cursor: pointer;
+      background: var(--color-sidebar); color: var(--color-sidebar-text) !important; border: none; cursor: pointer;
       border-radius: 10px 0 0 10px; padding: 12px 7px; box-shadow: var(--shadow-md);
     }
-    .tour-widget-toggle:hover { background: var(--color-primary-dark); }
+    .tour-widget-toggle:hover { filter: brightness(1.2); }
     .tour-widget-icon { font-size: 15px; line-height: 1; }
     .tour-widget-label {
       writing-mode: vertical-rl; transform: rotate(180deg);
@@ -581,8 +589,8 @@ function injectWidgetStyles() {
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       padding: 10px 12px; border-bottom: 1px solid var(--color-border); font-size: 13px; color: var(--color-text);
     }
-    .tour-widget-panel-close { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--color-text-muted); padding: 4px; line-height: 1; }
-    .tour-widget-panel-close:hover { color: var(--color-text); }
+    .tour-widget-panel-close { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--color-text-muted) !important; padding: 4px; line-height: 1; }
+    .tour-widget-panel-close:hover { color: var(--color-text) !important; }
     .tour-widget-panel-body { max-height: 320px; overflow-y: auto; padding: 6px; }
     .tour-widget-loading { color: var(--color-text-muted); font-size: 12px; text-align: center; padding: 16px 4px; }
     .tour-list-item {
