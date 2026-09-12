@@ -133,7 +133,7 @@
       <button class="tab-btn active" data-tab="tarefas">✅ Tarefas/Prazos</button>
       <button class="tab-btn" data-tab="kanban" id="tabBtnKanban">
         🗂 Kanban
-        <span id="kanbanProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
+        <span id="kanbanProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PLUS</span>
       </button>
     </div>
 
@@ -310,7 +310,7 @@ let currentTab = 'tarefas';
 let kanbanLoaded = false;
 
 function switchTab(name) {
-  if (name === 'kanban' && free) { showUpgradeToast(); return; }
+  if (name === 'kanban' && free) { showUpgradeToast('Plus'); return; }
   currentTab = name;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
