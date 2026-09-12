@@ -306,7 +306,8 @@ public class SuperAdminController(
                 temaCustomizado,
                 honorarioContratosCounts.GetValueOrDefault(t.Id),
                 calculadoraPrazosCounts.GetValueOrDefault(t.Id),
-                calculadoraHonorariosCounts.GetValueOrDefault(t.Id)
+                calculadoraHonorariosCounts.GetValueOrDefault(t.Id),
+                t.StripeSubscriptionId != null || t.AbacatePayBillingId != null
             );
         }).ToList();
 

@@ -450,7 +450,11 @@
       return `há ${Math.floor(d / 365)}a`;
     }
     function paymentBadge(t) {
-      const hasBilling = !!(t.stripeSubscriptionId || t.abacatePayBillingId);
+      // Na listagem vem `temBilling` (já calculado no backend); no modal de detalhes
+      // vêm os IDs crus (stripeSubscriptionId/abacatePayBillingId) — cobrimos os dois formatos.
+      const hasBilling = t.temBilling !== undefined
+        ? t.temBilling
+        : !!(t.stripeSubscriptionId || t.abacatePayBillingId);
       // Plano: Free não tem billing
       if (t.plano === 'Free') {
         return '<span class="badge badge-gray" title="Plano Free, sem cobrança">—</span>';

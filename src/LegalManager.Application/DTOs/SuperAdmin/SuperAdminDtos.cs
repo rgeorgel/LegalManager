@@ -31,7 +31,8 @@ public record TenantListItemDto(
     bool TemaCustomizado,
     int HonorarioContratosCount,
     int CalculadoraPrazosCount,
-    int CalculadoraHonorariosCount
+    int CalculadoraHonorariosCount,
+    bool TemBilling
 );
 
 public record TenantDetailDto(
