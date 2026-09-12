@@ -517,6 +517,12 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
     job => job.ExecutarAsync(),
     "0 6 1,11,21 * *"); // dias 1, 11 e 21 de cada mês às 06:00 UTC (~a cada 10 dias) — reduz a janela de defasagem em relação à publicação da BCB
 
+// Limpeza de recurring job órfão: "escavador-callback-polling" foi substituído por
+// "escavador-movimentacoes-polling" (EscavadorCallbackPollingJob removido em 56ac1d8),
+// mas RecurringJob.AddOrUpdate não apaga o registro antigo do storage do Hangfire.
+// TODO: remover esta linha após confirmar que o job órfão sumiu de todos os ambientes.
+RecurringJob.RemoveIfExists("escavador-callback-polling");
+
 // Escavador: modo configurável (Webhook | Polling | Hybrid).
 // Webhook é primário; polling é backstop para Hybrid/Polling.
 var escavadorModo = builder.Configuration["Escavador:ModoCaptura"] ?? "Hybrid";
