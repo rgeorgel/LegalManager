@@ -112,7 +112,13 @@ public class ProcessosMonitoradosController(
                     vara = capa?.Vara,
                     movimentosCount = escavadorResult.Data.Count,
                     classe = capa?.Classe,
-                    assuntos = capa?.Assuntos,
+                    // O Escavador retorna "assunto" como uma única string já concatenada com " | "
+                    // (ver comentário em EscavadorHttpClient.CapaData.Assunto), mas o front-end
+                    // (processos.html) sempre trata `assuntos` como array — igual ao DataJud, que
+                    // retorna IReadOnlyList<string>. Sem esse split, `result.assuntos.join(...)` no
+                    // JS explode com TypeError e a busca aparece como "erro" mesmo já tendo
+                    // encontrado o processo (dados corretos, exceção só na renderização).
+                    assuntos = SplitAssuntos(capa?.Assuntos),
                     dataAjuizamento = (DateTime?)null,
                     grau = (string?)null,
                     valorCausa = capa?.ValorCausa,
@@ -159,6 +165,11 @@ public class ProcessosMonitoradosController(
             })
         });
     }
+
+    private static string[]? SplitAssuntos(string? assuntos) =>
+        string.IsNullOrWhiteSpace(assuntos)
+            ? null
+            : assuntos.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private static string FormatCNJ(string numero)
     {
