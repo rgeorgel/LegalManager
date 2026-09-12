@@ -33,8 +33,9 @@ export function stopDots(key) {
 
 // onDone (opcional): chamado quando o fluxo de onboarding termina — seja por
 // já estar completo (modal nem chega a abrir), seja por Pular/Concluir no
-// modal. Usado para encadear o início automático do tutorial guiado logo
-// após o onboarding, sem empilhar dois modais de primeiro acesso.
+// modal. O tour guiado não inicia mais automaticamente em seguida (ver
+// tour.js) — fica disponível sob demanda pelo widget "Tutorial" — mas o
+// parâmetro continua útil para outros encadeamentos pós-onboarding.
 export async function initOnboarding(onDone) {
   try {
     const status = await apiFetch('/onboarding/status');

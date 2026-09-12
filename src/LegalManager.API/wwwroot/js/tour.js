@@ -119,12 +119,6 @@ export async function startTour(tourId) {
   await goToCurrentStep();
 }
 
-export async function autoStartGeneralTour(tourId = 'geral') {
-  if (getActiveState()) return; // já existe um tour em andamento/retomando
-  if (await isTourCompleted(tourId)) return;
-  await startTour(tourId);
-}
-
 export async function resumeTourIfActive() {
   const state = getActiveState();
   if (!state) return;

@@ -426,7 +426,6 @@
     import { apiFetch, isLoggedIn } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
-    import { autoStartGeneralTour } from '/js/tour.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -435,10 +434,11 @@
 
     initLayout();
     initOnboardingModal();
-    // Encadeado: trial de boas-vindas → onboarding (importar por OAB) → tour
-    // geral. Cada etapa só aparece se a anterior foi concluída/pulada e a
-    // própria etapa ainda não tiver sido vista, evitando empilhar modais.
-    initTrialBoasVindasModal(() => initOnboarding(() => autoStartGeneralTour()));
+    // Encadeado: trial de boas-vindas → onboarding (importar por OAB). O tour
+    // guiado não inicia mais automaticamente (intrusivo demais) — fica
+    // disponível sob demanda pelo widget "Tutorial" (injectTourWidget(), via
+    // initLayout()).
+    initTrialBoasVindasModal(() => initOnboarding());
 
     const free = isPlanoFree();
 
