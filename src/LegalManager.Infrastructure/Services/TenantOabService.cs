@@ -22,17 +22,20 @@ public class TenantOabService : ITenantOabService
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenant;
     private readonly IEscavadorService _escavador;
+    private readonly IConsultaExternaLogService _consultaLog;
     private readonly ILogger<TenantOabService> _logger;
 
     public TenantOabService(
         AppDbContext context,
         ITenantContext tenant,
         IEscavadorService escavador,
+        IConsultaExternaLogService consultaLog,
         ILogger<TenantOabService> logger)
     {
         _context = context;
         _tenant = tenant;
         _escavador = escavador;
+        _consultaLog = consultaLog;
         _logger = logger;
     }
 
@@ -196,7 +199,11 @@ public class TenantOabService : ITenantOabService
     {
         try
         {
-            var mon = await _escavador.CriarMonitoramentoOabAsync(oab.Uf, oab.Numero, oab.Nome);
+            var mon = await _consultaLog.RegistrarAsync(
+                "Escavador", "CriarMonitoramentoOab", "Configurações — Cadastro de OAB do escritório",
+                new { oab.Uf, oab.Numero, oab.Nome },
+                () => _escavador.CriarMonitoramentoOabAsync(oab.Uf, oab.Numero, oab.Nome),
+                m => m == null ? (0, null) : (1, new { m.Id, m.Status }));
             if (mon != null)
             {
                 oab.EscavadorMonitoramentoId = mon.Id;

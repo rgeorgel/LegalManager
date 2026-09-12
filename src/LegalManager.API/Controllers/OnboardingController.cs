@@ -30,6 +30,7 @@ public class OnboardingController : ControllerBase
     private readonly IProcessoService _processoService;
     private readonly IContatoService _contatoService;
     private readonly IContatoResolverService _contatoResolver;
+    private readonly IConsultaExternaLogService _consultaLog;
     private readonly ILogger<OnboardingController> _logger;
 
     public OnboardingController(
@@ -41,6 +42,7 @@ public class OnboardingController : ControllerBase
         IProcessoService processoService,
         IContatoService contatoService,
         IContatoResolverService contatoResolver,
+        IConsultaExternaLogService consultaLog,
         ILogger<OnboardingController> logger)
     {
         _context = context;
@@ -51,7 +53,17 @@ public class OnboardingController : ControllerBase
         _processoService = processoService;
         _contatoService = contatoService;
         _contatoResolver = contatoResolver;
+        _consultaLog = consultaLog;
         _logger = logger;
+    }
+
+    private const string OrigemOnboardingBuscaOab = "Onboarding — Busca de processos por OAB";
+    private const string OrigemOnboardingImportarProcesso = "Onboarding — Importar processo";
+
+    private static (int? Total, object? Resumo) ResumoProcessosPreview(IEnumerable<ProcessoOabPreviewDto> lista)
+    {
+        var itens = lista.Select(p => new { p.NumeroCNJ, p.Tribunal, p.Classe, p.DataAjuizamento }).ToList();
+        return (itens.Count, itens);
     }
 
     [HttpGet("status")]
@@ -101,10 +113,18 @@ public class OnboardingController : ControllerBase
     public async Task<ActionResult<List<ProcessoOabPreviewDto>>> BuscarPorOab(
         BuscarPorOabDto dto, CancellationToken ct)
     {
+        var parametrosBusca = new { oab = dto.NumeroOAB, uf = dto.Uf };
+
         // TJSP usa ESAJ; demais tribunais estaduais usam DataJud; TRF/TRT usam Escavador
-        var tarefaDataJud = _dataJud.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct);
+        var tarefaDataJud = _consultaLog.RegistrarAsync(
+            "DataJud", "BuscaProcessosPorOab", OrigemOnboardingBuscaOab, parametrosBusca,
+            () => _dataJud.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct),
+            ResumoProcessosPreview, ct: ct);
         var tarefaEsaj = dto.Uf.Equals("SP", StringComparison.OrdinalIgnoreCase)
-            ? _esaj.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct)
+            ? _consultaLog.RegistrarAsync(
+                "EsajTjsp", "BuscaProcessosPorOab", OrigemOnboardingBuscaOab, parametrosBusca,
+                () => _esaj.BuscarPorOabAsync(dto.NumeroOAB, dto.Uf, ct),
+                ResumoProcessosPreview, ct: ct)
             : Task.FromResult(new List<ProcessoOabPreviewDto>());
         var tarefaEscavador = BuscarEscavadorOabAsync(dto.NumeroOAB, dto.Uf, ct);
 
@@ -472,15 +492,23 @@ public class OnboardingController : ControllerBase
     {
         try
         {
-            var todos = new List<EscavadorProcessoDto>();
-            for (var pagina = 1; pagina <= 2; pagina++)
-            {
-                var resultado = await _escavador.BuscarPorOabAsync(oab.Trim(), uf.Trim(), pagina, ct);
-                foreach (var p in resultado.Data)
-                    if (!string.IsNullOrWhiteSpace(p.Numero))
-                        todos.Add(p);
-                if (!resultado.TemProxima) break;
-            }
+            var todos = await _consultaLog.RegistrarAsync(
+                "Escavador", "BuscaProcessosPorOab", OrigemOnboardingBuscaOab, new { oab, uf },
+                async () =>
+                {
+                    var pagina1 = new List<EscavadorProcessoDto>();
+                    for (var pagina = 1; pagina <= 2; pagina++)
+                    {
+                        var resultado = await _escavador.BuscarPorOabAsync(oab.Trim(), uf.Trim(), pagina, ct);
+                        foreach (var p in resultado.Data)
+                            if (!string.IsNullOrWhiteSpace(p.Numero))
+                                pagina1.Add(p);
+                        if (!resultado.TemProxima) break;
+                    }
+                    return pagina1;
+                },
+                lista => (lista.Count, lista.Select(p => new { p.Numero, p.NomeTribunal, p.Classe, p.DataAjuizamento })),
+                ct: ct);
 
             _logger.LogInformation("[Escavador] {N} processos retornados para OAB {Oab}/{Uf}", todos.Count, oab, uf);
             await SalvarCacheEscavadorAsync(todos, ct);
@@ -702,7 +730,11 @@ public class OnboardingController : ControllerBase
     {
         try
         {
-            var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde: null, pagina: 1, ct: ct);
+            var resultado = await _consultaLog.RegistrarAsync(
+                "Escavador", "BuscaMovimentacoesPorCnj", OrigemOnboardingImportarProcesso, new { cnj },
+                () => _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde: null, pagina: 1, ct: ct),
+                r => (r.Data.Count, r.Data.Select(m => new { m.Data, m.Tipo, m.Diario, m.Snippet })),
+                ct: ct);
 
             if (resultado.Data.Count == 0)
             {

@@ -7,6 +7,7 @@ const SUPERADMIN_PAGES = [
   '/superadmin/users.html',
   '/superadmin/waitlist.html',
   '/superadmin/tema.html',
+  '/superadmin/consultas.html',
 ];
 
 for (const pagePath of SUPERADMIN_PAGES) {

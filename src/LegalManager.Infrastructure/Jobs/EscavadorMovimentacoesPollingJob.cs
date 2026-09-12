@@ -21,17 +21,20 @@ public class EscavadorMovimentacoesPollingJob
     private readonly AppDbContext _context;
     private readonly IEscavadorService _escavador;
     private readonly PublicacaoMapper _mapper;
+    private readonly IConsultaExternaLogService _consultaLog;
     private readonly ILogger<EscavadorMovimentacoesPollingJob> _logger;
 
     public EscavadorMovimentacoesPollingJob(
         AppDbContext context,
         IEscavadorService escavador,
         PublicacaoMapper mapper,
+        IConsultaExternaLogService consultaLog,
         ILogger<EscavadorMovimentacoesPollingJob> logger)
     {
         _context = context;
         _escavador = escavador;
         _mapper = mapper;
+        _consultaLog = consultaLog;
         _logger = logger;
     }
 
@@ -82,8 +85,12 @@ public class EscavadorMovimentacoesPollingJob
 
                 if (desde > DateTime.UtcNow.AddMinutes(-1)) continue; // já capturamos há pouco
 
-                var resultado = await _escavador.ListarMovimentacoesPorProcessoAsync(
-                    proc.NumeroCNJ, desde, pagina: 1, ct: default);
+                var resultado = await _consultaLog.RegistrarAsync(
+                    "Escavador", "BuscaMovimentacoesPorCnj", "Job automático — Polling de movimentações",
+                    new { cnj = proc.NumeroCNJ, desde },
+                    () => _escavador.ListarMovimentacoesPorProcessoAsync(proc.NumeroCNJ, desde, pagina: 1, ct: default),
+                    r => (r.Data.Count, r.Data.Select(m => new { m.Data, m.Tipo, m.Diario, m.Snippet })),
+                    tenantId: proc.TenantId, usuarioId: null);
 
                 if (resultado.Data.Count == 0) continue;
 

@@ -97,7 +97,7 @@ public class BuscaProcessoDataJudTests
 
     private static ProcessosController CreateProcessosController(AppDbContext ctx, ITenantContext tenantContext)
     {
-        var processoService = new ProcessoService(ctx, tenantContext, new Mock<IEscavadorService>().Object);
+        var processoService = new ProcessoService(ctx, tenantContext, new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var contatoResolver = new ContatoResolverService(new ContatoService(ctx, tenantContext));
         return new ProcessosController(
             processoService,
@@ -114,7 +114,8 @@ public class BuscaProcessoDataJudTests
     {
         var (ctx, tenantId, userId) = await SeedTenantAsync();
         var tenantContext = CreateTenantContext(tenantId, userId);
-        var monitoradosController = new ProcessosMonitoradosController(CreateFakeDataJudAdapter(), Mock.Of<ILogger<ProcessosMonitoradosController>>());
+        var monitoradosController = new ProcessosMonitoradosController(
+            CreateFakeDataJudAdapter(), Mock.Of<ILogger<ProcessosMonitoradosController>>(), FakeConsultaExternaLogService.Instance);
 
         var result = await monitoradosController.Search("0000001-00.2024.8.26.0100", null, CancellationToken.None);
 

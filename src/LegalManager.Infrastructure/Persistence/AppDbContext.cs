@@ -25,6 +25,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<ContatoTag> ContatoTags => Set<ContatoTag>();
     public DbSet<Atendimento> Atendimentos => Set<Atendimento>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ConsultaExterna> ConsultasExternas => Set<ConsultaExterna>();
     public DbSet<Processo> Processos => Set<Processo>();
     public DbSet<ProcessoParte> ProcessoPartes => Set<ProcessoParte>();
     public DbSet<Andamento> Andamentos => Set<Andamento>();

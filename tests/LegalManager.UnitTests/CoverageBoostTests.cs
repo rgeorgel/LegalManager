@@ -11,6 +11,7 @@ using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.Infrastructure.Tribunais;
+using LegalManager.UnitTests.TestHelpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -340,7 +341,7 @@ public class ProcessoServiceUpdateMonitoradoTests
         var tenant = new Mock<ITenantContext>();
         tenant.Setup(t => t.TenantId).Returns(tenantId);
         tenant.Setup(t => t.Plano).Returns(plano);
-        return (new ProcessoService(ctx, tenant.Object, new Mock<IEscavadorService>().Object), ctx, tenantId);
+        return (new ProcessoService(ctx, tenant.Object, new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance), ctx, tenantId);
     }
 
     [Fact]

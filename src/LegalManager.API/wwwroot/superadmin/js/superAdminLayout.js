@@ -19,7 +19,10 @@ const NAV_GROUPS = [
   },
   {
     label: 'Sistema',
-    items: [{ href: '/superadmin/tema.html', label: '🎨 Tema' }]
+    items: [
+      { href: '/superadmin/tema.html', label: '🎨 Tema' },
+      { href: '/superadmin/consultas.html', label: '🔍 Consultas Externas' }
+    ]
   }
 ];
 

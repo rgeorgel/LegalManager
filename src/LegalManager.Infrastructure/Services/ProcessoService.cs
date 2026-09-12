@@ -15,12 +15,16 @@ public class ProcessoService : IProcessoService
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
     private readonly IEscavadorService _escavador;
+    private readonly IConsultaExternaLogService _consultaLog;
 
-    public ProcessoService(AppDbContext context, ITenantContext tenantContext, IEscavadorService escavador)
+    public ProcessoService(
+        AppDbContext context, ITenantContext tenantContext, IEscavadorService escavador,
+        IConsultaExternaLogService consultaLog)
     {
         _context = context;
         _tenantContext = tenantContext;
         _escavador = escavador;
+        _consultaLog = consultaLog;
     }
 
     public async Task<ProcessoResponseDto> CreateAsync(CreateProcessoDto dto, CancellationToken ct = default)
@@ -134,7 +138,12 @@ public class ProcessoService : IProcessoService
 
                 var dormante = processo.UltimoAndamentoEm < DateTime.Now.AddDays(-180);
                 var frequencia = dormante ? "semanal" : null;
-                var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ, frequencia, ct);
+                var mon = await _consultaLog.RegistrarAsync(
+                    "Escavador", "CriarMonitoramentoProcesso", "Processos — Ativar monitoramento",
+                    new { cnj = processo.NumeroCNJ, frequencia },
+                    () => _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ, frequencia, ct),
+                    m => m == null ? (0, null) : (1, new { m.Id, m.Status }),
+                    ct: ct);
                 if (mon != null)
                 {
                     processo.EscavadorMonitoramentoId = mon.Id.ToString();

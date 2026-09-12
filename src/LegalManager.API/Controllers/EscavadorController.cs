@@ -22,6 +22,7 @@ public class EscavadorController : ControllerBase
     private readonly IConfiguration _config;
     private readonly PublicacaoMapper _mapper;
     private readonly IHostEnvironment _env;
+    private readonly IConsultaExternaLogService _consultaLog;
 
     public EscavadorController(
         ITenantContext tenant,
@@ -29,7 +30,8 @@ public class EscavadorController : ControllerBase
         IEscavadorService escavador,
         IConfiguration config,
         PublicacaoMapper mapper,
-        IHostEnvironment env)
+        IHostEnvironment env,
+        IConsultaExternaLogService consultaLog)
     {
         _tenant = tenant;
         _context = context;
@@ -37,6 +39,7 @@ public class EscavadorController : ControllerBase
         _config = config;
         _mapper = mapper;
         _env = env;
+        _consultaLog = consultaLog;
     }
 
     /// <summary>
@@ -261,7 +264,7 @@ public class EscavadorController : ControllerBase
         {
             await _escavador.RemoverMonitoramentoAsync(id);
         }
-        var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ);
+        var mon = await CriarMonitoramentoComLogAsync(processo, "Processos — Upgrade monitoramento");
         if (mon != null)
         {
             processo.EscavadorMonitoramentoId = mon.Id.ToString();
@@ -271,7 +274,7 @@ public class EscavadorController : ControllerBase
 
     private async Task ReativarMonitoramentoAsync(Processo processo)
     {
-        var mon = await _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ);
+        var mon = await CriarMonitoramentoComLogAsync(processo, "Processos — Reativar monitoramento");
         if (mon != null)
         {
             processo.EscavadorMonitoramentoId = mon.Id.ToString();
@@ -279,6 +282,12 @@ public class EscavadorController : ControllerBase
             processo.MonitoramentoSemanal = false;
         }
     }
+
+    private Task<EscavadorMonitoramentoDto?> CriarMonitoramentoComLogAsync(Processo processo, string origem) =>
+        _consultaLog.RegistrarAsync(
+            "Escavador", "CriarMonitoramentoProcesso", origem, new { cnj = processo.NumeroCNJ },
+            () => _escavador.CriarMonitoramentoAsync(processo.NumeroCNJ),
+            m => m == null ? (0, null) : (1, new { m.Id, m.Status }));
 
     private bool ValidarCallbackToken()
     {

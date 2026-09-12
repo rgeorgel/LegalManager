@@ -11,8 +11,11 @@ namespace LegalManager.API.Controllers;
 public class ProcessosMonitoradosController(
     DataJudAdapter dataJud,
     ILogger<ProcessosMonitoradosController> logger,
+    IConsultaExternaLogService consultaLog,
     IEscavadorService? escavador = null) : ControllerBase
 {
+    private const string OrigemBuscaManualCnj = "Processos — Busca manual por CNJ";
+
     [HttpGet("search")]
     public async Task<IActionResult> Search(
         [FromQuery] string cnj, [FromQuery] string? tribunal, CancellationToken ct)
@@ -28,9 +31,13 @@ public class ProcessosMonitoradosController(
         logger.LogInformation("Buscando processo CNJ: {CNJ}, Tribunal: {Tribunal}",
             formatted, tribunal ?? "inferido");
 
-        var result = !string.IsNullOrWhiteSpace(tribunal)
-            ? await dataJud.ConsultarPorTribunalAsync(digitsOnly, tribunal, ct)
-            : await dataJud.ConsultarAsync(digitsOnly, ct);
+        var result = await consultaLog.RegistrarAsync(
+            "DataJud", "BuscaProcessoPorCnj", OrigemBuscaManualCnj, new { cnj = formatted, tribunal },
+            () => !string.IsNullOrWhiteSpace(tribunal)
+                ? dataJud.ConsultarPorTribunalAsync(digitsOnly, tribunal, ct)
+                : dataJud.ConsultarAsync(digitsOnly, ct),
+            r => (r.Encontrado ? 1 : 0, new { r.Encontrado, r.NomeTribunal, r.Classe, movimentos = r.Movimentos?.Count ?? 0 }),
+            ct: ct);
 
         if (result.Encontrado)
         {
@@ -71,7 +78,12 @@ public class ProcessosMonitoradosController(
         // nunca quando o DataJud já encontrou, para não gastar sem necessidade.
         if (escavador != null)
         {
-            var escavadorResult = await escavador.ListarMovimentacoesPorProcessoAsync(formatted, desde: null, ct: ct);
+            var escavadorResult = await consultaLog.RegistrarAsync(
+                "Escavador", "BuscaMovimentacoesPorCnj", OrigemBuscaManualCnj + " (fallback Escavador)",
+                new { cnj = formatted },
+                () => escavador.ListarMovimentacoesPorProcessoAsync(formatted, desde: null, ct: ct),
+                r => (r.Data.Count, r.Data.Select(m => new { m.Data, m.Tipo, m.Diario, m.Snippet })),
+                ct: ct);
             if (escavadorResult.Data.Count > 0)
             {
                 logger.LogInformation(
@@ -84,7 +96,12 @@ public class ProcessosMonitoradosController(
                 // doc completa em IEscavadorService.BuscarCapaPorNumeroCnjAsync. Se falhar/retornar
                 // null, a resposta segue igual à de hoje (campos null) — nunca derruba o resultado
                 // já obtido via movimentações.
-                var capa = await escavador.BuscarCapaPorNumeroCnjAsync(formatted, ct);
+                var capa = await consultaLog.RegistrarAsync(
+                    "Escavador", "BuscaCapaPorCnj", OrigemBuscaManualCnj + " (fallback Escavador)",
+                    new { cnj = formatted },
+                    () => escavador.BuscarCapaPorNumeroCnjAsync(formatted, ct),
+                    c => c == null ? (0, null) : (1, new { c.NomeTribunal, c.Vara, c.Classe, c.ValorCausa, c.Assuntos }),
+                    ct: ct);
 
                 return Ok(new
                 {

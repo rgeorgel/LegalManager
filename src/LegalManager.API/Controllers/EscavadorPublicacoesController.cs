@@ -22,17 +22,20 @@ public class EscavadorPublicacoesController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IEscavadorService _escavador;
     private readonly ITenantOabService _tenantOabService;
+    private readonly IConsultaExternaLogService _consultaLog;
 
     public EscavadorPublicacoesController(
         ITenantContext tenant,
         AppDbContext context,
         IEscavadorService escavador,
-        ITenantOabService tenantOabService)
+        ITenantOabService tenantOabService,
+        IConsultaExternaLogService consultaLog)
     {
         _tenant = tenant;
         _context = context;
         _escavador = escavador;
         _tenantOabService = tenantOabService;
+        _consultaLog = consultaLog;
     }
 
     /// <summary>
@@ -71,7 +74,12 @@ public class EscavadorPublicacoesController : ControllerBase
         {
             try
             {
-                var pagina = await _escavador.BuscarPublicacoesPorOabAsync(o.Numero, o.Uf, deDate, ateDate, 1, ct);
+                var pagina = await _consultaLog.RegistrarAsync(
+                    "Escavador", "BuscaPublicacoesPorOab", "Minha Caixa de Publicações — Busca por OAB",
+                    new { oab = o.Numero, uf = o.Uf, de = deDate, ate = ateDate },
+                    () => _escavador.BuscarPublicacoesPorOabAsync(o.Numero, o.Uf, deDate, ateDate, 1, ct),
+                    r => (r.Data.Count, r.Data.Select(p => new { p.NumeroCnj, p.Data, p.Diario, p.Snippet })),
+                    ct: ct);
                 return pagina.Data.Select(p => new
                 {
                     p.Id,

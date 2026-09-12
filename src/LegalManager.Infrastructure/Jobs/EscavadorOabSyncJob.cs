@@ -18,15 +18,18 @@ public class EscavadorOabSyncJob
 {
     private readonly AppDbContext _context;
     private readonly IEscavadorService _escavador;
+    private readonly IConsultaExternaLogService _consultaLog;
     private readonly ILogger<EscavadorOabSyncJob> _logger;
 
     public EscavadorOabSyncJob(
         AppDbContext context,
         IEscavadorService escavador,
+        IConsultaExternaLogService consultaLog,
         ILogger<EscavadorOabSyncJob> logger)
     {
         _context = context;
         _escavador = escavador;
+        _consultaLog = consultaLog;
         _logger = logger;
     }
 
@@ -82,7 +85,12 @@ public class EscavadorOabSyncJob
 
                     try
                     {
-                        var mon = await _escavador.CriarMonitoramentoOabAsync(oab.Uf, oab.Numero, oab.Nome);
+                        var mon = await _consultaLog.RegistrarAsync(
+                            "Escavador", "CriarMonitoramentoOab", "Job automático — Sincronização de OABs",
+                            new { oab.Uf, oab.Numero, oab.Nome },
+                            () => _escavador.CriarMonitoramentoOabAsync(oab.Uf, oab.Numero, oab.Nome),
+                            m => m == null ? (0, null) : (1, new { m.Id, m.Status }),
+                            tenantId: tenantId, usuarioId: null);
                         if (mon != null)
                         {
                             oab.EscavadorMonitoramentoId = mon.Id;

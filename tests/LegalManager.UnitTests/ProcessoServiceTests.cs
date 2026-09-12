@@ -5,6 +5,7 @@ using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
+using LegalManager.UnitTests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -62,7 +63,7 @@ public class ProcessoServiceTests
     public async Task CreateAsync_DeveCriarProcesso_ComDadosValidos()
     {
         var (ctx, tenant, usuario, contato) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var dto = new CreateProcessoDto(
             "0000001-00.2024.8.26.0001", "TJSP", "1ª Vara Cível", "São Paulo",
@@ -83,7 +84,7 @@ public class ProcessoServiceTests
     public async Task CreateAsync_DeveLancarExcecao_QuandoCNJDuplicado()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var dto = new CreateProcessoDto("1111111-11.2024.8.26.0001", null, null, null,
             AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
@@ -114,7 +115,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null));
 
         Assert.Equal(1, result.Total);
@@ -134,7 +135,7 @@ public class ProcessoServiceTests
         ctx.Processos.Add(processo);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         await service.EncerrarAsync(processo.Id, new EncerrarProcessoDto("Sentença", "Ganho"));
 
         var updated = await ctx.Processos.FindAsync(processo.Id);
@@ -157,7 +158,7 @@ public class ProcessoServiceTests
         ctx.Processos.Add(processo);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var dto = new CreateAndamentoDto(DateTime.UtcNow, TipoAndamento.Despacho, "Despacho de distribuição");
         var result = await service.AddAndamentoAsync(processo.Id, dto);
 
@@ -187,7 +188,7 @@ public class ProcessoServiceTests
         ctx.Andamentos.Add(andamento);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             service.DeleteAndamentoAsync(processo.Id, andamento.Id));
     }
@@ -206,7 +207,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, StatusProcesso.Ativo, null, null, null));
 
         Assert.Equal(1, result.Total);
@@ -227,7 +228,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, AreaDireito.Trabalhista, null, null));
 
         Assert.Equal(1, result.Total);
@@ -257,7 +258,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, usuario.Id, null));
 
         Assert.Equal(1, result.Total);
@@ -288,7 +289,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, contato.Id));
 
         Assert.Equal(1, result.Total);
@@ -308,7 +309,7 @@ public class ProcessoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAllAsync(new ProcessoFiltroDto(null, StatusProcesso.Encerrado, AreaDireito.Trabalhista, null, null));
 
         Assert.Equal(1, result.Total);
@@ -330,7 +331,7 @@ public class ProcessoServiceTests
         }
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var page1 = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, 1, 10));
         var page3 = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, 3, 10));
 
@@ -343,7 +344,7 @@ public class ProcessoServiceTests
     public async Task CreateAsync_DeveAtribuirTenantIdCorretamente()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var dto = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
             AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
@@ -359,7 +360,7 @@ public class ProcessoServiceTests
     public async Task CreateAsync_DeveLancarExcecao_QuandoNumeroCNJDuplicadoNoMesmoTenant()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var dto1 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
             AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
@@ -375,7 +376,7 @@ public class ProcessoServiceTests
     public async Task UpdateAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var dto = new UpdateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
             AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, 10000m, null, null, null, null, null, null);
@@ -387,7 +388,7 @@ public class ProcessoServiceTests
     public async Task DeleteAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DeleteAsync(Guid.NewGuid()));
     }
@@ -421,7 +422,7 @@ public class ProcessoServiceTests
         ctx.Andamentos.AddRange(andamento1, andamento2);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAndamentosAsync(processo.Id);
 
         Assert.Equal(2, result.Count());
@@ -434,7 +435,7 @@ public class ProcessoServiceTests
     public async Task GetAndamentosAsync_DeveLancarKeyNotFoundException_QuandoProcessoNaoExiste()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAndamentosAsync(Guid.NewGuid()));
     }
@@ -459,7 +460,7 @@ public class ProcessoServiceTests
         ctx.Processos.Add(processoOutroTenant);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetAndamentosAsync(processoOutroTenant.Id));
     }
@@ -510,7 +511,7 @@ public class ProcessoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetAndamentosAsync(processoTenant1.Id);
 
         Assert.Single(result);
@@ -541,7 +542,7 @@ public class ProcessoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
         var result = await service.GetByIdAsync(processo.Id);
 
         Assert.NotNull(result);
@@ -554,7 +555,7 @@ public class ProcessoServiceTests
     public async Task GetByIdAsync_DeveRetornarNull_QuandoProcessoNaoExiste()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var result = await service.GetByIdAsync(Guid.NewGuid());
 
@@ -581,7 +582,7 @@ public class ProcessoServiceTests
         ctx.Processos.Add(processoOutroTenant);
         await ctx.SaveChangesAsync();
 
-        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
 
         var result = await service.GetByIdAsync(processoOutroTenant.Id);
 

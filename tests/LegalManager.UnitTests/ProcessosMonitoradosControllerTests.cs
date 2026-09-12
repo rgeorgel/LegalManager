@@ -3,6 +3,7 @@ using System.Text.Json;
 using LegalManager.API.Controllers;
 using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Tribunais;
+using LegalManager.UnitTests.TestHelpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -28,7 +29,8 @@ public class ProcessosMonitoradosControllerTests
 
     private static ProcessosMonitoradosController CreateController(
         string responseJson, IEscavadorService? escavador = null) =>
-        new(CreateAdapter(responseJson), Mock.Of<ILogger<ProcessosMonitoradosController>>(), escavador);
+        new(CreateAdapter(responseJson), Mock.Of<ILogger<ProcessosMonitoradosController>>(),
+            FakeConsultaExternaLogService.Instance, escavador);
 
     private const string HitComPartesJson = """
     {
