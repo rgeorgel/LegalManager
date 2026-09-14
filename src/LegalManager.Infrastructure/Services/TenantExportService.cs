@@ -36,7 +36,7 @@ public class TenantExportService : ITenantExportService
         _logger = logger;
     }
 
-    public async Task<TenantExportResult> ExportAsync(Guid sourceTenantId, CancellationToken ct = default)
+    public async Task<TenantExportResult> ExportAsync(Guid sourceTenantId, bool anonymize = true, CancellationToken ct = default)
     {
         if (sourceTenantId == TenantConstants.SystemTenantId)
             throw new InvalidOperationException("Não é permitido exportar o tenant Sistema.");
@@ -56,7 +56,7 @@ public class TenantExportService : ITenantExportService
         foreach (var spec in TenantTableSpecs.ExportOrder)
         {
             ct.ThrowIfCancellationRequested();
-            var rows = await LoadTableAsync(spec, sourceTenantId, userIds, ct);
+            var rows = await LoadTableAsync(spec, sourceTenantId, userIds, anonymize, ct);
             tables[spec.JsonKey] = rows;
             rowsByTable[spec.JsonKey] = rows.Count;
         }
@@ -64,7 +64,7 @@ public class TenantExportService : ITenantExportService
         foreach (var identitySpec in TenantTableSpecs.IdentityJoinTables)
         {
             ct.ThrowIfCancellationRequested();
-            var rows = await LoadIdentityJoinAsync(identitySpec, userIds, ct);
+            var rows = await LoadIdentityJoinAsync(identitySpec, userIds, anonymize, ct);
             tables[identitySpec.JsonKey] = rows;
             rowsByTable[identitySpec.JsonKey] = rows.Count;
         }
@@ -75,16 +75,24 @@ public class TenantExportService : ITenantExportService
             SourceTenantId: sourceTenantId,
             SourceTenantNome: tenant.Nome,
             AppVersion: "1.0.0",
-            Anonymization: new TenantExportAnonymizationMetadata(
-                EmailsReplacedWith: $"*@{TenantExportConstants.ReplicaEmailDomain}",
-                PhonesReplacedWith: "+551190000XXXX",
-                PasswordsResetTo: TenantExportConstants.DefaultReplicaPassword,
-                FieldsScanned: new List<string>
-                {
-                    "Email", "NormalizedEmail", "EmailSecundario",
-                    "UserName", "NormalizedUserName",
-                    "Telefone", "Celular", "WhatsApp", "Phone"
-                }),
+            Anonymization: anonymize
+                ? new TenantExportAnonymizationMetadata(
+                    Enabled: true,
+                    EmailsReplacedWith: $"*@{TenantExportConstants.ReplicaEmailDomain}",
+                    PhonesReplacedWith: "+551190000XXXX",
+                    PasswordsResetTo: TenantExportConstants.DefaultReplicaPassword,
+                    FieldsScanned: new List<string>
+                    {
+                        "Email", "NormalizedEmail", "EmailSecundario",
+                        "UserName", "NormalizedUserName",
+                        "Telefone", "Celular", "WhatsApp", "Phone"
+                    })
+                : new TenantExportAnonymizationMetadata(
+                    Enabled: false,
+                    EmailsReplacedWith: "(dados reais mantidos)",
+                    PhonesReplacedWith: "(dados reais mantidos)",
+                    PasswordsResetTo: TenantExportConstants.DefaultReplicaPassword,
+                    FieldsScanned: new List<string>()),
             Tables: tables
         );
 
@@ -92,11 +100,12 @@ public class TenantExportService : ITenantExportService
         var bytes = Encoding.UTF8.GetBytes(json);
 
         var totalRows = rowsByTable.Values.Sum();
-        var fileName = $"tenant-{Slug(tenant.Nome)}-{DateTime.UtcNow:yyyyMMddHHmmss}.json";
+        var fileNameSuffix = anonymize ? string.Empty : "-dados-reais";
+        var fileName = $"tenant-{Slug(tenant.Nome)}{fileNameSuffix}-{DateTime.UtcNow:yyyyMMddHHmmss}.json";
 
         _logger.LogInformation(
-            "Tenant {TenantId} ({Nome}) exportado: {TotalRows} linhas em {TableCount} tabelas",
-            sourceTenantId, tenant.Nome, totalRows, rowsByTable.Count);
+            "Tenant {TenantId} ({Nome}) exportado: {TotalRows} linhas em {TableCount} tabelas (anonymize={Anonymize})",
+            sourceTenantId, tenant.Nome, totalRows, rowsByTable.Count, anonymize);
 
         return new TenantExportResult(
             FileName: fileName,
@@ -111,6 +120,7 @@ public class TenantExportService : ITenantExportService
         TenantTableSpec spec,
         Guid tenantId,
         List<Guid> userIds,
+        bool anonymize,
         CancellationToken ct)
     {
         var dbSet = GetDbSetTyped(spec.EntityType);
@@ -161,7 +171,7 @@ public class TenantExportService : ITenantExportService
         var rows = new List<Dictionary<string, object?>>(rawRows.Count);
         foreach (var row in rawRows)
         {
-            _anonymizer.AnonymizeInPlace(row);
+            if (anonymize) _anonymizer.AnonymizeInPlace(row);
             rows.Add(EntityToDict(row));
         }
         return rows;
@@ -170,6 +180,7 @@ public class TenantExportService : ITenantExportService
     private async Task<List<Dictionary<string, object?>>> LoadIdentityJoinAsync(
         IdentityJoinSpec spec,
         List<Guid> userIds,
+        bool anonymize,
         CancellationToken ct)
     {
         if (userIds.Count == 0) return new List<Dictionary<string, object?>>();
@@ -195,7 +206,7 @@ public class TenantExportService : ITenantExportService
         var rows = new List<Dictionary<string, object?>>(rawRows.Count);
         foreach (var row in rawRows)
         {
-            _anonymizer.AnonymizeInPlace(row);
+            if (anonymize) _anonymizer.AnonymizeInPlace(row);
             rows.Add(EntityToDict(row));
         }
 

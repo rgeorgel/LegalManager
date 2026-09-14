@@ -13,6 +13,7 @@ public record TenantExportEnvelope(
 );
 
 public record TenantExportAnonymizationMetadata(
+    [property: JsonPropertyName("enabled")] bool Enabled,
     [property: JsonPropertyName("emailsReplacedWith")] string EmailsReplacedWith,
     [property: JsonPropertyName("phonesReplacedWith")] string PhonesReplacedWith,
     [property: JsonPropertyName("passwordsResetTo")] string PasswordsResetTo,

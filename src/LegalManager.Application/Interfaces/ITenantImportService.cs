@@ -26,7 +26,13 @@ public record TenantImportRequest(
     TenantImportMode Mode,
     Stream Payload,
     string FileName,
-    string? NewTenantName = null
+    string? NewTenantName = null,
+    /// <summary>
+    /// Quando true (padrão), e-mails e telefones são anonimizados ao inserir, mesmo que o
+    /// arquivo já contenha dados reais. Quando false, preserva os dados como estão no
+    /// arquivo — só faz sentido para restaurar um backup exportado com dados reais.
+    /// </summary>
+    bool Anonymize = true
 );
 
 public record TenantImportOutcome(

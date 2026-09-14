@@ -1,8 +1,12 @@
 import { getToken } from './superAdminApi.js';
 
-export async function exportarTenant(tenantId) {
+export async function exportarTenant(tenantId, options) {
+  const opts = options || {};
+  const anonymize = opts.anonymize !== false;
+
   const token = getToken();
-  const res = await fetch(`/api/superadmin/tenants/${tenantId}/export`, {
+  const qs = anonymize ? '' : '?anonymize=false';
+  const res = await fetch(`/api/superadmin/tenants/${tenantId}/export${qs}`, {
     method: 'GET',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -43,6 +47,7 @@ export async function importarTenant(tenantId, file, options) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('mode', mode);
+  formData.append('anonymize', String(opts.anonymize !== false));
   if (mode === 'replace' && opts.confirmation) {
     formData.append('confirmation', opts.confirmation);
   }

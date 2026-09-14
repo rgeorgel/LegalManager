@@ -145,7 +145,7 @@ public class TenantImportService : ITenantImportService
                     continue;
                 }
 
-                var inserted = await InsertTenantTableAsync(spec, rows, effectiveTargetId, idRemap, committedIds, pendingPatches, ct);
+                var inserted = await InsertTenantTableAsync(spec, rows, effectiveTargetId, idRemap, committedIds, pendingPatches, request.Anonymize, ct);
                 rowsByTable[spec.JsonKey] = inserted;
                 totalInserted += inserted;
             }
@@ -158,6 +158,11 @@ public class TenantImportService : ITenantImportService
                 var inserted = await InsertIdentityJoinAsync(identitySpec, rows, idRemap, committedIds, pendingPatches, ct);
                 rowsByTable[identitySpec.JsonKey] = inserted;
                 totalInserted += inserted;
+            }
+
+            if (!request.Anonymize && envelope.Anonymization?.Enabled == false)
+            {
+                warnings.Add("Importado mantendo dados reais (e-mails e telefones não foram anonimizados).");
             }
 
             await ApplyPendingPatchesAsync(pendingPatches, ct);
@@ -347,6 +352,7 @@ public class TenantImportService : ITenantImportService
         Dictionary<Guid, Guid> idRemap,
         HashSet<Guid> committedIds,
         List<PendingFkPatch> pendingPatches,
+        bool anonymize,
         CancellationToken ct)
     {
         if (rows.Count == 0) return 0;
@@ -357,7 +363,7 @@ public class TenantImportService : ITenantImportService
         {
             var entity = DictToEntity(row, spec.EntityType, targetTenantId, spec, idRemap, committedIds, pendingPatches);
             if (entity is null) continue;
-            _anonymizer.AnonymizeInPlace(entity);
+            if (anonymize) _anonymizer.AnonymizeInPlace(entity);
             entities.Add(entity);
             if (TryGetRowId(row, out var originalId)) originalIds.Add(originalId);
         }

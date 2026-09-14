@@ -676,7 +676,7 @@ public class SuperAdminController(
 
     [HttpGet("tenants/{id:guid}/export")]
     [RequestSizeLimit(500_000_000)]
-    public async Task<IActionResult> ExportTenant(Guid id, CancellationToken ct)
+    public async Task<IActionResult> ExportTenant(Guid id, [FromQuery] bool anonymize = true, CancellationToken ct = default)
     {
         var tenant = await db.Tenants.AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id && t.Id != SystemTenantId, ct);
@@ -684,7 +684,7 @@ public class SuperAdminController(
 
         try
         {
-            var result = await exportService.ExportAsync(id, ct);
+            var result = await exportService.ExportAsync(id, anonymize, ct);
 
             var superAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(superAdminId, out var adminGuid))
@@ -692,7 +692,7 @@ public class SuperAdminController(
                 await audit.LogAsync(new AuditLogEntry(
                     id, adminGuid, "EXPORT", "TenantData", id.ToString(),
                     null,
-                    new { totalRows = result.TotalRows, rowsByTable = result.RowsByTable },
+                    new { totalRows = result.TotalRows, rowsByTable = result.RowsByTable, anonymize },
                     HttpContext.GetClientIpAddress()), ct);
             }
 
@@ -717,7 +717,8 @@ public class SuperAdminController(
         [FromForm] string? mode,
         [FromForm] string? confirmation,
         [FromForm] string? newTenantName,
-        CancellationToken ct)
+        [FromForm] bool anonymize = true,
+        CancellationToken ct = default)
     {
         if (file is null || file.Length == 0)
             return BadRequest(new { message = "Arquivo não enviado." });
@@ -750,7 +751,8 @@ public class SuperAdminController(
                     Mode: importMode,
                     Payload: stream,
                     FileName: file.FileName,
-                    NewTenantName: newTenantName
+                    NewTenantName: newTenantName,
+                    Anonymize: anonymize
                 ),
                 ct);
 
@@ -759,7 +761,7 @@ public class SuperAdminController(
             {
                 await audit.LogAsync(new AuditLogEntry(
                     result.TargetTenantId, adminGuid, "IMPORT", "TenantData", result.TargetTenantId.ToString(),
-                    new { sourceTenantId = id, mode = importMode.ToString() },
+                    new { sourceTenantId = id, mode = importMode.ToString(), anonymize },
                     new
                     {
                         mode = importMode.ToString(),
@@ -767,7 +769,8 @@ public class SuperAdminController(
                         tenantNome = result.TenantNome,
                         tablesImported = result.TablesImported,
                         rowsImported = result.RowsImported,
-                        rowsByTable = result.RowsByTable
+                        rowsByTable = result.RowsByTable,
+                        anonymize
                     },
                     HttpContext.GetClientIpAddress()), ct);
             }
