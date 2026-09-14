@@ -29,6 +29,17 @@ public class TenantDeletionService : ITenantDeletionService
         await using var transaction = await _db.Database.BeginTransactionAsync(ct);
         try
         {
+            // CalculosPrazo (registro leve de uso da calculadora de prazos) não faz parte do
+            // export/import de tenant, então WipeTenantDataAsync não o toca — mas ele tem FK
+            // Restrict para AspNetUsers (UsuarioId). "Usuarios" é a ÚLTIMA tabela apagada
+            // dentro de WipeTenantDataAsync (cada tabela ali já dá seu próprio SaveChanges),
+            // então essa remoção precisa ser marcada ANTES de chamar WipeTenantDataAsync —
+            // ela é persistida no primeiro SaveChanges que o wipe disparar, bem antes de
+            // chegar em AspNetUsers. Marcá-la depois do wipe (como CreditosAI abaixo) é tarde
+            // demais: o DELETE em AspNetUsers já teria sido tentado e falhado por FK.
+            var calculosPrazo = await _db.CalculosPrazo.Where(c => c.TenantId == tenantId).ToListAsync(ct);
+            if (calculosPrazo.Count > 0) _db.CalculosPrazo.RemoveRange(calculosPrazo);
+
             // Reaproveita a mesma lógica de wipe usada pelo import em modo Replace — ela já
             // resolve a ordem correta de FK entre as ~35 tabelas do tenant e quebra o ciclo
             // ParcelaHonorario<->LancamentoFinanceiro. Reimplementar isso aqui arriscaria
@@ -40,6 +51,9 @@ public class TenantDeletionService : ITenantDeletionService
             // o toca — mas ele tem FK Restrict para Tenants (a única tabela do schema com
             // FK direta para Tenants que fica de fora do wipe; as demais são Cascade ou já
             // cobertas pelo wipe), então precisa ser apagado aqui antes de remover o Tenant.
+            // Diferente de CalculosPrazo, sua FK é só com Tenants (não com AspNetUsers), e
+            // Tenants só é removido depois do wipe — então marcá-lo aqui, após o wipe, é
+            // seguro.
             var creditos = await _db.CreditosAI.Where(c => c.TenantId == tenantId).ToListAsync(ct);
             if (creditos.Count > 0) _db.CreditosAI.RemoveRange(creditos);
 
