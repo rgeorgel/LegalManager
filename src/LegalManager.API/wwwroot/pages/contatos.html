@@ -929,6 +929,9 @@
 
     loadContatos();
 
+    const editId = new URLSearchParams(window.location.search).get('editId');
+    if (editId) editContato(editId);
+
     // ============================================================
     // DOCUMENTOS DO CONTATO
     // ============================================================
