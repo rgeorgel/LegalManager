@@ -144,12 +144,25 @@ public class AuthService : IAuthService
         if (usuario == null)
         {
             var nome = string.IsNullOrWhiteSpace(googleUser.Name) ? googleUser.Email : googleUser.Name;
-            return await CriarTenantComTrialBoasVindasAsync(
-                nomeEscritorio: $"Escritório de {nome}",
-                nomeAdmin: nome,
-                email: googleUser.Email,
-                origemCadastro: "google_oauth",
-                ct);
+            var novoUsuario = new Usuario
+            {
+                Id = Guid.NewGuid(),
+                Nome = nome,
+                Email = googleUser.Email,
+                UserName = googleUser.Email,
+                Perfil = PerfilUsuario.Admin,
+                Ativo = true,
+                EmailConfirmed = true,
+                OrigemCadastro = DerivarOrigemCadastro(dto.UtmSource, dto.UtmMedium, dto.Gclid, dto.Fbclid, dto.Referrer, fallback: "google_oauth"),
+                UtmSource = NullIfBlank(dto.UtmSource),
+                UtmMedium = NullIfBlank(dto.UtmMedium),
+                UtmCampaign = NullIfBlank(dto.UtmCampaign),
+                Referrer = NullIfBlank(dto.Referrer),
+                LandingPage = NullIfBlank(dto.LandingPage),
+                Fbclid = NullIfBlank(dto.Fbclid),
+                Gclid = NullIfBlank(dto.Gclid)
+            };
+            return await CriarTenantComTrialBoasVindasAsync($"Escritório de {nome}", novoUsuario, ct);
         }
 
         if (!usuario.Ativo)
@@ -370,7 +383,7 @@ public class AuthService : IAuthService
     /// A senha do usuário é gerada aleatoriamente pois o login segue sendo feito via Google.
     /// </summary>
     private async Task<AuthResponseDto> CriarTenantComTrialBoasVindasAsync(
-        string nomeEscritorio, string nomeAdmin, string email, string origemCadastro, CancellationToken ct)
+        string nomeEscritorio, Usuario usuario, CancellationToken ct)
     {
         var agora = DateTime.UtcNow;
 
@@ -392,19 +405,8 @@ public class AuthService : IAuthService
 
         await _creditoService.InicializarCreditosPadraoAsync(tenant.Id, tenant.Plano, ct);
 
-        var usuario = new Usuario
-        {
-            Id = Guid.NewGuid(),
-            TenantId = tenant.Id,
-            Nome = nomeAdmin,
-            Email = email,
-            UserName = email,
-            Perfil = PerfilUsuario.Admin,
-            Ativo = true,
-            CriadoEm = agora,
-            EmailConfirmed = true,
-            OrigemCadastro = origemCadastro
-        };
+        usuario.TenantId = tenant.Id;
+        usuario.CriadoEm = agora;
 
         var result = await _userManager.CreateAsync(usuario, GenerateSecureToken());
         if (!result.Succeeded)
@@ -412,7 +414,7 @@ public class AuthService : IAuthService
 
         await _userManager.AddToRoleAsync(usuario, PerfilUsuario.Admin.ToString());
 
-        await _emailService.EnviarBoasVindasAsync(email, nomeAdmin, nomeEscritorio, tenant.Plano.ToString(), tenant.TrialExpiraEm);
+        await _emailService.EnviarBoasVindasAsync(usuario.Email!, usuario.Nome, nomeEscritorio, tenant.Plano.ToString(), tenant.TrialExpiraEm);
 
         return await GerarAuthResponseAsync(usuario, tenant, ct);
     }
@@ -500,13 +502,23 @@ public class AuthService : IAuthService
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static string DerivarOrigemCadastro(RegisterTenantDto dto)
+    private static string DerivarOrigemCadastro(RegisterTenantDto dto) =>
+        DerivarOrigemCadastro(dto.UtmSource, dto.UtmMedium, dto.Gclid, dto.Fbclid, dto.Referrer, fallback: "direto");
+
+    /// <summary>
+    /// Deriva o canal de origem do cadastro a partir dos dados de atribuição (UTM/gclid/fbclid/referrer)
+    /// capturados no frontend. <paramref name="fallback"/> é usado quando nenhum sinal de marketing está
+    /// presente — "direto" no cadastro por formulário, "google_oauth" no login/cadastro via Google (nesse
+    /// caso o próprio método de autenticação já indica a origem, na ausência de campanha).
+    /// </summary>
+    private static string DerivarOrigemCadastro(
+        string? utmSource, string? utmMedium, string? gclid, string? fbclid, string? referrer, string fallback)
     {
-        var source = (dto.UtmSource ?? string.Empty).Trim().ToLowerInvariant();
-        var medium = (dto.UtmMedium ?? string.Empty).Trim().ToLowerInvariant();
-        var hasGclid = !string.IsNullOrWhiteSpace(dto.Gclid);
-        var hasFbclid = !string.IsNullOrWhiteSpace(dto.Fbclid);
-        var hasReferrer = !string.IsNullOrWhiteSpace(dto.Referrer);
+        var source = (utmSource ?? string.Empty).Trim().ToLowerInvariant();
+        var medium = (utmMedium ?? string.Empty).Trim().ToLowerInvariant();
+        var hasGclid = !string.IsNullOrWhiteSpace(gclid);
+        var hasFbclid = !string.IsNullOrWhiteSpace(fbclid);
+        var hasReferrer = !string.IsNullOrWhiteSpace(referrer);
 
         if (hasGclid || source.Contains("google")) return "google_ads";
         if (hasFbclid || source is "facebook" or "fb" or "instagram" or "ig" or "meta") return "facebook_ads";
@@ -516,7 +528,7 @@ public class AuthService : IAuthService
             return $"{source}_{medium}";
         if (!string.IsNullOrEmpty(source)) return source;
         if (hasReferrer) return "referral";
-        return "direto";
+        return fallback;
     }
 
     private record VoucherBeneficio(PlanoTipo Plano, DateTime PlanoExpiraEm);

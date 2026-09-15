@@ -370,6 +370,47 @@ var creditoService = CreateCreditoServiceMock();
     }
 
     [Fact]
+    public async Task GoogleLoginAsync_DevePreservarAtribuicaoDeMarketing_QuandoCriaTenantNovo()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        Usuario? usuarioCriado = null;
+        userManager.Setup(u => u.CreateAsync(It.IsAny<Usuario>(), It.IsAny<string>()))
+            .Callback<Usuario, string>((u, _) => usuarioCriado = u)
+            .ReturnsAsync(IdentityResult.Success);
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-fb-ads", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("viafacebook@teste.com", true, "Via Facebook"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        var dto = new GoogleLoginDto("token-fb-ads", Fbclid: "fbclid-abc123", Referrer: "https://facebook.com/ads/x");
+        await service.GoogleLoginAsync(dto);
+
+        Assert.NotNull(usuarioCriado);
+        Assert.Equal("facebook_ads", usuarioCriado!.OrigemCadastro);
+        Assert.Equal("fbclid-abc123", usuarioCriado.Fbclid);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_UsaOrigemGoogleOAuth_QuandoNenhumSinalDeMarketingPresente()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        Usuario? usuarioCriado = null;
+        userManager.Setup(u => u.CreateAsync(It.IsAny<Usuario>(), It.IsAny<string>()))
+            .Callback<Usuario, string>((u, _) => usuarioCriado = u)
+            .ReturnsAsync(IdentityResult.Success);
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-sem-atribuicao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("semorigem@teste.com", true, "Sem Origem"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        await service.GoogleLoginAsync(new GoogleLoginDto("token-sem-atribuicao"));
+
+        Assert.Equal("google_oauth", usuarioCriado!.OrigemCadastro);
+    }
+
+    [Fact]
     public async Task GoogleLoginAsync_DeveLancarUnauthorized_QuandoEmailNaoVerificado()
     {
         var ctx = CreateContext();

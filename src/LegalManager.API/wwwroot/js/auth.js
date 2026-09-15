@@ -17,14 +17,19 @@ export async function login(email, senha) {
   return data;
 }
 
-export async function loginWithGoogle(idToken) {
+export async function loginWithGoogle(idToken, attribution = {}) {
+  // attribution (utmSource, gclid, referrer, etc. — ver utm.js) só é usado
+  // quando o botão do Google está na página de cadastro, para não perder a
+  // atribuição de marketing quando o e-mail ainda não tem conta e um tenant
+  // novo é criado. Ignorado pelo backend quando o e-mail já existe.
+  //
   // Usa fetch direto (não apiFetch) pelo mesmo motivo do login() acima:
   // evita que 401 (token do Google inválido) dispare redirect antes do
   // catch block do chamador exibir o erro.
   const res = await fetch('/api/auth/google', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken }),
+    body: JSON.stringify({ idToken, ...attribution }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

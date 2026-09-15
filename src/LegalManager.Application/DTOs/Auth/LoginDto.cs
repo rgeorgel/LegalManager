@@ -9,7 +9,14 @@ public record LoginDto(
 );
 
 public record GoogleLoginDto(
-    [Required] string IdToken
+    [Required] string IdToken,
+    string? UtmSource = null,
+    string? UtmMedium = null,
+    string? UtmCampaign = null,
+    string? Referrer = null,
+    string? LandingPage = null,
+    string? Fbclid = null,
+    string? Gclid = null
 );
 
 public record AuthResponseDto(
