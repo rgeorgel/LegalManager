@@ -920,7 +920,8 @@ public class AuthControllerTests
             configMock.Object,
             emailServiceMock.Object,
             creditoServiceMock.Object,
-            ctx);
+            ctx,
+            new Mock<IGoogleTokenValidator>().Object);
     }
 
     [Fact]

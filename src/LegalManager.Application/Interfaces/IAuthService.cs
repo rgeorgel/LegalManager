@@ -6,6 +6,7 @@ public interface IAuthService
 {
     Task<AuthResponseDto> RegisterTenantAsync(RegisterTenantDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> LoginAsync(LoginDto dto, CancellationToken ct = default);
+    Task<AuthResponseDto> GoogleLoginAsync(GoogleLoginDto dto, CancellationToken ct = default);
     Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, CancellationToken ct = default);
     Task LogoutAsync(string refreshToken, CancellationToken ct = default);
     Task ForgotPasswordAsync(ForgotPasswordDto dto, CancellationToken ct = default);

@@ -47,6 +47,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Login</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
 <body>
@@ -71,6 +72,29 @@
         </button>
       </form>
 
+      <div style="display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--color-text-muted); font-size:13px;">
+        <div style="flex:1; height:1px; background:var(--color-border, #e2e8f0);"></div>
+        ou
+        <div style="flex:1; height:1px; background:var(--color-border, #e2e8f0);"></div>
+      </div>
+
+      <div style="display:flex; justify-content:center;">
+        <div id="g_id_onload"
+             data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
+             data-callback="handleGoogleCredential"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="outline"
+             data-text="continue_with"
+             data-size="large"
+             data-width="336"
+             data-locale="pt-BR">
+        </div>
+      </div>
+
       <div class="auth-footer">
         <a href="/blog/index.html">Blog</a>
         &nbsp;·&nbsp;
@@ -82,7 +106,7 @@
   </div>
 
   <script type="module">
-    import { login, isLoggedIn } from '/js/auth.js';
+    import { login, loginWithGoogle, isLoggedIn } from '/js/auth.js';
 
     function getSafeRedirect() {
       const r = new URLSearchParams(window.location.search).get('redirect');
@@ -125,6 +149,18 @@
         btn.textContent = 'Entrar';
       }
     });
+
+    // Chamado pelo Google Identity Services (data-callback em #g_id_onload) com o ID token do usuário.
+    window.handleGoogleCredential = async (response) => {
+      alert.style.display = 'none';
+      try {
+        await loginWithGoogle(response.credential);
+        window.location.href = getSafeRedirect();
+      } catch (err) {
+        alert.textContent = err.message;
+        alert.style.display = 'block';
+      }
+    };
   </script>
 </body>
 </html>

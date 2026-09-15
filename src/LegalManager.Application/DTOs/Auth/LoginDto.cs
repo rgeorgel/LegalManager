@@ -8,6 +8,10 @@ public record LoginDto(
     [Required] string Senha
 );
 
+public record GoogleLoginDto(
+    [Required] string IdToken
+);
+
 public record AuthResponseDto(
     string AccessToken,
     string RefreshToken,

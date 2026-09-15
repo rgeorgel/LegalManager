@@ -96,7 +96,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new RegisterTenantDto("Escritório Novo", "12.345.678/0001-90", "Admin Nome", "admin@novo.com", "Senha123!", PlanoTipo.Free);
 
@@ -119,7 +119,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new RegisterTenantDto("Escritório Free", null, "Admin", "free@teste.com", "Senha123!", PlanoTipo.Free);
 
@@ -146,7 +146,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new RegisterTenantDto("Escritório Plus", null, "Admin", "plus@teste.com", "Senha123!", PlanoTipo.Plus);
 
@@ -170,7 +170,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new RegisterTenantDto("Escritório", null, "Admin", "duplicado@teste.com", "Senha123!", PlanoTipo.Free);
 
@@ -185,7 +185,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new RegisterTenantDto("Escritório Teste", null, "Admin", "admin@teste.com", "Senha123!", PlanoTipo.Free);
 
@@ -209,7 +209,7 @@ public class AuthServiceTests
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
 var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var dto = new LoginDto("login@teste.com", "Senha123");
         var result = await service.LoginAsync(dto);
@@ -230,7 +230,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginDto("naoexiste@teste.com", "Senha123")));
@@ -251,7 +251,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginDto("inativo@teste.com", "Senha123")));
@@ -281,7 +281,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.LoginAsync(new LoginDto("trial@teste.com", "Senha123"));
 
@@ -316,12 +316,106 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.LoginAsync(new LoginDto("expirado@teste.com", "Senha123"));
 
         Assert.NotNull(result);
         Assert.Equal(PlanoTipo.Free.ToString(), result.Usuario.Plano);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_DeveLogarUsuarioExistente_QuandoEmailBateComConta()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+
+        var user = new Usuario { Id = UserId, TenantId = TenantId, Email = "google@teste.com", UserName = "google@teste.com", Nome = "User Google", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var userManager = CreateUserManagerMock(user);
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-valido", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("google@teste.com", true, "User Google"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        var result = await service.GoogleLoginAsync(new GoogleLoginDto("token-valido"));
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.AccessToken);
+        Assert.Equal("User Google", result.Usuario.Nome);
+        Assert.Equal(TenantId, result.Usuario.TenantId);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_DeveCriarTenantEUsuario_QuandoEmailNaoExiste()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-novo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("novo@teste.com", true, "Novo Usuário"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        var result = await service.GoogleLoginAsync(new GoogleLoginDto("token-novo"));
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.AccessToken);
+        Assert.Equal("Novo Usuário", result.Usuario.Nome);
+        var tenant = await ctx.Tenants.FindAsync(result.Usuario.TenantId);
+        Assert.NotNull(tenant);
+        Assert.Equal(StatusTenant.Trial, tenant!.Status);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_DeveLancarUnauthorized_QuandoEmailNaoVerificado()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-nao-verificado", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("naoverificado@teste.com", false, "Não Verificado"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.GoogleLoginAsync(new GoogleLoginDto("token-nao-verificado")));
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_DeveLancarUnauthorized_QuandoTokenInvalido()
+    {
+        var ctx = CreateContext();
+        var userManager = CreateUserManagerMock();
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-invalido", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GoogleUserInfo?)null);
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.GoogleLoginAsync(new GoogleLoginDto("token-invalido")));
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_DeveLancarUnauthorized_QuandoUsuarioDesativado()
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+
+        var user = new Usuario { Id = UserId, TenantId = TenantId, Email = "inativo-google@teste.com", UserName = "inativo-google@teste.com", Nome = "Inativo", Perfil = PerfilUsuario.Admin, Ativo = false, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var userManager = CreateUserManagerMock(user);
+        var googleValidator = new Mock<IGoogleTokenValidator>();
+        googleValidator.Setup(g => g.ValidateAsync("token-inativo", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GoogleUserInfo("inativo-google@teste.com", true, "Inativo"));
+        var service = new AuthService(userManager.Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, googleValidator.Object);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.GoogleLoginAsync(new GoogleLoginDto("token-inativo")));
     }
 
     [Fact]
@@ -346,7 +440,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.RefreshTokenAsync("token-valido-123");
 
@@ -362,7 +456,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(CreateUserManagerMock().Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.RefreshTokenAsync("token-invalido"));
@@ -390,7 +484,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.RefreshTokenAsync("token-antigo");
 
@@ -420,7 +514,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.LogoutAsync("token-logout");
 
@@ -436,7 +530,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.LogoutAsync("token-nao-existe");
     }
@@ -456,7 +550,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.ForgotPasswordAsync(new ForgotPasswordDto("forgot@teste.com"));
 
@@ -471,7 +565,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.ForgotPasswordAsync(new ForgotPasswordDto("naoexiste@teste.com"));
 
@@ -496,7 +590,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.ResetPasswordAsync(new ResetPasswordDto("token-valido", "reset@teste.com", "NovaSenha123!"));
 
@@ -521,7 +615,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ResetPasswordAsync(new ResetPasswordDto("token-invalido", "fail@teste.com", "NovaSenha123!")));
@@ -549,7 +643,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "Advogado"), ConviteTenantId);
 
@@ -580,7 +674,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "Advogado"), ConviteTenantId));
@@ -598,7 +692,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ConvidarUsuarioAsync(new ConvidarUsuarioDto("novo@teste.com", "PerfilInvalido"), ConviteTenantId));
@@ -624,7 +718,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.AceitarConviteAsync(new AceitarConviteDto("token-valido-abc123", "Nome Convidado", "Senha123!"));
 
@@ -641,7 +735,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.AceitarConviteAsync(new AceitarConviteDto("token-invalido", "Nome", "Senha123!")));
@@ -667,7 +761,7 @@ var creditoService = CreateCreditoServiceMock();
         var config = CreateConfig();
         var emailService = CreateEmailServiceMock();
         var creditoService = CreateCreditoServiceMock();
-        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx);
+        var service = new AuthService(userManager.Object, config, emailService.Object, creditoService.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await service.AceitarConviteAsync(new AceitarConviteDto("token-usado-xyz", "Nome", "Senha123!"));
 
@@ -694,7 +788,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         var alvo = CreateAlvoUsuario(ctx, tenant.Id);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var superAdminId = Guid.NewGuid();
         var result = await service.ImpersonarAsync(superAdminId, "Super Admin", alvo.Id);
@@ -713,7 +807,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         var alvo = CreateAlvoUsuario(ctx, tenant.Id, ativo: false);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
@@ -726,7 +820,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         var alvo = CreateAlvoUsuario(ctx, tenant.Id, perfil: PerfilUsuario.SuperAdmin);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
@@ -737,7 +831,7 @@ var creditoService = CreateCreditoServiceMock();
     {
         var ctx = CreateContext();
         var alvo = CreateAlvoUsuario(ctx, LegalManager.Domain.TenantConstants.SystemTenantId);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id));
@@ -747,7 +841,7 @@ var creditoService = CreateCreditoServiceMock();
     public async Task ImpersonarAsync_DeveLancarExcecao_QuandoUsuarioAlvoNaoExiste()
     {
         var ctx = CreateContext();
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", Guid.NewGuid()));
@@ -760,7 +854,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         var alvo = CreateAlvoUsuario(ctx, tenant.Id);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var superAdminId = Guid.NewGuid();
         var result = await service.ImpersonarAsync(superAdminId, "Super Admin", alvo.Id);
@@ -777,7 +871,7 @@ var creditoService = CreateCreditoServiceMock();
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Alvo", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         ctx.Tenants.Add(tenant);
         var alvo = CreateAlvoUsuario(ctx, tenant.Id);
-        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock().Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.ImpersonarAsync(Guid.NewGuid(), "Super Admin", alvo.Id);
 
@@ -796,7 +890,7 @@ var creditoService = CreateCreditoServiceMock();
         ctx.Users.Add(user);
         await ctx.SaveChangesAsync();
 
-        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.LoginAsync(new LoginDto("semimpersonacao@teste.com", "Senha123"));
 
@@ -828,7 +922,7 @@ var creditoService = CreateCreditoServiceMock();
         ctx.RefreshTokens.Add(refreshToken);
         await ctx.SaveChangesAsync();
 
-        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.RefreshTokenAsync("token-impersonado-123");
 
@@ -854,7 +948,7 @@ var creditoService = CreateCreditoServiceMock();
         ctx.RefreshTokens.Add(refreshToken);
         await ctx.SaveChangesAsync();
 
-        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx);
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
 
         var result = await service.RefreshTokenAsync("token-normal-456");
 

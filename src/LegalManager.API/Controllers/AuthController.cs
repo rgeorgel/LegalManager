@@ -52,6 +52,22 @@ public class AuthController : ControllerBase
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    [HttpPost("google")]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<AuthResponseDto>> Google(GoogleLoginDto dto, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _authService.GoogleLoginAsync(dto, ct);
+            await _audit.LogAsync(new AuditLogEntry(
+                result.Usuario.TenantId, null, AuditActions.Login, "Auth",
+                null, new { result.Usuario.Email, Provider = "google" }, null, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponseDto>> Refresh(RefreshTokenDto dto, CancellationToken ct)
     {

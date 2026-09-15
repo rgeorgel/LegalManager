@@ -23,19 +23,22 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly ICreditoService _creditoService;
     private readonly AppDbContext _context;
+    private readonly IGoogleTokenValidator _googleTokenValidator;
 
     public AuthService(
         UserManager<Usuario> userManager,
         IConfiguration config,
         IEmailService emailService,
         ICreditoService creditoService,
-        AppDbContext context)
+        AppDbContext context,
+        IGoogleTokenValidator googleTokenValidator)
     {
         _userManager = userManager;
         _config = config;
         _emailService = emailService;
         _creditoService = creditoService;
         _context = context;
+        _googleTokenValidator = googleTokenValidator;
     }
 
     public async Task<AuthResponseDto> RegisterTenantAsync(RegisterTenantDto dto, CancellationToken ct = default)
@@ -121,31 +124,44 @@ public class AuthService : IAuthService
         var tenant = await _context.Tenants.FindAsync([usuario.TenantId], ct)
             ?? throw new InvalidOperationException("Tenant não encontrado.");
 
-        if (tenant.Status == StatusTenant.Trial && tenant.TrialExpiraEm < DateTime.UtcNow)
-        {
-            tenant.Plano = PlanoTipo.Free;
-            tenant.Status = StatusTenant.Ativo;
-            tenant.TrialExpiraEm = null;
-            tenant.TrialConcedidoPorId = null;
-            tenant.TrialConcedidoEm = null;
-            tenant.TrialConcedidoDias = null;
-            tenant.TrialConcedidoMotivo = null;
-            await _context.SaveChangesAsync(ct);
-        }
-
-        // Downgrade to Free if Pro subscription expired (cancelled and past billing period)
-        if (tenant.PlanoExpiraEm.HasValue && tenant.PlanoExpiraEm.Value < DateTime.UtcNow)
-        {
-            tenant.Plano = PlanoTipo.Free;
-            tenant.Status = StatusTenant.Ativo;
-            tenant.PlanoExpiraEm = null;
-            tenant.AbacatePayBillingId = null;
-            tenant.StripeSubscriptionId = null;
-            tenant.PeriodoBilling = null;
-            await _context.SaveChangesAsync(ct);
-        }
+        await VerificarExpiracaoPlanoAsync(tenant, ct);
 
         usuario.UltimoAcessoEm = DateTime.UtcNow;
+        await _userManager.UpdateAsync(usuario);
+
+        return await GerarAuthResponseAsync(usuario, tenant, ct);
+    }
+
+    public async Task<AuthResponseDto> GoogleLoginAsync(GoogleLoginDto dto, CancellationToken ct = default)
+    {
+        var googleUser = await _googleTokenValidator.ValidateAsync(dto.IdToken, ct)
+            ?? throw new UnauthorizedAccessException("Token do Google inválido ou expirado.");
+
+        if (!googleUser.EmailVerified)
+            throw new UnauthorizedAccessException("E-mail do Google não verificado.");
+
+        var usuario = await _userManager.FindByEmailAsync(googleUser.Email);
+        if (usuario == null)
+        {
+            var nome = string.IsNullOrWhiteSpace(googleUser.Name) ? googleUser.Email : googleUser.Name;
+            return await CriarTenantComTrialBoasVindasAsync(
+                nomeEscritorio: $"Escritório de {nome}",
+                nomeAdmin: nome,
+                email: googleUser.Email,
+                origemCadastro: "google_oauth",
+                ct);
+        }
+
+        if (!usuario.Ativo)
+            throw new UnauthorizedAccessException("Usuário desativado.");
+
+        var tenant = await _context.Tenants.FindAsync([usuario.TenantId], ct)
+            ?? throw new InvalidOperationException("Tenant não encontrado.");
+
+        await VerificarExpiracaoPlanoAsync(tenant, ct);
+
+        usuario.UltimoAcessoEm = DateTime.UtcNow;
+        if (!usuario.EmailConfirmed) usuario.EmailConfirmed = true;
         await _userManager.UpdateAsync(usuario);
 
         return await GerarAuthResponseAsync(usuario, tenant, ct);
@@ -319,6 +335,86 @@ public class AuthService : IAuthService
             refreshToken.ExpiresAt,
             new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm, tema)
         );
+    }
+
+    private async Task VerificarExpiracaoPlanoAsync(Tenant tenant, CancellationToken ct)
+    {
+        if (tenant.Status == StatusTenant.Trial && tenant.TrialExpiraEm < DateTime.UtcNow)
+        {
+            tenant.Plano = PlanoTipo.Free;
+            tenant.Status = StatusTenant.Ativo;
+            tenant.TrialExpiraEm = null;
+            tenant.TrialConcedidoPorId = null;
+            tenant.TrialConcedidoEm = null;
+            tenant.TrialConcedidoDias = null;
+            tenant.TrialConcedidoMotivo = null;
+            await _context.SaveChangesAsync(ct);
+        }
+
+        // Downgrade to Free if Pro subscription expired (cancelled and past billing period)
+        if (tenant.PlanoExpiraEm.HasValue && tenant.PlanoExpiraEm.Value < DateTime.UtcNow)
+        {
+            tenant.Plano = PlanoTipo.Free;
+            tenant.Status = StatusTenant.Ativo;
+            tenant.PlanoExpiraEm = null;
+            tenant.AbacatePayBillingId = null;
+            tenant.StripeSubscriptionId = null;
+            tenant.PeriodoBilling = null;
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
+    /// <summary>
+    /// Cria um tenant novo com o mesmo trial de boas-vindas concedido no cadastro padrão
+    /// (sem voucher, plano Free) — usado pelo login via Google quando o e-mail ainda não tem conta.
+    /// A senha do usuário é gerada aleatoriamente pois o login segue sendo feito via Google.
+    /// </summary>
+    private async Task<AuthResponseDto> CriarTenantComTrialBoasVindasAsync(
+        string nomeEscritorio, string nomeAdmin, string email, string origemCadastro, CancellationToken ct)
+    {
+        var agora = DateTime.UtcNow;
+
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Nome = nomeEscritorio,
+            Plano = PlanoTipo.Plus,
+            Status = StatusTenant.Trial,
+            CriadoEm = agora,
+            TrialExpiraEm = agora.AddDays(TrialGratisConstants.DiasTrialBoasVindasFree),
+            TrialConcedidoEm = agora,
+            TrialConcedidoDias = TrialGratisConstants.DiasTrialBoasVindasFree,
+            TrialConcedidoMotivo = TrialGratisConstants.MotivoTrialBoasVindasFree
+        };
+
+        _context.Tenants.Add(tenant);
+        await _context.SaveChangesAsync(ct);
+
+        await _creditoService.InicializarCreditosPadraoAsync(tenant.Id, tenant.Plano, ct);
+
+        var usuario = new Usuario
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = nomeAdmin,
+            Email = email,
+            UserName = email,
+            Perfil = PerfilUsuario.Admin,
+            Ativo = true,
+            CriadoEm = agora,
+            EmailConfirmed = true,
+            OrigemCadastro = origemCadastro
+        };
+
+        var result = await _userManager.CreateAsync(usuario, GenerateSecureToken());
+        if (!result.Succeeded)
+            throw new InvalidOperationException(string.Join("; ", result.Errors.Select(e => e.Description)));
+
+        await _userManager.AddToRoleAsync(usuario, PerfilUsuario.Admin.ToString());
+
+        await _emailService.EnviarBoasVindasAsync(email, nomeAdmin, nomeEscritorio, tenant.Plano.ToString(), tenant.TrialExpiraEm);
+
+        return await GerarAuthResponseAsync(usuario, tenant, ct);
     }
 
     private string GerarJwt(

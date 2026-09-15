@@ -44,7 +44,7 @@ public class TenantsUsageFlagsTests
         var emailServiceMock = new Mock<IEmailService>();
         var creditoServiceMock = new Mock<ICreditoService>();
 
-        return new AuthService(userManagerMock.Object, configMock.Object, emailServiceMock.Object, creditoServiceMock.Object, ctx);
+        return new AuthService(userManagerMock.Object, configMock.Object, emailServiceMock.Object, creditoServiceMock.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
     }
 
     private static SuperAdminController CreateController(AppDbContext ctx)

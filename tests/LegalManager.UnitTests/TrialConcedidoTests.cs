@@ -44,7 +44,7 @@ public class TrialConcedidoTests
         var emailServiceMock = new Mock<IEmailService>();
         var creditoServiceMock = new Mock<ICreditoService>();
 
-        return new AuthService(userManagerMock.Object, configMock.Object, emailServiceMock.Object, creditoServiceMock.Object, ctx);
+        return new AuthService(userManagerMock.Object, configMock.Object, emailServiceMock.Object, creditoServiceMock.Object, ctx, new Mock<IGoogleTokenValidator>().Object);
     }
 
     private static SuperAdminController CreateController(AppDbContext ctx, Guid superAdminId, out Mock<IAuditService> auditMock)

@@ -148,6 +148,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
@@ -417,13 +418,13 @@ app.Use(async (ctx, next) =>
     ctx.Response.Headers["X-XSS-Protection"] = "0";
     ctx.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net; " +
-        "style-src 'self' 'unsafe-inline' https://client.crisp.chat; " +
+        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net https://accounts.google.com; " +
+        "style-src 'self' 'unsafe-inline' https://client.crisp.chat https://accounts.google.com; " +
         "img-src 'self' data: https:; " +
         "font-src 'self' data: https://client.crisp.chat; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +
-        "frame-src 'self' blob: https://www.facebook.com; " +
+        "frame-src 'self' blob: https://www.facebook.com https://accounts.google.com; " +
         "base-uri 'self'; " +
         "object-src 'none';";
     await next();

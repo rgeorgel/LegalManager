@@ -42,6 +42,7 @@ services:
       Jwt__Issuer: ${JWT_ISSUER:-LegalManager}
       Jwt__Audience: ${JWT_AUDIENCE:-LegalManagerUsers}
       App__FrontendUrl: ${APP_FRONTEND_URL:-http://localhost:6600}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Resend__ApiToken: ${RESEND_API_TOKEN:-}
       Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@legalmanager.com.br}
       Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}

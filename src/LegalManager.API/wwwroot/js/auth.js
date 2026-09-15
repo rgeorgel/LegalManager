@@ -17,6 +17,24 @@ export async function login(email, senha) {
   return data;
 }
 
+export async function loginWithGoogle(idToken) {
+  // Usa fetch direto (não apiFetch) pelo mesmo motivo do login() acima:
+  // evita que 401 (token do Google inválido) dispare redirect antes do
+  // catch block do chamador exibir o erro.
+  const res = await fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.title || 'Não foi possível entrar com o Google.');
+  }
+  const data = await res.json();
+  setSession(data);
+  return data;
+}
+
 export async function register(payload) {
   const data = await apiFetch('/auth/register', {
     method: 'POST',

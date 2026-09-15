@@ -660,7 +660,7 @@ public class ImpersonacaoIntegrationTests
         sectionMock.Setup(s => s["Audience"]).Returns("LegalManager");
         configMock.Setup(c => c.GetSection("Jwt")).Returns(sectionMock.Object);
 
-        return new AuthService(userManagerMock.Object, configMock.Object, new Mock<IEmailService>().Object, new Mock<ICreditoService>().Object, ctx);
+        return new AuthService(userManagerMock.Object, configMock.Object, new Mock<IEmailService>().Object, new Mock<ICreditoService>().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
     }
 
     [Fact]
