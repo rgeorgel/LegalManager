@@ -65,11 +65,17 @@
     initAdminLayout();
 
     const PUBLICO_LABELS = { Advogados: '👨‍💼 Advogados', Clientes: '🧑 Clientes' };
-    const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial' };
-    const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única' };
+    const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial', GrupoEspecifico: 'Grupo específico' };
+    const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única', EscolhaMultipla: 'Múltipla escolha' };
 
     function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDateTime(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
+
+    function respostaCelula(r) {
+      if (r.opcaoEscolhida) return esc(r.opcaoEscolhida);
+      if (r.opcoesEscolhidas && r.opcoesEscolhidas.length > 0) return esc(r.opcoesEscolhidas.join(', '));
+      return esc(r.respostaTexto ?? '—');
+    }
 
     const params = new URLSearchParams(window.location.search);
     let selectedId = params.get('id');
@@ -115,7 +121,7 @@
       const { pergunta, contagens, respostas } = data;
       const maxContagem = Math.max(1, ...contagens.map(c => c.total));
 
-      const contagensHtml = pergunta.tipoResposta === 'EscolhaUnica' && contagens.length > 0 ? `
+      const contagensHtml = (pergunta.tipoResposta === 'EscolhaUnica' || pergunta.tipoResposta === 'EscolhaMultipla') && contagens.length > 0 ? `
         <div class="contagens">
           ${contagens.map(c => `
             <div class="contagem-row">
@@ -145,7 +151,7 @@
                   <td>${r.respondenteEmail ? `<a href="mailto:${esc(r.respondenteEmail)}" style="color:var(--color-primary)">${esc(r.respondenteEmail)}</a>` : '—'}</td>
                   <td><span class="badge ${r.respondenteTipo === 'Cliente' ? 'badge-gray' : 'badge-blue'}">${r.respondenteTipo === 'Cliente' ? 'Cliente' : 'Advogado'}</span></td>
                   <td>${esc(r.tenantNome)}</td>
-                  <td>${r.opcaoEscolhida ? esc(r.opcaoEscolhida) : esc(r.respostaTexto ?? '—')}</td>
+                  <td>${respostaCelula(r)}</td>
                   <td style="color:var(--color-text-muted);white-space:nowrap">${fmtDateTime(r.respondidoEm)}</td>
                 </tr>`).join('')}
             </tbody>
@@ -158,7 +164,7 @@
           ${pergunta.descricao ? `<div class="pergunta-desc">${esc(pergunta.descricao)}</div>` : ''}
           <div class="pergunta-meta">
             <span class="badge badge-blue">${PUBLICO_LABELS[pergunta.publico] ?? esc(pergunta.publico)}</span>
-            <span class="badge badge-gray">${pergunta.segmento === 'PlanoEspecifico' && pergunta.planoAlvo ? `Plano ${esc(pergunta.planoAlvo)}` : (SEGMENTO_LABELS[pergunta.segmento] ?? esc(pergunta.segmento))}</span>
+            <span class="badge badge-gray">${pergunta.segmento === 'PlanoEspecifico' && pergunta.planoAlvo ? `Plano ${esc(pergunta.planoAlvo)}` : pergunta.segmento === 'GrupoEspecifico' ? `Grupo: ${esc(pergunta.grupoNome ?? '—')}` : (SEGMENTO_LABELS[pergunta.segmento] ?? esc(pergunta.segmento))}</span>
             <span class="badge badge-gray">${TIPO_LABELS[pergunta.tipoResposta] ?? esc(pergunta.tipoResposta)}</span>
             <span class="badge ${pergunta.ativa ? 'badge-blue' : 'badge-gray'}">${pergunta.ativa ? 'Ativa' : 'Inativa'}</span>
           </div>

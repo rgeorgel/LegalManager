@@ -177,13 +177,7 @@ function cardHtml(p, isModal, opts = {}) {
       <div class="pw-card-title">${esc(p.texto)}</div>
       ${p.descricao ? `<div class="pw-card-desc">${esc(p.descricao)}</div>` : ''}
       <div class="pw-card-input" data-input="${prefix}">
-        ${p.tipoResposta === 'EscolhaUnica'
-          ? p.opcoes.map(o => `
-              <label class="pw-option">
-                <input type="radio" name="pw-opt-${prefix}" value="${esc(o)}">
-                <span>${esc(o)}</span>
-              </label>`).join('')
-          : `<textarea class="pw-textarea" data-textarea="${prefix}" placeholder="Escreva aqui..." rows="3"></textarea>`}
+        ${optionsInputHtml(p, prefix)}
       </div>
       <div class="pw-card-error" data-error="${prefix}" hidden></div>
       ${opts.hideActions ? '' : `
@@ -191,6 +185,24 @@ function cardHtml(p, isModal, opts = {}) {
           <button type="button" class="pw-btn pw-btn-send" data-send="${prefix}">Enviar</button>
         </div>`}
     </div>`;
+}
+
+function optionsInputHtml(p, prefix) {
+  if (p.tipoResposta === 'EscolhaUnica') {
+    return p.opcoes.map(o => `
+      <label class="pw-option">
+        <input type="radio" name="pw-opt-${prefix}" value="${esc(o)}">
+        <span>${esc(o)}</span>
+      </label>`).join('');
+  }
+  if (p.tipoResposta === 'EscolhaMultipla') {
+    return p.opcoes.map(o => `
+      <label class="pw-option">
+        <input type="checkbox" name="pw-opt-${prefix}" value="${esc(o)}">
+        <span>${esc(o)}</span>
+      </label>`).join('');
+  }
+  return `<textarea class="pw-textarea" data-textarea="${prefix}" placeholder="Escreva aqui..." rows="3"></textarea>`;
 }
 
 async function submitCard(id, isModal) {
@@ -209,6 +221,10 @@ async function submitCard(id, isModal) {
     const checked = container?.querySelector('input[type=radio]:checked');
     if (!checked) return showCardError(errorEl, 'Selecione uma opção.');
     body = { opcaoEscolhida: checked.value };
+  } else if (p.tipoResposta === 'EscolhaMultipla') {
+    const checked = [...(container?.querySelectorAll('input[type=checkbox]:checked') ?? [])].map(el => el.value);
+    if (checked.length === 0) return showCardError(errorEl, 'Selecione ao menos uma opção.');
+    body = { opcoesEscolhidas: checked };
   } else {
     const texto = container?.querySelector('textarea')?.value.trim();
     if (!texto) return showCardError(errorEl, 'Escreva uma resposta.');

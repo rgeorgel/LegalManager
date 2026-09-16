@@ -17,7 +17,8 @@ const NAV_GROUPS = [
     label: 'Growth',
     items: [
       { href: '/superadmin/waitlist.html', label: '📋 Waitlist' },
-      { href: '/superadmin/perguntas.html', label: '💬 Perguntas' }
+      { href: '/superadmin/perguntas.html', label: '💬 Perguntas' },
+      { href: '/superadmin/grupos.html', label: '👥 Grupos' }
     ]
   },
   {

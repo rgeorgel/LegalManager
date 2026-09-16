@@ -62,6 +62,8 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<CalculoPrazo> CalculosPrazo => Set<CalculoPrazo>();
     public DbSet<Pergunta> Perguntas => Set<Pergunta>();
     public DbSet<RespostaPergunta> RespostasPerguntas => Set<RespostaPergunta>();
+    public DbSet<GrupoPergunta> GruposPergunta => Set<GrupoPergunta>();
+    public DbSet<GrupoPerguntaMembro> GruposPerguntaMembros => Set<GrupoPerguntaMembro>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

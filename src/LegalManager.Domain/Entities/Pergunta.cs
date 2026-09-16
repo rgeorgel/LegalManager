@@ -23,6 +23,7 @@ public class Pergunta
     // Só relevante quando Publico == Advogados — ver comentário em SegmentoPergunta.
     public SegmentoPergunta Segmento { get; set; }
     public PlanoTipo? PlanoAlvo { get; set; } // usado quando Segmento == PlanoEspecifico
+    public Guid? GrupoId { get; set; } // usado quando Segmento == GrupoEspecifico (ver GrupoPergunta)
 
     public bool Ativa { get; set; } = true;
     public int Ordem { get; set; }

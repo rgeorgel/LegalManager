@@ -3,6 +3,7 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916005735_AddEscolhaMultiplaPergunta")]
+    partial class AddEscolhaMultiplaPergunta
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -966,58 +969,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("feriados", (string)null);
                 });
 
-            modelBuilder.Entity("LegalManager.Domain.Entities.GrupoPergunta", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("AtualizadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CriadoPorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Descricao")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GruposPergunta");
-                });
-
-            modelBuilder.Entity("LegalManager.Domain.Entities.GrupoPerguntaMembro", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AdicionadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("GrupoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UsuarioId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrupoId", "UsuarioId")
-                        .IsUnique();
-
-                    b.ToTable("GruposPerguntaMembros");
-                });
-
             modelBuilder.Entity("LegalManager.Domain.Entities.HistoricoContratoHonorario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1519,9 +1470,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("Descricao")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
-
-                    b.Property<Guid?>("GrupoId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("OpcoesJson")
                         .HasColumnType("text");

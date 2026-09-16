@@ -84,9 +84,9 @@ public enum PublicoPergunta { Advogados, Clientes }
 // Segmentação por plano — só se aplica a perguntas com Publico == Advogados; para
 // Clientes a pergunta sempre alcança todos os clientes (plano é do escritório, não do
 // cliente que acessa o portal).
-public enum SegmentoPergunta { Todos, PlanoEspecifico, Pagantes, EmTrial }
+public enum SegmentoPergunta { Todos, PlanoEspecifico, Pagantes, EmTrial, GrupoEspecifico }
 
-public enum TipoRespostaPergunta { Texto, EscolhaUnica }
+public enum TipoRespostaPergunta { Texto, EscolhaUnica, EscolhaMultipla }
 
 public enum TipoRespondente { Usuario, Cliente }
 

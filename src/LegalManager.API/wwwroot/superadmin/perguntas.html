@@ -98,6 +98,7 @@
             <select class="form-control" id="fTipoResposta">
               <option value="Texto">Texto livre</option>
               <option value="EscolhaUnica">Escolha única</option>
+              <option value="EscolhaMultipla">Múltipla escolha</option>
             </select>
           </div>
           <div class="form-group">
@@ -127,10 +128,11 @@
               <option value="PlanoEspecifico">Plano específico</option>
               <option value="Pagantes">Somente pagantes</option>
               <option value="EmTrial">Somente em trial</option>
+              <option value="GrupoEspecifico">Grupo específico</option>
             </select>
           </div>
         </div>
-        <p class="hint" id="segmentoHint" hidden>Clientes do portal não têm plano próprio (o plano é do escritório) — a pergunta alcança todos os clientes.</p>
+        <p class="hint" id="segmentoHint" hidden>Clientes do portal não têm plano próprio nem grupo (o plano é do escritório) — a pergunta alcança todos os clientes.</p>
 
         <div class="form-group" id="planoAlvoGroup" hidden>
           <label>Plano-alvo</label>
@@ -141,6 +143,12 @@
             <option value="Max">Max</option>
             <option value="Enterprise">Enterprise</option>
           </select>
+        </div>
+
+        <div class="form-group" id="grupoAlvoGroup" hidden>
+          <label>Grupo-alvo</label>
+          <select class="form-control" id="fGrupoAlvo"></select>
+          <p class="hint" style="margin-top:6px">Gerencie os grupos e seus membros em <a href="/superadmin/grupos.html" target="_blank">Grupos</a>.</p>
         </div>
 
         <div class="form-group checkbox-row">
@@ -180,14 +188,25 @@
     initAdminLayout();
 
     let perguntas = [];
+    let grupos = [];
     let editingId = null;
     let deletingId = null;
 
-    const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única' };
+    const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única', EscolhaMultipla: 'Múltipla escolha' };
     const PUBLICO_LABELS = { Advogados: '👨‍💼 Advogados', Clientes: '🧑 Clientes' };
-    const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial' };
+    const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial', GrupoEspecifico: 'Grupo específico' };
 
     function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function loadGrupos() {
+      try {
+        grupos = await saFetch('/superadmin/grupos');
+        const select = document.getElementById('fGrupoAlvo');
+        select.innerHTML = grupos.length > 0
+          ? grupos.map(g => `<option value="${g.id}">${esc(g.nome)} (${g.totalMembros})</option>`).join('')
+          : '<option value="">Nenhum grupo cadastrado</option>';
+      } catch { /* formulário segue funcional mesmo se a lista de grupos falhar */ }
+    }
 
     async function load() {
       document.getElementById('tableBody').innerHTML =
@@ -211,7 +230,9 @@
       body.innerHTML = perguntas.map(p => {
         const segmentoTexto = p.segmento === 'PlanoEspecifico' && p.planoAlvo
           ? `Plano ${esc(p.planoAlvo)}`
-          : (SEGMENTO_LABELS[p.segmento] ?? p.segmento);
+          : p.segmento === 'GrupoEspecifico'
+            ? `Grupo: ${esc(p.grupoNome ?? '—')}`
+            : (SEGMENTO_LABELS[p.segmento] ?? p.segmento);
 
         return `
         <tr>
@@ -247,7 +268,7 @@
 
     function syncFormVisibility() {
       const tipo = document.getElementById('fTipoResposta').value;
-      document.getElementById('opcoesGroup').hidden = tipo !== 'EscolhaUnica';
+      document.getElementById('opcoesGroup').hidden = tipo !== 'EscolhaUnica' && tipo !== 'EscolhaMultipla';
 
       const publico = document.getElementById('fPublico').value;
       const segmentoSelect = document.getElementById('fSegmento');
@@ -257,6 +278,7 @@
       document.getElementById('segmentoHint').hidden = !isClientes;
 
       document.getElementById('planoAlvoGroup').hidden = segmentoSelect.value !== 'PlanoEspecifico';
+      document.getElementById('grupoAlvoGroup').hidden = segmentoSelect.value !== 'GrupoEspecifico';
     }
 
     function abrirFormulario(pergunta) {
@@ -271,6 +293,7 @@
       document.getElementById('fPublico').value = pergunta?.publico ?? 'Advogados';
       document.getElementById('fSegmento').value = pergunta?.segmento ?? 'Todos';
       document.getElementById('fPlanoAlvo').value = pergunta?.planoAlvo ?? 'Plus';
+      if (pergunta?.grupoId) document.getElementById('fGrupoAlvo').value = pergunta.grupoId;
       document.getElementById('fAtiva').checked = pergunta?.ativa ?? true;
 
       const opcoesList = document.getElementById('opcoesList');
@@ -311,6 +334,7 @@
         publico: document.getElementById('fPublico').value,
         segmento: document.getElementById('fSegmento').value,
         planoAlvo: document.getElementById('fSegmento').value === 'PlanoEspecifico' ? document.getElementById('fPlanoAlvo').value : null,
+        grupoId: document.getElementById('fSegmento').value === 'GrupoEspecifico' ? (document.getElementById('fGrupoAlvo').value || null) : null,
         ativa: document.getElementById('fAtiva').checked,
         ordem: parseInt(document.getElementById('fOrdem').value, 10) || 0,
       };
@@ -349,7 +373,7 @@
           method: 'PUT',
           body: JSON.stringify({
             texto: p.texto, descricao: p.descricao, tipoResposta: p.tipoResposta, opcoes: p.opcoes,
-            publico: p.publico, segmento: p.segmento, planoAlvo: p.planoAlvo,
+            publico: p.publico, segmento: p.segmento, planoAlvo: p.planoAlvo, grupoId: p.grupoId,
             ativa: !p.ativa, ordem: p.ordem,
           }),
         });
@@ -379,6 +403,7 @@
     });
 
     load();
+    loadGrupos();
   </script>
 </body>
 </html>

@@ -12,7 +12,7 @@ public record PerguntaPendenteDto(
     List<string> Opcoes
 );
 
-public record ResponderPerguntaDto(string? RespostaTexto, string? OpcaoEscolhida);
+public record ResponderPerguntaDto(string? RespostaTexto, string? OpcaoEscolhida, List<string>? OpcoesEscolhidas);
 
 // ── Super admin: cadastro ───────────────────────────────────────────────────
 
@@ -25,6 +25,8 @@ public record PerguntaAdminDto(
     string Publico,
     string Segmento,
     string? PlanoAlvo,
+    Guid? GrupoId,
+    string? GrupoNome,
     bool Ativa,
     int Ordem,
     DateTime CriadoEm,
@@ -39,6 +41,7 @@ public record SalvarPerguntaDto(
     [Required] string Publico,
     [Required] string Segmento,
     string? PlanoAlvo,
+    Guid? GrupoId,
     bool Ativa,
     int Ordem
 );
@@ -53,6 +56,7 @@ public record RespostaAdminDto(
     string TenantNome,
     string? RespostaTexto,
     string? OpcaoEscolhida,
+    List<string> OpcoesEscolhidas,
     DateTime RespondidoEm
 );
 

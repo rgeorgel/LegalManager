@@ -47,12 +47,15 @@ public class PerguntasController : ControllerBase
             var pagante = tenant.Status == StatusTenant.Ativo && tenant.Plano != PlanoTipo.Free;
             var emTrial = tenant.Status == StatusTenant.Trial;
             var plano = tenant.Plano;
+            var userId = _tenantContext.UserId;
 
             query = query.Where(p =>
                 p.Segmento == SegmentoPergunta.Todos ||
                 (p.Segmento == SegmentoPergunta.PlanoEspecifico && p.PlanoAlvo == plano) ||
                 (p.Segmento == SegmentoPergunta.Pagantes && pagante) ||
-                (p.Segmento == SegmentoPergunta.EmTrial && emTrial));
+                (p.Segmento == SegmentoPergunta.EmTrial && emTrial) ||
+                (p.Segmento == SegmentoPergunta.GrupoEspecifico &&
+                    _context.GruposPerguntaMembros.Any(m => m.GrupoId == p.GrupoId && m.UsuarioId == userId)));
         }
 
         var perguntas = await query.OrderBy(p => p.Ordem).ThenBy(p => p.CriadoEm).ToListAsync(ct);
@@ -80,11 +83,20 @@ public class PerguntasController : ControllerBase
         var pergunta = await _context.Perguntas.FirstOrDefaultAsync(p => p.Id == id && p.Ativa, ct);
         if (pergunta == null) return NotFound();
 
+        List<string>? opcoesEscolhidas = null;
+
         if (pergunta.TipoResposta == TipoRespostaPergunta.EscolhaUnica)
         {
             var opcoes = ParseOpcoes(pergunta.OpcoesJson);
             if (string.IsNullOrWhiteSpace(dto.OpcaoEscolhida) || !opcoes.Contains(dto.OpcaoEscolhida))
                 return BadRequest(new { message = "Selecione uma das opções apresentadas." });
+        }
+        else if (pergunta.TipoResposta == TipoRespostaPergunta.EscolhaMultipla)
+        {
+            var opcoes = ParseOpcoes(pergunta.OpcoesJson);
+            opcoesEscolhidas = (dto.OpcoesEscolhidas ?? []).Distinct().ToList();
+            if (opcoesEscolhidas.Count == 0 || opcoesEscolhidas.Any(o => !opcoes.Contains(o)))
+                return BadRequest(new { message = "Selecione ao menos uma das opções apresentadas." });
         }
         else if (string.IsNullOrWhiteSpace(dto.RespostaTexto))
         {
@@ -107,6 +119,7 @@ public class PerguntasController : ControllerBase
             RespondenteId = _tenantContext.UserId,
             RespostaTexto = string.IsNullOrWhiteSpace(dto.RespostaTexto) ? null : dto.RespostaTexto.Trim(),
             OpcaoEscolhida = dto.OpcaoEscolhida,
+            OpcoesEscolhidasJson = opcoesEscolhidas != null ? JsonSerializer.Serialize(opcoesEscolhidas) : null,
             RespondidoEm = DateTime.UtcNow,
         });
         await _context.SaveChangesAsync(ct);

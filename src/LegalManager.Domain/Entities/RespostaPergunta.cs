@@ -17,7 +17,10 @@ public class RespostaPergunta
     public Guid RespondenteId { get; set; }
 
     public string? RespostaTexto { get; set; }
-    public string? OpcaoEscolhida { get; set; }
+    public string? OpcaoEscolhida { get; set; } // TipoRespostaPergunta.EscolhaUnica
+
+    // JSON com as opções marcadas (TipoRespostaPergunta.EscolhaMultipla), ex: ["IA","WhatsApp"].
+    public string? OpcoesEscolhidasJson { get; set; }
 
     public DateTime RespondidoEm { get; set; }
 }

@@ -39,25 +39,28 @@ public class SuperAdminPerguntasController : ControllerBase
             .Select(g => new { PerguntaId = g.Key, Total = g.Count() })
             .ToDictionaryAsync(g => g.PerguntaId, g => g.Total, ct);
 
-        return Ok(perguntas.Select(p => ToDto(p, contagens.GetValueOrDefault(p.Id))).ToList());
+        var gruposNomes = await GetGruposNomesAsync(perguntas, ct);
+
+        return Ok(perguntas.Select(p => ToDto(p, contagens.GetValueOrDefault(p.Id), gruposNomes.GetValueOrDefault(p.GrupoId ?? Guid.Empty))).ToList());
     }
 
     [HttpPost]
     public async Task<ActionResult<PerguntaAdminDto>> Criar([FromBody] SalvarPerguntaDto dto, CancellationToken ct)
     {
-        var erro = Validar(dto, out var tipoResposta, out var publico, out var segmento, out var planoAlvo, out var opcoes);
-        if (erro != null) return BadRequest(new { message = erro });
+        var v = await ValidarAsync(dto, ct);
+        if (v.Erro != null) return BadRequest(new { message = v.Erro });
 
         var pergunta = new Pergunta
         {
             Id = Guid.NewGuid(),
             Texto = dto.Texto.Trim(),
             Descricao = string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim(),
-            TipoResposta = tipoResposta,
-            OpcoesJson = opcoes,
-            Publico = publico,
-            Segmento = publico == PublicoPergunta.Clientes ? SegmentoPergunta.Todos : segmento,
-            PlanoAlvo = publico == PublicoPergunta.Clientes ? null : planoAlvo,
+            TipoResposta = v.TipoResposta,
+            OpcoesJson = v.OpcoesJson,
+            Publico = v.Publico,
+            Segmento = v.Publico == PublicoPergunta.Clientes ? SegmentoPergunta.Todos : v.Segmento,
+            PlanoAlvo = v.Publico == PublicoPergunta.Clientes ? null : v.PlanoAlvo,
+            GrupoId = v.Publico == PublicoPergunta.Clientes ? null : v.GrupoId,
             Ativa = dto.Ativa,
             Ordem = dto.Ordem,
             CriadoEm = DateTime.UtcNow,
@@ -67,7 +70,10 @@ public class SuperAdminPerguntasController : ControllerBase
         _context.Perguntas.Add(pergunta);
         await _context.SaveChangesAsync(ct);
 
-        return Ok(ToDto(pergunta, 0));
+        var grupoNome = pergunta.GrupoId.HasValue
+            ? await _context.GruposPergunta.Where(g => g.Id == pergunta.GrupoId).Select(g => g.Nome).FirstOrDefaultAsync(ct)
+            : null;
+        return Ok(ToDto(pergunta, 0, grupoNome));
     }
 
     [HttpPut("{id:guid}")]
@@ -76,16 +82,17 @@ public class SuperAdminPerguntasController : ControllerBase
         var pergunta = await _context.Perguntas.FirstOrDefaultAsync(p => p.Id == id, ct);
         if (pergunta == null) return NotFound();
 
-        var erro = Validar(dto, out var tipoResposta, out var publico, out var segmento, out var planoAlvo, out var opcoes);
-        if (erro != null) return BadRequest(new { message = erro });
+        var v = await ValidarAsync(dto, ct);
+        if (v.Erro != null) return BadRequest(new { message = v.Erro });
 
         pergunta.Texto = dto.Texto.Trim();
         pergunta.Descricao = string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim();
-        pergunta.TipoResposta = tipoResposta;
-        pergunta.OpcoesJson = opcoes;
-        pergunta.Publico = publico;
-        pergunta.Segmento = publico == PublicoPergunta.Clientes ? SegmentoPergunta.Todos : segmento;
-        pergunta.PlanoAlvo = publico == PublicoPergunta.Clientes ? null : planoAlvo;
+        pergunta.TipoResposta = v.TipoResposta;
+        pergunta.OpcoesJson = v.OpcoesJson;
+        pergunta.Publico = v.Publico;
+        pergunta.Segmento = v.Publico == PublicoPergunta.Clientes ? SegmentoPergunta.Todos : v.Segmento;
+        pergunta.PlanoAlvo = v.Publico == PublicoPergunta.Clientes ? null : v.PlanoAlvo;
+        pergunta.GrupoId = v.Publico == PublicoPergunta.Clientes ? null : v.GrupoId;
         pergunta.Ativa = dto.Ativa;
         pergunta.Ordem = dto.Ordem;
         pergunta.AtualizadoEm = DateTime.UtcNow;
@@ -93,7 +100,10 @@ public class SuperAdminPerguntasController : ControllerBase
         await _context.SaveChangesAsync(ct);
 
         var total = await _context.RespostasPerguntas.CountAsync(r => r.PerguntaId == id, ct);
-        return Ok(ToDto(pergunta, total));
+        var grupoNome = pergunta.GrupoId.HasValue
+            ? await _context.GruposPergunta.Where(g => g.Id == pergunta.GrupoId).Select(g => g.Nome).FirstOrDefaultAsync(ct)
+            : null;
+        return Ok(ToDto(pergunta, total, grupoNome));
     }
 
     [HttpDelete("{id:guid}")]
@@ -158,7 +168,7 @@ public class SuperAdminPerguntasController : ControllerBase
             return new RespostaAdminDto(
                 r.Id, nome, email, r.RespondenteTipo.ToString(),
                 tenants.GetValueOrDefault(r.TenantId, "—"),
-                r.RespostaTexto, r.OpcaoEscolhida, r.RespondidoEm);
+                r.RespostaTexto, r.OpcaoEscolhida, ParseOpcoes(r.OpcoesEscolhidasJson), r.RespondidoEm);
         }).ToList();
 
         var contagens = new List<OpcaoContagemDto>();
@@ -171,49 +181,88 @@ public class SuperAdminPerguntasController : ControllerBase
                 .OrderByDescending(c => c.Total)
                 .ToList();
         }
+        else if (pergunta.TipoResposta == TipoRespostaPergunta.EscolhaMultipla)
+        {
+            contagens = respostas
+                .SelectMany(r => ParseOpcoes(r.OpcoesEscolhidasJson))
+                .GroupBy(o => o)
+                .Select(g => new OpcaoContagemDto(g.Key, g.Count()))
+                .OrderByDescending(c => c.Total)
+                .ToList();
+        }
 
-        return Ok(new PerguntaComRespostasDto(ToDto(pergunta, respostas.Count), contagens, respostasDto));
+        var grupoNome = pergunta.GrupoId.HasValue
+            ? await _context.GruposPergunta.Where(g => g.Id == pergunta.GrupoId).Select(g => g.Nome).FirstOrDefaultAsync(ct)
+            : null;
+        return Ok(new PerguntaComRespostasDto(ToDto(pergunta, respostas.Count, grupoNome), contagens, respostasDto));
     }
 
-    private static string? Validar(
-        SalvarPerguntaDto dto,
-        out TipoRespostaPergunta tipoResposta,
-        out PublicoPergunta publico,
-        out SegmentoPergunta segmento,
-        out PlanoTipo? planoAlvo,
-        out string? opcoesJson)
+    // Async não pode ter parâmetros `out` (CS1988) — os campos parseados voltam num
+    // record em vez de out params, mas a checagem de erro no chamador continua igual
+    // (`if (resultado.Erro != null) ...`).
+    private record ValidacaoPergunta(
+        string? Erro,
+        TipoRespostaPergunta TipoResposta,
+        PublicoPergunta Publico,
+        SegmentoPergunta Segmento,
+        PlanoTipo? PlanoAlvo,
+        Guid? GrupoId,
+        string? OpcoesJson);
+
+    private async Task<ValidacaoPergunta> ValidarAsync(SalvarPerguntaDto dto, CancellationToken ct)
     {
-        tipoResposta = default;
-        publico = default;
-        segmento = default;
-        planoAlvo = null;
-        opcoesJson = null;
+        if (string.IsNullOrWhiteSpace(dto.Texto))
+            return new ValidacaoPergunta("Informe o texto da pergunta.", default, default, default, null, null, null);
+        if (!Enum.TryParse<TipoRespostaPergunta>(dto.TipoResposta, out var tipoResposta))
+            return new ValidacaoPergunta("Tipo de resposta inválido.", default, default, default, null, null, null);
+        if (!Enum.TryParse<PublicoPergunta>(dto.Publico, out var publico))
+            return new ValidacaoPergunta("Público-alvo inválido.", default, default, default, null, null, null);
+        if (!Enum.TryParse<SegmentoPergunta>(dto.Segmento, out var segmento))
+            return new ValidacaoPergunta("Segmento inválido.", default, default, default, null, null, null);
 
-        if (string.IsNullOrWhiteSpace(dto.Texto)) return "Informe o texto da pergunta.";
-        if (!Enum.TryParse(dto.TipoResposta, out tipoResposta)) return "Tipo de resposta inválido.";
-        if (!Enum.TryParse(dto.Publico, out publico)) return "Público-alvo inválido.";
-        if (!Enum.TryParse(dto.Segmento, out segmento)) return "Segmento inválido.";
-
-        if (tipoResposta == TipoRespostaPergunta.EscolhaUnica)
+        string? opcoesJson = null;
+        if (tipoResposta == TipoRespostaPergunta.EscolhaUnica || tipoResposta == TipoRespostaPergunta.EscolhaMultipla)
         {
             var opcoes = (dto.Opcoes ?? []).Select(o => o.Trim()).Where(o => o.Length > 0).Distinct().ToList();
-            if (opcoes.Count < 2) return "Cadastre ao menos duas opções para perguntas de escolha única.";
+            if (opcoes.Count < 2)
+                return new ValidacaoPergunta("Cadastre ao menos duas opções para perguntas de escolha única ou múltipla.", default, default, default, null, null, null);
             opcoesJson = JsonSerializer.Serialize(opcoes);
         }
 
+        PlanoTipo? planoAlvo = null;
         if (segmento == SegmentoPergunta.PlanoEspecifico)
         {
             if (string.IsNullOrWhiteSpace(dto.PlanoAlvo) || !Enum.TryParse<PlanoTipo>(dto.PlanoAlvo, out var plano))
-                return "Selecione o plano-alvo.";
+                return new ValidacaoPergunta("Selecione o plano-alvo.", default, default, default, null, null, null);
             planoAlvo = plano;
         }
 
-        return null;
+        Guid? grupoId = null;
+        if (segmento == SegmentoPergunta.GrupoEspecifico)
+        {
+            if (!dto.GrupoId.HasValue)
+                return new ValidacaoPergunta("Selecione o grupo de usuários.", default, default, default, null, null, null);
+            if (!await _context.GruposPergunta.AnyAsync(g => g.Id == dto.GrupoId.Value, ct))
+                return new ValidacaoPergunta("Grupo de usuários não encontrado.", default, default, default, null, null, null);
+            grupoId = dto.GrupoId;
+        }
+
+        return new ValidacaoPergunta(null, tipoResposta, publico, segmento, planoAlvo, grupoId, opcoesJson);
     }
 
-    private static PerguntaAdminDto ToDto(Pergunta p, int totalRespostas) => new(
+    private async Task<Dictionary<Guid, string>> GetGruposNomesAsync(List<Pergunta> perguntas, CancellationToken ct)
+    {
+        var grupoIds = perguntas.Where(p => p.GrupoId.HasValue).Select(p => p.GrupoId!.Value).Distinct().ToList();
+        if (grupoIds.Count == 0) return new Dictionary<Guid, string>();
+
+        return await _context.GruposPergunta
+            .Where(g => grupoIds.Contains(g.Id))
+            .ToDictionaryAsync(g => g.Id, g => g.Nome, ct);
+    }
+
+    private static PerguntaAdminDto ToDto(Pergunta p, int totalRespostas, string? grupoNome = null) => new(
         p.Id, p.Texto, p.Descricao, p.TipoResposta.ToString(), ParseOpcoes(p.OpcoesJson),
-        p.Publico.ToString(), p.Segmento.ToString(), p.PlanoAlvo?.ToString(),
+        p.Publico.ToString(), p.Segmento.ToString(), p.PlanoAlvo?.ToString(), p.GrupoId, grupoNome,
         p.Ativa, p.Ordem, p.CriadoEm, totalRespostas);
 
     private static List<string> ParseOpcoes(string? json)
