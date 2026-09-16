@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Respostas</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f9fafb; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; }
+    .selector-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .selector-bar select { padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); min-width: 320px; }
+    .pergunta-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+    .pergunta-texto { font-size: 16px; font-weight: 700; color: var(--color-text); }
+    .pergunta-desc { font-size: 13px; color: var(--color-text-muted); margin-top: 4px; }
+    .pergunta-meta { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .contagens { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .contagem-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .contagem-label { width: 200px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .contagem-bar-track { flex: 1; background: var(--color-bg); border-radius: 999px; height: 10px; overflow: hidden; }
+    .contagem-bar-fill { background: var(--color-primary); height: 100%; border-radius: 999px; }
+    .contagem-total { width: 32px; text-align: right; color: var(--color-text-muted); flex-shrink: 0; }
+    .empty-state { text-align: center; color: var(--color-text-muted); padding: 40px 16px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Respostas</h1>
+        <a href="/superadmin/perguntas.html" class="btn btn-secondary">← Voltar para perguntas</a>
+      </div>
+
+      <div class="selector-bar">
+        <select id="perguntaSelect"></select>
+      </div>
+
+      <div id="conteudo"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const PUBLICO_LABELS = { Advogados: '👨‍💼 Advogados', Clientes: '🧑 Clientes' };
+    const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial' };
+    const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única' };
+
+    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtDateTime(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
+
+    const params = new URLSearchParams(window.location.search);
+    let selectedId = params.get('id');
+
+    async function loadSelector() {
+      const perguntas = await saFetch('/superadmin/perguntas');
+      const select = document.getElementById('perguntaSelect');
+
+      if (perguntas.length === 0) {
+        select.innerHTML = '<option>Nenhuma pergunta cadastrada</option>';
+        select.disabled = true;
+        document.getElementById('conteudo').innerHTML = '<div class="empty-state">Nenhuma pergunta cadastrada ainda.</div>';
+        return;
+      }
+
+      if (!selectedId || !perguntas.some(p => p.id === selectedId)) selectedId = perguntas[0].id;
+
+      select.innerHTML = perguntas.map(p =>
+        `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>${esc(p.texto)} (${p.totalRespostas})</option>`
+      ).join('');
+
+      select.addEventListener('change', () => {
+        selectedId = select.value;
+        history.replaceState(null, '', `?id=${selectedId}`);
+        loadRespostas();
+      });
+    }
+
+    async function loadRespostas() {
+      if (!selectedId) return;
+      const conteudo = document.getElementById('conteudo');
+      conteudo.innerHTML = '<div class="empty-state">Carregando...</div>';
+
+      try {
+        const data = await saFetch(`/superadmin/perguntas/${selectedId}/respostas`);
+        render(data);
+      } catch (e) {
+        conteudo.innerHTML = `<div class="empty-state" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
+      }
+    }
+
+    function render(data) {
+      const { pergunta, contagens, respostas } = data;
+      const maxContagem = Math.max(1, ...contagens.map(c => c.total));
+
+      const contagensHtml = pergunta.tipoResposta === 'EscolhaUnica' && contagens.length > 0 ? `
+        <div class="contagens">
+          ${contagens.map(c => `
+            <div class="contagem-row">
+              <span class="contagem-label" title="${esc(c.opcao)}">${esc(c.opcao)}</span>
+              <div class="contagem-bar-track"><div class="contagem-bar-fill" style="width:${(c.total / maxContagem) * 100}%"></div></div>
+              <span class="contagem-total">${c.total}</span>
+            </div>`).join('')}
+        </div>` : '';
+
+      const tabelaHtml = respostas.length > 0 ? `
+        <div style="overflow-x:auto;margin-top:20px">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Tipo</th>
+                <th>Escritório (tenant)</th>
+                <th>Resposta</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${respostas.map(r => `
+                <tr>
+                  <td style="font-weight:500">${esc(r.respondenteNome)}</td>
+                  <td>${r.respondenteEmail ? `<a href="mailto:${esc(r.respondenteEmail)}" style="color:var(--color-primary)">${esc(r.respondenteEmail)}</a>` : '—'}</td>
+                  <td><span class="badge ${r.respondenteTipo === 'Cliente' ? 'badge-gray' : 'badge-blue'}">${r.respondenteTipo === 'Cliente' ? 'Cliente' : 'Advogado'}</span></td>
+                  <td>${esc(r.tenantNome)}</td>
+                  <td>${r.opcaoEscolhida ? esc(r.opcaoEscolhida) : esc(r.respostaTexto ?? '—')}</td>
+                  <td style="color:var(--color-text-muted);white-space:nowrap">${fmtDateTime(r.respondidoEm)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : '<div class="empty-state">Ainda não há respostas para esta pergunta.</div>';
+
+      document.getElementById('conteudo').innerHTML = `
+        <div class="pergunta-card">
+          <div class="pergunta-texto">${esc(pergunta.texto)}</div>
+          ${pergunta.descricao ? `<div class="pergunta-desc">${esc(pergunta.descricao)}</div>` : ''}
+          <div class="pergunta-meta">
+            <span class="badge badge-blue">${PUBLICO_LABELS[pergunta.publico] ?? esc(pergunta.publico)}</span>
+            <span class="badge badge-gray">${pergunta.segmento === 'PlanoEspecifico' && pergunta.planoAlvo ? `Plano ${esc(pergunta.planoAlvo)}` : (SEGMENTO_LABELS[pergunta.segmento] ?? esc(pergunta.segmento))}</span>
+            <span class="badge badge-gray">${TIPO_LABELS[pergunta.tipoResposta] ?? esc(pergunta.tipoResposta)}</span>
+            <span class="badge ${pergunta.ativa ? 'badge-blue' : 'badge-gray'}">${pergunta.ativa ? 'Ativa' : 'Inativa'}</span>
+          </div>
+          ${contagensHtml}
+        </div>
+        ${tabelaHtml}
+      `;
+    }
+
+    await loadSelector();
+    await loadRespostas();
+  </script>
+</body>
+</html>

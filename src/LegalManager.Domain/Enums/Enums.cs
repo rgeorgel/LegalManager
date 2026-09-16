@@ -77,6 +77,19 @@ public enum StatusParcelaHonorario { Pendente = 1, Pago = 2, Vencido = 3, Cancel
 
 public enum EventoContratoHonorario { Criado = 1, Alterado = 2, ParcelaPaga = 3, ParcelaCancelada = 4, Suspenso = 5, Reativado = 6, Distratado = 7, Renegociado = 8 }
 
+// Pesquisa de interesse/satisfação (perguntas cadastradas pelo super admin, mostradas
+// aos usuários no login e no menu flutuante enquanto não respondidas).
+public enum PublicoPergunta { Advogados, Clientes }
+
+// Segmentação por plano — só se aplica a perguntas com Publico == Advogados; para
+// Clientes a pergunta sempre alcança todos os clientes (plano é do escritório, não do
+// cliente que acessa o portal).
+public enum SegmentoPergunta { Todos, PlanoEspecifico, Pagantes, EmTrial }
+
+public enum TipoRespostaPergunta { Texto, EscolhaUnica }
+
+public enum TipoRespondente { Usuario, Cliente }
+
 public static class CategoriaLancamento
 {
     public const string Honorario = "Honorario";

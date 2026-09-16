@@ -1,5 +1,6 @@
 import { getUser, logout, isLoggedIn } from './clienteApi.js';
 import { applyTenantTheme, getStoredTheme } from '/js/theme.js';
+import { injectPerguntasWidget } from './clientePerguntas.js';
 
 export function requireAuth() {
   if (!isLoggedIn()) {
@@ -37,6 +38,10 @@ export function initLayout(activePage) {
   const toggle = document.getElementById('navToggle');
   const links = document.getElementById('navLinks');
   toggle.addEventListener('click', () => links.classList.toggle('open'));
+
+  // Pesquisa de interesse/satisfação — assíncrono; se não houver pergunta
+  // pendente para o cliente, não injeta nada (nem o botão flutuante aparece).
+  injectPerguntasWidget();
 
   return user;
 }

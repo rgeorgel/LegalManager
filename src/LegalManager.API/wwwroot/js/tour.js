@@ -8,6 +8,7 @@
 // getPlano() é reimplementado aqui, igual ao de layout.js.
 import { apiFetch, getUser } from './api.js';
 import { TOURS } from './tours-config.js';
+import { layoutWidgetStack } from './widget-stack.js';
 
 const ACTIVE_KEY = 'tour_active';
 const WAIT_TIMEOUT_MS = 6000;
@@ -418,6 +419,7 @@ export function injectTourWidget() {
     </div>
   `;
   document.body.appendChild(wrap);
+  layoutWidgetStack();
 
   document.getElementById('tourWidgetToggle').addEventListener('click', () => toggleWidget());
   document.getElementById('tourWidgetClose').addEventListener('click', () => toggleWidget(false));
@@ -549,8 +551,10 @@ function injectWidgetStyles() {
   s.id = 'tourWidgetStyles';
   s.textContent = `
     /* ── Widget flutuante "Tutorial" (lateral direita) ── */
-    .tour-widget { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 940; display: flex; align-items: center; }
-    .tour-widget.stacked { transform: translateY(-50%) translateY(130px); }
+    .tour-widget {
+      position: fixed; top: 50%; right: 0; z-index: 940; display: flex; align-items: center;
+      transform: translateY(-50%) translateY(var(--widget-offset, 0px));
+    }
     /* Usa var(--color-sidebar)/var(--color-sidebar-text) em vez de
        --color-primary + #fff: nos temas escuros --color-primary costuma ser
        uma cor viva/clara (ciano, verde neon etc.) pensada para texto SOBRE

@@ -3,6 +3,7 @@
 // avançar o status (Pendente → Em Andamento → Concluída) sem sair da página.
 // Disponível a partir do plano Plus (chamado por initLayout() em layout.js).
 import { apiFetch, getUser } from './api.js';
+import { layoutWidgetStack } from './widget-stack.js';
 
 const OPEN_KEY = 'tarefasWidgetOpen';
 const REFRESH_MS = 120000;
@@ -75,6 +76,7 @@ export function injectTarefasWidget() {
     </div>
   `;
   document.body.appendChild(overlay);
+  layoutWidgetStack();
 
   document.getElementById('twToggle').addEventListener('click', () => toggle());
   document.getElementById('twClose').addEventListener('click', () => toggle(false));
@@ -256,7 +258,10 @@ function injectStyles() {
   const s = document.createElement('style');
   s.id = 'tarefasWidgetStyles';
   s.textContent = `
-    .tw { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 950; display: flex; align-items: center; }
+    .tw {
+      position: fixed; top: 50%; right: 0; z-index: 950; display: flex; align-items: center;
+      transform: translateY(-50%) translateY(var(--widget-offset, 0px));
+    }
     /* Usa o par --color-sidebar/--color-sidebar-text (não --color-primary)
        porque esse é o único par de cores no design system com contraste
        garantido em qualquer tema — inclusive nos temas escuros predefinidos,

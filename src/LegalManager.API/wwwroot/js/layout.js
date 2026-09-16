@@ -3,6 +3,7 @@ import { apiFetch, getImpersonationInfo } from './api.js';
 import { applyTenantTheme, getStoredTheme } from './theme.js';
 import { injectTarefasWidget } from './tarefas-widget.js';
 import { injectTourWidget, resumeTourIfActive } from './tour.js';
+import { injectPerguntasWidget } from './perguntas-widget.js';
 
 const NAV_GROUPS = [
   {
@@ -102,6 +103,12 @@ export function initLayout() {
 
   // Widget flutuante do tutorial guiado — disponível para todos os planos.
   injectTourWidget();
+
+  // Pesquisa de interesse/satisfação — pergunta(s) cadastradas pelo super admin.
+  // Assíncrono (busca as perguntas pendentes no servidor); se não houver nenhuma
+  // pendente para o usuário, não injeta nada (nem o botão flutuante aparece).
+  // Também é responsável por mostrar o modal de boas-vindas uma vez por sessão.
+  injectPerguntasWidget();
 
   // Retoma um tour guiado em andamento (se o passo atual for desta página).
   // Roda por último: pode precisar destacar elementos injetados acima

@@ -60,6 +60,8 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<ConfiguracaoHonorario> ConfiguracoesHonorarios => Set<ConfiguracaoHonorario>();
     public DbSet<HistoricoContratoHonorario> HistoricosContratoHonorario => Set<HistoricoContratoHonorario>();
     public DbSet<CalculoPrazo> CalculosPrazo => Set<CalculoPrazo>();
+    public DbSet<Pergunta> Perguntas => Set<Pergunta>();
+    public DbSet<RespostaPergunta> RespostasPerguntas => Set<RespostaPergunta>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
