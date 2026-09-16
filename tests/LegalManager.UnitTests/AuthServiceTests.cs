@@ -996,6 +996,78 @@ var creditoService = CreateCreditoServiceMock();
         var parsed = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
         Assert.DoesNotContain(parsed.Claims, c => c.Type == "impersonadoPorId");
     }
+
+    [Fact]
+    public async Task RefreshTokenAsync_NaoDeveAtualizarUltimoAcessoDoAlvo_QuandoTokenDeImpersonacao()
+    {
+        // Regressão: refresh automático durante uma sessão de impersonation não deve
+        // marcar o usuário impersonado como tendo acessado o sistema agora, pois isso
+        // aparece no dashboard do superadmin como se fosse um acesso real do usuário.
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var user = new Usuario
+        {
+            Id = UserId, TenantId = TenantId, Email = "semultimoacesso@teste.com", UserName = "semultimoacesso@teste.com",
+            Nome = "Sem Ultimo Acesso", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow,
+            UltimoAcessoEm = null
+        };
+        ctx.Users.Add(user);
+
+        var superAdminId = Guid.NewGuid();
+        var superAdmin = new Usuario { Id = superAdminId, TenantId = LegalManager.Domain.TenantConstants.SystemTenantId, Email = "sa2@teste.com", UserName = "sa2@teste.com", Nome = "Super Admin", Perfil = PerfilUsuario.SuperAdmin, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Users.Add(superAdmin);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(), UsuarioId = UserId, Token = "token-impersonado-ultimoacesso",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(30), CriadoEm = DateTime.UtcNow, Revogado = false,
+            ImpersonadoPorId = superAdminId
+        };
+        ctx.RefreshTokens.Add(refreshToken);
+        await ctx.SaveChangesAsync();
+
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
+
+        await service.RefreshTokenAsync("token-impersonado-ultimoacesso");
+
+        var usuarioAtualizado = await ctx.Users.FindAsync(UserId);
+        Assert.Null(usuarioAtualizado!.UltimoAcessoEm);
+    }
+
+    [Fact]
+    public async Task RefreshTokenAsync_DeveAtualizarUltimoAcesso_QuandoTokenNormal()
+    {
+        // Guarda de regressão: refresh de uma sessão normal (não impersonada) deve
+        // continuar contando como último acesso do próprio usuário.
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = TenantId, Nome = "Teste", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        var user = new Usuario
+        {
+            Id = UserId, TenantId = TenantId, Email = "comultimoacesso@teste.com", UserName = "comultimoacesso@teste.com",
+            Nome = "Com Ultimo Acesso", Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow,
+            UltimoAcessoEm = null
+        };
+        ctx.Users.Add(user);
+
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(), UsuarioId = UserId, Token = "token-normal-ultimoacesso",
+            ExpiresAt = DateTime.UtcNow.AddDays(7), CriadoEm = DateTime.UtcNow, Revogado = false
+        };
+        ctx.RefreshTokens.Add(refreshToken);
+        await ctx.SaveChangesAsync();
+
+        var service = new AuthService(CreateUserManagerMock(user).Object, CreateConfig(), CreateEmailServiceMock().Object, CreateCreditoServiceMock().Object, ctx, new Mock<IGoogleTokenValidator>().Object);
+
+        var antes = DateTime.UtcNow;
+        await service.RefreshTokenAsync("token-normal-ultimoacesso");
+
+        var usuarioAtualizado = await ctx.Users.FindAsync(UserId);
+        Assert.NotNull(usuarioAtualizado!.UltimoAcessoEm);
+        Assert.True(usuarioAtualizado.UltimoAcessoEm >= antes);
+    }
 }
 
 public class JwtGenerationTests

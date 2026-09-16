@@ -190,8 +190,6 @@ public class AuthService : IAuthService
         token.Revogado = true;
         _context.RefreshTokens.Update(token);
 
-        token.Usuario.UltimoAcessoEm = DateTime.UtcNow;
-
         var tenant = await _context.Tenants.FindAsync([token.Usuario.TenantId], ct)!;
 
         string? impersonadoPorNome = null;
@@ -201,6 +199,13 @@ public class AuthService : IAuthService
                 .Where(u => u.Id == token.ImpersonadoPorId.Value)
                 .Select(u => u.Nome)
                 .FirstOrDefaultAsync(ct);
+        }
+        else
+        {
+            // Não marcar como acesso real do usuário quando o refresh é de uma
+            // sessão de impersonation (superadmin "como" o usuário) — só refresh
+            // de sessão própria conta como último acesso.
+            token.Usuario.UltimoAcessoEm = DateTime.UtcNow;
         }
 
         return await GerarAuthResponseAsync(token.Usuario, tenant!, ct, token.ImpersonadoPorId, impersonadoPorNome);
