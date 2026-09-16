@@ -30,6 +30,13 @@
     .checkbox-row { display: flex; align-items: center; gap: 8px; }
     .checkbox-row input { width: auto; min-height: auto; }
     .hint { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .filters input, .filters select { padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); }
+    .filters input { flex: 1; min-width: 200px; }
+    .data-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+    .data-table th.sortable:hover { color: var(--color-text); }
+    .sort-arrow { display: inline-block; width: 10px; opacity: .5; }
+    .data-table th.sort-active .sort-arrow { opacity: 1; }
   </style>
 </head>
 <body>
@@ -55,17 +62,34 @@
         Perguntas mostradas aos usuários no login e, enquanto não respondidas, no menu flutuante lateral.
       </p>
 
+      <div class="filters">
+        <input type="text" id="filtroTexto" placeholder="Buscar por texto da pergunta...">
+        <select id="filtroSegmento">
+          <option value="">Todos os segmentos</option>
+          <option value="Todos">Todos os usuários</option>
+          <option value="PlanoEspecifico">Plano específico</option>
+          <option value="Pagantes">Somente pagantes</option>
+          <option value="EmTrial">Somente em trial</option>
+          <option value="GrupoEspecifico">Grupo específico</option>
+        </select>
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="true">Ativa</option>
+          <option value="false">Inativa</option>
+        </select>
+      </div>
+
       <div style="overflow-x:auto">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Pergunta</th>
-              <th>Público</th>
-              <th>Segmento</th>
-              <th>Tipo</th>
-              <th>Respostas</th>
-              <th>Status</th>
-              <th>Ordem</th>
+              <th class="sortable" data-key="texto">Pergunta <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="publico">Público <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="segmento">Segmento <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="tipoResposta">Tipo <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="totalRespostas">Respostas <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="ativa">Status <span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="ordem">Ordem <span class="sort-arrow"></span></th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -191,6 +215,7 @@
     let grupos = [];
     let editingId = null;
     let deletingId = null;
+    let sortState = { key: 'ordem', dir: 'asc' };
 
     const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única', EscolhaMultipla: 'Múltipla escolha' };
     const PUBLICO_LABELS = { Advogados: '👨‍💼 Advogados', Clientes: '🧑 Clientes' };
@@ -220,14 +245,75 @@
       }
     }
 
+    // ── Filtros + ordenação ──────────────────────────────────────────────────
+
+    function filtrarEOrdenar() {
+      const texto = document.getElementById('filtroTexto').value.trim().toLowerCase();
+      const segmento = document.getElementById('filtroSegmento').value;
+      const status = document.getElementById('filtroStatus').value;
+
+      let lista = perguntas.filter(p => {
+        if (texto && !p.texto.toLowerCase().includes(texto) && !(p.descricao ?? '').toLowerCase().includes(texto)) return false;
+        if (segmento && p.segmento !== segmento) return false;
+        if (status && String(p.ativa) !== status) return false;
+        return true;
+      });
+
+      const { key, dir } = sortState;
+      const mult = dir === 'asc' ? 1 : -1;
+      lista = [...lista].sort((a, b) => {
+        let va = a[key];
+        let vb = b[key];
+        if (typeof va === 'string') va = va.toLowerCase();
+        if (typeof vb === 'string') vb = vb.toLowerCase();
+        if (va < vb) return -1 * mult;
+        if (va > vb) return 1 * mult;
+        return 0;
+      });
+
+      return lista;
+    }
+
+    function atualizarIndicadoresSort() {
+      document.querySelectorAll('.data-table th.sortable').forEach(th => {
+        const active = th.dataset.key === sortState.key;
+        th.classList.toggle('sort-active', active);
+        th.querySelector('.sort-arrow').textContent = active ? (sortState.dir === 'asc' ? '▲' : '▼') : '';
+      });
+    }
+
+    document.querySelectorAll('.data-table th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key;
+        if (sortState.key === key) {
+          sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortState = { key, dir: 'asc' };
+        }
+        render();
+      });
+    });
+
+    document.getElementById('filtroTexto').addEventListener('input', render);
+    document.getElementById('filtroSegmento').addEventListener('change', render);
+    document.getElementById('filtroStatus').addEventListener('change', render);
+
     function render() {
+      atualizarIndicadoresSort();
+
       const body = document.getElementById('tableBody');
+      const filtradas = filtrarEOrdenar();
+
       if (perguntas.length === 0) {
         body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhuma pergunta cadastrada ainda.</td></tr>';
         return;
       }
+      if (filtradas.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhuma pergunta corresponde aos filtros.</td></tr>';
+        return;
+      }
 
-      body.innerHTML = perguntas.map(p => {
+      body.innerHTML = filtradas.map(p => {
         const segmentoTexto = p.segmento === 'PlanoEspecifico' && p.planoAlvo
           ? `Plano ${esc(p.planoAlvo)}`
           : p.segmento === 'GrupoEspecifico'

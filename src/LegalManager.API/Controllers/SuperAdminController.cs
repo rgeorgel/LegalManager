@@ -534,7 +534,12 @@ public class SuperAdminController(
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(u => u.Nome.Contains(search) || (u.Email != null && u.Email.Contains(search)));
+        {
+            // ILIKE em vez de Contains: Contains vira LIKE binário no Postgres (case-sensitive
+            // por padrão), então buscar "ricardo" não encontrava "Ricardo".
+            var termo = $"%{search}%";
+            query = query.Where(u => EF.Functions.ILike(u.Nome, termo) || (u.Email != null && EF.Functions.ILike(u.Email, termo)));
+        }
 
         if (tenantId.HasValue)
             query = query.Where(u => u.TenantId == tenantId.Value);
