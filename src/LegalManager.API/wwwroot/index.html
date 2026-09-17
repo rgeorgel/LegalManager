@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <!-- Traffic redirect: Facebook / Instagram campaigns → lp-facebook.html -->
+  <!-- Traffic redirect: Facebook / Instagram / LinkedIn campaigns → lp-facebook.html / lp-linkedin.html -->
   <script>
     (function () {
       try {
@@ -16,11 +16,29 @@
         var utmSource = (params.get('utm_source') || '').toLowerCase();
         var utmMedium = (params.get('utm_medium') || '').toLowerCase();
         var hasFbclid = params.has('fbclid') || params.has('igclid');
+        var hasLiFatId = params.has('li_fat_id');
 
         var referrer = '';
         try { referrer = document.referrer.toLowerCase(); } catch (e) {}
         var selfOrigin = (location.origin || '').toLowerCase();
         var isExternal = referrer && selfOrigin && referrer.indexOf(selfOrigin) !== 0;
+
+        // LinkedIn checked first: it also uses utm_medium=paid_social/cpc,
+        // which would otherwise fall through to the generic social fallback below.
+        var linkedInHosts = ['linkedin.com', 'lnkd.in'];
+        var fromLinkedInReferrer = false;
+        if (isExternal) {
+          for (var j = 0; j < linkedInHosts.length; j++) {
+            if (referrer.indexOf(linkedInHosts[j]) !== -1) { fromLinkedInReferrer = true; break; }
+          }
+        }
+        var linkedInSources = ['linkedin', 'li', 'linkedin_ads'];
+        var fromLinkedInUtm = linkedInSources.indexOf(utmSource) !== -1;
+
+        if (fromLinkedInReferrer || hasLiFatId || fromLinkedInUtm) {
+          location.replace('/lp-linkedin.html' + location.search + location.hash);
+          return;
+        }
 
         var socialHosts = ['facebook.com', 'instagram.com', 'fb.com', 'fb.me', 'meta.com'];
         var fromSocialReferrer = false;
