@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Causify — LinkedIn Ads</title>
+<style>
+  :root{
+    --navy:#0f172a;
+    --navy-800:#1e293b;
+    --gold:#f59e0b;
+    --gold-soft:#fcd34d;
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       display:flex;flex-direction:column;align-items:center;gap:32px;padding:32px}
+
+  .ad{
+    position:relative;width:1200px;height:627px;overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 90% at 88% 40%, rgba(245,158,11,.20) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 0% 100%, rgba(30,41,59,.9) 0%, transparent 60%),
+      linear-gradient(135deg,#0f172a 0%,#131f38 55%,#0b1222 100%);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  /* fio de ouro no topo */
+  .ad::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;
+    background:linear-gradient(90deg,#A8721A,var(--gold),var(--gold-soft),#A8721A)}
+
+  /* textura sutil de grade */
+  .grid{position:absolute;inset:0;opacity:.055;
+    background-image:linear-gradient(rgba(255,255,255,.7) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.7) 1px,transparent 1px);
+    background-size:44px 44px}
+
+  .copy{position:absolute;left:64px;top:56px;width:478px;z-index:3}
+
+  /* wordmark */
+  .brand{display:inline-flex;align-items:center;gap:10px;margin-bottom:26px}
+  .brand .bk{color:#A8721A;font-size:34px;line-height:1;font-weight:300}
+  .brand .wm{display:flex;flex-direction:column;align-items:center}
+  .brand .name{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:31px;
+    letter-spacing:1px;color:#fff;line-height:1}
+  .brand .rule{width:100%;height:1px;background:#A8721A;margin:5px 0 4px}
+  .brand .tag{font-size:7px;letter-spacing:3.1px;color:#d4a14a;white-space:nowrap}
+
+  .eyebrow{display:inline-block;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.38);
+    color:var(--gold-soft);font-size:13px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;
+    padding:7px 15px;border-radius:999px;margin-bottom:22px}
+
+  h1{font-size:45px;line-height:1.08;letter-spacing:-.025em;font-weight:800;color:#fff}
+  h1 .hl{color:var(--gold)}
+  h1 .u{background:linear-gradient(transparent 68%,rgba(245,158,11,.35) 68%)}
+
+  .sub{margin-top:18px;font-size:18px;line-height:1.5;color:#b8c4d6;max-width:450px}
+
+  .bullets{margin-top:22px;display:flex;flex-direction:column;gap:9px}
+  .bullets li{list-style:none;font-size:17px;color:#cbd5e1;display:flex;align-items:center;gap:10px}
+  .bullets .ck{color:#34d399;font-weight:900;font-size:15px}
+
+  .cta{position:absolute;left:64px;bottom:52px;display:flex;align-items:center;gap:18px;z-index:3}
+  .cta .btn{background:linear-gradient(135deg,var(--gold),#d97706);color:#1a1205;font-weight:800;
+    font-size:18px;padding:14px 26px;border-radius:10px;box-shadow:0 10px 26px rgba(245,158,11,.32)}
+  .cta .note{font-size:14px;color:var(--muted);line-height:1.35}
+  .cta .note b{color:#cbd5e1;font-weight:700}
+
+  /* moldura do screenshot */
+  .shot{position:absolute;z-index:2;border-radius:14px;overflow:hidden;background:#f8fafc;
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 44px 90px rgba(0,0,0,.62), 0 0 0 1px rgba(255,255,255,.05) inset}
+  .shot img{position:absolute;display:block;max-width:none}
+  .shot .bar{position:absolute;top:0;left:0;right:0;height:26px;background:#0f172a;z-index:2;
+    display:flex;align-items:center;gap:6px;padding-left:12px}
+  .shot .bar i{width:8px;height:8px;border-radius:50%;background:#475569;display:block}
+  .shot .clip{position:absolute;inset:26px 0 0 0;overflow:hidden;background:#f8fafc}
+  /* brilho de vidro */
+  .shot::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:linear-gradient(115deg,rgba(255,255,255,.16) 0%,transparent 34%)}
+
+  /* selo/metrica flutuante */
+  .chip{position:absolute;z-index:4;background:rgba(15,23,42,.94);border:1px solid rgba(245,158,11,.45);
+    border-radius:12px;padding:12px 16px;box-shadow:0 18px 40px rgba(0,0,0,.55)}
+  .chip .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
+  .chip .v{font-size:23px;font-weight:800;color:#fff;margin-top:3px;line-height:1}
+  .chip .s{font-size:11px;color:var(--muted);margin-top:3px}
+
+  /* ---------- AD 1 — Honorários ---------- */
+  #ad1 .shot{right:-30px;top:64px;width:592px;height:500px;transform:rotate(-1.6deg)}
+  #ad1 .shot img{width:741px;left:-138px;top:-77px}
+
+  /* ---------- AD 2 — Tarefas / Kanban ---------- */
+  #ad2 .shot{right:-58px;top:100px;width:640px;height:418px;transform:rotate(1.4deg)}
+  #ad2 .shot img{width:1160px;left:-500px;top:-226px}
+
+  /* ---------- AD 3 — Calculadora ---------- */
+  #ad3 .shot{right:-34px;top:58px;width:620px;height:516px;transform:rotate(-1.6deg)}
+  #ad3 .shot img{width:1385px;left:-806px;top:-299px}
+</style>
+</head>
+<body>
+
+<!-- ============ AD 1 — HONORÁRIOS & CONTRATOS ============ -->
+<div class="ad" id="ad1">
+  <div class="grid"></div>
+  <div class="copy">
+    <div class="brand">
+      <span class="bk">&#91;</span>
+      <span class="wm">
+        <span class="name">Causify</span>
+        <span class="rule"></span>
+        <span class="tag">GESTÃO JURÍDICA INTELIGENTE</span>
+      </span>
+      <span class="bk">&#93;</span>
+    </div>
+    <div class="eyebrow">Honorários &amp; Contratos</div>
+    <h1>Quanto o seu escritório <span class="hl">tem a receber</span> hoje?</h1>
+    <p class="sub">Contratos, parcelas, atrasos e meta mensal em um só painel — atualizado sozinho, sem planilha.</p>
+  </div>
+  <div class="cta">
+    <span class="btn">Testar grátis →</span>
+    <span class="note"><b>causify.com.br</b><br>Sem cartão de crédito</span>
+  </div>
+  <div class="shot">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="clip"><img src="src/honorarios.png" alt="Honorários Contratos"></div>
+  </div>
+</div>
+
+<!-- ============ AD 2 — TAREFAS / PRAZOS ============ -->
+<div class="ad" id="ad2">
+  <div class="grid"></div>
+  <div class="copy">
+    <div class="brand">
+      <span class="bk">&#91;</span>
+      <span class="wm">
+        <span class="name">Causify</span>
+        <span class="rule"></span>
+        <span class="tag">GESTÃO JURÍDICA INTELIGENTE</span>
+      </span>
+      <span class="bk">&#93;</span>
+    </div>
+    <div class="eyebrow">Tarefas &amp; Prazos</div>
+    <h1>O prazo não<br>depende mais<br><span class="hl u">da sua memória.</span></h1>
+    <ul class="bullets">
+      <li><span class="ck">✓</span> Kanban por status e prioridade</li>
+      <li><span class="ck">✓</span> Prazo vinculado ao processo e ao responsável</li>
+      <li><span class="ck">✓</span> Alertas de tarefa atrasada</li>
+    </ul>
+  </div>
+  <div class="cta">
+    <span class="btn">Organizar meu escritório →</span>
+    <span class="note"><b>causify.com.br</b><br>Plano grátis disponível</span>
+  </div>
+  <div class="shot">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="clip"><img src="src/tarefas-kanban.png" alt="Kanban de tarefas"></div>
+  </div>
+</div>
+
+<!-- ============ AD 3 — CALCULADORA DE HONORÁRIOS ============ -->
+<div class="ad" id="ad3">
+  <div class="grid"></div>
+  <div class="copy">
+    <div class="brand">
+      <span class="bk">&#91;</span>
+      <span class="wm">
+        <span class="name">Causify</span>
+        <span class="rule"></span>
+        <span class="tag">GESTÃO JURÍDICA INTELIGENTE</span>
+      </span>
+      <span class="bk">&#93;</span>
+    </div>
+    <div class="eyebrow">Calculadora de Honorários</div>
+    <h1>Pare de <span class="hl">chutar</span> o valor dos seus honorários.</h1>
+    <p class="sub">Tabela <b>OAB/SP 2026</b> + complexidade, risco, urgência e êxito. Proposta pronta em segundos.</p>
+  </div>
+  <div class="cta">
+    <span class="btn">Calcular agora →</span>
+    <span class="note"><b>causify.com.br</b><br>CAASP · ESA · PREV</span>
+  </div>
+  <div class="shot">
+    <div class="bar"><i></i><i></i><i></i></div>
+    <div class="clip"><img src="src/calculadora.png" alt="Calculadora de honorários"></div>
+  </div>
+</div>
+
+</body>
+</html>
