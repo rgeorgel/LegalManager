@@ -265,7 +265,7 @@
         </div>
         <div class="form-group">
           <label for="voucher">Código promocional <span style="color:var(--color-text-muted)">(opcional)</span></label>
-          <input type="text" id="voucher" class="form-control" placeholder="Ex: primeiros50" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.05em">
+          <input type="text" id="voucher" class="form-control" placeholder="Ex: primeiros20" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.05em">
           <div id="voucherBanner" style="display:none;margin-top:0.5rem;padding:0.6rem 0.875rem;border-radius:8px;font-size:0.8rem;font-weight:600"></div>
         </div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:0.25rem">
@@ -366,14 +366,14 @@
     const voucherBanner = document.getElementById('voucherBanner');
     const planSelector = document.querySelector('.plan-selector');
 
-    const VOUCHER_PRIMEIROS50 = 'primeiros50';
+    const VOUCHER_PRIMEIROS20 = 'primeiros20';
 
     function applyVoucherUI(code) {
-      if (code.toLowerCase() === VOUCHER_PRIMEIROS50) {
+      if (code.toLowerCase() === VOUCHER_PRIMEIROS20) {
         selectPlan('3'); // força Plus
         planSelector.style.pointerEvents = 'none';
         planSelector.style.opacity = '0.5';
-        voucherBanner.textContent = '3 meses do plano Plus gratuito — aproveite!';
+        voucherBanner.textContent = '30 dias do plano Plus gratuito — aproveite!';
         voucherBanner.style.color = '#16a34a';
         voucherBanner.style.borderColor = 'rgba(22,163,74,0.4)';
         voucherBanner.style.background = 'rgba(22,163,74,0.08)';
