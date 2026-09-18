@@ -80,6 +80,7 @@
         loginWithGoogle(response.credential, getAttributionPayload()).then(function () {
           track('lp_signup_success', { plano: 'google' });
           if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_D_google' });
+          try { if (typeof window.lintrk === 'function') window.lintrk('track', { conversion_id: 28925116 }); } catch (e) {}
           window.location.href = '/pages/dashboard.html';
         }).catch(function (err) {
           showMsg((err && err.message) || 'Não foi possível entrar com o Google.', 'err');
@@ -724,6 +725,7 @@
       });
       track('lp_signup_success', { plano });
       if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_D_' + plano });
+      try { if (typeof window.lintrk === 'function') window.lintrk('track', { conversion_id: 28925116 }); } catch (e) {}
       window.location.href = '/pages/dashboard.html';
     } catch (err) {
       showMsg(err.message || 'Erro ao criar conta. Tente novamente.', 'err');
