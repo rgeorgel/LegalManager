@@ -130,11 +130,7 @@ function ensureModalDom() {
 
   overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
   document.getElementById('pwModalClose').addEventListener('click', closeModal);
-  document.getElementById('pwModalSkip').addEventListener('click', () => {
-    modalIndex += 1;
-    if (modalIndex >= cache.length) { closeModal(); return; }
-    renderModalStep();
-  });
+  document.getElementById('pwModalSkip').addEventListener('click', () => closeModal());
   document.getElementById('pwModalSend').addEventListener('click', () => submitCard(currentModalPergunta()?.id, true));
 }
 
