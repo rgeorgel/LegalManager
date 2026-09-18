@@ -373,6 +373,26 @@
     .form-msg.ok { display: block; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
     .form-msg.err { display: block; background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
 
+    .signup-google {
+      display: flex;
+      justify-content: center;
+    }
+    .signup-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1rem 0;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+    .signup-divider::before,
+    .signup-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
     .terms {
       display: flex; align-items: flex-start; gap: 0.5rem;
       margin: 0.85rem 0 0.5rem;
@@ -443,7 +463,7 @@
         <h2 id="signup-title">Comece em 1 minuto</h2>
         <p class="sub">Preencha seus dados para acessar agora.</p>
 
-        <div style="display:flex; justify-content:center;">
+        <div class="signup-google">
           <div id="g_id_onload"
                data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
                data-callback="handleGoogleCredential"
@@ -460,16 +480,12 @@
           </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:12px; margin:1rem 0; color:var(--text-muted); font-size:0.78rem;">
-          <div style="flex:1; height:1px; background:var(--border);"></div>
-          ou preencha os dados
-          <div style="flex:1; height:1px; background:var(--border);"></div>
-        </div>
+        <div class="signup-divider" aria-hidden="true"><span>ou preencha os dados</span></div>
 
         <form id="signupForm" novalidate>
           <div class="selected-plan-pill" aria-live="polite">
             <span class="lbl">Plano:</span>
-            <span class="name" id="selectedPlanName">Plus — R$ 20/mês</span>
+            <span class="name" id="selectedPlanName">Free — R$ 0/mês</span>
             <span class="change" onclick="document.getElementById('plans-title').scrollIntoView({behavior:'smooth'})">trocar</span>
           </div>
 
@@ -514,8 +530,8 @@
 
       <div class="plans" role="radiogroup" aria-label="Planos disponíveis">
 
-        <label class="plan" data-plan-value="0">
-          <input type="radio" name="plano" value="0">
+        <label class="plan selected" data-plan-value="0">
+          <input type="radio" name="plano" value="0" checked>
           <div class="plan-name">Free</div>
           <div class="plan-price">
             <span class="cur">R$</span>
@@ -531,9 +547,9 @@
           </ul>
         </label>
 
-        <label class="plan popular selected" data-plan-value="3">
+        <label class="plan popular" data-plan-value="3">
           <div class="plan-badge">Mais popular</div>
-          <input type="radio" name="plano" value="3" checked>
+          <input type="radio" name="plano" value="3">
           <div class="plan-name">Plus</div>
           <div class="plan-price">
             <span class="cur">R$</span>
@@ -569,8 +585,8 @@
       </div>
 
       <div class="plan-dots" id="planDots" aria-hidden="true">
-        <span class="dot"></span>
         <span class="dot active"></span>
+        <span class="dot"></span>
         <span class="dot"></span>
       </div>
     </section>
