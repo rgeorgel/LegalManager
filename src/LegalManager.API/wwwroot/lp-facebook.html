@@ -56,6 +56,8 @@
 
   <title>Criar conta no Causify — Free, Plus ou Pro</title>
 
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     :root {
       --navy: #0f172a;
@@ -409,6 +411,29 @@
         <h2 id="signup-title">Comece em 1 minuto</h2>
         <p class="sub">Preencha seus dados para acessar agora.</p>
 
+        <div style="display:flex; justify-content:center;">
+          <div id="g_id_onload"
+               data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
+               data-callback="handleGoogleCredential"
+               data-auto_prompt="false">
+          </div>
+          <div class="g_id_signin"
+               data-type="standard"
+               data-shape="rectangular"
+               data-theme="filled_black"
+               data-text="signup_with"
+               data-size="large"
+               data-width="336"
+               data-locale="pt-BR">
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; margin:1rem 0; color:var(--text-muted); font-size:0.78rem;">
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+          ou preencha os dados
+          <div style="flex:1; height:1px; background:var(--border);"></div>
+        </div>
+
         <form id="signupForm" novalidate>
           <div class="selected-plan-pill" aria-live="polite">
             <span class="lbl">Plano:</span>
@@ -533,7 +558,7 @@
   </footer>
 
 <script type="module">
-  import { register } from '/js/auth.js';
+  import { register, loginWithGoogle } from '/js/auth.js';
   import { getAttributionPayload } from '/js/utm.js';
 
   const LP_VARIANT = 'C';
@@ -661,6 +686,24 @@
       track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
     }
   });
+
+  // Chamado pelo Google Identity Services (data-callback em #g_id_onload) com o ID token do usuário.
+  // Cria conta nova (plano Free + trial de boas-vindas) se o e-mail ainda não existir, ou só loga
+  // quem já tem conta — mesmo endpoint usado pelo botão do Google no register.html/login.html.
+  window.handleGoogleCredential = async (response) => {
+    msgEl.className = 'form-msg';
+    track('lp_signup_submit', { plano: 'google' });
+    try {
+      await loginWithGoogle(response.credential, getAttributionPayload());
+      track('lp_signup_success', { plano: 'google' });
+      if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_C_google' });
+      if (typeof fbq === 'function') fbq('track', 'CompleteRegistration');
+      window.location.href = '/pages/dashboard.html';
+    } catch (err) {
+      showMsg(err.message || 'Não foi possível entrar com o Google.', 'err');
+      track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
+    }
+  };
 </script>
 
 </body>
