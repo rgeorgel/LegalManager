@@ -56,6 +56,39 @@
 
   <title>Criar conta no Causify — Free, Plus ou Pro</title>
 
+  <script>
+    // Definido de forma síncrona (fora do <script type="module"> no fim da página) porque o
+    // script do GSI abaixo é async e pode escanear #g_id_onload/data-callback antes do módulo
+    // rodar — se window.handleGoogleCredential ainda não existir nesse momento, o GSI ignora a
+    // configuração ("[GSI_LOGGER]: The value of 'callback' is not a function").
+    window.handleGoogleCredential = function (response) {
+      Promise.all([import('/js/auth.js'), import('/js/utm.js')]).then(function (mods) {
+        var loginWithGoogle = mods[0].loginWithGoogle;
+        var getAttributionPayload = mods[1].getAttributionPayload;
+        var msgEl = document.getElementById('formMsg');
+        function showMsg(text, type) {
+          if (!msgEl) return;
+          msgEl.textContent = text;
+          msgEl.className = 'form-msg ' + type;
+        }
+        function track(event, params) {
+          try { if (typeof gtag === 'function') gtag('event', event, Object.assign({ lp_variant: 'C' }, params || {})); } catch (e) {}
+          try { if (typeof fbq === 'function') fbq('trackCustom', event, Object.assign({ lp_variant: 'C' }, params || {})); } catch (e) {}
+        }
+        if (msgEl) msgEl.className = 'form-msg';
+        track('lp_signup_submit', { plano: 'google' });
+        loginWithGoogle(response.credential, getAttributionPayload()).then(function () {
+          track('lp_signup_success', { plano: 'google' });
+          if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_C_google' });
+          if (typeof fbq === 'function') fbq('track', 'CompleteRegistration');
+          window.location.href = '/pages/dashboard.html';
+        }).catch(function (err) {
+          showMsg((err && err.message) || 'Não foi possível entrar com o Google.', 'err');
+          track('lp_signup_error', { message: String((err && err.message) || '').slice(0, 80) });
+        });
+      });
+    };
+  </script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -558,7 +591,7 @@
   </footer>
 
 <script type="module">
-  import { register, loginWithGoogle } from '/js/auth.js';
+  import { register } from '/js/auth.js';
   import { getAttributionPayload } from '/js/utm.js';
 
   const LP_VARIANT = 'C';
@@ -686,24 +719,6 @@
       track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
     }
   });
-
-  // Chamado pelo Google Identity Services (data-callback em #g_id_onload) com o ID token do usuário.
-  // Cria conta nova (plano Free + trial de boas-vindas) se o e-mail ainda não existir, ou só loga
-  // quem já tem conta — mesmo endpoint usado pelo botão do Google no register.html/login.html.
-  window.handleGoogleCredential = async (response) => {
-    msgEl.className = 'form-msg';
-    track('lp_signup_submit', { plano: 'google' });
-    try {
-      await loginWithGoogle(response.credential, getAttributionPayload());
-      track('lp_signup_success', { plano: 'google' });
-      if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_C_google' });
-      if (typeof fbq === 'function') fbq('track', 'CompleteRegistration');
-      window.location.href = '/pages/dashboard.html';
-    } catch (err) {
-      showMsg(err.message || 'Não foi possível entrar com o Google.', 'err');
-      track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
-    }
-  };
 </script>
 
 </body>
