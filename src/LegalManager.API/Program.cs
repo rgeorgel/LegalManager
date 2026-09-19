@@ -418,7 +418,7 @@ app.Use(async (ctx, next) =>
     ctx.Response.Headers["X-XSS-Protection"] = "0";
     ctx.Response.Headers["Content-Security-Policy"] =
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net https://accounts.google.com https://snap.licdn.com; " +
+        "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net https://accounts.google.com https://snap.licdn.com https://*.i.posthog.com; " +
         "style-src 'self' 'unsafe-inline' https://client.crisp.chat https://accounts.google.com; " +
         "img-src 'self' data: https:; " +
         "font-src 'self' data: https://client.crisp.chat; " +

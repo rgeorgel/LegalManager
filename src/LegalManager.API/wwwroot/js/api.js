@@ -1,3 +1,5 @@
+import { identifyUser, resetIdentity, trackApiCall } from './analytics.js';
+
 const API_BASE = '/api';
 
 function getToken() {
@@ -13,6 +15,13 @@ export function setSession(data) {
   } else if (data.perfil && data.perfil.tema !== undefined) {
     sessionStorage.setItem('tenant_theme', JSON.stringify(data.perfil.tema));
   }
+  identifyUser(data.usuario?.id, {
+    email: data.usuario?.email,
+    nome: data.usuario?.nome,
+    perfil: data.usuario?.perfil,
+    tenantId: data.usuario?.tenantId,
+    app_area: 'admin',
+  });
 }
 
 export function clearSession() {
@@ -20,6 +29,7 @@ export function clearSession() {
   sessionStorage.removeItem('refresh_token');
   sessionStorage.removeItem('user');
   sessionStorage.removeItem('tenant_theme');
+  resetIdentity();
 }
 
 export function getUser() {
@@ -83,6 +93,7 @@ async function refreshTokenIfNeeded() {
 }
 
 export async function apiFetch(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -137,28 +148,39 @@ export async function apiFetch(path, options = {}) {
             : `HTTP ${res.status}`;
       errorMsg = hint;
     }
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    trackApiCall('api', method, path, { ok: false, error: err, status: res.status });
+    throw err;
   }
 
-  if (res.status === 204) return null;
+  if (res.status === 204) {
+    trackApiCall('api', method, path, { ok: true });
+    return null;
+  }
 
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     const text = await res.text();
-    throw new Error(
+    const err = new Error(
       `Resposta não-JSON do endpoint ${path} (Content-Type: ${contentType || 'vazio'}). ` +
       `Provavelmente o endpoint não existe e o servidor retornou a página padrão. ` +
       `Conteúdo recebido: ${text.substring(0, 120)}`
     );
+    trackApiCall('api', method, path, { ok: false, error: err, status: res.status });
+    throw err;
   }
 
   try {
-    return await res.json();
+    const json = await res.json();
+    trackApiCall('api', method, path, { ok: true });
+    return json;
   } catch (e) {
     const text = await res.text();
-    throw new Error(
+    const err = new Error(
       `Falha ao parsear JSON do endpoint ${path}: ${e.message}. ` +
       `Conteúdo recebido: ${text.substring(0, 120)}`
     );
+    trackApiCall('api', method, path, { ok: false, error: err, status: res.status });
+    throw err;
   }
 }

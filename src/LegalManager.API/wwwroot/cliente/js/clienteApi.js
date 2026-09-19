@@ -1,3 +1,5 @@
+import { identifyUser, resetIdentity, trackApiCall, trackEvent } from '/js/analytics.js';
+
 const API_BASE = '/api/portal';
 const TOKEN_KEY = 'cliente_token';
 const USER_KEY = 'cliente_user';
@@ -13,12 +15,18 @@ export function setSession(data) {
   if (data.perfil && data.perfil.tema !== undefined) {
     sessionStorage.setItem(THEME_KEY, JSON.stringify(data.perfil.tema));
   }
+  identifyUser(data.perfil?.acessoId, {
+    email: data.perfil?.email,
+    nome: data.perfil?.nome,
+    app_area: 'portal_cliente',
+  });
 }
 
 export function clearSession() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);
   sessionStorage.removeItem(THEME_KEY);
+  resetIdentity();
 }
 
 export function getUser() {
@@ -31,6 +39,7 @@ export function isLoggedIn() {
 }
 
 export async function clienteApiFetch(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -52,11 +61,18 @@ export async function clienteApiFetch(path, options = {}) {
       const body = await res.json();
       errorMsg = body.message || body.title || errorMsg;
     } catch {}
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    trackApiCall('portal_api', method, path, { ok: false, error: err, status: res.status });
+    throw err;
   }
 
-  if (res.status === 204) return null;
-  return res.json();
+  if (res.status === 204) {
+    trackApiCall('portal_api', method, path, { ok: true });
+    return null;
+  }
+  const json = await res.json();
+  trackApiCall('portal_api', method, path, { ok: true });
+  return json;
 }
 
 export async function login(email, senha) {
@@ -67,14 +83,17 @@ export async function login(email, senha) {
   });
   if (!data.ok) {
     const body = await data.json().catch(() => ({}));
+    trackEvent('portal_login_failed', { status: data.status });
     throw new Error(body.message || body.title || 'E-mail ou senha inválidos.');
   }
   const json = await data.json();
   setSession(json);
+  trackEvent('portal_login_succeeded');
   return json;
 }
 
 export function logout() {
+  trackEvent('portal_logout');
   clearSession();
   window.location.href = '/cliente/';
 }
@@ -113,6 +132,7 @@ export async function aceitarConvitePortal(token, senha) {
   }
   const json = await res.json();
   setSession(json);
+  trackEvent('portal_convite_aceito');
   return json;
 }
 
@@ -133,6 +153,9 @@ export const portalApi = {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
+    }).then(res => {
+      trackApiCall('portal_api', 'POST', '/meus-processos/:id/documentos', { ok: res.ok, status: res.status });
+      return res;
     });
   }
 };

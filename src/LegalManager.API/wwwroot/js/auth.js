@@ -1,4 +1,5 @@
 import { apiFetch, setSession, clearSession, isLoggedIn, getUser } from './api.js';
+import { trackEvent } from './analytics.js';
 
 export async function login(email, senha) {
   // Usa fetch direto (não apiFetch) para evitar que 401 cause redirect
@@ -10,10 +11,12 @@ export async function login(email, senha) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    trackEvent('login_failed', { status: res.status });
     throw new Error(body.message || body.title || 'E-mail ou senha inválidos.');
   }
   const data = await res.json();
   setSession(data);
+  trackEvent('login_succeeded', { method: 'password' });
   return data;
 }
 
@@ -33,10 +36,12 @@ export async function loginWithGoogle(idToken, attribution = {}) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    trackEvent('login_failed', { method: 'google', status: res.status });
     throw new Error(body.message || body.title || 'Não foi possível entrar com o Google.');
   }
   const data = await res.json();
   setSession(data);
+  trackEvent('login_succeeded', { method: 'google' });
   return data;
 }
 
@@ -46,11 +51,13 @@ export async function register(payload) {
     body: JSON.stringify(payload)
   });
   setSession(data);
+  trackEvent('cadastro_concluido', { plano: payload.plano });
   return data;
 }
 
 export async function logout() {
   const rt = sessionStorage.getItem('refresh_token');
+  trackEvent('logout');
   try {
     await apiFetch('/auth/logout', {
       method: 'POST',

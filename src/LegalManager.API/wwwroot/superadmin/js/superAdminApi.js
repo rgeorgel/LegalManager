@@ -1,3 +1,5 @@
+import { identifyUser, resetIdentity, trackApiCall, trackEvent } from '/js/analytics.js';
+
 const API_BASE = '/api';
 const SA_ACCESS_TOKEN = 'sa_access_token';
 const SA_REFRESH_TOKEN = 'sa_refresh_token';
@@ -11,12 +13,19 @@ export function setSession(data) {
   sessionStorage.setItem(SA_ACCESS_TOKEN, data.accessToken);
   sessionStorage.setItem(SA_REFRESH_TOKEN, data.refreshToken);
   sessionStorage.setItem(SA_USER, JSON.stringify(data.usuario));
+  identifyUser(data.usuario?.id, {
+    email: data.usuario?.email,
+    nome: data.usuario?.nome,
+    perfil: data.usuario?.perfil,
+    app_area: 'superadmin',
+  });
 }
 
 export function clearSession() {
   sessionStorage.removeItem(SA_ACCESS_TOKEN);
   sessionStorage.removeItem(SA_REFRESH_TOKEN);
   sessionStorage.removeItem(SA_USER);
+  resetIdentity();
 }
 
 export function getAdminUser() {
@@ -51,6 +60,7 @@ async function refreshTokenIfNeeded() {
 }
 
 export async function saFetch(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -84,11 +94,18 @@ export async function saFetch(path, options = {}) {
       const text = await res.text();
       errorMsg = text.substring(0, 200);
     }
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    trackApiCall('sa_api', method, path, { ok: false, error: err, status: res.status });
+    throw err;
   }
 
-  if (res.status === 204) return null;
-  return res.json();
+  if (res.status === 204) {
+    trackApiCall('sa_api', method, path, { ok: true });
+    return null;
+  }
+  const json = await res.json();
+  trackApiCall('sa_api', method, path, { ok: true });
+  return json;
 }
 
 export async function impersonarUsuario(userId, nome) {
