@@ -985,6 +985,7 @@ import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
+import { contatoPerfilUrl } from '/js/contato-nav.js';
 
 initLayout();
 
@@ -1123,7 +1124,7 @@ function renderProcesso() {
     partesEl.innerHTML = processo.partes.map(pt => `
       <div class="parte-item">
         <div style="flex:1">
-          <div style="font-weight:500">${pt.nomeContato}</div>
+          <div style="font-weight:500"><a href="${contatoPerfilUrl(pt.contatoId)}" style="color:inherit">${pt.nomeContato}</a></div>
           <div><span class="badge badge-${pt.tipoParte === 'Autor' ? 'blue' : 'gray'}">${tipoLabel[pt.tipoParte] || pt.tipoParte}</span></div>
         </div>
         <button class="btn btn-danger btn-sm" onclick="removerParte('${pt.contatoId}')" title="Remover">✕</button>

@@ -162,6 +162,7 @@
       excluirContrato, abrirExtratoPdf,
       STATUS_CONTRATO_LABELS, STATUS_PARCELA_LABELS, mapForma
     } from '/js/honorarios.js';
+    import { contatoPerfilUrl } from '/js/contato-nav.js';
     initLayout();
 
     let contrato = null;
@@ -222,7 +223,7 @@
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
             <div style="min-width:0">
               <div style="font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px">
-                ${escapeHtml(c.nomeContato ?? c.NomeContato)}
+                <a href="${contatoPerfilUrl(c.contatoId ?? c.ContatoId)}" style="color:inherit">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
                 <a href="/pages/contatos.html?editId=${c.contatoId ?? c.ContatoId}" title="Ver/editar cliente" style="font-size:13px;font-weight:600;text-decoration:none">✏️ editar</a>
               </div>
               <div style="font-size:13px;color:var(--color-text-muted);margin-top:2px">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</div>

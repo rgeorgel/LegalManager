@@ -137,6 +137,7 @@
       listarContratos, getDashboard,
       mapForma, statusContrato, STATUS_CONTRATO_LABELS
     } from '/js/honorarios.js';
+    import { contatoPerfilUrl } from '/js/contato-nav.js';
     initLayout();
 
     const PAGE_SIZE = 50;
@@ -288,7 +289,7 @@
         <div class="ci ${cls}">
           <div class="ci-top">
             <div style="min-width:0;flex:1">
-              <div class="ci-name">${escapeHtml(c.nomeContato ?? c.NomeContato)}</div>
+              <div class="ci-name"><a href="${contatoPerfilUrl(pick(c, 'contatoId'))}" style="color:inherit">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a></div>
               <div class="ci-sub">
                 <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
                 ${c.numeroProcesso || c.NumeroProcesso ? `<span class="badge-sm badge-proc" title="Processo">⚖ ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</span>` : ''}

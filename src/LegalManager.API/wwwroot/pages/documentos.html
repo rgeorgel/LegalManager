@@ -543,6 +543,7 @@
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
+import { contatoPerfilUrl } from '/js/contato-nav.js';
 
 initLayout();
 
@@ -971,7 +972,7 @@ function tipoBadge(tipo) {
 
 function getOrigemLabel(doc) {
   if (doc.processoId) return `<a href="/pages/processo-detalhe.html?id=${doc.processoId}">${doc.numeroProcesso || 'Processo'}</a>`;
-  if (doc.clienteId) return `<a href="/pages/contatos.html">${doc.nomeCliente || 'Cliente'}</a>`;
+  if (doc.clienteId) return `<a href="${contatoPerfilUrl(doc.clienteId)}">${doc.nomeCliente || 'Cliente'}</a>`;
   return '—';
 }
 

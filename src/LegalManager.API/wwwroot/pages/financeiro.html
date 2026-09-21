@@ -211,6 +211,7 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
+    import { contatoPerfilUrl } from '/js/contato-nav.js';
 
     initLayout();
 
@@ -373,7 +374,7 @@
             <span class="status-${l.status.toLowerCase()}">${l.status}</span>
             <span style="font-size:12px;color:var(--color-text-muted)">${esc(CAT_LABELS[l.categoria] ?? l.categoria)}</span>
           </div>
-          <div style="font-size:13px;color:var(--color-text-muted)">Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}${l.numeroProcesso ? ` · <span style="font-family:monospace">${esc(l.numeroProcesso)}</span>` : ''}${l.nomeContato ? ` · ${esc(l.nomeContato)}` : ''}</div>
+          <div style="font-size:13px;color:var(--color-text-muted)">Venc: ${dt}${dtPago ? ` · Pago: ${dtPago}` : ''}${l.numeroProcesso ? ` · <span style="font-family:monospace">${esc(l.numeroProcesso)}</span>` : ''}${l.nomeContato ? ` · <a href="${contatoPerfilUrl(l.contatoId)}">${esc(l.nomeContato)}</a>` : ''}</div>
           ${l.descricao ? `<div style="font-size:12px;color:#6b7280">${esc(l.descricao)}</div>` : ''}
         </div>
         <div class="lancamento-actions">
