@@ -314,6 +314,10 @@ import { apiFetch, getUser } from '/js/api.js';
 
 initLayout();
 
+// Capturado antes de qualquer history.replaceState (ver switchTab abaixo), que limpa a
+// querystring da URL — se lida depois, parâmetros como ?abrirId= já teriam sumido.
+const _urlParams = new URLSearchParams(location.search);
+
 const free = isPlanoFree();
 if (free) document.getElementById('kanbanProBadge').style.display = '';
 
@@ -334,7 +338,7 @@ document.querySelectorAll('.tab-btn').forEach(btn =>
   btn.addEventListener('click', () => switchTab(btn.dataset.tab))
 );
 
-const initTab = new URLSearchParams(location.search).get('tab') || 'tarefas';
+const initTab = _urlParams.get('tab') || 'tarefas';
 switchTab(initTab);
 
 // ── Shared helpers ─────────────────────────────────────────────
@@ -766,7 +770,6 @@ document.getElementById('modalDetalhe').addEventListener('click', e => {
 });
 
 // ── Init ───────────────────────────────────────────────────────
-const _urlParams = new URLSearchParams(location.search);
 const _initTipo = _urlParams.get('tipo');
 if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
 loadTarefas();
