@@ -10,10 +10,12 @@ namespace LegalManager.Infrastructure.Services;
 public class TenantsThemeService : ITenantsThemeService
 {
     private readonly AppDbContext _context;
+    private readonly IStorageService _storage;
 
-    public TenantsThemeService(AppDbContext context)
+    public TenantsThemeService(AppDbContext context, IStorageService storage)
     {
         _context = context;
+        _storage = storage;
     }
 
     public Task<TenantThemeDto?> GetThemeAsync(Guid tenantId, CancellationToken ct = default)
@@ -61,11 +63,15 @@ public class TenantsThemeService : ITenantsThemeService
 
         if (tenant.LogoUrl is null) return;
 
-        // O arquivo em OCI Storage fica órfão (será limpo por política de retenção).
-        // A URL não guarda o objectKey separado, então não conseguimos remover do bucket
-        // de forma confiável sem re-derivá-lo a partir de URL → key.
+        var objectKey = tenant.LogoObjectKey;
         tenant.LogoUrl = null;
+        tenant.LogoObjectKey = null;
         await _context.SaveChangesAsync(ct);
+
+        if (!string.IsNullOrWhiteSpace(objectKey))
+        {
+            try { await _storage.DeleteAsync(objectKey, ct); } catch { /* best-effort cleanup */ }
+        }
     }
 
     public Task<bool> PermitePersonalizacaoAsync(PlanoTipo plano, CancellationToken ct = default)

@@ -8,6 +8,7 @@ public class Tenant
     public string Nome { get; set; } = string.Empty;
     public string? Cnpj { get; set; }
     public string? LogoUrl { get; set; }
+    public string? LogoObjectKey { get; set; }
     public string? Endereco { get; set; }
     public PlanoTipo Plano { get; set; }
     public StatusTenant Status { get; set; }

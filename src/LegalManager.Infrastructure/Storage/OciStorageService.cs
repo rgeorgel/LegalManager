@@ -209,8 +209,13 @@ public class OciStorageService : IStorageService
         return new FileStream(tempFile, FileMode.Open, FileAccess.Read, FileShare.Delete, 4096, FileOptions.DeleteOnClose);
     }
 
+    // SigV4 presigned URLs are hard-capped at 7 dias (604800s) pelo protocolo,
+    // independentemente do valor pedido — nunca gere um link "permanente" com isso.
+    private const int MaxPresignedUrlSeconds = 604800;
+
     public async Task<string> GetPresignedUrlAsync(string objectKey, int expiresInMinutes = 30, CancellationToken ct = default)
     {
+        var expiresInSeconds = Math.Min(expiresInMinutes * 60, MaxPresignedUrlSeconds);
         var script = $@"
 import botocore.config
 import botocore.session
@@ -231,7 +236,7 @@ s3 = session.create_client(
 url = s3.generate_presigned_url(
     'get_object',
     Params={{'Bucket': '{_bucketName}', 'Key': '{objectKey}'}},
-    ExpiresIn={expiresInMinutes}
+    ExpiresIn={expiresInSeconds}
 )
 print(url)
 ";

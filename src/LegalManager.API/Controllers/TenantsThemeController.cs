@@ -14,11 +14,13 @@ public class TenantsThemeController : ControllerBase
 {
     private readonly ITenantsThemeService _service;
     private readonly ITenantContext _tenantContext;
+    private readonly IConfiguration _configuration;
 
-    public TenantsThemeController(ITenantsThemeService service, ITenantContext tenantContext)
+    public TenantsThemeController(ITenantsThemeService service, ITenantContext tenantContext, IConfiguration configuration)
     {
         _service = service;
         _tenantContext = tenantContext;
+        _configuration = configuration;
     }
 
     [HttpGet("current/theme")]
@@ -90,17 +92,28 @@ public class TenantsThemeController : ControllerBase
         using var stream = new MemoryStream(bytes);
         await storage.UploadAsync(stream, objectKey, dto.ContentType, ct);
 
-        var url = await storage.GetPresignedUrlAsync(objectKey, 60 * 24 * 365, ct);
-
         var ctx = HttpContext.RequestServices.GetRequiredService<LegalManager.Infrastructure.Persistence.AppDbContext>();
         var tenant = await ctx.Tenants.FindAsync([_tenantContext.TenantId], ct);
-        if (tenant is not null)
+        if (tenant is null)
+            return NotFound();
+
+        var oldObjectKey = tenant.LogoObjectKey;
+
+        // URL estável que nunca expira: resolve para uma presigned URL nova a
+        // cada acesso (presigned URLs não podem ter validade "permanente").
+        var frontendUrl = _configuration["App:FrontendUrl"]?.TrimEnd('/');
+        var logoUrl = $"{frontendUrl}/api/tenants/{tenant.Id}/logo";
+
+        tenant.LogoObjectKey = objectKey;
+        tenant.LogoUrl = logoUrl;
+        await ctx.SaveChangesAsync(ct);
+
+        if (!string.IsNullOrWhiteSpace(oldObjectKey) && oldObjectKey != objectKey)
         {
-            tenant.LogoUrl = url;
-            await ctx.SaveChangesAsync(ct);
+            try { await storage.DeleteAsync(oldObjectKey, ct); } catch { /* best-effort cleanup */ }
         }
 
-        return Ok(new { logoUrl = url });
+        return Ok(new { logoUrl });
     }
 
     [HttpDelete("current/logo")]
