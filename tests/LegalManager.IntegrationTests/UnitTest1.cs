@@ -264,8 +264,8 @@ public class MultiTenantIsolationTests
         );
         await ctx.SaveChangesAsync();
 
-        var service1 = new ContatoService(ctx, TestHelpers.CreateTenantContext(tenant1.Id, Guid.NewGuid()));
-        var service2 = new ContatoService(ctx, TestHelpers.CreateTenantContext(tenant2.Id, Guid.NewGuid()));
+        var service1 = new ContatoService(ctx, TestHelpers.CreateTenantContext(tenant1.Id, Guid.NewGuid()), new HonorarioService(ctx, Mock.Of<IAuditService>()));
+        var service2 = new ContatoService(ctx, TestHelpers.CreateTenantContext(tenant2.Id, Guid.NewGuid()), new HonorarioService(ctx, Mock.Of<IAuditService>()));
 
         await service1.CreateAsync(new CreateContatoDto(TipoPessoa.PF, TipoContato.Cliente, "Contato T1", null, null, null, null, null, null, null, null, null, null, false, null));
         await service1.CreateAsync(new CreateContatoDto(TipoPessoa.PF, TipoContato.Cliente, "Contato T1b", null, null, null, null, null, null, null, null, null, null, false, null));

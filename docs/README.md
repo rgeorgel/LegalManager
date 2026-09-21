@@ -40,6 +40,7 @@
 ### Features / Specs
 - [Calculadora de Prazos](features/calculadora_prazos.md)
 - [Melhorias Portal do Cliente](features/melhorias_portal_cliente.md)
+- [Melhorias Módulo de Contatos](features/melhorias_contatos.md)
 
 ### Segurança
 - [Security Audit (2026-05-25)](seguranca/security-audit.md)

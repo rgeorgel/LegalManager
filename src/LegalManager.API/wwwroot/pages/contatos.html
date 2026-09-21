@@ -102,6 +102,28 @@
     th.sortable:hover { color: var(--color-primary); }
     .sort-indicator { display: inline-block; margin-left: 4px; font-size: 10px; color: var(--color-text-muted); opacity: 0.7; }
     th.sortable.active .sort-indicator { opacity: 1; color: var(--color-primary); }
+
+    /* View toggle (lista/cards) — mesmo padrão visual da tela de Processos */
+    .view-toggle { display:flex; gap:4px; align-items:center; }
+    .view-btn { width:36px; height:36px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:.2s; }
+    .view-btn:hover { background:#e5e7eb; }
+    .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+
+    .contatos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding:4px 0; }
+    .contato-card { background:#fff; border:1px solid var(--color-border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:12px; transition:box-shadow .15s, border-color .15s; cursor:pointer; }
+    .contato-card:hover { border-color:#d1d5db; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .contato-card .card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .contato-card .card-name { font-size:14px; font-weight:600; }
+    .contato-card .card-name a { color:inherit; text-decoration:none; }
+    .contato-card .card-name a:hover { color:var(--color-primary); text-decoration:underline; }
+    .contato-card .card-badges { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .contato-card .card-divider { height:1px; background:var(--color-border); opacity:.5; }
+    .contato-card .card-info-row { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--color-text-muted); }
+    .contato-card .card-info-row .label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#9ca3af; min-width:70px; }
+    .contato-card .card-info-row .value { color:var(--color-text); font-weight:500; }
+    .contato-card .card-info-row .value.empty { color:var(--color-text-muted); font-style:italic; }
+    .contato-card .card-footer { display:flex; align-items:center; justify-content:flex-end; padding-top:4px; }
+    @media(max-width:768px) { .contatos-grid { grid-template-columns:1fr; } }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -136,7 +158,11 @@
     <main class="main-content">
       <div class="page-header">
         <h1 class="page-title">Contatos</h1>
-        <button class="btn btn-primary" id="btnNovo">+ Novo Contato</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" id="btnAniversariantes">🎂 Aniversariantes</button>
+          <button class="btn btn-secondary" id="btnDuplicados">⚠️ Duplicados</button>
+          <button class="btn btn-primary" id="btnNovo">+ Novo Contato</button>
+        </div>
       </div>
 
       <div class="filter-bar">
@@ -157,11 +183,20 @@
         <select id="filtTag" class="form-control" style="width:auto">
           <option value="">Todas as tags</option>
         </select>
+        <select id="filtSalvo" class="form-control" style="width:auto">
+          <option value="">Filtros salvos...</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="btnRemoverFiltroSalvo" title="Remover filtro salvo selecionado">🗑️</button>
+        <button class="btn btn-secondary btn-sm" id="btnSalvarFiltro" title="Salvar filtro atual">💾 Salvar filtro</button>
+        <div class="view-toggle">
+          <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
+          <button type="button" class="view-btn" id="viewCards" title="Visualização em cards">⊞</button>
+        </div>
       </div>
 
       <div id="alertMsg" class="alert" style="display:none"></div>
 
-      <div class="card">
+      <div class="card" id="contatosListWrap">
         <div class="table-wrapper">
           <table>
             <thead>
@@ -182,6 +217,8 @@
           </table>
         </div>
       </div>
+
+      <div id="contatosCardsContainer" class="contatos-grid" style="display:none"></div>
 
       <div class="pagination" id="pagination"></div>
 
@@ -461,11 +498,101 @@
     </div>
   </div>
 
+  <!-- Modal Aniversariantes -->
+  <div class="modal-overlay" id="modalAniversariantes">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <span class="modal-title">🎂 Aniversariantes do mês</span>
+        <button class="modal-close" id="aniversariantesClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mês</label>
+          <select id="aniversariantesMes" class="form-control"></select>
+        </div>
+        <div id="aniversariantesList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="aniversariantesCancelar">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Duplicados -->
+  <div class="modal-overlay" id="modalDuplicados">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header">
+        <span class="modal-title">⚠️ Possíveis contatos duplicados</span>
+        <button class="modal-close" id="duplicadosClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="duplicadosList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="duplicadosCancelar">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Agendar Retorno -->
+  <div class="modal-overlay" id="modalAgendarRetorno">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Agendar retorno — <span id="retornoContatoNome"></span></span>
+        <button class="modal-close" id="retornoClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="retornoAlert" class="alert alert-error" style="display:none"></div>
+        <div class="form-group">
+          <label>Data do retorno *</label>
+          <input type="date" id="retornoData" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Nota</label>
+          <input type="text" id="retornoNota" class="form-control" placeholder="Ex: retornar sobre proposta de acordo">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="retornoCancelar">Cancelar</button>
+        <button class="btn btn-primary" id="retornoSalvar">Agendar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Salvar Filtro -->
+  <div class="modal-overlay" id="modalSalvarFiltro">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <span class="modal-title">Salvar filtro atual</span>
+        <button class="modal-close" id="salvarFiltroClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="salvarFiltroAlert" class="alert alert-error" style="display:none"></div>
+        <div class="form-group">
+          <label>Nome do filtro *</label>
+          <input type="text" id="salvarFiltroNome" class="form-control" placeholder="Ex: Clientes VIP inadimplentes">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="salvarFiltroCancelar">Cancelar</button>
+        <button class="btn btn-primary" id="salvarFiltroConfirmar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
-    import { getContatos, createContato, updateContato, deleteContato, addAtendimento, getPortalAcesso, criarPortalAcesso, revogarPortalAcesso } from '/js/contatos.js';
+    import {
+      getContatos, createContato, updateContato, deleteContato, addAtendimento,
+      getPortalAcesso, criarPortalAcesso, revogarPortalAcesso,
+      getDuplicados, getAniversariantes,
+      getFiltrosSalvos, addFiltroSalvo, removeFiltroSalvo,
+      agendarRetorno
+    } from '/js/contatos.js';
     import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
+    import { contatoPerfilUrl, goToContatoPerfil } from '/js/contato-nav.js';
+    window.goToContatoPerfil = goToContatoPerfil;
 
     initLayout();
 
@@ -487,6 +614,8 @@
     const VALID_SORT_BY = new Set(['nome', 'tipo', 'tipoContato', 'cpfCnpj', 'email', 'telefone']);
     const VALID_SORT_DIR = new Set(['asc', 'desc']);
 
+    const VALID_VIEW = new Set(['list', 'cards']);
+
     function loadListState() {
       try {
         const raw = localStorage.getItem(STATE_KEY);
@@ -497,11 +626,12 @@
         const sortDir = VALID_SORT_DIR.has(s.sortDir) ? s.sortDir : 'asc';
         const tag = typeof s.tag === 'string' ? s.tag : '';
         const page = Number.isInteger(s.page) && s.page > 0 ? s.page : 1;
-        return { sortBy, sortDir, tag, page };
+        const view = VALID_VIEW.has(s.view) ? s.view : 'list';
+        return { sortBy, sortDir, tag, page, view };
       } catch { return null; }
     }
     function saveListState() {
-      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tag: currentTag, page: currentPage })); } catch {}
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tag: currentTag, page: currentPage, view: currentView })); } catch {}
     }
     let knownTags = new Set();
 
@@ -510,6 +640,7 @@
     let currentSortDir = initialState?.sortDir ?? 'asc';
     let currentTag = initialState?.tag ?? '';
     currentPage = initialState?.page ?? 1;
+    let currentView = initialState?.view ?? 'list';
 
     function updateSortIndicators() {
       document.querySelectorAll('th.sortable').forEach(th => {
@@ -544,6 +675,8 @@
           page: currentPage
         });
         renderTable(result.items);
+        renderCards(result.items);
+        attachRowMenus(result.items);
         renderPagination(result.totalPages, result.page);
         collectKnownTags(result.items);
       } catch (err) {
@@ -584,7 +717,7 @@
       }
       tbody.innerHTML = items.map(c => `
         <tr>
-          <td data-label="Nome"><strong>${c.nome}</strong></td>
+          <td data-label="Nome"><strong><a href="${contatoPerfilUrl(c.id)}">${c.nome}</a></strong></td>
           <td data-label="Tipo"><span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span></td>
           <td data-label="Categoria">${formatTipoContato(c.tipoContato)}</td>
           <td data-label="CPF/CNPJ">${c.cpfCnpj || '—'}</td>
@@ -595,8 +728,47 @@
             <button class="btn btn-secondary btn-sm" style="padding:4px 18px;font-size:16px;line-height:1;text-align:center" onclick="toggleRowMenu(this, '${c.id}')">⋮</button>
           </td>
         </tr>`).join('');
-      // attach row menus after render
-      attachRowMenus(items);
+    }
+
+    function renderCards(items) {
+      const grid = document.getElementById('contatosCardsContainer');
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">👥</div>
+          <div class="empty-state-text">Nenhum contato encontrado</div>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = items.map(c => `
+        <div class="contato-card" onclick="window.location.href='${contatoPerfilUrl(c.id)}'">
+          <div class="card-header">
+            <div class="card-name"><a href="${contatoPerfilUrl(c.id)}" onclick="event.stopPropagation()">${c.nome}</a></div>
+            <span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span>
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-gray">${formatTipoContato(c.tipoContato)}</span>
+            ${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join('')}
+          </div>
+          <div class="card-divider"></div>
+          <div>
+            <div class="card-info-row">
+              <span class="label">CPF/CNPJ</span>
+              <span class="value ${c.cpfCnpj ? '' : 'empty'}">${c.cpfCnpj || '—'}</span>
+            </div>
+            <div class="card-info-row" style="margin-top:6px">
+              <span class="label">E-mail</span>
+              <span class="value ${c.email ? '' : 'empty'}">${c.email || '—'}</span>
+            </div>
+            <div class="card-info-row" style="margin-top:6px">
+              <span class="label">Telefone</span>
+              <span class="value ${c.telefone ? '' : 'empty'}">${c.telefone || '—'}</span>
+            </div>
+          </div>
+          <div class="card-divider"></div>
+          <div class="card-footer" onclick="event.stopPropagation()">
+            <button class="btn btn-secondary btn-sm" style="padding:4px 18px;font-size:16px;line-height:1;text-align:center" onclick="toggleRowMenu(this, '${c.id}')">⋮</button>
+          </div>
+        </div>`).join('');
     }
 
     function attachRowMenus(items) {
@@ -608,8 +780,10 @@
         menu.className = 'row-menu-dropdown';
         menu.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1px solid var(--color-border);border-radius:8px;padding:4px;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:none';
         menu.innerHTML = `
+          <div onclick="goToContatoPerfil('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>👤</span><span>Perfil</span></div>
           <div onclick="editContato('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>✏️</span><span>Editar</span></div>
           <div onclick="openAtendimento('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📋</span><span>Atendimento</span></div>
+          <div onclick="openAgendarRetorno('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📅</span><span>Agendar retorno</span></div>
           <div onclick="openDocContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📄</span><span>Docs</span></div>
           <div onclick="openPortal('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}','${(c.email||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>🔑</span><span>Portal</span></div>
           <div onclick="removeContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)"><span>🗑️</span><span>Excluir</span></div>`;
@@ -826,6 +1000,26 @@
       const sel = document.getElementById('filtTag');
       if (sel) sel.value = currentTag;
     }
+
+    // ── Toggle de visualização (lista/cards) ────────────────────────────
+    function applyView() {
+      document.getElementById('viewList').classList.toggle('active', currentView === 'list');
+      document.getElementById('viewCards').classList.toggle('active', currentView === 'cards');
+      document.getElementById('contatosListWrap').style.display = currentView === 'list' ? '' : 'none';
+      document.getElementById('contatosCardsContainer').style.display = currentView === 'cards' ? '' : 'none';
+    }
+
+    document.getElementById('viewList').addEventListener('click', () => {
+      currentView = 'list';
+      applyView();
+      saveListState();
+    });
+    document.getElementById('viewCards').addEventListener('click', () => {
+      currentView = 'cards';
+      applyView();
+      saveListState();
+    });
+    applyView();
 
     // ── Portal do Cliente ─────────────────────────────────
     const modalPortal = document.getElementById('modalPortal');
@@ -1230,6 +1424,205 @@
     }
 
     setupContatoFolderEvents();
+
+    // ============================================================
+    // AGENDAR RETORNO (lembrete de follow-up via Tarefas)
+    // ============================================================
+    let retornoContatoId = null;
+
+    window.openAgendarRetorno = (id, nome) => {
+      retornoContatoId = id;
+      document.getElementById('retornoContatoNome').textContent = nome;
+      document.getElementById('retornoAlert').style.display = 'none';
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      document.getElementById('retornoData').value = d.toISOString().split('T')[0];
+      document.getElementById('retornoNota').value = '';
+      document.getElementById('modalAgendarRetorno').classList.add('open');
+    };
+
+    [document.getElementById('retornoClose'), document.getElementById('retornoCancelar')].forEach(el =>
+      el.addEventListener('click', () => document.getElementById('modalAgendarRetorno').classList.remove('open')));
+
+    document.getElementById('retornoSalvar').addEventListener('click', async () => {
+      const data = document.getElementById('retornoData').value;
+      if (!data) {
+        document.getElementById('retornoAlert').textContent = 'Informe a data do retorno.';
+        document.getElementById('retornoAlert').style.display = 'block';
+        return;
+      }
+      const nota = document.getElementById('retornoNota').value.trim();
+      const btn = document.getElementById('retornoSalvar');
+      btn.disabled = true;
+      try {
+        await agendarRetorno(retornoContatoId, {
+          titulo: nota ? `Retornar contato: ${nota}` : 'Retornar contato',
+          prazo: data
+        });
+        document.getElementById('modalAgendarRetorno').classList.remove('open');
+        showAlert('Retorno agendado em Tarefas.', 'success');
+      } catch (err) {
+        document.getElementById('retornoAlert').textContent = err.message;
+        document.getElementById('retornoAlert').style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ============================================================
+    // ANIVERSARIANTES DO MÊS
+    // ============================================================
+    (function initAniversariantesMes() {
+      const sel = document.getElementById('aniversariantesMes');
+      const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      sel.innerHTML = meses.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+      sel.value = new Date().getMonth() + 1;
+    })();
+
+    async function loadAniversariantes() {
+      const mes = document.getElementById('aniversariantesMes').value;
+      const el = document.getElementById('aniversariantesList');
+      el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--color-text-muted)">Carregando...</div>';
+      try {
+        const items = await getAniversariantes(mes);
+        if (!items.length) {
+          el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎂</div><div class="empty-state-text">Nenhum aniversariante neste mês</div></div>';
+          return;
+        }
+        el.innerHTML = items.map(c => {
+          const dia = new Date(c.dataNascimento).getUTCDate();
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-border)">
+            <div><strong>${c.nome}</strong><div style="font-size:12px;color:var(--color-text-muted)">${c.email || c.telefone || '—'}</div></div>
+            <span class="badge badge-blue">dia ${dia}</span>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        el.innerHTML = `<div style="color:var(--color-danger);padding:12px 0">${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('btnAniversariantes').addEventListener('click', () => {
+      document.getElementById('modalAniversariantes').classList.add('open');
+      loadAniversariantes();
+    });
+    document.getElementById('aniversariantesMes').addEventListener('change', loadAniversariantes);
+    [document.getElementById('aniversariantesClose'), document.getElementById('aniversariantesCancelar')].forEach(el =>
+      el.addEventListener('click', () => document.getElementById('modalAniversariantes').classList.remove('open')));
+
+    // ============================================================
+    // DUPLICADOS
+    // ============================================================
+    document.getElementById('btnDuplicados').addEventListener('click', async () => {
+      document.getElementById('modalDuplicados').classList.add('open');
+      const el = document.getElementById('duplicadosList');
+      el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--color-text-muted)">Carregando...</div>';
+      try {
+        const grupos = await getDuplicados();
+        if (!grupos.length) {
+          el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Nenhum duplicado encontrado</div></div>';
+          return;
+        }
+        const criterioLabel = { CpfCnpj: 'CPF/CNPJ', Email: 'E-mail', Telefone: 'Telefone', Nome: 'Nome' };
+        el.innerHTML = grupos.map(g => `
+          <div style="margin-bottom:16px">
+            <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:6px">
+              Mesmo <strong>${criterioLabel[g.criterio] || g.criterio}</strong>: ${g.valor}
+            </div>
+            ${g.contatos.map(c => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--color-bg);border-radius:6px;margin-bottom:4px">
+                <div><strong>${c.nome}</strong><div style="font-size:12px;color:var(--color-text-muted)">${c.email || '—'} · ${c.telefone || '—'} · ${c.cpfCnpj || '—'}</div></div>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modalDuplicados').classList.remove('open'); editContato('${c.id}')">Editar</button>
+              </div>`).join('')}
+          </div>`).join('');
+      } catch (err) {
+        el.innerHTML = `<div style="color:var(--color-danger);padding:12px 0">${err.message}</div>`;
+      }
+    });
+    [document.getElementById('duplicadosClose'), document.getElementById('duplicadosCancelar')].forEach(el =>
+      el.addEventListener('click', () => document.getElementById('modalDuplicados').classList.remove('open')));
+
+    // ============================================================
+    // FILTROS SALVOS
+    // ============================================================
+    let filtrosSalvos = [];
+
+    async function loadFiltrosSalvos() {
+      try {
+        filtrosSalvos = await getFiltrosSalvos();
+        const sel = document.getElementById('filtSalvo');
+        sel.innerHTML = '<option value="">Filtros salvos...</option>' +
+          filtrosSalvos.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+      } catch { filtrosSalvos = []; }
+    }
+
+    document.getElementById('filtSalvo').addEventListener('change', (e) => {
+      const f = filtrosSalvos.find(x => x.id === e.target.value);
+      if (!f) return;
+      document.getElementById('filtBusca').value = f.busca || '';
+      document.getElementById('filtTipo').value = f.tipo || '';
+      document.getElementById('filtTipoContato').value = f.tipoContato || '';
+      currentTag = f.tag || '';
+      const tagSel = document.getElementById('filtTag');
+      if (tagSel) tagSel.value = currentTag;
+      currentFilters = {
+        busca: f.busca || undefined,
+        tipo: f.tipo || undefined,
+        tipoContato: f.tipoContato || undefined
+      };
+      currentPage = 1;
+      saveListState();
+      loadContatos();
+    });
+
+    document.getElementById('btnRemoverFiltroSalvo').addEventListener('click', async () => {
+      const id = document.getElementById('filtSalvo').value;
+      if (!id) return;
+      const f = filtrosSalvos.find(x => x.id === id);
+      if (!confirm(`Remover o filtro "${f?.nome}"?`)) return;
+      try {
+        await removeFiltroSalvo(id);
+        document.getElementById('filtSalvo').value = '';
+        loadFiltrosSalvos();
+      } catch (err) { showAlert(err.message); }
+    });
+
+    document.getElementById('btnSalvarFiltro').addEventListener('click', () => {
+      document.getElementById('salvarFiltroNome').value = '';
+      document.getElementById('salvarFiltroAlert').style.display = 'none';
+      document.getElementById('modalSalvarFiltro').classList.add('open');
+    });
+    [document.getElementById('salvarFiltroClose'), document.getElementById('salvarFiltroCancelar')].forEach(el =>
+      el.addEventListener('click', () => document.getElementById('modalSalvarFiltro').classList.remove('open')));
+
+    document.getElementById('salvarFiltroConfirmar').addEventListener('click', async () => {
+      const nome = document.getElementById('salvarFiltroNome').value.trim();
+      if (!nome) {
+        document.getElementById('salvarFiltroAlert').textContent = 'Informe um nome para o filtro.';
+        document.getElementById('salvarFiltroAlert').style.display = 'block';
+        return;
+      }
+      const btn = document.getElementById('salvarFiltroConfirmar');
+      btn.disabled = true;
+      try {
+        await addFiltroSalvo({
+          nome,
+          busca: document.getElementById('filtBusca').value || null,
+          tipo: document.getElementById('filtTipo').value || null,
+          tipoContato: document.getElementById('filtTipoContato').value || null,
+          tag: currentTag || null
+        });
+        document.getElementById('modalSalvarFiltro').classList.remove('open');
+        showAlert('Filtro salvo.', 'success');
+        loadFiltrosSalvos();
+      } catch (err) {
+        document.getElementById('salvarFiltroAlert').textContent = err.message;
+        document.getElementById('salvarFiltroAlert').style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    loadFiltrosSalvos();
   </script>
 </body>
 </html>

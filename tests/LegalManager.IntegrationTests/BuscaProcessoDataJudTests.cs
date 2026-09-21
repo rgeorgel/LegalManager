@@ -98,7 +98,7 @@ public class BuscaProcessoDataJudTests
     private static ProcessosController CreateProcessosController(AppDbContext ctx, ITenantContext tenantContext)
     {
         var processoService = new ProcessoService(ctx, tenantContext, new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
-        var contatoResolver = new ContatoResolverService(new ContatoService(ctx, tenantContext));
+        var contatoResolver = new ContatoResolverService(new ContatoService(ctx, tenantContext, new HonorarioService(ctx, Mock.Of<IAuditService>())));
         return new ProcessosController(
             processoService,
             new Mock<IMonitoramentoService>().Object,
@@ -131,7 +131,7 @@ public class BuscaProcessoDataJudTests
         Assert.Equal(15000.50m, body.GetProperty("valorCausa").GetDecimal());
 
         // Load-bearing: buscar/pré-visualizar NUNCA cria Contato.
-        var contatoService = new ContatoService(ctx, tenantContext);
+        var contatoService = new ContatoService(ctx, tenantContext, new HonorarioService(ctx, Mock.Of<IAuditService>()));
         var contatos = await contatoService.GetAllAsync(new ContatoFiltroDto("Fulano DataJud Integração", null, null, null, null), CancellationToken.None);
         Assert.Empty(contatos.Items);
     }
@@ -155,7 +155,7 @@ public class BuscaProcessoDataJudTests
         Assert.Single(processo.Partes);
         Assert.Equal(TipoParteProcesso.Autor, processo.Partes[0].TipoParte);
 
-        var contatoService = new ContatoService(ctx, tenantContext);
+        var contatoService = new ContatoService(ctx, tenantContext, new HonorarioService(ctx, Mock.Of<IAuditService>()));
         var contatos = await contatoService.GetAllAsync(new ContatoFiltroDto("Fulano DataJud Integração", null, null, null, null), CancellationToken.None);
         Assert.Single(contatos.Items);
         Assert.Equal(processo.Partes[0].ContatoId, contatos.Items.Single().Id);
@@ -166,7 +166,7 @@ public class BuscaProcessoDataJudTests
     {
         var (ctx, tenantId, userId) = await SeedTenantAsync();
         var tenantContext = CreateTenantContext(tenantId, userId);
-        var contatoService = new ContatoService(ctx, tenantContext);
+        var contatoService = new ContatoService(ctx, tenantContext, new HonorarioService(ctx, Mock.Of<IAuditService>()));
         var existente = await contatoService.CreateAsync(new CreateContatoDto(
             TipoPessoa.PF, TipoContato.Cliente, "Fulano DataJud Integração", "11122233344",
             null, null, null, null, null, null, null, null, null, false, null), CancellationToken.None);

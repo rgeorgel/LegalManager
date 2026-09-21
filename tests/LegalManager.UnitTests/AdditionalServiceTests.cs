@@ -251,7 +251,7 @@ public class ContatoServiceAdditionalTests
         ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "T", Plano = PlanoTipo.Pro, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow });
         ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Adv", Email = "a@a.com", UserName = "a@a.com" });
         ctx.SaveChanges();
-        var svc = new ContatoService(ctx, SvcTestHelpers.TenantMock(tenantId, userId).Object);
+        var svc = new ContatoService(ctx, SvcTestHelpers.TenantMock(tenantId, userId).Object, new HonorarioService(ctx, Mock.Of<IAuditService>()));
         return (svc, ctx, tenantId, userId);
     }
 

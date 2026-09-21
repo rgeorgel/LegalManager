@@ -106,6 +106,69 @@ public class ContatosController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("duplicados")]
+    public async Task<ActionResult<IEnumerable<ContatoDuplicadoGrupoDto>>> GetDuplicados(CancellationToken ct)
+    {
+        var result = await _service.GetDuplicadosAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpGet("aniversariantes")]
+    public async Task<ActionResult<IEnumerable<ContatoAniversarianteDto>>> GetAniversariantes([FromQuery] int? mes, CancellationToken ct)
+    {
+        var result = await _service.GetAniversariantesAsync(mes, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("filtros-salvos")]
+    public async Task<ActionResult<IEnumerable<ContatoFiltroSalvoResponseDto>>> GetFiltrosSalvos(CancellationToken ct)
+    {
+        var result = await _service.GetFiltrosSalvosAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpPost("filtros-salvos")]
+    public async Task<ActionResult<ContatoFiltroSalvoResponseDto>> AddFiltroSalvo([FromBody] CreateContatoFiltroSalvoDto dto, CancellationToken ct)
+    {
+        var result = await _service.AddFiltroSalvoAsync(dto, ct);
+        return Ok(result);
+    }
+
+    [HttpDelete("filtros-salvos/{filtroId:guid}")]
+    public async Task<IActionResult> RemoveFiltroSalvo(Guid filtroId, CancellationToken ct)
+    {
+        await _service.RemoveFiltroSalvoAsync(filtroId, ct);
+        return NoContent();
+    }
+
+    [HttpGet("{id:guid}/perfil")]
+    public async Task<ActionResult<ContatoPerfilDto>> GetPerfil(Guid id, CancellationToken ct)
+    {
+        var result = await _service.GetPerfilAsync(id, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/vinculos")]
+    public async Task<ActionResult<IEnumerable<ContatoVinculoResponseDto>>> GetVinculos(Guid id, CancellationToken ct)
+    {
+        var result = await _service.GetVinculosAsync(id, ct);
+        return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/vinculos")]
+    public async Task<ActionResult<ContatoVinculoResponseDto>> AddVinculo(Guid id, [FromBody] CreateContatoVinculoDto dto, CancellationToken ct)
+    {
+        var result = await _service.AddVinculoAsync(id, dto, ct);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id:guid}/vinculos/{vinculoId:guid}")]
+    public async Task<IActionResult> RemoveVinculo(Guid id, Guid vinculoId, CancellationToken ct)
+    {
+        await _service.RemoveVinculoAsync(id, vinculoId, ct);
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/portal-acesso")]
     public async Task<ActionResult<AcessoPortalInfoDto>> CriarPortalAcesso(Guid id, [FromBody] CriarAcessoPortalDto dto, CancellationToken ct)
     {

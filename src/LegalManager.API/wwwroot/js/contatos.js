@@ -61,3 +61,70 @@ export async function criarPortalAcesso(contatoId, data) {
 export async function revogarPortalAcesso(contatoId) {
   return apiFetch(`/contatos/${contatoId}/portal-acesso`, { method: 'DELETE' });
 }
+
+// ── Perfil (resumo 360° + timeline) ─────────────────────────────────────
+
+export async function getContatoPerfil(contatoId) {
+  return apiFetch(`/contatos/${contatoId}/perfil`);
+}
+
+// ── Vínculos entre contatos ──────────────────────────────────────────────
+
+export async function getVinculos(contatoId) {
+  return apiFetch(`/contatos/${contatoId}/vinculos`);
+}
+
+export async function addVinculo(contatoId, data) {
+  return apiFetch(`/contatos/${contatoId}/vinculos`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function removeVinculo(contatoId, vinculoId) {
+  return apiFetch(`/contatos/${contatoId}/vinculos/${vinculoId}`, { method: 'DELETE' });
+}
+
+// ── Duplicados ────────────────────────────────────────────────────────────
+
+export async function getDuplicados() {
+  return apiFetch('/contatos/duplicados');
+}
+
+// ── Aniversariantes ───────────────────────────────────────────────────────
+
+export async function getAniversariantes(mes) {
+  const params = new URLSearchParams();
+  if (mes) params.set('mes', mes);
+  return apiFetch(`/contatos/aniversariantes?${params}`);
+}
+
+// ── Filtros salvos ────────────────────────────────────────────────────────
+
+export async function getFiltrosSalvos() {
+  return apiFetch('/contatos/filtros-salvos');
+}
+
+export async function addFiltroSalvo(data) {
+  return apiFetch('/contatos/filtros-salvos', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function removeFiltroSalvo(filtroId) {
+  return apiFetch(`/contatos/filtros-salvos/${filtroId}`, { method: 'DELETE' });
+}
+
+// ── Lembretes / follow-up (reaproveita o módulo de Tarefas) ──────────────
+
+export async function agendarRetorno(contatoId, { titulo, prazo }) {
+  // "prazo" vem de um <input type="date"> (só "YYYY-MM-DD", sem hora). Sem horário,
+  // o valor é interpretado como meia-noite UTC e o fuso do Brasil (UTC-3) faz a data
+  // "voltar" um dia quando exibida. Fixando 12:00 evita o problema em qualquer fuso.
+  const prazoComHora = prazo && /^\d{4}-\d{2}-\d{2}$/.test(prazo) ? `${prazo}T12:00:00` : prazo;
+  return apiFetch('/tarefas', {
+    method: 'POST',
+    body: JSON.stringify({
+      titulo,
+      contatoId,
+      prazo: prazoComHora,
+      prioridade: 'Media',
+      tipo: 'Tarefa'
+    })
+  });
+}

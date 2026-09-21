@@ -40,6 +40,28 @@ CRM jurídico para centralizar informações de clientes, partes, testemunhas e 
 - Redefinição de senha do portal
 - Revogação de acesso
 
+### Perfil do Contato (resumo 360° + timeline)
+- Card de resumo: processos ativos, saldo financeiro pendente, próximo prazo, último atendimento
+- Timeline unificada: atendimentos, tarefas, lançamentos financeiros e vínculo com processos
+
+### Vínculos entre Contatos
+- Relação entre dois contatos do mesmo escritório (sócio, cônjuge, familiar, representante legal, indicação, outro)
+- Visível na ficha dos dois contatos envolvidos
+
+### Detecção de Duplicados
+- Agrupamento de contatos ativos por CPF/CNPJ, e-mail, telefone ou nome repetidos
+
+### Lembretes / Follow-up
+- Ação "Agendar retorno" cria uma Tarefa vinculada ao contato (reaproveita o módulo de Tarefas)
+
+### Aniversariantes do Mês
+- Lista de contatos ativos com aniversário no mês selecionado
+
+### Filtros Salvos
+- Combinações de busca/tipo/categoria/tag salvas por usuário, reaplicáveis com um clique
+
+> Ver detalhamento completo em [`melhorias_contatos.md`](../features/melhorias_contatos.md).
+
 ---
 
 ## Arquitetura
@@ -50,7 +72,9 @@ ContatosController
         └── AppDbContext
               ├── Contatos
               ├── ContatoTags
-              └── Atendimentos
+              ├── Atendimentos
+              ├── ContatoVinculos
+              └── ContatoFiltrosSalvos
 ```
 
 ---
@@ -69,6 +93,15 @@ ContatosController
 | POST | `/api/contatos/{id}/portal-acesso` | Criar/redefinir acesso ao portal |
 | GET | `/api/contatos/{id}/portal-acesso` | Consultar acesso ao portal |
 | DELETE | `/api/contatos/{id}/portal-acesso` | Revogar acesso ao portal |
+| GET | `/api/contatos/{id}/perfil` | Resumo 360° + timeline unificada |
+| GET | `/api/contatos/{id}/vinculos` | Listar vínculos do contato |
+| POST | `/api/contatos/{id}/vinculos` | Criar vínculo com outro contato |
+| DELETE | `/api/contatos/{id}/vinculos/{vinculoId}` | Remover vínculo |
+| GET | `/api/contatos/duplicados` | Agrupar possíveis contatos duplicados |
+| GET | `/api/contatos/aniversariantes?mes=` | Listar aniversariantes do mês |
+| GET | `/api/contatos/filtros-salvos` | Listar filtros salvos do usuário |
+| POST | `/api/contatos/filtros-salvos` | Salvar filtro atual |
+| DELETE | `/api/contatos/filtros-salvos/{filtroId}` | Remover filtro salvo |
 
 ---
 
@@ -84,18 +117,24 @@ Contato {
 ContatoTag { Id, ContatoId, Tag }
 
 Atendimento { Id, TenantId, ContatoId, UsuarioId, Descricao, Data, CriadoEm }
+
+ContatoVinculo { Id, TenantId, ContatoId, ContatoRelacionadoId, Tipo, Observacao, CriadoEm }
+
+ContatoFiltroSalvo { Id, TenantId, UsuarioId, Nome, Busca, TipoContato, Tipo, Tag, CriadoEm }
 ```
 
 **Configurações EF:**
-- Índice único em `(TenantId, CpfCnpj)` — CPF/CNPJ único por escritório
+- Índice (não único) em `(TenantId, CpfCnpj)` — CPF/CNPJ pode se repetir (ver detecção de duplicados)
 - Cascade delete de `ContatoTag` ao remover `Contato`
 - `ContatoTag` sem `Id` próprio — chave composta `(ContatoId, Tag)`
+- `ContatoVinculo` referencia `Contato` duas vezes (`ContatoId` e `ContatoRelacionadoId`), cascade delete nos dois lados
 
 ---
 
 ## Migration
 
 `InitialCreate` — cria `Contatos`, `ContatoTags`, `Atendimentos`
+`AddContatosMelhorias` — cria `ContatoVinculos`, `ContatoFiltrosSalvos`
 
 ---
 

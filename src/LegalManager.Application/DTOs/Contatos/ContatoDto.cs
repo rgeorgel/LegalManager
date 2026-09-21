@@ -105,3 +105,91 @@ public record PagedResultDto<T>(
     int PageSize,
     int TotalPages
 );
+
+// ── Perfil (resumo 360° + timeline) ─────────────────────────────────────
+
+public record ContatoResumoDto(
+    int ProcessosAtivos,
+    decimal SaldoFinanceiro,
+    TimelineItemDto? ProximoPrazo,
+    DateTime? UltimoAtendimentoEm
+);
+
+public record TimelineItemDto(
+    string Tipo, // Atendimento | Tarefa | Financeiro | Processo
+    DateTime Data,
+    string Titulo,
+    string? Descricao,
+    string? Link = null // URL relativa da entidade de origem (processo, tarefa, contrato de honorário), se houver
+);
+
+public record ContatoPerfilDto(
+    ContatoResumoDto Resumo,
+    List<TimelineItemDto> Timeline
+);
+
+// ── Vínculos entre contatos ──────────────────────────────────────────────
+
+public record CreateContatoVinculoDto(
+    [Required] Guid ContatoRelacionadoId,
+    [Required] TipoVinculoContato Tipo,
+    string? Observacao
+);
+
+public record ContatoVinculoResponseDto(
+    Guid Id,
+    Guid ContatoId,
+    string ContatoNome,
+    Guid ContatoRelacionadoId,
+    string ContatoRelacionadoNome,
+    TipoVinculoContato Tipo,
+    string? Observacao,
+    DateTime CriadoEm
+);
+
+// ── Detecção de duplicados ───────────────────────────────────────────────
+
+public record ContatoDuplicadoItemDto(
+    Guid Id,
+    string Nome,
+    TipoContato TipoContato,
+    string? Email,
+    string? Telefone,
+    string? CpfCnpj
+);
+
+public record ContatoDuplicadoGrupoDto(
+    string Criterio, // CpfCnpj | Email | Telefone | Nome
+    string Valor,
+    List<ContatoDuplicadoItemDto> Contatos
+);
+
+// ── Aniversariantes ───────────────────────────────────────────────────────
+
+public record ContatoAniversarianteDto(
+    Guid Id,
+    string Nome,
+    DateTime DataNascimento,
+    string? Email,
+    string? Telefone
+);
+
+// ── Filtros salvos ────────────────────────────────────────────────────────
+
+public record CreateContatoFiltroSalvoDto(
+    [Required, MaxLength(100)] string Nome,
+    string? Busca,
+    TipoContato? TipoContato,
+    TipoPessoa? Tipo,
+    string? Tag
+);
+
+public record ContatoFiltroSalvoResponseDto(
+    Guid Id,
+    string Nome,
+    string? Busca,
+    TipoContato? TipoContato,
+    TipoPessoa? Tipo,
+    string? Tag,
+    DateTime CriadoEm
+);

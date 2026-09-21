@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="vu fu pu gu bu init Hu zu qu ju Gu Xl Bu Qu Du eh ih nh sh rh oh capture getExtension Uu cu hh calculateEventProperties uh register register_once register_for_session unregister unregister_for_session gh Nu dh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync mh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset yh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty fh Xu createPersonProfile setInternalOrTestUser ph wu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ju debug Yl Os getPageViewId captureTraceFeedback captureTraceMetric Ru".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- Microsoft Clarity — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x099iggkqu");
+    }
+  </script>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Perfil do Contato</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .voltar-link { font-size:13px; color:var(--color-text-muted); text-decoration:none; }
+    .voltar-link:hover { color:var(--color-text); }
+    .perfil-grid { display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; }
+    @media (max-width:900px) { .perfil-grid { grid-template-columns:1fr; } }
+    .resumo-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+    .resumo-card { background:var(--color-bg); border-radius:var(--radius); padding:14px; }
+    .resumo-card label { color:var(--color-text-muted); font-size:11px; text-transform:uppercase; font-weight:600; display:block; margin-bottom:4px; }
+    .resumo-card .value { font-size:18px; font-weight:600; }
+    .info-list .info-row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--color-border); font-size:13px; }
+    .info-list .info-row:last-child { border-bottom:none; }
+    .info-list .info-label { color:var(--color-text-muted); flex-shrink:0; }
+    .info-list .info-value { text-align:right; word-break:break-word; }
+    .timeline-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--color-border); }
+    .timeline-item:last-child { border-bottom:none; }
+    .timeline-icon { font-size:18px; }
+    .timeline-title { font-size:13px; font-weight:600; }
+    .timeline-desc { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+    .timeline-date { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .vinculo-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--color-border); font-size:13px; }
+    .vinculo-row:last-child { border-bottom:none; }
+    .contrato-row { display:block; padding:10px 0; border-bottom:1px solid var(--color-border); font-size:13px; color:inherit; text-decoration:none; }
+    .contrato-row:last-child { border-bottom:none; }
+    .contrato-row:hover { background:var(--color-bg); }
+    .badge-ok { background:#d1fae5; color:#059669; }
+    .badge-error { background:#fee2e2; color:#dc2626; }
+    .badge-warn { background:#fef3c7; color:#b45309; }
+    .badge-muted { background:#f1f3f8; color:#6b7a99; }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav"></ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <a href="/pages/contatos.html" class="voltar-link" id="btnVoltar">← Voltar</a>
+        <h1 class="page-title" id="pageTitle">Carregando...</h1>
+        <div style="margin-top:4px;display:flex;gap:6px;align-items:center" id="pageBadges"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="btnAgendarRetorno">📅 Agendar retorno</button>
+        <button class="btn btn-primary" id="btnEditar">✏️ Editar</button>
+      </div>
+    </div>
+
+    <div id="alertMsg" class="alert" style="display:none"></div>
+    <div id="perfilLoading" style="text-align:center;padding:48px;color:var(--color-text-muted)">Carregando...</div>
+
+    <div id="perfilContent" style="display:none">
+      <div class="resumo-cards">
+        <div class="resumo-card"><label>Processos ativos</label><div class="value" id="rProcessosAtivos"></div></div>
+        <div class="resumo-card"><label>Saldo financeiro (pendente)</label><div class="value" id="rSaldoFinanceiro"></div></div>
+        <div class="resumo-card"><label>Próximo prazo</label><div class="value" style="font-size:13px" id="rProximoPrazo"></div></div>
+        <div class="resumo-card"><label>Último atendimento</label><div class="value" style="font-size:13px" id="rUltimoAtendimento"></div></div>
+      </div>
+
+      <div class="perfil-grid">
+        <div>
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-body">
+              <div class="card-title">Dados do Contato</div>
+              <div class="info-list" id="infoList"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div class="card-title" style="margin-bottom:0">Vínculos</div>
+                <button class="btn btn-secondary btn-sm" id="btnNovoVinculo">+ Vincular</button>
+              </div>
+              <div id="vinculosList"></div>
+              <div id="formNovoVinculo" style="display:none;background:var(--color-bg);border-radius:var(--radius);padding:12px;margin-top:12px">
+                <div class="form-group">
+                  <label>Contato relacionado</label>
+                  <select id="vContatoRelacionado" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                  <label>Tipo de vínculo</label>
+                  <select id="vTipo" class="form-control">
+                    <option value="Socio">Sócio</option>
+                    <option value="Conjuge">Cônjuge</option>
+                    <option value="Familiar">Familiar</option>
+                    <option value="RepresentanteLegal">Representante Legal</option>
+                    <option value="Indicacao">Indicação</option>
+                    <option value="Outro">Outro</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Observação</label>
+                  <input type="text" id="vObservacao" class="form-control" placeholder="Opcional">
+                </div>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                  <button class="btn btn-secondary btn-sm" id="btnCancelarVinculo">Cancelar</button>
+                  <button class="btn btn-primary btn-sm" id="btnSalvarVinculo">Salvar vínculo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="cardHonorarios" style="margin-top:20px;display:none">
+            <div class="card-body">
+              <div class="card-title">Contratos de Honorários</div>
+              <div id="honorariosList"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="card-title">Linha do tempo</div>
+            <div id="perfilTimeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Agendar Retorno -->
+<div class="modal-overlay" id="modalAgendarRetorno">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Agendar retorno</span>
+      <button class="modal-close" id="retornoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="retornoAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label>Data do retorno *</label>
+        <input type="date" id="retornoData" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Nota</label>
+        <input type="text" id="retornoNota" class="form-control" placeholder="Ex: retornar sobre proposta de acordo">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="retornoCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="retornoSalvar">Agendar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, getContatos, agendarRetorno } from '/js/contatos.js';
+  import { setupVoltarButton, contatoPerfilUrl } from '/js/contato-nav.js';
+  import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
+
+  initLayout();
+
+  const params = new URLSearchParams(location.search);
+  const contatoId = params.get('id');
+
+  setupVoltarButton(document.getElementById('btnVoltar'), '/pages/contatos.html');
+
+  if (!contatoId) {
+    document.getElementById('perfilLoading').textContent = 'Contato não informado.';
+  } else {
+    carregar();
+  }
+
+  function showAlert(msg, type = 'error') {
+    const el = document.getElementById('alertMsg');
+    el.className = `alert alert-${type}`;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
+
+  function formatMoeda(v) {
+    return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  function formatDateBr(dt, comHora = false) {
+    if (!dt) return '—';
+    const d = new Date(dt);
+    if (isNaN(d)) return '—';
+    return comHora
+      ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function formatTipoContato(t) {
+    const map = { Cliente: 'Cliente', ParteContraria: 'Parte Contrária', Testemunha: 'Testemunha', Perito: 'Perito', Outro: 'Outro' };
+    return map[t] || t;
+  }
+
+  async function carregar() {
+    try {
+      const [contato, perfil, vinculos] = await Promise.all([
+        getContato(contatoId),
+        getContatoPerfil(contatoId),
+        getVinculos(contatoId)
+      ]);
+      renderContato(contato);
+      renderPerfil(perfil);
+      renderVinculos(vinculos);
+      document.getElementById('perfilLoading').style.display = 'none';
+      document.getElementById('perfilContent').style.display = 'block';
+      if (!isPlanoFree()) carregarHonorarios();
+    } catch (err) {
+      document.getElementById('perfilLoading').textContent = err.message || 'Erro ao carregar contato.';
+    }
+  }
+
+  function renderContato(c) {
+    document.title = `Causify — ${c.nome}`;
+    document.getElementById('pageTitle').textContent = c.nome;
+    document.getElementById('pageBadges').innerHTML = `
+      <span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span>
+      <span class="badge badge-gray">${formatTipoContato(c.tipoContato)}</span>
+      ${!c.ativo ? '<span class="badge badge-red">Inativo</span>' : ''}
+      ${(c.tags || []).map(t => `<span class="badge badge-blue">${t}</span>`).join('')}
+    `;
+    document.getElementById('btnEditar').addEventListener('click', () => {
+      location.href = `/pages/contatos.html?editId=${c.id}`;
+    });
+
+    const rows = [
+      ['E-mail', c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'],
+      ['Telefone', c.telefone || '—'],
+      ['CPF/CNPJ', c.cpfCnpj || '—'],
+      ['OAB', c.oab || '—'],
+      ['Endereço', c.endereco || '—'],
+      ['Cidade/UF', [c.cidade, c.estado].filter(Boolean).join(' / ') || '—'],
+      ['CEP', c.cep || '—'],
+      ['Data de nascimento', c.dataNascimento ? formatDateBr(c.dataNascimento) : '—'],
+      ['Observações', c.observacoes || '—']
+    ];
+    document.getElementById('infoList').innerHTML = rows.map(([label, value]) => `
+      <div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>
+    `).join('');
+  }
+
+  function renderPerfil(perfil) {
+    const r = perfil.resumo;
+    document.getElementById('rProcessosAtivos').textContent = r.processosAtivos;
+    const saldoEl = document.getElementById('rSaldoFinanceiro');
+    saldoEl.textContent = formatMoeda(r.saldoFinanceiro);
+    saldoEl.style.color = r.saldoFinanceiro < 0 ? 'var(--color-danger)' : '';
+    const rProximoPrazoEl = document.getElementById('rProximoPrazo');
+    rProximoPrazoEl.innerHTML = r.proximoPrazo
+      ? (r.proximoPrazo.link
+          ? `<a href="${r.proximoPrazo.link}">${r.proximoPrazo.titulo}</a> — ${formatDateBr(r.proximoPrazo.data)}`
+          : `${r.proximoPrazo.titulo} — ${formatDateBr(r.proximoPrazo.data)}`)
+      : 'Nenhum';
+    document.getElementById('rUltimoAtendimento').textContent = r.ultimoAtendimentoEm ? formatDateBr(r.ultimoAtendimentoEm) : 'Nenhum';
+
+    const timelineIcon = { Atendimento: '📋', Tarefa: '✅', Financeiro: '💰', Processo: '⚖️' };
+    const tl = perfil.timeline;
+    const tlEl = document.getElementById('perfilTimeline');
+    if (!tl.length) {
+      tlEl.innerHTML = '<div style="color:var(--color-text-muted);font-size:13px;padding:12px 0">Nenhum evento registrado ainda.</div>';
+      return;
+    }
+    tlEl.innerHTML = tl.map(item => `
+      <div class="timeline-item">
+        <div class="timeline-icon">${timelineIcon[item.tipo] || '•'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="timeline-title">${item.link ? `<a href="${item.link}">${item.titulo}</a>` : item.titulo}</div>
+          ${item.descricao ? `<div class="timeline-desc">${item.descricao}</div>` : ''}
+          <div class="timeline-date">${formatDateBr(item.data)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderVinculos(vinculos) {
+    const el = document.getElementById('vinculosList');
+    if (!vinculos.length) {
+      el.innerHTML = '<div style="color:var(--color-text-muted);font-size:13px">Nenhum vínculo cadastrado.</div>';
+      return;
+    }
+    const tipoLabel = { Socio: 'Sócio', Conjuge: 'Cônjuge', Familiar: 'Familiar', RepresentanteLegal: 'Representante Legal', Indicacao: 'Indicação', Outro: 'Outro' };
+    el.innerHTML = vinculos.map(v => `
+      <div class="vinculo-row">
+        <div>
+          <span class="badge badge-blue">${tipoLabel[v.tipo] || v.tipo}</span>
+          <a href="${contatoPerfilUrl(v.contatoRelacionadoId)}" style="margin-left:6px;font-weight:600">${v.contatoRelacionadoNome}</a>
+          ${v.observacao ? `<div style="font-size:12px;color:var(--color-text-muted)">${v.observacao}</div>` : ''}
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="removerVinculo('${v.id}')">Remover</button>
+      </div>`).join('');
+  }
+
+  // ── Contratos de Honorários (só para planos Plus+) ────────────────────
+  async function carregarHonorarios() {
+    const card = document.getElementById('cardHonorarios');
+    const el = document.getElementById('honorariosList');
+    try {
+      const result = await listarContratos({ contatoId });
+      const items = result?.items ?? result?.Items ?? [];
+      if (!items.length) return; // sem contratos: card continua oculto
+      card.style.display = 'block';
+      el.innerHTML = items.map(c => {
+        const info = STATUS_CONTRATO_LABELS[c.status] ?? { cls: 'badge-muted', label: c.status };
+        const aReceber = (c.valorPendente ?? 0) + (c.valorEmAtraso ?? 0);
+        return `
+        <a class="contrato-row" href="/pages/honorarios-contrato-detalhe.html?id=${c.id}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <strong>${c.numeroContrato}</strong>
+            <span class="badge ${info.cls}">${info.label}</span>
+          </div>
+          <div style="color:var(--color-text-muted);margin-top:2px">
+            Total: ${brl(c.valorTotal)} · A receber: ${brl(aReceber)}
+          </div>
+        </a>`;
+      }).join('');
+    } catch {
+      // Sem acesso (plano) ou erro pontual: mantém o card oculto sem travar o perfil.
+    }
+  }
+
+  window.removerVinculo = async (vinculoId) => {
+    if (!confirm('Remover este vínculo?')) return;
+    try {
+      await removeVinculo(contatoId, vinculoId);
+      renderVinculos(await getVinculos(contatoId));
+    } catch (err) { showAlert(err.message); }
+  };
+
+  document.getElementById('btnNovoVinculo').addEventListener('click', async () => {
+    const sel = document.getElementById('vContatoRelacionado');
+    sel.innerHTML = '<option>Carregando...</option>';
+    document.getElementById('formNovoVinculo').style.display = 'block';
+    try {
+      const result = await getContatos({ pageSize: 200, ativo: true });
+      const opcoes = result.items.filter(c => c.id !== contatoId);
+      sel.innerHTML = opcoes.length
+        ? opcoes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('')
+        : '<option value="">Nenhum contato disponível</option>';
+    } catch {
+      sel.innerHTML = '<option value="">Erro ao carregar contatos</option>';
+    }
+  });
+
+  document.getElementById('btnCancelarVinculo').addEventListener('click', () => {
+    document.getElementById('formNovoVinculo').style.display = 'none';
+  });
+
+  document.getElementById('btnSalvarVinculo').addEventListener('click', async () => {
+    const contatoRelacionadoId = document.getElementById('vContatoRelacionado').value;
+    if (!contatoRelacionadoId) return;
+    const btn = document.getElementById('btnSalvarVinculo');
+    btn.disabled = true;
+    try {
+      await addVinculo(contatoId, {
+        contatoRelacionadoId,
+        tipo: document.getElementById('vTipo').value,
+        observacao: document.getElementById('vObservacao').value || null
+      });
+      document.getElementById('formNovoVinculo').style.display = 'none';
+      document.getElementById('vObservacao').value = '';
+      renderVinculos(await getVinculos(contatoId));
+    } catch (err) {
+      showAlert(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ── Agendar retorno ───────────────────────────────────────────────────
+  const modalAgendarRetorno = document.getElementById('modalAgendarRetorno');
+
+  document.getElementById('btnAgendarRetorno').addEventListener('click', () => {
+    document.getElementById('retornoAlert').style.display = 'none';
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    document.getElementById('retornoData').value = d.toISOString().split('T')[0];
+    document.getElementById('retornoNota').value = '';
+    modalAgendarRetorno.classList.add('open');
+  });
+
+  [document.getElementById('retornoClose'), document.getElementById('retornoCancelar')].forEach(el =>
+    el.addEventListener('click', () => modalAgendarRetorno.classList.remove('open')));
+
+  document.getElementById('retornoSalvar').addEventListener('click', async () => {
+    const data = document.getElementById('retornoData').value;
+    if (!data) {
+      document.getElementById('retornoAlert').textContent = 'Informe a data do retorno.';
+      document.getElementById('retornoAlert').style.display = 'block';
+      return;
+    }
+    const nota = document.getElementById('retornoNota').value.trim();
+    const btn = document.getElementById('retornoSalvar');
+    btn.disabled = true;
+    try {
+      await agendarRetorno(contatoId, {
+        titulo: nota ? `Retornar contato: ${nota}` : 'Retornar contato',
+        prazo: data
+      });
+      modalAgendarRetorno.classList.remove('open');
+      showAlert('Retorno agendado em Tarefas.', 'success');
+    } catch (err) {
+      document.getElementById('retornoAlert').textContent = err.message;
+      document.getElementById('retornoAlert').style.display = 'block';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
