@@ -378,9 +378,55 @@ async function loadTarefas(page = 1) {
 
   try {
     const data = await apiFetch(`/tarefas?${params}`);
-    allListItems = data.items ?? [];
+    let items = data.items ?? [];
+
+    // Prazos também podem ter sido criados como Evento (Tipo=Prazo) na Agenda,
+    // em vez de como Tarefa — mesclamos os dois aqui pra não sumirem da tela.
+    // Só na página 1 (evita duplicar em toda página) e só quando os filtros de
+    // status/prioridade não estão ativos, já que evento de agenda não tem essas
+    // propriedades (não daria pra classificá-lo corretamente sob um filtro desses).
+    if (page === 1 && !f.status && !f.prioridade && f.tipo !== 'Tarefa') {
+      const eventosPrazo = await loadEventosPrazo(f);
+      items = mergePorPrazo(items, eventosPrazo);
+    }
+
+    allListItems = items;
     renderLista(allListItems, data);
   } catch (e) { console.error(e); }
+}
+
+async function loadEventosPrazo(f) {
+  try {
+    const data = await apiFetch('/eventos?tipo=Prazo&pageSize=200');
+    let items = (data.items ?? []).map(e => ({
+      id: e.id,
+      titulo: e.titulo,
+      prazo: e.dataHora,
+      tipo: 'Prazo',
+      atrasada: new Date(e.dataHora) < new Date(),
+      nomeResponsavel: e.nomeResponsavel,
+      numeroCNJProcesso: e.numeroCNJProcesso,
+      processoId: e.processoId,
+      origemAgenda: true,
+    }));
+    if (f.busca) {
+      const q = f.busca.toLowerCase();
+      items = items.filter(e => e.titulo.toLowerCase().includes(q));
+    }
+    if (f.atrasada) items = items.filter(e => e.atrasada);
+    return items;
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+function mergePorPrazo(tarefas, eventos) {
+  return [...tarefas, ...eventos].sort((a, b) => {
+    const da = a.prazo ? new Date(a.prazo).getTime() : Infinity;
+    const db = b.prazo ? new Date(b.prazo).getTime() : Infinity;
+    return da - db;
+  });
 }
 
 function renderLista(items, data) {
@@ -396,6 +442,7 @@ function renderLista(items, data) {
 }
 
 function tarefaCard(t) {
+  if (t.origemAgenda) return tarefaCardAgenda(t);
   const prioClass = `prioridade-${t.prioridade.toLowerCase()}`;
   const statusClass = `status-${t.status.toLowerCase()}`;
   const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
@@ -426,6 +473,32 @@ function tarefaCard(t) {
         `<button class="btn btn-secondary btn-sm" data-action="concluir" data-id="${t.id}">✓ Concluir</button>` : ''}
       <button class="btn btn-secondary btn-sm" data-action="edit" data-id="${t.id}">Editar</button>
       <button class="btn btn-danger btn-sm" data-action="delete" data-id="${t.id}">Excluir</button>
+    </div>
+  </div>`;
+}
+
+function tarefaCardAgenda(t) {
+  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
+
+  return `
+  <div class="tarefa-card" data-id="${t.id}">
+    <div class="tarefa-card-header">
+      <div>
+        <span class="tarefa-card-titulo">${esc(t.titulo)}</span>
+        ${atrasadaBadge}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="badge" style="background:#ede9fe;color:#6d28d9">⏰ Prazo (Agenda)</span>
+      </div>
+    </div>
+    <div class="tarefa-card-meta">
+      <span>📅 Prazo: ${prazoStr}</span>
+      ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
+      ${t.numeroCNJProcesso && t.processoId ? `<span>⚖️ <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link" onclick="event.stopPropagation()">${esc(t.numeroCNJProcesso)}</a></span>` : t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
+    </div>
+    <div class="tarefa-card-actions">
+      <a class="btn btn-secondary btn-sm" href="/pages/agenda.html">Ver/editar na agenda →</a>
     </div>
   </div>`;
 }

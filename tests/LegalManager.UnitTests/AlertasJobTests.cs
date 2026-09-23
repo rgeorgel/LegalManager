@@ -190,7 +190,7 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_DeveAlertarPrazoProcessual()
+    public async Task ExecutarAsync_DeveIncluirPrazoDeTarefaNoResumoUnico()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
@@ -217,16 +217,104 @@ public class AlertasJobTests
         await ctx.SaveChangesAsync();
 
         var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
+                l.Count == 1 && l[0].Titulo == "Prazo para contestação" && l[0].Dias == 1)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_DeveUnificarPrazoDeTarefaEPrazoDeAgendaNoMesmoEmail()
+    {
+        // Um prazo criado na tela de Tarefas e outro criado direto na Agenda (Evento Tipo=Prazo)
+        // aparecem juntos na mesma tela — precisam chegar no MESMO e-mail, não em dois separados.
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        var amanha = hoje.AddDays(1);
+
+        ctx.Tarefas.Add(new Tarefa
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Prazo para contestação",
+            Prazo = amanha, Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Alta
+        });
+        ctx.Eventos.Add(new Evento
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = amanha,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 2
+                && l.Any(i => i.Titulo == "Prazo para contestação")
+                && l.Any(i => i.Titulo == "Inscrição prova OAB"))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_DeveIncluirPrazoDeAgendaQueVenceHoje()
+    {
+        // O prazo criado na Agenda também precisa aparecer no dia em que vence, não só nos
+        // avisos D-1/D-3/D-5 de antecedência.
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+
+        ctx.Eventos.Add(new Evento
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = hoje.AddHours(17),
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
+                l.Count == 1 && l[0].Titulo == "Inscrição prova OAB" && l[0].Dias == 0)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_NaoDeveIncluirPrazoDeAgenda_QuandoPreferenciaDesabilitada()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+
+        ctx.Eventos.Add(new Evento
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
         var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
-        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(true);
-        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(true);
+        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(false);
+        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(false);
 
         var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
         await job.ExecutarAsync(hoje);
 
-        mockEmail.Verify(e => e.EnviarAlertaPrazoProcessualAsync(
-            "resp@test.com", "Responsável", "0000001-00.2024.8.26.0001",
-            "Prazo para contestação", amanha, 1), Times.Once);
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>()),
+            Times.Never);
     }
 
     [Fact]
@@ -355,45 +443,27 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_NaoDeveEnviarEmailDuplicado_PrazoProcessual_QuandoJobRodaDuasVezes()
+    public async Task ExecutarAsync_NaoDeveEnviarEmailDuplicado_PrazoDeAgenda_QuandoJobRodaDuasVezes()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
-        var amanha = hoje.AddDays(1);
-        var processoId = Guid.NewGuid();
 
-        ctx.Processos.Add(new Processo
+        ctx.Eventos.Add(new Evento
         {
-            Id = processoId, TenantId = tenantId, NumeroCNJ = "0000001-00.2024.8.26.0001",
-            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
-            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
-        });
-        ctx.Tarefas.Add(new Tarefa
-        {
-            Id = Guid.NewGuid(), TenantId = tenantId, ProcessoId = processoId,
-            Titulo = "Prazo para contestação",
-            DataInicio = hoje.AddDays(-5),
-            QuantidadeDias = 5, TipoCalculo = TipoCalculo.DiasCorridos,
-            Prazo = amanha, Status = StatusTarefa.Pendente,
-            Tipo = TipoTarefa.Prazo,
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow,
-            CriadoPorId = responsavelId, Prioridade = PrioridadeTarefa.Alta
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
         });
         await ctx.SaveChangesAsync();
 
         var mockEmail = new Mock<IEmailService>();
-        var mockPrefs = new Mock<IPreferenciasNotificacaoService>();
-        mockPrefs.Setup(p => p.PermiteEmailAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(true);
-        mockPrefs.Setup(p => p.PermiteInAppAsync(tenantId, responsavelId, "Prazos")).ReturnsAsync(true);
-
-        var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
 
         await job.ExecutarAsync(hoje);
         await job.ExecutarAsync(hoje);
 
-        mockEmail.Verify(e => e.EnviarAlertaPrazoProcessualAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>()), Times.Once);
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>()), Times.Once);
     }
 
     [Fact]

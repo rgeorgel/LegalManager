@@ -33,9 +33,12 @@ public class AlertasJob
         await AlertarTarefasAsync(hoje);
         await AlertarEventosAsync(hoje);
         await AlertarTrialExpirandoAsync(hoje);
-        await AlertarPrazosProcessuaisAsync(hoje);
     }
 
+    // Tarefas e Prazos aparecem juntos na mesma tela (Tarefas/Prazos), então viram um só
+    // e-mail diário: um prazo pode ter sido criado como Tarefa (Tipo=Prazo) ou direto como
+    // Evento na Agenda (Tipo=Prazo) — as duas origens entram no mesmo resumo, nas mesmas
+    // janelas (hoje, D+1, D+3, D+5 antes de vencer; até 5 dias de atraso depois).
     private async Task AlertarTarefasAsync(DateTime hoje)
     {
         var tarefas = await _context.Tarefas
@@ -48,10 +51,27 @@ public class AlertasJob
                 t.Id,
                 t.TenantId,
                 t.Titulo,
-                t.Prazo,
+                Prazo = t.Prazo!.Value,
                 DestinatarioId = t.ResponsavelId ?? t.CriadoPorId,
                 DestinatarioNome = t.ResponsavelId.HasValue ? t.Responsavel!.Nome : t.CriadoPor!.Nome,
-                DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email
+                DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email,
+                Origem = "Tarefas"
+            })
+            .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
+            .ToListAsync();
+
+        var prazosAgenda = await _context.Eventos
+            .Where(e => e.Tipo == TipoEvento.Prazo && e.ResponsavelId.HasValue)
+            .Select(e => new
+            {
+                e.Id,
+                e.TenantId,
+                e.Titulo,
+                Prazo = e.DataHora,
+                DestinatarioId = e.ResponsavelId!.Value,
+                DestinatarioNome = e.Responsavel!.Nome,
+                DestinatarioEmail = e.Responsavel!.Email,
+                Origem = "Prazos"
             })
             .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
             .ToListAsync();
@@ -59,8 +79,12 @@ public class AlertasJob
         var hojeStr = hoje.ToString("yyyyMMdd");
         var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
         const int limiteDiasAtraso = 5;
-        var candidatas = tarefas.Where(t => t.Prazo!.Value.Date < hoje.AddDays(6) &&
-                                             t.Prazo!.Value.Date >= hoje.AddDays(-limiteDiasAtraso)).ToList();
+
+        bool NaJanela(DateTime prazo) => prazo.Date < hoje.AddDays(6) && prazo.Date >= hoje.AddDays(-limiteDiasAtraso);
+
+        var candidatas = tarefas.Where(t => NaJanela(t.Prazo))
+            .Concat(prazosAgenda.Where(e => NaJanela(e.Prazo)))
+            .ToList();
 
         var grupos = candidatas
             .GroupBy(t => new { t.TenantId, t.DestinatarioId, t.DestinatarioNome, t.DestinatarioEmail })
@@ -71,22 +95,27 @@ public class AlertasJob
             try
             {
                 var itens = new List<ResumoTarefaItem>();
+                var categorias = new HashSet<string>();
 
                 foreach (var t in grupo)
                 {
-                    var diasPrazo = (t.Prazo!.Value.Date - hoje).Days;
+                    var diasPrazo = (t.Prazo.Date - hoje).Days;
                     if (diasPrazo >= 0 && !janelasFuturas.Contains(diasPrazo)) continue;
 
                     var ehAtrasada = diasPrazo < 0;
-                    if (ehAtrasada)
+                    // Prazo da Agenda não tem status "concluído" pra sumir da lista sozinho, então
+                    // sempre passa pela preferência "Prazos" antes de entrar — igual já fazíamos com
+                    // tarefa atrasada.
+                    var prefKey = t.Origem == "Prazos" ? "Prazos" : ehAtrasada ? "TarefaAtrasada" : "PrazoTarefa";
+                    if (ehAtrasada || t.Origem == "Prazos")
                     {
-                        var prefKey = "TarefaAtrasada";
-                        var permiteEmailAtrasada = await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
-                        var permiteInAppAtrasada = await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
-                        if (!permiteEmailAtrasada && !permiteInAppAtrasada) continue;
+                        var permiteEmailItem = await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
+                        var permiteInAppItem = await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
+                        if (!permiteEmailItem && !permiteInAppItem) continue;
                     }
 
-                    itens.Add(new ResumoTarefaItem(t.Titulo, t.Prazo!.Value, diasPrazo));
+                    categorias.Add(prefKey);
+                    itens.Add(new ResumoTarefaItem(t.Titulo, t.Prazo, diasPrazo));
                 }
 
                 if (itens.Count == 0) continue;
@@ -95,10 +124,15 @@ public class AlertasJob
                 var jaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveDigest);
                 if (jaEnviado) continue;
 
-                var prefKeyEmail = itens.Any(i => i.Dias < 0) ? "TarefaAtrasada" : "PrazoTarefa";
-                var prefKeyInApp = prefKeyEmail;
-                var permiteEmail = await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKeyEmail);
-                var permiteInApp = await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKeyInApp);
+                // O e-mail é único, mas pode conter itens de categorias diferentes (Tarefas,
+                // TarefaAtrasada, Prazos) — mandamos se o usuário permitir pelo menos uma delas.
+                var permiteEmail = false;
+                var permiteInApp = false;
+                foreach (var categoria in categorias)
+                {
+                    permiteEmail |= await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, categoria);
+                    permiteInApp |= await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, categoria);
+                }
 
                 if (permiteEmail)
                 {
@@ -286,81 +320,6 @@ public class AlertasJob
                     {
                         _logger.LogError(ex, "Erro ao alertar trial tenant {TenantId}", tenant.Id);
                     }
-                }
-            }
-        }
-    }
-
-    private async Task AlertarPrazosProcessuaisAsync(DateTime hoje)
-    {
-        var limites = new[] { 1, 3, 5 };
-        foreach (var dias in limites)
-        {
-            var dataAlvo = hoje.AddDays(dias).Date;
-            var prazos = await _context.Tarefas
-                .Where(t => t.Tipo == TipoTarefa.Prazo &&
-                            t.Status == StatusTarefa.Pendente &&
-                            t.Prazo.HasValue &&
-                            t.Prazo.Value.Date == dataAlvo &&
-                            t.ResponsavelId.HasValue)
-                .Select(t => new
-                {
-                    t.Id,
-                    t.TenantId,
-                    Descricao = t.Titulo,
-                    DataFinal = t.Prazo!.Value,
-                    t.ResponsavelId,
-                    NumeroCNJ = t.Processo != null ? t.Processo.NumeroCNJ : null,
-                    ResponsavelNome = t.Responsavel!.Nome,
-                    ResponsavelEmail = t.Responsavel!.Email
-                })
-                .ToListAsync();
-
-            foreach (var prazo in prazos)
-            {
-                try
-                {
-                    var chave = $"prazo-{prazo.Id}-{dias}d-{hoje:yyyyMMdd}";
-                    var permiteEmail = await _prefs.PermiteEmailAsync(prazo.TenantId, prazo.ResponsavelId!.Value, "Prazos");
-                    var permiteInApp = await _prefs.PermiteInAppAsync(prazo.TenantId, prazo.ResponsavelId!.Value, "Prazos");
-
-                    if (permiteEmail && !string.IsNullOrEmpty(prazo.ResponsavelEmail))
-                    {
-                        var chaveEmail = $"email-prazo-{prazo.Id}-{dias}d-{hoje:yyyyMMdd}";
-                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
-                        if (!emailJaEnviado)
-                        {
-                            await _emailService.EnviarAlertaPrazoProcessualAsync(
-                                prazo.ResponsavelEmail, prazo.ResponsavelNome,
-                                prazo.NumeroCNJ ?? "(sem processo)", prazo.Descricao,
-                                prazo.DataFinal, dias);
-                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
-                            {
-                                Id = Guid.NewGuid(),
-                                TenantId = prazo.TenantId,
-                                UsuarioId = prazo.ResponsavelId!.Value,
-                                Tipo = TipoNotificacao.PrazoTarefa,
-                                Titulo = $"Email prazo {prazo.Descricao}",
-                                Mensagem = $"Email enviado para {prazo.ResponsavelEmail}",
-                                Lida = false,
-                                CriadaEm = DateTime.UtcNow,
-                                ChaveDedup = chaveEmail
-                            });
-                            await _context.SaveChangesAsync();
-                        }
-                    }
-
-                    if (permiteInApp)
-                        await CriarNotificacaoAsync(
-                            prazo.TenantId, prazo.ResponsavelId!.Value,
-                            TipoNotificacao.PrazoTarefa,
-                            $"Prazo processual em {dias} dia(s)",
-                            $"O prazo \"{prazo.Descricao}\" vence em {dias} dia(s).",
-                            "/pages/tarefas.html?tipo=Prazo", chave);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Erro ao alertar prazo processual {Descricao}", prazo.Descricao);
                 }
             }
         }

@@ -552,7 +552,7 @@ public class EmailService : IEmailService
                 </table>
 
                 <p style="text-align:center;margin:28px 0">
-                  <a href="{_config["App:FrontendUrl"]}/pages/prazos.html"
+                  <a href="{_config["App:FrontendUrl"]}/pages/tarefas.html?tipo=Prazo"
                      style="background:#dc2626;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
                     Ver prazos
                   </a>
