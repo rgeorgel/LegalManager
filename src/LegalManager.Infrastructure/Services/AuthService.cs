@@ -88,6 +88,7 @@ public class AuthService : IAuthService
             Perfil = PerfilUsuario.Admin,
             Ativo = true,
             CriadoEm = DateTime.UtcNow,
+            UltimoAcessoEm = DateTime.UtcNow,
             OrigemCadastro = DerivarOrigemCadastro(dto),
             UtmSource = NullIfBlank(dto.UtmSource),
             UtmMedium = NullIfBlank(dto.UtmMedium),
@@ -412,6 +413,7 @@ public class AuthService : IAuthService
 
         usuario.TenantId = tenant.Id;
         usuario.CriadoEm = agora;
+        usuario.UltimoAcessoEm = agora;
 
         var result = await _userManager.CreateAsync(usuario, GenerateSecureToken());
         if (!result.Succeeded)
