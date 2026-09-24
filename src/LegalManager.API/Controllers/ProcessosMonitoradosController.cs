@@ -1,4 +1,6 @@
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
+using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Tribunais;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +14,7 @@ public class ProcessosMonitoradosController(
     DataJudAdapter dataJud,
     ILogger<ProcessosMonitoradosController> logger,
     IConsultaExternaLogService consultaLog,
+    ITenantContext tenantContext,
     IEscavadorService? escavador = null) : ControllerBase
 {
     private const string OrigemBuscaManualCnj = "Processos — Busca manual por CNJ";
@@ -20,6 +23,12 @@ public class ProcessosMonitoradosController(
     public async Task<IActionResult> Search(
         [FromQuery] string cnj, [FromQuery] string? tribunal, CancellationToken ct)
     {
+        if (!PlanoRestricoes.PermiteBuscaExternaProcesso(tenantContext.Plano))
+            return StatusCode(403, new
+            {
+                message = "A busca automática de dados do processo em APIs externas é uma funcionalidade paga, disponível a partir do plano Plus. No plano Free, cadastre o processo manualmente preenchendo os campos."
+            });
+
         if (string.IsNullOrWhiteSpace(cnj))
             return BadRequest(new { message = "CNJ é obrigatório." });
 

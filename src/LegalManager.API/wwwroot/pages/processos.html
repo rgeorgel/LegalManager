@@ -382,6 +382,7 @@
                   <ul class="searchable-select-list" id="tribunalList"></ul>
                 </div>
                 <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+                <span id="buscaProcessoPlusBadge" style="display:none;flex-shrink:0;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;white-space:nowrap" title="Disponível a partir do plano Plus">PLUS</span>
               </div>
             </div>
           </div>
@@ -627,7 +628,7 @@
 
 
 <script type="module">
-import { initLayout } from '/js/layout.js';
+import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { mascaraCnj } from '/js/mascaras.js';
@@ -636,6 +637,16 @@ import { initOnboardingModal, openOnboardingModal, openReadOnlyModal, startDots,
 initLayout();
 
 document.getElementById('fNumeroCNJ').addEventListener('input', (e) => mascaraCnj(e.target));
+
+// Busca automática (DataJud/Escavador) é funcionalidade paga — disponível a partir do
+// plano Plus. No Free, o botão fica visualmente marcado com o badge "PLUS" e o clique (ou
+// Enter no campo CNJ, que dispara o mesmo botão) mostra o toast de upgrade em vez de buscar.
+// O bloqueio real está no backend (ProcessosMonitoradosController.Search) — isso aqui é só
+// feedback imediato para evitar o round-trip.
+if (isPlanoFree()) {
+  document.getElementById('buscaProcessoPlusBadge').style.display = '';
+  document.getElementById('btnBuscarProcesso').title = 'Disponível a partir do plano Plus';
+}
 
 function esc(str) {
   return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -767,6 +778,11 @@ document.getElementById('btnUsarPartes').addEventListener('click', () => {
 
 // Buscar dados do processo (preview)
 document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
+  if (isPlanoFree()) {
+    showUpgradeToast('Plus', 'A busca automática de dados do processo em APIs externas é uma funcionalidade paga. No plano Free, cadastre o processo manualmente preenchendo os campos.');
+    return;
+  }
+
   const input = document.getElementById('fNumeroCNJ');
   const preview = document.getElementById('processPreview');
   const btn = document.getElementById('btnBuscarProcesso');
