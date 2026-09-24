@@ -12,6 +12,7 @@ const _params = new URLSearchParams(location.search);
 let currentView = ['dia','semana','mes','lista'].includes(_params.get('view')) ? _params.get('view') : 'semana';
 let currentDate = _params.get('date') ? new Date(_params.get('date') + 'T00:00:00') : new Date();
 currentDate.setHours(0, 0, 0, 0);
+let pendingAbrirId = _params.get('abrirId');
 
 let agendaItems = [];
 let editingId = null;
@@ -74,6 +75,7 @@ function syncUrl() {
   const d = currentDate;
   const pad = n => String(n).padStart(2, '0');
   p.set('date', `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+  p.delete('abrirId');
   history.replaceState(null, '', `${location.pathname}?${p}`);
 }
 
@@ -103,6 +105,26 @@ function render(start, end) {
   else if (currentView === 'semana') container.innerHTML = renderSemanaView(start);
   else if (currentView === 'mes') container.innerHTML = renderMesView(start);
   bindChipClicks();
+  abrirPendente(container);
+}
+
+// --- Open event from deep link (e.g. ?date=...&abrirId=...) ---
+function abrirPendente(container) {
+  if (!pendingAbrirId) return;
+  const id = pendingAbrirId;
+  pendingAbrirId = null;
+  const item = agendaItems.find(it => it.id === id);
+  if (!item) return;
+  requestAnimationFrame(() => {
+    const el = container.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const rect = el.getBoundingClientRect();
+      showTooltip(item, item.tipo, rect.left + rect.width / 2, rect.bottom);
+    } else {
+      showTooltip(item, item.tipo, window.innerWidth / 2, window.innerHeight / 3);
+    }
+  });
 }
 
 // --- List View ---
