@@ -354,7 +354,8 @@ public class OnboardingController : ControllerBase
                     DataNascimento: null,
                     Observacoes: obs,
                     NotificacaoHabilitada: false,
-                    Tags: null
+                    Tags: null,
+                    ImportadoAutomaticamente: true
                 ), ct);
             }
 
@@ -702,7 +703,8 @@ public class OnboardingController : ControllerBase
                             DataNascimento: null,
                             Observacoes: null,
                             NotificacaoHabilitada: false,
-                            Tags: null
+                            Tags: null,
+                            ImportadoAutomaticamente: true
                         ), ct);
                     }
 

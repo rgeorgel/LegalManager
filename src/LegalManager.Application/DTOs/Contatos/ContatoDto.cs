@@ -18,7 +18,8 @@ public record CreateContatoDto(
     DateTime? DataNascimento,
     string? Observacoes,
     bool NotificacaoHabilitada,
-    List<string>? Tags
+    List<string>? Tags,
+    bool ImportadoAutomaticamente = false
 );
 
 public record UpdateContatoDto(
@@ -57,7 +58,8 @@ public record ContatoResponseDto(
     bool NotificacaoHabilitada,
     bool Ativo,
     List<string> Tags,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    bool ImportadoAutomaticamente = false
 );
 
 public record ContatoListItemDto(
@@ -69,7 +71,8 @@ public record ContatoListItemDto(
     string? Email,
     string? Telefone,
     bool Ativo,
-    List<string> Tags
+    List<string> Tags,
+    bool ImportadoAutomaticamente
 );
 
 public record ContatoFiltroDto(
@@ -78,6 +81,7 @@ public record ContatoFiltroDto(
     TipoPessoa? Tipo,
     string? Tag,
     bool? Ativo,
+    bool? ImportadoAutomaticamente = null,
     int Page = 1,
     int PageSize = 20,
     string? SortBy = null,

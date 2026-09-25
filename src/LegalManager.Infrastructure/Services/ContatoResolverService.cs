@@ -45,7 +45,8 @@ public class ContatoResolverService(IContatoService contatoService) : IContatoRe
                     DataNascimento: null,
                     Observacoes: null,
                     NotificacaoHabilitada: false,
-                    Tags: null
+                    Tags: null,
+                    ImportadoAutomaticamente: true
                 ), ct);
             }
 

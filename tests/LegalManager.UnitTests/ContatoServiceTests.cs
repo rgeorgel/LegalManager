@@ -300,9 +300,9 @@ public class ContatoServiceTests
         var tenantCtx = CreateTenantContext(tenant.Id, Guid.NewGuid());
         var service = new ContatoService(ctx, tenantCtx, CreateHonorarioService(ctx));
 
-        var page1 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 10));
-        var page2 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 2, 10));
-        var page3 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 3, 10));
+        var page1 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 10));
+        var page2 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 2, 10));
+        var page3 = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 3, 10));
 
         Assert.Equal(10, page1.Items.Count());
         Assert.Equal(10, page2.Items.Count());
@@ -386,7 +386,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "nome", "asc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "nome", "asc"));
 
         Assert.Equal(new[] { "Ana", "Beatriz", "Carlos" }, result.Items.Select(i => i.Nome));
     }
@@ -401,7 +401,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "nome", "desc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "nome", "desc"));
 
         Assert.Equal(new[] { "Carlos", "Ana" }, result.Items.Select(i => i.Nome));
     }
@@ -417,7 +417,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "email", "asc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "email", "asc"));
 
         var nomes = result.Items.Select(i => i.Nome).ToList();
         Assert.Equal("Ana", nomes[0]);
@@ -436,7 +436,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "tipoContato", "asc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "tipoContato", "asc"));
 
         Assert.Equal(TipoContato.Cliente, result.Items.First().TipoContato);
         Assert.Equal(TipoContato.Perito, result.Items.Last().TipoContato);
@@ -452,7 +452,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "campo-inexistente", "asc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "campo-inexistente", "asc"));
 
         Assert.Equal(new[] { "Ana", "Carlos" }, result.Items.Select(i => i.Nome));
     }
@@ -467,7 +467,7 @@ public class ContatoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, Guid.NewGuid()), CreateHonorarioService(ctx));
-        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, 1, 20, "cpfCnpj", "asc"));
+        var result = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, null, null, 1, 20, "cpfCnpj", "asc"));
 
         Assert.Equal("ComDoc", result.Items.First().Nome);
         Assert.Equal("SemDoc", result.Items.Last().Nome);

@@ -41,6 +41,7 @@ public class ContatoService : IContatoService
             DataNascimento = dto.DataNascimento,
             Observacoes = dto.Observacoes,
             NotificacaoHabilitada = dto.NotificacaoHabilitada,
+            ImportadoAutomaticamente = dto.ImportadoAutomaticamente,
             Ativo = true,
             CriadoEm = DateTime.UtcNow,
             Tags = dto.Tags?.Select(t => new ContatoTag { Id = Guid.NewGuid(), Tag = t }).ToList() ?? []
@@ -127,6 +128,9 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
 
         if (filtro.Ativo.HasValue)
             query = query.Where(c => c.Ativo == filtro.Ativo.Value);
+
+        if (filtro.ImportadoAutomaticamente.HasValue)
+            query = query.Where(c => c.ImportadoAutomaticamente == filtro.ImportadoAutomaticamente.Value);
 
         if (!string.IsNullOrWhiteSpace(filtro.Tag))
             query = query.Where(c => c.Tags.Any(t => t.Tag == filtro.Tag));
@@ -452,11 +456,11 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Oab, c.Email,
         c.Telefone, c.Endereco, c.Cidade, c.Estado, c.Cep, c.DataNascimento,
         c.Observacoes, c.NotificacaoHabilitada, c.Ativo,
-        c.Tags.Select(t => t.Tag).ToList(), c.CriadoEm);
+        c.Tags.Select(t => t.Tag).ToList(), c.CriadoEm, c.ImportadoAutomaticamente);
 
     private static ContatoListItemDto MapToListItem(Contato c) => new(
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Email, c.Telefone,
-        c.Ativo, c.Tags.Select(t => t.Tag).ToList());
+        c.Ativo, c.Tags.Select(t => t.Tag).ToList(), c.ImportadoAutomaticamente);
 }
 
 internal static class ContatoServiceSortExtensions

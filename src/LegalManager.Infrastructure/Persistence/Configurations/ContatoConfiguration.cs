@@ -35,5 +35,6 @@ public class ContatoConfiguration : IEntityTypeConfiguration<Contato>
         builder.HasIndex(c => new { c.TenantId, c.Nome });
 
         builder.Property(c => c.IAHabilitada).HasDefaultValue(false);
+        builder.Property(c => c.ImportadoAutomaticamente).HasDefaultValue(false);
     }
 }

@@ -33,6 +33,7 @@ public class ContatosController : ControllerBase
         [FromQuery] string? tipo,
         [FromQuery] string? tag,
         [FromQuery] bool? ativo,
+        [FromQuery] bool? importadoAutomaticamente,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? sortBy = null,
@@ -52,7 +53,7 @@ public class ContatosController : ControllerBase
             busca,
             tipoContato != null && Enum.TryParse<Domain.Enums.TipoContato>(tipoContato, true, out var tc) ? tc : null,
             tipo != null && Enum.TryParse<Domain.Enums.TipoPessoa>(tipo, true, out var tp) ? tp : null,
-            tag, ativo, page, pageSize,
+            tag, ativo, importadoAutomaticamente, page, pageSize,
             normalizedSortBy, normalizedSortDir);
 
         var result = await _service.GetAllAsync(filtro, ct);

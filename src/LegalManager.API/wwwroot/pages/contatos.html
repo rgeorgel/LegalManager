@@ -183,6 +183,11 @@
         <select id="filtTag" class="form-control" style="width:auto">
           <option value="">Todas as tags</option>
         </select>
+        <select id="filtOrigem" class="form-control" style="width:auto" title="Filtrar por origem do cadastro">
+          <option value="">Cadastrados e importados</option>
+          <option value="manual">Cadastrados manualmente</option>
+          <option value="importado">Importados automaticamente</option>
+        </select>
         <select id="filtSalvo" class="form-control" style="width:auto">
           <option value="">Filtros salvos...</option>
         </select>
@@ -615,6 +620,7 @@
     const VALID_SORT_DIR = new Set(['asc', 'desc']);
 
     const VALID_VIEW = new Set(['list', 'cards']);
+    const VALID_ORIGEM = new Set(['', 'manual', 'importado']);
 
     function loadListState() {
       try {
@@ -627,11 +633,12 @@
         const tag = typeof s.tag === 'string' ? s.tag : '';
         const page = Number.isInteger(s.page) && s.page > 0 ? s.page : 1;
         const view = VALID_VIEW.has(s.view) ? s.view : 'list';
-        return { sortBy, sortDir, tag, page, view };
+        const origem = VALID_ORIGEM.has(s.origem) ? s.origem : '';
+        return { sortBy, sortDir, tag, page, view, origem };
       } catch { return null; }
     }
     function saveListState() {
-      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tag: currentTag, page: currentPage, view: currentView })); } catch {}
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tag: currentTag, page: currentPage, view: currentView, origem: currentOrigem })); } catch {}
     }
     let knownTags = new Set();
 
@@ -641,6 +648,7 @@
     let currentTag = initialState?.tag ?? '';
     currentPage = initialState?.page ?? 1;
     let currentView = initialState?.view ?? 'list';
+    let currentOrigem = initialState?.origem ?? '';
 
     function updateSortIndicators() {
       document.querySelectorAll('th.sortable').forEach(th => {
@@ -670,6 +678,7 @@
         const result = await getContatos({
           ...currentFilters,
           tag: currentTag || undefined,
+          importadoAutomaticamente: currentOrigem === 'importado' ? true : currentOrigem === 'manual' ? false : undefined,
           sortBy: currentSortBy,
           sortDir: currentSortDir,
           page: currentPage
@@ -717,7 +726,7 @@
       }
       tbody.innerHTML = items.map(c => `
         <tr>
-          <td data-label="Nome"><strong><a href="${contatoPerfilUrl(c.id)}">${c.nome}</a></strong></td>
+          <td data-label="Nome"><strong><a href="${contatoPerfilUrl(c.id)}">${c.nome}</a></strong>${c.importadoAutomaticamente ? ' <span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}</td>
           <td data-label="Tipo"><span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span></td>
           <td data-label="Categoria">${formatTipoContato(c.tipoContato)}</td>
           <td data-label="CPF/CNPJ">${c.cpfCnpj || '—'}</td>
@@ -747,6 +756,7 @@
           </div>
           <div class="card-badges">
             <span class="badge badge-gray">${formatTipoContato(c.tipoContato)}</span>
+            ${c.importadoAutomaticamente ? '<span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}
             ${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join('')}
           </div>
           <div class="card-divider"></div>
@@ -978,6 +988,13 @@
       loadContatos();
     });
 
+    document.getElementById('filtOrigem').addEventListener('change', (e) => {
+      currentOrigem = e.target.value || '';
+      currentPage = 1;
+      saveListState();
+      loadContatos();
+    });
+
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.dataset.sort;
@@ -999,6 +1016,10 @@
     if (currentTag) {
       const sel = document.getElementById('filtTag');
       if (sel) sel.value = currentTag;
+    }
+    if (currentOrigem) {
+      const selOrigem = document.getElementById('filtOrigem');
+      if (selOrigem) selOrigem.value = currentOrigem;
     }
 
     // ── Toggle de visualização (lista/cards) ────────────────────────────

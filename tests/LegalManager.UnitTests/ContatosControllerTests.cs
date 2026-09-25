@@ -70,7 +70,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        var result = await controller.GetAll(null, null, null, null, null, 1, 20, null, null, CancellationToken.None);
+        var result = await controller.GetAll(null, null, null, null, null, null, 1, 20, null, null, CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -84,7 +84,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll("busca", "Cliente", "PF", "tag1", true, 2, 50, "nome", "asc", CancellationToken.None);
+        await controller.GetAll("busca", "Cliente", "PF", "tag1", true, null, 2, 50, "nome", "asc", CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ContatoFiltroDto>(f =>
@@ -109,7 +109,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll(null, "InvalidTipoContato", "InvalidTipo", null, null, 1, 20, null, null, CancellationToken.None);
+        await controller.GetAll(null, "InvalidTipoContato", "InvalidTipo", null, null, null, 1, 20, null, null, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ContatoFiltroDto>(f => f.TipoContato == null && f.Tipo == null),
@@ -128,7 +128,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll(null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
+        await controller.GetAll(null, null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
 
         var expectedDir = string.IsNullOrEmpty(sortDir) ? null : sortDir.Trim().ToLowerInvariant();
         service.Verify(s => s.GetAllAsync(
@@ -152,7 +152,7 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll(null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
+        await controller.GetAll(null, null, null, null, null, null, 1, 20, sortBy, sortDir, CancellationToken.None);
 
         var expectedSortBy = expectSortByNull ? null : sortBy!.Trim();
         service.Verify(s => s.GetAllAsync(

@@ -21,6 +21,7 @@ public class Contato
     public string? Observacoes { get; set; }
     public bool NotificacaoHabilitada { get; set; }
     public bool IAHabilitada { get; set; }
+    public bool ImportadoAutomaticamente { get; set; }
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public DateTime? AtualizadoEm { get; set; }
