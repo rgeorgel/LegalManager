@@ -20,6 +20,12 @@ public class Usuario : IdentityUser<Guid>
     // coluna por tour evita migration a cada novo tutorial adicionado.
     public string? ToursConcluidos { get; set; }
 
+    // Layout personalizado do dashboard (JSON: ordem, largura e visibilidade dos
+    // blocos — ver DashboardLayoutDto). Null = layout padrão. Mesmo racional de
+    // ToursConcluidos: os ids dos blocos vivem no frontend, então novos blocos
+    // não exigem migration.
+    public string? DashboardLayout { get; set; }
+
     public string? OrigemCadastro { get; set; }
     public string? UtmSource { get; set; }
     public string? UtmMedium { get; set; }

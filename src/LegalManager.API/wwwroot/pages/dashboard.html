@@ -156,9 +156,10 @@
     .d2-kpi.locked { opacity: .65; }
 
     /* Grids */
-    .d2-row { display: grid; gap: 16px; margin-bottom: 16px; }
-    .d2-row-3 { grid-template-columns: 1.25fr 1fr 1fr; }
-    .d2-row-3b { grid-template-columns: 1fr 1fr 1fr; }
+    .d2-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .d2-w2 { grid-column: span 2; }
+    .d2-w3 { grid-column: 1 / -1; }
+    .d2-oculto { display: none; }
 
     /* Tabs (pill) */
     .d2-tabs { display: flex; gap: 4px; background: var(--d2-soft); padding: 4px; border-radius: 10px; margin-bottom: 12px; }
@@ -283,12 +284,12 @@
     .d2-topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .d2-topbar-link { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
     .d2-topbar-link:hover { border-color: var(--color-primary); }
+    button.d2-topbar-link { cursor: pointer; color: var(--color-text) !important; font-family: inherit; }
     .d2-plus { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 100px; margin-left: 4px; }
 
     @media (max-width: 1200px) {
       .d2-kpis { grid-template-columns: repeat(3, 1fr); }
-      .d2-row-3, .d2-row-3b { grid-template-columns: 1fr 1fr; }
-      .d2-row-3 > :first-child { grid-column: 1 / -1; }
+      .d2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 900px) {
       .d2-hero { grid-template-columns: 1fr; }
@@ -296,7 +297,8 @@
     @media (max-width: 700px) {
       .d2-actions { grid-template-columns: 1fr 1fr; }
       .d2-kpis { grid-template-columns: 1fr 1fr; }
-      .d2-row-3, .d2-row-3b { grid-template-columns: 1fr; }
+      .d2-grid { grid-template-columns: minmax(0, 1fr); }
+      .d2-grid > .d2-w2, .d2-grid > .d2-w3 { grid-column: auto; }
       .d2-kpi-value { font-size: 22px; }
     }
     .ob-step { display: none; }
@@ -434,6 +436,7 @@
         <div class="d2-topbar">
           <h1 class="page-title">Dashboard</h1>
           <div class="d2-topbar-actions">
+            <button class="d2-topbar-link" id="d2Personalizar" type="button" aria-pressed="false">⚙️ Personalizar</button>
             <a class="d2-topbar-link" id="d2Indicadores" href="/pages/dashboard-classico.html?tab=indicadores">📈 Indicadores<span class="d2-plus" id="d2IndPlus" style="display:none">PLUS</span></a>
             <div id="dashVersao"></div>
           </div>
@@ -501,9 +504,10 @@
           </a>
         </section>
 
-        <!-- Linha 1: Prazos/Tarefas · Agenda · Notificações -->
-        <section class="d2-row d2-row-3">
-          <div class="d2-card">
+        <!-- Blocos personalizáveis (ordem, largura e visibilidade salvas por usuário —
+             ver /js/dashboard-layout.js). A ordem aqui é o layout padrão. -->
+        <section class="d2-grid" id="d2Grid">
+          <div class="d2-card" data-widget="prazos" data-titulo="Prazos e tarefas">
             <div class="d2-card-head">
               <div class="d2-card-title">🎯 Prazos e tarefas</div>
               <a class="d2-card-link" href="/pages/tarefas.html">Ver todas →</a>
@@ -516,7 +520,7 @@
             <div class="d2-list" id="ttList"><div class="d2-skel"></div><div class="d2-skel"></div><div class="d2-skel"></div></div>
           </div>
 
-          <div class="d2-card">
+          <div class="d2-card" data-widget="agenda" data-titulo="Agenda">
             <div class="d2-card-head">
               <div class="d2-card-title" id="agMes">Agenda</div>
               <div class="d2-week-nav">
@@ -529,18 +533,15 @@
             <div class="d2-events" id="agEvents"><div class="d2-skel"></div><div class="d2-skel"></div></div>
           </div>
 
-          <div class="d2-card">
+          <div class="d2-card" data-widget="notificacoes" data-titulo="Notificações">
             <div class="d2-card-head">
               <div class="d2-card-title">🔔 Notificações <span class="d2-count" id="ntCount" style="display:none"></span></div>
               <button class="d2-link-btn" id="ntLimpar" style="display:none">Marcar todas como lidas</button>
             </div>
             <div class="d2-list" id="ntList"><div class="d2-skel"></div><div class="d2-skel"></div></div>
           </div>
-        </section>
 
-        <!-- Linha 2: Honorários · Calculadora · Timesheet -->
-        <section class="d2-row d2-row-3b">
-          <div class="d2-card" id="honCard">
+          <div class="d2-card" id="honCard" data-widget="honorarios" data-titulo="Honorários de contrato">
             <div class="d2-card-head">
               <div class="d2-card-title">🤝 Honorários de contrato</div>
               <a class="d2-card-link" href="/pages/honorarios-contratos.html">Contratos →</a>
@@ -568,7 +569,7 @@
             <div style="margin-top:12px" id="honInadimplentes"></div>
           </div>
 
-          <div class="d2-card d2-calc" id="calcCard">
+          <div class="d2-card d2-calc" id="calcCard" data-widget="calculadora" data-titulo="Calcular prazo">
             <div class="d2-card-head">
               <div class="d2-card-title">🧮 Calcular prazo</div>
               <a class="d2-card-link" href="/pages/calculadora-prazos.html">Calculadora completa →</a>
@@ -597,45 +598,7 @@
             <div class="d2-calc-result" id="calcResult" style="display:none"></div>
           </div>
 
-          <div class="d2-card">
-            <div class="d2-card-head">
-              <div class="d2-card-title">📊 Processos por área</div>
-            </div>
-            <div id="arBars"><div class="d2-skel"></div><div class="d2-skel"></div></div>
-            <div class="d2-card-head" style="margin:18px 0 8px">
-              <div class="d2-card-title">🎂 Aniversariantes do mês</div>
-            </div>
-            <div id="anList"><div class="d2-skel"></div></div>
-          </div>
-        </section>
-
-        <!-- Linha 3: Processos recentes · Financeiro · Distribuição + aniversariantes -->
-        <section class="d2-row d2-row-3b">
-          <div class="d2-card">
-            <div class="d2-card-head">
-              <div class="d2-card-title">📂 Últimas movimentações</div>
-              <a class="d2-card-link" href="/pages/processos.html">Ver todos →</a>
-            </div>
-            <div class="d2-list" id="prList"><div class="d2-skel"></div><div class="d2-skel"></div><div class="d2-skel"></div></div>
-          </div>
-
-          <div class="d2-card" id="finCard" data-tour="dashboard-financeiro">
-            <div class="d2-card-head">
-              <div class="d2-card-title">💵 Financeiro — 6 meses</div>
-              <a class="d2-card-link" href="/pages/financeiro.html">Detalhes →</a>
-            </div>
-            <div class="d2-mini-stats" style="margin-bottom:10px">
-              <div class="d2-mini"><div class="d2-mini-label">Saldo do mês</div><div class="d2-mini-value" id="fnSaldo">—</div></div>
-              <div class="d2-mini"><div class="d2-mini-label">Receb. vencidos</div><div class="d2-mini-value" style="color:var(--d2-red)" id="fnVencidos">—</div></div>
-            </div>
-            <div class="d2-trend" id="fnTrend"></div>
-            <div class="d2-legend">
-              <span><i style="background:var(--color-primary)"></i>Receitas</span>
-              <span><i style="background:#94a3b8"></i>Despesas</span>
-            </div>
-          </div>
-
-          <div class="d2-card">
+          <div class="d2-card" data-widget="cronometro" data-titulo="Cronômetro">
             <div class="d2-card-head">
               <div class="d2-card-title">⏱️ Cronômetro</div>
               <a class="d2-card-link" href="/pages/timesheet.html">Timesheet →</a>
@@ -651,6 +614,44 @@
               <div class="d2-mini"><div class="d2-mini-label">Mês anterior</div><div class="d2-mini-value" id="tmMesAnt">—</div></div>
             </div>
           </div>
+
+          <div class="d2-card d2-w2" data-widget="movimentacoes" data-titulo="Últimas movimentações">
+            <div class="d2-card-head">
+              <div class="d2-card-title">📂 Últimas movimentações</div>
+              <a class="d2-card-link" href="/pages/processos.html">Ver todos →</a>
+            </div>
+            <div class="d2-list" id="prList"><div class="d2-skel"></div><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card" data-widget="areas" data-titulo="Processos por área">
+            <div class="d2-card-head">
+              <div class="d2-card-title">📊 Processos por área</div>
+            </div>
+            <div id="arBars"><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card d2-w2" id="finCard" data-tour="dashboard-financeiro" data-widget="financeiro" data-titulo="Financeiro">
+            <div class="d2-card-head">
+              <div class="d2-card-title">💵 Financeiro — 6 meses</div>
+              <a class="d2-card-link" href="/pages/financeiro.html">Detalhes →</a>
+            </div>
+            <div class="d2-mini-stats" style="margin-bottom:10px">
+              <div class="d2-mini"><div class="d2-mini-label">Saldo do mês</div><div class="d2-mini-value" id="fnSaldo">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Receb. vencidos</div><div class="d2-mini-value" style="color:var(--d2-red)" id="fnVencidos">—</div></div>
+            </div>
+            <div class="d2-trend" id="fnTrend"></div>
+            <div class="d2-legend">
+              <span><i style="background:var(--color-primary)"></i>Receitas</span>
+              <span><i style="background:#94a3b8"></i>Despesas</span>
+            </div>
+          </div>
+
+          <div class="d2-card" data-widget="aniversariantes" data-titulo="Aniversariantes do mês">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🎂 Aniversariantes do mês</div>
+            </div>
+            <div id="anList"><div class="d2-skel"></div></div>
+          </div>
         </section>
 
       </div>
@@ -663,6 +664,7 @@
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
     import { injectDashboardSwitch } from '/js/dashboard-versao.js';
+    import { initDashboardLayout } from '/js/dashboard-layout.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -685,6 +687,9 @@
     detectarTemaEscuro();
 
     const user = getUser();
+
+    // Aplica o layout personalizado (ordem/largura/visibilidade dos blocos) o quanto antes.
+    initDashboardLayout({ grid: document.getElementById('d2Grid'), botao: document.getElementById('d2Personalizar'), userId: user?.id });
     const plano = getPlano();
     const free = isPlanoFree();
     const planoPro = ['Pro', 'Max', 'Enterprise'].includes(plano);
