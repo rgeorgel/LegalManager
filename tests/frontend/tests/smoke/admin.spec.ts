@@ -3,6 +3,7 @@ import { test, expect } from '../../fixtures';
 // Todas as páginas do portal admin que requerem autenticação
 const ADMIN_PAGES = [
   '/pages/dashboard.html',
+  '/pages/dashboard-classico.html',
   '/pages/processos.html',
   '/pages/processo-detalhe.html',
   '/pages/contatos.html',

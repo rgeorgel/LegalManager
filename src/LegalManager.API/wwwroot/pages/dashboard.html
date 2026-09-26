@@ -1,6 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <script>
+    // Preferência de versão do dashboard (ver setDashboardVersao em /js/dashboard-versao.js).
+    // Roda antes de qualquer render para não piscar a página nova. Não redireciona
+    // durante um tour guiado, cujos passos apontam para /pages/dashboard.html.
+    try {
+      if (localStorage.getItem('dashboard_versao') === 'classico' && !sessionStorage.getItem('tour_active'))
+        location.replace('/pages/dashboard-classico.html' + location.search);
+    } catch {}
+  </script>
   <!-- PostHog — only loads in non-local environments -->
   <script>
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -13,7 +23,6 @@
       });
     }
   </script>
-  <meta charset="UTF-8">
   <!-- Google tag (gtag.js) — only loads in non-local environments -->
   <script>
     if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -55,72 +64,238 @@
       })(window, document, "clarity", "script", "x099iggkqu");
     }
   </script>
-<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+    /* ── Dashboard 2 (beta) ─────────────────────────────── */
+    /* Tokens derivados das variáveis do tema (--color-*), para funcionar em
+       qualquer preset. Temas escuros (presets com customCss) são detectados
+       via JS, que adiciona .d2-dark — ver detectarTemaEscuro(). */
+    .d2 {
+      max-width: 1440px;
+      --d2-radius: 16px;
+      --d2-red: #dc2626;
+      --d2-red-bg: #fef2f2;
+      --d2-amber: #b45309;
+      --d2-amber-bg: #fffbeb;
+      --d2-green: #15803d;
+      --d2-green-bg: #f0fdf4;
+      --d2-soft: color-mix(in srgb, var(--color-text) 5%, var(--color-surface));
+      --d2-line: color-mix(in srgb, var(--color-text) 22%, var(--color-surface));
+      /* Superfícies preenchidas com a cor primária (calculadora, ação principal) */
+      --d2-fill: var(--color-primary);
+      --d2-on-fill: #fff;
+      --d2-on-primary: #fff;
     }
-    @media(max-width:560px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
-    .stat-card {
+    .d2.d2-dark {
+      --d2-red: #f87171;
+      --d2-red-bg: #7f1d1d;
+      --d2-amber: #fcd34d;
+      --d2-amber-bg: #78350f;
+      --d2-green: #6ee7b7;
+      --d2-green-bg: #064e3b;
+      --d2-soft: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+      --d2-fill: color-mix(in srgb, var(--color-primary) 28%, var(--color-surface));
+      --d2-on-fill: var(--color-text);
+      --d2-on-primary: var(--color-bg);
+    }
+    .d2.d2-dark .d2-chip.red { color: #fca5a5; }
+    .d2 a:hover { text-decoration: none; }
+
+    .d2-card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
+      border-radius: var(--d2-radius);
+      padding: 20px;
       box-shadow: var(--shadow);
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
     }
-    a.stat-card-link {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+    .d2-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+    .d2-card-title { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .d2-card-link { font-size: 12px; font-weight: 600; color: var(--color-primary); white-space: nowrap; }
+    .d2-count { background: var(--color-primary-light); color: var(--color-primary); font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 100px; }
+    .d2-muted { color: var(--color-text-muted); font-size: 13px; }
+    .d2-empty { color: var(--color-text-muted); font-size: 13px; padding: 18px 0; text-align: center; }
+
+    /* Hero */
+    .d2-hero { display: grid; grid-template-columns: minmax(260px, 1.2fr) 2fr; gap: 16px; margin-bottom: 16px; }
+    .d2-greet h1 { font-size: 24px; font-weight: 800; line-height: 1.2; }
+    .d2-greet h2 { font-size: 17px; font-weight: 700; margin-top: 4px; }
+    .d2-greet p { margin-top: 8px; font-size: 13px; color: var(--color-text-muted); max-width: 420px; }
+    .d2-greet .d2-date { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-primary); margin-bottom: 6px; }
+    .d2-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .d2-action {
+      display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--d2-radius);
+      padding: 16px; color: inherit; transition: transform .12s, border-color .15s, box-shadow .15s;
     }
-    a.stat-card-link:hover {
-      border-color: var(--color-primary);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    .d2-action:hover { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-md); }
+    .d2-action-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--color-primary-light); }
+    .d2-action-title { font-weight: 700; font-size: 14px; }
+    .d2-action-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+    .d2-action.primary { background: var(--d2-fill); border-color: var(--color-primary); color: var(--d2-on-fill); }
+    .d2-action.primary .d2-action-icon { background: rgba(255,255,255,.18); }
+    .d2-action.primary .d2-action-sub { color: var(--d2-on-fill); opacity: .8; }
+
+    /* KPIs */
+    .d2-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+    .d2-kpi {
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--d2-radius);
+      padding: 14px 16px; color: inherit; display: block; transition: border-color .15s, transform .12s;
     }
-    a.stat-card-link:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
+    .d2-kpi:hover { border-color: var(--color-primary); transform: translateY(-2px); }
+    .d2-kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); display: flex; align-items: center; gap: 6px; }
+    .d2-kpi-value { font-size: 26px; font-weight: 800; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .d2-kpi-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; min-height: 18px; }
+    .d2-kpi.alert { border-color: color-mix(in srgb, var(--d2-red) 45%, var(--color-border)); }
+    .d2-kpi.alert .d2-kpi-value { color: var(--d2-red); }
+    .d2-kpi.locked { opacity: .65; }
+
+    /* Grids */
+    .d2-row { display: grid; gap: 16px; margin-bottom: 16px; }
+    .d2-row-3 { grid-template-columns: 1.25fr 1fr 1fr; }
+    .d2-row-3b { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* Tabs (pill) */
+    .d2-tabs { display: flex; gap: 4px; background: var(--d2-soft); padding: 4px; border-radius: 10px; margin-bottom: 12px; }
+    /* !important nas cores de botões: o preset escuro força `button { color: inherit !important }` */
+    .d2-tab { flex: 1; border: none; background: transparent; padding: 6px 8px; font-size: 12px; font-weight: 600; border-radius: 8px; cursor: pointer; color: var(--color-text-muted) !important; white-space: nowrap; }
+    .d2-tab:hover { color: var(--color-text) !important; }
+    .d2-tab.active { background: var(--color-surface); color: var(--color-text) !important; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+    .d2-tab .n { font-weight: 700; margin-left: 4px; color: var(--color-text-muted); }
+
+    /* Lista de tarefas/prazos */
+    .d2-list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; }
+    .d2-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+    .d2-item:hover { border-color: var(--d2-line); }
+    .d2-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--d2-line); background: var(--color-surface); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: grid; place-items: center; font-size: 12px; color: #fff !important; padding: 0; }
+    .d2-check:hover { border-color: var(--d2-green); }
+    .d2-check.done { background: #15803d; border-color: #15803d; }
+    .d2-item-body { flex: 1; min-width: 0; }
+    .d2-item-title { font-weight: 600; font-size: 13px; color: var(--color-text); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d2-item-meta { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d2-chip { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; white-space: nowrap; flex-shrink: 0; }
+    .d2-chip.red { background: var(--d2-red-bg); color: var(--d2-red); }
+    .d2-chip.amber { background: var(--d2-amber-bg); color: var(--d2-amber); }
+    .d2-chip.green { background: var(--d2-green-bg); color: var(--d2-green); }
+    .d2-chip.gray { background: var(--d2-soft); color: var(--color-text-muted); }
+    .d2-prio { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
+
+    /* Agenda semanal */
+    .d2-week-nav { display: flex; gap: 4px; }
+    .d2-icon-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; font-size: 14px; color: var(--color-text-muted) !important; display: grid; place-items: center; padding: 0; }
+    .d2-icon-btn:hover { color: var(--color-text) !important; border-color: var(--d2-line); }
+    .d2-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px; }
+    .d2-day { border: none; background: transparent; cursor: pointer; padding: 6px 0; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .d2-day:hover { background: var(--d2-soft); }
+    .d2-day-dow { font-size: 11px; color: var(--color-text-muted); font-weight: 600; text-transform: capitalize; }
+    .d2-day-num { font-size: 15px; font-weight: 700; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--color-text); }
+    .d2-day.today .d2-day-num { color: var(--color-primary); }
+    .d2-day.selected .d2-day-num { background: var(--color-primary); color: var(--d2-on-primary); }
+    .d2-day-dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+    .d2-day.has .d2-day-dot { background: var(--color-primary); }
+    .d2-events { display: flex; flex-direction: column; gap: 8px; max-height: 290px; overflow-y: auto; }
+    .d2-event { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--d2-soft); color: inherit; }
+    .d2-event:hover { background: var(--color-primary-light); }
+    .d2-event-time { font-size: 12px; font-weight: 700; min-width: 42px; font-variant-numeric: tabular-nums; }
+    .d2-event-bar { width: 3px; align-self: stretch; border-radius: 3px; }
+
+    /* Notificações */
+    .d2-notif { display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--color-border); }
+    .d2-notif-icon { width: 32px; height: 32px; border-radius: 10px; background: var(--color-primary-light); display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
+    .d2-notif-msg { font-size: 12px; color: var(--color-text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .d2-link-btn { background: none; border: none; color: var(--color-primary) !important; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; }
+
+    /* Honorários */
+    .d2-hon-top { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+    .d2-ring { position: relative; width: 96px; height: 96px; flex-shrink: 0; }
+    .d2-ring svg { transform: rotate(-90deg); }
+    .d2-ring-label { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 18px; }
+    .d2-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .d2-mini { background: var(--d2-soft); border-radius: 12px; padding: 10px 12px; }
+    .d2-mini-label { font-size: 11px; color: var(--color-text-muted); font-weight: 600; }
+    .d2-mini-value { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .d2-row-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--color-border); font-size: 13px; }
+
+    /* Calculadora (card destaque) */
+    .d2-calc { background: var(--d2-fill); border-color: var(--color-primary); color: var(--d2-on-fill); }
+    .d2-calc .d2-card-link { color: var(--d2-on-fill); opacity: .9; }
+    .d2-calc label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; opacity: .85; display: block; margin-bottom: 4px; }
+    .d2-calc input { width: 100%; border: none; border-radius: 10px; padding: 9px 10px; font-size: 14px; background: rgba(255,255,255,.95); color: #111827; min-height: 40px; }
+    .d2-calc-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .d2-seg { display: flex; background: rgba(0,0,0,.18); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
+    .d2-seg button { flex: 1; border: none; background: transparent; color: var(--d2-on-fill) !important; font-size: 12px; font-weight: 600; padding: 7px; border-radius: 8px; cursor: pointer; }
+    .d2-seg button.active { background: #fff; color: var(--color-primary) !important; }
+    .d2-dark .d2-calc input { background: var(--color-bg); color: var(--color-text); color-scheme: dark; }
+    .d2-dark .d2-seg button.active { background: var(--color-primary); color: var(--d2-on-primary) !important; }
+    .d2-presets { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .d2-presets button { border: 1px solid color-mix(in srgb, var(--d2-on-fill) 40%, transparent); background: transparent; color: var(--d2-on-fill) !important; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px; cursor: pointer; }
+    .d2-presets button:hover { background: color-mix(in srgb, var(--d2-on-fill) 15%, transparent); }
+    .d2-calc-btn { width: 100%; border: none; background: #0f172a; color: #fff !important; font-weight: 700; padding: 11px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    .d2-calc-btn:disabled { opacity: .6; cursor: wait; }
+    .d2-dark .d2-calc-btn { background: var(--color-primary); color: var(--d2-on-primary) !important; }
+    .d2-calc-result { margin-top: 12px; background: color-mix(in srgb, var(--d2-on-fill) 14%, transparent); border-radius: 12px; padding: 12px; font-size: 13px; }
+    .d2-calc-result strong { font-size: 18px; display: block; margin: 2px 0; }
+
+    /* Timer */
+    .d2-timer { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+    .d2-timer.running { color: var(--d2-green); }
+    .d2-timer-row { display: flex; gap: 8px; margin-top: 10px; }
+    .d2-timer-row input { flex: 1; min-width: 0; border: 1px solid var(--color-border); border-radius: 10px; padding: 8px 10px; font-size: 13px; background: var(--color-surface); color: var(--color-text); }
+    .d2-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--d2-green); display: inline-block; animation: d2pulse 1.4s infinite; }
+    @keyframes d2pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+
+    /* Barras */
+    .d2-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+    .d2-bar-label { width: 110px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d2-bar-track { flex: 1; height: 10px; background: var(--d2-soft); border-radius: 4px; overflow: hidden; }
+    .d2-bar-fill { height: 100%; border-radius: 4px; background: var(--color-primary); }
+    .d2-bar-val { width: 32px; text-align: right; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+    .d2-trend { display: flex; align-items: flex-end; gap: 10px; height: 130px; padding-top: 8px; }
+    .d2-trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+    .d2-trend-bars { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+    .d2-trend-bars div { width: 40%; max-width: 16px; border-radius: 4px 4px 0 0; min-height: 2px; }
+    .d2-trend-label { font-size: 11px; color: var(--color-text-muted); }
+    .d2-legend { display: flex; gap: 14px; font-size: 12px; color: var(--color-text-muted); margin-top: 10px; }
+    .d2-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+    /* Lock para recursos de planos superiores */
+    .d2-lock {
+      position: absolute; inset: 0; background: rgba(15,23,42,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 20px; color: #f8fafc; z-index: 2;
     }
-    .stat-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
-    .stat-card-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: var(--color-primary); }
-    .fin-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
-    .fin-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; }
-    .fin-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
-    .fin-value { font-size:18px; font-weight:700; margin-top:6px; }
-    /* Indicadores */
-    .ind-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:8px; }
-    .ind-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); }
-    .ind-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
-    .ind-value { font-size:26px; font-weight:700; margin-top:6px; color:var(--color-primary); }
-    .ind-value.green { color:#15803d; }
-    .ind-value.red   { color:#dc2626; }
-    .ind-value.amber { color:#ca8a04; }
-    .section { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
-    .section-title { font-weight:700; font-size:15px; margin-bottom:16px; }
-    .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .bar-label { font-size:13px; min-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .bar-track { flex:1; background:#f3f4f6; border-radius:4px; height:12px; overflow:hidden; }
-    .bar-fill { height:100%; border-radius:4px; transition:width .4s; }
-    .bar-count { font-size:12px; color:var(--color-text-muted); min-width:30px; text-align:right; }
-    .trend-row { display:flex; align-items:flex-end; gap:8px; height:80px; }
-    .trend-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
-    .trend-bars { display:flex; align-items:flex-end; gap:2px; height:60px; width:100%; }
-    .trend-bar-r { background:#10b981; border-radius:2px 2px 0 0; flex:1; min-height:2px; }
-    .trend-bar-d { background:#f87171; border-radius:2px 2px 0 0; flex:1; min-height:2px; }
-    .trend-label { font-size:10px; color:var(--color-text-muted); white-space:nowrap; }
-    .kpi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-    @media(max-width:480px) { .kpi-row { grid-template-columns:1fr 1fr; } }
-  </style>
-  <style>
+    .d2-lock strong { font-size: 15px; }
+    .d2-lock span { font-size: 12px; color: #cbd5e1; max-width: 240px; }
+    .d2-lock a { background: #f59e0b; color: #0f172a; font-weight: 700; font-size: 12px; padding: 7px 16px; border-radius: 8px; margin-top: 4px; }
+
+    .d2-skel { background: linear-gradient(90deg, var(--d2-soft) 25%, var(--color-border) 50%, var(--d2-soft) 75%); background-size: 200% 100%; animation: d2skel 1.2s infinite; border-radius: 8px; height: 14px; margin: 8px 0; }
+    @keyframes d2skel { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+    .d2-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .d2-topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .d2-topbar-link { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
+    .d2-topbar-link:hover { border-color: var(--color-primary); }
+    .d2-plus { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 100px; margin-left: 4px; }
+
+    @media (max-width: 1200px) {
+      .d2-kpis { grid-template-columns: repeat(3, 1fr); }
+      .d2-row-3, .d2-row-3b { grid-template-columns: 1fr 1fr; }
+      .d2-row-3 > :first-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 900px) {
+      .d2-hero { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .d2-actions { grid-template-columns: 1fr 1fr; }
+      .d2-kpis { grid-template-columns: 1fr 1fr; }
+      .d2-row-3, .d2-row-3b { grid-template-columns: 1fr; }
+      .d2-kpi-value { font-size: 22px; }
+    }
     .ob-step { display: none; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
@@ -251,193 +426,240 @@
     <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
 
     <main class="main-content">
-      <div class="page-header">
-        <h1 class="page-title">Dashboard</h1>
-      </div>
+      <div class="d2">
 
-      <div class="tab-nav">
-        <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="tab-btn" data-tab="indicadores" id="tabBtnIndicadores">
-          📈 Indicadores
-          <span id="indProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PLUS</span>
-        </button>
-      </div>
-
-      <!-- Tab: Dashboard -->
-      <div class="tab-content active" id="tab-dashboard">
-        <!-- Operacional -->
-        <div class="dashboard-grid" data-tour="dashboard-stats">
-          <a class="stat-card stat-card-link" href="/pages/processos.html">
-            <div class="stat-card-label">Processos Ativos</div>
-            <div class="stat-card-value" id="statProcessos">—</div>
-          </a>
-          <a class="stat-card stat-card-link" href="/pages/contatos.html">
-            <div class="stat-card-label">Contatos</div>
-            <div class="stat-card-value" id="statContatos">—</div>
-          </a>
-          <a class="stat-card stat-card-link" href="/pages/tarefas.html">
-            <div class="stat-card-label">Tarefas Abertas</div>
-            <div class="stat-card-value" id="statTarefas">—</div>
-          </a>
-          <a class="stat-card stat-card-link" href="/pages/tarefas.html" style="border-color:#fca5a5">
-            <div class="stat-card-label" style="color:#dc2626">Tarefas Atrasadas</div>
-            <div class="stat-card-value" style="color:#dc2626" id="statAtrasadas">—</div>
-          </a>
-          <a class="stat-card stat-card-link" href="/pages/processos.html">
-            <div class="stat-card-label">Processos Encerrados</div>
-            <div class="stat-card-value" style="font-size:22px" id="statEncerrados">—</div>
-          </a>
-          <a class="stat-card stat-card-link" href="/pages/assinatura.html">
-            <div class="stat-card-label">Plano / Status</div>
-            <div class="stat-card-value" style="font-size:14px" id="statPlano">—</div>
-          </a>
-        </div>
-
-        <!-- Financeiro do mês -->
-        <div id="finSection" data-tour="dashboard-financeiro" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:28px;margin-bottom:20px;position:relative;overflow:hidden">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <div style="font-weight:700;font-size:15px">💰 Financeiro (mês atual)</div>
-            <a href="/pages/financeiro.html" style="font-size:13px;color:#1a56db">Ver detalhe →</a>
-          </div>
-          <div class="fin-grid">
-            <div class="fin-card">
-              <div class="fin-label">Receitas pagas</div>
-              <div class="fin-value" style="color:#15803d" id="finReceitas">R$ 4.800,00</div>
-            </div>
-            <div class="fin-card">
-              <div class="fin-label">Despesas pagas</div>
-              <div class="fin-value" style="color:#dc2626" id="finDespesas">R$ 1.200,00</div>
-            </div>
-            <div class="fin-card">
-              <div class="fin-label">Saldo do mês</div>
-              <div class="fin-value" style="color:#15803d" id="finSaldo">R$ 3.600,00</div>
-            </div>
-            <div class="fin-card">
-              <div class="fin-label">A receber</div>
-              <div class="fin-value" style="color:#ca8a04" id="finAReceber">R$ 2.500,00</div>
-            </div>
-            <div class="fin-card">
-              <div class="fin-label">A pagar</div>
-              <div class="fin-value" style="color:#ea580c" id="finAPagar">R$ 800,00</div>
-            </div>
-            <div class="fin-card" style="border-color:#fca5a5">
-              <div class="fin-label" style="color:#dc2626">Receb. vencidos</div>
-              <div class="fin-value" style="color:#dc2626;font-size:15px" id="finVencidos">R$ 300,00</div>
-            </div>
-          </div>
-          <!-- Plus overlay (shown only for Free plan) -->
-          <div id="finProOverlay" style="display:none;position:absolute;inset:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:rgba(15,23,42,.55);border-radius:var(--radius);align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:20px">
-            <div style="font-size:28px">💰</div>
-            <div style="font-weight:800;font-size:16px;color:#f8fafc">Controle Financeiro</div>
-            <div style="font-size:13px;color:#cbd5e1;max-width:260px">Acompanhe receitas, despesas e saldo do escritório. Disponível a partir do plano <strong style="color:#f59e0b">Plus</strong>.</div>
-            <a href="/pages/assinatura.html" style="margin-top:6px;background:#f59e0b;color:#0f172a;font-weight:600;font-size:13px;padding:8px 20px;border-radius:8px;text-decoration:none">Fazer upgrade para Plus</a>
+        <div class="d2-topbar">
+          <h1 class="page-title">Dashboard</h1>
+          <div class="d2-topbar-actions">
+            <a class="d2-topbar-link" id="d2Indicadores" href="/pages/dashboard-classico.html?tab=indicadores">📈 Indicadores<span class="d2-plus" id="d2IndPlus" style="display:none">PLUS</span></a>
+            <div id="dashVersao"></div>
           </div>
         </div>
 
-        <!-- Próximos eventos -->
-        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:12px">📅 Próximos Eventos (7 dias)</div>
-          <div id="proximosEventos"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
-        </div>
-
-        <!-- Tarefas urgentes -->
-        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:20px;margin-bottom:20px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div style="font-weight:700;font-size:15px">✅ Tarefas Urgentes / Alta Prioridade</div>
-            <a href="/pages/tarefas.html" style="font-size:13px;color:#1a56db">Ver todas →</a>
+        <!-- Hero: saudação + ações rápidas -->
+        <section class="d2-hero">
+          <div class="d2-card d2-greet">
+            <div class="d2-date" id="d2Hoje">—</div>
+            <h1 id="d2Saudacao">Olá!</h1>
+            <h2>Quais são os planos para hoje?</h2>
+            <p id="d2Resumo">Carregando o seu resumo do dia…</p>
           </div>
-          <div id="tarefasUrgentes"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
-        </div>
-      </div>
+          <div class="d2-actions">
+            <a class="d2-action primary" href="/pages/processos.html">
+              <div class="d2-action-icon">⚖️</div>
+              <div><div class="d2-action-title">Novo processo</div><div class="d2-action-sub">Cadastrar ou importar</div></div>
+            </a>
+            <a class="d2-action" href="/pages/tarefas.html">
+              <div class="d2-action-icon">✅</div>
+              <div><div class="d2-action-title">Nova tarefa</div><div class="d2-action-sub">Prazos e pendências</div></div>
+            </a>
+            <a class="d2-action" href="/pages/agenda.html">
+              <div class="d2-action-icon">📅</div>
+              <div><div class="d2-action-title">Novo evento</div><div class="d2-action-sub">Audiências e reuniões</div></div>
+            </a>
+            <a class="d2-action" href="/pages/contatos.html">
+              <div class="d2-action-icon">👤</div>
+              <div><div class="d2-action-title">Novo contato</div><div class="d2-action-sub">Clientes e partes</div></div>
+            </a>
+          </div>
+        </section>
 
-      <!-- Tab: Indicadores (Pro) -->
-      <div class="tab-content" id="tab-indicadores">
-        <div id="indLoading" style="color:var(--color-text-muted);padding:20px">Carregando indicadores...</div>
-        <div id="indContent" style="display:none">
+        <!-- KPIs -->
+        <section class="d2-kpis" data-tour="dashboard-stats">
+          <a class="d2-kpi" href="/pages/processos.html">
+            <div class="d2-kpi-label">⚖️ Processos ativos</div>
+            <div class="d2-kpi-value" id="kProcessos">—</div>
+            <div class="d2-kpi-sub" id="kProcessosSub"></div>
+          </a>
+          <a class="d2-kpi" href="/pages/tarefas.html">
+            <div class="d2-kpi-label">✅ Tarefas abertas</div>
+            <div class="d2-kpi-value" id="kTarefas">—</div>
+            <div class="d2-kpi-sub" id="kTarefasSub"></div>
+          </a>
+          <a class="d2-kpi alert" href="/pages/tarefas.html">
+            <div class="d2-kpi-label" style="color:var(--d2-red)">⚠️ Atrasadas</div>
+            <div class="d2-kpi-value" id="kAtrasadas">—</div>
+            <div class="d2-kpi-sub">tarefas e prazos vencidos</div>
+          </a>
+          <a class="d2-kpi" href="/pages/prazos.html">
+            <div class="d2-kpi-label">⏳ Prazos em 7 dias</div>
+            <div class="d2-kpi-value" id="kPrazos">—</div>
+            <div class="d2-kpi-sub" id="kPrazosSub"></div>
+          </a>
+          <a class="d2-kpi" href="/pages/agenda.html">
+            <div class="d2-kpi-label">📅 Eventos hoje</div>
+            <div class="d2-kpi-value" id="kEventos">—</div>
+            <div class="d2-kpi-sub" id="kEventosSub"></div>
+          </a>
+          <a class="d2-kpi" href="/pages/honorarios-contratos.html" id="kHonLink">
+            <div class="d2-kpi-label">💰 Honorários a receber</div>
+            <div class="d2-kpi-value" id="kHonorarios" style="font-size:20px">—</div>
+            <div class="d2-kpi-sub" id="kHonorariosSub"></div>
+          </a>
+        </section>
 
-          <!-- Processos -->
-          <div class="section">
-            <div class="section-title">⚖️ Processos</div>
-            <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Total</div><div class="ind-value" id="pTotal">—</div></div>
-              <div class="ind-card"><div class="ind-label">Ativos</div><div class="ind-value" id="pAtivos">—</div></div>
-              <div class="ind-card"><div class="ind-label">Encerrados</div><div class="ind-value" id="pEncerrados">—</div></div>
-              <div class="ind-card"><div class="ind-label">Suspensos</div><div class="ind-value amber" id="pSuspensos">—</div></div>
-              <div class="ind-card"><div class="ind-label">Novos este mês</div><div class="ind-value green" id="pNovos">—</div></div>
+        <!-- Linha 1: Prazos/Tarefas · Agenda · Notificações -->
+        <section class="d2-row d2-row-3">
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🎯 Prazos e tarefas</div>
+              <a class="d2-card-link" href="/pages/tarefas.html">Ver todas →</a>
             </div>
-            <div class="kpi-row" style="margin-top:16px">
-              <div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR ÁREA</div>
-                <div id="barArea"></div>
+            <div class="d2-tabs" role="tablist">
+              <button class="d2-tab active" data-tt="prazos">Prazos<span class="n" id="ttPrazosN"></span></button>
+              <button class="d2-tab" data-tt="minhas">Minhas<span class="n" id="ttMinhasN"></span></button>
+              <button class="d2-tab" data-tt="atrasadas">Atrasadas<span class="n" id="ttAtrasadasN"></span></button>
+            </div>
+            <div class="d2-list" id="ttList"><div class="d2-skel"></div><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title" id="agMes">Agenda</div>
+              <div class="d2-week-nav">
+                <button class="d2-icon-btn" id="agPrev" title="Semana anterior">‹</button>
+                <button class="d2-icon-btn" id="agHoje" title="Hoje" style="width:auto;padding:0 8px;font-size:11px;font-weight:700">Hoje</button>
+                <button class="d2-icon-btn" id="agNext" title="Próxima semana">›</button>
+              </div>
+            </div>
+            <div class="d2-week" id="agWeek"></div>
+            <div class="d2-events" id="agEvents"><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🔔 Notificações <span class="d2-count" id="ntCount" style="display:none"></span></div>
+              <button class="d2-link-btn" id="ntLimpar" style="display:none">Marcar todas como lidas</button>
+            </div>
+            <div class="d2-list" id="ntList"><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+        </section>
+
+        <!-- Linha 2: Honorários · Calculadora · Timesheet -->
+        <section class="d2-row d2-row-3b">
+          <div class="d2-card" id="honCard">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🤝 Honorários de contrato</div>
+              <a class="d2-card-link" href="/pages/honorarios-contratos.html">Contratos →</a>
+            </div>
+            <div class="d2-hon-top">
+              <div class="d2-ring" id="honRing" title="Recebido no mês em relação à meta mensal">
+                <svg width="96" height="96" viewBox="0 0 96 96">
+                  <circle cx="48" cy="48" r="40" fill="none" stroke="var(--d2-soft)" stroke-width="10"/>
+                  <circle id="honRingArc" cx="48" cy="48" r="40" fill="none" stroke="var(--color-primary)" stroke-width="10" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3" style="transition:stroke-dashoffset .6s"/>
+                </svg>
+                <div class="d2-ring-label" id="honPct">—</div>
               </div>
               <div>
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">POR FASE (ativos)</div>
-                <div id="barFase"></div>
+                <div class="d2-mini-label">Recebido no mês</div>
+                <div style="font-size:20px;font-weight:800" id="honRecebido">—</div>
+                <div class="d2-muted" id="honMeta">Meta mensal não definida</div>
               </div>
             </div>
+            <div class="d2-mini-stats">
+              <div class="d2-mini"><div class="d2-mini-label">A receber</div><div class="d2-mini-value" id="honAReceber">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Em atraso</div><div class="d2-mini-value" style="color:var(--d2-red)" id="honAtraso">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Contratos ativos</div><div class="d2-mini-value" id="honAtivos">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Com atraso</div><div class="d2-mini-value" id="honAtrasados">—</div></div>
+            </div>
+            <div style="margin-top:12px" id="honInadimplentes"></div>
           </div>
 
-          <!-- Tarefas -->
-          <div class="section">
-            <div class="section-title">✅ Tarefas</div>
-            <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Pendentes</div><div class="ind-value" id="tPendentes">—</div></div>
-              <div class="ind-card"><div class="ind-label">Em Andamento</div><div class="ind-value" style="color:#1d4ed8" id="tEmAndamento">—</div></div>
-              <div class="ind-card"><div class="ind-label">Concluídas</div><div class="ind-value green" id="tConcluidas">—</div></div>
-              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Atrasadas</div><div class="ind-value red" id="tAtrasadas">—</div></div>
-              <div class="ind-card"><div class="ind-label">Concluídas este mês</div><div class="ind-value green" id="tConcluidasMes">—</div></div>
+          <div class="d2-card d2-calc" id="calcCard">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🧮 Calcular prazo</div>
+              <a class="d2-card-link" href="/pages/calculadora-prazos.html">Calculadora completa →</a>
             </div>
-            <div style="margin-top:16px">
-              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">ABERTAS POR PRIORIDADE</div>
-              <div id="barPrioridade"></div>
+            <div class="d2-seg" id="calcTipo">
+              <button class="active" data-tipo="DiasUteis" type="button">Dias úteis (CPC)</button>
+              <button data-tipo="DiasCorridos" type="button">Dias corridos</button>
             </div>
-          </div>
-
-          <!-- Financeiro -->
-          <div class="section">
-            <div class="section-title">💰 Financeiro (mês atual)</div>
-            <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Receitas pagas (R$)</div><div class="ind-value green" id="fReceitas">—</div></div>
-              <div class="ind-card"><div class="ind-label">Despesas pagas (R$)</div><div class="ind-value red" id="fDespesas">—</div></div>
-              <div class="ind-card"><div class="ind-label">Saldo do mês (R$)</div><div class="ind-value" id="fSaldo">—</div></div>
-              <div class="ind-card"><div class="ind-label">A receber (R$)</div><div class="ind-value amber" id="fAReceber">—</div></div>
-              <div class="ind-card"><div class="ind-label">A pagar (R$)</div><div class="ind-value amber" id="fAPagar">—</div></div>
-              <div class="ind-card" style="border-color:#fca5a5"><div class="ind-label" style="color:#dc2626">Receb. vencidos (R$)</div><div class="ind-value red" style="font-size:18px" id="fVencidos">—</div></div>
-            </div>
-            <div style="margin-top:20px">
-              <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--color-text-muted)">EVOLUÇÃO — ÚLTIMOS 6 MESES</div>
-              <div class="trend-row" id="trendMeses"></div>
-              <div style="display:flex;gap:16px;margin-top:8px;font-size:12px">
-                <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px"></span>Receitas</span>
-                <span><span style="display:inline-block;width:10px;height:10px;background:#f87171;border-radius:2px;margin-right:4px"></span>Despesas</span>
+            <div class="d2-calc-grid">
+              <div>
+                <label for="calcInicio">Intimação / início</label>
+                <input type="date" id="calcInicio">
+              </div>
+              <div>
+                <label for="calcDias">Dias</label>
+                <input type="number" id="calcDias" min="1" max="3650" value="15" inputmode="numeric">
               </div>
             </div>
+            <div class="d2-presets">
+              <button type="button" data-d="5">5 dias</button>
+              <button type="button" data-d="8">8 dias</button>
+              <button type="button" data-d="15">15 dias</button>
+              <button type="button" data-d="30">30 dias</button>
+            </div>
+            <button class="d2-calc-btn" id="calcBtn" type="button">Calcular</button>
+            <div class="d2-calc-result" id="calcResult" style="display:none"></div>
           </div>
 
-          <!-- Timesheet -->
-          <div class="section">
-            <div class="section-title">⏱️ Timesheet (mês atual)</div>
-            <div class="ind-grid">
-              <div class="ind-card"><div class="ind-label">Horas este mês</div><div class="ind-value" id="tsEsteMes">—</div></div>
-              <div class="ind-card"><div class="ind-label">Horas mês anterior</div><div class="ind-value" style="font-size:20px;color:#6b7280" id="tsMesAnterior">—</div></div>
-              <div class="ind-card"><div class="ind-label">Registros este mês</div><div class="ind-value" id="tsRegistros">—</div></div>
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title">📊 Processos por área</div>
             </div>
-            <div style="margin-top:16px" id="tsTopWrap">
-              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--color-text-muted)">TOP PROCESSOS (horas)</div>
-              <div id="barTopProcessos"></div>
+            <div id="arBars"><div class="d2-skel"></div><div class="d2-skel"></div></div>
+            <div class="d2-card-head" style="margin:18px 0 8px">
+              <div class="d2-card-title">🎂 Aniversariantes do mês</div>
+            </div>
+            <div id="anList"><div class="d2-skel"></div></div>
+          </div>
+        </section>
+
+        <!-- Linha 3: Processos recentes · Financeiro · Distribuição + aniversariantes -->
+        <section class="d2-row d2-row-3b">
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title">📂 Últimas movimentações</div>
+              <a class="d2-card-link" href="/pages/processos.html">Ver todos →</a>
+            </div>
+            <div class="d2-list" id="prList"><div class="d2-skel"></div><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card" id="finCard" data-tour="dashboard-financeiro">
+            <div class="d2-card-head">
+              <div class="d2-card-title">💵 Financeiro — 6 meses</div>
+              <a class="d2-card-link" href="/pages/financeiro.html">Detalhes →</a>
+            </div>
+            <div class="d2-mini-stats" style="margin-bottom:10px">
+              <div class="d2-mini"><div class="d2-mini-label">Saldo do mês</div><div class="d2-mini-value" id="fnSaldo">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Receb. vencidos</div><div class="d2-mini-value" style="color:var(--d2-red)" id="fnVencidos">—</div></div>
+            </div>
+            <div class="d2-trend" id="fnTrend"></div>
+            <div class="d2-legend">
+              <span><i style="background:var(--color-primary)"></i>Receitas</span>
+              <span><i style="background:#94a3b8"></i>Despesas</span>
             </div>
           </div>
 
-        </div>
+          <div class="d2-card">
+            <div class="d2-card-head">
+              <div class="d2-card-title">⏱️ Cronômetro</div>
+              <a class="d2-card-link" href="/pages/timesheet.html">Timesheet →</a>
+            </div>
+            <div class="d2-muted" id="tmStatus">Nenhum registro em andamento</div>
+            <div class="d2-timer" id="tmClock">00:00:00</div>
+            <div class="d2-timer-row">
+              <input type="text" id="tmDesc" placeholder="O que você está fazendo?" maxlength="200">
+              <button class="btn btn-primary btn-sm" id="tmBtn" type="button">▶ Iniciar</button>
+            </div>
+            <div class="d2-mini-stats" style="margin-top:14px">
+              <div class="d2-mini"><div class="d2-mini-label">Horas no mês</div><div class="d2-mini-value" id="tmMes">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Mês anterior</div><div class="d2-mini-value" id="tmMesAnt">—</div></div>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
 
   <script type="module">
-    import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
-    import { apiFetch, isLoggedIn } from '/js/api.js';
+    import { initLayout, getPlano, isPlanoFree, showUpgradeToast } from '/js/layout.js';
+    import { apiFetch, isLoggedIn, getUser } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
+    import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 
     if (!isLoggedIn()) {
       window.location.href = '/login.html';
@@ -446,238 +668,600 @@
 
     initLayout();
     initOnboardingModal();
-    // Encadeado: trial de boas-vindas → onboarding (importar por OAB). O tour
-    // guiado não inicia mais automaticamente (intrusivo demais) — fica
-    // disponível sob demanda pelo widget "Tutorial" (injectTourWidget(), via
-    // initLayout()).
+    // Mesmo encadeamento do dashboard clássico: trial de boas-vindas → onboarding (importar por OAB).
     initTrialBoasVindasModal(() => initOnboarding());
+    injectDashboardSwitch(document.getElementById('dashVersao'), 'novo');
 
+    // Temas escuros são presets com customCss (ver presets.js) — não há classe
+    // global, então detecta pela luminância do fundo, como theme.js faz.
+    function detectarTemaEscuro() {
+      const m = getComputedStyle(document.body).backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      const escuro = !!m && (m[1] * 0.299 + m[2] * 0.587 + m[3] * 0.114) / 255 < 0.5;
+      document.querySelector('.d2').classList.toggle('d2-dark', escuro);
+    }
+    detectarTemaEscuro();
+
+    const user = getUser();
+    const plano = getPlano();
     const free = isPlanoFree();
+    const planoPro = ['Pro', 'Max', 'Enterprise'].includes(plano);
 
     if (free) {
-      document.getElementById('finProOverlay').style.display = 'flex';
-      document.getElementById('indProBadge').style.display = '';
+      document.getElementById('d2IndPlus').style.display = '';
+      document.getElementById('d2Indicadores').addEventListener('click', e => {
+        e.preventDefault();
+        showUpgradeToast('Plus');
+      });
     }
 
-    let indicadoresLoaded = false;
+    // ── Helpers ────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const brl = v => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const brlCompact = v => (v || 0) >= 10000
+      ? 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil'
+      : brl(v);
+    const pad = n => String(n).padStart(2, '0');
+    const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const startOfDay = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+    const daysUntil = iso => Math.round((startOfDay(new Date(iso)) - startOfDay(new Date())) / 86400000);
+    const fmtDur = min => {
+      if (!min) return '0h';
+      const h = Math.floor(min / 60), m = min % 60;
+      return h > 0 ? `${h}h${m ? ' ' + pad(m) + 'min' : ''}` : `${m}min`;
+    };
+    const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
+    const lock = (el, titulo, texto, alvo = 'Plus') => {
+      el.insertAdjacentHTML('beforeend', `<div class="d2-lock">
+        <div style="font-size:24px">🔒</div>
+        <strong>${esc(titulo)}</strong>
+        <span>${esc(texto)} Disponível a partir do plano <b style="color:#f59e0b">${esc(alvo)}</b>.</span>
+        <a href="/pages/assinatura.html">Fazer upgrade</a>
+      </div>`);
+    };
 
-    function switchTab(name) {
-      if (name === 'indicadores' && free) {
-        showUpgradeToast('Plus');
+    function prazoChip(iso) {
+      if (!iso) return '<span class="d2-chip gray">Sem prazo</span>';
+      const d = daysUntil(iso);
+      if (d < 0) return `<span class="d2-chip red">${plural(-d, 'dia', 'dias')} atrasada</span>`;
+      if (d === 0) return '<span class="d2-chip red">Hoje</span>';
+      if (d === 1) return '<span class="d2-chip amber">Amanhã</span>';
+      if (d <= 5) return `<span class="d2-chip amber">em ${d} dias</span>`;
+      return `<span class="d2-chip gray">${new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>`;
+    }
+
+    const PRIO_COR = { Urgente: '#dc2626', Alta: '#ea580c', Media: '#ca8a04', Baixa: '#94a3b8' };
+    const AREA_LABEL = {
+      Civil: 'Civil', Trabalhista: 'Trabalhista', Criminal: 'Criminal', Tributario: 'Tributário',
+      Previdenciario: 'Previdenciário', Administrativo: 'Administrativo', Consumidor: 'Consumidor',
+      Familia: 'Família', Empresarial: 'Empresarial', Ambiental: 'Ambiental', Imobiliario: 'Imobiliário', Outro: 'Outro'
+    };
+
+    // ── Hero ───────────────────────────────────────────────
+    const agora = new Date();
+    const hora = agora.getHours();
+    const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+    const primeiroNome = (user?.nome ?? '').trim().split(/\s+/)[0];
+    $('d2Saudacao').textContent = primeiroNome ? `${saud}, ${primeiroNome}!` : `${saud}!`;
+    $('d2Hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const resumo = { prazosHoje: null, eventosHoje: null, atrasadas: null };
+    function renderResumo() {
+      if (Object.values(resumo).some(v => v === null)) return;
+      const partes = [];
+      if (resumo.prazosHoje) partes.push(`<strong>${plural(resumo.prazosHoje, 'prazo vence', 'prazos vencem')} hoje</strong>`);
+      if (resumo.eventosHoje) partes.push(`${plural(resumo.eventosHoje, 'compromisso', 'compromissos')} na agenda`);
+      if (resumo.atrasadas) partes.push(`<span style="color:var(--d2-red);font-weight:600">${plural(resumo.atrasadas, 'item atrasado', 'itens atrasados')}</span>`);
+      $('d2Resumo').innerHTML = partes.length
+        ? `Hoje você tem ${partes.join(', ').replace(/, ([^,]*)$/, ' e $1')}.`
+        : 'Nenhum prazo ou compromisso para hoje. Bom momento para adiantar o trabalho! ✨';
+    }
+
+    // ── Prazos e tarefas ───────────────────────────────────
+    const tt = { prazos: [], minhas: [], atrasadas: [], aba: 'prazos' };
+
+    // Totais e listas calculados no backend (GET /api/tarefas/dashboard), com
+    // limites de dia no horário de Brasília.
+    async function loadTarefas() {
+      const d = await apiFetch('/tarefas/dashboard?dias=7&limite=15').catch(() => null);
+      const tot = d?.totais ?? { abertas: 0, emAndamento: 0, atrasadas: 0, prazos: 0, prazosHoje: 0, prazosProximosDias: 0, minhas: 0 };
+      tt.prazos = d?.prazos ?? [];
+      tt.minhas = d?.minhas ?? [];
+      tt.atrasadas = d?.atrasadas ?? [];
+
+      $('ttPrazosN').textContent = tot.prazos || '';
+      $('ttMinhasN').textContent = tot.minhas || '';
+      $('ttAtrasadasN').textContent = tot.atrasadas || '';
+
+      // KPIs
+      $('kTarefas').textContent = tot.abertas;
+      $('kTarefasSub').textContent = `${tot.emAndamento} em andamento`;
+      $('kAtrasadas').textContent = tot.atrasadas;
+      $('kPrazos').textContent = tot.prazosProximosDias;
+      $('kPrazosSub').textContent = tot.prazosHoje ? `${plural(tot.prazosHoje, 'vence', 'vencem')} hoje` : 'nenhum vence hoje';
+
+      resumo.prazosHoje = tot.prazosHoje;
+      resumo.atrasadas = tot.atrasadas;
+      renderResumo();
+      renderTarefas();
+    }
+
+    function renderTarefas() {
+      const list = tt[tt.aba];
+      const el = $('ttList');
+      if (!list.length) {
+        el.innerHTML = `<div class="d2-empty">${tt.aba === 'atrasadas' ? '🎉 Nada atrasado. Tudo em dia!' : 'Nenhum item em aberto.'}</div>`;
         return;
       }
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === `tab-${name}`));
-      history.replaceState(null, '', name === 'dashboard' ? window.location.pathname : `?tab=${name}`);
-      if (name === 'indicadores' && !indicadoresLoaded) {
-        loadIndicadores();
-        indicadoresLoaded = true;
-      }
+      el.innerHTML = list.map(t => {
+        const meta = [
+          t.tipo === 'Prazo' ? '⏳ Prazo' : null,
+          t.numeroCNJProcesso ? esc(t.numeroCNJProcesso) : null,
+          t.nomeContato ? esc(t.nomeContato) : null,
+          t.nomeResponsavel ? '👤 ' + esc(t.nomeResponsavel) : null,
+        ].filter(Boolean).join(' · ');
+        return `<div class="d2-item" data-id="${t.id}">
+          <div class="d2-prio" style="background:${PRIO_COR[t.prioridade] ?? '#94a3b8'}" title="Prioridade ${esc(t.prioridade)}"></div>
+          <button class="d2-check" data-concluir="${t.id}" title="Concluir" aria-label="Concluir ${esc(t.titulo)}"></button>
+          <div class="d2-item-body">
+            <a class="d2-item-title" href="/pages/tarefas.html?abrirId=${t.id}" title="${esc(t.titulo)}">${esc(t.titulo)}</a>
+            <div class="d2-item-meta">${meta || '&nbsp;'}</div>
+          </div>
+          ${prazoChip(t.prazo)}
+        </div>`;
+      }).join('');
     }
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    document.querySelectorAll('.d2-tab').forEach(b => b.addEventListener('click', () => {
+      tt.aba = b.dataset.tt;
+      document.querySelectorAll('.d2-tab').forEach(x => x.classList.toggle('active', x === b));
+      renderTarefas();
+    }));
+
+    $('ttList').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-concluir]');
+      if (!btn) return;
+      const id = btn.dataset.concluir;
+      btn.classList.add('done');
+      btn.textContent = '✓';
+      btn.disabled = true;
+      try {
+        await apiFetch(`/tarefas/${id}/concluir`, { method: 'POST' });
+        const row = btn.closest('.d2-item');
+        row.style.transition = 'opacity .3s';
+        row.style.opacity = '0';
+        setTimeout(() => loadTarefas(), 300);
+      } catch (err) {
+        btn.classList.remove('done');
+        btn.textContent = '';
+        btn.disabled = false;
+        alert('Não foi possível concluir: ' + err.message);
+      }
     });
 
-    const initTab = new URLSearchParams(location.search).get('tab') || 'dashboard';
-    switchTab(initTab);
+    // ── Agenda semanal ─────────────────────────────────────
+    const ag = { inicio: null, selecionado: startOfDay(new Date()), eventos: [] };
 
-    // ── Dashboard ──────────────────────────────────────────────
-    async function loadStats() {
-      try {
-        const now = new Date();
-        const em7dias = new Date(now.getTime() + 7 * 86400000);
+    function segunda(d) {
+      const x = startOfDay(d);
+      const dow = (x.getDay() + 6) % 7; // 0 = segunda
+      return addDays(x, -dow);
+    }
 
-        const [me, contatos, processosAtivos, processosEncerrados, tarefas, tarefasAtrasadas, tarefasUrgentes, eventos, financeiro] = await Promise.all([
-          apiFetch('/usuarios/me').catch(() => null),
-          apiFetch('/contatos?pageSize=1').catch(() => null),
-          apiFetch('/processos?status=Ativo&pageSize=1').catch(() => null),
-          apiFetch('/processos?status=Encerrado&pageSize=1').catch(() => null),
-          apiFetch('/tarefas?status=Pendente&pageSize=1').catch(() => null),
-          apiFetch('/tarefas?atrasada=true&pageSize=1').catch(() => null),
-          apiFetch('/tarefas?prioridade=Urgente&pageSize=5').catch(() => null),
-          apiFetch(`/agenda?de=${now.toISOString()}&ate=${em7dias.toISOString()}`).catch(() => []),
-          free ? Promise.resolve(null) : apiFetch('/financeiro/resumo').catch(() => null),
-        ]);
+    async function loadAgenda(dia = ag.selecionado) {
+      ag.selecionado = startOfDay(dia);
+      ag.inicio = segunda(dia);
+      const fim = addDays(ag.inicio, 7);
+      renderSemana();
+      $('agEvents').innerHTML = '<div class="d2-skel"></div><div class="d2-skel"></div>';
+      const itens = await apiFetch(`/agenda?de=${ag.inicio.toISOString()}&ate=${fim.toISOString()}`).catch(() => []);
+      ag.eventos = (itens ?? []).filter(e => e.tipo !== 'Tarefa');
+      renderSemana();
+      renderEventosDia();
 
-        document.getElementById('statProcessos').textContent = processosAtivos?.total ?? '0';
-        document.getElementById('statEncerrados').textContent = processosEncerrados?.total ?? '0';
-        document.getElementById('statContatos').textContent = contatos?.total ?? '0';
-        document.getElementById('statTarefas').textContent = tarefas?.total ?? '0';
-        document.getElementById('statAtrasadas').textContent = tarefasAtrasadas?.total ?? '0';
-
-        const tenant = me?.tenant;
-        const planoLabel = tenant?.plano ?? '–';
-        const statusLabel = tenant?.status === 'Trial' && tenant?.trialExpiraEm
-          ? `${Math.max(0, Math.ceil((new Date(tenant.trialExpiraEm) - now) / 86400000))}d trial`
-          : tenant?.status ?? '–';
-        document.getElementById('statPlano').textContent = `${planoLabel} · ${statusLabel}`;
-
-        const fmt = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-        const f = financeiro?.mes;
-        if (f) {
-          document.getElementById('finReceitas').textContent = fmt(f.totalReceitas);
-          document.getElementById('finDespesas').textContent = fmt(f.totalDespesas);
-          const saldoEl = document.getElementById('finSaldo');
-          saldoEl.textContent = fmt(f.saldo);
-          saldoEl.style.color = f.saldo >= 0 ? '#15803d' : '#dc2626';
-          document.getElementById('finAReceber').textContent = fmt(f.receitasPendentes);
-          document.getElementById('finAPagar').textContent = fmt(f.despesasPendentes);
-          document.getElementById('finVencidos').textContent = fmt(f.receitasVencidas);
-        }
-
-        const evEl = document.getElementById('proximosEventos');
-        const evList = (eventos ?? []).filter(e => e.tipo !== 'Tarefa').slice(0, 5);
-        if (!evList.length) {
-          evEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum evento nos próximos 7 dias.</span>';
-        } else {
-          evEl.innerHTML = evList.map(ev => {
-            const dt = ev.dataHora ? new Date(ev.dataHora) : null;
-            const dtStr = dt && !isNaN(dt) ? dt.toLocaleDateString('pt-BR', {weekday:'short',day:'numeric',month:'short'}) : '–';
-            const tmStr = dt && !isNaN(dt) ? dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
-            const pad = n => String(n).padStart(2, '0');
-            const dateParam = dt && !isNaN(dt) ? `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}` : '';
-            const href = `/pages/agenda.html?view=dia&date=${dateParam}&abrirId=${ev.id}`;
-            return `<a href="${href}" style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #f3f4f6;align-items:center;text-decoration:none;color:inherit;cursor:pointer">
-              <div style="width:10px;height:10px;border-radius:50%;background:${ev.cor};flex-shrink:0"></div>
-              <div>
-                <div style="font-weight:600;font-size:13px">${esc(ev.titulo)}</div>
-                <div style="font-size:12px;color:#6b7280">${ev.tipo} · ${dtStr}${tmStr ? ' ' + tmStr : ''}${ev.local ? ` · 📍${esc(ev.local)}` : ''}</div>
-              </div>
-            </a>`;
-          }).join('');
-        }
-
-        const tuEl = document.getElementById('tarefasUrgentes');
-        const tuList = tarefasUrgentes?.items ?? [];
-        if (!tuList.length) {
-          tuEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhuma tarefa urgente no momento.</span>';
-        } else {
-          tuEl.innerHTML = tuList.map(t => {
-            const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '–'; })() : '–';
-            const atrasada = t.atrasada ? '<span style="background:#fef2f2;color:#dc2626;font-size:11px;padding:2px 6px;border-radius:4px;margin-left:6px">Atrasada</span>' : '';
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px">
-              <div>
-                <span style="font-weight:600;font-size:13px">${esc(t.titulo)}</span>${atrasada}
-                ${t.nomeResponsavel ? `<span style="font-size:12px;color:#6b7280;margin-left:8px">👤${esc(t.nomeResponsavel)}</span>` : ''}
-              </div>
-              <span style="font-size:12px;color:#6b7280">📅 ${prazo}</span>
-            </div>`;
-          }).join('');
-        }
-      } catch (err) {
-        console.error(err);
+      const hoje = startOfDay(new Date());
+      if (ag.inicio <= hoje && hoje < fim && resumo.eventosHoje === null) {
+        const doDia = ag.eventos.filter(e => isoDate(new Date(e.dataHora)) === isoDate(hoje));
+        resumo.eventosHoje = doDia.length;
+        $('kEventos').textContent = doDia.length;
+        const futuros = doDia.filter(e => new Date(e.dataHora) > new Date());
+        $('kEventosSub').textContent = futuros.length
+          ? `próximo às ${new Date(futuros[0].dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+          : doDia.length ? 'todos já passaram' : 'agenda livre';
+        renderResumo();
       }
     }
 
-    // ── Indicadores ────────────────────────────────────────────
-    async function loadIndicadores() {
-      try {
-        const d = await apiFetch('/indicadores');
-        document.getElementById('indLoading').style.display = 'none';
-        document.getElementById('indContent').style.display = '';
-        renderProcessos(d.processos);
-        renderTarefas(d.tarefas);
-        renderFinanceiro(d.financeiro);
-        renderTimesheet(d.timesheet);
-      } catch (e) {
-        document.getElementById('indLoading').textContent = 'Erro ao carregar indicadores: ' + e.message;
+    function renderSemana() {
+      const hojeIso = isoDate(new Date());
+      const selIso = isoDate(ag.selecionado);
+      const comEvento = new Set(ag.eventos.map(e => isoDate(new Date(e.dataHora))));
+      const mes = ag.selecionado.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      $('agMes').textContent = '📅 ' + mes.charAt(0).toUpperCase() + mes.slice(1);
+      $('agWeek').innerHTML = Array.from({ length: 7 }, (_, i) => {
+        const d = addDays(ag.inicio, i);
+        const iso = isoDate(d);
+        const cls = ['d2-day', iso === hojeIso && 'today', iso === selIso && 'selected', comEvento.has(iso) && 'has'].filter(Boolean).join(' ');
+        return `<button class="${cls}" data-dia="${iso}">
+          <span class="d2-day-dow">${d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</span>
+          <span class="d2-day-num">${d.getDate()}</span>
+          <span class="d2-day-dot"></span>
+        </button>`;
+      }).join('');
+    }
+
+    function renderEventosDia() {
+      const selIso = isoDate(ag.selecionado);
+      const list = ag.eventos
+        .filter(e => isoDate(new Date(e.dataHora)) === selIso)
+        .sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+      const el = $('agEvents');
+      if (!list.length) {
+        el.innerHTML = `<div class="d2-empty">Nenhum compromisso neste dia.<br><a href="/pages/agenda.html?view=dia&date=${selIso}" style="font-weight:600">Abrir agenda</a></div>`;
+        return;
       }
+      el.innerHTML = list.map(ev => {
+        const dt = new Date(ev.dataHora);
+        const fim = ev.dataHoraFim ? new Date(ev.dataHoraFim) : null;
+        const hm = d => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const meta = [esc(ev.tipo), fim ? `até ${hm(fim)}` : null, ev.local ? '📍 ' + esc(ev.local) : null, ev.numeroCNJProcesso ? esc(ev.numeroCNJProcesso) : null].filter(Boolean).join(' · ');
+        return `<a class="d2-event" href="/pages/agenda.html?view=dia&date=${selIso}&abrirId=${ev.id}">
+          <div class="d2-event-time">${hm(dt)}</div>
+          <div class="d2-event-bar" style="background:${esc(ev.cor || 'var(--color-primary)')}"></div>
+          <div class="d2-item-body">
+            <div class="d2-item-title">${esc(ev.titulo)}</div>
+            <div class="d2-item-meta">${meta}</div>
+          </div>
+        </a>`;
+      }).join('');
     }
 
-    function renderProcessos(p) {
-      document.getElementById('pTotal').textContent = p.total;
-      document.getElementById('pAtivos').textContent = p.ativos;
-      document.getElementById('pEncerrados').textContent = p.encerrados;
-      document.getElementById('pSuspensos').textContent = p.suspensos;
-      document.getElementById('pNovos').textContent = p.novosEsteMes;
-      renderBars('barArea', p.porArea, '#3b82f6');
-      renderBars('barFase', p.porFase, '#8b5cf6');
+    $('agWeek').addEventListener('click', e => {
+      const b = e.target.closest('[data-dia]');
+      if (!b) return;
+      ag.selecionado = new Date(b.dataset.dia + 'T00:00:00');
+      renderSemana();
+      renderEventosDia();
+    });
+    $('agPrev').addEventListener('click', () => loadAgenda(addDays(ag.selecionado, -7)));
+    $('agNext').addEventListener('click', () => loadAgenda(addDays(ag.selecionado, 7)));
+    $('agHoje').addEventListener('click', () => loadAgenda(new Date()));
+
+    // ── Notificações ───────────────────────────────────────
+    const NOTIF_ICON = { PrazoTarefa: '⏳', PrazoEvento: '📅', TrialExpirando: '⭐', Geral: '📣', NovoAndamento: '⚖️', TarefaAtrasada: '⚠️' };
+
+    function tempoRelativo(iso) {
+      const min = Math.round((Date.now() - new Date(iso)) / 60000);
+      if (min < 1) return 'agora';
+      if (min < 60) return `há ${min} min`;
+      const h = Math.round(min / 60);
+      if (h < 24) return `há ${h}h`;
+      const d = Math.round(h / 24);
+      return d === 1 ? 'ontem' : `há ${d} dias`;
     }
 
-    function renderTarefas(t) {
-      document.getElementById('tPendentes').textContent = t.pendentes;
-      document.getElementById('tEmAndamento').textContent = t.emAndamento;
-      document.getElementById('tConcluidas').textContent = t.concluidas;
-      document.getElementById('tAtrasadas').textContent = t.atrasadas;
-      document.getElementById('tConcluidasMes').textContent = t.concluidasEsteMes;
-      const PRIO_COLOR = { Urgente:'#dc2626', Alta:'#ea580c', Media:'#ca8a04', Baixa:'#16a34a' };
-      renderBars('barPrioridade', t.porPrioridade, null, PRIO_COLOR);
+    async function loadNotificacoes() {
+      const list = await apiFetch('/notificacoes').catch(() => []) ?? [];
+      const el = $('ntList');
+      $('ntCount').textContent = list.length;
+      $('ntCount').style.display = list.length ? '' : 'none';
+      $('ntLimpar').style.display = list.length ? '' : 'none';
+      if (!list.length) {
+        el.innerHTML = '<div class="d2-empty">🔕 Nenhuma notificação nova.</div>';
+        return;
+      }
+      el.innerHTML = list.slice(0, 10).map(n => `
+        <div class="d2-notif">
+          <div class="d2-notif-icon">${NOTIF_ICON[n.tipo] ?? '🔔'}</div>
+          <div class="d2-item-body">
+            <div style="display:flex;justify-content:space-between;gap:8px">
+              ${n.url
+                ? `<a class="d2-item-title" href="${esc(n.url)}" data-lida="${n.id}">${esc(n.titulo)}</a>`
+                : `<span class="d2-item-title">${esc(n.titulo)}</span>`}
+              <span class="d2-muted" style="font-size:11px;white-space:nowrap">${tempoRelativo(n.criadaEm)}</span>
+            </div>
+            <div class="d2-notif-msg">${esc(n.mensagem)}</div>
+            <button class="d2-link-btn" data-lida="${n.id}" style="margin-top:4px;font-size:11px">Marcar como lida</button>
+          </div>
+        </div>`).join('');
+    }
+
+    $('ntList').addEventListener('click', async e => {
+      const t = e.target.closest('[data-lida]');
+      if (!t) return;
+      const isLink = t.tagName === 'A';
+      if (isLink) e.preventDefault();
+      await apiFetch(`/notificacoes/${t.dataset.lida}/lida`, { method: 'POST' }).catch(() => null);
+      if (isLink) { window.location.href = t.getAttribute('href'); return; }
+      loadNotificacoes();
+    });
+    $('ntLimpar').addEventListener('click', async () => {
+      await apiFetch('/notificacoes/marcar-todas-lidas', { method: 'POST' }).catch(() => null);
+      loadNotificacoes();
+    });
+
+    // ── Últimas movimentações + KPI ────────────────────────
+    const TIPO_ANDAMENTO_ICON = { Despacho: '📝', Decisao: '⚖️', Sentenca: '🏛️', Acordao: '🏛️', Audiencia: '🗣️', Peticao: '📄', Intimacao: '📬', Publicacao: '📰', Outro: '•' };
+
+    async function loadProcessos() {
+      const [ativos, ultimos] = await Promise.all([
+        apiFetch('/processos?status=Ativo&pageSize=1').catch(() => null),
+        apiFetch('/processos/ultimos-andamentos?limite=6').catch(() => null),
+      ]);
+      $('kProcessos').textContent = ativos?.total ?? 0;
+      const items = ultimos ?? [];
+      const el = $('prList');
+      if (!items.length) {
+        el.innerHTML = '<div class="d2-empty">Nenhuma movimentação registrada.<br><a href="/pages/processos.html" style="font-weight:600">Cadastrar ou importar por OAB</a></div>';
+        return;
+      }
+      el.innerHTML = items.map(p => {
+        const recente = daysUntil(p.dataAndamento) >= -7;
+        const meta = [p.nomeCliente, AREA_LABEL[p.areaDireito] ?? p.areaDireito, p.tribunal].filter(Boolean).map(esc).join(' · ');
+        return `<a class="d2-item" href="/pages/processo-detalhe.html?id=${p.processoId}" style="color:inherit">
+          <div class="d2-item-body">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <span class="d2-item-title" style="font-variant-numeric:tabular-nums">${esc(p.numeroCNJ)}</span>
+              <span class="d2-chip ${recente ? 'green' : 'gray'}" title="${new Date(p.dataAndamento).toLocaleString('pt-BR')}">${tempoRelativo(p.dataAndamento)}</span>
+            </div>
+            <div class="d2-notif-msg" style="margin-top:2px;color:var(--color-text)">${TIPO_ANDAMENTO_ICON[p.tipoAndamento] ?? '•'} ${esc(p.descricaoAndamento)}</div>
+            ${meta ? `<div class="d2-item-meta">${meta}</div>` : ''}
+          </div>
+        </a>`;
+      }).join('');
+    }
+
+    // ── Indicadores (Plus+): áreas, financeiro, timesheet ──
+    function renderAreas(porArea) {
+      const el = $('arBars');
+      if (!porArea?.length) { el.innerHTML = '<div class="d2-empty">Sem dados</div>'; return; }
+      const max = Math.max(...porArea.map(x => x.count), 1);
+      el.innerHTML = porArea.slice(0, 6).map(x => `
+        <div class="d2-bar-row" title="${esc(AREA_LABEL[x.label] ?? x.label)}: ${x.count}">
+          <div class="d2-bar-label">${esc(AREA_LABEL[x.label] ?? x.label)}</div>
+          <div class="d2-bar-track"><div class="d2-bar-fill" style="width:${Math.max(3, x.count / max * 100)}%"></div></div>
+          <div class="d2-bar-val">${x.count}</div>
+        </div>`).join('');
     }
 
     function renderFinanceiro(f) {
-      const fmt = v => (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-      document.getElementById('fReceitas').textContent = fmt(f.totalReceitasMes);
-      document.getElementById('fDespesas').textContent = fmt(f.totalDespesasMes);
-      const saldoEl = document.getElementById('fSaldo');
-      saldoEl.textContent = fmt(f.saldoMes);
-      saldoEl.className = 'ind-value ' + (f.saldoMes >= 0 ? 'green' : 'red');
-      document.getElementById('fAReceber').textContent = fmt(f.receitasPendentes);
-      document.getElementById('fAPagar').textContent = fmt(f.despesasPendentes);
-      document.getElementById('fVencidos').textContent = fmt(f.receitasVencidas);
-
+      const saldo = $('fnSaldo');
+      saldo.textContent = brlCompact(f.saldoMes);
+      saldo.style.color = f.saldoMes >= 0 ? 'var(--d2-green)' : 'var(--d2-red)';
+      $('fnVencidos').textContent = brlCompact(f.receitasVencidas);
       const meses = f.ultimosSeisMeses ?? [];
-      const maxVal = Math.max(...meses.flatMap(m => [m.receitas, m.despesas]), 1);
-      document.getElementById('trendMeses').innerHTML = meses.map(m => {
-        const hR = Math.max(4, Math.round((m.receitas / maxVal) * 60));
-        const hD = Math.max(4, Math.round((m.despesas / maxVal) * 60));
-        return `<div class="trend-col">
-          <div class="trend-bars">
-            <div class="trend-bar-r" style="height:${hR}px" title="Receitas: ${fmt(m.receitas)}"></div>
-            <div class="trend-bar-d" style="height:${hD}px" title="Despesas: ${fmt(m.despesas)}"></div>
+      const max = Math.max(...meses.flatMap(m => [m.receitas, m.despesas]), 1);
+      $('fnTrend').innerHTML = meses.map(m => `
+        <div class="d2-trend-col">
+          <div class="d2-trend-bars">
+            <div style="height:${m.receitas / max * 100}%;background:var(--color-primary)" title="${esc(m.mes)} — Receitas: ${brl(m.receitas)}"></div>
+            <div style="height:${m.despesas / max * 100}%;background:#94a3b8" title="${esc(m.mes)} — Despesas: ${brl(m.despesas)}"></div>
           </div>
-          <div class="trend-label">${esc(m.mes)}</div>
-        </div>`;
-      }).join('');
+          <div class="d2-trend-label">${esc(m.mes)}</div>
+        </div>`).join('');
     }
 
-    function renderTimesheet(ts) {
-      document.getElementById('tsEsteMes').textContent = formatDur(ts.minutosEsteMes);
-      document.getElementById('tsMesAnterior').textContent = formatDur(ts.minutosMesAnterior);
-      document.getElementById('tsRegistros').textContent = ts.totalRegistrosEsteMes;
-      if (ts.topProcessos?.length) {
-        renderBars('barTopProcessos', ts.topProcessos.map(x => ({ label: x.label, count: x.count })), '#0ea5e9', null, min => formatDur(min));
-      } else {
-        document.getElementById('tsTopWrap').style.display = 'none';
+    async function loadIndicadores() {
+      if (free) {
+        lock($('finCard'), 'Financeiro do escritório', 'Receitas, despesas e saldo mês a mês.');
+        $('arBars').innerHTML = '<div class="d2-empty">Distribuição por área disponível no plano Plus.</div>';
+        $('tmMes').textContent = '—';
+        $('tmMesAnt').textContent = '—';
+        return;
+      }
+      try {
+        const d = await apiFetch('/indicadores');
+        $('kProcessosSub').textContent = d.processos.novosEsteMes
+          ? `+${d.processos.novosEsteMes} este mês`
+          : `${d.processos.suspensos} suspensos`;
+        renderAreas(d.processos.porArea);
+        renderFinanceiro(d.financeiro);
+        $('tmMes').textContent = fmtDur(d.timesheet.minutosEsteMes);
+        $('tmMesAnt').textContent = fmtDur(d.timesheet.minutosMesAnterior);
+      } catch {
+        $('arBars').innerHTML = '<div class="d2-empty">Não foi possível carregar.</div>';
       }
     }
 
-    const LABEL_MAP = {
-      Civil:'Civil', Trabalhista:'Trabalhista', Criminal:'Criminal', Tributario:'Tributário',
-      Previdenciario:'Previdenciário', Administrativo:'Administrativo', Consumidor:'Consumidor',
-      Familia:'Família', Empresarial:'Empresarial', Ambiental:'Ambiental', Imobiliario:'Imobiliário',
-      Conhecimento:'Conhecimento', Recursal:'Recursal', Execucao:'Execução', Cumprimento:'Cumprimento',
-      InqueritoPolicial:'Inquérito Policial', InvestigacaoDefensiva:'Invest. Defensiva',
-      Urgente:'Urgente', Alta:'Alta', Media:'Média', Baixa:'Baixa', Outro:'Outro'
-    };
+    // ── Honorários de contrato (Plus+) ─────────────────────
+    async function loadHonorarios() {
+      if (free) {
+        lock($('honCard'), 'Honorários de contrato', 'Parcelas, inadimplência e meta mensal de recebimento.');
+        $('kHonLink').classList.add('locked');
+        $('kHonLink').href = '/pages/assinatura.html';
+        $('kHonorarios').textContent = '🔒';
+        $('kHonorariosSub').textContent = 'plano Plus';
+        return;
+      }
+      try {
+        const h = await apiFetch('/honorarios/contratos/dashboard');
+        $('kHonorarios').textContent = brlCompact(h.totalAReceber);
+        $('kHonorariosSub').innerHTML = h.totalEmAtraso
+          ? `<span style="color:var(--d2-red);font-weight:600">${brlCompact(h.totalEmAtraso)} em atraso</span>`
+          : 'nada em atraso';
+        $('honRecebido').textContent = brl(h.recebidoNoMes);
+        $('honAReceber').textContent = brlCompact(h.totalAReceber);
+        $('honAtraso').textContent = brlCompact(h.totalEmAtraso);
+        $('honAtivos').textContent = h.contratosAtivos;
+        $('honAtrasados').textContent = h.contratosAtrasados;
 
-    function renderBars(elId, items, defaultColor, colorMap, fmtFn) {
-      const el = document.getElementById(elId);
-      if (!items?.length) { el.innerHTML = '<span style="color:var(--color-text-muted);font-size:13px">Sem dados</span>'; return; }
-      const max = Math.max(...items.map(x => x.count), 1);
-      el.innerHTML = items.slice(0, 8).map(x => {
-        const pct = Math.max(4, Math.round((x.count / max) * 100));
-        const color = colorMap?.[x.label] ?? defaultColor ?? '#3b82f6';
-        const displayVal = fmtFn ? fmtFn(x.count) : x.count;
-        return `<div class="bar-row">
-          <div class="bar-label" title="${esc(x.label)}">${esc(LABEL_MAP[x.label] ?? x.label)}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
-          <div class="bar-count">${displayVal}</div>
-        </div>`;
-      }).join('');
+        const meta = h.metaMensal;
+        const pct = meta ? Math.round((h.alcancadoMes / meta) * 100) : null;
+        $('honPct').textContent = pct === null ? '—' : `${pct}%`;
+        $('honMeta').innerHTML = meta
+          ? `de ${brl(meta)} (meta)`
+          : 'Meta mensal não definida · <a href="/pages/honorarios-config.html">definir</a>';
+        const arc = $('honRingArc');
+        const C = 2 * Math.PI * 40;
+        arc.setAttribute('stroke-dasharray', C.toFixed(1));
+        arc.style.strokeDashoffset = (C * (1 - Math.min(pct ?? 0, 100) / 100)).toFixed(1);
+        if (pct !== null && pct >= 100) arc.setAttribute('stroke', 'var(--d2-green)');
+
+        const inad = (h.inadimplentes ?? []).slice(0, 3);
+        $('honInadimplentes').innerHTML = inad.length
+          ? `<div class="d2-mini-label" style="margin-bottom:2px">Maiores inadimplências</div>` + inad.map(i => `
+              <a class="d2-row-line" href="/pages/honorarios-contrato-detalhe.html?id=${i.contratoId}" style="color:inherit">
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.nomeContato)} <span class="d2-muted">· ${plural(i.parcelasVencidas, 'parcela', 'parcelas')}</span></span>
+                <strong style="color:var(--d2-red);white-space:nowrap">${brl(i.valorEmAtraso)}</strong>
+              </a>`).join('')
+          : '';
+      } catch {
+        $('kHonorarios').textContent = '—';
+      }
     }
 
-    function formatDur(min) {
-      if (!min) return '0min';
-      const h = Math.floor(min / 60), m = min % 60;
-      return h > 0 ? `${h}h ${m}min` : `${m}min`;
+    // ── Calculadora de prazos (Plus+) ──────────────────────
+    let calcTipo = 'DiasUteis';
+    $('calcInicio').value = isoDate(new Date());
+    $('calcTipo').addEventListener('click', e => {
+      const b = e.target.closest('[data-tipo]');
+      if (!b) return;
+      calcTipo = b.dataset.tipo;
+      $('calcTipo').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    });
+    document.querySelectorAll('.d2-presets button').forEach(b => b.addEventListener('click', () => {
+      $('calcDias').value = b.dataset.d;
+      calcular();
+    }));
+    $('calcBtn').addEventListener('click', calcular);
+    $('calcDias').addEventListener('keydown', e => { if (e.key === 'Enter') calcular(); });
+
+    async function calcular() {
+      const inicio = $('calcInicio').value;
+      const dias = parseInt($('calcDias').value, 10);
+      const out = $('calcResult');
+      if (!inicio || !dias || dias < 1) {
+        out.style.display = '';
+        out.textContent = 'Informe a data de início e a quantidade de dias.';
+        return;
+      }
+      const btn = $('calcBtn');
+      btn.disabled = true;
+      btn.textContent = 'Calculando…';
+      try {
+        const r = await apiFetch('/prazos/calcular', {
+          method: 'POST',
+          body: { dataInicio: inicio, quantidadeDias: dias, tipoCalculo: calcTipo },
+        });
+        const final = new Date(r.dataFinal.substring(0, 10) + 'T12:00:00');
+        const faltam = daysUntil(final);
+        const feriados = r.feriadosNoIntervalo ?? [];
+        out.style.display = '';
+        out.innerHTML = `
+          <div style="opacity:.85">Prazo final</div>
+          <strong>${final.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</strong>
+          <div style="opacity:.85">${faltam < 0 ? `venceu há ${plural(-faltam, 'dia', 'dias')}` : faltam === 0 ? 'vence hoje' : `faltam ${plural(faltam, 'dia corrido', 'dias corridos')}`}
+          ${feriados.length ? ` · ${plural(feriados.length, 'feriado considerado', 'feriados considerados')}` : ''}</div>
+          ${feriados.length ? `<div style="font-size:11px;opacity:.75;margin-top:4px">${feriados.slice(0, 4).map(esc).join(' · ')}${feriados.length > 4 ? '…' : ''}</div>` : ''}`;
+      } catch (err) {
+        out.style.display = '';
+        out.textContent = err.message || 'Erro ao calcular.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Calcular';
+      }
+    }
+    if (free) lock($('calcCard'), 'Calculadora de prazos', 'Dias úteis com feriados nacionais e forenses.');
+
+    // ── Cronômetro (timesheet) ─────────────────────────────
+    let tmAtivo = null;
+    let tmInterval = null;
+
+    function tick() {
+      if (!tmAtivo) { $('tmClock').textContent = '00:00:00'; return; }
+      const s = Math.max(0, Math.floor((Date.now() - new Date(tmAtivo.inicio)) / 1000));
+      $('tmClock').textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
     }
 
-    function esc(str) {
-      return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    function renderTimer() {
+      clearInterval(tmInterval);
+      const clock = $('tmClock');
+      const btn = $('tmBtn');
+      const desc = $('tmDesc');
+      if (tmAtivo) {
+        clock.classList.add('running');
+        const ctx = tmAtivo.numeroProcesso || tmAtivo.tituloTarefa;
+        $('tmStatus').innerHTML = `<span class="d2-pulse"></span> Em andamento${ctx ? ' · ' + esc(ctx) : ''}`;
+        desc.value = tmAtivo.descricao ?? '';
+        btn.textContent = '■ Parar';
+        btn.className = 'btn btn-danger btn-sm';
+        tmInterval = setInterval(tick, 1000);
+      } else {
+        clock.classList.remove('running');
+        $('tmStatus').textContent = 'Nenhum registro em andamento';
+        btn.textContent = '▶ Iniciar';
+        btn.className = 'btn btn-primary btn-sm';
+      }
+      tick();
     }
 
-    loadStats();
+    async function loadTimer() {
+      tmAtivo = await apiFetch('/timesheet/ativo').catch(() => null);
+      renderTimer();
+    }
+
+    $('tmBtn').addEventListener('click', async () => {
+      const btn = $('tmBtn');
+      btn.disabled = true;
+      const descricao = $('tmDesc').value.trim() || null;
+      try {
+        if (tmAtivo) {
+          await apiFetch('/timesheet/parar', { method: 'POST', body: { descricao } });
+          tmAtivo = null;
+          $('tmDesc').value = '';
+          if (!free) loadIndicadores();
+        } else {
+          tmAtivo = await apiFetch('/timesheet/iniciar', { method: 'POST', body: { descricao } });
+        }
+        renderTimer();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ── Aniversariantes ────────────────────────────────────
+    async function loadAniversariantes() {
+      const list = await apiFetch(`/contatos/aniversariantes?mes=${new Date().getMonth() + 1}`).catch(() => []) ?? [];
+      const el = $('anList');
+      const hojeDia = new Date().getDate();
+      const ordenados = list
+        .map(c => ({ ...c, dia: parseInt(String(c.dataNascimento).substring(8, 10), 10) }))
+        .sort((a, b) => a.dia - b.dia);
+      // Próximos primeiro; os que já passaram vão para o fim
+      const prox = [...ordenados.filter(c => c.dia >= hojeDia), ...ordenados.filter(c => c.dia < hojeDia)].slice(0, 5);
+      if (!prox.length) { el.innerHTML = '<div class="d2-muted">Nenhum aniversariante este mês.</div>'; return; }
+      el.innerHTML = prox.map(c => `
+        <a class="d2-row-line" href="/pages/contato-detalhe.html?id=${c.id}" style="color:inherit">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.nome)}</span>
+          <span class="d2-chip ${c.dia === hojeDia ? 'green' : c.dia < hojeDia ? 'gray' : 'amber'}">${c.dia === hojeDia ? '🎉 Hoje' : `dia ${c.dia}`}</span>
+        </a>`).join('');
+    }
+
+    // ── Publicações (Pro+) — substitui subtítulo do KPI de processos
+    async function loadPublicacoes() {
+      if (!planoPro) return;
+      const r = await apiFetch('/publicacoes/nao-lidas/count').catch(() => null);
+      if (r?.count) {
+        const sub = $('kProcessosSub');
+        sub.innerHTML = `<span style="color:var(--color-primary);font-weight:600">📰 ${plural(r.count, 'publicação nova', 'publicações novas')}</span>`;
+      }
+    }
+
+    // ── Boot ───────────────────────────────────────────────
+    await Promise.all([
+      loadTarefas(),
+      loadAgenda(new Date()),
+      loadNotificacoes(),
+      loadProcessos(),
+      loadIndicadores(),
+      loadHonorarios(),
+      loadTimer(),
+      loadAniversariantes(),
+    ]);
+    loadPublicacoes();
   </script>
 </body>
 </html>
