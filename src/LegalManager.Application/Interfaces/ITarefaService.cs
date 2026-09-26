@@ -13,4 +13,5 @@ public interface ITarefaService
     Task ConcluirAsync(Guid id, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default);
+    Task<TarefasDashboardDto> GetDashboardAsync(int dias, int limite, CancellationToken ct = default);
 }

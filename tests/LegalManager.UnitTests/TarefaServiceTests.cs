@@ -300,4 +300,79 @@ public class TarefaServiceTests
 
         Assert.Equal(processoIdInexistente, updated.ProcessoId);
     }
+
+    // ── GetDashboardAsync ────────────────────────────────────────────────
+
+    private static Tarefa NovaTarefa(Guid tenantId, Guid responsavelId, string titulo, DateTime? prazo,
+        TipoTarefa tipo = TipoTarefa.Tarefa, StatusTarefa status = StatusTarefa.Pendente)
+        => new()
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = titulo, Prazo = prazo,
+            Tipo = tipo, Status = status, Prioridade = PrioridadeTarefa.Media,
+            ResponsavelId = responsavelId, CriadoPorId = responsavelId, CriadoEm = DateTime.UtcNow
+        };
+
+    /// <summary>Converte um horário "de parede" em Brasília (hoje + dias, hh:mm) para UTC.</summary>
+    private static DateTime Brasilia(int dias, int hora, int minuto = 0)
+        => TimeZoneInfo.ConvertTimeToUtc(
+            LegalManager.Infrastructure.BrasiliaTime.Hoje.AddDays(dias).AddHours(hora).AddMinutes(minuto),
+            LegalManager.Infrastructure.BrasiliaTime.Tz);
+
+    [Fact]
+    public async Task GetDashboardAsync_DeveCalcularTotaisEListas()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var outroUsuario = Guid.NewGuid();
+        ctx.Tarefas.AddRange(
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo hoje", Brasilia(0, 23, 59), TipoTarefa.Prazo),
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo em 3 dias", Brasilia(3, 12), TipoTarefa.Prazo),
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo em 10 dias", Brasilia(10, 12), TipoTarefa.Prazo),
+            NovaTarefa(tenant.Id, usuario.Id, "Tarefa atrasada", Brasilia(-2, 12)),
+            NovaTarefa(tenant.Id, usuario.Id, "Concluída atrasada", Brasilia(-2, 12), status: StatusTarefa.Concluida),
+            NovaTarefa(tenant.Id, outroUsuario, "De outro responsável", null, status: StatusTarefa.EmAndamento),
+            NovaTarefa(Guid.NewGuid(), usuario.Id, "Outro tenant", Brasilia(1, 12), TipoTarefa.Prazo));
+        await ctx.SaveChangesAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await svc.GetDashboardAsync(dias: 7, limite: 15);
+
+        Assert.Equal(7, result.Dias);
+        Assert.Equal(new TarefasDashboardTotaisDto(
+            Abertas: 5, EmAndamento: 1, Atrasadas: 1, Prazos: 3,
+            PrazosHoje: 1, PrazosProximosDias: 2, Minhas: 4), result.Totais);
+        Assert.Equal(new[] { "Prazo hoje", "Prazo em 3 dias", "Prazo em 10 dias" }, result.Prazos.Select(t => t.Titulo));
+        Assert.Equal("Tarefa atrasada", Assert.Single(result.Atrasadas).Titulo);
+        Assert.True(result.Atrasadas.Single().Atrasada);
+        Assert.Equal(4, result.Minhas.Count());
+        Assert.DoesNotContain(result.Minhas, t => t.Titulo == "De outro responsável");
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_DeveRespeitarLimiteDasListas()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        for (var i = 1; i <= 5; i++)
+            ctx.Tarefas.Add(NovaTarefa(tenant.Id, usuario.Id, $"Prazo {i}", Brasilia(i, 12), TipoTarefa.Prazo));
+        await ctx.SaveChangesAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await svc.GetDashboardAsync(dias: 7, limite: 2);
+
+        Assert.Equal(new[] { "Prazo 1", "Prazo 2" }, result.Prazos.Select(t => t.Titulo));
+        Assert.Equal(5, result.Totais.Prazos);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_SemTarefas_DeveRetornarZeros()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await svc.GetDashboardAsync(dias: 7, limite: 15);
+
+        Assert.Equal(new TarefasDashboardTotaisDto(0, 0, 0, 0, 0, 0, 0), result.Totais);
+        Assert.Empty(result.Prazos);
+        Assert.Empty(result.Minhas);
+        Assert.Empty(result.Atrasadas);
+    }
 }

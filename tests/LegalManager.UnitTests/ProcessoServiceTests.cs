@@ -588,4 +588,64 @@ public class ProcessoServiceTests
 
         Assert.Null(result);
     }
+
+    // ── GetUltimosAndamentosAsync ────────────────────────────────────────
+
+    private static Processo NovoProcesso(Guid tenantId, string cnj) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = cnj,
+        AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+        Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+    };
+
+    private static Andamento NovoAndamento(Processo p, int diasAtras, string descricao) => new()
+    {
+        Id = Guid.NewGuid(), ProcessoId = p.Id, TenantId = p.TenantId,
+        Data = DateTime.UtcNow.AddDays(-diasAtras), Tipo = TipoAndamento.Despacho,
+        Descricao = descricao, Fonte = FonteAndamento.Manual, CriadoEm = DateTime.UtcNow
+    };
+
+    [Fact]
+    public async Task GetUltimosAndamentosAsync_DeveOrdenarPeloAndamentoMaisRecente()
+    {
+        var (ctx, tenant, usuario, contato) = await SeedAsync();
+        var a = NovoProcesso(tenant.Id, "0000100-00.2024.8.26.0001");
+        var b = NovoProcesso(tenant.Id, "0000200-00.2024.8.26.0001");
+        var semAndamentos = NovoProcesso(tenant.Id, "0000300-00.2024.8.26.0001");
+        var outroTenant = NovoProcesso(Guid.NewGuid(), "0000400-00.2024.8.26.0001");
+        ctx.Processos.AddRange(a, b, semAndamentos, outroTenant);
+        ctx.ProcessoPartes.Add(new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = a.Id, ContatoId = contato.Id, TipoParte = TipoParteProcesso.Autor });
+        ctx.Andamentos.AddRange(
+            NovoAndamento(a, 5, "Antigo de A"),
+            NovoAndamento(a, 1, "Recente de A"),
+            NovoAndamento(b, 2, "Único de B"),
+            NovoAndamento(outroTenant, 0, "De outro tenant"));
+        await ctx.SaveChangesAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        var result = (await service.GetUltimosAndamentosAsync(10)).ToList();
+
+        Assert.Equal(new[] { a.Id, b.Id }, result.Select(r => r.ProcessoId));
+        Assert.Equal("Recente de A", result[0].DescricaoAndamento);
+        Assert.Equal("Cliente Teste", result[0].NomeCliente);
+        Assert.Null(result[1].NomeCliente);
+    }
+
+    [Fact]
+    public async Task GetUltimosAndamentosAsync_DeveRespeitarLimiteETruncarDescricao()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var a = NovoProcesso(tenant.Id, "0000500-00.2024.8.26.0001");
+        var b = NovoProcesso(tenant.Id, "0000600-00.2024.8.26.0001");
+        ctx.Processos.AddRange(a, b);
+        ctx.Andamentos.AddRange(NovoAndamento(a, 0, new string('x', 500)), NovoAndamento(b, 3, "B"));
+        await ctx.SaveChangesAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        var result = Assert.Single(await service.GetUltimosAndamentosAsync(1));
+
+        Assert.Equal(a.Id, result.ProcessoId);
+        Assert.Equal(241, result.DescricaoAndamento.Length);
+        Assert.EndsWith("…", result.DescricaoAndamento);
+    }
 }

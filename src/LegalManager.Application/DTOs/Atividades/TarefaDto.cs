@@ -97,3 +97,36 @@ public record TarefaFiltroDto(
     int PageSize = 20,
     TipoTarefa? Tipo = null
 );
+
+// ── Dashboard: prazos e tarefas (cálculo no backend, payload enxuto) ──────
+
+public record TarefaDashboardItemDto(
+    Guid Id,
+    string Titulo,
+    DateTime? Prazo,
+    PrioridadeTarefa Prioridade,
+    StatusTarefa Status,
+    TipoTarefa Tipo,
+    string? NumeroCNJProcesso,
+    string? NomeContato,
+    string? NomeResponsavel,
+    bool Atrasada
+);
+
+public record TarefasDashboardTotaisDto(
+    int Abertas,             // Pendente + EmAndamento
+    int EmAndamento,
+    int Atrasadas,           // abertas com prazo já vencido
+    int Prazos,              // prazos processuais abertos a vencer (a partir de hoje)
+    int PrazosHoje,          // prazos processuais que vencem hoje (horário de Brasília)
+    int PrazosProximosDias,  // prazos processuais que vencem de hoje até hoje + Dias
+    int Minhas               // abertas sob responsabilidade do usuário logado
+);
+
+public record TarefasDashboardDto(
+    int Dias,
+    TarefasDashboardTotaisDto Totais,
+    IEnumerable<TarefaDashboardItemDto> Prazos,
+    IEnumerable<TarefaDashboardItemDto> Minhas,
+    IEnumerable<TarefaDashboardItemDto> Atrasadas
+);

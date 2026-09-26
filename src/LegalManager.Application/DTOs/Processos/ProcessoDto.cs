@@ -172,3 +172,15 @@ public record EncerrarProcessoDto(
 );
 
 public record SetVisivelClienteDto(bool Visivel);
+
+public record ProcessoUltimoAndamentoDto(
+    Guid ProcessoId,
+    string NumeroCNJ,
+    string? Tribunal,
+    AreaDireito AreaDireito,
+    StatusProcesso Status,
+    string? NomeCliente,
+    DateTime DataAndamento,
+    TipoAndamento TipoAndamento,
+    string DescricaoAndamento
+);

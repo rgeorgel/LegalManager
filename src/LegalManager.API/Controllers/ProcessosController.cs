@@ -68,6 +68,14 @@ public class ProcessosController : ControllerBase
         return Ok(await _service.GetAllAsync(filtro, ct));
     }
 
+    /// <summary>Processos ordenados pelo andamento mais recente, com o resumo desse andamento.</summary>
+    [HttpGet("ultimos-andamentos")]
+    public async Task<ActionResult<IEnumerable<ProcessoUltimoAndamentoDto>>> GetUltimosAndamentos(
+        [FromQuery] int limite = 6, CancellationToken ct = default)
+    {
+        return Ok(await _service.GetUltimosAndamentosAsync(Math.Clamp(limite, 1, 30), ct));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProcessoResponseDto>> GetById(Guid id, CancellationToken ct)
     {

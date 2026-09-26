@@ -49,6 +49,19 @@ public class TarefasController : ControllerBase
         return Ok(await _service.GetAllAsync(filtro, ct));
     }
 
+    /// <summary>
+    /// Resumo para o dashboard: totais (abertas, atrasadas, prazos de hoje e dos próximos
+    /// <paramref name="dias"/> dias) e as listas de prazos, minhas tarefas e atrasadas.
+    /// </summary>
+    [HttpGet("dashboard")]
+    public async Task<ActionResult<TarefasDashboardDto>> GetDashboard(
+        [FromQuery] int dias = 7,
+        [FromQuery] int limite = 15,
+        CancellationToken ct = default)
+    {
+        return Ok(await _service.GetDashboardAsync(Math.Clamp(dias, 1, 60), Math.Clamp(limite, 1, 50), ct));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TarefaResponseDto>> GetById(Guid id, CancellationToken ct)
     {

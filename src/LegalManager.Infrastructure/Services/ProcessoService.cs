@@ -254,6 +254,55 @@ public class ProcessoService : IProcessoService
             (int)Math.Ceiling((double)total / filtro.PageSize));
     }
 
+    public async Task<IEnumerable<ProcessoUltimoAndamentoDto>> GetUltimosAndamentosAsync(int limite, CancellationToken ct = default)
+    {
+        // Consulta a tabela de andamentos (e não Processo.UltimoAndamentoEm), porque
+        // nem todo fluxo de captura atualiza essa coluna.
+        // Em duas etapas: projetar o andamento inteiro numa query só faz o EF gerar um
+        // ROW_NUMBER() sobre a tabela Andamentos toda (todos os tenants).
+        // 1) Top N processos pela data do último andamento — MAX por processo usa o índice (ProcessoId, Data).
+        var topo = await _context.Processos
+            .Where(p => p.TenantId == _tenantContext.TenantId && p.Andamentos.Any())
+            .Select(p => new { p.Id, Data = p.Andamentos.Max(a => a.Data) })
+            .OrderByDescending(x => x.Data)
+            .Take(limite)
+            .ToListAsync(ct);
+        if (topo.Count == 0) return [];
+
+        // 2) Detalhes apenas desses N processos (subqueries correlacionadas com LIMIT 1).
+        var ids = topo.Select(x => x.Id).ToList();
+        var detalhes = await _context.Processos
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new
+            {
+                p.Id, p.NumeroCNJ, p.Tribunal, p.AreaDireito, p.Status,
+                NomeCliente = p.Partes
+                    .Where(pt => pt.TipoParte == TipoParteProcesso.Autor)
+                    .Select(pt => pt.Contato.Nome)
+                    .FirstOrDefault(),
+                Tipo = p.Andamentos
+                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .Select(a => a.Tipo)
+                    .FirstOrDefault(),
+                Descricao = p.Andamentos
+                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .Select(a => a.Descricao)
+                    .FirstOrDefault()
+            })
+            .ToDictionaryAsync(x => x.Id, ct);
+
+        const int maxDescricao = 240;
+        return topo.Where(t => detalhes.ContainsKey(t.Id)).Select(t =>
+        {
+            var d = detalhes[t.Id];
+            var descricao = d.Descricao ?? string.Empty;
+            return new ProcessoUltimoAndamentoDto(
+                d.Id, d.NumeroCNJ, d.Tribunal, d.AreaDireito, d.Status, d.NomeCliente,
+                t.Data, d.Tipo,
+                descricao.Length > maxDescricao ? descricao[..maxDescricao].TrimEnd() + "…" : descricao);
+        }).ToList();
+    }
+
     public async Task EncerrarAsync(Guid id, EncerrarProcessoDto dto, CancellationToken ct = default)
     {
         var processo = await _context.Processos

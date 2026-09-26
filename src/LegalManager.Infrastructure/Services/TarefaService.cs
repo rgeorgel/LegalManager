@@ -168,6 +168,64 @@ public class TarefaService : ITarefaService
         return new PagedResultDto<TarefaListItemDto>(items, total, filtro.Page, filtro.PageSize, (int)Math.Ceiling(total / (double)filtro.PageSize));
     }
 
+    public async Task<TarefasDashboardDto> GetDashboardAsync(int dias, int limite, CancellationToken ct = default)
+    {
+        var agora = DateTime.UtcNow;
+        // Limites de dia no horário de Brasília, convertidos para UTC (colunas timestamptz).
+        var hojeInicio = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje, BrasiliaTime.Tz);
+        var amanhaInicio = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje.AddDays(1), BrasiliaTime.Tz);
+        var janelaFim = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje.AddDays(dias + 1), BrasiliaTime.Tz);
+        var userId = _tenantContext.UserId;
+
+        var abertas = _context.Tarefas.Where(t =>
+            t.TenantId == _tenantContext.TenantId &&
+            (t.Status == StatusTarefa.Pendente || t.Status == StatusTarefa.EmAndamento));
+
+        // Todos os totais em uma única query (COUNT ... FILTER no PostgreSQL).
+        var totais = await abertas
+            .GroupBy(_ => 1)
+            .Select(g => new TarefasDashboardTotaisDto(
+                g.Count(),
+                g.Count(t => t.Status == StatusTarefa.EmAndamento),
+                g.Count(t => t.Prazo < agora),
+                g.Count(t => t.Tipo == TipoTarefa.Prazo && t.Prazo >= hojeInicio),
+                g.Count(t => t.Tipo == TipoTarefa.Prazo && t.Prazo >= hojeInicio && t.Prazo < amanhaInicio),
+                g.Count(t => t.Tipo == TipoTarefa.Prazo && t.Prazo >= hojeInicio && t.Prazo < janelaFim),
+                g.Count(t => t.ResponsavelId == userId)))
+            .FirstOrDefaultAsync(ct)
+            ?? new TarefasDashboardTotaisDto(0, 0, 0, 0, 0, 0, 0);
+
+        var prazos = await ProjetarDashboard(abertas
+                .Where(t => t.Tipo == TipoTarefa.Prazo && t.Prazo >= hojeInicio)
+                .OrderBy(t => t.Prazo).ThenByDescending(t => t.Prioridade), limite, agora)
+            .ToListAsync(ct);
+
+        var minhas = await ProjetarDashboard(abertas
+                .Where(t => t.ResponsavelId == userId)
+                .OrderBy(t => t.Prazo == null).ThenBy(t => t.Prazo).ThenByDescending(t => t.Prioridade), limite, agora)
+            .ToListAsync(ct);
+
+        var atrasadas = await ProjetarDashboard(abertas
+                .Where(t => t.Prazo < agora)
+                .OrderBy(t => t.Prazo).ThenByDescending(t => t.Prioridade), limite, agora)
+            .ToListAsync(ct);
+
+        return new TarefasDashboardDto(dias, totais, prazos, minhas, atrasadas);
+    }
+
+    private static IQueryable<TarefaDashboardItemDto> ProjetarDashboard(IQueryable<Tarefa> query, int limite, DateTime agora)
+        => query.Take(limite).Select(t => new TarefaDashboardItemDto(
+            t.Id,
+            t.Titulo,
+            t.Prazo,
+            t.Prioridade,
+            t.Status,
+            t.Tipo,
+            t.Processo != null ? t.Processo.NumeroCNJ : null,
+            t.Contato != null ? t.Contato.Nome : null,
+            t.Responsavel != null ? t.Responsavel.Nome : null,
+            t.Prazo < agora));
+
     public async Task ConcluirAsync(Guid id, CancellationToken ct = default)
     {
         var tarefa = await _context.Tarefas
