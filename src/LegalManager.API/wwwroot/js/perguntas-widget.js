@@ -1,17 +1,14 @@
 // Pesquisa de interesse/satisfação — menu flutuante retrátil (mesmo padrão de
 // tarefas-widget.js/tour.js: botão na lateral direita, empilhado abaixo dos outros
-// widgets já presentes na página) + modal exibido uma vez por sessão logo após o
-// login, com as perguntas pendentes cadastradas pelo super admin (ver
-// SuperAdminPerguntasController). Se não houver nenhuma pergunta pendente para o
-// usuário, o widget simplesmente não é inserido no DOM — nem o botão flutuante
-// aparece.
+// widgets já presentes na página), com as perguntas pendentes cadastradas pelo
+// super admin (ver SuperAdminPerguntasController). Se não houver nenhuma pergunta
+// pendente para o usuário, o widget simplesmente não é inserido no DOM — nem o
+// botão flutuante aparece. As perguntas só aparecem quando o usuário clica no
+// botão flutuante para abrir o painel.
 import { apiFetch } from './api.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
-const SESSION_MODAL_KEY = 'perguntasModalShownSession';
-
 let cache = null; // Array de perguntas pendentes — mutado conforme o usuário responde
-let modalIndex = 0;
 
 export async function injectPerguntasWidget() {
   if (document.getElementById('perguntasWidget')) return;
@@ -21,7 +18,6 @@ export async function injectPerguntasWidget() {
 
   injectStyles();
   renderWidget();
-  maybeShowLoginModal();
 }
 
 // ── Widget flutuante ─────────────────────────────────────────────────────
@@ -78,78 +74,17 @@ function renderBadge() {
 function renderPanelBody() {
   const body = document.getElementById('pwBody');
   if (!body) return;
-  body.innerHTML = cache.map(p => cardHtml(p, false)).join('');
+  body.innerHTML = cache.map(p => cardHtml(p)).join('');
   cache.forEach(p => {
     document.querySelector(`[data-send="w-${p.id}"]`)
-      ?.addEventListener('click', () => submitCard(p.id, false));
+      ?.addEventListener('click', () => submitCard(p.id));
   });
 }
 
-// ── Modal de login (uma pergunta por vez) ───────────────────────────────
+// ── Card de pergunta ─────────────────────────────────────────────────────
 
-function maybeShowLoginModal() {
-  try {
-    if (sessionStorage.getItem(SESSION_MODAL_KEY) === '1') return;
-    sessionStorage.setItem(SESSION_MODAL_KEY, '1');
-  } catch { /* sessionStorage indisponível — não bloqueia o restante do app */ }
-
-  if (cache.length === 0) return;
-  modalIndex = 0;
-  ensureModalDom();
-  renderModalStep();
-  document.getElementById('pwModalOverlay').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('pwModalOverlay')?.classList.remove('open');
-}
-
-function ensureModalDom() {
-  if (document.getElementById('pwModalOverlay')) return;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'pwModalOverlay';
-  overlay.className = 'pw-modal-overlay';
-  overlay.innerHTML = `
-    <div class="pw-modal">
-      <div class="pw-modal-header">
-        <strong>📢 Sua opinião importa</strong>
-        <button type="button" class="pw-modal-close" id="pwModalClose">✕</button>
-      </div>
-      <div class="pw-modal-body" id="pwModalBody"></div>
-      <div class="pw-modal-footer">
-        <span class="pw-modal-counter" id="pwModalCounter"></span>
-        <div class="pw-modal-actions">
-          <button type="button" class="pw-btn pw-btn-secondary" id="pwModalSkip">Agora não</button>
-          <button type="button" class="pw-btn pw-btn-send" id="pwModalSend">Enviar</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-  document.getElementById('pwModalClose').addEventListener('click', closeModal);
-  document.getElementById('pwModalSkip').addEventListener('click', () => closeModal());
-  document.getElementById('pwModalSend').addEventListener('click', () => submitCard(currentModalPergunta()?.id, true));
-}
-
-function currentModalPergunta() {
-  return cache[modalIndex] ?? null;
-}
-
-function renderModalStep() {
-  const p = currentModalPergunta();
-  if (!p) { closeModal(); return; }
-
-  document.getElementById('pwModalCounter').textContent = `${modalIndex + 1} de ${cache.length}`;
-  document.getElementById('pwModalBody').innerHTML = cardHtml(p, true, { hideActions: true });
-}
-
-// ── Card de pergunta (compartilhado entre widget e modal) ───────────────
-
-function cardHtml(p, isModal, opts = {}) {
-  const prefix = isModal ? 'm' : `w-${p.id}`;
+function cardHtml(p) {
+  const prefix = `w-${p.id}`;
   return `
     <div class="pw-card" id="pw-card-${prefix}">
       <div class="pw-card-title">${esc(p.texto)}</div>
@@ -158,10 +93,9 @@ function cardHtml(p, isModal, opts = {}) {
         ${optionsInputHtml(p, prefix)}
       </div>
       <div class="pw-card-error" data-error="${prefix}" hidden></div>
-      ${opts.hideActions ? '' : `
-        <div class="pw-card-actions">
-          <button type="button" class="pw-btn pw-btn-send" data-send="${prefix}">Enviar</button>
-        </div>`}
+      <div class="pw-card-actions">
+        <button type="button" class="pw-btn pw-btn-send" data-send="${prefix}">Enviar</button>
+      </div>
     </div>`;
 }
 
@@ -183,16 +117,14 @@ function optionsInputHtml(p, prefix) {
   return `<textarea class="pw-textarea" data-textarea="${prefix}" placeholder="Escreva aqui..." rows="3"></textarea>`;
 }
 
-async function submitCard(id, isModal) {
+async function submitCard(id) {
   const p = cache.find(x => x.id === id);
   if (!p) return;
 
-  const prefix = isModal ? 'm' : `w-${id}`;
+  const prefix = `w-${id}`;
   const container = document.querySelector(`[data-input="${prefix}"]`);
   const errorEl = document.querySelector(`[data-error="${prefix}"]`);
-  const sendBtn = isModal
-    ? document.getElementById('pwModalSend')
-    : document.querySelector(`[data-send="${prefix}"]`);
+  const sendBtn = document.querySelector(`[data-send="${prefix}"]`);
 
   let body;
   if (p.tipoResposta === 'EscolhaUnica') {
@@ -220,15 +152,8 @@ async function submitCard(id, isModal) {
 
     if (cache.length === 0) {
       document.getElementById('perguntasWidget')?.remove();
-      closeModal();
       layoutWidgetStack(); // recentraliza tarefas/tutorial sem o widget de perguntas
       return;
-    }
-
-    if (isModal) {
-      // O item respondido saiu da lista — o próximo já ocupa este mesmo índice.
-      if (modalIndex >= cache.length) modalIndex = cache.length - 1;
-      renderModalStep();
     }
   } catch {
     showCardError(errorEl, 'Erro ao enviar. Tente novamente.');
@@ -314,33 +239,6 @@ function injectStyles() {
     .pw-btn-secondary:hover { background: var(--color-bg); }
 
     .pw-card + .pw-card { border-top: 1px solid var(--color-border); padding-top: 12px; }
-
-    /* Modal de login — auto-contido (não depende de .modal-overlay/.modal globais). */
-    .pw-modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 10600; background: rgba(15,23,42,.55);
-      align-items: center; justify-content: center; padding: 16px;
-    }
-    .pw-modal-overlay.open { display: flex; }
-    .pw-modal {
-      width: 420px; max-width: 100%; max-height: calc(100vh - 32px); overflow-y: auto;
-      background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-md);
-      display: flex; flex-direction: column;
-    }
-    .pw-modal-header {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 16px 18px; border-bottom: 1px solid var(--color-border); font-size: 15px; color: var(--color-text);
-    }
-    .pw-modal-close { background: none; border: none; cursor: pointer; font-size: 15px; color: var(--color-text-muted); padding: 2px; line-height: 1; }
-    .pw-modal-close:hover { color: var(--color-text); }
-    .pw-modal-body { padding: 18px; }
-    .pw-modal-body .pw-card-title { font-size: 15px; }
-    .pw-modal-body .pw-card-desc { font-size: 13px; }
-    .pw-modal-footer {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 14px 18px; border-top: 1px solid var(--color-border);
-    }
-    .pw-modal-counter { font-size: 12px; color: var(--color-text-muted); white-space: nowrap; }
-    .pw-modal-actions { display: flex; gap: 8px; }
 
     @media (max-width: 768px) {
       .pw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--pw-stack-mobile, 0px)); transform: none; }
