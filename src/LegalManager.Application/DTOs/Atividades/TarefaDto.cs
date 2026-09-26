@@ -110,16 +110,18 @@ public record TarefaDashboardItemDto(
     string? NumeroCNJProcesso,
     string? NomeContato,
     string? NomeResponsavel,
-    bool Atrasada
+    bool Atrasada,
+    string Origem            // "Tarefa" ou "Evento" (eventos da agenda do tipo Prazo)
 );
 
 public record TarefasDashboardTotaisDto(
     int Abertas,             // Pendente + EmAndamento
     int EmAndamento,
     int Atrasadas,           // abertas com prazo já vencido
-    int Prazos,              // prazos processuais abertos a vencer (a partir de hoje)
-    int PrazosHoje,          // prazos processuais que vencem hoje (horário de Brasília)
-    int PrazosProximosDias,  // prazos processuais que vencem de hoje até hoje + Dias
+    // Prazos = tarefas do tipo Prazo em aberto + eventos da agenda do tipo Prazo
+    int Prazos,              // a vencer (a partir de hoje)
+    int PrazosHoje,          // que vencem hoje (horário de Brasília)
+    int PrazosProximosDias,  // que vencem de hoje até hoje + Dias
     int Minhas               // abertas sob responsabilidade do usuário logado
 );
 

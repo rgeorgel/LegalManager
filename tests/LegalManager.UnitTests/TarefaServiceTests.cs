@@ -348,6 +348,37 @@ public class TarefaServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardAsync_DeveIncluirEventosDoTipoPrazo()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        Evento NovoEvento(string titulo, DateTime dataHora, TipoEvento tipo = TipoEvento.Prazo) => new()
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Titulo = titulo, Tipo = tipo,
+            DataHora = dataHora, ResponsavelId = usuario.Id, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Eventos.AddRange(
+            NovoEvento("Evento prazo hoje", Brasilia(0, 23, 59)),
+            NovoEvento("Evento prazo em 2 dias", Brasilia(2, 17, 32)),
+            NovoEvento("Evento prazo em 20 dias", Brasilia(20, 10)),
+            NovoEvento("Evento prazo passado", Brasilia(-1, 10)),
+            NovoEvento("Perícia", Brasilia(1, 9), TipoEvento.Pericia));
+        ctx.Tarefas.Add(NovaTarefa(tenant.Id, usuario.Id, "Tarefa prazo em 1 dia", Brasilia(1, 12), TipoTarefa.Prazo));
+        await ctx.SaveChangesAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var result = await svc.GetDashboardAsync(dias: 7, limite: 15);
+
+        Assert.Equal(4, result.Totais.Prazos);
+        Assert.Equal(1, result.Totais.PrazosHoje);
+        Assert.Equal(3, result.Totais.PrazosProximosDias);
+        Assert.Equal(0, result.Totais.Atrasadas);
+        Assert.Equal(
+            new[] { "Evento prazo hoje", "Tarefa prazo em 1 dia", "Evento prazo em 2 dias", "Evento prazo em 20 dias" },
+            result.Prazos.Select(p => p.Titulo));
+        Assert.Equal(new[] { "Evento", "Tarefa", "Evento", "Evento" }, result.Prazos.Select(p => p.Origem));
+    }
+
+    [Fact]
     public async Task GetDashboardAsync_DeveRespeitarLimiteDasListas()
     {
         var (ctx, tenant, usuario) = await SeedAsync();

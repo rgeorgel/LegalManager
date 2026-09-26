@@ -195,10 +195,54 @@ public class TarefaService : ITarefaService
             .FirstOrDefaultAsync(ct)
             ?? new TarefasDashboardTotaisDto(0, 0, 0, 0, 0, 0, 0);
 
-        var prazos = await ProjetarDashboard(abertas
+        // Prazos também são cadastrados como eventos da agenda (TipoEvento.Prazo), que
+        // não têm status — entram a partir de hoje e nunca contam como atrasados.
+        var eventosPrazo = _context.Eventos.Where(e =>
+            e.TenantId == _tenantContext.TenantId && e.Tipo == TipoEvento.Prazo && e.DataHora >= hojeInicio);
+
+        var totaisEventos = await eventosPrazo
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Hoje = g.Count(e => e.DataHora < amanhaInicio),
+                Janela = g.Count(e => e.DataHora < janelaFim)
+            })
+            .FirstOrDefaultAsync(ct);
+        if (totaisEventos is not null)
+            totais = totais with
+            {
+                Prazos = totais.Prazos + totaisEventos.Total,
+                PrazosHoje = totais.PrazosHoje + totaisEventos.Hoje,
+                PrazosProximosDias = totais.PrazosProximosDias + totaisEventos.Janela
+            };
+
+        var prazosTarefas = await ProjetarDashboard(abertas
                 .Where(t => t.Tipo == TipoTarefa.Prazo && t.Prazo >= hojeInicio)
                 .OrderBy(t => t.Prazo).ThenByDescending(t => t.Prioridade), limite, agora)
             .ToListAsync(ct);
+
+        var prazosEventos = await eventosPrazo
+            .OrderBy(e => e.DataHora)
+            .Take(limite)
+            .Select(e => new TarefaDashboardItemDto(
+                e.Id,
+                e.Titulo,
+                e.DataHora,
+                PrioridadeTarefa.Alta,
+                StatusTarefa.Pendente,
+                TipoTarefa.Prazo,
+                e.Processo != null ? e.Processo.NumeroCNJ : null,
+                null,
+                e.Responsavel != null ? e.Responsavel.Nome : null,
+                false,
+                "Evento"))
+            .ToListAsync(ct);
+
+        var prazos = prazosTarefas.Concat(prazosEventos)
+            .OrderBy(t => t.Prazo)
+            .Take(limite)
+            .ToList();
 
         var minhas = await ProjetarDashboard(abertas
                 .Where(t => t.ResponsavelId == userId)
@@ -224,7 +268,8 @@ public class TarefaService : ITarefaService
             t.Processo != null ? t.Processo.NumeroCNJ : null,
             t.Contato != null ? t.Contato.Nome : null,
             t.Responsavel != null ? t.Responsavel.Nome : null,
-            t.Prazo < agora));
+            t.Prazo < agora,
+            "Tarefa"));
 
     public async Task ConcluirAsync(Guid id, CancellationToken ct = default)
     {

@@ -174,6 +174,9 @@
     .d2-item:hover { border-color: var(--d2-line); }
     .d2-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--d2-line); background: var(--color-surface); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: grid; place-items: center; font-size: 12px; color: #fff !important; padding: 0; }
     .d2-check:hover { border-color: var(--d2-green); }
+    .d2-check-evento { border: none; background: transparent; font-size: 14px; cursor: default; }
+    .d2-day-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin: 6px 0 -2px; }
+    .d2-day-group:first-child { margin-top: 0; }
     .d2-check.done { background: #15803d; border-color: #15803d; }
     .d2-item-body { flex: 1; min-width: 0; }
     .d2-item-title { font-weight: 600; font-size: 13px; color: var(--color-text); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -796,16 +799,24 @@
       }
       el.innerHTML = list.map(t => {
         const meta = [
-          t.tipo === 'Prazo' ? '⏳ Prazo' : null,
+          t.origem === 'Evento' ? '📅 Prazo (agenda)' : t.tipo === 'Prazo' ? '⏳ Prazo' : null,
           t.numeroCNJProcesso ? esc(t.numeroCNJProcesso) : null,
           t.nomeContato ? esc(t.nomeContato) : null,
           t.nomeResponsavel ? '👤 ' + esc(t.nomeResponsavel) : null,
         ].filter(Boolean).join(' · ');
+        // Prazos também vêm de eventos da agenda (origem "Evento"): sem status, então
+        // não têm "concluir" e abrem na agenda em vez da tela de tarefas.
+        const evento = t.origem === 'Evento';
+        const href = evento
+          ? `/pages/agenda.html?view=dia&date=${isoDate(new Date(t.prazo))}&abrirId=${t.id}`
+          : `/pages/tarefas.html?abrirId=${t.id}`;
         return `<div class="d2-item" data-id="${t.id}">
-          <div class="d2-prio" style="background:${PRIO_COR[t.prioridade] ?? '#94a3b8'}" title="Prioridade ${esc(t.prioridade)}"></div>
-          <button class="d2-check" data-concluir="${t.id}" title="Concluir" aria-label="Concluir ${esc(t.titulo)}"></button>
+          <div class="d2-prio" style="background:${evento ? '#d97706' : PRIO_COR[t.prioridade] ?? '#94a3b8'}" title="${evento ? 'Prazo na agenda' : 'Prioridade ' + esc(t.prioridade)}"></div>
+          ${evento
+            ? '<span class="d2-check d2-check-evento" title="Prazo cadastrado na agenda">📅</span>'
+            : `<button class="d2-check" data-concluir="${t.id}" title="Concluir" aria-label="Concluir ${esc(t.titulo)}"></button>`}
           <div class="d2-item-body">
-            <a class="d2-item-title" href="/pages/tarefas.html?abrirId=${t.id}" title="${esc(t.titulo)}">${esc(t.titulo)}</a>
+            <a class="d2-item-title" href="${href}" title="${esc(t.titulo)}">${esc(t.titulo)}</a>
             <div class="d2-item-meta">${meta || '&nbsp;'}</div>
           </div>
           ${prazoChip(t.prazo)}
@@ -840,50 +851,53 @@
       }
     });
 
-    // ── Agenda semanal ─────────────────────────────────────
-    const ag = { inicio: null, selecionado: startOfDay(new Date()), eventos: [] };
+    // ── Agenda: próximos 7 dias ────────────────────────────
+    // Janela móvel de 7 dias a partir de hoje (como os "Próximos eventos" do
+    // dashboard clássico). Sem dia selecionado, lista tudo da janela agrupado por
+    // dia; clicar num dia filtra, clicar de novo volta para a lista completa.
+    const ag = { inicio: startOfDay(new Date()), selecionado: null, eventos: [] };
+    const hm = d => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    function segunda(d) {
-      const x = startOfDay(d);
-      const dow = (x.getDay() + 6) % 7; // 0 = segunda
-      return addDays(x, -dow);
-    }
-
-    async function loadAgenda(dia = ag.selecionado) {
-      ag.selecionado = startOfDay(dia);
-      ag.inicio = segunda(dia);
+    async function loadAgenda(inicio = ag.inicio) {
+      ag.inicio = startOfDay(inicio);
+      ag.selecionado = null;
       const fim = addDays(ag.inicio, 7);
       renderSemana();
       $('agEvents').innerHTML = '<div class="d2-skel"></div><div class="d2-skel"></div>';
       const itens = await apiFetch(`/agenda?de=${ag.inicio.toISOString()}&ate=${fim.toISOString()}`).catch(() => []);
-      ag.eventos = (itens ?? []).filter(e => e.tipo !== 'Tarefa');
+      ag.eventos = (itens ?? [])
+        .filter(e => e.tipo !== 'Tarefa')
+        .sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
       renderSemana();
-      renderEventosDia();
+      renderEventos();
 
       const hoje = startOfDay(new Date());
-      if (ag.inicio <= hoje && hoje < fim && resumo.eventosHoje === null) {
+      if (+ag.inicio === +hoje && resumo.eventosHoje === null) {
         const doDia = ag.eventos.filter(e => isoDate(new Date(e.dataHora)) === isoDate(hoje));
         resumo.eventosHoje = doDia.length;
         $('kEventos').textContent = doDia.length;
         const futuros = doDia.filter(e => new Date(e.dataHora) > new Date());
         $('kEventosSub').textContent = futuros.length
-          ? `próximo às ${new Date(futuros[0].dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-          : doDia.length ? 'todos já passaram' : 'agenda livre';
+          ? `próximo às ${hm(new Date(futuros[0].dataHora))}`
+          : doDia.length ? 'todos já passaram' : `${plural(ag.eventos.length, 'compromisso', 'compromissos')} em 7 dias`;
         renderResumo();
       }
     }
 
     function renderSemana() {
-      const hojeIso = isoDate(new Date());
-      const selIso = isoDate(ag.selecionado);
+      const hoje = startOfDay(new Date());
+      const hojeIso = isoDate(hoje);
+      const selIso = ag.selecionado ? isoDate(ag.selecionado) : null;
       const comEvento = new Set(ag.eventos.map(e => isoDate(new Date(e.dataHora))));
-      const mes = ag.selecionado.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      $('agMes').textContent = '📅 ' + mes.charAt(0).toUpperCase() + mes.slice(1);
+      const fmt = d => d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }).replace('.', '');
+      $('agMes').textContent = +ag.inicio === +hoje
+        ? '📅 Próximos 7 dias'
+        : `📅 ${fmt(ag.inicio)} – ${fmt(addDays(ag.inicio, 6))}`;
       $('agWeek').innerHTML = Array.from({ length: 7 }, (_, i) => {
         const d = addDays(ag.inicio, i);
         const iso = isoDate(d);
         const cls = ['d2-day', iso === hojeIso && 'today', iso === selIso && 'selected', comEvento.has(iso) && 'has'].filter(Boolean).join(' ');
-        return `<button class="${cls}" data-dia="${iso}">
+        return `<button class="${cls}" data-dia="${iso}" aria-pressed="${iso === selIso}">
           <span class="d2-day-dow">${d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</span>
           <span class="d2-day-num">${d.getDate()}</span>
           <span class="d2-day-dot"></span>
@@ -891,27 +905,37 @@
       }).join('');
     }
 
-    function renderEventosDia() {
-      const selIso = isoDate(ag.selecionado);
-      const list = ag.eventos
-        .filter(e => isoDate(new Date(e.dataHora)) === selIso)
-        .sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+    function rotuloDia(d) {
+      const diff = Math.round((startOfDay(d) - startOfDay(new Date())) / 86400000);
+      if (diff === 0) return 'Hoje';
+      if (diff === 1) return 'Amanhã';
+      return d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
+    }
+
+    function renderEventos() {
+      const selIso = ag.selecionado ? isoDate(ag.selecionado) : null;
+      const list = selIso ? ag.eventos.filter(e => isoDate(new Date(e.dataHora)) === selIso) : ag.eventos;
       const el = $('agEvents');
       if (!list.length) {
-        el.innerHTML = `<div class="d2-empty">Nenhum compromisso neste dia.<br><a href="/pages/agenda.html?view=dia&date=${selIso}" style="font-weight:600">Abrir agenda</a></div>`;
+        const dataAgenda = selIso ?? isoDate(ag.inicio);
+        el.innerHTML = `<div class="d2-empty">${selIso ? 'Nenhum compromisso neste dia.' : 'Nenhum compromisso nestes 7 dias.'}<br>
+          <a href="/pages/agenda.html?view=${selIso ? 'dia' : 'semana'}&date=${dataAgenda}" style="font-weight:600">Abrir agenda</a></div>`;
         return;
       }
+      let ultimoDia = null;
       el.innerHTML = list.map(ev => {
         const dt = new Date(ev.dataHora);
+        const iso = isoDate(dt);
+        const grupo = !selIso && iso !== ultimoDia ? `<div class="d2-day-group">${rotuloDia(dt)}</div>` : '';
+        ultimoDia = iso;
         const fim = ev.dataHoraFim ? new Date(ev.dataHoraFim) : null;
-        const hm = d => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const meta = [esc(ev.tipo), fim ? `até ${hm(fim)}` : null, ev.local ? '📍 ' + esc(ev.local) : null, ev.numeroCNJProcesso ? esc(ev.numeroCNJProcesso) : null].filter(Boolean).join(' · ');
-        return `<a class="d2-event" href="/pages/agenda.html?view=dia&date=${selIso}&abrirId=${ev.id}">
+        return `${grupo}<a class="d2-event" href="/pages/agenda.html?view=dia&date=${iso}&abrirId=${ev.id}">
           <div class="d2-event-time">${hm(dt)}</div>
           <div class="d2-event-bar" style="background:${esc(ev.cor || 'var(--color-primary)')}"></div>
           <div class="d2-item-body">
             <div class="d2-item-title">${esc(ev.titulo)}</div>
-            <div class="d2-item-meta">${meta}</div>
+            <div class="d2-item-meta" title="${meta.replace(/"/g, '&quot;')}">${meta}</div>
           </div>
         </a>`;
       }).join('');
@@ -920,12 +944,13 @@
     $('agWeek').addEventListener('click', e => {
       const b = e.target.closest('[data-dia]');
       if (!b) return;
-      ag.selecionado = new Date(b.dataset.dia + 'T00:00:00');
+      const dia = new Date(b.dataset.dia + 'T00:00:00');
+      ag.selecionado = ag.selecionado && isoDate(ag.selecionado) === b.dataset.dia ? null : dia;
       renderSemana();
-      renderEventosDia();
+      renderEventos();
     });
-    $('agPrev').addEventListener('click', () => loadAgenda(addDays(ag.selecionado, -7)));
-    $('agNext').addEventListener('click', () => loadAgenda(addDays(ag.selecionado, 7)));
+    $('agPrev').addEventListener('click', () => loadAgenda(addDays(ag.inicio, -7)));
+    $('agNext').addEventListener('click', () => loadAgenda(addDays(ag.inicio, 7)));
     $('agHoje').addEventListener('click', () => loadAgenda(new Date()));
 
     // ── Notificações ───────────────────────────────────────
@@ -1253,7 +1278,7 @@
     // ── Boot ───────────────────────────────────────────────
     await Promise.all([
       loadTarefas(),
-      loadAgenda(new Date()),
+      loadAgenda(),
       loadNotificacoes(),
       loadProcessos(),
       loadIndicadores(),
