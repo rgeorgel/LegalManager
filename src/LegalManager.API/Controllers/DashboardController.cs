@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.API.Controllers;
 
-// Layout personalizado do dashboard (ordem, largura e visibilidade dos blocos),
-// salvo por usuário em Usuario.DashboardLayout. Os ids dos blocos são definidos
+// Layout personalizado do dashboard (ordem, largura e visibilidade dos blocos e
+// dos KPIs do topo), salvo por usuário em Usuario.DashboardLayout. Os ids dos blocos são definidos
 // pelo frontend: aqui só validamos formato e limites, para que blocos novos não
 // exijam mudança no backend — ids desconhecidos são ignorados pela página.
 [ApiController]
@@ -38,30 +38,36 @@ public partial class DashboardController : ControllerBase
             .Select(u => u.DashboardLayout)
             .FirstOrDefaultAsync(ct);
 
-        return Ok(new DashboardLayoutDto(Parse(json)));
+        return Ok(Parse(json));
     }
 
     [HttpPut("layout")]
     public async Task<ActionResult<DashboardLayoutDto>> SalvarLayout([FromBody] DashboardLayoutDto dto, CancellationToken ct)
     {
-        var widgets = dto.Widgets ?? [];
-        if (widgets.Count == 0)
-            return BadRequest(new { message = "Informe ao menos um bloco." });
-        if (widgets.Count > MaxWidgets)
-            return BadRequest(new { message = $"Máximo de {MaxWidgets} blocos." });
-        if (widgets.Any(w => w.Id is null || !WidgetIdRegex().IsMatch(w.Id)))
-            return BadRequest(new { message = "Id de bloco inválido." });
-        if (widgets.Any(w => w.Largura is < 1 or > 3))
-            return BadRequest(new { message = "Largura deve ser entre 1 e 3 colunas." });
-        if (widgets.Select(w => w.Id).Distinct().Count() != widgets.Count)
-            return BadRequest(new { message = "Blocos duplicados." });
+        if (dto.Widgets is null && dto.Kpis is null)
+            return BadRequest(new { message = "Informe os blocos ou os KPIs." });
+        if ((Validar(dto.Widgets) ?? Validar(dto.Kpis)) is { } erro)
+            return BadRequest(new { message = erro });
 
         var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
         if (usuario == null) return NotFound();
 
-        usuario.DashboardLayout = JsonSerializer.Serialize(widgets, JsonOptions);
+        var layout = new DashboardLayoutDto(dto.Widgets, dto.Kpis);
+        usuario.DashboardLayout = JsonSerializer.Serialize(layout, JsonOptions);
         await _context.SaveChangesAsync(ct);
-        return Ok(new DashboardLayoutDto(widgets));
+        return Ok(layout);
+    }
+
+    /// <summary>Valida uma seção do layout; null = válida (seção ausente também é válida).</summary>
+    private static string? Validar(List<DashboardWidgetDto>? itens)
+    {
+        if (itens is null) return null;
+        if (itens.Count == 0) return "Informe ao menos um item.";
+        if (itens.Count > MaxWidgets) return $"Máximo de {MaxWidgets} itens por seção.";
+        if (itens.Any(w => w.Id is null || !WidgetIdRegex().IsMatch(w.Id))) return "Id de item inválido.";
+        if (itens.Any(w => w.Largura is < 1 or > 3)) return "Largura deve ser entre 1 e 3 colunas.";
+        if (itens.Select(w => w.Id).Distinct().Count() != itens.Count) return "Itens duplicados.";
+        return null;
     }
 
     /// <summary>Volta ao layout padrão.</summary>
@@ -76,16 +82,19 @@ public partial class DashboardController : ControllerBase
         return NoContent();
     }
 
-    private static List<DashboardWidgetDto>? Parse(string? json)
+    private static DashboardLayoutDto Parse(string? json)
     {
-        if (string.IsNullOrWhiteSpace(json)) return null;
+        if (string.IsNullOrWhiteSpace(json)) return new DashboardLayoutDto(null);
         try
         {
-            return JsonSerializer.Deserialize<List<DashboardWidgetDto>>(json, JsonOptions);
+            // Formato antigo (antes dos KPIs personalizáveis): só a lista de blocos.
+            if (json.TrimStart().StartsWith('['))
+                return new DashboardLayoutDto(JsonSerializer.Deserialize<List<DashboardWidgetDto>>(json, JsonOptions));
+            return JsonSerializer.Deserialize<DashboardLayoutDto>(json, JsonOptions) ?? new DashboardLayoutDto(null);
         }
         catch (JsonException)
         {
-            return null;
+            return new DashboardLayoutDto(null);
         }
     }
 

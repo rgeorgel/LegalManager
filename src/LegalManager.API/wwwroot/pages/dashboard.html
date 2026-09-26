@@ -121,28 +121,27 @@
     .d2-muted { color: var(--color-text-muted); font-size: 13px; }
     .d2-empty { color: var(--color-text-muted); font-size: 13px; padding: 18px 0; text-align: center; }
 
-    /* Hero */
-    .d2-hero { display: grid; grid-template-columns: minmax(260px, 1.2fr) 2fr; gap: 16px; margin-bottom: 16px; }
-    .d2-greet h1 { font-size: 24px; font-weight: 800; line-height: 1.2; }
-    .d2-greet h2 { font-size: 17px; font-weight: 700; margin-top: 4px; }
-    .d2-greet p { margin-top: 8px; font-size: 13px; color: var(--color-text-muted); max-width: 420px; }
-    .d2-greet .d2-date { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-primary); margin-bottom: 6px; }
-    .d2-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .d2-action {
-      display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
-      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--d2-radius);
-      padding: 16px; color: inherit; transition: transform .12s, border-color .15s, box-shadow .15s;
+    /* Saudação (barra do topo) */
+    .d2-greet { min-width: 0; }
+    .d2-greet .d2-date { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-primary); }
+    .d2-greet h1 { font-size: 24px; font-weight: 800; line-height: 1.2; margin: 2px 0 0; }
+    .d2-greet p { margin-top: 4px; font-size: 13px; color: var(--color-text-muted); }
+
+    /* Atalhos (tamanho de um KPI, na linha de indicadores) */
+    .d2-kpi-atalhos { padding: 12px; }
+    .d2-kpi-atalhos:hover { transform: none; }
+    .d2-atalhos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+    .d2-atalhos a {
+      display: grid; place-items: center; height: 38px; border-radius: 8px; font-size: 18px; line-height: 1;
+      background: var(--d2-soft); border: 1px solid transparent; position: relative;
     }
-    .d2-action:hover { transform: translateY(-2px); border-color: var(--color-primary); box-shadow: var(--shadow-md); }
-    .d2-action-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--color-primary-light); }
-    .d2-action-title { font-weight: 700; font-size: 14px; }
-    .d2-action-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
-    .d2-action.primary { background: var(--d2-fill); border-color: var(--color-primary); color: var(--d2-on-fill); }
-    .d2-action.primary .d2-action-icon { background: rgba(255,255,255,.18); }
-    .d2-action.primary .d2-action-sub { color: var(--d2-on-fill); opacity: .8; }
+    .d2-atalhos a:hover, .d2-atalhos a:focus-visible { border-color: var(--color-primary); background: var(--color-primary-light); }
+    .d2-atalhos-dica { margin-top: 6px; min-height: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Atalho de tela de plano pago no Free: ponto âmbar (o title diz o plano). */
+    .d2-atalhos a.bloq::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
 
     /* KPIs */
-    .d2-kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+    .d2-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .d2-kpi {
       background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--d2-radius);
       padding: 14px 16px; color: inherit; display: block; transition: border-color .15s, transform .12s;
@@ -151,8 +150,8 @@
     .d2-kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); display: flex; align-items: center; gap: 6px; }
     .d2-kpi-value { font-size: 26px; font-weight: 800; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; }
     .d2-kpi-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; min-height: 18px; }
-    .d2-kpi.alert { border-color: color-mix(in srgb, var(--d2-red) 45%, var(--color-border)); }
-    .d2-kpi.alert .d2-kpi-value { color: var(--d2-red); }
+    .d2-kpi.d2-kpi-alerta { border-color: color-mix(in srgb, var(--d2-red) 45%, var(--color-border)); }
+    .d2-kpi.d2-kpi-alerta .d2-kpi-value { color: var(--d2-red); }
     .d2-kpi.locked { opacity: .65; }
 
     /* Grids */
@@ -288,15 +287,11 @@
     .d2-plus { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 100px; margin-left: 4px; }
 
     @media (max-width: 1200px) {
-      .d2-kpis { grid-template-columns: repeat(3, 1fr); }
       .d2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    @media (max-width: 900px) {
-      .d2-hero { grid-template-columns: 1fr; }
-    }
     @media (max-width: 700px) {
-      .d2-actions { grid-template-columns: 1fr 1fr; }
-      .d2-kpis { grid-template-columns: 1fr 1fr; }
+      .d2-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .d2-greet h1 { font-size: 20px; }
       .d2-grid { grid-template-columns: minmax(0, 1fr); }
       .d2-grid > .d2-w2, .d2-grid > .d2-w3 { grid-column: auto; }
       .d2-kpi-value { font-size: 22px; }
@@ -434,7 +429,11 @@
       <div class="d2">
 
         <div class="d2-topbar">
-          <h1 class="page-title">Dashboard</h1>
+          <div class="d2-greet">
+            <div class="d2-date" id="d2Hoje">—</div>
+            <h1 class="page-title" id="d2Saudacao">Olá!</h1>
+            <p id="d2Resumo">Carregando o seu resumo do dia…</p>
+          </div>
           <div class="d2-topbar-actions">
             <button class="d2-topbar-link" id="d2Personalizar" type="button" aria-pressed="false">⚙️ Personalizar</button>
             <a class="d2-topbar-link" id="d2Indicadores" href="/pages/dashboard-classico.html?tab=indicadores">📈 Indicadores<span class="d2-plus" id="d2IndPlus" style="display:none">PLUS</span></a>
@@ -442,65 +441,70 @@
           </div>
         </div>
 
-        <!-- Hero: saudação + ações rápidas -->
-        <section class="d2-hero">
-          <div class="d2-card d2-greet">
-            <div class="d2-date" id="d2Hoje">—</div>
-            <h1 id="d2Saudacao">Olá!</h1>
-            <h2>Quais são os planos para hoje?</h2>
-            <p id="d2Resumo">Carregando o seu resumo do dia…</p>
+        <!-- KPIs personalizáveis (ordem e visibilidade — ver /js/dashboard-layout.js).
+             Os com d2-oculto são extras que o usuário pode ligar em "Personalizar". -->
+        <section class="d2-kpis" id="d2Kpis" data-tour="dashboard-stats">
+          <div class="d2-kpi d2-kpi-atalhos" data-kpi="atalhos" data-titulo="Atalhos">
+            <div class="d2-kpi-label">⚡ Atalhos</div>
+            <div class="d2-atalhos">
+              <a href="/pages/processos.html" title="Novo processo" aria-label="Novo processo">⚖️</a>
+              <a href="/pages/tarefas.html" title="Nova tarefa" aria-label="Nova tarefa">✅</a>
+              <a href="/pages/agenda.html" title="Novo evento" aria-label="Novo evento">📅</a>
+              <a href="/pages/contatos.html" title="Novo contato" aria-label="Novo contato">👤</a>
+              <a href="/pages/honorarios-contrato-novo.html" title="Novo contrato de honorários" aria-label="Novo contrato de honorários" data-plano="Plus">🤝</a>
+              <a href="/pages/financeiro.html" title="Novo lançamento financeiro" aria-label="Novo lançamento financeiro" data-plano="Plus">💵</a>
+            </div>
+            <div class="d2-kpi-sub d2-atalhos-dica" id="d2AtalhoDica" aria-hidden="true">Criar novo…</div>
           </div>
-          <div class="d2-actions">
-            <a class="d2-action primary" href="/pages/processos.html">
-              <div class="d2-action-icon">⚖️</div>
-              <div><div class="d2-action-title">Novo processo</div><div class="d2-action-sub">Cadastrar ou importar</div></div>
-            </a>
-            <a class="d2-action" href="/pages/tarefas.html">
-              <div class="d2-action-icon">✅</div>
-              <div><div class="d2-action-title">Nova tarefa</div><div class="d2-action-sub">Prazos e pendências</div></div>
-            </a>
-            <a class="d2-action" href="/pages/agenda.html">
-              <div class="d2-action-icon">📅</div>
-              <div><div class="d2-action-title">Novo evento</div><div class="d2-action-sub">Audiências e reuniões</div></div>
-            </a>
-            <a class="d2-action" href="/pages/contatos.html">
-              <div class="d2-action-icon">👤</div>
-              <div><div class="d2-action-title">Novo contato</div><div class="d2-action-sub">Clientes e partes</div></div>
-            </a>
-          </div>
-        </section>
-
-        <!-- KPIs -->
-        <section class="d2-kpis" data-tour="dashboard-stats">
-          <a class="d2-kpi" href="/pages/processos.html">
+          <a class="d2-kpi" href="/pages/processos.html" data-kpi="processos" data-titulo="Processos ativos">
             <div class="d2-kpi-label">⚖️ Processos ativos</div>
             <div class="d2-kpi-value" id="kProcessos">—</div>
             <div class="d2-kpi-sub" id="kProcessosSub"></div>
           </a>
-          <a class="d2-kpi" href="/pages/tarefas.html">
+          <a class="d2-kpi" href="/pages/tarefas.html" data-kpi="tarefas" data-titulo="Tarefas abertas">
             <div class="d2-kpi-label">✅ Tarefas abertas</div>
             <div class="d2-kpi-value" id="kTarefas">—</div>
             <div class="d2-kpi-sub" id="kTarefasSub"></div>
           </a>
-          <a class="d2-kpi alert" href="/pages/tarefas.html">
+          <a class="d2-kpi d2-kpi-alerta" href="/pages/tarefas.html" data-kpi="atrasadas" data-titulo="Atrasadas">
             <div class="d2-kpi-label" style="color:var(--d2-red)">⚠️ Atrasadas</div>
             <div class="d2-kpi-value" id="kAtrasadas">—</div>
             <div class="d2-kpi-sub">tarefas e prazos vencidos</div>
           </a>
-          <a class="d2-kpi" href="/pages/prazos.html">
+          <a class="d2-kpi" href="/pages/prazos.html" data-kpi="prazos" data-titulo="Prazos em 7 dias">
             <div class="d2-kpi-label">⏳ Prazos em 7 dias</div>
             <div class="d2-kpi-value" id="kPrazos">—</div>
             <div class="d2-kpi-sub" id="kPrazosSub"></div>
           </a>
-          <a class="d2-kpi" href="/pages/agenda.html">
+          <a class="d2-kpi" href="/pages/agenda.html" data-kpi="eventos" data-titulo="Eventos hoje">
             <div class="d2-kpi-label">📅 Eventos hoje</div>
             <div class="d2-kpi-value" id="kEventos">—</div>
             <div class="d2-kpi-sub" id="kEventosSub"></div>
           </a>
-          <a class="d2-kpi" href="/pages/honorarios-contratos.html" id="kHonLink">
+          <a class="d2-kpi" href="/pages/honorarios-contratos.html" id="kHonLink" data-kpi="honorarios" data-titulo="Honorários a receber">
             <div class="d2-kpi-label">💰 Honorários a receber</div>
             <div class="d2-kpi-value" id="kHonorarios" style="font-size:20px">—</div>
             <div class="d2-kpi-sub" id="kHonorariosSub"></div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/publicacoes.html" id="kPubLink" data-kpi="publicacoes" data-titulo="Publicações novas">
+            <div class="d2-kpi-label">📰 Publicações novas</div>
+            <div class="d2-kpi-value" id="kPublicacoes">—</div>
+            <div class="d2-kpi-sub" id="kPublicacoesSub">não lidas</div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/financeiro.html" id="kSaldoLink" data-kpi="saldo" data-titulo="Saldo do mês">
+            <div class="d2-kpi-label">💵 Saldo do mês</div>
+            <div class="d2-kpi-value" id="kSaldo" style="font-size:20px">—</div>
+            <div class="d2-kpi-sub" id="kSaldoSub"></div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/timesheet.html" id="kHorasLink" data-kpi="horas" data-titulo="Horas no mês">
+            <div class="d2-kpi-label">⏱️ Horas no mês</div>
+            <div class="d2-kpi-value" id="kHoras">—</div>
+            <div class="d2-kpi-sub" id="kHorasSub"></div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/contatos.html" data-kpi="contatos" data-titulo="Contatos">
+            <div class="d2-kpi-label">👥 Contatos</div>
+            <div class="d2-kpi-value" id="kContatos">—</div>
+            <div class="d2-kpi-sub">clientes e partes</div>
           </a>
         </section>
 
@@ -688,13 +692,25 @@
 
     const user = getUser();
 
-    // Aplica o layout personalizado (ordem/largura/visibilidade dos blocos) o quanto antes.
-    initDashboardLayout({ grid: document.getElementById('d2Grid'), botao: document.getElementById('d2Personalizar'), userId: user?.id });
+    // Aplica o layout personalizado (KPIs e blocos: ordem, largura e visibilidade) o quanto antes.
+    initDashboardLayout({
+      secoes: [
+        { chave: 'kpis', grid: document.getElementById('d2Kpis'), attr: 'kpi', compacto: true },
+        { chave: 'widgets', grid: document.getElementById('d2Grid'), attr: 'widget', larguras: true },
+      ],
+      botao: document.getElementById('d2Personalizar'),
+      userId: user?.id,
+    });
     const plano = getPlano();
     const free = isPlanoFree();
     const planoPro = ['Pro', 'Max', 'Enterprise'].includes(plano);
 
     if (free) {
+      // Atalhos para telas de planos pagos ganham o selo do plano.
+      document.querySelectorAll('.d2-atalhos a[data-plano]').forEach(a => {
+        a.classList.add('bloq');
+        a.title += ` — disponível no plano ${a.dataset.plano}`;
+      });
       document.getElementById('d2IndPlus').style.display = '';
       document.getElementById('d2Indicadores').addEventListener('click', e => {
         e.preventDefault();
@@ -729,6 +745,13 @@
       </div>`);
     };
 
+    function kpiBloqueado(linkId, valorId, subId, alvo) {
+      $(linkId).classList.add('locked');
+      $(linkId).href = '/pages/assinatura.html';
+      $(valorId).textContent = '🔒';
+      $(subId).textContent = `plano ${alvo}`;
+    }
+
     function prazoChip(iso) {
       if (!iso) return '<span class="d2-chip gray">Sem prazo</span>';
       const d = daysUntil(iso);
@@ -745,6 +768,16 @@
       Previdenciario: 'Previdenciário', Administrativo: 'Administrativo', Consumidor: 'Consumidor',
       Familia: 'Família', Empresarial: 'Empresarial', Ambiental: 'Ambiental', Imobiliario: 'Imobiliário', Outro: 'Outro'
     };
+
+    // ── Atalhos: legenda mostra o nome do atalho sob o mouse/foco ─────────
+    const atalhoDica = $('d2AtalhoDica');
+    const atalhos = document.querySelector('.d2-atalhos');
+    const mostrarDica = e => { const a = e.target.closest('a'); if (a) atalhoDica.textContent = a.title; };
+    const limparDica = () => { atalhoDica.textContent = 'Criar novo…'; };
+    atalhos.addEventListener('mouseover', mostrarDica);
+    atalhos.addEventListener('focusin', mostrarDica);
+    atalhos.addEventListener('mouseleave', limparDica);
+    atalhos.addEventListener('focusout', limparDica);
 
     // ── Hero ───────────────────────────────────────────────
     const agora = new Date();
@@ -1078,10 +1111,22 @@
         $('arBars').innerHTML = '<div class="d2-empty">Distribuição por área disponível no plano Plus.</div>';
         $('tmMes').textContent = '—';
         $('tmMesAnt').textContent = '—';
+        kpiBloqueado('kSaldoLink', 'kSaldo', 'kSaldoSub', 'Plus');
+        kpiBloqueado('kHorasLink', 'kHoras', 'kHorasSub', 'Plus');
         return;
       }
       try {
         const d = await apiFetch('/indicadores');
+        const saldo = d.financeiro.saldoMes;
+        $('kSaldo').textContent = brlCompact(saldo);
+        $('kSaldo').style.color = saldo >= 0 ? 'var(--d2-green)' : 'var(--d2-red)';
+        $('kSaldoSub').textContent = d.financeiro.receitasVencidas
+          ? `${brlCompact(d.financeiro.receitasVencidas)} a receber vencido`
+          : 'receitas − despesas pagas';
+        const ts = d.timesheet;
+        $('kHoras').textContent = fmtDur(ts.minutosEsteMes);
+        const dif = ts.minutosEsteMes - ts.minutosMesAnterior;
+        $('kHorasSub').textContent = ts.minutosMesAnterior ? `${dif >= 0 ? '+' : '−'}${fmtDur(Math.abs(dif))} vs. mês anterior` : 'neste mês';
         $('kProcessosSub').textContent = d.processos.novosEsteMes
           ? `+${d.processos.novosEsteMes} este mês`
           : `${d.processos.suspensos} suspensos`;
@@ -1098,10 +1143,7 @@
     async function loadHonorarios() {
       if (free) {
         lock($('honCard'), 'Honorários de contrato', 'Parcelas, inadimplência e meta mensal de recebimento.');
-        $('kHonLink').classList.add('locked');
-        $('kHonLink').href = '/pages/assinatura.html';
-        $('kHonorarios').textContent = '🔒';
-        $('kHonorariosSub').textContent = 'plano Plus';
+        kpiBloqueado('kHonLink', 'kHonorarios', 'kHonorariosSub', 'Plus');
         return;
       }
       try {
@@ -1272,12 +1314,14 @@
 
     // ── Publicações (Pro+) — substitui subtítulo do KPI de processos
     async function loadPublicacoes() {
-      if (!planoPro) return;
+      if (!planoPro) { kpiBloqueado('kPubLink', 'kPublicacoes', 'kPublicacoesSub', 'Pro'); return; }
       const r = await apiFetch('/publicacoes/nao-lidas/count').catch(() => null);
-      if (r?.count) {
-        const sub = $('kProcessosSub');
-        sub.innerHTML = `<span style="color:var(--color-primary);font-weight:600">📰 ${plural(r.count, 'publicação nova', 'publicações novas')}</span>`;
-      }
+      $('kPublicacoes').textContent = r?.count ?? '—';
+    }
+
+    async function loadContatos() {
+      const r = await apiFetch('/contatos?pageSize=1').catch(() => null);
+      $('kContatos').textContent = r?.total ?? '—';
     }
 
     // ── Boot ───────────────────────────────────────────────
@@ -1290,6 +1334,7 @@
       loadHonorarios(),
       loadTimer(),
       loadAniversariantes(),
+      loadContatos(),
     ]);
     loadPublicacoes();
   </script>

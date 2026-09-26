@@ -71,8 +71,11 @@ public class DashboardControllerTests
 
     public static TheoryData<DashboardLayoutDto> LayoutsInvalidos => new()
     {
-        new DashboardLayoutDto(null),
+        new DashboardLayoutDto(null),                              // nenhuma seção
         new DashboardLayoutDto([]),
+        new DashboardLayoutDto(null, []),
+        new DashboardLayoutDto(null, [new DashboardWidgetDto("kpi-x"), new DashboardWidgetDto("kpi-x")]),
+        new DashboardLayoutDto([new DashboardWidgetDto("agenda")], [new DashboardWidgetDto("KPI")]),
         Layout(new DashboardWidgetDto("Agenda")),                  // maiúscula
         Layout(new DashboardWidgetDto("<script>")),
         Layout(new DashboardWidgetDto("agenda", 0)),
@@ -90,6 +93,50 @@ public class DashboardControllerTests
         Assert.IsType<BadRequestObjectResult>((await controller.SalvarLayout(layout, CancellationToken.None)).Result);
 
         Assert.Null((await ctx.Users.FindAsync(usuario.Id))!.DashboardLayout);
+    }
+
+    [Fact]
+    public async Task SalvarLayout_ComKpis_DevePersistirAsDuasSecoes()
+    {
+        var (_, controller, _) = await SetupAsync();
+        var layout = new DashboardLayoutDto(
+            [new DashboardWidgetDto("atalhos")],
+            [new DashboardWidgetDto("atrasadas"), new DashboardWidgetDto("processos", 1, Oculto: true)]);
+
+        Assert.IsType<OkObjectResult>((await controller.SalvarLayout(layout, CancellationToken.None)).Result);
+
+        var ok = Assert.IsType<OkObjectResult>((await controller.GetLayout(CancellationToken.None)).Result);
+        var salvo = Assert.IsType<DashboardLayoutDto>(ok.Value);
+        Assert.Equal("atalhos", Assert.Single(salvo.Widgets!).Id);
+        Assert.Equal(new[] { "atrasadas", "processos" }, salvo.Kpis!.Select(k => k.Id));
+        Assert.True(salvo.Kpis![1].Oculto);
+    }
+
+    [Fact]
+    public async Task SalvarLayout_SoKpis_MantemWidgetsNulo()
+    {
+        var (_, controller, _) = await SetupAsync();
+
+        await controller.SalvarLayout(new DashboardLayoutDto(null, [new DashboardWidgetDto("saldo")]), CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>((await controller.GetLayout(CancellationToken.None)).Result);
+        var salvo = Assert.IsType<DashboardLayoutDto>(ok.Value);
+        Assert.Null(salvo.Widgets);
+        Assert.Equal("saldo", Assert.Single(salvo.Kpis!).Id);
+    }
+
+    [Fact]
+    public async Task GetLayout_FormatoAntigo_ListaDeBlocos_EhLidoComoWidgets()
+    {
+        var (ctx, controller, usuario) = await SetupAsync();
+        (await ctx.Users.FindAsync(usuario.Id))!.DashboardLayout = """[{"id":"agenda","largura":2,"oculto":false}]""";
+        await ctx.SaveChangesAsync();
+
+        var ok = Assert.IsType<OkObjectResult>((await controller.GetLayout(CancellationToken.None)).Result);
+        var salvo = Assert.IsType<DashboardLayoutDto>(ok.Value);
+
+        Assert.Equal(2, Assert.Single(salvo.Widgets!).Largura);
+        Assert.Null(salvo.Kpis);
     }
 
     [Fact]

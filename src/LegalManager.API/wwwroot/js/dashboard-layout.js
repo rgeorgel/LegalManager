@@ -1,81 +1,105 @@
-// Personalização do dashboard: o usuário reordena (drag and drop ou botões ‹ ›),
-// muda a largura (1–3 colunas) e oculta blocos. O layout é salvo por usuário em
-// PUT /api/dashboard/layout e espelhado no localStorage só para aplicar sem
-// "piscar" no próximo carregamento — o banco é a fonte da verdade.
+// Personalização do dashboard: o usuário reordena (drag and drop ou setas),
+// muda a largura (1–3 colunas, onde a seção permite) e oculta itens. O layout
+// é salvo por usuário em PUT /api/dashboard/layout e espelhado no localStorage
+// só para aplicar sem "piscar" no próximo carregamento — o banco é a fonte da
+// verdade.
 //
-// Cada bloco é um filho do grid com data-widget="<id>" e data-titulo="<nome>".
-// A ordem no HTML é o layout padrão; blocos novos (ausentes do layout salvo)
-// entram no fim, e ids salvos que não existem mais são ignorados.
+// O dashboard tem várias seções (ex.: KPIs do topo e o grid de blocos), cada
+// uma salva numa chave do layout ({ kpis: [...], widgets: [...] }). Um item é
+// um filho direto do grid da seção com data-<attr>="<id>" e data-titulo="<nome>".
+// A ordem no HTML é o padrão; itens novos (ausentes do layout salvo) entram no
+// fim, e ids salvos que não existem mais são ignorados.
 import { apiFetch } from './api.js';
 import { trackEvent } from './analytics.js';
 
 const LARGURAS = [1, 2, 3];
 
 /**
- * @param {{ grid: HTMLElement, botao: HTMLElement, userId?: string }} opts
+ * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, compacto?: boolean }} Secao
+ * @param {{ secoes: Secao[], botao: HTMLElement, userId?: string }} opts
  */
-export function initDashboardLayout({ grid, botao, userId }) {
-  if (!grid) return;
+export function initDashboardLayout({ secoes, botao, userId }) {
+  secoes = secoes.filter(s => s.grid);
+  if (!secoes.length) return;
   injectStyles();
 
+  for (const s of secoes) {
+    s.sel = `:scope > [data-${s.attr}]`;
+    s.id = el => el.getAttribute(`data-${s.attr}`);
+    s.padrao = lerDoDom(s); // antes de aplicar qualquer layout salvo
+    s.ids = new Set(s.padrao.map(w => w.id));
+    s.grid.classList.add('d2-secao');
+    if (s.compacto) s.grid.classList.add('d2-secao-compacta');
+  }
+
   const cacheKey = `dashboard_layout:${userId ?? 'anon'}`;
-  const padrao = lerDoDom(grid); // antes de aplicar qualquer layout salvo
-  const idsConhecidos = new Set(padrao.map(w => w.id));
   let editando = false;
   let snapshot = null;
-  let arrastando = null;
+  let arrastando = null; // { secao, el }
   let editBar = null;
 
   // ── Carregamento: cache local primeiro, depois o servidor ─────────────
   const cache = lerCache();
-  if (cache) aplicar(cache);
+  if (cache) aplicarTudo(cache);
 
   apiFetch('/dashboard/layout')
     .then(res => {
       if (editando) return; // não atropela uma edição em curso
-      const layout = res?.widgets ? normalizar(res.widgets) : padrao;
-      aplicar(layout);
-      salvarCache(res?.widgets ? layout : null);
+      aplicarTudo(res ?? {});
+      salvarCache(temAlgo(res) ? res : null);
     })
     .catch(() => { /* mantém cache/padrão */ });
 
   botao?.addEventListener('click', () => (editando ? sair(false) : entrar()));
 
   // ── Layout ────────────────────────────────────────────────────────────
-  function lerDoDom(el) {
-    return [...el.querySelectorAll(':scope > [data-widget]')].map(card => ({
-      id: card.dataset.widget,
-      largura: card.classList.contains('d2-w3') ? 3 : card.classList.contains('d2-w2') ? 2 : 1,
-      oculto: card.classList.contains('d2-oculto'),
+  function larguraDe(el) {
+    return el.classList.contains('d2-w3') ? 3 : el.classList.contains('d2-w2') ? 2 : 1;
+  }
+
+  function lerDoDom(s) {
+    return [...s.grid.querySelectorAll(s.sel)].map(el => ({
+      id: s.id(el),
+      largura: larguraDe(el),
+      oculto: el.classList.contains('d2-oculto'),
     }));
   }
 
-  function normalizar(salvo) {
+  const lerTudo = () => Object.fromEntries(secoes.map(s => [s.chave, lerDoDom(s)]));
+  const temAlgo = layout => !!layout && secoes.some(s => Array.isArray(layout[s.chave]));
+
+  function normalizar(s, salvo) {
     const vistos = new Set();
     const lista = [];
     for (const w of salvo ?? []) {
-      if (!w || !idsConhecidos.has(w.id) || vistos.has(w.id)) continue;
+      if (!w || !s.ids.has(w.id) || vistos.has(w.id)) continue;
       vistos.add(w.id);
       lista.push({
         id: w.id,
-        largura: LARGURAS.includes(w.largura) ? w.largura : 1,
+        largura: s.larguras && LARGURAS.includes(w.largura) ? w.largura : 1,
         oculto: !!w.oculto,
       });
     }
-    for (const w of padrao) if (!vistos.has(w.id)) lista.push({ ...w });
+    for (const w of s.padrao) if (!vistos.has(w.id)) lista.push({ ...w });
     return lista;
   }
 
-  function aplicar(layout) {
-    for (const w of normalizar(layout)) {
-      const card = grid.querySelector(`:scope > [data-widget="${w.id}"]`);
-      if (!card) continue;
-      grid.appendChild(card);
-      card.classList.remove('d2-w2', 'd2-w3');
-      if (w.largura > 1) card.classList.add(`d2-w${w.largura}`);
-      card.classList.toggle('d2-oculto', w.oculto);
-      atualizarFerramentas(card);
+  function aplicar(s, itens) {
+    for (const w of normalizar(s, itens ?? s.padrao)) {
+      const el = s.grid.querySelector(`:scope > [data-${s.attr}="${w.id}"]`);
+      if (!el) continue;
+      s.grid.appendChild(el);
+      el.classList.remove('d2-w2', 'd2-w3');
+      if (w.largura > 1) el.classList.add(`d2-w${w.largura}`);
+      el.classList.toggle('d2-oculto', w.oculto);
+      atualizarFerramentas(s, el);
     }
+  }
+
+  // Aceita também o formato antigo do cache (só a lista de blocos).
+  function aplicarTudo(layout) {
+    const obj = Array.isArray(layout) ? { widgets: layout } : layout;
+    for (const s of secoes) aplicar(s, obj?.[s.chave]);
   }
 
   const iguais = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -97,12 +121,14 @@ export function initDashboardLayout({ grid, botao, userId }) {
   // ── Modo de edição ────────────────────────────────────────────────────
   function entrar() {
     editando = true;
-    snapshot = lerDoDom(grid);
-    grid.classList.add('d2-editando');
-    grid.querySelectorAll(':scope > [data-widget]').forEach(card => {
-      garantirFerramentas(card);
-      card.draggable = true;
-    });
+    snapshot = lerTudo();
+    for (const s of secoes) {
+      s.grid.classList.add('d2-editando');
+      s.grid.querySelectorAll(s.sel).forEach(el => {
+        garantirFerramentas(s, el);
+        el.draggable = true;
+      });
+    }
     mostrarEditBar();
     botao?.setAttribute('aria-pressed', 'true');
     if (botao) botao.textContent = '✕ Sair da edição';
@@ -112,11 +138,13 @@ export function initDashboardLayout({ grid, botao, userId }) {
   }
 
   function sair(manter) {
-    if (!manter && snapshot) aplicar(snapshot);
+    if (!manter && snapshot) aplicarTudo(snapshot);
     editando = false;
     snapshot = null;
-    grid.classList.remove('d2-editando');
-    grid.querySelectorAll(':scope > [data-widget]').forEach(card => { card.draggable = false; });
+    for (const s of secoes) {
+      s.grid.classList.remove('d2-editando');
+      s.grid.querySelectorAll(s.sel).forEach(el => { el.draggable = false; });
+    }
     editBar?.remove();
     editBar = null;
     botao?.setAttribute('aria-pressed', 'false');
@@ -124,21 +152,26 @@ export function initDashboardLayout({ grid, botao, userId }) {
   }
 
   async function salvar(btn) {
-    const layout = lerDoDom(grid);
+    // Seções iguais ao padrão vão como null: blocos novos seguem a ordem padrão.
+    const layout = Object.fromEntries(secoes.map(s => {
+      const atual = lerDoDom(s);
+      return [s.chave, iguais(atual, s.padrao) ? null : atual];
+    }));
     btn.disabled = true;
     btn.textContent = 'Salvando…';
     try {
-      if (iguais(layout, padrao)) {
+      if (!secoes.some(s => layout[s.chave])) {
         await apiFetch('/dashboard/layout', { method: 'DELETE' });
         salvarCache(null);
       } else {
-        await apiFetch('/dashboard/layout', { method: 'PUT', body: { widgets: layout } });
+        await apiFetch('/dashboard/layout', { method: 'PUT', body: layout });
         salvarCache(layout);
       }
-      trackEvent('dashboard_layout_salvo', {
-        ocultos: layout.filter(w => w.oculto).map(w => w.id),
-        ordem: layout.map(w => w.id),
-      });
+      const tudo = lerTudo();
+      trackEvent('dashboard_layout_salvo', Object.fromEntries(secoes.flatMap(s => [
+        [`${s.chave}_ordem`, tudo[s.chave].map(w => w.id)],
+        [`${s.chave}_ocultos`, tudo[s.chave].filter(w => w.oculto).map(w => w.id)],
+      ])));
       sair(true);
     } catch (err) {
       btn.disabled = false;
@@ -151,7 +184,7 @@ export function initDashboardLayout({ grid, botao, userId }) {
     editBar = document.createElement('div');
     editBar.className = 'd2-editbar';
     editBar.innerHTML = `
-      <div class="d2-editbar-msg">Arraste os blocos ou use as setas para reorganizar. Ajuste a largura (↔) e oculte o que não usa.</div>
+      <div class="d2-editbar-msg">Arraste os indicadores e blocos ou use as setas para reorganizar. Ajuste a largura (↔) e oculte o que não usa.</div>
       <div class="d2-editbar-acoes">
         <button type="button" class="btn btn-secondary btn-sm" data-acao="padrao">Restaurar padrão</button>
         <button type="button" class="btn btn-secondary btn-sm" data-acao="cancelar">Cancelar</button>
@@ -160,102 +193,112 @@ export function initDashboardLayout({ grid, botao, userId }) {
     editBar.addEventListener('click', e => {
       const btn = e.target.closest('[data-acao]');
       if (!btn) return;
-      if (btn.dataset.acao === 'padrao') aplicar(padrao);
+      if (btn.dataset.acao === 'padrao') for (const s of secoes) aplicar(s, s.padrao);
       if (btn.dataset.acao === 'cancelar') sair(false);
       if (btn.dataset.acao === 'salvar') salvar(btn);
     });
-    grid.before(editBar);
+    secoes[0].grid.before(editBar);
   }
 
-  // ── Ferramentas por bloco (visíveis só no modo de edição) ─────────────
-  function garantirFerramentas(card) {
-    if (card.querySelector(':scope > .d2-wtools')) return;
+  // ── Ferramentas por item (visíveis só no modo de edição) ──────────────
+  function garantirFerramentas(s, el) {
+    if (el.querySelector(':scope > .d2-wtools')) return;
+    const titulo = esc(el.dataset.titulo || s.id(el));
     const t = document.createElement('div');
     t.className = 'd2-wtools';
     t.innerHTML = `
-      <span class="d2-wtools-handle" title="Arraste para mover">⠿ <span>${esc(card.dataset.titulo || card.dataset.widget)}</span></span>
+      <span class="d2-wtools-handle" title="Arraste para mover">⠿ <span>${titulo}</span></span>
       <span class="d2-wtools-btns">
-        <button type="button" data-w="antes" title="Mover para antes" aria-label="Mover ${esc(card.dataset.titulo)} para antes"><span class="d2-h">‹</span><span class="d2-v">↑</span></button>
-        <button type="button" data-w="depois" title="Mover para depois" aria-label="Mover ${esc(card.dataset.titulo)} para depois"><span class="d2-h">›</span><span class="d2-v">↓</span></button>
-        <button type="button" data-w="largura" title="Largura (colunas)"></button>
+        <button type="button" data-w="antes" title="Mover para antes" aria-label="Mover ${titulo} para antes"><span class="d2-h">‹</span><span class="d2-v">↑</span></button>
+        <button type="button" data-w="depois" title="Mover para depois" aria-label="Mover ${titulo} para depois"><span class="d2-h">›</span><span class="d2-v">↓</span></button>
+        ${s.larguras ? '<button type="button" data-w="largura" title="Largura (colunas)"></button>' : ''}
         <button type="button" data-w="ocultar"></button>
       </span>`;
-    card.prepend(t);
-    atualizarFerramentas(card);
+    el.prepend(t);
+    atualizarFerramentas(s, el);
   }
 
-  function atualizarFerramentas(card) {
-    const t = card.querySelector(':scope > .d2-wtools');
+  function atualizarFerramentas(s, el) {
+    const t = el.querySelector(':scope > .d2-wtools');
     if (!t) return;
-    const largura = card.classList.contains('d2-w3') ? 3 : card.classList.contains('d2-w2') ? 2 : 1;
-    const oculto = card.classList.contains('d2-oculto');
     const bLarg = t.querySelector('[data-w="largura"]');
-    bLarg.textContent = `↔ ${largura}`;
-    bLarg.setAttribute('aria-label', `Largura: ${largura} coluna(s). Clique para alterar`);
+    if (bLarg) {
+      bLarg.textContent = `↔ ${larguraDe(el)}`;
+      bLarg.setAttribute('aria-label', `Largura: ${larguraDe(el)} coluna(s). Clique para alterar`);
+    }
+    const oculto = el.classList.contains('d2-oculto');
     const bOc = t.querySelector('[data-w="ocultar"]');
-    bOc.textContent = oculto ? '🙈 Oculto' : '👁 Visível';
-    bOc.title = oculto ? 'Mostrar bloco' : 'Ocultar bloco';
+    bOc.textContent = s.compacto ? (oculto ? '🙈' : '👁') : (oculto ? '🙈 Oculto' : '👁 Visível');
+    bOc.title = oculto ? 'Mostrar' : 'Ocultar';
+    bOc.setAttribute('aria-label', `${oculto ? 'Mostrar' : 'Ocultar'} ${el.dataset.titulo || ''}`.trim());
     bOc.setAttribute('aria-pressed', String(oculto));
   }
 
-  grid.addEventListener('click', e => {
-    if (!editando) return;
-    const btn = e.target.closest('.d2-wtools [data-w]');
-    if (!btn) return;
-    const card = btn.closest('[data-widget]');
-    const acao = btn.dataset.w;
-    if (acao === 'antes' && card.previousElementSibling) {
-      card.previousElementSibling.before(card);
-    } else if (acao === 'depois' && card.nextElementSibling) {
-      card.nextElementSibling.after(card);
-    } else if (acao === 'largura') {
-      const atual = card.classList.contains('d2-w3') ? 3 : card.classList.contains('d2-w2') ? 2 : 1;
-      const prox = LARGURAS[(LARGURAS.indexOf(atual) + 1) % LARGURAS.length];
-      card.classList.remove('d2-w2', 'd2-w3');
-      if (prox > 1) card.classList.add(`d2-w${prox}`);
-    } else if (acao === 'ocultar') {
-      card.classList.toggle('d2-oculto');
-    }
-    atualizarFerramentas(card);
-    // Mover o nó no DOM tira o foco do botão — devolve para quem usa teclado.
-    card.querySelector(`.d2-wtools [data-w="${acao}"]`)?.focus();
-  });
+  const secaoDe = el => secoes.find(s => s.grid === el?.parentElement);
 
-  // ── Drag and drop (HTML5 nativo; no toque, os botões ‹ › fazem o papel) ─
-  grid.addEventListener('dragstart', e => {
-    const card = e.target.closest?.('[data-widget]');
-    if (!editando || !card) return;
-    arrastando = card;
-    card.classList.add('d2-arrastando');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', card.dataset.widget); // Firefox exige setData
-  });
+  for (const s of secoes) {
+    // Em edição, clicar no item não navega — inclusive nos botões das ferramentas,
+    // já que o KPI é um <a> e o clique num botão dentro dele seguiria o link.
+    s.grid.addEventListener('click', e => {
+      if (!editando) return;
+      e.preventDefault();
+      const btn = e.target.closest('.d2-wtools [data-w]');
+      if (!btn) return;
+      const el = btn.closest(`[data-${s.attr}]`);
+      const acao = btn.dataset.w;
+      if (acao === 'antes' && el.previousElementSibling) {
+        el.previousElementSibling.before(el);
+      } else if (acao === 'depois' && el.nextElementSibling) {
+        el.nextElementSibling.after(el);
+      } else if (acao === 'largura') {
+        const prox = LARGURAS[(LARGURAS.indexOf(larguraDe(el)) + 1) % LARGURAS.length];
+        el.classList.remove('d2-w2', 'd2-w3');
+        if (prox > 1) el.classList.add(`d2-w${prox}`);
+      } else if (acao === 'ocultar') {
+        el.classList.toggle('d2-oculto');
+      }
+      atualizarFerramentas(s, el);
+      // Mover o nó no DOM tira o foco do botão — devolve para quem usa teclado.
+      el.querySelector(`.d2-wtools [data-w="${acao}"]`)?.focus();
+    }, true);
+
+    // ── Drag and drop (HTML5 nativo; no toque, as setas fazem o papel) ──
+    s.grid.addEventListener('dragstart', e => {
+      const el = e.target.closest?.(`[data-${s.attr}]`);
+      if (!editando || !el || secaoDe(el) !== s) return;
+      arrastando = { secao: s, el };
+      el.classList.add('d2-arrastando');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', s.id(el)); // Firefox exige setData
+    });
+  }
 
   // Escuta no documento e acha o alvo pelas coordenadas (não por e.target): assim a
-  // barra de edição fixa (sticky) por cima da 1ª linha e os vãos entre blocos não
-  // "engolem" o dragover.
+  // barra de edição fixa (sticky) e os vãos entre itens não "engolem" o dragover.
+  // Só reordena dentro da própria seção.
   document.addEventListener('dragover', e => {
     if (!arrastando) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    const alvo = [...grid.querySelectorAll(':scope > [data-widget]')].find(card => {
-      if (card === arrastando) return false;
-      const r = card.getBoundingClientRect();
+    const { secao: s, el: arr } = arrastando;
+    const alvo = [...s.grid.querySelectorAll(s.sel)].find(el => {
+      if (el === arr) return false;
+      const r = el.getBoundingClientRect();
       return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
     });
     if (!alvo) return;
     const r = alvo.getBoundingClientRect();
-    // Bloco que ocupa a linha inteira: decide pela metade vertical; senão, horizontal.
-    const linhaInteira = r.width > grid.clientWidth * 0.9;
+    // Item que ocupa a linha inteira: decide pela metade vertical; senão, horizontal.
+    const linhaInteira = r.width > s.grid.clientWidth * 0.9;
     const depois = linhaInteira ? e.clientY > r.top + r.height / 2 : e.clientX > r.left + r.width / 2;
     const ref = depois ? alvo.nextElementSibling : alvo;
-    if (ref !== arrastando && ref !== arrastando.nextElementSibling) grid.insertBefore(arrastando, ref);
+    if (ref !== arr && ref !== arr.nextElementSibling) s.grid.insertBefore(arr, ref);
   });
 
   document.addEventListener('drop', e => { if (arrastando) e.preventDefault(); });
 
-  grid.addEventListener('dragend', () => {
-    arrastando?.classList.remove('d2-arrastando');
+  document.addEventListener('dragend', () => {
+    arrastando?.el.classList.remove('d2-arrastando');
     arrastando = null;
   });
 }
@@ -271,9 +314,9 @@ function injectStyles() {
   // !important nas cores dos botões: o preset escuro força `button { color: inherit !important }`.
   s.textContent = `
     .d2-wtools { display: none; }
-    .d2-editando > [data-widget] { outline: 2px dashed var(--color-border); outline-offset: -2px; cursor: grab; }
-    .d2-editando > [data-widget]:hover { outline-color: var(--color-primary); }
-    .d2-editando > [data-widget] > :not(.d2-wtools) { pointer-events: none; user-select: none; }
+    .d2-editando > * { outline: 2px dashed var(--color-border); outline-offset: -2px; cursor: grab; }
+    .d2-editando > *:hover { outline-color: var(--color-primary); }
+    .d2-editando > * > :not(.d2-wtools) { pointer-events: none; user-select: none; }
     .d2-editando > .d2-oculto { display: block; opacity: .45; }
     .d2-editando > .d2-arrastando { opacity: .3; }
     .d2-editando .d2-wtools {
@@ -290,6 +333,12 @@ function injectStyles() {
     }
     .d2-wtools-btns button:hover { border-color: var(--color-primary); }
     .d2-wtools-btns [aria-pressed="true"] { color: var(--color-text-muted) !important; }
+    .d2-wtools-btns .d2-v { display: none; }
+    /* Seção compacta (KPIs): ferramentas numa linha só, sem o título (já está no card). */
+    .d2-secao-compacta.d2-editando .d2-wtools { margin: -6px -8px 8px; padding: 4px; flex-wrap: nowrap; }
+    .d2-secao-compacta .d2-wtools-handle span { display: none; }
+    .d2-secao-compacta .d2-wtools-btns { flex-wrap: nowrap; gap: 2px; }
+    .d2-secao-compacta .d2-wtools-btns button { padding: 2px 6px; min-width: 26px; }
     .d2-editbar {
       display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
       position: sticky; top: calc(var(--header-height) + 8px); z-index: 20; margin-bottom: 16px; padding: 12px 16px;
@@ -297,13 +346,12 @@ function injectStyles() {
     }
     .d2-editbar-msg { font-size: 13px; color: var(--color-text); }
     .d2-editbar-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-    .d2-wtools-btns .d2-v { display: none; }
     @media (max-width: 700px) {
       .d2-editbar { top: calc(var(--header-height) + 4px); }
-      /* Uma coluna só: largura não se aplica e a ordem é vertical. */
-      .d2-wtools-btns [data-w="largura"] { display: none; }
-      .d2-wtools-btns .d2-h { display: none; }
-      .d2-wtools-btns .d2-v { display: inline; }
+      /* Grid de blocos vira uma coluna: largura não se aplica e a ordem é vertical. */
+      .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns [data-w="largura"] { display: none; }
+      .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns .d2-h { display: none; }
+      .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns .d2-v { display: inline; }
     }
   `;
   document.head.appendChild(s);
