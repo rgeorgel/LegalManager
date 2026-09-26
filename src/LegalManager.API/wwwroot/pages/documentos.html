@@ -81,10 +81,100 @@
     .pdf-modal-body { flex:1; overflow:hidden; background:#525658; position:relative; min-height:0; display:flex; flex-direction:column; }
     #pdfContainer { flex:1; position:relative; overflow:hidden; min-height:0; }
 
-    .var-badge { background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:12px; font-size:12px; margin:2px; display:inline-block; }
-    .var-list { margin-top:8px; }
-    .editor-toolbar { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
-    .editor-toolbar button { padding:4px 12px; font-size:13px; }
+    /* ── Modelos: lista ─────────────────────────────── */
+    /* Tom da cor primária que funciona em tema claro e escuro (--color-primary-light é claro em alguns temas escuros). */
+    :root { --mv-tint: color-mix(in srgb, var(--color-primary) 16%, transparent); }
+    .mv-toolbar { display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+    .mv-toolbar .form-control { width:auto; }
+    .mv-toolbar #modBusca { flex:1; min-width:200px; }
+    .mv-count { font-size:13px; color:var(--color-text-muted); white-space:nowrap; }
+    .mv-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+    .mv-card { display:flex; flex-direction:column; gap:10px; padding:16px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+    .mv-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow-md); }
+    .mv-card:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+    .mv-card-head { display:flex; gap:10px; align-items:flex-start; }
+    .mv-card-icon { width:36px; height:36px; flex-shrink:0; border-radius:8px; background:var(--mv-tint); color:var(--color-primary); display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .mv-card-title { font-weight:600; font-size:15px; line-height:1.3; word-break:break-word; }
+    .mv-card-desc { font-size:13px; color:var(--color-text-muted); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .mv-card-snippet { font-family:Georgia, 'Times New Roman', serif; font-size:12.5px; line-height:1.55; color:var(--color-text); background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; padding:10px 12px; height:84px; overflow:hidden; white-space:pre-wrap; word-break:break-word; position:relative; }
+    .mv-card-snippet::after { content:''; position:absolute; left:0; right:0; bottom:0; height:28px; background:linear-gradient(transparent, var(--color-bg)); }
+    .mv-card-meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--color-text-muted); }
+    .mv-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:12px; background:var(--mv-tint); color:var(--color-text); font-weight:500; }
+    .mv-card-actions { display:flex; gap:6px; margin-top:auto; padding-top:4px; }
+    .mv-card-actions .btn-primary { flex:1; justify-content:center; }
+    .mv-icon-btn { min-width:36px; padding:0 10px; justify-content:center; }
+    .mv-icon-btn.mv-danger:hover { color:var(--color-danger); border-color:var(--color-danger); }
+
+    .mv-empty { text-align:center; padding:40px 20px 24px; }
+    .mv-empty h2 { font-size:18px; margin:8px 0 6px; }
+    .mv-empty p { color:var(--color-text-muted); max-width:520px; margin:0 auto 20px; }
+    .mv-empty-actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .mv-exemplos { margin-top:28px; text-align:left; }
+    .mv-exemplos-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); margin-bottom:10px; }
+
+    /* ── Modelos: editor e uso ─────────────────────── */
+    .mv-modal { max-width:1120px !important; display:flex; flex-direction:column; }
+    .mv-modal .modal-body { flex:1; min-height:0; overflow-y:auto; }
+    .mv-modal .modal-header, .mv-modal .modal-footer { flex-shrink:0; }
+    .mv-split { display:grid; grid-template-columns:minmax(0, 1fr) 300px; gap:20px; }
+    .mv-split-uso { grid-template-columns:340px minmax(0, 1fr); }
+    .mv-side { display:flex; flex-direction:column; gap:16px; min-width:0; }
+    .mv-side-box { border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; background:var(--color-bg); }
+    .mv-side-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+    .mv-side-hint { font-size:12px; color:var(--color-text-muted); line-height:1.45; }
+    .mv-var-group { margin-bottom:10px; }
+    .mv-var-group:last-child { margin-bottom:0; }
+    .mv-var-group-name { font-size:12px; color:var(--color-text-muted); margin-bottom:4px; }
+    .mv-var-btns { display:flex; flex-wrap:wrap; gap:4px; }
+    /* !important: os temas escuros forçam `button { color: inherit !important }`; aqui a especificidade maior vence. */
+    .mv-var-btn { border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text) !important; border-radius:14px; padding:3px 10px; font-size:12px; cursor:pointer; transition:border-color .15s, background .15s; }
+    .mv-var-btn:hover { border-color:var(--color-primary); }
+    .mv-var-btn.usada { background:var(--mv-tint); border-color:var(--color-primary); }
+    .mv-var-btn small { opacity:.7; margin-left:2px; }
+    .mv-custom-var { display:flex; gap:6px; margin-top:8px; }
+    .mv-custom-var .form-control { font-size:13px; min-height:36px; padding:6px 10px; }
+    .mv-segment { display:inline-flex; border:1px solid var(--color-border); border-radius:var(--radius); overflow:hidden; }
+    .mv-segment button { border:none; background:var(--color-surface); color:var(--color-text-muted) !important; padding:6px 14px; font-size:13px; cursor:pointer; }
+    .mv-segment button.active { background:var(--mv-tint); color:var(--color-text) !important; font-weight:600; }
+    .mv-editor-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px; }
+    .mv-editor-head label { margin:0 !important; }
+    .mv-textarea { min-height:420px; resize:vertical; font-family:Georgia, 'Times New Roman', serif; font-size:15px; line-height:1.6; }
+    .mv-editor-foot { display:flex; justify-content:space-between; font-size:12px; color:var(--color-text-muted); margin-top:6px; gap:8px; flex-wrap:wrap; }
+    .mv-paper { background:#fff; color:#111; border:1px solid var(--color-border); border-radius:6px; box-shadow:var(--shadow); padding:36px 40px; min-height:420px; max-height:62vh; overflow-y:auto; font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.65; white-space:pre-wrap; word-break:break-word; text-align:justify; }
+    .mv-token { background:#e0e7ff; color:#3730a3; border-radius:4px; padding:0 4px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:.85em; white-space:nowrap; }
+    .mv-token-ok { background:#d1fae5; color:#065f46; font-family:inherit; font-size:inherit; white-space:normal; }
+    .mv-token-pendente { background:#fef3c7; color:#92400e; }
+    .mv-token.flash { outline:2px solid var(--color-primary); }
+    .mv-ai-note { font-size:13px; padding:8px 12px; border-radius:var(--radius); background:var(--mv-tint); color:var(--color-primary); margin-bottom:12px; }
+
+    .mv-progress { height:6px; background:var(--color-border); border-radius:3px; overflow:hidden; margin-top:6px; }
+    .mv-progress-fill { height:100%; background:var(--color-success); transition:width .2s; }
+    .mv-fields { display:flex; flex-direction:column; gap:10px; }
+    .mv-field label { display:flex; justify-content:space-between; gap:6px; font-size:13px; font-weight:500; margin-bottom:4px; }
+    .mv-field label code { font-size:11px; color:var(--color-text-muted); font-weight:400; }
+    .mv-field .form-control { min-height:38px; padding:7px 10px; font-size:14px; }
+    .mv-field.preenchida .form-control { border-color:#6ee7b7; }
+    .mv-proc-search { position:relative; }
+    .mv-proc-results { position:absolute; top:100%; left:0; right:0; z-index:5; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); box-shadow:var(--shadow-md); max-height:240px; overflow-y:auto; margin-top:4px; display:none; }
+    .mv-proc-results.open { display:block; }
+    .mv-proc-item { padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid var(--color-border); }
+    .mv-proc-item:last-child { border-bottom:none; }
+    .mv-proc-item:hover, .mv-proc-item.active { background:var(--color-bg); }
+    .mv-proc-item small { display:block; color:var(--color-text-muted); }
+    .mv-proc-sel { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; padding:8px 10px; border-radius:var(--radius); background:var(--color-surface); border:1px solid var(--color-border); }
+    .mv-proc-sel button { background:none; border:none; color:var(--color-text-muted); cursor:pointer; font-size:14px; }
+    .mv-uso-footer { justify-content:space-between !important; flex-wrap:wrap; }
+    .mv-uso-footer > div { display:flex; gap:8px; flex-wrap:wrap; }
+
+    .mv-ia-exemplos { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+
+    @media (max-width: 900px) {
+      .mv-split, .mv-split-uso { grid-template-columns:1fr; }
+      .mv-textarea, .mv-paper { min-height:300px; }
+      .mv-paper { padding:20px; max-height:none; }
+      .mv-uso-footer > div { width:100%; }
+      .mv-uso-footer > div > .btn { flex:1 1 calc(50% - 4px); justify-content:center; padding-left:8px; padding-right:8px; }
+    }
 
     /* Folder tree */
     .folder-layout { display:flex; gap:16px; flex:1; min-height:0; }
@@ -279,23 +369,18 @@
     <div class="tab-content" id="tab-modelos">
       <div id="modAlertMsg" class="alert" style="display:none"></div>
 
-      <div class="card">
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Descrição</th>
-                <th>Variáveis</th>
-                <th>Criado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="modTableBody">
-              <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="mv-toolbar" id="modToolbar" style="display:none">
+        <input type="search" id="modBusca" class="form-control" placeholder="Buscar por nome, descrição ou texto do modelo...">
+        <select id="modOrdem" class="form-control" aria-label="Ordenar">
+          <option value="recentes">Mais recentes</option>
+          <option value="nome">Nome (A–Z)</option>
+          <option value="variaveis">Mais variáveis</option>
+        </select>
+        <span class="mv-count" id="modCount"></span>
+      </div>
+
+      <div id="modLista">
+        <div style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</div>
       </div>
     </div>
   </main>
@@ -440,50 +525,66 @@
 
 <!-- ===== MODAL: Criar / Editar Modelo ===== -->
 <div class="modal-overlay" id="modalModeloForm">
-  <div class="modal" style="max-width:700px">
+  <div class="modal mv-modal">
     <div class="modal-header">
       <span class="modal-title" id="modalModeloTitle">Novo Modelo</span>
-      <button class="modal-close" id="modalModeloClose">✕</button>
+      <button class="modal-close" id="modalModeloClose" aria-label="Fechar">✕</button>
     </div>
     <div class="modal-body">
       <div id="modFormAlert" class="alert" style="display:none"></div>
-      <form id="modeloForm">
+      <div id="modIANote" class="mv-ai-note" style="display:none">🤖 Modelo gerado com IA. Revise o texto e dê um nome antes de salvar.</div>
+      <form id="modeloForm" autocomplete="off">
         <input type="hidden" id="fModeloId">
-        <div class="form-group">
-          <label>Nome *</label>
-          <input type="text" id="fModeloNome" class="form-control" required placeholder="Ex: Petição Inicial Cível">
-        </div>
-        <div class="form-group">
-          <label>Descrição</label>
-          <input type="text" id="fModeloDescricao" class="form-control" placeholder="Breve descrição do modelo">
-        </div>
-        <div class="form-group">
-          <label>Variáveis</label>
-          <input type="text" id="fModeloVariaveis" class="form-control" placeholder="Detectadas automaticamente do conteúdo (ou digite separadas por vírgula)">
-          <div class="var-list" id="varPreview"></div>
-        </div>
-        <div class="form-group">
-          <label>Conteúdo do Modelo *</label>
-          <div class="editor-toolbar">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_autor')">&#123;&#123;nome_autor&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_reu')">&#123;&#123;nome_reu&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_interessado')">&#123;&#123;nome_interessado&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_terceiro')">&#123;&#123;nome_terceiro&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('nome_advogado')">&#123;&#123;nome_advogado&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('numero_processo')">&#123;&#123;numero_processo&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('tribunal')">&#123;&#123;tribunal&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('vara')">&#123;&#123;vara&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('comarca')">&#123;&#123;comarca&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('area_direito')">&#123;&#123;area_direito&#125;&#125;</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="insertVar('valor_causa')">&#123;&#123;valor_causa&#125;&#125;</button>
+        <div class="mv-split">
+          <div style="min-width:0">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fModeloNome">Nome *</label>
+                <input type="text" id="fModeloNome" class="form-control" required maxlength="200" placeholder="Ex: Petição Inicial Cível">
+              </div>
+              <div class="form-group">
+                <label for="fModeloDescricao">Descrição</label>
+                <input type="text" id="fModeloDescricao" class="form-control" maxlength="500" placeholder="Quando usar este modelo">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <div class="mv-editor-head">
+                <label for="fModeloConteudo">Conteúdo *</label>
+                <div class="mv-segment" role="tablist">
+                  <button type="button" class="active" data-modo="editar">✏️ Editar</button>
+                  <button type="button" data-modo="preview">👁 Pré-visualizar</button>
+                </div>
+              </div>
+              <textarea id="fModeloConteudo" class="form-control mv-textarea" required placeholder="Escreva o texto do modelo. Use {{nome_da_variavel}} nos trechos que mudam a cada documento — por exemplo: {{nome_cliente}}, {{numero_processo}}."></textarea>
+              <div id="modPreview" class="mv-paper" style="display:none"></div>
+              <div class="mv-editor-foot">
+                <span id="modContagem">0 palavras</span>
+                <span>Ctrl+S salva · as variáveis são detectadas automaticamente</span>
+              </div>
+            </div>
           </div>
-          <textarea id="fModeloConteudo" class="form-control" rows="12" required placeholder="Digite o conteúdo do modelo usando &#123;&#123;variavel&#125;&#125; para variáveis dinâmicas"></textarea>
+
+          <aside class="mv-side">
+            <div class="mv-side-box">
+              <div class="mv-side-title">Neste modelo <span class="mv-chip" id="modVarCount">0</span></div>
+              <div id="modVarsUsadas"></div>
+            </div>
+            <div class="mv-side-box">
+              <div class="mv-side-title">Inserir variável</div>
+              <div id="modVarsSugeridas"></div>
+              <div class="mv-custom-var">
+                <input type="text" id="modVarNova" class="form-control" placeholder="Outra, ex: cpf_cliente">
+                <button type="button" class="btn btn-secondary btn-sm" id="modVarNovaBtn">Inserir</button>
+              </div>
+              <p class="mv-side-hint" style="margin-top:8px">Clique para inserir na posição do cursor. Variáveis de partes e do processo podem ser preenchidas automaticamente ao usar o modelo.</p>
+            </div>
+          </aside>
         </div>
       </form>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnModeloCancelar">Cancelar</button>
-      <button class="btn btn-primary" id="btnModeloSalvar">Salvar</button>
+      <button class="btn btn-primary" id="btnModeloSalvar">Salvar modelo</button>
     </div>
   </div>
 </div>
@@ -493,49 +594,75 @@
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
       <span class="modal-title">🤖 Gerar Modelo com IA</span>
-      <button class="modal-close" id="modalGerarIAClose">✕</button>
+      <button class="modal-close" id="modalGerarIAClose" aria-label="Fechar">✕</button>
     </div>
     <div class="modal-body">
       <div id="gerarIAAlert" class="alert" style="display:none"></div>
       <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
-        Descreva o modelo de documento que deseja criar. A IA irá gerar um modelo completo em português do Brasil, consumindo 1 crédito de peça jurídica.
+        Descreva o documento e a IA escreve um modelo completo, já com as variáveis. Você revisa no editor antes de salvar. Consome 1 crédito de peça jurídica.
       </p>
       <div class="form-group">
-        <label>Descrição do modelo *</label>
-        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Modelo de petição inicial para ação de danos morais em face de empresa de telefonia, contendo variáveis como nome do autor, CPF, endereço, nome da empresa ré, CNPJ, valor do dano pedido, fundamentos legais..."></textarea>
-      </div>
-      <div id="iaPreview" style="display:none;margin-top:16px">
-        <label>Preview do conteúdo gerado:</label>
-        <textarea id="iaConteudoGerado" class="form-control" rows="12" readonly style="background:#f9fafb"></textarea>
-        <div id="iaVariaveisPreview" style="margin-top:8px;font-size:13px;color:var(--color-text-muted)"></div>
+        <label for="iaDescricao">O que o modelo deve conter? *</label>
+        <textarea id="iaDescricao" class="form-control" rows="6" placeholder="Ex: Petição inicial de indenização por danos morais contra empresa de telefonia por negativação indevida, com nome e CPF do autor, dados da empresa ré, valor do dano pedido e fundamentos no CDC."></textarea>
+        <div class="mv-ia-exemplos" id="iaExemplos">
+          <button type="button" class="mv-var-btn">Notificação extrajudicial de cobrança</button>
+          <button type="button" class="mv-var-btn">Contestação trabalhista</button>
+          <button type="button" class="mv-var-btn">Substabelecimento com reservas</button>
+          <button type="button" class="mv-var-btn">Acordo extrajudicial</button>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnGerarIACancelar">Cancelar</button>
-      <button class="btn btn-primary" id="btnGerarIAGerar">Gerar</button>
-      <button class="btn btn-primary" id="btnGerarIASalvar" style="display:none">Salvar Modelo</button>
+      <button class="btn btn-primary" id="btnGerarIAGerar">Gerar modelo</button>
     </div>
   </div>
 </div>
 
-<!-- ===== MODAL: Aplicar Variáveis ===== -->
+<!-- ===== MODAL: Usar Modelo ===== -->
 <div class="modal-overlay" id="modalAplicar">
-  <div class="modal" style="max-width:600px">
+  <div class="modal mv-modal">
     <div class="modal-header">
-      <span class="modal-title">Aplicar Variáveis</span>
-      <button class="modal-close" id="modalAplicarClose">✕</button>
+      <span class="modal-title" id="aplicarModeloNome">Usar modelo</span>
+      <button class="modal-close" id="modalAplicarClose" aria-label="Fechar">✕</button>
     </div>
     <div class="modal-body">
-      <p id="aplicarModeloNome" style="margin-bottom:16px;font-weight:600"></p>
-      <div id="varInputs"></div>
-      <div class="form-group" style="margin-top:16px">
-        <label>Resultado</label>
-        <textarea id="resultadoConteudo" class="form-control" rows="10" readonly style="background:#f9fafb"></textarea>
+      <div id="aplicarAlert" class="alert" style="display:none"></div>
+      <div class="mv-split mv-split-uso">
+        <aside class="mv-side">
+          <div class="mv-side-box">
+            <div class="mv-side-title">Preencher com um processo</div>
+            <div class="mv-proc-search" id="procBuscaWrap">
+              <input type="search" id="procBusca" class="form-control" placeholder="Número, cliente ou parte..." autocomplete="off" style="min-height:38px;padding:7px 10px;font-size:14px">
+              <div class="mv-proc-results" id="procResultados"></div>
+            </div>
+            <div class="mv-proc-sel" id="procSelecionado" style="display:none"></div>
+            <p class="mv-side-hint" id="procDica" style="margin-top:6px">Partes, número, vara, comarca e advogado são preenchidos a partir do processo.</p>
+          </div>
+          <div>
+            <div class="mv-side-title">
+              <span>Variáveis</span>
+              <span id="aplicarProgressoTxt" style="text-transform:none;letter-spacing:0;font-weight:500"></span>
+            </div>
+            <div class="mv-progress" id="aplicarProgresso"><div class="mv-progress-fill" id="aplicarProgressoFill" style="width:0%"></div></div>
+            <div class="mv-fields" id="varInputs" style="margin-top:12px"></div>
+          </div>
+        </aside>
+        <div style="min-width:0">
+          <div class="mv-paper" id="aplicarPreview"></div>
+        </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="btnFecharAplicar">Fechar</button>
-      <button class="btn btn-primary" id="btnCopiar">Copiar Conteúdo</button>
+    <div class="modal-footer mv-uso-footer">
+      <div>
+        <button class="btn btn-secondary" id="btnFecharAplicar">Fechar</button>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="btnCopiar">📋 Copiar texto</button>
+        <button class="btn btn-secondary" id="btnImprimir">🖨 Imprimir / PDF</button>
+        <button class="btn btn-secondary" id="btnWord">⬇️ Baixar Word</button>
+        <button class="btn btn-primary" id="btnSalvarNoProcesso" style="display:none">💾 Salvar no processo</button>
+      </div>
     </div>
   </div>
 </div>
@@ -544,6 +671,11 @@
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
+import { esc } from '/js/utils.js';
+import {
+  VARIAVEIS_SUGERIDAS, MODELOS_EXEMPLO, extrairVariaveis, contarVariaveis, aplicarVariaveis, previewHtml,
+  rotuloVariavel, normalizarNomeVariavel, valoresDoProcesso, valoresAutomaticos, imprimirTexto, baixarWord, arquivoWord,
+} from '/js/modelos.js';
 
 initLayout();
 
@@ -1214,7 +1346,6 @@ document.addEventListener('keydown', e => {
 // MODELOS
 // ============================================================
 let modelos = [];
-let currentModeloId = null;
 
 function showModAlert(msg, type = 'error') {
   const el = document.getElementById('modAlertMsg');
@@ -1224,241 +1355,576 @@ function showModAlert(msg, type = 'error') {
   setTimeout(() => el.style.display = 'none', 5000);
 }
 
+function showInlineAlert(id, msg, type = 'error') {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// Busca sem diferenciar acentos nem maiúsculas.
+const semAcento = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
 async function loadModelos() {
-  const tbody = document.getElementById('modTableBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px">Carregando...</td></tr>';
+  document.getElementById('modLista').innerHTML =
+    '<div style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</div>';
   try {
     modelos = await apiFetch('/modelos');
-    renderModelosTable(modelos);
+    renderModelos();
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-danger)">${err.message}</td></tr>`;
+    document.getElementById('modLista').innerHTML =
+      `<div style="text-align:center;padding:24px;color:var(--color-danger)">${esc(err.message)}</div>`;
   }
 }
 
-function renderModelosTable(items) {
-  const tbody = document.getElementById('modTableBody');
-  if (!items.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum modelo encontrado</div></div></td></tr>`;
+function modelosFiltrados() {
+  const termos = semAcento(document.getElementById('modBusca').value).split(/\s+/).filter(Boolean);
+  const ordem = document.getElementById('modOrdem').value;
+  const lista = modelos.filter(m => {
+    const alvo = semAcento(`${m.nome} ${m.descricao || ''} ${m.conteudo}`);
+    return termos.every(t => alvo.includes(t));
+  });
+  if (ordem === 'nome') lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  else if (ordem === 'variaveis') lista.sort((a, b) => extrairVariaveis(b.conteudo).length - extrairVariaveis(a.conteudo).length);
+  else lista.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+  return lista;
+}
+
+function cardModeloHtml(m, { exemplo = false, indice = 0 } = {}) {
+  const vars = extrairVariaveis(m.conteudo);
+  const meta = exemplo
+    ? '<span>Modelo de exemplo</span>'
+    : `<span>Criado em ${new Date(m.criadoEm).toLocaleDateString('pt-BR')}${m.nomeCriadoPor ? ` · ${esc(m.nomeCriadoPor)}` : ''}</span>`;
+  const acoes = exemplo
+    ? `<button type="button" class="btn btn-primary btn-sm" data-acao="exemplo" data-indice="${indice}">Adicionar e editar</button>`
+    : `<button type="button" class="btn btn-primary btn-sm" data-acao="usar">Usar modelo</button>
+       <button type="button" class="btn btn-secondary btn-sm" data-acao="editar">Editar</button>
+       <button type="button" class="btn btn-secondary btn-sm mv-icon-btn" data-acao="duplicar" title="Duplicar" aria-label="Duplicar">⧉</button>
+       <button type="button" class="btn btn-secondary btn-sm mv-icon-btn mv-danger" data-acao="excluir" title="Excluir" aria-label="Excluir">🗑</button>`;
+  return `
+    <div class="card mv-card" ${exemplo ? '' : `tabindex="0" data-id="${esc(m.id)}"`}>
+      <div class="mv-card-head">
+        <div class="mv-card-icon">📄</div>
+        <div style="min-width:0">
+          <div class="mv-card-title">${esc(m.nome)}</div>
+          ${m.descricao ? `<div class="mv-card-desc">${esc(m.descricao)}</div>` : ''}
+        </div>
+      </div>
+      <div class="mv-card-snippet">${previewHtml(m.conteudo.slice(0, 320))}</div>
+      <div class="mv-card-meta">
+        <span class="mv-chip" title="${esc(vars.join(', '))}">{ } ${vars.length} ${vars.length === 1 ? 'variável' : 'variáveis'}</span>
+        ${meta}
+      </div>
+      <div class="mv-card-actions">${acoes}</div>
+    </div>`;
+}
+
+function renderModelos() {
+  const lista = document.getElementById('modLista');
+  const toolbar = document.getElementById('modToolbar');
+
+  if (!modelos.length) {
+    toolbar.style.display = 'none';
+    lista.innerHTML = `
+      <div class="card mv-empty">
+        <div style="font-size:40px">📋</div>
+        <h2>Monte sua biblioteca de modelos</h2>
+        <p>Escreva uma vez e reutilize sempre: procurações, contratos, petições. Os trechos que mudam — nome do cliente, número do processo — viram variáveis preenchidas na hora de usar.</p>
+        <div class="mv-empty-actions">
+          <button type="button" class="btn btn-primary" data-acao="novo">+ Criar modelo</button>
+          <button type="button" class="btn btn-secondary" data-acao="ia">🤖 Gerar com IA</button>
+        </div>
+        <div class="mv-exemplos">
+          <div class="mv-exemplos-title">Ou comece com um exemplo</div>
+          <div class="mv-grid">${MODELOS_EXEMPLO.map((m, i) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
+        </div>
+      </div>`;
     return;
   }
-  tbody.innerHTML = items.map(m => {
-    const vars = m.variaveis && m.variaveis.length
-      ? m.variaveis.map(v => `<span class="var-badge">${v}</span>`).join('')
-      : '<span style="color:var(--color-text-muted);font-size:13px">Nenhuma</span>';
-    return `
-    <tr>
-      <td data-label="Nome"><strong>${m.nome}</strong></td>
-      <td data-label="Descrição">${m.descricao || '—'}</td>
-      <td data-label="Variáveis">${vars}</td>
-      <td data-label="Criado em">${new Date(m.criadoEm).toLocaleDateString('pt-BR')}</td>
-      <td data-label="Ações" style="white-space:nowrap">
-        <button class="btn btn-secondary btn-sm" onclick="editarModelo('${m.id}')">Editar</button>
-        <button class="btn btn-primary btn-sm" onclick="aplicarModelo('${m.id}')">Usar</button>
-        <button class="btn btn-danger btn-sm" onclick="excluirModelo('${m.id}')">Excluir</button>
-      </td>
-    </tr>`;
-  }).join('');
+
+  toolbar.style.display = '';
+  const filtrados = modelosFiltrados();
+  document.getElementById('modCount').textContent = filtrados.length === modelos.length
+    ? `${modelos.length} ${modelos.length === 1 ? 'modelo' : 'modelos'}`
+    : `${filtrados.length} de ${modelos.length}`;
+
+  if (!filtrados.length) {
+    lista.innerHTML = `
+      <div class="card mv-empty">
+        <div style="font-size:32px">🔍</div>
+        <h2>Nenhum modelo encontrado</h2>
+        <p>Nenhum modelo contém “${esc(document.getElementById('modBusca').value.trim())}”.</p>
+        <div class="mv-empty-actions"><button type="button" class="btn btn-secondary" data-acao="limpar-busca">Limpar busca</button></div>
+      </div>`;
+    return;
+  }
+  lista.innerHTML = `<div class="mv-grid">${filtrados.map(m => cardModeloHtml(m)).join('')}</div>`;
 }
 
-const modalModeloForm = document.getElementById('modalModeloForm');
+document.getElementById('modBusca').addEventListener('input', renderModelos);
+document.getElementById('modOrdem').addEventListener('change', renderModelos);
 
-function resetModeloModal() {
-  document.getElementById('modeloForm').reset();
-  document.getElementById('fModeloId').value = '';
-  document.getElementById('modFormAlert').style.display = 'none';
-  currentModeloId = null;
-  document.getElementById('modalModeloTitle').textContent = 'Novo Modelo';
-  document.getElementById('varPreview').innerHTML = '';
-}
+document.getElementById('modLista').addEventListener('click', e => {
+  const btn = e.target.closest('[data-acao]');
+  const card = e.target.closest('.mv-card');
+  const modelo = card?.dataset.id ? modelos.find(m => m.id === card.dataset.id) : null;
+  const acao = btn?.dataset.acao ?? (modelo ? 'usar' : null);
+  if (!acao) return;
+  if (acao === 'novo') abrirEditor();
+  else if (acao === 'ia') document.getElementById('btnGerarIA').click();
+  else if (acao === 'limpar-busca') { document.getElementById('modBusca').value = ''; renderModelos(); }
+  else if (acao === 'exemplo') {
+    const ex = MODELOS_EXEMPLO[Number(btn.dataset.indice)];
+    abrirEditor({ nome: ex.nome, descricao: ex.descricao, conteudo: ex.conteudo, titulo: 'Novo modelo (exemplo)' });
+  }
+  else if (!modelo) return;
+  else if (acao === 'usar') abrirUso(modelo);
+  else if (acao === 'editar') abrirEditor({ ...modelo, titulo: 'Editar modelo' });
+  else if (acao === 'duplicar') duplicarModelo(modelo);
+  else if (acao === 'excluir') excluirModelo(modelo);
+});
 
-function updateVarPreview() {
-  const vars = document.getElementById('fModeloVariaveis').value.split(',').map(v => v.trim()).filter(v => v);
-  document.getElementById('varPreview').innerHTML = vars.map(v => `<span class="var-badge">${v}</span>`).join('');
-}
+document.getElementById('modLista').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches('.mv-card[data-id]')) return;
+  const modelo = modelos.find(m => m.id === e.target.dataset.id);
+  if (modelo) abrirUso(modelo);
+});
 
-document.getElementById('fModeloVariaveis').addEventListener('input', updateVarPreview);
-
-window.insertVar = name => {
-  const ta = document.getElementById('fModeloConteudo');
-  const start = ta.selectionStart, end = ta.selectionEnd;
-  const insert = `{{${name}}}`;
-  ta.value = ta.value.substring(0, start) + insert + ta.value.substring(end);
-  ta.selectionStart = ta.selectionEnd = start + insert.length;
-  ta.focus();
-};
-
-window.editarModelo = id => {
-  const m = modelos.find(x => x.id === id);
-  if (!m) return;
-  currentModeloId = id;
-  document.getElementById('fModeloId').value = id;
-  document.getElementById('fModeloNome').value = m.nome;
-  document.getElementById('fModeloDescricao').value = m.descricao || '';
-  document.getElementById('fModeloVariaveis').value = (m.variaveis || []).join(', ');
-  document.getElementById('fModeloConteudo').value = m.conteudo;
-  document.getElementById('modalModeloTitle').textContent = 'Editar Modelo';
-  updateVarPreview();
-  modalModeloForm.classList.add('open');
-};
-
-window.excluirModelo = async id => {
-  if (!confirm('Tem certeza que deseja excluir este modelo?')) return;
+async function duplicarModelo(m) {
   try {
-    await apiFetch(`/modelos/${id}`, { method: 'DELETE' });
+    await apiFetch('/modelos', {
+      method: 'POST',
+      body: JSON.stringify({ nome: `${m.nome} (cópia)`, descricao: m.descricao, conteudo: m.conteudo, variaveis: extrairVariaveis(m.conteudo) }),
+    });
+    showModAlert('Modelo duplicado.', 'success');
+    loadModelos();
+  } catch (err) { showModAlert(err.message); }
+}
+
+async function excluirModelo(m) {
+  if (!confirm(`Excluir o modelo "${m.nome}"? Esta ação não pode ser desfeita.`)) return;
+  try {
+    await apiFetch(`/modelos/${m.id}`, { method: 'DELETE' });
     showModAlert('Modelo excluído.', 'success');
     loadModelos();
   } catch (err) { showModAlert(err.message); }
-};
-
-document.getElementById('btnNovoModelo').addEventListener('click', () => { resetModeloModal(); modalModeloForm.classList.add('open'); });
-document.getElementById('modalModeloClose').addEventListener('click', () => modalModeloForm.classList.remove('open'));
-document.getElementById('btnModeloCancelar').addEventListener('click', () => modalModeloForm.classList.remove('open'));
-
-document.getElementById('btnModeloSalvar').addEventListener('click', async () => {
-  const nome = document.getElementById('fModeloNome').value.trim();
-  const descricao = document.getElementById('fModeloDescricao').value.trim();
-  const conteudo = document.getElementById('fModeloConteudo').value;
-
-  if (!nome) { showModAlert('Nome é obrigatório.'); return; }
-  if (!conteudo) { showModAlert('Conteúdo é obrigatório.'); return; }
-
-  const variaveisMatch = conteudo.match(/\{\{([^}]+)\}\}/g) || [];
-  const variaveis = [...new Set(variaveisMatch.map(v => v.replace(/\{\{|\}\}/g, '').trim()))].filter(v => v);
-  document.getElementById('fModeloVariaveis').value = variaveis.join(', ');
-  updateVarPreview();
-
-  const btn = document.getElementById('btnModeloSalvar');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-
-  const id = document.getElementById('fModeloId').value;
-  try {
-    if (id) {
-      await apiFetch(`/modelos/${id}`, { method: 'PUT', body: JSON.stringify({ nome, descricao, conteudo, variaveis }) });
-      showModAlert('Modelo atualizado.', 'success');
-    } else {
-      await apiFetch('/modelos', { method: 'POST', body: JSON.stringify({ nome, descricao, conteudo, variaveis }) });
-      showModAlert('Modelo criado.', 'success');
-    }
-    modalModeloForm.classList.remove('open');
-    loadModelos();
-  } catch (err) {
-    showModAlert(err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Salvar';
-  }
-});
-
-// Aplicar variáveis
-const modalAplicar = document.getElementById('modalAplicar');
-
-window.aplicarModelo = id => {
-  const m = modelos.find(x => x.id === id);
-  if (!m) return;
-  currentModeloId = id;
-  document.getElementById('aplicarModeloNome').textContent = m.nome;
-
-  const container = document.getElementById('varInputs');
-  container.innerHTML = '';
-  if (!m.variaveis || !m.variaveis.length) {
-    container.innerHTML = '<p style="color:var(--color-text-muted)">Este modelo não possui variáveis definidas.</p>';
-  } else {
-    m.variaveis.forEach(v => {
-      const div = document.createElement('div');
-      div.className = 'form-group';
-      div.innerHTML = `<label style="text-transform:uppercase;font-size:12px">${v}</label><input type="text" class="form-control var-input" data-var="${v}" placeholder="Valor para ${v}">`;
-      container.appendChild(div);
-    });
-  }
-  document.getElementById('resultadoConteudo').value = m.conteudo;
-  modalAplicar.classList.add('open');
-};
-
-document.getElementById('btnFecharAplicar').addEventListener('click', () => modalAplicar.classList.remove('open'));
-document.getElementById('modalAplicarClose').addEventListener('click', () => modalAplicar.classList.remove('open'));
-
-document.getElementById('varInputs').addEventListener('input', e => {
-  if (e.target.classList.contains('var-input')) atualizarResultado();
-});
-
-function atualizarResultado() {
-  const m = modelos.find(x => x.id === currentModeloId);
-  if (!m) return;
-  const vars = {};
-  document.querySelectorAll('.var-input').forEach(input => vars[input.dataset.var] = input.value);
-  let resultado = m.conteudo;
-  Object.entries(vars).forEach(([chave, valor]) => {
-    resultado = resultado.replace(new RegExp(`\\{\\{${chave}\\}\\}`, 'gi'), valor || `{{${chave}}}`);
-  });
-  document.getElementById('resultadoConteudo').value = resultado;
 }
 
-document.getElementById('btnCopiar').addEventListener('click', () => {
-  navigator.clipboard.writeText(document.getElementById('resultadoConteudo').value)
-    .then(() => showModAlert('Conteúdo copiado!', 'success'))
-    .catch(() => showModAlert('Erro ao copiar.'));
+// ── Editor ─────────────────────────────────────────────────
+const modalModeloForm = document.getElementById('modalModeloForm');
+const taConteudo = document.getElementById('fModeloConteudo');
+let editorSnapshot = '';
+let editorModo = 'editar';
+
+const editorEstado = () => JSON.stringify([
+  document.getElementById('fModeloNome').value, document.getElementById('fModeloDescricao').value, taConteudo.value,
+]);
+
+function abrirEditor({ id = '', nome = '', descricao = '', conteudo = '', titulo = 'Novo modelo', ia = false } = {}) {
+  document.getElementById('modFormAlert').style.display = 'none';
+  document.getElementById('modIANote').style.display = ia ? '' : 'none';
+  document.getElementById('modalModeloTitle').textContent = titulo;
+  document.getElementById('fModeloId').value = id;
+  document.getElementById('fModeloNome').value = nome;
+  document.getElementById('fModeloDescricao').value = descricao || '';
+  taConteudo.value = conteudo;
+  // Só um modelo já salvo começa "limpo"; exemplo e texto da IA ainda não foram salvos.
+  editorSnapshot = id ? editorEstado() : JSON.stringify(['', '', '']);
+  setModoEditor('editar');
+  atualizarPainelVariaveis();
+  modalModeloForm.classList.add('open');
+  document.getElementById(nome ? 'fModeloConteudo' : 'fModeloNome').focus();
+}
+
+function fecharEditor() {
+  if (editorEstado() !== editorSnapshot && !confirm('Descartar as alterações deste modelo?')) return;
+  modalModeloForm.classList.remove('open');
+}
+
+function setModoEditor(modo) {
+  editorModo = modo;
+  document.querySelectorAll('#modalModeloForm .mv-segment button').forEach(b => b.classList.toggle('active', b.dataset.modo === modo));
+  const preview = document.getElementById('modPreview');
+  taConteudo.style.display = modo === 'editar' ? '' : 'none';
+  preview.style.display = modo === 'preview' ? '' : 'none';
+  if (modo === 'preview') {
+    preview.innerHTML = taConteudo.value.trim()
+      ? previewHtml(taConteudo.value)
+      : '<span style="color:#6b7280">Nada para pré-visualizar ainda.</span>';
+  }
+}
+
+document.querySelectorAll('#modalModeloForm .mv-segment button').forEach(b =>
+  b.addEventListener('click', () => setModoEditor(b.dataset.modo)));
+
+function atualizarPainelVariaveis() {
+  const contagem = contarVariaveis(taConteudo.value);
+  const usadas = Object.keys(contagem);
+  document.getElementById('modVarCount').textContent = usadas.length;
+  document.getElementById('modVarsUsadas').innerHTML = usadas.length
+    ? `<div class="mv-var-btns">${usadas.map(v =>
+        `<button type="button" class="mv-var-btn usada" data-localizar="${esc(v)}" title="{{${esc(v)}}} — clique para localizar no texto">${esc(rotuloVariavel(v))}${contagem[v] > 1 ? ` <small>×${contagem[v]}</small>` : ''}</button>`).join('')}</div>`
+    : '<p class="mv-side-hint">Nenhuma variável ainda. Insira uma abaixo ou digite <code>{{assim}}</code> no texto.</p>';
+
+  const usadasLower = new Set(usadas.map(v => v.toLowerCase()));
+  document.getElementById('modVarsSugeridas').innerHTML = VARIAVEIS_SUGERIDAS.map(g => `
+    <div class="mv-var-group">
+      <div class="mv-var-group-name">${esc(g.grupo)}</div>
+      <div class="mv-var-btns">${g.nomes.map(v =>
+        `<button type="button" class="mv-var-btn${usadasLower.has(v) ? ' usada' : ''}" data-inserir="${esc(v)}" title="{{${esc(v)}}}">${esc(rotuloVariavel(v))}</button>`).join('')}</div>
+    </div>`).join('');
+
+  const palavras = taConteudo.value.trim() ? taConteudo.value.trim().split(/\s+/).length : 0;
+  document.getElementById('modContagem').textContent = `${palavras} ${palavras === 1 ? 'palavra' : 'palavras'}`;
+}
+
+taConteudo.addEventListener('input', atualizarPainelVariaveis);
+
+function inserirVariavel(nome) {
+  if (editorModo !== 'editar') setModoEditor('editar');
+  const inicio = taConteudo.selectionStart, fim = taConteudo.selectionEnd;
+  const trecho = `{{${nome}}}`;
+  taConteudo.focus();
+  taConteudo.setRangeText(trecho, inicio, fim, 'end');
+  atualizarPainelVariaveis();
+}
+
+// Seleciona a próxima ocorrência da variável no texto (volta ao início quando chega ao fim).
+function localizarVariavel(nome) {
+  if (editorModo !== 'editar') setModoEditor('editar');
+  const re = new RegExp(`\\{\\{\\s*${nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\}\\}`, 'gi');
+  const texto = taConteudo.value;
+  re.lastIndex = taConteudo.selectionEnd;
+  let m = re.exec(texto);
+  if (!m) { re.lastIndex = 0; m = re.exec(texto); }
+  if (!m) return;
+  taConteudo.focus();
+  taConteudo.setSelectionRange(m.index, m.index + m[0].length);
+  // Rola até a seleção: blur/focus faz o navegador trazer o cursor para a vista.
+  taConteudo.blur(); taConteudo.focus();
+}
+
+document.querySelector('#modalModeloForm .mv-side').addEventListener('click', e => {
+  const ins = e.target.closest('[data-inserir]');
+  const loc = e.target.closest('[data-localizar]');
+  if (ins) inserirVariavel(ins.dataset.inserir);
+  else if (loc) localizarVariavel(loc.dataset.localizar);
 });
 
-// Gerar com IA
+function inserirVariavelNova() {
+  const input = document.getElementById('modVarNova');
+  const nome = normalizarNomeVariavel(input.value);
+  if (!nome) { input.focus(); return; }
+  input.value = '';
+  inserirVariavel(nome);
+}
+document.getElementById('modVarNovaBtn').addEventListener('click', inserirVariavelNova);
+document.getElementById('modVarNova').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); inserirVariavelNova(); }
+});
+document.getElementById('modeloForm').addEventListener('submit', e => e.preventDefault());
+
+document.getElementById('btnNovoModelo').addEventListener('click', () => abrirEditor());
+document.getElementById('modalModeloClose').addEventListener('click', fecharEditor);
+document.getElementById('btnModeloCancelar').addEventListener('click', fecharEditor);
+
+async function salvarModelo() {
+  const nome = document.getElementById('fModeloNome').value.trim();
+  const descricao = document.getElementById('fModeloDescricao').value.trim();
+  const conteudo = taConteudo.value;
+  if (!nome) { showInlineAlert('modFormAlert', 'Dê um nome ao modelo.'); document.getElementById('fModeloNome').focus(); return; }
+  if (!conteudo.trim()) { showInlineAlert('modFormAlert', 'Escreva o conteúdo do modelo.'); setModoEditor('editar'); taConteudo.focus(); return; }
+
+  const btn = document.getElementById('btnModeloSalvar');
+  if (btn.disabled) return;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  const id = document.getElementById('fModeloId').value;
+  const body = JSON.stringify({ nome, descricao, conteudo, variaveis: extrairVariaveis(conteudo) });
+  try {
+    if (id) await apiFetch(`/modelos/${id}`, { method: 'PUT', body });
+    else await apiFetch('/modelos', { method: 'POST', body });
+    modalModeloForm.classList.remove('open');
+    showModAlert(id ? 'Modelo atualizado.' : 'Modelo criado.', 'success');
+    loadModelos();
+  } catch (err) {
+    showInlineAlert('modFormAlert', err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar modelo';
+  }
+}
+document.getElementById('btnModeloSalvar').addEventListener('click', salvarModelo);
+
+// ── Usar modelo ───────────────────────────────────────────
+const modalAplicar = document.getElementById('modalAplicar');
+let usoModelo = null;
+let usoValores = {};
+let usoProcesso = null;
+
+function abrirUso(m) {
+  usoModelo = m;
+  usoProcesso = null;
+  const vars = extrairVariaveis(m.conteudo);
+  usoValores = valoresAutomaticos(vars);
+  document.getElementById('aplicarModeloNome').textContent = m.nome;
+  document.getElementById('aplicarAlert').style.display = 'none';
+  document.getElementById('procBusca').value = '';
+  document.getElementById('procResultados').classList.remove('open');
+  renderProcessoSelecionado();
+
+  const container = document.getElementById('varInputs');
+  container.innerHTML = vars.length
+    ? vars.map((v, i) => `
+      <div class="mv-field" data-var="${esc(v)}">
+        <label for="mvVar${i}"><span>${esc(rotuloVariavel(v))}</span><code>{{${esc(v)}}}</code></label>
+        <input type="text" id="mvVar${i}" class="form-control" data-var="${esc(v)}" value="${esc(usoValores[v] || '')}">
+      </div>`).join('')
+    : '<p class="mv-side-hint">Este modelo não tem variáveis — o texto já está pronto para uso.</p>';
+  document.getElementById('aplicarProgresso').style.display = vars.length ? '' : 'none';
+  atualizarUso();
+  modalAplicar.classList.add('open');
+  container.querySelector('input[value=""]')?.focus();
+}
+
+function atualizarUso() {
+  if (!usoModelo) return;
+  const vars = extrairVariaveis(usoModelo.conteudo);
+  const preenchidas = vars.filter(v => usoValores[v]).length;
+  document.getElementById('aplicarProgressoTxt').textContent = vars.length ? `${preenchidas} de ${vars.length} preenchidas` : '';
+  document.getElementById('aplicarProgressoFill').style.width = vars.length ? `${(preenchidas / vars.length) * 100}%` : '0%';
+  document.querySelectorAll('#varInputs .mv-field').forEach(f => f.classList.toggle('preenchida', !!usoValores[f.dataset.var]));
+  document.getElementById('aplicarPreview').innerHTML = previewHtml(usoModelo.conteudo, usoValores);
+}
+
+const textoFinal = () => aplicarVariaveis(usoModelo.conteudo, usoValores);
+
+function confirmarPendentes() {
+  const pendentes = extrairVariaveis(usoModelo.conteudo).filter(v => !usoValores[v]);
+  return !pendentes.length ||
+    confirm(`Ainda ${pendentes.length === 1 ? 'falta 1 variável' : `faltam ${pendentes.length} variáveis`} (${pendentes.map(rotuloVariavel).join(', ')}). Continuar mesmo assim?`);
+}
+
+document.getElementById('varInputs').addEventListener('input', e => {
+  if (!e.target.dataset.var) return;
+  usoValores[e.target.dataset.var] = e.target.value;
+  atualizarUso();
+});
+
+// Enter avança para o próximo campo.
+document.getElementById('varInputs').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.dataset.var) return;
+  e.preventDefault();
+  const inputs = [...document.querySelectorAll('#varInputs input')];
+  inputs[inputs.indexOf(e.target) + 1]?.focus();
+});
+
+// Clicar em uma variável na pré-visualização leva ao campo dela.
+document.getElementById('aplicarPreview').addEventListener('click', e => {
+  const token = e.target.closest('[data-var]');
+  if (!token) return;
+  const input = [...document.querySelectorAll('#varInputs input')].find(i => i.dataset.var === token.dataset.var);
+  input?.focus();
+  input?.select();
+});
+
+// Busca de processo para preencher as variáveis.
+let procBuscaTimer = null;
+let procBuscaSeq = 0;
+const procResultados = document.getElementById('procResultados');
+
+document.getElementById('procBusca').addEventListener('input', e => {
+  clearTimeout(procBuscaTimer);
+  const termo = e.target.value.trim();
+  if (termo.length < 2) { procResultados.classList.remove('open'); return; }
+  procBuscaTimer = setTimeout(async () => {
+    const seq = ++procBuscaSeq;
+    try {
+      const res = await apiFetch(`/processos?busca=${encodeURIComponent(termo)}&pageSize=8`);
+      if (seq !== procBuscaSeq) return;
+      const itens = res.items || [];
+      procResultados.innerHTML = itens.length
+        ? itens.map(p => `
+          <div class="mv-proc-item" data-id="${esc(p.id)}">
+            <strong>${esc(p.numeroCNJ)}</strong>
+            <small>${esc([p.nomeCliente, p.vara, p.comarca].filter(Boolean).join(' · ') || '—')}</small>
+          </div>`).join('')
+        : '<div class="mv-proc-item" style="cursor:default;color:var(--color-text-muted)">Nenhum processo encontrado</div>';
+      procResultados.classList.add('open');
+    } catch { procResultados.classList.remove('open'); }
+  }, 250);
+});
+
+procResultados.addEventListener('click', async e => {
+  const item = e.target.closest('.mv-proc-item[data-id]');
+  if (!item) return;
+  procResultados.classList.remove('open');
+  try {
+    usoProcesso = await apiFetch(`/processos/${item.dataset.id}`);
+  } catch (err) {
+    showInlineAlert('aplicarAlert', err.message);
+    return;
+  }
+  const preenchidos = valoresDoProcesso(extrairVariaveis(usoModelo.conteudo), usoProcesso);
+  Object.assign(usoValores, preenchidos);
+  document.querySelectorAll('#varInputs input').forEach(i => { i.value = usoValores[i.dataset.var] || ''; });
+  renderProcessoSelecionado(Object.keys(preenchidos).length);
+  atualizarUso();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#procBuscaWrap')) procResultados.classList.remove('open');
+});
+
+function renderProcessoSelecionado(qtdPreenchidas = 0) {
+  const sel = document.getElementById('procSelecionado');
+  const dica = document.getElementById('procDica');
+  document.getElementById('procBuscaWrap').style.display = usoProcesso ? 'none' : '';
+  document.getElementById('btnSalvarNoProcesso').style.display = usoProcesso ? '' : 'none';
+  if (!usoProcesso) {
+    sel.style.display = 'none';
+    dica.textContent = 'Partes, número, vara, comarca e advogado são preenchidos a partir do processo.';
+    return;
+  }
+  sel.style.display = '';
+  sel.innerHTML = `<span>⚖️ <strong>${esc(usoProcesso.numeroCNJ)}</strong></span>
+    <button type="button" id="procRemover" title="Trocar processo" aria-label="Trocar processo">✕</button>`;
+  dica.textContent = qtdPreenchidas
+    ? `${qtdPreenchidas} ${qtdPreenchidas === 1 ? 'variável preenchida' : 'variáveis preenchidas'} com dados do processo.`
+    : 'Nenhuma variável deste modelo corresponde a dados do processo.';
+  document.getElementById('procRemover').addEventListener('click', () => {
+    usoProcesso = null;
+    renderProcessoSelecionado();
+    document.getElementById('procBusca').value = '';
+    document.getElementById('procBusca').focus();
+  });
+}
+
+function fecharUso() { modalAplicar.classList.remove('open'); }
+document.getElementById('btnFecharAplicar').addEventListener('click', fecharUso);
+document.getElementById('modalAplicarClose').addEventListener('click', fecharUso);
+
+function feedbackBotao(btn, texto) {
+  const original = btn.textContent;
+  btn.textContent = texto;
+  setTimeout(() => { btn.textContent = original; }, 1800);
+}
+
+const nomeDocumento = () => usoProcesso ? `${usoModelo.nome} - ${usoProcesso.numeroCNJ}` : usoModelo.nome;
+
+document.getElementById('btnCopiar').addEventListener('click', e => {
+  if (!confirmarPendentes()) return;
+  const btn = e.currentTarget;
+  navigator.clipboard.writeText(textoFinal())
+    .then(() => feedbackBotao(btn, '✓ Copiado'))
+    .catch(() => showInlineAlert('aplicarAlert', 'Não foi possível copiar. Selecione o texto e copie manualmente.'));
+});
+
+document.getElementById('btnImprimir').addEventListener('click', () => {
+  if (!confirmarPendentes()) return;
+  if (!imprimirTexto(nomeDocumento(), textoFinal()))
+    showInlineAlert('aplicarAlert', 'O navegador bloqueou a janela de impressão. Permita pop-ups para este site.');
+});
+
+document.getElementById('btnWord').addEventListener('click', () => {
+  if (!confirmarPendentes()) return;
+  baixarWord(nomeDocumento(), textoFinal());
+});
+
+document.getElementById('btnSalvarNoProcesso').addEventListener('click', async e => {
+  if (!usoProcesso || !confirmarPendentes()) return;
+  const nome = prompt('Nome do documento:', nomeDocumento());
+  if (!nome) return;
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try {
+    const arquivo = arquivoWord(nome, textoFinal());
+    const formData = new FormData();
+    formData.append('file', arquivo);
+    formData.append('tipo', 'Outro');
+    formData.append('nome', arquivo.name);
+    formData.append('processoId', usoProcesso.id);
+    formData.append('modeloId', usoModelo.id);
+    const res = await fetch('/api/documentos/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${sessionStorage.getItem('access_token')}` },
+      body: formData
+    });
+    if (!res.ok) throw new Error(`Não foi possível salvar o documento (HTTP ${res.status}).`);
+    showInlineAlert('aplicarAlert', `Documento salvo nos documentos do processo ${usoProcesso.numeroCNJ}.`, 'success');
+    loadDocumentos();
+    loadCota();
+  } catch (err) {
+    showInlineAlert('aplicarAlert', err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Gerar com IA ──────────────────────────────────────────
 const modalGerarIA = document.getElementById('modalGerarIA');
-let iaConteudoGerado = '';
-let iaVariaveisGerado = [];
 
 document.getElementById('btnGerarIA').addEventListener('click', () => {
   document.getElementById('gerarIAAlert').style.display = 'none';
   document.getElementById('iaDescricao').value = '';
-  document.getElementById('iaPreview').style.display = 'none';
-  document.getElementById('btnGerarIASalvar').style.display = 'none';
-  document.getElementById('btnGerarIAGerar').style.display = '';
   modalGerarIA.classList.add('open');
+  document.getElementById('iaDescricao').focus();
+});
+
+document.getElementById('iaExemplos').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const ta = document.getElementById('iaDescricao');
+  ta.value = `${b.textContent}, com variáveis para os dados das partes e do processo.`;
+  ta.focus();
 });
 
 [document.getElementById('modalGerarIAClose'), document.getElementById('btnGerarIACancelar')].forEach(el =>
   el?.addEventListener('click', () => modalGerarIA.classList.remove('open'))
 );
 
+// Primeira linha curta do texto gerado costuma ser o título da peça.
+function tituloSugerido(conteudo) {
+  const linha = String(conteudo).split('\n').map(l => l.replace(/[#*_]/g, '').trim()).find(Boolean) || '';
+  if (!linha || linha.length > 80 || linha.includes('{{')) return '';
+  return linha === linha.toUpperCase() ? linha.charAt(0) + linha.slice(1).toLowerCase() : linha;
+}
+
 document.getElementById('btnGerarIAGerar').addEventListener('click', async () => {
   const descricao = document.getElementById('iaDescricao').value.trim();
-  if (!descricao) {
-    const alertEl = document.getElementById('gerarIAAlert');
-    alertEl.textContent = 'Descreva o modelo que deseja criar.';
-    alertEl.className = 'alert alert-error';
-    alertEl.style.display = 'block';
-    return;
-  }
+  if (!descricao) { showInlineAlert('gerarIAAlert', 'Descreva o modelo que deseja criar.'); return; }
 
   const btn = document.getElementById('btnGerarIAGerar');
-  const alertEl = document.getElementById('gerarIAAlert');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Gerando...';
-  alertEl.style.display = 'none';
-
+  document.getElementById('gerarIAAlert').style.display = 'none';
   try {
     const result = await apiFetch('/modelos/gerar-com-ia', { method: 'POST', body: JSON.stringify({ descricao }) });
-    iaConteudoGerado = result.conteudo;
-    iaVariaveisGerado = result.variaveis || [];
-    document.getElementById('iaConteudoGerado').value = result.conteudo;
-    document.getElementById('iaVariaveisPreview').innerHTML = result.variaveis?.length
-      ? `Variáveis detectadas: ${result.variaveis.map(v => `<span class="var-badge">${v}</span>`).join(' ')}`
-      : 'Nenhuma variável detectada';
-    document.getElementById('iaPreview').style.display = '';
-    document.getElementById('btnGerarIASalvar').style.display = '';
-    btn.style.display = 'none';
+    modalGerarIA.classList.remove('open');
+    abrirEditor({
+      nome: tituloSugerido(result.conteudo),
+      descricao: descricao.length <= 200 ? descricao : '',
+      conteudo: result.conteudo,
+      titulo: 'Novo modelo (via IA)',
+      ia: true,
+    });
   } catch (err) {
-    alertEl.textContent = err.message;
-    alertEl.className = 'alert alert-error';
-    alertEl.style.display = 'block';
+    showInlineAlert('gerarIAAlert', err.message);
   } finally {
-    btn.disabled = false; btn.innerHTML = 'Gerar';
+    btn.disabled = false; btn.textContent = 'Gerar modelo';
   }
 });
 
-document.getElementById('btnGerarIASalvar').addEventListener('click', () => {
-  resetModeloModal();
-  document.getElementById('fModeloVariaveis').value = iaVariaveisGerado.join(', ');
-  document.getElementById('fModeloConteudo').value = iaConteudoGerado;
-  document.getElementById('modalModeloTitle').textContent = 'Novo Modelo (via IA)';
-  updateVarPreview();
-  modalGerarIA.classList.remove('open');
-  modalModeloForm.classList.add('open');
+// ── Atalhos de teclado ────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const editorAberto = modalModeloForm.classList.contains('open');
+  if (editorAberto && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    salvarModelo();
+    return;
+  }
+  if (e.key !== 'Escape') return;
+  if (procResultados.classList.contains('open')) procResultados.classList.remove('open');
+  else if (editorAberto) fecharEditor();
+  else if (modalAplicar.classList.contains('open')) fecharUso();
+  else if (modalGerarIA.classList.contains('open')) modalGerarIA.classList.remove('open');
 });
 
 // ============================================================
