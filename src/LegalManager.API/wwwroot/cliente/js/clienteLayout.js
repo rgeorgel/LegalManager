@@ -2,6 +2,7 @@ import { getUser, logout, isLoggedIn } from './clienteApi.js';
 import { applyTenantTheme, getStoredTheme } from '/js/theme.js';
 import { injectPerguntasWidget } from './clientePerguntas.js';
 
+import { esc as escapeHtml } from '/js/utils.js';
 export function requireAuth() {
   if (!isLoggedIn()) {
     window.location.href = '/cliente/index.html';
@@ -46,9 +47,6 @@ export function initLayout(activePage) {
   return user;
 }
 
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
 
 export function formatDate(dateStr) {
   if (!dateStr) return '—';

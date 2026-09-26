@@ -435,6 +435,7 @@
   </div>
 
   <script type="module">
+import { esc, dataParede } from '/js/utils.js';
     import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
     import { apiFetch, isLoggedIn } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
@@ -535,7 +536,7 @@
           evEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhum evento nos próximos 7 dias.</span>';
         } else {
           evEl.innerHTML = evList.map(ev => {
-            const dt = ev.dataHora ? new Date(ev.dataHora) : null;
+            const dt = ev.dataHora ? dataParede(ev.dataHora) : null;
             const dtStr = dt && !isNaN(dt) ? dt.toLocaleDateString('pt-BR', {weekday:'short',day:'numeric',month:'short'}) : '–';
             const tmStr = dt && !isNaN(dt) ? dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
             const pad = n => String(n).padStart(2, '0');
@@ -557,7 +558,7 @@
           tuEl.innerHTML = '<span style="color:var(--color-text-muted);font-size:14px">Nenhuma tarefa urgente no momento.</span>';
         } else {
           tuEl.innerHTML = tuList.map(t => {
-            const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '–'; })() : '–';
+            const prazo = t.prazo ? (() => { const d = dataParede(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '–'; })() : '–';
             const atrasada = t.atrasada ? '<span style="background:#fef2f2;color:#dc2626;font-size:11px;padding:2px 6px;border-radius:4px;margin-left:6px">Atrasada</span>' : '';
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;gap:8px">
               <div>
@@ -676,9 +677,6 @@
       return h > 0 ? `${h}h ${m}min` : `${m}min`;
     }
 
-    function esc(str) {
-      return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
 
     loadStats();
   </script>

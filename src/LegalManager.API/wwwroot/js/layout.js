@@ -5,6 +5,7 @@ import { injectTarefasWidget } from './tarefas-widget.js';
 import { injectTourWidget, resumeTourIfActive } from './tour.js';
 import { injectPerguntasWidget } from './perguntas-widget.js';
 
+import { esc } from './utils.js';
 const NAV_GROUPS = [
   {
     label: 'Visão Geral',
@@ -433,9 +434,6 @@ function timeAgo(isoStr) {
   return `${Math.floor(diff / 1440)}d atrás`;
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 export function showUpgradeToast(targetPlano = 'Pro', msg = null) {
   const defaultMsg = targetPlano === 'Plus'

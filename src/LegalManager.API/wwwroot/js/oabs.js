@@ -1,6 +1,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
+import { esc } from './utils.js';
 initLayout();
 
 let oabs = [];
@@ -240,8 +241,5 @@ document.getElementById('formOab').addEventListener('submit', async (e) => {
   }
 });
 
-function esc(str) {
-  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 
 load();

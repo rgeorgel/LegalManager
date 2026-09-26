@@ -71,6 +71,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch } from '/superadmin/js/superAdminApi.js';
 
@@ -80,7 +81,6 @@
     const SEGMENTO_LABELS = { Todos: 'Todos', PlanoEspecifico: 'Plano específico', Pagantes: 'Pagantes', EmTrial: 'Em trial', GrupoEspecifico: 'Grupo específico' };
     const TIPO_LABELS = { Texto: 'Texto livre', EscolhaUnica: 'Escolha única', EscolhaMultipla: 'Múltipla escolha' };
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDateTime(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
 
     function respostaCelula(r) {

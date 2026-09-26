@@ -137,6 +137,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch } from '/superadmin/js/superAdminApi.js';
 
@@ -146,7 +147,6 @@
     const pageSize = 30;
     let total = 0;
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDateTime(iso) { return iso ? new Date(iso).toLocaleString('pt-BR') : '—'; }
 
     const API_COLORS = { Escavador: 'blue', DataJud: 'green', EsajTjsp: 'amber' };

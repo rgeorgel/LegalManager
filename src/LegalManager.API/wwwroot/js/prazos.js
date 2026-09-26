@@ -1,6 +1,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
+import { esc } from './utils.js';
 initLayout();
 
 const STATUS_LABEL = { Pendente: 'Pendente', Cumprido: 'Cumprido', Perdido: 'Perdido', Suspenso: 'Suspenso' };
@@ -198,8 +199,5 @@ document.getElementById('btnFiltrar').addEventListener('click', load);
 // Init calculadora with today
 document.getElementById('calcInicio').value = new Date().toISOString().substring(0, 10);
 
-function esc(s) {
-  return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 load();

@@ -1,6 +1,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
+import { esc, dataParede, isoLocal, abrirNovoPelaUrl } from './utils.js';
 initLayout();
 
 const TIPO_LABEL = {
@@ -64,9 +65,9 @@ function advance(view, date, dir) {
 }
 
 // --- Helpers ---
-function toLocalISO(date) {
-  return date.toISOString().slice(0, 19) + 'Z';
-}
+// Limites da consulta na hora local, sem fuso: eventos são gravados na hora "de parede"
+// de Brasília (ver dataParede em utils.js), então o intervalo usa o mesmo referencial.
+const toLocalISO = isoLocal;
 
 // --- Load ---
 function syncUrl() {
@@ -132,7 +133,7 @@ function renderListaView() {
   if (!agendaItems.length) return '<p style="color:var(--color-text-muted);padding:16px">Nenhum evento no período.</p>';
   const byDay = {};
   agendaItems.forEach(item => {
-    const day = new Date(item.dataHora).toDateString();
+    const day = dataParede(item.dataHora).toDateString();
     if (!byDay[day]) byDay[day] = [];
     byDay[day].push(item);
   });
@@ -147,7 +148,7 @@ function renderListaView() {
           <div class="agenda-item-titulo">${esc(item.titulo)}</div>
           <div class="agenda-item-meta">
             ${TIPO_LABEL[item.tipo] ?? item.tipo} ·
-            ${new Date(item.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            ${dataParede(item.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             ${item.local ? ` · 📍 ${esc(item.local)}` : ''}
             ${item.nomeResponsavel ? ` · 👤 ${esc(item.nomeResponsavel)}` : ''}
           </div>
@@ -183,7 +184,7 @@ function renderSemanaView(start) {
 
   const dayCols = days.map(d => {
     const dayItems = agendaItems.filter(it => {
-      const dt = new Date(it.dataHora);
+      const dt = dataParede(it.dataHora);
       return dt.getFullYear() === d.getFullYear() &&
              dt.getMonth() === d.getMonth() &&
              dt.getDate() === d.getDate();
@@ -194,13 +195,13 @@ function renderSemanaView(start) {
     ).join('');
 
     const chips = dayItems.map(it => {
-      const dtStart = new Date(it.dataHora);
+      const dtStart = dataParede(it.dataHora);
       const startH = dtStart.getHours() + dtStart.getMinutes() / 60;
       const top = (startH - HOURS[0]) * SLOT_PX;
       if (top < 0 || top >= totalH) return '';
       let height = SLOT_PX - 4;
       if (it.dataHoraFim) {
-        const dur = (new Date(it.dataHoraFim) - dtStart) / 3600000;
+        const dur = (dataParede(it.dataHoraFim) - dtStart) / 3600000;
         height = Math.max(20, dur * SLOT_PX - 4);
       }
       return `<div class="evento-chip" style="position:absolute;top:${top}px;left:2px;right:2px;height:${height}px;background:${it.cor};white-space:normal;line-height:1.3;overflow:hidden" data-id="${it.id}" data-tipo="${it.tipo}" title="${esc(it.titulo)}">${esc(it.titulo)}</div>`;
@@ -225,7 +226,7 @@ function renderSemanaView(start) {
 // --- Day View ---
 function renderDiaView(day) {
   const dayItems = agendaItems.filter(it => {
-    const dt = new Date(it.dataHora);
+    const dt = dataParede(it.dataHora);
     return dt.getFullYear() === day.getFullYear() &&
            dt.getMonth() === day.getMonth() &&
            dt.getDate() === day.getDate();
@@ -238,8 +239,8 @@ function renderDiaView(day) {
     <div class="agenda-item-body">
       <div class="agenda-item-titulo">${esc(it.titulo)}</div>
       <div class="agenda-item-meta">
-        ${new Date(it.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-        ${it.dataHoraFim ? ` – ${new Date(it.dataHoraFim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : ''}
+        ${dataParede(it.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+        ${it.dataHoraFim ? ` – ${dataParede(it.dataHoraFim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : ''}
         ${it.local ? ` · 📍 ${esc(it.local)}` : ''}
       </div>
     </div>
@@ -261,7 +262,7 @@ function renderMesView(start) {
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d);
     const items = agendaItems.filter(it => {
-      const dt = new Date(it.dataHora);
+      const dt = dataParede(it.dataHora);
       return dt.getFullYear() === year && dt.getMonth() === month && dt.getDate() === d;
     });
     const today = new Date(); today.setHours(0,0,0,0);
@@ -314,7 +315,7 @@ function bindChipClicks() {
 function showTooltip(item, tipo, x, y) {
   const tt = document.getElementById('eventoTooltip');
   document.getElementById('ttTitulo').textContent = item.titulo;
-  const dt = new Date(item.dataHora);
+  const dt = dataParede(item.dataHora);
   const meta = [
     TIPO_LABEL[tipo] ?? tipo,
     dt.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }),
@@ -439,9 +440,6 @@ document.getElementById('btnHoje').addEventListener('click', () => {
 });
 
 // --- Helpers ---
-function esc(str) {
-  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
 // --- Init ---
@@ -452,3 +450,6 @@ if (_initViewBtn) {
   _initViewBtn.classList.add('active');
 }
 load();
+
+// Atalho "criar novo" (ex.: dashboard → ?novo=1).
+abrirNovoPelaUrl('btnNovoEvento');

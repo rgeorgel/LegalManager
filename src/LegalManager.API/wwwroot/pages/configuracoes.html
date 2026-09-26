@@ -151,6 +151,16 @@
             <label class="form-label">Endereço</label>
             <input type="text" id="cEndereco" class="form-control" maxlength="500">
           </div>
+          <div class="form-group">
+            <label class="form-label" for="cFuso">Fuso horário</label>
+            <select id="cFuso" class="form-control">
+              <option value="America/Sao_Paulo">Brasília (UTC−3)</option>
+            </select>
+            <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">
+              Define o "agora" do escritório: quando um prazo passa a constar como atrasado e o que
+              vence hoje. Prazos e eventos continuam no horário em que foram digitados.
+            </div>
+          </div>
           <div id="perfilMsg" class="alert" style="display:none"></div>
           <button type="submit" class="btn btn-primary">Salvar alterações</button>
         </form>
@@ -496,6 +506,7 @@
 </div>
 
 <script type="module">
+import { esc } from '/js/utils.js';
   import { initLayout, isPlanoFree } from '/js/layout.js';
   import { apiFetch, clearSession } from '/js/api.js';
   import { getUser } from '/js/auth.js';
@@ -553,9 +564,6 @@
     if (overlay) overlay.style.display = 'flex';
   }
 
-  function esc(str) {
-    return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
 
   async function load() {
     try {
@@ -591,6 +599,12 @@
         document.getElementById('cNome').value = config.nome;
         document.getElementById('cCnpj').value = config.cnpj ?? '';
         document.getElementById('cEndereco').value = config.endereco ?? '';
+        const fusos = config.fusosHorarios ?? [];
+        if (fusos.length) {
+          document.getElementById('cFuso').innerHTML = fusos
+            .map(f => `<option value="${esc(f.id)}">${esc(f.nome)}</option>`).join('');
+        }
+        document.getElementById('cFuso').value = config.fusoHorario ?? 'America/Sao_Paulo';
         renderDangerZone(config, dias);
       }
     } catch (e) { console.error(e); }
@@ -607,6 +621,7 @@
           nome: document.getElementById('cNome').value.trim(),
           cnpj: document.getElementById('cCnpj').value.trim() || null,
           endereco: document.getElementById('cEndereco').value.trim() || null,
+          fusoHorario: document.getElementById('cFuso').value,
         })
       });
       msg.className = 'alert alert-success';

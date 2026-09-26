@@ -1,8 +1,10 @@
 // Alternância entre o dashboard novo (/pages/dashboard.html, padrão) e o
-// clássico (/pages/dashboard-classico.html). A escolha fica no localStorage;
-// o <head> de dashboard.html lê a mesma chave e redireciona para o clássico
-// antes de renderizar, então links para /pages/dashboard.html continuam
-// levando cada usuário para a versão que ele escolheu.
+// clássico (/pages/dashboard-classico.html). A escolha é salva no banco
+// (PUT /api/dashboard/versao) e volta no login em usuario.dashboardVersao, que o
+// <head> de dashboard.html lê do sessionStorage para redirecionar ao clássico antes
+// de renderizar — assim a preferência vale em qualquer dispositivo. O localStorage
+// fica só como reserva (ex.: sessão aberta antes desta mudança).
+import { apiFetch } from './api.js';
 import { trackEvent } from './analytics.js';
 
 const KEY = 'dashboard_versao';
@@ -12,8 +14,14 @@ const VERSOES = {
   classico: { label: 'Clássico', href: '/pages/dashboard-classico.html' },
 };
 
-export function setDashboardVersao(versao) {
-  try { localStorage.setItem(KEY, versao); } catch { /* storage bloqueado: só navega */ }
+export async function setDashboardVersao(versao) {
+  try { localStorage.setItem(KEY, versao); } catch { /* storage bloqueado */ }
+  try {
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    if (user) sessionStorage.setItem('user', JSON.stringify({ ...user, dashboardVersao: versao }));
+  } catch { /* sessão ilegível: o servidor ainda recebe a escolha */ }
+  // Não bloqueia a troca de página se a API falhar: a escolha local já vale nesta sessão.
+  await apiFetch('/dashboard/versao', { method: 'PUT', body: { versao } }).catch(() => {});
 }
 
 /**
@@ -28,13 +36,18 @@ export function injectDashboardSwitch(container, atual) {
     ${Object.entries(VERSOES).map(([id, v]) => `<button type="button" data-versao="${id}"
       class="${id === atual ? 'active' : ''}" aria-pressed="${id === atual}">${v.label}</button>`).join('')}
   </div>`;
+  // Escolha feita antes de a preferência ir para o banco (só no localStorage): sincroniza uma vez.
+  try {
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    if (user && !user.dashboardVersao && localStorage.getItem(KEY) === atual) setDashboardVersao(atual);
+  } catch { /* sem sessão legível: nada a sincronizar */ }
   container.querySelector('.dash-versao').addEventListener('click', e => {
     const btn = e.target.closest('[data-versao]');
     if (!btn || btn.dataset.versao === atual) return;
     const para = btn.dataset.versao;
-    setDashboardVersao(para);
+    btn.disabled = true;
     trackEvent('dashboard_versao_alterada', { de: atual, para });
-    window.location.href = VERSOES[para].href;
+    setDashboardVersao(para).finally(() => { window.location.href = VERSOES[para].href; });
   });
 }
 

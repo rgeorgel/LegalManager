@@ -311,6 +311,7 @@
 </div>
 
 <script type="module">
+import { esc as escapeHtml } from '/js/utils.js';
   import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
   import { applyTenantTheme, resetTenantTheme, sanitizeHex } from '/js/theme.js';
@@ -379,9 +380,6 @@
     });
   }
 
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
 
   function showAlert(text, type = 'success') {
     msg.className = `alert alert-${type}`;

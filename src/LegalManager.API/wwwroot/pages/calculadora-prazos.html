@@ -383,6 +383,7 @@
 </div>
 
 <script type="module">
+import { esc } from '/js/utils.js';
   import { initLayout, isPlanoFree } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
 
@@ -682,9 +683,6 @@
     return `${d}/${m}/${y}`;
   }
 
-  function esc(s) {
-    return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
 </script>
 </body>
 </html>

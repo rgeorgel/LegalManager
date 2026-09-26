@@ -980,6 +980,7 @@
 </div>
 
 <script type="module">
+import { dataParede } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
@@ -1182,7 +1183,7 @@ async function fetchTarefasProcesso() {
 function tarefaItemHtml(t, showActions) {
   const prioKey = t.prioridade.toLowerCase();
   const statusKey = t.status === 'EmAndamento' ? 'emandamento' : t.status.toLowerCase();
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '—';
+  const prazoStr = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '—';
   const atrasada = t.atrasada ? '<span class="t-atrasada">Atrasada</span>' : '';
   const tags = (t.tags ?? []).map(tag => `<span class="t-tag">${esc(tag)}</span>`).join('');
   const actions = showActions ? `
@@ -1341,7 +1342,7 @@ function renderPrazosDoAndamento(andamentoId) {
   const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
   return prazos.map(p => {
     const concluida = p.status === 'Concluida' || p.status === 'Cancelada';
-    const prazoStr = p.prazo ? new Date(p.prazo).toLocaleString('pt-BR') : '—';
+    const prazoStr = p.prazo ? dataParede(p.prazo).toLocaleString('pt-BR') : '—';
     const statusColor = STATUS_COLOR[p.status] ?? '#374151';
     return `<div class="prazo-info${concluida ? ' prazo-concluido' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">

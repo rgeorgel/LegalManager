@@ -121,6 +121,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch } from '/superadmin/js/superAdminApi.js';
 
@@ -133,7 +134,6 @@
     const PLAN_COLORS = { Plus: 'blue', Pro: 'amber', Max: 'green' };
     const STATUS_COLORS = { Pendente: 'amber', Aprovado: 'green', Rejeitado: 'red' };
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—'; }
 
     async function loadSummary() {

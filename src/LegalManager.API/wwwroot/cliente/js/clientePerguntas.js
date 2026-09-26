@@ -6,6 +6,7 @@
 // portal do cliente, então não há empilhamento a calcular.
 import { getToken, clearSession } from './clienteApi.js';
 
+import { esc } from '/js/utils.js';
 let cache = null;
 
 async function perguntasFetch(path, options = {}) {
@@ -184,9 +185,6 @@ function showCardError(el, msg) {
   el.hidden = false;
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 // ── Estilos (auto-contidos, mesmo padrão do portal admin) ────────────────
 

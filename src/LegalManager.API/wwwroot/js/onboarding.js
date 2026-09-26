@@ -1,5 +1,6 @@
 import { apiFetch } from '/js/api.js';
 
+import { esc } from './utils.js';
 const UFS = [
   'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA',
   'MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN',
@@ -333,6 +334,3 @@ async function importar() {
   }
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}

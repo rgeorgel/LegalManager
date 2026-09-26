@@ -1,6 +1,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
+import { esc, dataParede } from './utils.js';
 initLayout();
 
 const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
@@ -58,7 +59,7 @@ function renderLista(items, data) {
 function tarefaCard(t) {
   const prioClass = `prioridade-${t.prioridade.toLowerCase()}`;
   const statusClass = `status-${t.status.toLowerCase()}`;
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazoStr = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
   const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   const tags = t.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') ?? '';
 
@@ -115,7 +116,7 @@ function renderKanban(items) {
 
 function kanbanCard(t) {
   const prioClass = `prioridade-${t.prioridade.toLowerCase()}`;
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleDateString('pt-BR') : null;
+  const prazoStr = t.prazo ? dataParede(t.prazo).toLocaleDateString('pt-BR') : null;
   const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   return `
   <div class="tarefa-card" data-id="${t.id}" style="padding:10px">
@@ -303,9 +304,6 @@ document.getElementById('filtBusca').addEventListener('input', () => {
   document.getElementById(id).addEventListener('change', () => loadTarefas(1)));
 
 // --- Helpers ---
-function esc(str) {
-  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
 // --- Init ---

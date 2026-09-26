@@ -1,11 +1,4 @@
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+import { esc as escapeHtml } from './utils.js';
 
 function renderInline(text) {
   let s = escapeHtml(text);

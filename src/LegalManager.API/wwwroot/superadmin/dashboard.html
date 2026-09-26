@@ -118,6 +118,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch } from '/superadmin/js/superAdminApi.js';
 
@@ -178,7 +179,6 @@
       }
     }
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     loadMetrics();
   </script>

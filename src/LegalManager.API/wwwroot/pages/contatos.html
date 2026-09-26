@@ -586,6 +586,7 @@
   </div>
 
   <script type="module">
+import { abrirNovoPelaUrl } from '/js/utils.js';
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
     import {
@@ -1644,6 +1645,9 @@
     });
 
     loadFiltrosSalvos();
-  </script>
+
+// Atalho "criar novo" (ex.: dashboard → ?novo=1).
+abrirNovoPelaUrl('btnNovo');
+</script>
 </body>
 </html>

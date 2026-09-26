@@ -82,6 +82,7 @@
   </main>
 
   <script type="module">
+import { esc as escapeHtml } from '/js/utils.js';
     import { initLayout, formatDate, formatDateTime, statusBadge, faseBadge, tipoParteLabel } from '/cliente/js/clienteLayout.js';
     import { portalApi } from '/cliente/js/clienteApi.js';
     import { renderMarkdown } from '/js/markdown.js';
@@ -338,10 +339,6 @@
       }
     }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
   </script>
 </body>
 </html>

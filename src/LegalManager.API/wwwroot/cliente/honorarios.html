@@ -57,6 +57,7 @@
   </main>
 
   <script type="module">
+import { esc as escapeHtml } from '/js/utils.js';
     import { initLayout, formatDate } from '/cliente/js/clienteLayout.js';
     import { listarContratosCliente, listarParcelasCliente, abrirExtratoPdf, brl } from '/cliente/js/clienteHonorarios.js';
 
@@ -168,7 +169,6 @@
       }
 
       window._extrato = abrirExtratoPdf;
-      function escapeHtml(s) { return (s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
       function formaLabel(v) {
         if (typeof v === 'string') return ({ AVista: 'À Vista', Parcelado: 'Parcelado', EntradaParcelado: 'Entrada + Parcelas' })[v] ?? v;
         return ['', 'À Vista', 'Parcelado', 'Entrada + Parcelas'][v] ?? '—';

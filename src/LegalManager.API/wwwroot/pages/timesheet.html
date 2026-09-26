@@ -159,6 +159,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
 
@@ -365,7 +366,6 @@
       finally { btn.disabled = false; }
     }
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   </script>
 </body>
 </html>

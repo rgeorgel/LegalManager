@@ -296,6 +296,7 @@
 </div>
 
 <script type="module">
+import { esc } from '/js/utils.js';
   import { initLayout } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
 
@@ -493,9 +494,6 @@
     return new Date(isoStr).toLocaleDateString('pt-BR');
   }
 
-  function esc(str) {
-    return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
 
   loadNotificacoes();
 </script>

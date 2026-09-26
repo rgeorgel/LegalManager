@@ -586,6 +586,7 @@
 </div>
 
 <script type="module">
+import { esc } from '/js/utils.js';
   import { initLayout } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
   import { getUser } from '/js/auth.js';
@@ -1166,9 +1167,6 @@
     }
   }
 
-  function esc(str) {
-    return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
 
   loadPlano();
   loadHistorico();

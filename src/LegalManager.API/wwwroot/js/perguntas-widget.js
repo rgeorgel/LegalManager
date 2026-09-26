@@ -8,6 +8,7 @@
 import { apiFetch } from './api.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
+import { esc } from './utils.js';
 let cache = null; // Array de perguntas pendentes — mutado conforme o usuário responde
 
 export async function injectPerguntasWidget() {
@@ -167,9 +168,6 @@ function showCardError(el, msg) {
   el.hidden = false;
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 // ── Estilos (auto-contidos, mesmo padrão de tarefas-widget.js/tour.js) ──
 

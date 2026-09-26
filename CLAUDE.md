@@ -5,7 +5,11 @@
 Após qualquer mudança em `wwwroot/**`:
 
 ```powershell
-# Verificação rápida de sintaxe JS (sem backend)
+# Verificação rápida de sintaxe JS (sem backend) — .js e scripts inline dos .html.
+# Multiplataforma (não exige PowerShell); é o mesmo check que roda no CI.
+node scripts/check-js.mjs
+
+# Versão PowerShell (só arquivos .js)
 .\scripts\check-js.ps1
 
 # Suite completa (requer: dotnet run --project src/LegalManager.API)
@@ -14,6 +18,20 @@ Após qualquer mudança em `wwwroot/**`:
 # Apenas smoke tests
 .\scripts\test-frontend.ps1 -Suite smoke
 ```
+
+## CI
+
+`.github/workflows/ci.yml` roda em todo push na `main` e em PRs: build + testes unitários e de
+integração (.NET, EF InMemory — sem PostgreSQL) e `node scripts/check-js.mjs`.
+
+## Datas (prazos e eventos)
+
+Prazos (`Tarefa.Prazo`) e eventos (`Evento.DataHora`) são gravados na hora "de parede"
+digitada no formulário, sem conversão de fuso. No backend, compare com o "agora" do escritório,
+`FusoHorario.AgoraParede(await db.DoTenantAsync(tenantId))` (fuso em Configurações → Perfil do
+Escritório; padrão Brasília, `BrasiliaTime.AgoraParede`) — nunca `DateTime.UtcNow`; no frontend, leia com `dataParede()` de
+`/js/utils.js` (não `new Date()`). Carimbos gerados no servidor (`CriadoEm` etc.) são UTC reais.
+Texto para pessoas: `BrasiliaTime.PtBr`; formatos de máquina (URL, hash): `CultureInfo.InvariantCulture`.
 
 ## Backend
 

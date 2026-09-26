@@ -10,6 +10,7 @@ import { apiFetch, getUser } from './api.js';
 import { TOURS } from './tours-config.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
+import { esc } from './utils.js';
 const ACTIVE_KEY = 'tour_active';
 const WAIT_TIMEOUT_MS = 6000;
 const WAIT_POLL_MS = 150;
@@ -504,9 +505,6 @@ function showLockedTourToast(planRequired) {
   toast._timeout = setTimeout(() => toast.classList.remove('show'), 4500);
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 // Estilos do overlay do tour (spotlight + bolha): injetados uma vez por
 // carregamento de página, como injectWidgetStyles().

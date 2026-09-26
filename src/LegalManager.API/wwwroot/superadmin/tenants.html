@@ -401,6 +401,7 @@
   </div>
 
   <script type="module">
+import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
     import { exportarTenant, importarTenant, excluirTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
@@ -473,7 +474,6 @@
     let sortBy = savedSort?.sortBy ?? 'cadastro';
     let sortDir = savedSort?.sortDir ?? 'desc';
 
-    function esc(s) { return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—'; }
     function fmtDateTime(iso) {
       if (!iso) return '—';

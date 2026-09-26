@@ -12,6 +12,7 @@
 import { apiFetch } from './api.js';
 import { trackEvent } from './analytics.js';
 
+import { esc } from './utils.js';
 const LARGURAS = [1, 2, 3];
 
 /**
@@ -303,9 +304,6 @@ export function initDashboardLayout({ secoes, botao, userId }) {
   });
 }
 
-function esc(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 function injectStyles() {
   if (document.getElementById('dashLayoutStyles')) return;

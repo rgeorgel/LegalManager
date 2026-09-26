@@ -321,6 +321,7 @@
 </div>
 
 <script type="module">
+import { esc, dataParede, abrirNovoPelaUrl } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch, getUser } from '/js/api.js';
 
@@ -357,9 +358,6 @@ switchTab(initTab);
 const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
 const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
 
-function esc(str) {
-  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 
 // ── Lista: state ───────────────────────────────────────────────
@@ -442,7 +440,7 @@ async function loadEventosPrazo(f) {
       titulo: e.titulo,
       prazo: e.dataHora,
       tipo: 'Prazo',
-      atrasada: new Date(e.dataHora) < new Date(),
+      atrasada: dataParede(e.dataHora) < new Date(),
       nomeResponsavel: e.nomeResponsavel,
       numeroCNJProcesso: e.numeroCNJProcesso,
       processoId: e.processoId,
@@ -462,8 +460,8 @@ async function loadEventosPrazo(f) {
 
 function mergePorPrazo(tarefas, eventos) {
   return [...tarefas, ...eventos].sort((a, b) => {
-    const da = a.prazo ? new Date(a.prazo).getTime() : Infinity;
-    const db = b.prazo ? new Date(b.prazo).getTime() : Infinity;
+    const da = a.prazo ? dataParede(a.prazo).getTime() : Infinity;
+    const db = b.prazo ? dataParede(b.prazo).getTime() : Infinity;
     return da - db;
   });
 }
@@ -484,7 +482,7 @@ function tarefaCard(t) {
   if (t.origemAgenda) return tarefaCardAgenda(t);
   const prioClass = `prioridade-${t.prioridade.toLowerCase()}`;
   const statusClass = `status-${t.status.toLowerCase()}`;
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazoStr = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
   const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   const tags = t.tags?.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') ?? '';
 
@@ -517,7 +515,7 @@ function tarefaCard(t) {
 }
 
 function tarefaCardAgenda(t) {
-  const prazoStr = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazoStr = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
   const atrasadaBadge = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
 
   return `
@@ -770,7 +768,7 @@ function renderBoard() {
 }
 
 function renderKanbanCard(t) {
-  const prazo = t.prazo ? (() => { const d = new Date(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : null; })() : null;
+  const prazo = t.prazo ? (() => { const d = dataParede(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : null; })() : null;
   const atrasada = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   return `<div class="kanban-card prioridade-${(t.prioridade ?? '').toLowerCase()}" draggable="true" data-id="${t.id}" data-status="${t.status}">
     <div class="kanban-card-title" data-detail-id="${t.id}">${esc(t.titulo)}</div>
@@ -844,7 +842,7 @@ let detalheAtualId = null;
 
 function showDetailModal(t) {
   detalheAtualId = t.id;
-  const prazo = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazo = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
   const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') : '';
   const descricao = t.descricao
     ? `<div class="detail-description">${esc(t.descricao)}</div>`
@@ -887,6 +885,9 @@ if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
 loadTarefas();
 const _abrirId = _urlParams.get('abrirId');
 if (_abrirId) openEditModal(_abrirId);
+
+// Atalho "criar novo" (ex.: dashboard → ?novo=1).
+abrirNovoPelaUrl('btnNova');
 </script>
 </body>
 </html>

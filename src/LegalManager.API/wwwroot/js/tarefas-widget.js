@@ -5,6 +5,7 @@
 import { apiFetch, getUser } from './api.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
+import { esc, dataParede } from './utils.js';
 const OPEN_KEY = 'tarefasWidgetOpen';
 const REFRESH_MS = 120000;
 const PAGE_SIZE = 30;
@@ -98,7 +99,7 @@ function showDetail(id, status) {
   const t = tasks[status]?.find(item => item.id === id);
   if (!t) return;
 
-  const prazo = t.prazo ? new Date(t.prazo).toLocaleString('pt-BR') : '–';
+  const prazo = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
   const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join(' ') : '–';
   const descricao = t.descricao
     ? esc(t.descricao).replace(/\n/g, '<br>')
@@ -245,13 +246,10 @@ async function moveTask(id, toStatus, fromStatus) {
 
 function formatPrazo(prazo) {
   if (!prazo) return null;
-  const d = new Date(prazo);
-  return isNaN(d) ? null : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const d = dataParede(prazo);
+  return !d ? null : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
-function esc(str) {
-  return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 function injectStyles() {
   if (document.getElementById('tarefasWidgetStyles')) return;

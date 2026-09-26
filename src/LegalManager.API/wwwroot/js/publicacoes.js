@@ -1,6 +1,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
+import { esc } from './utils.js';
 initLayout();
 
 const TIPO_LABEL = {
@@ -117,8 +118,5 @@ document.getElementById('btnMarcarTodasLidas').addEventListener('click', async (
   load();
 });
 
-function esc(str) {
-  return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 
 load();

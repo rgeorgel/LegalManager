@@ -1,5 +1,6 @@
 import { apiFetch } from './api.js';
 
+import { esc as escapeHtml } from './utils.js';
 const FORMATTERS = {
   brl: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }),
   date: new Intl.DateTimeFormat('pt-BR'),
@@ -204,9 +205,7 @@ export function notify(text, kind = 'info') {
   }, 2600);
 }
 
-export function escapeHtml(s) {
-  return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+export { escapeHtml };
 
 export function getQueryParam(name) {
   return new URLSearchParams(window.location.search).get(name);
