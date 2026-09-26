@@ -27,7 +27,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
             .Select(h => new
             {
                 h.Id,
-                ts = h.CriadoEm.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+                ts = LegalManager.Infrastructure.BrasiliaTime.DeUtc(h.CriadoEm).ToString("dd/MM/yyyy HH:mm", LegalManager.Infrastructure.BrasiliaTime.PtBr),
                 h.Cliente,
                 h.Mode,
                 h.Area,

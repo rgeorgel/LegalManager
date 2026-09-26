@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -74,9 +75,9 @@ public class JusBrasilDjeAdapter : IDjeAdapter
             {
                 _logger.LogInformation(
                     "[JusBrasil] Data inicio {Input} anterior ao limite de {Limite}, usando {Limite}",
-                    dataInicio?.ToString("dd/MM/yyyy") ?? "7 dias atrás",
-                    maxInicio.ToString("dd/MM/yyyy"),
-                    maxInicio.ToString("dd/MM/yyyy"));
+                    dataInicio?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "7 dias atrás",
+                    maxInicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                    maxInicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
             }
 
             var todasPublicacoes = new List<DjePublicacao>();
@@ -93,7 +94,7 @@ public class JusBrasilDjeAdapter : IDjeAdapter
 
             var page = await context.NewPageAsync();
 
-            var dataFormatada = inicio.ToString("yyyy-MM-dd");
+            var dataFormatada = inicio.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             var query = Uri.EscapeDataString(nome);
             var searchUrl = string.IsNullOrWhiteSpace(nome)
                 ? $"{BaseUrlValue}/DJSP?date={dataFormatada}"
@@ -233,7 +234,7 @@ public class JusBrasilDjeAdapter : IDjeAdapter
 
     private static string GerarHash(DjePublicacao pub)
     {
-        var input = $"{pub.SiglaTribunal}|{pub.DataPublicacao:yyyy-MM-dd}|{pub.Tipo}|{pub.Conteudo}";
+        var input = $"{pub.SiglaTribunal}|{pub.DataPublicacao.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}|{pub.Tipo}|{pub.Conteudo}";
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes)[..32];
     }

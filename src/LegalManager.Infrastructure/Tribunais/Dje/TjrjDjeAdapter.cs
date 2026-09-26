@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -78,7 +79,7 @@ public class TjrjDjeAdapter : IDjeAdapter
 
             var diarios = await ListarDiariosAsync(inicio, fim, ct);
             _logger.LogInformation("[TJRJ] {Count} edições encontradas entre {Ini} e {Fim}",
-                diarios.Count, inicio.ToString("dd/MM/yyyy"), fim.ToString("dd/MM/yyyy"));
+                diarios.Count, inicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture), fim.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
 
             var todas = new List<DjePublicacao>();
 

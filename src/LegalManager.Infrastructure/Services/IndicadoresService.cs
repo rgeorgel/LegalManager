@@ -15,7 +15,8 @@ public class IndicadoresService(AppDbContext db) : IIndicadoresService
         var inicioMesAnterior = inicioMes.AddMonths(-1);
 
         var processos = await BuildProcessosAsync(tenantId, inicioMes, ct);
-        var tarefas = await BuildTarefasAsync(tenantId, inicioMes, now, ct);
+        // Prazo está na hora "de parede" digitada; "agora" no fuso do escritório (ver FusoHorario).
+        var tarefas = await BuildTarefasAsync(tenantId, inicioMes, FusoHorario.AgoraParede(await db.DoTenantAsync(tenantId, ct)), ct);
         var financeiro = await BuildFinanceiroAsync(tenantId, inicioMes, ct);
         var timesheet = await BuildTimesheetAsync(tenantId, inicioMes, inicioMesAnterior, ct);
 

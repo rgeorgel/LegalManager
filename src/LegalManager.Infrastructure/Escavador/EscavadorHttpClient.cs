@@ -266,7 +266,7 @@ public class EscavadorHttpClient : IEscavadorService
         _logger.LogInformation("[Escavador] Buscando publicacoes OAB {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
             uf, oab, de, ate);
         var url = $"/api/v1/oab/{Uri.EscapeDataString(uf.ToUpperInvariant())}/{Uri.EscapeDataString(oab)}/publicacoes" +
-                  $"?de={de:yyyy-MM-dd}&ate={ate:yyyy-MM-dd}&page={pagina}";
+                  $"?de={de.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&ate={ate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&page={pagina}";
         return await FetchPublicacoesPaged(url, ct);
     }
 

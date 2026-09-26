@@ -70,6 +70,21 @@ public partial class DashboardController : ControllerBase
         return null;
     }
 
+    /// <summary>Versão do dashboard escolhida pelo usuário ("novo" ou "classico").</summary>
+    [HttpPut("versao")]
+    public async Task<IActionResult> SalvarVersao([FromBody] DashboardVersaoDto dto, CancellationToken ct)
+    {
+        if (dto.Versao is not ("novo" or "classico"))
+            return BadRequest(new { message = "Versão deve ser \"novo\" ou \"classico\"." });
+
+        var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
+        if (usuario == null) return NotFound();
+
+        usuario.DashboardVersao = dto.Versao;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     /// <summary>Volta ao layout padrão.</summary>
     [HttpDelete("layout")]
     public async Task<IActionResult> RestaurarPadrao(CancellationToken ct)

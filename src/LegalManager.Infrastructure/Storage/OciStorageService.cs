@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
@@ -78,7 +79,7 @@ public class OciStorageService : IStorageService
     private string ComputeAuthHeader(string method, string objectKey, string payloadHash, string datetimeStr)
     {
         var now = DateTime.UtcNow;
-        var dateStamp = now.ToString("yyyyMMdd");
+        var dateStamp = now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         var host = new Uri(_endpoint).Host;
         var canonicalUri = $"/{_bucketName}/{objectKey}";
         var signedHeaders = "host;x-amz-content-sha256;x-amz-date";
@@ -112,7 +113,7 @@ public class OciStorageService : IStorageService
             data = ms.ToArray();
         }
 
-        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
         var payloadHash = Sha256Hex(data);
         var authHeader = ComputeAuthHeader("PUT", objectKey, payloadHash, datetimeStr);
 
@@ -171,7 +172,7 @@ public class OciStorageService : IStorageService
     {
         var tempFile = Path.Combine(Path.GetTempPath(), $"oci_download_{Guid.NewGuid():N}.tmp");
 
-        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
         var payloadHash = Sha256Hex(Array.Empty<byte>());
         var authHeader = ComputeAuthHeader("GET", objectKey, payloadHash, datetimeStr);
 
@@ -275,7 +276,7 @@ print(url)
 
     public async Task DeleteAsync(string objectKey, CancellationToken ct = default)
     {
-        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ");
+        var datetimeStr = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture);
         var payloadHash = Sha256Hex(Array.Empty<byte>());
         var authHeader = ComputeAuthHeader("DELETE", objectKey, payloadHash, datetimeStr);
 

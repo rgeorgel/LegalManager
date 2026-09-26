@@ -352,7 +352,7 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken.Token,
             refreshToken.ExpiresAt,
-            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm, tema)
+            new UsuarioInfoDto(usuario.Id, usuario.Nome, usuario.Email!, usuario.Perfil.ToString(), tenant.Id, tenant.Nome, tenant.Plano.ToString(), usuario.UltimoAcessoEm, tema, usuario.DashboardVersao)
         );
     }
 

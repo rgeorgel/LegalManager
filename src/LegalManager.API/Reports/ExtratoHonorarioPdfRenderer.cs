@@ -90,7 +90,7 @@ public static class ExtratoHonorarioPdfRenderer
                 page.Content().Element(c => Conteudo(c, d));
                 page.Footer().AlignCenter().PaddingTop(20).Text(t =>
                 {
-                    t.Span($"Emitido em {d.EmitidoEm:dd/MM/yyyy HH:mm} · Causify — Gestão de Honorários · ").FontColor(CorMuted).FontSize(8);
+                    t.Span($"Emitido em {d.EmitidoEm.ToString("dd/MM/yyyy HH:mm", PtBr)} · Causify — Gestão de Honorários · ").FontColor(CorMuted).FontSize(8);
                     t.Span(d.NomeEscritorio).FontColor(CorMuted).FontSize(8);
                 });
             });
@@ -144,13 +144,13 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 g.Columns(2);
                 g.Item().Text($"Nº Contrato: {d.NumeroContrato}");
-                g.Item().Text($"Data Início: {d.DataInicio:dd/MM/yyyy}");
+                g.Item().Text($"Data Início: {d.DataInicio.ToString("dd/MM/yyyy", PtBr)}");
                 g.Item().Text($"Serviço: {d.Objeto ?? "—"}");
                 g.Item().Text($"Valor Total: {FormatBRL(d.ValorTotal)}");
                 g.Item().Text($"Forma: {d.FormaPagamento}");
                 g.Item().Text($"Tipo de Cobrança: {d.TipoCobranca}");
                 g.Item().Text($"Processo: {d.NumeroProcesso ?? "—"}");
-                g.Item().Text($"Encargos: Multa {d.PercentualMulta:P0} + Juros {d.PercentualJurosMensal:P1}/mês");
+                g.Item().Text($"Encargos: Multa {d.PercentualMulta.ToString("P0", PtBr)} + Juros {d.PercentualJurosMensal.ToString("P1", PtBr)}/mês");
             });
 
             if (d.TotalEmAtraso > 0)
@@ -158,7 +158,7 @@ public static class ExtratoHonorarioPdfRenderer
                 col.Item().PaddingTop(12).Background("#FFF5F5").Border(1).BorderColor("#FECACA").Padding(8).Column(cw =>
                 {
                     cw.Item().Text("⚠ ENCARGOS DE ATRASO").FontSize(8).Bold().FontColor("#DC2626");
-                    cw.Item().PaddingTop(2).Text($"Sobre os valores em atraso incidem multa de {d.PercentualMulta:P0} (incidência única) e juros de mora de {d.PercentualJurosMensal:P1} ao mês pro rata die, conforme contrato de honorários. Total atualizado: {FormatBRL(d.TotalEmAtraso)}");
+                    cw.Item().PaddingTop(2).Text($"Sobre os valores em atraso incidem multa de {d.PercentualMulta.ToString("P0", PtBr)} (incidência única) e juros de mora de {d.PercentualJurosMensal.ToString("P1", PtBr)} ao mês pro rata die, conforme contrato de honorários. Total atualizado: {FormatBRL(d.TotalEmAtraso)}");
                 });
             }
 
@@ -195,11 +195,11 @@ public static class ExtratoHonorarioPdfRenderer
                         _ => "#B45309"
                     };
                     tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Label).FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy")).FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy", PtBr)).FontSize(9);
                     tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.Valor)).FontSize(9);
                     tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.JurosMulta.HasValue ? FormatBRL(r.JurosMulta.Value) : "—").FontColor(r.JurosMulta.HasValue ? "#DC2626" : "#999").FontSize(9);
                     tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Status).FontColor(statusColor).FontSize(9).Bold();
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy") ?? "—").FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy", PtBr) ?? "—").FontSize(9);
                     tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.ValorAtualizado)).FontSize(9).Bold();
                 }
             });
@@ -225,5 +225,8 @@ public static class ExtratoHonorarioPdfRenderer
         });
     }
 
-    private static string FormatBRL(decimal v) => v.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+    // Formatação fixa em pt-BR (datas, moeda, percentuais) — independente da cultura do servidor.
+    private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+
+    private static string FormatBRL(decimal v) => v.ToString("C", PtBr);
 }

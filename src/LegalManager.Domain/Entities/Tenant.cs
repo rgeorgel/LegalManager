@@ -10,6 +10,9 @@ public class Tenant
     public string? LogoUrl { get; set; }
     public string? LogoObjectKey { get; set; }
     public string? Endereco { get; set; }
+
+    // Fuso horário do escritório (id IANA, ver FusosHorarios). Null = Brasília.
+    public string? FusoHorario { get; set; }
     public PlanoTipo Plano { get; set; }
     public StatusTenant Status { get; set; }
     public DateTime CriadoEm { get; set; }

@@ -26,6 +26,9 @@ public class Usuario : IdentityUser<Guid>
     // não exigem migration.
     public string? DashboardLayout { get; set; }
 
+    // Versão do dashboard escolhida pelo usuário: "novo" | "classico" (null = novo).
+    public string? DashboardVersao { get; set; }
+
     public string? OrigemCadastro { get; set; }
     public string? UtmSource { get; set; }
     public string? UtmMedium { get; set; }

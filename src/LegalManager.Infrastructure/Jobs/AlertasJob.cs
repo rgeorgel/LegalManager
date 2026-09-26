@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Diagnostics;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
@@ -76,7 +77,7 @@ public class AlertasJob
             .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
             .ToListAsync();
 
-        var hojeStr = hoje.ToString("yyyyMMdd");
+        var hojeStr = hoje.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
         const int limiteDiasAtraso = 5;
 
@@ -244,7 +245,7 @@ public class AlertasJob
                             evento.TenantId, evento.ResponsavelId!.Value,
                             TipoNotificacao.PrazoEvento,
                             "Evento amanhã",
-                            $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToLocalTime():HH:mm}.",
+                            $"\"{evento.Titulo}\" amanhã às {evento.DataHora.ToString("HH:mm", BrasiliaTime.PtBr)}.",
                             "/pages/agenda.html", chaveInApp);
                     }
                 }

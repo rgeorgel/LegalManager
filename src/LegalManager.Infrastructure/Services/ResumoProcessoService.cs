@@ -68,7 +68,7 @@ public class ResumoProcessoService : IResumoProcessoService
         sb.AppendLine($"Fase: {processo.Fase}");
         sb.AppendLine($"Status: {processo.Status}");
         if (processo.TipoAcao != null) sb.AppendLine($"Tipo de Ação: {processo.TipoAcao}");
-        if (processo.ValorCausa.HasValue) sb.AppendLine($"Valor da Causa: R$ {processo.ValorCausa:N2}");
+        if (processo.ValorCausa.HasValue) sb.AppendLine($"Valor da Causa: R$ {processo.ValorCausa?.ToString("N2", BrasiliaTime.PtBr)}");
         if (processo.Classe != null) sb.AppendLine($"Classe: {processo.Classe}");
         if (processo.Assuntos != null) sb.AppendLine($"Assuntos: {processo.Assuntos}");
         if (processo.Observacoes != null) sb.AppendLine($"Observações: {processo.Observacoes}");
@@ -83,7 +83,7 @@ public class ResumoProcessoService : IResumoProcessoService
         if (andamentos.Count > 0)
         {
             foreach (var a in andamentos)
-                sb.AppendLine($"[{a.Data:dd/MM/yyyy}] {a.Tipo}: {a.Descricao}");
+                sb.AppendLine($"[{a.Data.ToString("dd/MM/yyyy", BrasiliaTime.PtBr)}] {a.Tipo}: {a.Descricao}");
         }
         else
         {
@@ -104,7 +104,7 @@ public class ResumoProcessoService : IResumoProcessoService
         {
             foreach (var t in tarefas)
             {
-                var prazo = t.Prazo.HasValue ? $", prazo: {t.Prazo:dd/MM/yyyy}" : "";
+                var prazo = t.Prazo.HasValue ? $", prazo: {t.Prazo?.ToString("dd/MM/yyyy", BrasiliaTime.PtBr)}" : "";
                 sb.AppendLine($"- [{t.Prioridade}] {t.Titulo} ({t.Status}{prazo})");
             }
         }

@@ -302,7 +302,7 @@ public class AssinaturaController(
 
         return Ok(new
         {
-            message = $"Assinatura cancelada. Você continuará com o plano {tenant.Plano} até {expiraEm:dd/MM/yyyy}.",
+            message = $"Assinatura cancelada. Você continuará com o plano {tenant.Plano} até {LegalManager.Infrastructure.BrasiliaTime.DeUtc(expiraEm.Value).ToString("dd/MM/yyyy", LegalManager.Infrastructure.BrasiliaTime.PtBr)}.",
             expiraEm
         });
     }

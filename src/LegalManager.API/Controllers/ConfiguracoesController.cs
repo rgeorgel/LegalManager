@@ -47,6 +47,8 @@ public class ConfiguracoesController : ControllerBase
             tenant.Nome,
             tenant.Cnpj,
             tenant.Endereco,
+            FusoHorario = tenant.FusoHorario ?? FusosHorarios.Padrao,
+            FusosHorarios = FusosHorarios.Opcoes,
             tenant.LogoUrl,
             tenant.Plano,
             tenant.Status,
@@ -62,11 +64,18 @@ public class ConfiguracoesController : ControllerBase
         var tenant = await _context.Tenants.FindAsync([_tenantContext.TenantId], ct);
         if (tenant is null) return NotFound();
 
+        // Fuso é opcional no payload (clientes antigos não enviam): só altera se vier.
+        if (dto.FusoHorario is not null && !FusosHorarios.EhValido(dto.FusoHorario))
+            return BadRequest(new { message = "Fuso horário inválido." });
+
         tenant.Nome = dto.Nome;
         tenant.Cnpj = dto.Cnpj;
         tenant.Endereco = dto.Endereco;
+        if (dto.FusoHorario is not null)
+            tenant.FusoHorario = dto.FusoHorario == FusosHorarios.Padrao ? null : dto.FusoHorario;
 
         await _context.SaveChangesAsync(ct);
+        LegalManager.Infrastructure.FusoHorario.Invalidar(tenant.Id);
         return NoContent();
     }
 
@@ -214,7 +223,8 @@ public class ConfiguracoesController : ControllerBase
 public record UpdateConfiguracoesDto(
     [Required, MaxLength(200)] string Nome,
     string? Cnpj,
-    string? Endereco
+    string? Endereco,
+    string? FusoHorario = null // id IANA de FusosHorarios.Opcoes; null = não altera
 );
 
 public record AlterarSenhaDto(

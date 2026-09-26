@@ -8,3 +8,6 @@ public record DashboardWidgetDto(string Id, int Largura = 1, bool Oculto = false
 /// e <c>Kpis</c> (indicadores do topo). Seção nula = layout padrão daquela seção.
 /// </summary>
 public record DashboardLayoutDto(List<DashboardWidgetDto>? Widgets, List<DashboardWidgetDto>? Kpis = null);
+
+/// <summary>Versão do dashboard: "novo" ou "classico".</summary>
+public record DashboardVersaoDto(string? Versao);

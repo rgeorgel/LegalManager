@@ -139,6 +139,32 @@ public class DashboardControllerTests
         Assert.Null(salvo.Kpis);
     }
 
+    [Theory]
+    [InlineData("novo")]
+    [InlineData("classico")]
+    public async Task SalvarVersao_Valida_Persiste(string versao)
+    {
+        var (ctx, controller, usuario) = await SetupAsync();
+
+        Assert.IsType<NoContentResult>(await controller.SalvarVersao(new DashboardVersaoDto(versao), CancellationToken.None));
+
+        Assert.Equal(versao, (await ctx.Users.FindAsync(usuario.Id))!.DashboardVersao);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Classico")]
+    [InlineData("beta")]
+    public async Task SalvarVersao_Invalida_RetornaBadRequest(string? versao)
+    {
+        var (ctx, controller, usuario) = await SetupAsync();
+
+        Assert.IsType<BadRequestObjectResult>(await controller.SalvarVersao(new DashboardVersaoDto(versao), CancellationToken.None));
+
+        Assert.Null((await ctx.Users.FindAsync(usuario.Id))!.DashboardVersao);
+    }
+
     [Fact]
     public async Task GetLayout_JsonCorrompido_RetornaWidgetsNulo()
     {

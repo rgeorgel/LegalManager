@@ -312,11 +312,12 @@ public class TarefaServiceTests
             ResponsavelId = responsavelId, CriadoPorId = responsavelId, CriadoEm = DateTime.UtcNow
         };
 
-    /// <summary>Converte um horário "de parede" em Brasília (hoje + dias, hh:mm) para UTC.</summary>
+    /// <summary>
+    /// Horário "de parede" em Brasília (hoje + dias, hh:mm), no mesmo referencial em que os
+    /// formulários gravam prazos e eventos (ver BrasiliaTime.AgoraParede).
+    /// </summary>
     private static DateTime Brasilia(int dias, int hora, int minuto = 0)
-        => TimeZoneInfo.ConvertTimeToUtc(
-            LegalManager.Infrastructure.BrasiliaTime.Hoje.AddDays(dias).AddHours(hora).AddMinutes(minuto),
-            LegalManager.Infrastructure.BrasiliaTime.Tz);
+        => LegalManager.Infrastructure.BrasiliaTime.HojeParede.AddDays(dias).AddHours(hora).AddMinutes(minuto);
 
     [Fact]
     public async Task GetDashboardAsync_DeveCalcularTotaisEListas()
@@ -345,6 +346,27 @@ public class TarefaServiceTests
         Assert.True(result.Atrasadas.Single().Atrasada);
         Assert.Equal(4, result.Minhas.Count());
         Assert.DoesNotContain(result.Minhas, t => t.Titulo == "De outro responsável");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_PrazoDaquiAUmaHoraEmBrasilia_NaoEstaAtrasado()
+    {
+        // Regressão: prazos são gravados na hora "de parede" de Brasília; comparar com UtcNow
+        // marcava como atrasada uma tarefa que ainda tinha até 3h pela frente.
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var agora = LegalManager.Infrastructure.BrasiliaTime.AgoraParede;
+        ctx.Tarefas.AddRange(
+            NovaTarefa(tenant.Id, usuario.Id, "Vence em 1h", agora.AddHours(1)),
+            NovaTarefa(tenant.Id, usuario.Id, "Venceu há 1h", agora.AddHours(-1)));
+        await ctx.SaveChangesAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var todas = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null, 1, 20));
+        var atrasadas = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, true, 1, 20));
+
+        Assert.False(todas.Items.Single(t => t.Titulo == "Vence em 1h").Atrasada);
+        Assert.True(todas.Items.Single(t => t.Titulo == "Venceu há 1h").Atrasada);
+        Assert.Equal("Venceu há 1h", Assert.Single(atrasadas.Items).Titulo);
     }
 
     [Fact]

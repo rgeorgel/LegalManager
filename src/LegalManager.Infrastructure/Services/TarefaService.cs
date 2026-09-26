@@ -104,6 +104,8 @@ public class TarefaService : ITarefaService
 
     public async Task<PagedResultDto<TarefaListItemDto>> GetAllAsync(TarefaFiltroDto filtro, CancellationToken ct = default)
     {
+        // Prazo está na hora "de parede" digitada; "agora" no fuso do escritório (ver FusoHorario).
+        var agora = FusoHorario.AgoraParede(await _context.DoTenantAsync(_tenantContext.TenantId, ct));
         var query = _context.Tarefas
             .Where(t => t.TenantId == _tenantContext.TenantId)
             .AsQueryable();
@@ -127,7 +129,7 @@ public class TarefaService : ITarefaService
             query = query.Where(t => t.ContatoId == filtro.ContatoId.Value);
 
         if (filtro.Atrasada == true)
-            query = query.Where(t => t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada);
+            query = query.Where(t => t.Prazo < agora && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada);
 
         if (filtro.Tipo.HasValue)
             query = query.Where(t => t.Tipo == filtro.Tipo.Value);
@@ -155,7 +157,7 @@ public class TarefaService : ITarefaService
                 t.ContatoId,
                 t.Contato != null ? t.Contato.Nome : null,
                 t.Tags.Select(tag => tag.Tag).ToList(),
-                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
+                t.Prazo < agora && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
                 t.CriadoEm,
                 t.Tipo,
                 t.AndamentoId,
@@ -170,11 +172,13 @@ public class TarefaService : ITarefaService
 
     public async Task<TarefasDashboardDto> GetDashboardAsync(int dias, int limite, CancellationToken ct = default)
     {
-        var agora = DateTime.UtcNow;
-        // Limites de dia no horário de Brasília, convertidos para UTC (colunas timestamptz).
-        var hojeInicio = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje, BrasiliaTime.Tz);
-        var amanhaInicio = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje.AddDays(1), BrasiliaTime.Tz);
-        var janelaFim = TimeZoneInfo.ConvertTimeToUtc(BrasiliaTime.Hoje.AddDays(dias + 1), BrasiliaTime.Tz);
+        // Prazos e eventos são gravados na hora "de parede" digitada, então "agora" e os limites
+        // de dia usam o mesmo referencial, no fuso do escritório (ver FusoHorario).
+        var fuso = await _context.DoTenantAsync(_tenantContext.TenantId, ct);
+        var agora = FusoHorario.AgoraParede(fuso);
+        var hojeInicio = FusoHorario.HojeParede(fuso);
+        var amanhaInicio = hojeInicio.AddDays(1);
+        var janelaFim = hojeInicio.AddDays(dias + 1);
         var userId = _tenantContext.UserId;
 
         var abertas = _context.Tarefas.Where(t =>
@@ -295,7 +299,9 @@ public class TarefaService : ITarefaService
     }
 
     private async Task<TarefaResponseDto?> LoadResponseAsync(Guid id, CancellationToken ct)
-        => await _context.Tarefas
+    {
+        var agora = FusoHorario.AgoraParede(await _context.DoTenantAsync(_tenantContext.TenantId, ct));
+        return await _context.Tarefas
             .Include(t => t.Tags)
             .Where(t => t.TenantId == _tenantContext.TenantId && t.Id == id)
             .Select(t => new TarefaResponseDto(
@@ -316,7 +322,7 @@ public class TarefaService : ITarefaService
                 t.Tags.Select(tag => tag.Tag).ToList(),
                 t.CriadoEm,
                 t.ConcluidaEm,
-                t.Prazo < DateTime.UtcNow && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
+                t.Prazo < agora && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada,
                 t.Tipo,
                 t.AndamentoId,
                 t.DataInicio,
@@ -324,6 +330,7 @@ public class TarefaService : ITarefaService
                 t.TipoCalculo
             ))
             .FirstOrDefaultAsync(ct);
+    }
 
     public async Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default)
     {

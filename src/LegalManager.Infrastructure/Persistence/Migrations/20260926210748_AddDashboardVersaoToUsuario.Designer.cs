@@ -3,6 +3,7 @@ using System;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LegalManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926210748_AddDashboardVersaoToUsuario")]
+    partial class AddDashboardVersaoToUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2340,9 +2343,6 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Endereco")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FusoHorario")
                         .HasColumnType("text");
 
                     b.Property<string>("LayoutMode")

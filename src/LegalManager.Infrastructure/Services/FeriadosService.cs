@@ -81,7 +81,7 @@ public static class FeriadosService
         return todos
             .Where(f => f >= inicio.Date && f <= fim.Date)
             .OrderBy(f => f)
-            .Select(f => f.ToString("dd/MM/yyyy"))
+            .Select(f => f.ToString("dd/MM/yyyy", BrasiliaTime.PtBr))
             .ToList();
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -77,7 +78,7 @@ public class TjmgDjeAdapter : IDjeAdapter
 
             var diarios = await ListarDiariosAsync(inicio, fim, ct);
             _logger.LogInformation("[TJMG] {Count} edições encontradas entre {Ini} e {Fim}",
-                diarios.Count, inicio.ToString("dd/MM/yyyy"), fim.ToString("dd/MM/yyyy"));
+                diarios.Count, inicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture), fim.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
 
             var todas = new List<DjePublicacao>();
 
@@ -142,7 +143,7 @@ public class TjmgDjeAdapter : IDjeAdapter
 
             var form = new Dictionary<string, string>
             {
-                ["data"] = data.ToString("dd/MM/yyyy")
+                ["data"] = data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
             };
 
             using var content = new FormUrlEncodedContent(form);
@@ -150,7 +151,7 @@ public class TjmgDjeAdapter : IDjeAdapter
 
             if (!response.IsSuccessStatusCode)
             {
-                var diarioUrl = $"{_baseUrl}/portal-tjmg/diarios-de-justica-eletronicos-djen/{data:yyyy-MM-dd}";
+                var diarioUrl = $"{_baseUrl}/portal-tjmg/diarios-de-justica-eletronicos-djen/{data.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
                 using var r2 = await _http.GetAsync(diarioUrl, ct);
 
                 if (!r2.IsSuccessStatusCode)

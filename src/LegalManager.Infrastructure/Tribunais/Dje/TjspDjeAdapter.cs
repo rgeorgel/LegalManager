@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -84,9 +85,9 @@ public class TjspDjeAdapter : IDjeAdapter
             if (inicio > maxInicio)
             {
                 _logger.LogInformation("[TJSP] Data inicio {Input} anterior ao limite de {Limite}, usando {Limite}",
-                    dataInicio?.ToString("dd/MM/yyyy") ?? "7 dias atr\u00e1s",
-                    maxInicio.ToString("dd/MM/yyyy"),
-                    maxInicio.ToString("dd/MM/yyyy"));
+                    dataInicio?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? "7 dias atr\u00e1s",
+                    maxInicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                    maxInicio.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
             }
 
             var todasPublicacoes = new List<DjePublicacao>();
@@ -107,7 +108,7 @@ public class TjspDjeAdapter : IDjeAdapter
                 if (!datasJaProcessadas.Add(dataParaConsulta.Date))
                 {
                     _logger.LogDebug("[TJSP] Data {Data} ja processada, pulando",
-                        dataParaConsulta.ToString("dd/MM/yyyy"));
+                        dataParaConsulta.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
                     continue;
                 }
 
@@ -121,7 +122,7 @@ public class TjspDjeAdapter : IDjeAdapter
                 if (cadernos.Count > 0)
                 {
                     _logger.LogInformation("[TJSP] {Count} cadernos para {Data}",
-                        cadernos.Count, dataParaConsulta.ToString("dd/MM/yyyy"));
+                        cadernos.Count, dataParaConsulta.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
                     foreach (var caderno in cadernos)
                     {
                         var pubs = await BaixarCadernoAsync(caderno, nome, ct);
@@ -132,7 +133,7 @@ public class TjspDjeAdapter : IDjeAdapter
                 else
                 {
                     _logger.LogWarning("[TJSP] Nenhum caderno encontrado para {Data} nem dias anteriores",
-                        dataParaConsulta.ToString("dd/MM/yyyy"));
+                        dataParaConsulta.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
                 }
 
                 diasProcessados++;
@@ -162,7 +163,7 @@ public class TjspDjeAdapter : IDjeAdapter
 
     private async Task<List<TjspCadernoInfo>> ListarCadernosAsync(DateTime data, CancellationToken ct)
     {
-        var url = $"{_baseUrl}/cdje/getListaDeCadernos.do?dtDiario={data:dd/MM/yyyy}";
+        var url = $"{_baseUrl}/cdje/getListaDeCadernos.do?dtDiario={data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}";
         Exception? ultimaEx = null;
 
         for (var tentativa = 0; tentativa < 3; tentativa++)
@@ -171,7 +172,7 @@ public class TjspDjeAdapter : IDjeAdapter
             {
                 var espera = TimeSpan.FromSeconds(Math.Pow(2, tentativa));
                 _logger.LogInformation("[TJSP] Retry {N} para {Data} após {Wait}s",
-                    tentativa, data.ToString("dd/MM/yyyy"), espera.TotalSeconds);
+                    tentativa, data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture), espera.TotalSeconds);
                 await Task.Delay(espera, ct);
             }
 
@@ -189,13 +190,13 @@ public class TjspDjeAdapter : IDjeAdapter
                 {
                     var body = await response.Content.ReadAsStringAsync(ct);
                     _logger.LogWarning("[TJSP] BadRequest para {Data} (tentativa {N}): {Body}",
-                        data.ToString("dd/MM/yyyy"), tentativa + 1, body);
+                        data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture), tentativa + 1, body);
                     ultimaEx = new HttpRequestException($"BadRequest: {body}");
                     continue;
                 }
 
                 _logger.LogWarning("[TJSP] Falha ao listar cadernos para {Data}: {Status}",
-                    data.ToString("dd/MM/yyyy"), response.StatusCode);
+                    data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture), response.StatusCode);
                 return [];
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -204,7 +205,7 @@ public class TjspDjeAdapter : IDjeAdapter
             }
         }
 
-        _logger.LogWarning("[TJSP] Todas tentativas exauridas para {Data}", data.ToString("dd/MM/yyyy"));
+        _logger.LogWarning("[TJSP] Todas tentativas exauridas para {Data}", data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
         return [];
     }
 
@@ -226,7 +227,7 @@ public class TjspDjeAdapter : IDjeAdapter
                 continue;
             }
 
-            _logger.LogInformation("[TJSP] Tentando dia anterior: {Data}", dia.ToString("dd/MM/yyyy"));
+            _logger.LogInformation("[TJSP] Tentando dia anterior: {Data}", dia.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
             var cadernos = await ListarCadernosAsync(dia, ct);
 
             if (cadernos.Count > 0)

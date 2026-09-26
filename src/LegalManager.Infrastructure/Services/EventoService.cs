@@ -124,7 +124,8 @@ public class EventoService : IEventoService
     public async Task<IEnumerable<AgendaItemDto>> GetAgendaAsync(AgendaFiltroDto filtro, CancellationToken ct = default)
     {
         var tenantId = _tenantContext.TenantId;
-        var now = DateTime.UtcNow;
+        // Eventos e prazos estão na hora "de parede" digitada; "agora" no fuso do escritório.
+        var now = FusoHorario.AgoraParede(await _context.DoTenantAsync(tenantId, ct));
 
         var eventosQuery = _context.Eventos
             .Where(e => e.TenantId == tenantId && e.DataHora >= filtro.De && e.DataHora <= filtro.Ate);

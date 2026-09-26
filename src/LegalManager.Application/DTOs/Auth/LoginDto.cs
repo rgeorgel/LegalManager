@@ -35,7 +35,10 @@ public record UsuarioInfoDto(
     string NomeEscritorio,
     string Plano,
     DateTime? UltimoAcessoEm,
-    TenantThemeDto? Tema
+    TenantThemeDto? Tema,
+    // "novo" | "classico" | null (padrão = novo). Vem no login para o <head> de
+    // pages/dashboard.html decidir o redirecionamento sem esperar outra requisição.
+    string? DashboardVersao = null
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

@@ -61,8 +61,8 @@ public class EmailService : IEmailService
             ("Free", _)    => "Plano Gratuito — sem expiração",
             (_, null)      => $"Plano {plano} — sem expiração",
             (_, DateTime d) when d > DateTime.UtcNow.AddDays(15)
-                           => $"Plano {plano} ativo até {d.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}",
-            (_, DateTime d) => $"Período de teste ativo até {d.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}",
+                           => $"Plano {plano} ativo até {BrasiliaTime.DeUtc(d).ToString("dd/MM/yyyy", PtBr)}",
+            (_, DateTime d) => $"Período de teste ativo até {BrasiliaTime.DeUtc(d).ToString("dd/MM/yyyy", PtBr)}",
         };
 
         var frontendUrl = _config["App:FrontendUrl"];
@@ -248,7 +248,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa,
         DateTime prazo, int diasRestantes, CancellationToken ct = default)
     {
-        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr);
+        var prazoStr = prazo.ToString("dd/MM/yyyy HH:mm", PtBr);
         var urgencia = diasRestantes == 0 ? "HOJE" : $"em {diasRestantes} dia(s)";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -267,7 +267,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa,
         DateTime prazo, int diasAtraso, CancellationToken ct = default)
     {
-        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy", PtBr);
+        var prazoStr = prazo.ToString("dd/MM/yyyy", PtBr);
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#7f1d1d;padding:24px;text-align:center;border-radius:8px 8px 0 0">
@@ -331,7 +331,7 @@ public class EmailService : IEmailService
                       <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                         <div style="color:#b91c1c;font-size:13px;margin-top:2px">
-                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}
+                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToString("dd/MM/yyyy", PtBr)}
                         </div>
                       </td>
                     </tr>
@@ -353,7 +353,7 @@ public class EmailService : IEmailService
                       <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                         <div style="color:#d97706;font-size:13px;margin-top:2px">
-                          vence hoje · {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr)}
+                          vence hoje · {t.Prazo.ToString("dd/MM/yyyy HH:mm", PtBr)}
                         </div>
                       </td>
                     </tr>
@@ -380,7 +380,7 @@ public class EmailService : IEmailService
                           <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                             <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                             <div style="color:#6b7280;font-size:13px;margin-top:2px">
-                              {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr)}
+                              {t.Prazo.ToString("dd/MM/yyyy HH:mm", PtBr)}
                             </div>
                           </td>
                         </tr>
@@ -415,7 +415,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
         DateTime dataHora, string? local, CancellationToken ct = default)
     {
-        var dtStr = dataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr);
+        var dtStr = dataHora.ToString("dd/MM/yyyy HH:mm", PtBr);
         var localStr = local != null ? $" — {local}" : "";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -461,7 +461,7 @@ public class EmailService : IEmailService
             var localLinha = string.IsNullOrEmpty(ev.Local) ? "" : $"<div style=\"color:#6b7280;font-size:13px;margin-top:2px\">📍 {System.Net.WebUtility.HtmlEncode(ev.Local)}</div>";
             sb.Append($"""
                     <tr>
-                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#1e40af;vertical-align:top">{ev.DataHora.ToLocalTime().ToString("HH:mm", PtBr)}</td>
+                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#1e40af;vertical-align:top">{ev.DataHora.ToString("HH:mm", PtBr)}</td>
                       <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(ev.Titulo)}</div>
                         {localLinha}

@@ -211,6 +211,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         if (!contatoExists) throw new KeyNotFoundException("Contato não encontrado.");
 
         var tenantId = _tenantContext.TenantId;
+        var agoraEscritorio = FusoHorario.AgoraParede(await _context.DoTenantAsync(tenantId, ct));
 
         var processosAtivos = await _context.ProcessoPartes
             .Where(pp => pp.ContatoId == contatoId && pp.Processo.TenantId == tenantId && pp.Processo.Status == Domain.Enums.StatusProcesso.Ativo)
@@ -237,7 +238,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
 
         var proximaTarefa = await _context.Tarefas
             .Where(t => t.ContatoId == contatoId && t.TenantId == tenantId
-                && t.Prazo != null && t.Prazo >= DateTime.UtcNow
+                && t.Prazo != null && t.Prazo >= agoraEscritorio
                 && t.Status != Domain.Enums.StatusTarefa.Concluida && t.Status != Domain.Enums.StatusTarefa.Cancelada)
             .OrderBy(t => t.Prazo)
             .FirstOrDefaultAsync(ct);
@@ -281,7 +282,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
             "Financeiro",
             l.DataPagamento ?? l.DataVencimento,
             $"{(l.Tipo == Domain.Enums.TipoLancamento.Receita ? "Receita" : "Despesa")} — {l.Categoria}",
-            $"R$ {l.Valor:N2} ({l.Status})",
+            $"R$ {l.Valor.ToString("N2", BrasiliaTime.PtBr)} ({l.Status})",
             l.ContratoHonorarioId != null ? (podeVerHonorarios ? $"/pages/honorarios-contrato-detalhe.html?id={l.ContratoHonorarioId}" : null)
                 : l.ProcessoId != null ? $"/pages/processo-detalhe.html?id={l.ProcessoId}"
                 : (podeVerFinanceiro ? "/pages/financeiro.html" : null))));
