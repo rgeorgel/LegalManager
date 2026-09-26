@@ -432,7 +432,8 @@ public class TenantImportServiceTests
         using var sourceCtx = CreateContext(nameof(ImportAsync_TenantInexistente_RetornaErro));
         var exportService = new TenantImportService(sourceCtx, new TenantAnonymizer(), CreatePasswordHasher(), NullLogger<TenantImportService>.Instance);
 
-        var fakeJson = BuildExportJson(Guid.NewGuid(), "X", new Dictionary<string, object>());
+        // Precisa de ao menos uma tabela: arquivo sem tabelas é rejeitado antes da busca do tenant.
+        var fakeJson = BuildExportJson(Guid.NewGuid(), "X", new Dictionary<string, object> { ["Contatos"] = Array.Empty<object>() });
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(fakeJson));
 
         await Assert.ThrowsAsync<KeyNotFoundException>(
@@ -610,7 +611,7 @@ public class TenantImportServiceTests
         var exportResult = await exportService.ExportAsync(source.Id);
 
         using var targetCtx = CreateContext(nameof(ImportAsync_ModoCreateNew_NomeDuplicado_RetornaErro) + "-tgt");
-        var existing = SeedTenant(targetCtx, "Nome Ja Existe");
+        var existing = SeedTenant(targetCtx, "Nome Já Existe");
         await targetCtx.SaveChangesAsync();
 
         var importService = new TenantImportService(targetCtx, new TenantAnonymizer(), CreatePasswordHasher(), NullLogger<TenantImportService>.Instance);
@@ -623,7 +624,7 @@ public class TenantImportServiceTests
                     Mode: TenantImportMode.CreateNew,
                     Payload: stream,
                     FileName: "export.json",
-                    NewTenantName: "Nome Já Existe"),
+                    NewTenantName: "  nome já existe "),  // comparação ignora caixa e espaços nas pontas
                 CancellationToken.None));
 
         Assert.Contains("Já existe um tenant", ex.Message);

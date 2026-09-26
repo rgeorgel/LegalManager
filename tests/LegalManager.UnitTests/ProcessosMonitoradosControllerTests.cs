@@ -2,6 +2,8 @@ using System.Net;
 using System.Text.Json;
 using LegalManager.API.Controllers;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Enums;
+using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Tribunais;
 using LegalManager.UnitTests.TestHelpers;
 using Microsoft.AspNetCore.Mvc;
@@ -28,9 +30,9 @@ public class ProcessosMonitoradosControllerTests
     }
 
     private static ProcessosMonitoradosController CreateController(
-        string responseJson, IEscavadorService? escavador = null) =>
+        string responseJson, IEscavadorService? escavador = null, PlanoTipo plano = PlanoTipo.Plus) =>
         new(CreateAdapter(responseJson), Mock.Of<ILogger<ProcessosMonitoradosController>>(),
-            FakeConsultaExternaLogService.Instance, escavador);
+            FakeConsultaExternaLogService.Instance, Mock.Of<ITenantContext>(t => t.Plano == plano), escavador);
 
     private const string HitComPartesJson = """
     {
@@ -190,7 +192,10 @@ public class ProcessosMonitoradosControllerTests
         Assert.Equal("Tribunal de Justiça de São Paulo", root.GetProperty("tribunal").GetString());
         Assert.Equal("1ª Vara Cível", root.GetProperty("vara").GetString());
         Assert.Equal("PROCEDIMENTO COMUM CÍVEL", root.GetProperty("classe").GetString());
-        Assert.Equal("Indenização por Dano Moral", root.GetProperty("assuntos").GetString());
+        // Sempre array (como no DataJud) — o frontend faz assuntos.join(...).
+        var assuntos = root.GetProperty("assuntos");
+        Assert.Equal(JsonValueKind.Array, assuntos.ValueKind);
+        Assert.Equal("Indenização por Dano Moral", Assert.Single(assuntos.EnumerateArray()).GetString());
         Assert.Equal(15000.50m, root.GetProperty("valorCausa").GetDecimal());
         Assert.Equal("TJSP", root.GetProperty("siglaTribunal").GetString());
         // Movimentações continuam vindo do endpoint de movimentações, não da capa.
@@ -239,5 +244,17 @@ public class ProcessosMonitoradosControllerTests
             {
                 Content = new StringContent(responseJson, System.Text.Encoding.UTF8, "application/json")
             });
+    }
+
+    [Fact]
+    public async Task Search_PlanoFree_DeveRetornar403SemConsultarApisExternas()
+    {
+        var escavador = new Mock<IEscavadorService>(MockBehavior.Strict);
+        var controller = CreateController(HitComPartesJson, escavador.Object, PlanoTipo.Free);
+
+        var result = await controller.Search("0000001-00.2024.8.26.0001", null, CancellationToken.None);
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, obj.StatusCode);
     }
 }

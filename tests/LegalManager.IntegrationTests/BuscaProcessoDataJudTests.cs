@@ -115,7 +115,8 @@ public class BuscaProcessoDataJudTests
         var (ctx, tenantId, userId) = await SeedTenantAsync();
         var tenantContext = CreateTenantContext(tenantId, userId);
         var monitoradosController = new ProcessosMonitoradosController(
-            CreateFakeDataJudAdapter(), Mock.Of<ILogger<ProcessosMonitoradosController>>(), FakeConsultaExternaLogService.Instance);
+            CreateFakeDataJudAdapter(), Mock.Of<ILogger<ProcessosMonitoradosController>>(), FakeConsultaExternaLogService.Instance,
+            tenantContext);
 
         var result = await monitoradosController.Search("0000001-00.2024.8.26.0100", null, CancellationToken.None);
 

@@ -158,10 +158,10 @@ public class PlanoRestricoesTests
     }
 
     [Theory]
-    [InlineData(PlanoTipo.Free, 20)]
+    [InlineData(PlanoTipo.Free, 10)]
     [InlineData(PlanoTipo.Plus, 20)]
-    [InlineData(PlanoTipo.Pro, 100)]
-    [InlineData(PlanoTipo.Max, 250)]
+    [InlineData(PlanoTipo.Pro, 40)]
+    [InlineData(PlanoTipo.Max, 80)]
     [InlineData(PlanoTipo.Enterprise, 500)]
     public void MaxProcessosMonitorados_ReturnsCorrectValue(PlanoTipo plano, int expected)
     {

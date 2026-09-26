@@ -1,3 +1,4 @@
+using System.Globalization;
 ﻿using LegalManager.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,10 @@ namespace LegalManager.Infrastructure.Services;
 
 public class EmailService : IEmailService
 {
+    // Formatação fixa em pt-BR: em formatos customizados a "/" vira o separador de
+    // data da cultura do servidor (ex.: "25-12-2026" em en-CA) e "C2" usaria a moeda local.
+    private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
+
     private readonly IResend _resend;
     private readonly IConfiguration _config;
     private readonly ILogger<EmailService> _logger;
@@ -56,8 +61,8 @@ public class EmailService : IEmailService
             ("Free", _)    => "Plano Gratuito — sem expiração",
             (_, null)      => $"Plano {plano} — sem expiração",
             (_, DateTime d) when d > DateTime.UtcNow.AddDays(15)
-                           => $"Plano {plano} ativo até {d.ToLocalTime():dd/MM/yyyy}",
-            (_, DateTime d) => $"Período de teste ativo até {d.ToLocalTime():dd/MM/yyyy}",
+                           => $"Plano {plano} ativo até {d.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}",
+            (_, DateTime d) => $"Período de teste ativo até {d.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}",
         };
 
         var frontendUrl = _config["App:FrontendUrl"];
@@ -243,7 +248,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa,
         DateTime prazo, int diasRestantes, CancellationToken ct = default)
     {
-        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr);
         var urgencia = diasRestantes == 0 ? "HOJE" : $"em {diasRestantes} dia(s)";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -262,7 +267,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa,
         DateTime prazo, int diasAtraso, CancellationToken ct = default)
     {
-        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy");
+        var prazoStr = prazo.ToLocalTime().ToString("dd/MM/yyyy", PtBr);
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#7f1d1d;padding:24px;text-align:center;border-radius:8px 8px 0 0">
@@ -326,7 +331,7 @@ public class EmailService : IEmailService
                       <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                         <div style="color:#b91c1c;font-size:13px;margin-top:2px">
-                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToLocalTime():dd/MM/yyyy}
+                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy", PtBr)}
                         </div>
                       </td>
                     </tr>
@@ -348,7 +353,7 @@ public class EmailService : IEmailService
                       <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                         <div style="color:#d97706;font-size:13px;margin-top:2px">
-                          vence hoje · {t.Prazo.ToLocalTime():dd/MM/yyyy HH:mm}
+                          vence hoje · {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr)}
                         </div>
                       </td>
                     </tr>
@@ -375,7 +380,7 @@ public class EmailService : IEmailService
                           <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                             <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                             <div style="color:#6b7280;font-size:13px;margin-top:2px">
-                              {t.Prazo.ToLocalTime():dd/MM/yyyy HH:mm}
+                              {t.Prazo.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr)}
                             </div>
                           </td>
                         </tr>
@@ -410,7 +415,7 @@ public class EmailService : IEmailService
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,
         DateTime dataHora, string? local, CancellationToken ct = default)
     {
-        var dtStr = dataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        var dtStr = dataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm", PtBr);
         var localStr = local != null ? $" — {local}" : "";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
@@ -456,7 +461,7 @@ public class EmailService : IEmailService
             var localLinha = string.IsNullOrEmpty(ev.Local) ? "" : $"<div style=\"color:#6b7280;font-size:13px;margin-top:2px\">📍 {System.Net.WebUtility.HtmlEncode(ev.Local)}</div>";
             sb.Append($"""
                     <tr>
-                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#1e40af;vertical-align:top">{ev.DataHora.ToLocalTime():HH:mm}</td>
+                      <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6;font-weight:600;color:#1e40af;vertical-align:top">{ev.DataHora.ToLocalTime().ToString("HH:mm", PtBr)}</td>
                       <td style="padding:10px 14px;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(ev.Titulo)}</div>
                         {localLinha}
@@ -546,7 +551,7 @@ public class EmailService : IEmailService
                     </tr>
                     <tr>
                       <td style="padding:12px 16px;background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Vencimento</td>
-                      <td style="padding:12px 16px;color:#dc2626;font-weight:600">{dataFinal:dd/MM/yyyy}</td>
+                      <td style="padding:12px 16px;color:#dc2626;font-weight:600">{dataFinal.ToString("dd/MM/yyyy", PtBr)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -666,8 +671,8 @@ public class EmailService : IEmailService
 
                 <div style="background:#f3f4f6;border-radius:8px;padding:20px;margin:24px 0">
                   <p style="margin:0 0 8px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Detalhes da cobrança</p>
-                  <p style="margin:4px 0;font-size:18px"><strong>Valor:</strong> {valor:C2}</p>
-                  <p style="margin:4px 0"><strong>Vencimento:</strong> {vencimento:dd/MM/yyyy}</p>
+                  <p style="margin:4px 0;font-size:18px"><strong>Valor:</strong> {valor.ToString("C2", PtBr)}</p>
+                  <p style="margin:4px 0"><strong>Vencimento:</strong> {vencimento.ToString("dd/MM/yyyy", PtBr)}</p>
                 </div>
 
                 {imgTag}
@@ -686,6 +691,6 @@ public class EmailService : IEmailService
               </div>
             </div>
             """;
-        await EnviarAsync(CriarMensagem(email, $"Cobrança de honorários — vencimento {vencimento:dd/MM/yyyy}", html));
+        await EnviarAsync(CriarMensagem(email, $"Cobrança de honorários — vencimento {vencimento.ToString("dd/MM/yyyy", PtBr)}", html));
     }
 }

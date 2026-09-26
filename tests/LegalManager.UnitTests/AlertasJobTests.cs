@@ -125,9 +125,11 @@ public class AlertasJobTests
         var job = new AlertasJob(ctx, mockEmail.Object, mockPrefs.Object, Mock.Of<ILogger<AlertasJob>>());
         await job.ExecutarAsync(hoje);
 
-        mockEmail.Verify(e => e.EnviarAlertaEventoAsync(
-            "resp@test.com", "Responsável", "Audiência",
-            It.IsAny<DateTime>(), It.IsAny<string?>()), Times.Once);
+        // Eventos são enviados num resumo consolidado por destinatário (um e-mail por pessoa).
+        mockEmail.Verify(e => e.EnviarResumoEventosAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Single().Titulo == "Audiência"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -402,9 +404,10 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
         await job.ExecutarAsync(hoje);
 
-        mockEmail.Verify(e => e.EnviarAlertaEventoAsync(
-            It.IsAny<string>(), It.IsAny<string>(), "Audiência",
-            It.IsAny<DateTime>(), It.IsAny<string?>()), Times.Once);
+        mockEmail.Verify(e => e.EnviarResumoEventosAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Any(i => i.Titulo == "Audiência")),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
