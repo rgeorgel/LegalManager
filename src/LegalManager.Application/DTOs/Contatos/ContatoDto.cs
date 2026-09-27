@@ -75,11 +75,12 @@ public record ContatoListItemDto(
     bool ImportadoAutomaticamente
 );
 
+// TiposContato/Tags: vazio ou null = sem filtro; vários valores = contato com qualquer um deles.
 public record ContatoFiltroDto(
     string? Busca,
-    TipoContato? TipoContato,
+    IReadOnlyList<TipoContato>? TiposContato,
     TipoPessoa? Tipo,
-    string? Tag,
+    IReadOnlyList<string>? Tags,
     bool? Ativo,
     bool? ImportadoAutomaticamente = null,
     int Page = 1,
@@ -183,17 +184,19 @@ public record ContatoAniversarianteDto(
 public record CreateContatoFiltroSalvoDto(
     [Required, MaxLength(100)] string Nome,
     string? Busca,
-    TipoContato? TipoContato,
+    IReadOnlyList<TipoContato>? TiposContato,
     TipoPessoa? Tipo,
-    string? Tag
+    IReadOnlyList<string>? Tags,
+    bool? ImportadoAutomaticamente = null
 );
 
 public record ContatoFiltroSalvoResponseDto(
     Guid Id,
     string Nome,
     string? Busca,
-    TipoContato? TipoContato,
+    IReadOnlyList<TipoContato> TiposContato,
     TipoPessoa? Tipo,
-    string? Tag,
+    IReadOnlyList<string> Tags,
+    bool? ImportadoAutomaticamente,
     DateTime CriadoEm
 );

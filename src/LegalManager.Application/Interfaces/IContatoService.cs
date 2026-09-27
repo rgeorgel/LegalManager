@@ -23,6 +23,8 @@ public interface IContatoService
 
     Task<IEnumerable<ContatoAniversarianteDto>> GetAniversariantesAsync(int? mes, CancellationToken ct = default);
 
+    Task<IEnumerable<string>> GetTagsAsync(CancellationToken ct = default);
+
     Task<ContatoFiltroSalvoResponseDto> AddFiltroSalvoAsync(CreateContatoFiltroSalvoDto dto, CancellationToken ct = default);
     Task<IEnumerable<ContatoFiltroSalvoResponseDto>> GetFiltrosSalvosAsync(CancellationToken ct = default);
     Task RemoveFiltroSalvoAsync(Guid filtroId, CancellationToken ct = default);

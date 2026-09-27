@@ -84,14 +84,14 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll("busca", "Cliente", "PF", "tag1", true, null, 2, 50, "nome", "asc", CancellationToken.None);
+        await controller.GetAll("busca", ["Cliente", "Perito"], "PF", ["tag1", "tag2"], true, null, 2, 50, "nome", "asc", CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ContatoFiltroDto>(f =>
                 f.Busca == "busca" &&
-                f.TipoContato == TipoContato.Cliente &&
+                f.TiposContato!.SequenceEqual(new[] { TipoContato.Cliente, TipoContato.Perito }) &&
                 f.Tipo == TipoPessoa.PF &&
-                f.Tag == "tag1" &&
+                f.Tags!.SequenceEqual(new[] { "tag1", "tag2" }) &&
                 f.Ativo == true &&
                 f.Page == 2 &&
                 f.PageSize == 50 &&
@@ -109,10 +109,10 @@ public class ContatosControllerTests
         var audit = CreateAuditServiceMock();
         var controller = new ContatosController(service.Object, portalService.Object, tenantContext.Object, audit.Object);
 
-        await controller.GetAll(null, "InvalidTipoContato", "InvalidTipo", null, null, null, 1, 20, null, null, CancellationToken.None);
+        await controller.GetAll(null, ["InvalidTipoContato", "Cliente"], "InvalidTipo", null, null, null, 1, 20, null, null, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
-            It.Is<ContatoFiltroDto>(f => f.TipoContato == null && f.Tipo == null),
+            It.Is<ContatoFiltroDto>(f => f.TiposContato!.SequenceEqual(new[] { TipoContato.Cliente }) && f.Tipo == null),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

@@ -58,9 +58,8 @@ test('filtro de tags está presente na barra de filtros', async ({ adminPage: pa
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 
   await expect(page.locator('#filtTag')).toBeVisible({ timeout: 5_000 });
-  // Deve começar com "Todas as tags"
-  const firstOption = await page.locator('#filtTag option').first().textContent();
-  expect(firstOption?.trim()).toBe('Todas as tags');
+  // Sem seleção, o botão mostra "Todas as tags"
+  await expect(page.locator('#filtTag .multiselect-label')).toHaveText('Todas as tags');
 });
 
 test('clicar em coluna ordenável dispara request com sortBy e sortDir', async ({ adminPage: page }) => {
@@ -129,29 +128,34 @@ test('ordenação persiste após reload da página', async ({ adminPage: page })
   expect(req.url()).toContain('sortDir=asc');
 });
 
-test('filtro de tag é enviado ao backend', async ({ adminPage: page }) => {
+test('várias tags e categorias são enviadas ao backend', async ({ adminPage: page }) => {
+  // Simula as tags do escritório para não depender dos dados do ambiente
+  await page.route('**/api/contatos/tags', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(['novo', 'vip']) }));
+
   await page.goto('/pages/contatos.html');
   await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-
   await page.evaluate(() => localStorage.removeItem('contatos.listState'));
+  await page.reload();
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
 
-  // Intercepta próxima request
+  await page.locator('#filtTag .multiselect-toggle').click();
+  await page.locator('#filtTag input[value="vip"]').check();
   const tagReq = page.waitForRequest(
-    (req) => req.url().includes('/api/contatos') && req.url().includes('tag='),
+    (req) => req.url().includes('/api/contatos?') && req.url().includes('tag=vip') && req.url().includes('tag=novo'),
     { timeout: 8_000 }
   );
+  await page.locator('#filtTag input[value="novo"]').check();
+  await tagReq;
+  await expect(page.locator('#filtTag .multiselect-label')).toHaveText('2 tags');
 
-  // Injeta uma opção manualmente (simula tags já carregadas) e dispara change
-  await page.evaluate(() => {
-    const sel = document.getElementById('filtTag') as HTMLSelectElement;
-    const opt = document.createElement('option');
-    opt.value = 'vip';
-    opt.textContent = 'vip';
-    sel.appendChild(opt);
-    sel.value = 'vip';
-    sel.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-
-  const req = await tagReq;
+  await page.locator('#filtTipoContato .multiselect-toggle').click();
+  await page.locator('#filtTipoContato input[value="Cliente"]').check();
+  const catReq = page.waitForRequest(
+    (req) => req.url().includes('tipoContato=Cliente') && req.url().includes('tipoContato=Perito'),
+    { timeout: 8_000 }
+  );
+  await page.locator('#filtTipoContato input[value="Perito"]').check();
+  const req = await catReq;
   expect(req.url()).toContain('tag=vip');
 });

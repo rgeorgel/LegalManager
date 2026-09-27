@@ -120,8 +120,11 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
                 (c.Email != null && c.Email.ToLower().Contains(busca)));
         }
 
-        if (filtro.TipoContato.HasValue)
-            query = query.Where(c => c.TipoContato == filtro.TipoContato.Value);
+        if (filtro.TiposContato is { Count: > 0 })
+        {
+            var tipos = filtro.TiposContato.Distinct().ToList();
+            query = query.Where(c => tipos.Contains(c.TipoContato));
+        }
 
         if (filtro.Tipo.HasValue)
             query = query.Where(c => c.Tipo == filtro.Tipo.Value);
@@ -132,8 +135,9 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         if (filtro.ImportadoAutomaticamente.HasValue)
             query = query.Where(c => c.ImportadoAutomaticamente == filtro.ImportadoAutomaticamente.Value);
 
-        if (!string.IsNullOrWhiteSpace(filtro.Tag))
-            query = query.Where(c => c.Tags.Any(t => t.Tag == filtro.Tag));
+        var tags = filtro.Tags?.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+        if (tags is { Count: > 0 })
+            query = query.Where(c => c.Tags.Any(t => tags.Contains(t.Tag)));
 
         var total = await query.CountAsync(ct);
         var items = await query
@@ -409,6 +413,17 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
             .Select(c => new ContatoAniversarianteDto(c.Id, c.Nome, c.DataNascimento!.Value, c.Email, c.Telefone));
     }
 
+    public async Task<IEnumerable<string>> GetTagsAsync(CancellationToken ct = default)
+    {
+        var tags = await _context.ContatoTags
+            .Where(t => t.Contato.TenantId == _tenantContext.TenantId)
+            .Select(t => t.Tag)
+            .Distinct()
+            .ToListAsync(ct);
+
+        return tags.OrderBy(t => t, StringComparer.Create(BrasiliaTime.PtBr, true));
+    }
+
     public async Task<ContatoFiltroSalvoResponseDto> AddFiltroSalvoAsync(CreateContatoFiltroSalvoDto dto, CancellationToken ct = default)
     {
         var filtro = new ContatoFiltroSalvo
@@ -418,9 +433,10 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
             UsuarioId = _tenantContext.UserId,
             Nome = dto.Nome,
             Busca = dto.Busca,
-            TipoContato = dto.TipoContato,
+            TiposContato = dto.TiposContato?.Distinct().ToList() ?? [],
             Tipo = dto.Tipo,
-            Tag = dto.Tag,
+            Tags = dto.Tags?.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).Distinct().ToList() ?? [],
+            ImportadoAutomaticamente = dto.ImportadoAutomaticamente,
             CriadoEm = DateTime.UtcNow
         };
 
@@ -451,7 +467,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
     }
 
     private static ContatoFiltroSalvoResponseDto MapToFiltroSalvoResponse(ContatoFiltroSalvo f) => new(
-        f.Id, f.Nome, f.Busca, f.TipoContato, f.Tipo, f.Tag, f.CriadoEm);
+        f.Id, f.Nome, f.Busca, f.TiposContato, f.Tipo, f.Tags, f.ImportadoAutomaticamente, f.CriadoEm);
 
     private static ContatoResponseDto MapToResponse(Contato c) => new(
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Oab, c.Email,

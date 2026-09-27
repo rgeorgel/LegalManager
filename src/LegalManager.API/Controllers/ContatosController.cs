@@ -29,9 +29,9 @@ public class ContatosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<ContatoListItemDto>>> GetAll(
         [FromQuery] string? busca,
-        [FromQuery] string? tipoContato,
+        [FromQuery] string[]? tipoContato,
         [FromQuery] string? tipo,
-        [FromQuery] string? tag,
+        [FromQuery] string[]? tag,
         [FromQuery] bool? ativo,
         [FromQuery] bool? importadoAutomaticamente,
         [FromQuery] int page = 1,
@@ -51,7 +51,10 @@ public class ContatosController : ControllerBase
 
         var filtro = new ContatoFiltroDto(
             busca,
-            tipoContato != null && Enum.TryParse<Domain.Enums.TipoContato>(tipoContato, true, out var tc) ? tc : null,
+            tipoContato?
+                .Select(v => Enum.TryParse<Domain.Enums.TipoContato>(v, true, out var tc) ? tc : (Domain.Enums.TipoContato?)null)
+                .OfType<Domain.Enums.TipoContato>()
+                .ToList(),
             tipo != null && Enum.TryParse<Domain.Enums.TipoPessoa>(tipo, true, out var tp) ? tp : null,
             tag, ativo, importadoAutomaticamente, page, pageSize,
             normalizedSortBy, normalizedSortDir);
@@ -111,6 +114,13 @@ public class ContatosController : ControllerBase
     public async Task<ActionResult<IEnumerable<ContatoDuplicadoGrupoDto>>> GetDuplicados(CancellationToken ct)
     {
         var result = await _service.GetDuplicadosAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpGet("tags")]
+    public async Task<ActionResult<IEnumerable<string>>> GetTags(CancellationToken ct)
+    {
+        var result = await _service.GetTagsAsync(ct);
         return Ok(result);
     }
 

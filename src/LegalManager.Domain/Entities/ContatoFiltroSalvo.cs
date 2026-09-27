@@ -9,9 +9,10 @@ public class ContatoFiltroSalvo
     public Guid UsuarioId { get; set; }
     public string Nome { get; set; } = string.Empty;
     public string? Busca { get; set; }
-    public TipoContato? TipoContato { get; set; }
+    public List<TipoContato> TiposContato { get; set; } = [];
     public TipoPessoa? Tipo { get; set; }
-    public string? Tag { get; set; }
+    public List<string> Tags { get; set; } = [];
+    public bool? ImportadoAutomaticamente { get; set; }
     public DateTime CriadoEm { get; set; }
 
     public Tenant Tenant { get; set; } = null!;

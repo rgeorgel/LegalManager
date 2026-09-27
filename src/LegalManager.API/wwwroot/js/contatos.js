@@ -3,9 +3,10 @@ import { apiFetch } from './api.js';
 export async function getContatos(filtro = {}) {
   const params = new URLSearchParams();
   if (filtro.busca) params.set('busca', filtro.busca);
-  if (filtro.tipoContato) params.set('tipoContato', filtro.tipoContato);
+  // tipoContato e tag aceitam um valor ou uma lista (contatos com qualquer um deles).
+  for (const v of [].concat(filtro.tipoContato || [])) params.append('tipoContato', v);
   if (filtro.tipo) params.set('tipo', filtro.tipo);
-  if (filtro.tag) params.set('tag', filtro.tag);
+  for (const v of [].concat(filtro.tag || [])) params.append('tag', v);
   if (filtro.ativo !== undefined) params.set('ativo', filtro.ativo);
   if (filtro.importadoAutomaticamente !== undefined) params.set('importadoAutomaticamente', filtro.importadoAutomaticamente);
   if (filtro.sortBy) params.set('sortBy', filtro.sortBy);
@@ -95,6 +96,12 @@ export async function getAniversariantes(mes) {
   const params = new URLSearchParams();
   if (mes) params.set('mes', mes);
   return apiFetch(`/contatos/aniversariantes?${params}`);
+}
+
+// ── Tags (todas as usadas no escritório) ──────────────────────────────────
+
+export async function getContatoTags() {
+  return apiFetch('/contatos/tags');
 }
 
 // ── Filtros salvos ────────────────────────────────────────────────────────
