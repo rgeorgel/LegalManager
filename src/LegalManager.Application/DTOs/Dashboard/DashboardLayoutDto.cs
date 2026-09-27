@@ -1,7 +1,10 @@
 namespace LegalManager.Application.DTOs.Dashboard;
 
-/// <summary>Um item do dashboard (bloco ou KPI): id definido pelo frontend, largura em colunas (1–3) e visibilidade.</summary>
-public record DashboardWidgetDto(string Id, int Largura = 1, bool Oculto = false);
+/// <summary>
+/// Um item do dashboard (bloco ou KPI): id definido pelo frontend, largura em colunas (1–3),
+/// altura em blocos (0.5, 1 ou 2) e visibilidade.
+/// </summary>
+public record DashboardWidgetDto(string Id, int Largura = 1, bool Oculto = false, double Altura = 1);
 
 /// <summary>
 /// Layout do dashboard, na ordem de exibição, por seção: <c>Widgets</c> (blocos do grid)

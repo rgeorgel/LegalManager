@@ -30,11 +30,11 @@ detectarTemaEscuro();
 
 const user = getUser();
 
-// Aplica o layout personalizado (KPIs e blocos: ordem, largura e visibilidade) o quanto antes.
+// Aplica o layout personalizado (KPIs e blocos: ordem, largura, altura e visibilidade) o quanto antes.
 initDashboardLayout({
   secoes: [
     { chave: 'kpis', grid: document.getElementById('d2Kpis'), attr: 'kpi', compacto: true },
-    { chave: 'widgets', grid: document.getElementById('d2Grid'), attr: 'widget', larguras: true },
+    { chave: 'widgets', grid: document.getElementById('d2Grid'), attr: 'widget', larguras: true, alturas: true },
   ],
   botao: document.getElementById('d2Personalizar'),
   userId: user?.id,

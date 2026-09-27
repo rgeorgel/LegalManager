@@ -1,5 +1,5 @@
 // Personalização do dashboard: o usuário reordena (drag and drop ou setas),
-// muda a largura (1–3 colunas, onde a seção permite) e oculta itens. O layout
+// muda a largura (1–3 colunas) e a altura (½, 1 ou 2 — onde a seção permite) e oculta itens. O layout
 // é salvo por usuário em PUT /api/dashboard/layout e espelhado no localStorage
 // só para aplicar sem "piscar" no próximo carregamento — o banco é a fonte da
 // verdade.
@@ -14,9 +14,13 @@ import { trackEvent } from './analytics.js';
 
 import { esc } from './utils.js';
 const LARGURAS = [1, 2, 3];
+// Altura em "blocos": ½ = uma linha do grid, 1 = duas (padrão), 2 = quatro (ver .d2-grid em dashboard.html).
+const ALTURAS = [1, 2, 0.5];
+const CLASSE_ALTURA = { 0.5: 'd2-hm', 2: 'd2-h2' };
+const ROTULO_ALTURA = { 0.5: '½', 1: '1', 2: '2' };
 
 /**
- * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, compacto?: boolean }} Secao
+ * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, alturas?: boolean, compacto?: boolean }} Secao
  * @param {{ secoes: Secao[], botao: HTMLElement, userId?: string }} opts
  */
 export function initDashboardLayout({ secoes, botao, userId }) {
@@ -58,10 +62,20 @@ export function initDashboardLayout({ secoes, botao, userId }) {
     return el.classList.contains('d2-w3') ? 3 : el.classList.contains('d2-w2') ? 2 : 1;
   }
 
+  function alturaDe(el) {
+    return el.classList.contains('d2-hm') ? 0.5 : el.classList.contains('d2-h2') ? 2 : 1;
+  }
+
+  function definirAltura(el, altura) {
+    el.classList.remove('d2-hm', 'd2-h2');
+    if (CLASSE_ALTURA[altura]) el.classList.add(CLASSE_ALTURA[altura]);
+  }
+
   function lerDoDom(s) {
     return [...s.grid.querySelectorAll(s.sel)].map(el => ({
       id: s.id(el),
       largura: larguraDe(el),
+      altura: alturaDe(el),
       oculto: el.classList.contains('d2-oculto'),
     }));
   }
@@ -78,6 +92,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
       lista.push({
         id: w.id,
         largura: s.larguras && LARGURAS.includes(w.largura) ? w.largura : 1,
+        altura: s.alturas && ALTURAS.includes(w.altura) ? w.altura : 1,
         oculto: !!w.oculto,
       });
     }
@@ -92,6 +107,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
       s.grid.appendChild(el);
       el.classList.remove('d2-w2', 'd2-w3');
       if (w.largura > 1) el.classList.add(`d2-w${w.largura}`);
+      definirAltura(el, w.altura);
       el.classList.toggle('d2-oculto', w.oculto);
       atualizarFerramentas(s, el);
     }
@@ -185,7 +201,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
     editBar = document.createElement('div');
     editBar.className = 'd2-editbar';
     editBar.innerHTML = `
-      <div class="d2-editbar-msg">Arraste os indicadores e blocos ou use as setas para reorganizar. Ajuste a largura (↔) e oculte o que não usa.</div>
+      <div class="d2-editbar-msg">Arraste os indicadores e blocos ou use as setas para reorganizar. Ajuste a largura (↔), a altura (↕) e oculte o que não usa.</div>
       <div class="d2-editbar-acoes">
         <button type="button" class="btn btn-secondary btn-sm" data-acao="padrao">Restaurar padrão</button>
         <button type="button" class="btn btn-secondary btn-sm" data-acao="cancelar">Cancelar</button>
@@ -213,6 +229,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
         <button type="button" data-w="antes" title="Mover para antes" aria-label="Mover ${titulo} para antes"><span class="d2-h">‹</span><span class="d2-v">↑</span></button>
         <button type="button" data-w="depois" title="Mover para depois" aria-label="Mover ${titulo} para depois"><span class="d2-h">›</span><span class="d2-v">↓</span></button>
         ${s.larguras ? '<button type="button" data-w="largura" title="Largura (colunas)"></button>' : ''}
+        ${s.alturas ? '<button type="button" data-w="altura" title="Altura (½, 1 ou 2 blocos)"></button>' : ''}
         <button type="button" data-w="ocultar"></button>
       </span>`;
     el.prepend(t);
@@ -226,6 +243,12 @@ export function initDashboardLayout({ secoes, botao, userId }) {
     if (bLarg) {
       bLarg.textContent = `↔ ${larguraDe(el)}`;
       bLarg.setAttribute('aria-label', `Largura: ${larguraDe(el)} coluna(s). Clique para alterar`);
+    }
+    const bAlt = t.querySelector('[data-w="altura"]');
+    if (bAlt) {
+      const rotulo = ROTULO_ALTURA[alturaDe(el)];
+      bAlt.textContent = `↕ ${rotulo}`;
+      bAlt.setAttribute('aria-label', `Altura: ${rotulo} bloco(s). Clique para alterar`);
     }
     const oculto = el.classList.contains('d2-oculto');
     const bOc = t.querySelector('[data-w="ocultar"]');
@@ -255,6 +278,8 @@ export function initDashboardLayout({ secoes, botao, userId }) {
         const prox = LARGURAS[(LARGURAS.indexOf(larguraDe(el)) + 1) % LARGURAS.length];
         el.classList.remove('d2-w2', 'd2-w3');
         if (prox > 1) el.classList.add(`d2-w${prox}`);
+      } else if (acao === 'altura') {
+        definirAltura(el, ALTURAS[(ALTURAS.indexOf(alturaDe(el)) + 1) % ALTURAS.length]);
       } else if (acao === 'ocultar') {
         el.classList.toggle('d2-oculto');
       }
@@ -346,8 +371,8 @@ function injectStyles() {
     .d2-editbar-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
     @media (max-width: 700px) {
       .d2-editbar { top: calc(var(--header-height) + 4px); }
-      /* Grid de blocos vira uma coluna: largura não se aplica e a ordem é vertical. */
-      .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns [data-w="largura"] { display: none; }
+      /* Grid de blocos vira uma coluna: largura e altura não se aplicam e a ordem é vertical. */
+      .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns :is([data-w="largura"], [data-w="altura"]) { display: none; }
       .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns .d2-h { display: none; }
       .d2-secao:not(.d2-secao-compacta) .d2-wtools-btns .d2-v { display: inline; }
     }

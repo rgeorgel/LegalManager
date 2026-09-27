@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.API.Controllers;
 
-// Layout personalizado do dashboard (ordem, largura e visibilidade dos blocos e
+// Layout personalizado do dashboard (ordem, largura, altura e visibilidade dos blocos e
 // dos KPIs do topo), salvo por usuário em Usuario.DashboardLayout. Os ids dos blocos são definidos
 // pelo frontend: aqui só validamos formato e limites, para que blocos novos não
 // exijam mudança no backend — ids desconhecidos são ignorados pela página.
@@ -66,6 +66,7 @@ public partial class DashboardController : ControllerBase
         if (itens.Count > MaxWidgets) return $"Máximo de {MaxWidgets} itens por seção.";
         if (itens.Any(w => w.Id is null || !WidgetIdRegex().IsMatch(w.Id))) return "Id de item inválido.";
         if (itens.Any(w => w.Largura is < 1 or > 3)) return "Largura deve ser entre 1 e 3 colunas.";
+        if (itens.Any(w => w.Altura is not (0.5 or 1 or 2))) return "Altura deve ser ½, 1 ou 2 blocos.";
         if (itens.Select(w => w.Id).Distinct().Count() != itens.Count) return "Itens duplicados.";
         return null;
     }

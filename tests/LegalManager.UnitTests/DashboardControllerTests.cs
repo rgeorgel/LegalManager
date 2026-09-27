@@ -46,16 +46,21 @@ public class DashboardControllerTests
         var layout = Layout(
             new DashboardWidgetDto("agenda", 2),
             new DashboardWidgetDto("prazos"),
-            new DashboardWidgetDto("financeiro", 1, Oculto: true));
+            new DashboardWidgetDto("financeiro", 1, Oculto: true),
+            new DashboardWidgetDto("areas", Altura: 0.5),
+            new DashboardWidgetDto("notificacoes", Altura: 2));
 
         Assert.IsType<OkObjectResult>((await controller.SalvarLayout(layout, CancellationToken.None)).Result);
 
         Assert.NotNull((await ctx.Users.FindAsync(usuario.Id))!.DashboardLayout);
         var ok = Assert.IsType<OkObjectResult>((await controller.GetLayout(CancellationToken.None)).Result);
         var salvo = Assert.IsType<DashboardLayoutDto>(ok.Value).Widgets!;
-        Assert.Equal(new[] { "agenda", "prazos", "financeiro" }, salvo.Select(w => w.Id));
+        Assert.Equal(new[] { "agenda", "prazos", "financeiro", "areas", "notificacoes" }, salvo.Select(w => w.Id));
         Assert.Equal(2, salvo[0].Largura);
+        Assert.Equal(1, salvo[0].Altura);
         Assert.True(salvo[2].Oculto);
+        Assert.Equal(0.5, salvo[3].Altura);
+        Assert.Equal(2, salvo[4].Altura);
     }
 
     [Fact]
@@ -80,6 +85,9 @@ public class DashboardControllerTests
         Layout(new DashboardWidgetDto("<script>")),
         Layout(new DashboardWidgetDto("agenda", 0)),
         Layout(new DashboardWidgetDto("agenda", 4)),
+        Layout(new DashboardWidgetDto("agenda", Altura: 0)),
+        Layout(new DashboardWidgetDto("agenda", Altura: 1.5)),
+        Layout(new DashboardWidgetDto("agenda", Altura: 3)),
         Layout(new DashboardWidgetDto("agenda"), new DashboardWidgetDto("agenda")),
         new DashboardLayoutDto(Enumerable.Range(0, 51).Select(i => new DashboardWidgetDto($"w{i}")).ToList()),
     };
@@ -135,7 +143,9 @@ public class DashboardControllerTests
         var ok = Assert.IsType<OkObjectResult>((await controller.GetLayout(CancellationToken.None)).Result);
         var salvo = Assert.IsType<DashboardLayoutDto>(ok.Value);
 
-        Assert.Equal(2, Assert.Single(salvo.Widgets!).Largura);
+        var bloco = Assert.Single(salvo.Widgets!);
+        Assert.Equal(2, bloco.Largura);
+        Assert.Equal(1, bloco.Altura); // layouts salvos antes da altura existir: padrão
         Assert.Null(salvo.Kpis);
     }
 

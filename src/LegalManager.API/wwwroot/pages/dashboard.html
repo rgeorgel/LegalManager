@@ -158,7 +158,20 @@
     .d2-kpi.locked { opacity: .65; }
 
     /* Grids */
+    /* Cada linha do grid é "meio bloco": altura 1 (padrão) ocupa 2 linhas e cresce com o conteúdo;
+       ½ ocupa 1 e 2 ocupa 4. Nesses dois a altura é fixa (contain: size) — o conteúdo rola dentro
+       do card, com as listas preenchendo o espaço. "dense" deixa dois blocos de ½ empilharem.
+       Em uma coluna (≤700px) a altura não se aplica: cada bloco fica na altura do conteúdo. */
     .d2-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+    @media (min-width: 701px) {
+      .d2-grid { grid-auto-rows: minmax(160px, auto); grid-auto-flow: row dense; }
+      .d2-grid > * { grid-row: span 2; }
+      .d2-grid > .d2-hm { grid-row: span 1; }
+      .d2-grid > .d2-h2 { grid-row: span 4; }
+      .d2-grid > :is(.d2-hm, .d2-h2):not(.d2-oculto) { contain: size; overflow-y: auto; display: flex; flex-direction: column; }
+      .d2-grid > :is(.d2-hm, .d2-h2) > * { flex-shrink: 0; }
+      .d2-grid > :is(.d2-hm, .d2-h2) :is(.d2-list, .d2-events) { flex: 1 1 0; min-height: 60px; max-height: none; }
+    }
     .d2-w2 { grid-column: span 2; }
     .d2-w3 { grid-column: 1 / -1; }
     .d2-oculto { display: none; }
@@ -511,7 +524,7 @@
           </a>
         </section>
 
-        <!-- Blocos personalizáveis (ordem, largura e visibilidade salvas por usuário —
+        <!-- Blocos personalizáveis (ordem, largura, altura e visibilidade salvas por usuário —
              ver /js/dashboard-layout.js). A ordem aqui é o layout padrão. -->
         <section class="d2-grid" id="d2Grid">
           <div class="d2-card" data-widget="prazos" data-titulo="Prazos e tarefas">
