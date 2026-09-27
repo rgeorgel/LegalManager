@@ -1,4 +1,5 @@
 using LegalManager.Application.DTOs.Auth;
+using LegalManager.Application.DTOs.CodigosPromocionais;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Services;
@@ -34,6 +35,22 @@ public class AuthController : ControllerBase
             return Ok(result);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    // Validação ao vivo do campo "Código promocional" do cadastro. O cadastro revalida
+    // tudo de novo — isto é só para o visitante ver o benefício antes de enviar.
+    [HttpGet("codigo-promocional/{codigo}")]
+    [EnableRateLimiting("codigo-promocional")]
+    public async Task<ActionResult<CodigoPromocionalPublicoDto>> ValidarCodigoPromocional(string codigo, CancellationToken ct)
+    {
+        try
+        {
+            var promo = await _authService.ValidarCodigoPromocionalAsync(codigo, ct);
+            return Ok(new CodigoPromocionalPublicoDto(
+                promo.Codigo, promo.Descricao, promo.TemPeriodoGratis ? promo.Plano : null, promo.DiasGratuitos,
+                promo.DescontoPercentual, promo.DescontoPercentual.HasValue ? promo.DescontoMeses : null));
+        }
+        catch (InvalidOperationException ex) { return NotFound(new { message = ex.Message }); }
     }
 
     [HttpPost("login")]

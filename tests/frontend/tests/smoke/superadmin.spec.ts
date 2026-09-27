@@ -8,6 +8,7 @@ const SUPERADMIN_PAGES = [
   '/superadmin/waitlist.html',
   '/superadmin/tema.html',
   '/superadmin/consultas.html',
+  '/superadmin/codigos-promocionais.html',
 ];
 
 for (const pagePath of SUPERADMIN_PAGES) {

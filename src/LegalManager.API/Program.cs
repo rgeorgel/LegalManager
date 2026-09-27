@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using LegalManager.API.Middleware;
@@ -340,6 +341,17 @@ builder.Services.AddRateLimiter(options =>
         opt.PermitLimit = 10;
         opt.QueueLimit = 0;
     });
+    // Por IP: o campo do cadastro consulta a cada digitação (com debounce), e não pode
+    // dividir a cota global de "auth" nem servir para varrer códigos.
+    options.AddPolicy("codigo-promocional", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetClientIpAddress(),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 20,
+                QueueLimit = 0
+            }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 

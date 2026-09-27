@@ -37,8 +37,12 @@ public record CriarCheckoutAssinaturaInput(
     string Plano,
     string Periodo,
     string ReturnUrl,
-    string CompletionUrl
+    string CompletionUrl,
+    DescontoAssinaturaInput? Desconto = null
 );
+
+/// <summary>Desconto de código promocional: Percentual% por Meses ciclos (null = para sempre).</summary>
+public record DescontoAssinaturaInput(string CodigoPromocional, int Percentual, int? Meses);
 
 public record AtualizarAssinaturaInput(
     string SubscriptionId,

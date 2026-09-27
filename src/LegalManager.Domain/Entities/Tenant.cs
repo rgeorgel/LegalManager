@@ -26,6 +26,14 @@ public class Tenant
     public DateTime? BillingCycleStart { get; set; }
     public string? VoucherUtilizado { get; set; }
 
+    // Código promocional cujo desconto vale na assinatura: o do cadastro (se tiver desconto)
+    // ou um aplicado depois na tela de assinatura.
+    public string? CodigoDesconto { get; set; }
+
+    // Quando o desconto de CodigoDesconto foi usado num checkout de assinatura. Null = ainda
+    // disponível. O desconto só vale na primeira assinatura.
+    public DateTime? DescontoPromocionalUsadoEm { get; set; }
+
     public string? PrimaryColor { get; set; }
     public string? SidebarColor { get; set; }
     public string? AccentColor { get; set; }

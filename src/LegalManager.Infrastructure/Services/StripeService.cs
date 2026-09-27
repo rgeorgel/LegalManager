@@ -42,10 +42,18 @@ public class StripeService : IStripeService
             ["periodo"] = input.Periodo
         };
 
+        List<SessionDiscountOptions>? discounts = null;
+        if (input.Desconto is { } desconto)
+        {
+            discounts = [new() { Coupon = await ObterOuCriarCupomAsync(desconto, ct) }];
+            metadata["codigoPromocional"] = desconto.CodigoPromocional;
+        }
+
         var sessionService = new SessionService(_stripeClient);
         var session = await sessionService.CreateAsync(new SessionCreateOptions
         {
             Mode = "subscription",
+            Discounts = discounts,
             Customer = customerId,
             PaymentMethodTypes = new List<string> { "card" },
             LineItems = new List<SessionLineItemOptions>
@@ -206,6 +214,38 @@ public class StripeService : IStripeService
 
         _logger.LogInformation("Cliente Stripe criado: {CustomerId} para tenant {TenantId}", customer.Id, tenantId);
         return customer.Id;
+    }
+
+    /// <summary>
+    /// Um cupom Stripe por combinação código/percentual/duração — o id muda se o super admin
+    /// editar o desconto do código, e cupons de assinaturas já criadas não são afetados.
+    /// </summary>
+    private async Task<string> ObterOuCriarCupomAsync(DescontoAssinaturaInput desconto, CancellationToken ct)
+    {
+        var cupomId = $"causify-{desconto.CodigoPromocional}-{desconto.Percentual}off-{(desconto.Meses is { } m ? $"{m}m" : "sempre")}";
+
+        var couponService = new CouponService(_stripeClient);
+        try
+        {
+            var existente = await couponService.GetAsync(cupomId, cancellationToken: ct);
+            return existente.Id;
+        }
+        catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+        {
+        }
+
+        var nome = $"{desconto.CodigoPromocional.ToUpperInvariant()} {desconto.Percentual}% off";
+        var cupom = await couponService.CreateAsync(new CouponCreateOptions
+        {
+            Id = cupomId,
+            Name = nome.Length > 40 ? nome[..40] : nome,
+            PercentOff = desconto.Percentual,
+            Duration = desconto.Meses.HasValue ? "repeating" : "forever",
+            DurationInMonths = desconto.Meses
+        }, cancellationToken: ct);
+
+        _logger.LogInformation("Cupom Stripe criado: {CouponId}", cupom.Id);
+        return cupom.Id;
     }
 
     private async Task<string> ObterOuCriarPrecoAsync(string plano, string periodo, CancellationToken ct)

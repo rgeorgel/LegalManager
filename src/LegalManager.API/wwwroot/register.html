@@ -378,39 +378,84 @@
     const voucherBanner = document.getElementById('voucherBanner');
     const planSelector = document.querySelector('.plan-selector');
 
-    const VOUCHER_PRIMEIROS20 = 'primeiros20';
+    // Valor do radio de cada plano (enum PlanoTipo) — o backend devolve o nome.
+    const PLANO_RADIO = { Plus: '3', Pro: '1', Max: '4' };
+    let voucherTimer = null;
+    let voucherSeq = 0;
+
+    function setVoucherBanner(texto, ok) {
+      voucherBanner.textContent = texto;
+      voucherBanner.style.color = ok ? '#16a34a' : '#f87171';
+      voucherBanner.style.borderColor = ok ? 'rgba(22,163,74,0.4)' : 'rgba(248,113,113,0.4)';
+      voucherBanner.style.background = ok ? 'rgba(22,163,74,0.08)' : 'rgba(248,113,113,0.08)';
+      voucherBanner.style.display = 'block';
+    }
+
+    function liberarPlanos() {
+      planSelector.style.pointerEvents = '';
+      planSelector.style.opacity = '';
+    }
+
+    function descreverBeneficio(promo) {
+      const partes = [];
+      if (promo.plano && promo.diasGratuitos > 0) {
+        partes.push(`${promo.diasGratuitos} ${promo.diasGratuitos === 1 ? 'dia' : 'dias'} do plano ${promo.plano} gratuito`);
+      }
+      if (promo.descontoPercentual) {
+        const duracao = promo.descontoMeses == null ? ''
+          : promo.descontoMeses === 1 ? ' no 1º mês' : ` por ${promo.descontoMeses} meses`;
+        partes.push(`${promo.descontoPercentual}% de desconto na assinatura${duracao}`);
+      }
+      return `${partes.join(' + ')} — aproveite!`;
+    }
+
+    // O cadastro revalida o código no servidor; aqui é só para mostrar o benefício antes.
+    async function validarVoucher(code) {
+      const seq = ++voucherSeq;
+      try {
+        const res = await fetch(`/api/auth/codigo-promocional/${encodeURIComponent(code)}`);
+        if (seq !== voucherSeq) return; // o usuário continuou digitando
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) {
+          // Só o período grátis define o plano; código só de desconto deixa escolher.
+          const radio = PLANO_RADIO[body.plano];
+          if (radio) {
+            selectPlan(radio);
+            planSelector.style.pointerEvents = 'none';
+            planSelector.style.opacity = '0.5';
+          }
+          setVoucherBanner(body.descricao || descreverBeneficio(body), true);
+          requestAnimationFrame(scrollToSelectedPlan);
+        } else {
+          liberarPlanos();
+          setVoucherBanner(
+            res.status === 429 ? 'Muitas tentativas. Aguarde um minuto e tente novamente.'
+              : body.message || 'Código promocional não reconhecido.',
+            false);
+        }
+      } catch {
+        if (seq !== voucherSeq) return;
+        liberarPlanos();
+        voucherBanner.style.display = 'none';
+      }
+    }
 
     function applyVoucherUI(code) {
-      if (code.toLowerCase() === VOUCHER_PRIMEIROS20) {
-        selectPlan('3'); // força Plus
-        planSelector.style.pointerEvents = 'none';
-        planSelector.style.opacity = '0.5';
-        voucherBanner.textContent = '30 dias do plano Plus gratuito — aproveite!';
-        voucherBanner.style.color = '#16a34a';
-        voucherBanner.style.borderColor = 'rgba(22,163,74,0.4)';
-        voucherBanner.style.background = 'rgba(22,163,74,0.08)';
-        voucherBanner.style.display = 'block';
-      } else if (code.length > 0) {
-        voucherBanner.textContent = 'Código promocional não reconhecido.';
-        voucherBanner.style.color = '#f87171';
-        voucherBanner.style.borderColor = 'rgba(248,113,113,0.4)';
-        voucherBanner.style.background = 'rgba(248,113,113,0.08)';
-        voucherBanner.style.display = 'block';
-        planSelector.style.pointerEvents = '';
-        planSelector.style.opacity = '';
-      } else {
+      clearTimeout(voucherTimer);
+      voucherSeq++;
+      liberarPlanos();
+      if (!code) {
         voucherBanner.style.display = 'none';
-        planSelector.style.pointerEvents = '';
-        planSelector.style.opacity = '';
+        return;
       }
+      voucherTimer = setTimeout(() => validarVoucher(code), 400);
     }
 
     // Pre-fill voucher from URL param ?voucher=
     const voucherParam = params.get('voucher');
     if (voucherParam) {
       voucherInput.value = voucherParam.toUpperCase();
-      applyVoucherUI(voucherParam);
-      requestAnimationFrame(scrollToSelectedPlan);
+      applyVoucherUI(voucherParam.trim());
     }
 
     voucherInput.addEventListener('input', () => applyVoucherUI(voucherInput.value.trim()));

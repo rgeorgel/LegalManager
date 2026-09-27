@@ -316,7 +316,12 @@
     .toggle-wrapper { display: flex; justify-content: center; margin-bottom: 28px; }
     .config-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px; }
     .config-section-title { font-weight: 700; font-size: 15px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
-  </style>
+    .codigo-promo { margin-bottom: 16px; }
+  .codigo-promo label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .codigo-promo-row { display: flex; gap: 8px; max-width: 420px; }
+  .codigo-promo-row input { flex: 1; min-width: 0; text-transform: uppercase; letter-spacing: .04em; }
+  .codigo-promo-msg { margin-top: 6px; font-size: 12px; color: var(--color-danger); }
+</style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
 <body>
@@ -354,6 +359,17 @@
         <div id="membroDesde" style="font-size:13px;font-weight:600">—</div>
       </div>
     </div>
+
+    <div id="descontoPromo" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;color:#15803d;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.35)"></div>
+
+    <form id="codigoPromoForm" class="codigo-promo" style="display:none" novalidate>
+      <label for="codigoPromoInput" id="codigoPromoLabel">Tem um código promocional?</label>
+      <div class="codigo-promo-row">
+        <input type="text" id="codigoPromoInput" class="form-control" maxlength="50" placeholder="Digite o código" autocomplete="off">
+        <button type="submit" id="codigoPromoBtn" class="btn btn-secondary">Aplicar</button>
+      </div>
+      <div id="codigoPromoMsg" class="codigo-promo-msg" hidden></div>
+    </form>
 
     <!-- Tab navigation -->
     <div class="tab-nav">
@@ -669,6 +685,15 @@ import { esc } from '/js/utils.js';
         document.getElementById('membroDesde').textContent = !isNaN(criado) ? criado.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '–';
       }
 
+      const descontoEl = document.getElementById('descontoPromo');
+      if (data.descontoPromocional) {
+        descontoEl.textContent = `🎟️ Código ${data.descontoPromocional.codigo.toUpperCase()}: ${descreverDesconto(data.descontoPromocional)} na sua assinatura. O desconto é aplicado automaticamente no checkout.`;
+        descontoEl.style.display = '';
+      } else {
+        descontoEl.style.display = 'none';
+      }
+
+      atualizarCodigoPromo(data);
       updateCards(data);
     } catch (e) {
       console.error(e);
@@ -910,6 +935,54 @@ import { esc } from '/js/utils.js';
 
   const _precosMensais = { Plus: 20, Pro: 50, Max: 125 };
 
+  // Campo "código promocional": só para o admin de quem ainda não assinou nem usou um
+  // desconto (ver AssinaturaController.MotivoNaoPodeAplicarCodigo). Aplicar um novo
+  // código troca o desconto pendente.
+  function atualizarCodigoPromo(data) {
+    const form = document.getElementById('codigoPromoForm');
+    form.style.display = isAdmin && data.podeAplicarCodigoPromocional ? '' : 'none';
+    document.getElementById('codigoPromoLabel').textContent = data.descontoPromocional
+      ? 'Tem outro código promocional?'
+      : 'Tem um código promocional?';
+  }
+
+  document.getElementById('codigoPromoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('codigoPromoInput');
+    const btn = document.getElementById('codigoPromoBtn');
+    const msg = document.getElementById('codigoPromoMsg');
+    const codigo = input.value.trim();
+    msg.hidden = true;
+    if (!codigo) {
+      msg.textContent = 'Informe o código promocional.';
+      msg.hidden = false;
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Aplicando...';
+    try {
+      const desconto = await apiFetch('/assinatura/codigo-promocional', {
+        method: 'POST',
+        body: JSON.stringify({ codigo })
+      });
+      input.value = '';
+      showToast(`Código ${desconto.codigo.toUpperCase()} aplicado: ${descreverDesconto(desconto)}.`, true);
+      await loadPlano();
+    } catch (err) {
+      msg.textContent = err.message ?? 'Não foi possível aplicar o código.';
+      msg.hidden = false;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Aplicar';
+    }
+  });
+
+  function descreverDesconto(d) {
+    const duracao = d.meses == null ? '' : d.meses === 1 ? ' no 1º mês' : ` nos ${d.meses} primeiros meses`;
+    return `${d.percentual}% de desconto${duracao}`;
+  }
+
   async function iniciarCheckout(planoAlvo) {
     const btn = document.getElementById(`btn${planoAlvo}`);
     const originalText = btn.textContent;
@@ -984,7 +1057,9 @@ import { esc } from '/js/utils.js';
     }
 
     modalTitle.textContent = `Assinar plano ${planoAlvo}`;
-    modalBody.textContent = `Você será redirecionado para o checkout seguro. O plano ${planoAlvo} custa R$ ${fmt(precoFull)}/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.`;
+    modalBody.textContent = result.desconto
+      ? `Você será redirecionado para o checkout seguro. O plano ${planoAlvo} custa R$ ${fmt(precoFull)}/mês — com o código ${result.desconto.codigo.toUpperCase()}, você paga R$ ${fmt(result.valorProrado)}/mês (${descreverDesconto(result.desconto)}). Após confirmar o pagamento, seu acesso será ativado automaticamente.`
+      : `Você será redirecionado para o checkout seguro. O plano ${planoAlvo} custa R$ ${fmt(precoFull)}/mês. Após confirmar o pagamento, seu acesso será ativado automaticamente.`;
     confirmBtn.textContent = 'Ir para o checkout';
     confirmBtn.className = 'btn btn-primary';
     modal.style.display = 'flex';

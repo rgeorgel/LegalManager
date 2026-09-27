@@ -43,17 +43,22 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterTenantAsync(RegisterTenantDto dto, CancellationToken ct = default)
     {
-        var beneficio = string.IsNullOrWhiteSpace(dto.Voucher)
+        var promo = string.IsNullOrWhiteSpace(dto.Voucher)
             ? null
-            : await AplicarVoucherAsync(dto.Voucher, ct);
+            : await ValidarCodigoPromocionalAsync(dto.Voucher, ct);
+
+        // Só o período grátis muda o plano/status do cadastro; um código só de desconto
+        // segue o fluxo normal e fica guardado para o checkout da assinatura.
+        var agora = DateTime.UtcNow;
+        var beneficio = promo is { TemPeriodoGratis: true }
+            ? new VoucherBeneficio(promo.Plano!.Value, agora.AddDays(promo.DiasGratuitos))
+            : null;
 
         var ganhaTrialBoasVindas = beneficio is null && dto.Plano == PlanoTipo.Free;
         var planoFinal = beneficio?.Plano ?? (ganhaTrialBoasVindas ? PlanoTipo.Plus : dto.Plano);
 
         if (planoFinal is PlanoTipo.Enterprise)
             throw new InvalidOperationException("Este plano não está disponível para cadastro direto.");
-
-        var agora = DateTime.UtcNow;
 
         var tenant = new Tenant
         {
@@ -70,7 +75,8 @@ public class AuthService : IAuthService
             TrialConcedidoEm = ganhaTrialBoasVindas ? agora : null,
             TrialConcedidoDias = ganhaTrialBoasVindas ? TrialGratisConstants.DiasTrialBoasVindasFree : null,
             TrialConcedidoMotivo = ganhaTrialBoasVindas ? TrialGratisConstants.MotivoTrialBoasVindasFree : null,
-            VoucherUtilizado = beneficio != null ? dto.Voucher!.Trim().ToLowerInvariant() : null
+            VoucherUtilizado = promo?.Codigo,
+            CodigoDesconto = promo is { TemDesconto: true } ? promo.Codigo : null
         };
 
         _context.Tenants.Add(tenant);
@@ -487,24 +493,8 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(bytes);
     }
 
-    private async Task<VoucherBeneficio> AplicarVoucherAsync(string voucher, CancellationToken ct)
-    {
-        var code = voucher.Trim().ToLowerInvariant();
-        var section = _config.GetSection($"Vouchers:{code}");
-
-        if (!section.Exists())
-            throw new InvalidOperationException("Voucher inválido.");
-
-        var maxUsos = section.GetValue<int>("MaxUsos");
-        var usosAtuais = await _context.Tenants.CountAsync(t => t.VoucherUtilizado == code, ct);
-        if (usosAtuais >= maxUsos)
-            throw new InvalidOperationException("Voucher esgotado.");
-
-        var planoTipo = (PlanoTipo)section.GetValue<int>("PlanoTipo");
-        var meses = section.GetValue<int>("MesesGratuitos");
-
-        return new VoucherBeneficio(planoTipo, DateTime.UtcNow.AddMonths(meses));
-    }
+    public Task<CodigoPromocional> ValidarCodigoPromocionalAsync(string codigo, CancellationToken ct = default) =>
+        CodigosPromocionais.ValidarAsync(_context, codigo, ct: ct);
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

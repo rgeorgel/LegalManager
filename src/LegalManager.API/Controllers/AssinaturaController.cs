@@ -58,8 +58,68 @@ public class AssinaturaController(
             planoExpiraEm = tenant.PlanoExpiraEm,
             trialExpiraEm = tenant.TrialExpiraEm,
             criadoEm = tenant.CriadoEm,
-            temBilling = tenant.StripeSubscriptionId != null
+            temBilling = tenant.StripeSubscriptionId != null,
+            podeAplicarCodigoPromocional = MotivoNaoPodeAplicarCodigo(tenant) is null,
+            descontoPromocional = await ObterDescontoPendenteAsync(tenant, ct) is { } promo
+                ? new DescontoPromocionalDto(promo.Codigo, promo.DescontoPercentual!.Value, promo.DescontoMeses)
+                : null
         });
+    }
+
+    /// <summary>
+    /// Desconto do código promocional do tenant (cadastro ou aplicado aqui), se ainda não foi
+    /// aproveitado numa assinatura. Vale mesmo se o código foi desativado/expirou depois.
+    /// </summary>
+    private async Task<CodigoPromocional?> ObterDescontoPendenteAsync(Tenant tenant, CancellationToken ct)
+    {
+        if (tenant.CodigoDesconto is null || tenant.DescontoPromocionalUsadoEm is not null)
+            return null;
+
+        var promo = await context.CodigosPromocionais
+            .FirstOrDefaultAsync(c => c.Codigo == tenant.CodigoDesconto, ct);
+        return promo is { TemDesconto: true } ? promo : null;
+    }
+
+    // O desconto entra como cupom no checkout de uma assinatura nova — quem já tem assinatura
+    // Stripe troca de plano in-place (sem checkout), então não teria onde aplicá-lo.
+    private static string? MotivoNaoPodeAplicarCodigo(Tenant tenant) =>
+        tenant.DescontoPromocionalUsadoEm is not null ? "Você já utilizou um desconto promocional."
+        : !string.IsNullOrEmpty(tenant.StripeSubscriptionId) ? "Códigos promocionais valem apenas para uma nova assinatura."
+        : null;
+
+    /// <summary>
+    /// Aplica um código promocional a um tenant já cadastrado. Só o desconto vale aqui —
+    /// dias grátis são exclusivos do cadastro. Substitui um desconto pendente anterior.
+    /// </summary>
+    [HttpPost("codigo-promocional")]
+    [Authorize(Roles = "Admin")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("codigo-promocional")]
+    public async Task<IActionResult> AplicarCodigoPromocional([FromBody] AplicarCodigoPromocionalDto dto, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Codigo))
+            return BadRequest(new { message = "Informe o código promocional." });
+
+        var tenant = await context.Tenants.FindAsync([tenantContext.TenantId], ct);
+        if (tenant is null) return NotFound();
+
+        if (MotivoNaoPodeAplicarCodigo(tenant) is { } motivo)
+            return BadRequest(new { message = motivo });
+
+        CodigoPromocional promo;
+        try
+        {
+            promo = await CodigosPromocionais.ValidarAsync(context, dto.Codigo, tenant.Id, ct);
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+
+        if (!promo.TemDesconto)
+            return BadRequest(new { message = "Este código não oferece desconto na assinatura — ele é válido apenas para novos cadastros." });
+
+        tenant.CodigoDesconto = promo.Codigo;
+        await context.SaveChangesAsync(ct);
+
+        logger.LogInformation("Código promocional {Codigo} aplicado ao tenant {TenantId}", promo.Codigo, tenant.Id);
+        return Ok(new DescontoPromocionalDto(promo.Codigo, promo.DescontoPercentual!.Value, promo.DescontoMeses));
     }
 
     [HttpGet("trial-boas-vindas")]
@@ -168,6 +228,10 @@ public class AssinaturaController(
             });
         }
 
+        var promo = await ObterDescontoPendenteAsync(tenant, ct);
+        var desconto = promo is null ? null
+            : new DescontoAssinaturaInput(promo.Codigo, promo.DescontoPercentual!.Value, promo.DescontoMeses);
+
         StripeCheckoutResultDto result;
         try
         {
@@ -181,7 +245,8 @@ public class AssinaturaController(
                 Plano: planoAlvo.ToString(),
                 Periodo: dto.Periodo,
                 ReturnUrl: returnUrl,
-                CompletionUrl: completionUrl
+                CompletionUrl: completionUrl,
+                Desconto: desconto
             ), ct);
             result = new StripeCheckoutResultDto(checkout.CheckoutUrl, checkout.CustomerId);
         }
@@ -195,12 +260,16 @@ public class AssinaturaController(
         tenant.PeriodoBilling = dto.Periodo;
         await context.SaveChangesAsync(ct);
 
+        var precoCheio = _precosPorPlano.GetValueOrDefault(planoAlvo, 0m);
         return Ok(new
         {
             requerConfirmacao = false,
             checkoutUrl = result.CheckoutUrl,
             prorado = false,
-            valorProrado = _precosPorPlano.GetValueOrDefault(planoAlvo, 0m)
+            valorProrado = desconto is null ? precoCheio
+                : Math.Round(precoCheio * (100 - desconto.Percentual) / 100m, 2),
+            desconto = desconto is null ? null
+                : new DescontoPromocionalDto(desconto.CodigoPromocional, desconto.Percentual, desconto.Meses)
         });
     }
 
@@ -457,6 +526,8 @@ public class WebhookController(
         tenant.TrialConcedidoEm = null;
         tenant.TrialConcedidoDias = null;
         tenant.TrialConcedidoMotivo = null;
+        if (session.Metadata.ContainsKey("codigoPromocional"))
+            tenant.DescontoPromocionalUsadoEm ??= DateTime.UtcNow;
 
         context.Faturamentos.Add(new Faturamento
         {
@@ -557,6 +628,8 @@ public class WebhookController(
 
 public record IniciarCheckoutDto(string Periodo, string Plano = "Pro");
 public record ComprarCreditosDto(string PacoteId);
+public record AplicarCodigoPromocionalDto(string Codigo);
+public record DescontoPromocionalDto(string Codigo, int Percentual, int? Meses);
 public record TrialGratisBoasVindasStatusDto(bool Exibir, int DiasRestantes, DateTime? TrialExpiraEm);
 
 public static class PacotesCreditos

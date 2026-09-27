@@ -18,7 +18,8 @@ const NAV_GROUPS = [
     items: [
       { href: '/superadmin/waitlist.html', label: '📋 Waitlist' },
       { href: '/superadmin/perguntas.html', label: '💬 Perguntas' },
-      { href: '/superadmin/grupos.html', label: '👥 Grupos' }
+      { href: '/superadmin/grupos.html', label: '👥 Grupos' },
+      { href: '/superadmin/codigos-promocionais.html', label: '🎟️ Códigos promocionais' }
     ]
   },
   {
