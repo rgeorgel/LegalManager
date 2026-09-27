@@ -44,10 +44,14 @@ const free = isPlanoFree();
 const planoPro = ['Pro', 'Max', 'Enterprise'].includes(plano);
 
 if (free) {
-  // Atalhos para telas de planos pagos ganham o selo do plano.
+  // Atalhos para telas de planos pagos ganham o selo do plano e, no clique, o aviso de upgrade.
   document.querySelectorAll('.d2-atalhos a[data-plano]').forEach(a => {
     a.classList.add('bloq');
     a.title += ` — disponível no plano ${a.dataset.plano}`;
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      showUpgradeToast(a.dataset.plano);
+    });
   });
   document.getElementById('d2IndPlus').style.display = '';
   document.getElementById('d2Indicadores').addEventListener('click', e => {
