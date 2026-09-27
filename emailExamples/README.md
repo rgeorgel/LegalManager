@@ -16,7 +16,7 @@ Abra `index.html` no navegador — ele lista todos os emails com links para cada
 | `trial-expirando.html` | `EnviarTrialExpirandoAsync` | Job diário — trial expira em 7, 3 ou 1 dia(s) | Admin |
 | `resumo-tarefas.html` | `EnviarResumoTarefasAsync` | Resumo diário único: tarefas atrasadas/hoje/próximas **e** prazos (Tarefa tipo Prazo + Evento tipo Prazo da Agenda) — inclui o dia do vencimento | Usuário |
 | `alerta-evento.html` | `EnviarAlertaEventoAsync` | Template legado de evento único (mantido para reuso) | Usuário |
-| `resumo-eventos.html` | `EnviarResumoEventosAsync` | Job agrupa eventos de amanhã por destinatário e envia um único email por usuário/dia | Usuário |
+| `resumo-eventos.html` | `EnviarResumoEventosAsync` | Job agrupa eventos de amanhã (exceto tipo Prazo, que vai no resumo de tarefas) por destinatário e envia um único email por usuário/dia | Usuário |
 | `novo-andamento.html` | `EnviarNovoAndamentoAsync` | Monitoramento captura novo andamento processual | Usuário |
 | `acesso-portal.html` | `EnviarAcessoPortalAsync` | Escritório libera acesso do cliente ao Portal | Cliente |
 | `andamento-traduzido.html` | `EnviarAndamentoTraduzidoAsync` | Opt-in: andamento traduzido por IA para o cliente | Cliente |
@@ -41,7 +41,7 @@ Todos os HTMLs estão definidos em `src/LegalManager.Infrastructure/Services/Ema
 
 A maioria dos emails automáticos é disparada pelo `AlertasJob.cs` e `MonitoramentoJob.cs`:
 
-- **Resumo diário de tarefas e prazos** — todo dia no horário configurado; janelas de hoje, D+1, D+3, D+5 antes do vencimento, e até 5 dias de atraso depois. Cobre Tarefas, Tarefas tipo Prazo e Eventos tipo Prazo da Agenda, tudo no mesmo email
+- **Resumo diário de tarefas e prazos** — todo dia no horário configurado; janelas de hoje, D+1, D+3, D+5 antes do vencimento, e até 5 dias de atraso depois. Cobre Tarefas, Tarefas tipo Prazo e Eventos tipo Prazo da Agenda, tudo no mesmo email. Cada item segue a preferência da sua categoria ("Prazos" para os dois tipos de prazo; "Tarefas"/"Tarefas atrasadas" para as demais), e o "hoje" é o do fuso do escritório
 - **Alerta de evento** — 1 dia antes de cada evento da agenda
 - **Trial expirando** — diário, verifica tenants com trial em 7/3/1 dia(s)
 - **Novo andamento** — disparado pelo `MonitoramentoService` sempre que uma consulta a tribunais retorna novidades

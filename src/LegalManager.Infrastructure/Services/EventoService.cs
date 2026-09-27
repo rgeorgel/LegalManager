@@ -30,7 +30,8 @@ public class EventoService : IEventoService
             DataHora = dto.DataHora,
             DataHoraFim = dto.DataHoraFim,
             Local = dto.Local,
-            ResponsavelId = dto.ResponsavelId,
+            // Sem responsável o evento não entra em nenhum alerta (AlertasJob) — assume quem criou.
+            ResponsavelId = dto.ResponsavelId ?? _tenantContext.UserId,
             ProcessoId = dto.ProcessoId,
             Observacoes = dto.Observacoes,
             CriadoEm = DateTime.UtcNow
@@ -53,8 +54,9 @@ public class EventoService : IEventoService
         evento.DataHora = dto.DataHora;
         evento.DataHoraFim = dto.DataHoraFim;
         evento.Local = dto.Local;
-        evento.ResponsavelId = dto.ResponsavelId;
-        evento.ProcessoId = dto.ProcessoId;
+        // Omitidos no PUT = mantém o que já estava (a Agenda não tinha esses campos e apagava).
+        evento.ResponsavelId = dto.ResponsavelId ?? evento.ResponsavelId ?? _tenantContext.UserId;
+        evento.ProcessoId = dto.ProcessoId ?? evento.ProcessoId;
         evento.Observacoes = dto.Observacoes;
         evento.AtualizadoEm = DateTime.UtcNow;
 

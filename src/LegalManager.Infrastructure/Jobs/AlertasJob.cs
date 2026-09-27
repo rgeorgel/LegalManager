@@ -25,25 +25,56 @@ public class AlertasJob
         _logger = logger;
     }
 
-    public Task ExecutarAsync() => ExecutarAsync(BrasiliaTime.Hoje);
+    public Task ExecutarAsync() => ExecutarAsync(null);
 
-    public async Task ExecutarAsync(DateTime hoje)
+    /// <param name="hojeFixo">
+    /// Força o "hoje" de todos os escritórios (testes). Nulo = hoje no fuso de cada escritório
+    /// (Configurações → Perfil do Escritório), no mesmo referencial "de parede" de prazos e eventos.
+    /// </param>
+    public async Task ExecutarAsync(DateTime? hojeFixo)
     {
         using var activity = Telemetry.Hangfire.StartActivity($"{nameof(AlertasJob)}.{nameof(ExecutarAsync)}");
         activity?.SetTag("job.cron", "alertas-diarios");
-        await AlertarTarefasAsync(hoje);
-        await AlertarEventosAsync(hoje);
-        await AlertarTrialExpirandoAsync(hoje);
+        await AlertarTarefasAsync(hojeFixo);
+        await AlertarEventosAsync(hojeFixo);
+        await AlertarTrialExpirandoAsync(hojeFixo ?? BrasiliaTime.Hoje);
+    }
+
+    private async Task<DateTime> HojeDoTenantAsync(Guid tenantId, DateTime? hojeFixo) =>
+        hojeFixo?.Date ?? FusoHorario.HojeParede(await _context.DoTenantAsync(tenantId));
+
+    // Os fusos do Brasil ficam a no máximo 1 dia de Brasília, então buscamos no banco uma janela
+    // folgada em torno do "hoje" de Brasília e o recorte exato é feito por escritório depois.
+    private const int FolgaFusoDias = 1;
+
+    private async Task<(bool Email, bool InApp)> PreferenciaAsync(
+        Dictionary<string, (bool, bool)> cache, Guid tenantId, Guid usuarioId, string categoria)
+    {
+        if (cache.TryGetValue(categoria, out var p)) return p;
+        p = (await _prefs.PermiteEmailAsync(tenantId, usuarioId, categoria),
+             await _prefs.PermiteInAppAsync(tenantId, usuarioId, categoria));
+        cache[categoria] = p;
+        return p;
     }
 
     // Tarefas e Prazos aparecem juntos na mesma tela (Tarefas/Prazos), então viram um só
     // e-mail diário: um prazo pode ter sido criado como Tarefa (Tipo=Prazo) ou direto como
     // Evento na Agenda (Tipo=Prazo) — as duas origens entram no mesmo resumo, nas mesmas
     // janelas (hoje, D+1, D+3, D+5 antes de vencer; até 5 dias de atraso depois).
-    private async Task AlertarTarefasAsync(DateTime hoje)
+    // Cada item respeita a preferência da sua categoria — "Prazos" para os dois tipos de prazo,
+    // "PrazoTarefa"/"TarefaAtrasada" para as demais tarefas —, separadamente para e-mail e in-app.
+    private async Task AlertarTarefasAsync(DateTime? hojeFixo)
     {
+        var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
+        const int limiteDiasAtraso = 5;
+
+        var baseHoje = hojeFixo?.Date ?? BrasiliaTime.Hoje;
+        var buscaDe = baseHoje.AddDays(-limiteDiasAtraso - FolgaFusoDias);
+        var buscaAte = baseHoje.AddDays(janelasFuturas.Max() + 1 + FolgaFusoDias);
+
         var tarefas = await _context.Tarefas
             .Where(t => t.Prazo.HasValue &&
+                        t.Prazo.Value >= buscaDe && t.Prazo.Value < buscaAte &&
                         t.Status != StatusTarefa.Concluida &&
                         t.Status != StatusTarefa.Cancelada &&
                         t.Status != StatusTarefa.Perdida)
@@ -56,13 +87,14 @@ public class AlertasJob
                 DestinatarioId = t.ResponsavelId ?? t.CriadoPorId,
                 DestinatarioNome = t.ResponsavelId.HasValue ? t.Responsavel!.Nome : t.CriadoPor!.Nome,
                 DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email,
-                Origem = "Tarefas"
+                EhPrazo = t.Tipo == TipoTarefa.Prazo
             })
             .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
             .ToListAsync();
 
         var prazosAgenda = await _context.Eventos
-            .Where(e => e.Tipo == TipoEvento.Prazo && e.ResponsavelId.HasValue)
+            .Where(e => e.Tipo == TipoEvento.Prazo && e.ResponsavelId.HasValue &&
+                        e.DataHora >= buscaDe && e.DataHora < buscaAte)
             .Select(e => new
             {
                 e.Id,
@@ -72,22 +104,12 @@ public class AlertasJob
                 DestinatarioId = e.ResponsavelId!.Value,
                 DestinatarioNome = e.Responsavel!.Nome,
                 DestinatarioEmail = e.Responsavel!.Email,
-                Origem = "Prazos"
+                EhPrazo = true
             })
             .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
             .ToListAsync();
 
-        var hojeStr = hoje.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        var janelasFuturas = new HashSet<int> { 0, 1, 3, 5 };
-        const int limiteDiasAtraso = 5;
-
-        bool NaJanela(DateTime prazo) => prazo.Date < hoje.AddDays(6) && prazo.Date >= hoje.AddDays(-limiteDiasAtraso);
-
-        var candidatas = tarefas.Where(t => NaJanela(t.Prazo))
-            .Concat(prazosAgenda.Where(e => NaJanela(e.Prazo)))
-            .ToList();
-
-        var grupos = candidatas
+        var grupos = tarefas.Concat(prazosAgenda)
             .GroupBy(t => new { t.TenantId, t.DestinatarioId, t.DestinatarioNome, t.DestinatarioEmail })
             .ToList();
 
@@ -95,78 +117,64 @@ public class AlertasJob
         {
             try
             {
-                var itens = new List<ResumoTarefaItem>();
-                var categorias = new HashSet<string>();
+                var hoje = await HojeDoTenantAsync(grupo.Key.TenantId, hojeFixo);
+                var prefs = new Dictionary<string, (bool, bool)>();
+                var itensEmail = new List<ResumoTarefaItem>();
+                var itensInApp = new List<ResumoTarefaItem>();
 
-                foreach (var t in grupo)
+                foreach (var t in grupo.OrderBy(t => t.Prazo))
                 {
                     var diasPrazo = (t.Prazo.Date - hoje).Days;
+                    if (diasPrazo < -limiteDiasAtraso) continue;
                     if (diasPrazo >= 0 && !janelasFuturas.Contains(diasPrazo)) continue;
 
-                    var ehAtrasada = diasPrazo < 0;
-                    // Prazo da Agenda não tem status "concluído" pra sumir da lista sozinho, então
-                    // sempre passa pela preferência "Prazos" antes de entrar — igual já fazíamos com
-                    // tarefa atrasada.
-                    var prefKey = t.Origem == "Prazos" ? "Prazos" : ehAtrasada ? "TarefaAtrasada" : "PrazoTarefa";
-                    if (ehAtrasada || t.Origem == "Prazos")
-                    {
-                        var permiteEmailItem = await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
-                        var permiteInAppItem = await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, prefKey);
-                        if (!permiteEmailItem && !permiteInAppItem) continue;
-                    }
+                    var categoria = t.EhPrazo ? "Prazos" : diasPrazo < 0 ? "TarefaAtrasada" : "PrazoTarefa";
+                    var (email, inApp) = await PreferenciaAsync(prefs, grupo.Key.TenantId, grupo.Key.DestinatarioId, categoria);
 
-                    categorias.Add(prefKey);
-                    itens.Add(new ResumoTarefaItem(t.Titulo, t.Prazo, diasPrazo));
+                    var item = new ResumoTarefaItem(t.Titulo, t.Prazo, diasPrazo);
+                    if (email) itensEmail.Add(item);
+                    if (inApp) itensInApp.Add(item);
                 }
 
-                if (itens.Count == 0) continue;
+                if (itensEmail.Count == 0 && itensInApp.Count == 0) continue;
 
+                var hojeStr = hoje.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
                 var chaveDigest = $"digest-tarefas-{grupo.Key.DestinatarioId}-{hojeStr}";
                 var jaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveDigest);
                 if (jaEnviado) continue;
 
-                // O e-mail é único, mas pode conter itens de categorias diferentes (Tarefas,
-                // TarefaAtrasada, Prazos) — mandamos se o usuário permitir pelo menos uma delas.
-                var permiteEmail = false;
-                var permiteInApp = false;
-                foreach (var categoria in categorias)
-                {
-                    permiteEmail |= await _prefs.PermiteEmailAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, categoria);
-                    permiteInApp |= await _prefs.PermiteInAppAsync(grupo.Key.TenantId, grupo.Key.DestinatarioId, categoria);
-                }
-
-                if (permiteEmail)
+                if (itensEmail.Count > 0)
                 {
                     await _emailService.EnviarResumoTarefasAsync(
-                        grupo.Key.DestinatarioEmail!, grupo.Key.DestinatarioNome!, itens);
+                        grupo.Key.DestinatarioEmail!, grupo.Key.DestinatarioNome!, itensEmail);
                 }
 
-                if (permiteInApp || permiteEmail)
+                // A notificação também é o registro de dedup do dia. Se o usuário desligou o
+                // in-app, ela só registra o envio do e-mail e já nasce lida.
+                var itensNotificacao = itensInApp.Count > 0 ? itensInApp : itensEmail;
+                var resumo = string.Join("\n", itensNotificacao.Select(i =>
+                    i.Dias < 0 ? $"• [ATRASADA {Math.Abs(i.Dias)}d] {i.Titulo}"
+                    : i.Dias == 0 ? $"• [HOJE] {i.Titulo}"
+                    : $"• [{i.Dias}d] {i.Titulo}"));
+                var atrasadasCount = itensNotificacao.Count(i => i.Dias < 0);
+                var titulo = atrasadasCount > 0
+                    ? $"{itensNotificacao.Count} tarefa(s) — {atrasadasCount} atrasada(s)"
+                    : $"{itensNotificacao.Count} tarefa(s) com prazo próximo";
+
+                _context.Notificacoes.Add(new Domain.Entities.Notificacao
                 {
-                    var resumo = string.Join("\n", itens.Select(i =>
-                        i.Dias < 0 ? $"• [ATRASADA {Math.Abs(i.Dias)}d] {i.Titulo}"
-                        : i.Dias == 0 ? $"• [HOJE] {i.Titulo}"
-                        : $"• [{i.Dias}d] {i.Titulo}"));
-                    var atrasadasCount = itens.Count(i => i.Dias < 0);
-                    var titulo = atrasadasCount > 0
-                        ? $"{itens.Count} tarefa(s) — {atrasadasCount} atrasada(s)"
-                        : $"{itens.Count} tarefa(s) com prazo próximo";
-
-                    _context.Notificacoes.Add(new Domain.Entities.Notificacao
-                    {
-                        Id = Guid.NewGuid(),
-                        TenantId = grupo.Key.TenantId,
-                        UsuarioId = grupo.Key.DestinatarioId,
-                        Tipo = TipoNotificacao.PrazoTarefa,
-                        Titulo = titulo,
-                        Mensagem = resumo,
-                        Url = "/pages/tarefas.html",
-                        Lida = false,
-                        CriadaEm = DateTime.UtcNow,
-                        ChaveDedup = chaveDigest
-                    });
-                    await _context.SaveChangesAsync();
-                }
+                    Id = Guid.NewGuid(),
+                    TenantId = grupo.Key.TenantId,
+                    UsuarioId = grupo.Key.DestinatarioId,
+                    Tipo = TipoNotificacao.PrazoTarefa,
+                    Titulo = titulo,
+                    Mensagem = resumo,
+                    Url = "/pages/tarefas.html",
+                    Lida = itensInApp.Count == 0,
+                    CriadaEm = DateTime.UtcNow,
+                    ChaveDedup = chaveDigest
+                });
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -175,12 +183,17 @@ public class AlertasJob
         }
     }
 
-    private async Task AlertarEventosAsync(DateTime hoje)
+    // Prazos (Tipo=Prazo) ficam de fora: já vão no resumo diário de tarefas/prazos acima, que
+    // cobre inclusive o D+1 — incluí-los aqui mandaria o mesmo prazo em dois e-mails.
+    private async Task AlertarEventosAsync(DateTime? hojeFixo)
     {
-        var amanha = hoje.AddDays(1);
+        var baseHoje = hojeFixo?.Date ?? BrasiliaTime.Hoje;
+        var buscaDe = baseHoje.AddDays(1 - FolgaFusoDias);
+        var buscaAte = baseHoje.AddDays(2 + FolgaFusoDias);
 
         var eventos = await _context.Eventos
-            .Where(e => e.DataHora.Date == amanha && e.ResponsavelId.HasValue)
+            .Where(e => e.Tipo != TipoEvento.Prazo && e.ResponsavelId.HasValue &&
+                        e.DataHora >= buscaDe && e.DataHora < buscaAte)
             .Select(e => new
             {
                 e.Id,
@@ -198,19 +211,24 @@ public class AlertasJob
             .GroupBy(e => new { e.TenantId, e.ResponsavelId, e.ResponsavelNome, e.ResponsavelEmail })
             .ToList();
 
-        foreach (var grupo in grupos)
+        foreach (var grupoBusca in grupos)
         {
-            var key = grupo.Key;
+            var key = grupoBusca.Key;
             if (key.ResponsavelId is null) continue;
 
             try
             {
+                var hoje = await HojeDoTenantAsync(key.TenantId, hojeFixo);
+                var amanha = hoje.AddDays(1);
+                var grupo = grupoBusca.Where(e => e.DataHora.Date == amanha).ToList();
+                if (grupo.Count == 0) continue;
+
                 var permiteEmail = await _prefs.PermiteEmailAsync(key.TenantId, key.ResponsavelId.Value, "PrazoEvento");
                 var permiteInApp = await _prefs.PermiteInAppAsync(key.TenantId, key.ResponsavelId.Value, "PrazoEvento");
 
                 // Dedup por usuário + dia — garante no máximo 1 email por destinatário por execução,
                 // independente de quantos eventos ele tenha amanhã ou de quantas vezes o job rodar.
-                var chaveDigest = $"eventos-{key.ResponsavelId}-1d-{hoje:yyyyMMdd}";
+                var chaveDigest = $"eventos-{key.ResponsavelId}-1d-{hoje.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}";
                 var digestJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveDigest);
 
                 if (permiteEmail && !string.IsNullOrEmpty(key.ResponsavelEmail) && !digestJaEnviado)
@@ -240,7 +258,7 @@ public class AlertasJob
                 {
                     foreach (var evento in grupo)
                     {
-                        var chaveInApp = $"evento-{evento.Id}-1d-{hoje:yyyyMMdd}";
+                        var chaveInApp = $"evento-{evento.Id}-1d-{hoje.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}";
                         await CriarNotificacaoAsync(
                             evento.TenantId, evento.ResponsavelId!.Value,
                             TipoNotificacao.PrazoEvento,

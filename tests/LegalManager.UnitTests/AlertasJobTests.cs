@@ -681,4 +681,158 @@ public class AlertasJobTests
         Assert.Single(notifs);
         Assert.Contains("3 tarefa", notifs[0].Titulo);
     }
+
+    private static Tarefa NovaTarefa(Guid tenantId, Guid responsavelId, string titulo, DateTime prazo,
+        TipoTarefa tipo = TipoTarefa.Tarefa) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, Titulo = titulo,
+        Prazo = prazo, Status = StatusTarefa.Pendente, Tipo = tipo,
+        ResponsavelId = responsavelId, CriadoPorId = responsavelId,
+        CriadoEm = DateTime.UtcNow, Prioridade = PrioridadeTarefa.Media
+    };
+
+    private static Mock<IPreferenciasNotificacaoService> Prefs(Guid tenantId, Guid userId,
+        params (string Categoria, bool Email, bool InApp)[] categorias)
+    {
+        var mock = new Mock<IPreferenciasNotificacaoService>();
+        mock.Setup(p => p.PermiteEmailAsync(tenantId, userId, It.IsAny<string>())).ReturnsAsync(false);
+        mock.Setup(p => p.PermiteInAppAsync(tenantId, userId, It.IsAny<string>())).ReturnsAsync(false);
+        foreach (var (categoria, email, inApp) in categorias)
+        {
+            mock.Setup(p => p.PermiteEmailAsync(tenantId, userId, categoria)).ReturnsAsync(email);
+            mock.Setup(p => p.PermiteInAppAsync(tenantId, userId, categoria)).ReturnsAsync(inApp);
+        }
+        return mock;
+    }
+
+    [Fact]
+    public async Task Resumo_NaoDeveIncluirTarefa_QuandoSoPrazosPermiteEmail()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Ligar cliente", hoje.AddDays(1)));
+        ctx.Eventos.Add(new Evento
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var prefs = Prefs(tenantId, responsavelId, ("Prazos", true, true), ("PrazoTarefa", false, false));
+        var job = new AlertasJob(ctx, mockEmail.Object, prefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            "resp@test.com", "Responsável",
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Inscrição prova OAB")),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Resumo_ItemSoInApp_NaoDeveIrNoEmail_MasDeveIrNaNotificacao()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Tarefa atrasada", hoje.AddDays(-2)));
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Tarefa amanhã", hoje.AddDays(1)));
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var prefs = Prefs(tenantId, responsavelId, ("PrazoTarefa", true, true), ("TarefaAtrasada", false, true));
+        var job = new AlertasJob(ctx, mockEmail.Object, prefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Tarefa amanhã")),
+            Times.Once);
+        var notif = await ctx.Notificacoes.SingleAsync();
+        Assert.Contains("Tarefa atrasada", notif.Mensagem);
+        Assert.Contains("Tarefa amanhã", notif.Mensagem);
+        Assert.False(notif.Lida);
+    }
+
+    [Fact]
+    public async Task Resumo_SoEmailPermitido_NotificacaoDeDedupJaNasceLida()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Tarefa amanhã", hoje.AddDays(1)));
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var prefs = Prefs(tenantId, responsavelId, ("PrazoTarefa", true, false));
+        var job = new AlertasJob(ctx, mockEmail.Object, prefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>()), Times.Once);
+        Assert.True((await ctx.Notificacoes.SingleAsync()).Lida);
+    }
+
+    [Fact]
+    public async Task Resumo_TarefaTipoPrazo_DeveSeguirPreferenciaPrazos()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Prazo contestação", hoje.AddDays(1), TipoTarefa.Prazo));
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var prefs = Prefs(tenantId, responsavelId, ("Prazos", false, false), ("PrazoTarefa", true, true));
+        var job = new AlertasJob(ctx, mockEmail.Object, prefs.Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>()), Times.Never);
+        Assert.Empty(ctx.Notificacoes);
+    }
+
+    [Fact]
+    public async Task PrazoDeAgendaAmanha_NaoDeveIrNoEmailDeEventos_SoNoResumo()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Eventos.Add(new Evento
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
+            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1).AddHours(21),
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarResumoEventosAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Titulo == "Inscrição prova OAB")), Times.Once);
+    }
+
+    [Fact]
+    public async Task Resumo_SemHojeFixo_DeveUsarFusoDoEscritorio()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        // UTC+14: o "hoje" do escritório está sempre 1 ou 2 dias à frente do de Brasília.
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        tenant!.FusoHorario = "Etc/GMT-14";
+        var hojeEscritorio = FusoHorario.HojeParede(FusoHorario.Resolver("Etc/GMT-14"));
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Vence hoje lá", hojeEscritorio.AddHours(18)));
+        await ctx.SaveChangesAsync();
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync();
+
+        mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
+            It.IsAny<string>(), It.IsAny<string>(),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Dias == 0)), Times.Once);
+    }
 }

@@ -20,10 +20,11 @@ public class EventoServiceTests
         return new AppDbContext(options);
     }
 
-    private ITenantContext CreateTenantContext(Guid tenantId)
+    private ITenantContext CreateTenantContext(Guid tenantId, Guid? userId = null)
     {
         var mock = new Mock<ITenantContext>();
         mock.Setup(t => t.TenantId).Returns(tenantId);
+        mock.Setup(t => t.UserId).Returns(userId ?? Guid.Empty);
         return mock.Object;
     }
 
@@ -110,6 +111,49 @@ public class EventoServiceTests
 
         Assert.Equal("Atualizado", result.Titulo);
         Assert.Equal(TipoEvento.Audiencia, result.Tipo);
+    }
+
+    [Fact]
+    public async Task CreateAsync_SemResponsavel_DeveAssumirUsuarioLogado()
+    {
+        var (ctx, tenantId) = await SeedAsync();
+        var userId = Guid.NewGuid();
+        var service = new EventoService(ctx, CreateTenantContext(tenantId, userId));
+        var dto = new CreateEventoDto(
+            "Inscrição prova OAB", TipoEvento.Prazo,
+            DateTime.UtcNow.AddDays(1), null, null, null, null, null);
+
+        var result = await service.CreateAsync(dto);
+
+        var evento = await ctx.Eventos.FindAsync(result.Id);
+        Assert.Equal(userId, evento!.ResponsavelId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_SemResponsavelEProcesso_DeveManterOsExistentes()
+    {
+        var (ctx, tenantId) = await SeedAsync();
+        var eventoId = Guid.NewGuid();
+        var responsavelId = Guid.NewGuid();
+        var processoId = Guid.NewGuid();
+        ctx.Eventos.Add(new Evento
+        {
+            Id = eventoId, TenantId = tenantId, Titulo = "Original",
+            Tipo = TipoEvento.Pericia, DataHora = DateTime.UtcNow.AddDays(1),
+            ResponsavelId = responsavelId, ProcessoId = processoId, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new EventoService(ctx, CreateTenantContext(tenantId, Guid.NewGuid()));
+        var dto = new UpdateEventoDto(
+            "Atualizado", TipoEvento.Pericia,
+            DateTime.UtcNow.AddDays(2), null, null, null, null, null);
+
+        await service.UpdateAsync(eventoId, dto);
+
+        var evento = await ctx.Eventos.FindAsync(eventoId);
+        Assert.Equal(responsavelId, evento!.ResponsavelId);
+        Assert.Equal(processoId, evento.ProcessoId);
     }
 
     [Fact]

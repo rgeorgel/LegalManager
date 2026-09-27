@@ -331,7 +331,7 @@ public class EmailService : IEmailService
                       <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
                         <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
                         <div style="color:#b91c1c;font-size:13px;margin-top:2px">
-                          atrasada há {t.Dias} dia(s) · venceu em {t.Prazo.ToString("dd/MM/yyyy", PtBr)}
+                          atrasada há {Math.Abs(t.Dias)} dia(s) · venceu em {t.Prazo.ToString("dd/MM/yyyy", PtBr)}
                         </div>
                       </td>
                     </tr>

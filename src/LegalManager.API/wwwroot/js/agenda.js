@@ -1,5 +1,5 @@
 import { initLayout } from './layout.js';
-import { apiFetch } from './api.js';
+import { apiFetch, getUser } from './api.js';
 
 import { esc, dataParede, isoLocal, abrirNovoPelaUrl } from './utils.js';
 initLayout();
@@ -17,6 +17,7 @@ let pendingAbrirId = _params.get('abrirId');
 
 let agendaItems = [];
 let editingId = null;
+let editingProcessoId = null;
 
 // --- Period helpers ---
 function startOf(view, date) {
@@ -354,10 +355,31 @@ async function deleteEvento(id) {
   await load();
 }
 
-function openCreateModal() {
+// Sem responsável o evento não gera nenhum alerta por e-mail, então o campo sempre vem
+// preenchido (padrão: quem está criando). Só admin pode listar /usuarios; os demais veem só a si.
+let usuariosCache = null;
+async function carregarResponsaveis(selecionadoId, selecionadoNome) {
+  const eu = getUser();
+  if (!usuariosCache) {
+    if (eu?.perfil === 'Admin') {
+      try { usuariosCache = (await apiFetch('/usuarios') || []).filter(u => u.ativo); } catch { usuariosCache = null; }
+    }
+    if (!usuariosCache?.length) usuariosCache = eu ? [{ id: eu.id, nome: eu.nome }] : [];
+  }
+  const lista = [...usuariosCache];
+  if (selecionadoId && !lista.some(u => u.id === selecionadoId))
+    lista.push({ id: selecionadoId, nome: selecionadoNome || 'Usuário' });
+  const sel = document.getElementById('eResponsavel');
+  sel.innerHTML = lista.map(u => `<option value="${esc(u.id)}">${esc(u.nome)}</option>`).join('');
+  sel.value = selecionadoId || eu?.id || lista[0]?.id || '';
+}
+
+async function openCreateModal() {
   editingId = null;
+  editingProcessoId = null;
   document.getElementById('modalEventoTitulo').textContent = 'Novo Evento';
   document.getElementById('formEvento').reset();
+  await carregarResponsaveis(null);
   document.getElementById('eMsgErro').style.display = 'none';
   document.getElementById('modalEvento').style.display = 'flex';
 }
@@ -373,6 +395,8 @@ async function openEditModal(id) {
   document.getElementById('eDataHoraFim').value = ev.dataHoraFim ? ev.dataHoraFim.substring(0, 16) : '';
   document.getElementById('eLocal').value = ev.local ?? '';
   document.getElementById('eObservacoes').value = ev.observacoes ?? '';
+  editingProcessoId = ev.processoId ?? null;
+  await carregarResponsaveis(ev.responsavelId, ev.nomeResponsavel);
   document.getElementById('modalEvento').style.display = 'flex';
 }
 
@@ -401,6 +425,8 @@ document.getElementById('formEvento').addEventListener('submit', async e => {
     dataHoraFim: document.getElementById('eDataHoraFim').value || null,
     local: document.getElementById('eLocal').value.trim() || null,
     observacoes: document.getElementById('eObservacoes').value.trim() || null,
+    responsavelId: document.getElementById('eResponsavel').value || null,
+    processoId: editingId ? editingProcessoId : null,
   };
 
   try {
