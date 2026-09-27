@@ -10,6 +10,10 @@ public class Tenant
     public string? LogoUrl { get; set; }
     public string? LogoObjectKey { get; set; }
     public string? Endereco { get; set; }
+    // Contato e linha livre do papel timbrado dos modelos de documento.
+    public string? Telefone { get; set; }
+    public string? Email { get; set; }
+    public string? TimbradoComplemento { get; set; }
 
     // Fuso horário do escritório (id IANA, ver FusosHorarios). Null = Brasília.
     public string? FusoHorario { get; set; }

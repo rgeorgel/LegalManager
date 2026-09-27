@@ -981,7 +981,7 @@
 
 <script type="module">
 import { dataParede, esc } from '/js/utils.js';
-import { aplicarVariaveis, imprimirTexto, rotuloVariavel, valoresAutomaticos, valoresDoProcesso } from '/js/modelos.js';
+import { aplicarVariaveis, carregarTimbre, imprimirTexto, rotuloVariavel, timbreCarregado, valoresAutomaticos, valoresDoProcesso } from '/js/modelos.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
@@ -1747,6 +1747,7 @@ document.getElementById('btnGerarModeloDoc').addEventListener('click', async () 
   document.getElementById('gerarModeloAlert').style.display = 'none';
   document.getElementById('gmVariaveis').innerHTML = '<p style="color:var(--color-text-muted)">Selecione um modelo...</p>';
   document.getElementById('gmResultado').value = '';
+  carregarTimbre();
   try {
     gmModelos = await apiFetch('/modelos');
     const sel = document.getElementById('gmModelo');
@@ -1806,7 +1807,8 @@ document.getElementById('gmCopiar').addEventListener('click', () => {
 document.getElementById('gmGerarPdf').addEventListener('click', () => {
   const texto = document.getElementById('gmResultado').value;
   if (!texto) return;
-  if (!imprimirTexto(currentGmModelo?.nome || 'Documento', texto)) showAlert('Permita pop-ups para imprimir.', 'error', 'gerarModeloAlert');
+  const timbre = currentGmModelo?.usarTimbrado !== false ? timbreCarregado() : null;
+  if (!imprimirTexto(currentGmModelo?.nome || 'Documento', texto, timbre)) showAlert('Permita pop-ups para imprimir.', 'error', 'gerarModeloAlert');
 });
 
 document.getElementById('gmSalvar').addEventListener('click', async () => {

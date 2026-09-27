@@ -47,6 +47,9 @@ public class ConfiguracoesController : ControllerBase
             tenant.Nome,
             tenant.Cnpj,
             tenant.Endereco,
+            tenant.Telefone,
+            tenant.Email,
+            tenant.TimbradoComplemento,
             FusoHorario = tenant.FusoHorario ?? FusosHorarios.Padrao,
             FusosHorarios = FusosHorarios.Opcoes,
             tenant.LogoUrl,
@@ -71,6 +74,9 @@ public class ConfiguracoesController : ControllerBase
         tenant.Nome = dto.Nome;
         tenant.Cnpj = dto.Cnpj;
         tenant.Endereco = dto.Endereco;
+        tenant.Telefone = dto.Telefone;
+        tenant.Email = dto.Email;
+        tenant.TimbradoComplemento = dto.TimbradoComplemento;
         if (dto.FusoHorario is not null)
             tenant.FusoHorario = dto.FusoHorario == FusosHorarios.Padrao ? null : dto.FusoHorario;
 
@@ -224,7 +230,10 @@ public record UpdateConfiguracoesDto(
     [Required, MaxLength(200)] string Nome,
     string? Cnpj,
     string? Endereco,
-    string? FusoHorario = null // id IANA de FusosHorarios.Opcoes; null = não altera
+    string? FusoHorario = null, // id IANA de FusosHorarios.Opcoes; null = não altera
+    [MaxLength(30)] string? Telefone = null,
+    [MaxLength(200), EmailAddress] string? Email = null,
+    [MaxLength(300)] string? TimbradoComplemento = null
 );
 
 public record AlterarSenhaDto(

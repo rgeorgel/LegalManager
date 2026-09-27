@@ -152,6 +152,22 @@
             <input type="text" id="cEndereco" class="form-control" maxlength="500">
           </div>
           <div class="form-group">
+            <label class="form-label" for="cTelefone">Telefone</label>
+            <input type="tel" id="cTelefone" class="form-control" maxlength="30" placeholder="(11) 99999-9999">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cEmail">E-mail de contato</label>
+            <input type="email" id="cEmail" class="form-control" maxlength="200" placeholder="contato@escritorio.com.br">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cTimbradoComplemento">Linha do papel timbrado</label>
+            <input type="text" id="cTimbradoComplemento" class="form-control" maxlength="300" placeholder="Ex.: Dra. Maria Souza — OAB/SP 123.456">
+            <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px">
+              Nome, CNPJ, endereço, telefone, e-mail e esta linha formam o papel timbrado dos modelos de documento.
+              O logo é o enviado em <a href="/pages/tema.html">Tema do Escritório</a>.
+            </div>
+          </div>
+          <div class="form-group">
             <label class="form-label" for="cFuso">Fuso horário</label>
             <select id="cFuso" class="form-control">
               <option value="America/Sao_Paulo">Brasília (UTC−3)</option>
@@ -599,6 +615,9 @@ import { esc } from '/js/utils.js';
         document.getElementById('cNome').value = config.nome;
         document.getElementById('cCnpj').value = config.cnpj ?? '';
         document.getElementById('cEndereco').value = config.endereco ?? '';
+        document.getElementById('cTelefone').value = config.telefone ?? '';
+        document.getElementById('cEmail').value = config.email ?? '';
+        document.getElementById('cTimbradoComplemento').value = config.timbradoComplemento ?? '';
         const fusos = config.fusosHorarios ?? [];
         if (fusos.length) {
           document.getElementById('cFuso').innerHTML = fusos
@@ -621,6 +640,9 @@ import { esc } from '/js/utils.js';
           nome: document.getElementById('cNome').value.trim(),
           cnpj: document.getElementById('cCnpj').value.trim() || null,
           endereco: document.getElementById('cEndereco').value.trim() || null,
+          telefone: document.getElementById('cTelefone').value.trim() || null,
+          email: document.getElementById('cEmail').value.trim() || null,
+          timbradoComplemento: document.getElementById('cTimbradoComplemento').value.trim() || null,
           fusoHorario: document.getElementById('cFuso').value,
         })
       });

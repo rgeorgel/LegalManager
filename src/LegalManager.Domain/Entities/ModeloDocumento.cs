@@ -8,6 +8,8 @@ public class ModeloDocumento
     public string? Descricao { get; set; }
     public string Conteudo { get; set; } = string.Empty;
     public string Variaveis { get; set; } = string.Empty;
+    /// <summary>Imprime/exporta com o papel timbrado do escritório (dados em <see cref="Tenant"/>).</summary>
+    public bool UsarTimbrado { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public Guid CriadoPorId { get; set; }
 

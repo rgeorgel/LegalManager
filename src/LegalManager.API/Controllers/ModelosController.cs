@@ -28,6 +28,19 @@ public class ModelosController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("timbrado")]
+    public async Task<ActionResult<TimbradoDto>> GetTimbrado(CancellationToken ct = default)
+    {
+        try
+        {
+            return Ok(await _service.ObterTimbradoAsync(ct));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ModeloDocumentoDto>> GetById(Guid id, CancellationToken ct = default)
     {

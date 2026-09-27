@@ -11,4 +11,5 @@ public interface IModeloDocumentoService
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<string> AplicarVariaveisAsync(Guid id, Dictionary<string, string> variaveis, CancellationToken ct = default);
     Task<GerarModeloComIAResultDto> GerarComIAAsync(string descricao, CancellationToken ct = default);
+    Task<TimbradoDto> ObterTimbradoAsync(CancellationToken ct = default);
 }

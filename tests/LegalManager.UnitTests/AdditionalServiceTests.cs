@@ -432,6 +432,58 @@ public class ModeloDocumentoServiceTests
     }
 
     [Fact]
+    public async Task UsarTimbrado_PadraoLigado_UpdateSoAlteraQuandoInformado()
+    {
+        var svc = Build(out _, out _, out _);
+        var created = await svc.CreateAsync(new CreateModeloDocumentoDto { Nome = "M", Conteudo = "C", Variaveis = [] });
+        Assert.True(created.UsarTimbrado);
+
+        var desligado = await svc.UpdateAsync(created.Id, new UpdateModeloDocumentoDto { UsarTimbrado = false });
+        Assert.False(desligado.UsarTimbrado);
+
+        var soNome = await svc.UpdateAsync(created.Id, new UpdateModeloDocumentoDto { Nome = "Outro" });
+        Assert.False(soNome.UsarTimbrado);
+    }
+
+    [Fact]
+    public async Task ObterTimbradoAsync_PerfilPrimeiro_CaiNaConfiguracaoDeHonorarios()
+    {
+        var svc = Build(out var ctx, out var tenantId, out _);
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        tenant!.Nome = "Souza Advogados";
+        tenant.Cnpj = "12.345.678/0001-99";
+        tenant.Telefone = "(11) 3333-4444";
+        tenant.LogoUrl = "https://app/api/tenants/x/logo";
+        ctx.ConfiguracoesHonorarios.Add(new ConfiguracaoHonorario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId,
+            AdvogadoResponsavel = "Dra. Maria", OAB = "OAB/SP 123",
+            Endereco = "Rua A, 1", Telefone = "(11) 0000-0000", Email = "contato@souza.adv.br",
+        });
+        await ctx.SaveChangesAsync();
+
+        var t = await svc.ObterTimbradoAsync();
+
+        Assert.Equal("Souza Advogados", t.Nome);
+        Assert.Equal("(11) 3333-4444", t.Telefone);      // perfil vence
+        Assert.Equal("Rua A, 1", t.Endereco);            // vazio no perfil → honorários
+        Assert.Equal("contato@souza.adv.br", t.Email);
+        Assert.Equal("Dra. Maria — OAB/SP 123", t.Complemento);
+        Assert.Equal("https://app/api/tenants/x/logo", t.LogoUrl);
+    }
+
+    [Fact]
+    public async Task ObterTimbradoAsync_SemDadosExtras_SoNome()
+    {
+        var svc = Build(out _, out _, out _);
+        var t = await svc.ObterTimbradoAsync();
+        Assert.Equal("T", t.Nome);
+        Assert.Null(t.Endereco);
+        Assert.Null(t.Complemento);
+        Assert.Null(t.LogoUrl);
+    }
+
+    [Fact]
     public async Task DeleteAsync_RemoveModelo()
     {
         var svc = Build(out var ctx, out _, out _);

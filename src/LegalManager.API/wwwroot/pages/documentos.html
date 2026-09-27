@@ -111,6 +111,11 @@
     .mv-empty-actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
     .mv-exemplos { margin-top:28px; text-align:left; }
     .mv-exemplos-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); margin-bottom:10px; }
+    .mv-timbre-opcao { display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer; margin:0; }
+    .mv-timbre-opcao input { margin-top:3px; flex-shrink:0; }
+    .mv-timbre-opcao small { display:block; color:var(--color-text-muted); font-size:12px; line-height:1.4; margin-top:2px; }
+    details.mv-exemplos > summary { cursor:pointer; }
+    details.mv-exemplos:not([open]) > summary { margin-bottom:0; }
 
     /* ── Modelos: editor e uso ─────────────────────── */
     .mv-modal { max-width:1120px !important; display:flex; flex-direction:column; }
@@ -547,6 +552,14 @@
                 <input type="text" id="fModeloDescricao" class="form-control" maxlength="500" placeholder="Quando usar este modelo">
               </div>
             </div>
+            <div class="form-group">
+              <label class="mv-timbre-opcao">
+                <input type="checkbox" id="fModeloTimbrado" checked>
+                <span>Usar papel timbrado do escritório
+                  <small>Logo, nome e contatos no topo ao imprimir e baixar. Os dados vêm de <a href="/pages/configuracoes.html" target="_blank">Configurações → Perfil do Escritório</a>.</small>
+                </span>
+              </label>
+            </div>
             <div class="form-group" style="margin-bottom:0">
               <div class="mv-editor-head">
                 <label for="fModeloConteudo">Conteúdo *</label>
@@ -639,6 +652,10 @@
             <div class="mv-proc-sel" id="procSelecionado" style="display:none"></div>
             <p class="mv-side-hint" id="procDica" style="margin-top:6px">Partes, número, vara, comarca e advogado são preenchidos a partir do processo.</p>
           </div>
+          <label class="mv-timbre-opcao">
+            <input type="checkbox" id="usoTimbrado">
+            <span>Papel timbrado</span>
+          </label>
           <div>
             <div class="mv-side-title">
               <span>Variáveis</span>
@@ -675,7 +692,12 @@ import { esc } from '/js/utils.js';
 import {
   VARIAVEIS_SUGERIDAS, MODELOS_EXEMPLO, extrairVariaveis, contarVariaveis, aplicarVariaveis, previewHtml,
   rotuloVariavel, normalizarNomeVariavel, valoresDoProcesso, valoresAutomaticos, imprimirTexto, baixarWord, arquivoWord,
+  carregarTimbre, timbreCarregado, timbreHtml, TIMBRE_CSS,
 } from '/js/modelos.js';
+
+// Estilos do timbre também na pré-visualização (escopados ao papel).
+document.head.insertAdjacentHTML('beforeend',
+  `<style>${TIMBRE_CSS.replace(/\.timbre/g, '.mv-paper .timbre')}</style>`);
 
 initLayout();
 
@@ -1377,13 +1399,19 @@ async function loadModelos() {
   }
 }
 
+function termosBusca() {
+  return semAcento(document.getElementById('modBusca').value).split(/\s+/).filter(Boolean);
+}
+
+function correspondeBusca(m, termos) {
+  const alvo = semAcento(`${m.nome} ${m.descricao || ''} ${m.conteudo}`);
+  return termos.every(t => alvo.includes(t));
+}
+
 function modelosFiltrados() {
-  const termos = semAcento(document.getElementById('modBusca').value).split(/\s+/).filter(Boolean);
+  const termos = termosBusca();
   const ordem = document.getElementById('modOrdem').value;
-  const lista = modelos.filter(m => {
-    const alvo = semAcento(`${m.nome} ${m.descricao || ''} ${m.conteudo}`);
-    return termos.every(t => alvo.includes(t));
-  });
+  const lista = modelos.filter(m => correspondeBusca(m, termos));
   if (ordem === 'nome') lista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   else if (ordem === 'variaveis') lista.sort((a, b) => extrairVariaveis(b.conteudo).length - extrairVariaveis(a.conteudo).length);
   else lista.sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
@@ -1455,10 +1483,26 @@ function renderModelos() {
         <h2>Nenhum modelo encontrado</h2>
         <p>Nenhum modelo contém “${esc(document.getElementById('modBusca').value.trim())}”.</p>
         <div class="mv-empty-actions"><button type="button" class="btn btn-secondary" data-acao="limpar-busca">Limpar busca</button></div>
-      </div>`;
+      </div>${exemplosRestantesHtml()}`;
     return;
   }
-  lista.innerHTML = `<div class="mv-grid">${filtrados.map(m => cardModeloHtml(m)).join('')}</div>`;
+  lista.innerHTML = `<div class="mv-grid">${filtrados.map(m => cardModeloHtml(m)).join('')}</div>${exemplosRestantesHtml()}`;
+}
+
+// Exemplos que o escritório ainda não adicionou (pelo nome), para continuarem acessíveis
+// depois que a biblioteca deixa de estar vazia. Respeita a busca; com busca ativa, abre a seção.
+function exemplosRestantesHtml() {
+  const nomes = new Set(modelos.map(m => semAcento(m.nome).trim()));
+  const termos = termosBusca();
+  const restantes = MODELOS_EXEMPLO
+    .map((m, i) => ({ m, i }))
+    .filter(({ m }) => !nomes.has(semAcento(m.nome).trim()) && correspondeBusca(m, termos));
+  if (!restantes.length) return '';
+  return `
+    <details class="mv-exemplos"${termos.length ? ' open' : ''}>
+      <summary class="mv-exemplos-title">Modelos de exemplo (${restantes.length})</summary>
+      <div class="mv-grid">${restantes.map(({ m, i }) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
+    </details>`;
 }
 
 document.getElementById('modBusca').addEventListener('input', renderModelos);
@@ -1494,7 +1538,7 @@ async function duplicarModelo(m) {
   try {
     await apiFetch('/modelos', {
       method: 'POST',
-      body: JSON.stringify({ nome: `${m.nome} (cópia)`, descricao: m.descricao, conteudo: m.conteudo, variaveis: extrairVariaveis(m.conteudo) }),
+      body: JSON.stringify({ nome: `${m.nome} (cópia)`, descricao: m.descricao, conteudo: m.conteudo, variaveis: extrairVariaveis(m.conteudo), usarTimbrado: m.usarTimbrado !== false }),
     });
     showModAlert('Modelo duplicado.', 'success');
     loadModelos();
@@ -1513,14 +1557,17 @@ async function excluirModelo(m) {
 // ── Editor ─────────────────────────────────────────────────
 const modalModeloForm = document.getElementById('modalModeloForm');
 const taConteudo = document.getElementById('fModeloConteudo');
+const chkTimbrado = document.getElementById('fModeloTimbrado');
 let editorSnapshot = '';
 let editorModo = 'editar';
 
 const editorEstado = () => JSON.stringify([
   document.getElementById('fModeloNome').value, document.getElementById('fModeloDescricao').value, taConteudo.value,
+  chkTimbrado.checked,
 ]);
 
-function abrirEditor({ id = '', nome = '', descricao = '', conteudo = '', titulo = 'Novo modelo', ia = false } = {}) {
+function abrirEditor({ id = '', nome = '', descricao = '', conteudo = '', usarTimbrado = true, titulo = 'Novo modelo', ia = false } = {}) {
+  carregarTimbre().then(() => { if (editorModo === 'preview') setModoEditor('preview'); });
   document.getElementById('modFormAlert').style.display = 'none';
   document.getElementById('modIANote').style.display = ia ? '' : 'none';
   document.getElementById('modalModeloTitle').textContent = titulo;
@@ -1528,8 +1575,9 @@ function abrirEditor({ id = '', nome = '', descricao = '', conteudo = '', titulo
   document.getElementById('fModeloNome').value = nome;
   document.getElementById('fModeloDescricao').value = descricao || '';
   taConteudo.value = conteudo;
+  chkTimbrado.checked = usarTimbrado !== false;
   // Só um modelo já salvo começa "limpo"; exemplo e texto da IA ainda não foram salvos.
-  editorSnapshot = id ? editorEstado() : JSON.stringify(['', '', '']);
+  editorSnapshot = id ? editorEstado() : JSON.stringify(['', '', '', true]);
   setModoEditor('editar');
   atualizarPainelVariaveis();
   modalModeloForm.classList.add('open');
@@ -1548,14 +1596,15 @@ function setModoEditor(modo) {
   taConteudo.style.display = modo === 'editar' ? '' : 'none';
   preview.style.display = modo === 'preview' ? '' : 'none';
   if (modo === 'preview') {
-    preview.innerHTML = taConteudo.value.trim()
+    preview.innerHTML = (chkTimbrado.checked ? timbreHtml(timbreCarregado()) : '') + (taConteudo.value.trim()
       ? previewHtml(taConteudo.value)
-      : '<span style="color:#6b7280">Nada para pré-visualizar ainda.</span>';
+      : '<span style="color:#6b7280">Nada para pré-visualizar ainda.</span>');
   }
 }
 
 document.querySelectorAll('#modalModeloForm .mv-segment button').forEach(b =>
   b.addEventListener('click', () => setModoEditor(b.dataset.modo)));
+chkTimbrado.addEventListener('change', () => { if (editorModo === 'preview') setModoEditor('preview'); });
 
 function atualizarPainelVariaveis() {
   const contagem = contarVariaveis(taConteudo.value);
@@ -1639,7 +1688,7 @@ async function salvarModelo() {
   if (btn.disabled) return;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   const id = document.getElementById('fModeloId').value;
-  const body = JSON.stringify({ nome, descricao, conteudo, variaveis: extrairVariaveis(conteudo) });
+  const body = JSON.stringify({ nome, descricao, conteudo, variaveis: extrairVariaveis(conteudo), usarTimbrado: chkTimbrado.checked });
   try {
     if (id) await apiFetch(`/modelos/${id}`, { method: 'PUT', body });
     else await apiFetch('/modelos', { method: 'POST', body });
@@ -1656,6 +1705,7 @@ document.getElementById('btnModeloSalvar').addEventListener('click', salvarModel
 
 // ── Usar modelo ───────────────────────────────────────────
 const modalAplicar = document.getElementById('modalAplicar');
+const chkUsoTimbrado = document.getElementById('usoTimbrado');
 let usoModelo = null;
 let usoValores = {};
 let usoProcesso = null;
@@ -1667,6 +1717,9 @@ function abrirUso(m) {
   usoValores = valoresAutomaticos(vars);
   document.getElementById('aplicarModeloNome').textContent = m.nome;
   document.getElementById('aplicarAlert').style.display = 'none';
+  // Padrão vem do modelo; dá para desligar só neste documento.
+  chkUsoTimbrado.checked = m.usarTimbrado !== false;
+  carregarTimbre().then(() => { if (usoModelo === m) atualizarUso(); });
   document.getElementById('procBusca').value = '';
   document.getElementById('procResultados').classList.remove('open');
   renderProcessoSelecionado();
@@ -1692,10 +1745,12 @@ function atualizarUso() {
   document.getElementById('aplicarProgressoTxt').textContent = vars.length ? `${preenchidas} de ${vars.length} preenchidas` : '';
   document.getElementById('aplicarProgressoFill').style.width = vars.length ? `${(preenchidas / vars.length) * 100}%` : '0%';
   document.querySelectorAll('#varInputs .mv-field').forEach(f => f.classList.toggle('preenchida', !!usoValores[f.dataset.var]));
-  document.getElementById('aplicarPreview').innerHTML = previewHtml(usoModelo.conteudo, usoValores);
+  document.getElementById('aplicarPreview').innerHTML = timbreHtml(timbreUso()) + previewHtml(usoModelo.conteudo, usoValores);
 }
 
 const textoFinal = () => aplicarVariaveis(usoModelo.conteudo, usoValores);
+const timbreUso = () => chkUsoTimbrado.checked ? timbreCarregado() : null;
+chkUsoTimbrado.addEventListener('change', atualizarUso);
 
 function confirmarPendentes() {
   const pendentes = extrairVariaveis(usoModelo.conteudo).filter(v => !usoValores[v]);
@@ -1820,13 +1875,13 @@ document.getElementById('btnCopiar').addEventListener('click', e => {
 
 document.getElementById('btnImprimir').addEventListener('click', () => {
   if (!confirmarPendentes()) return;
-  if (!imprimirTexto(nomeDocumento(), textoFinal()))
+  if (!imprimirTexto(nomeDocumento(), textoFinal(), timbreUso()))
     showInlineAlert('aplicarAlert', 'O navegador bloqueou a janela de impressão. Permita pop-ups para este site.');
 });
 
 document.getElementById('btnWord').addEventListener('click', () => {
   if (!confirmarPendentes()) return;
-  baixarWord(nomeDocumento(), textoFinal());
+  baixarWord(nomeDocumento(), textoFinal(), timbreUso());
 });
 
 document.getElementById('btnSalvarNoProcesso').addEventListener('click', async e => {
@@ -1836,7 +1891,7 @@ document.getElementById('btnSalvarNoProcesso').addEventListener('click', async e
   const btn = e.currentTarget;
   btn.disabled = true;
   try {
-    const arquivo = arquivoWord(nome, textoFinal());
+    const arquivo = arquivoWord(nome, textoFinal(), timbreUso());
     const formData = new FormData();
     formData.append('file', arquivo);
     formData.append('tipo', 'Outro');

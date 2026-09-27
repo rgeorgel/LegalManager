@@ -62,6 +62,7 @@ public class ModeloDocumentoService : IModeloDocumentoService
             Descricao = dto.Descricao,
             Conteudo = dto.Conteudo,
             Variaveis = string.Join(",", dto.Variaveis.Select(v => v.Trim()).Where(v => !string.IsNullOrEmpty(v))),
+            UsarTimbrado = dto.UsarTimbrado,
             CriadoEm = DateTime.UtcNow,
             CriadoPorId = _tenantContext.UserId
         };
@@ -83,6 +84,7 @@ public class ModeloDocumentoService : IModeloDocumentoService
         if (dto.Conteudo != null) modelo.Conteudo = dto.Conteudo;
         if (dto.Variaveis != null)
             modelo.Variaveis = string.Join(",", dto.Variaveis.Select(v => v.Trim()).Where(v => !string.IsNullOrEmpty(v)));
+        if (dto.UsarTimbrado.HasValue) modelo.UsarTimbrado = dto.UsarTimbrado.Value;
 
         await _context.SaveChangesAsync(ct);
 
@@ -136,6 +138,28 @@ public class ModeloDocumentoService : IModeloDocumentoService
         };
     }
 
+    // Perfil do Escritório primeiro; o que estiver vazio cai na identidade já preenchida
+    // em Honorários → Configuração (a do extrato), para não obrigar a digitar de novo.
+    public async Task<TimbradoDto> ObterTimbradoAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantContext.TenantId;
+        var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tenantId, ct)
+            ?? throw new KeyNotFoundException("Escritório não encontrado.");
+        var cfg = await _context.ConfiguracoesHonorarios.AsNoTracking().FirstOrDefaultAsync(c => c.TenantId == tenantId, ct);
+
+        static string? Valor(params string?[] opcoes) => opcoes.FirstOrDefault(o => !string.IsNullOrWhiteSpace(o))?.Trim();
+        var advogado = string.Join(" — ", new[] { cfg?.AdvogadoResponsavel, cfg?.OAB }.Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v!.Trim()));
+
+        return new TimbradoDto(
+            tenant.Nome,
+            Valor(tenant.Cnpj),
+            Valor(tenant.Endereco, cfg?.Endereco),
+            Valor(tenant.Telefone, cfg?.Telefone),
+            Valor(tenant.Email, cfg?.Email),
+            Valor(tenant.TimbradoComplemento, advogado),
+            Valor(tenant.LogoUrl, cfg?.LogoUrl));
+    }
+
     private static ModeloDocumentoDto MapToDto(ModeloDocumento m) => new()
     {
         Id = m.Id,
@@ -145,6 +169,7 @@ public class ModeloDocumentoService : IModeloDocumentoService
         Variaveis = string.IsNullOrEmpty(m.Variaveis)
             ? new List<string>()
             : m.Variaveis.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(v => v.Trim()).ToList(),
+        UsarTimbrado = m.UsarTimbrado,
         CriadoEm = m.CriadoEm,
         CriadoPorId = m.CriadoPorId,
         NomeCriadoPor = m.CriadoPor?.Nome

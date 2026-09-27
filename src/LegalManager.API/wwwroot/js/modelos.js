@@ -1,6 +1,8 @@
 // Modelos de documento: variáveis {{nome_da_variavel}}, preenchimento a partir de um processo
-// e exportação (impressão/PDF e Word). Usado em documentos.html (aba Modelos) e processo-detalhe.html.
+// e exportação (impressão/PDF e Word) com o papel timbrado do escritório.
+// Usado em documentos.html (aba Modelos) e processo-detalhe.html.
 import { esc } from './utils.js';
+import { apiFetch } from './api.js';
 
 // Aceita espaços dentro das chaves ({{ nome }}) — o nome é o que fica entre elas, aparado.
 const RE_VARIAVEL = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -167,33 +169,89 @@ export function valoresAutomaticos(variaveis) {
   return valores;
 }
 
-function documentoHtml(titulo, texto) {
+// ── Papel timbrado ─────────────────────────────────────────
+let timbrePromise = null;
+let timbreCache = null;
+
+/** Carrega (uma vez por página) os dados do papel timbrado. Em caso de falha, resolve null e tenta de novo depois. */
+export function carregarTimbre() {
+  timbrePromise ??= apiFetch('/modelos/timbrado')
+    .then(t => (timbreCache = t))
+    .catch(() => { timbrePromise = null; return null; });
+  return timbrePromise;
+}
+
+/** Timbre já carregado, ou null. Síncrono: a janela de impressão precisa abrir no próprio clique. */
+export const timbreCarregado = () => timbreCache;
+
+/** Estilos do cabeçalho; usados no documento exportado e, com o prefixo `.mv-paper`, na pré-visualização. */
+export const TIMBRE_CSS = `
+  .timbre { text-align: center; border-bottom: 1px solid #9ca3af; padding-bottom: 10px; margin-bottom: 24px; line-height: 1.35; white-space: normal; }
+  .timbre-logo { max-height: 64px; max-width: 240px; margin-bottom: 6px; }
+  .timbre-nome { font-size: 14pt; font-weight: bold; letter-spacing: .02em; }
+  .timbre-linha { font-size: 9pt; color: #374151; }`;
+
+/**
+ * HTML do cabeçalho do papel timbrado, sem espaços entre as tags (a pré-visualização usa `white-space: pre-wrap`).
+ * O logo vai com URL absoluta: o .doc é aberto fora do site e a URL do logo é pública e estável.
+ */
+export function timbreHtml(t) {
+  if (!t) return '';
+  let logo = null;
+  try { if (t.logoUrl) logo = new URL(t.logoUrl, location.origin).href; } catch { /* URL inválida: sem logo */ }
+  const linhas = [
+    t.complemento,
+    t.cnpj && `CNPJ ${t.cnpj}`,
+    t.endereco,
+    [t.telefone, t.email].filter(Boolean).join(' · '),
+  ].filter(Boolean);
+  return '<div class="timbre">'
+    + (logo ? `<img class="timbre-logo" src="${esc(logo)}" alt="" height="64">` : '')
+    + `<div class="timbre-nome">${esc(t.nome)}</div>`
+    + linhas.map(l => `<div class="timbre-linha">${esc(l)}</div>`).join('')
+    + '</div>';
+}
+
+/**
+ * `repetir`: coloca o timbre no <thead> de uma tabela, que o navegador repete no topo de cada página impressa.
+ * No Word o timbre fica só no topo do documento (cabeçalho de página de verdade exigiria gerar .docx).
+ */
+function documentoHtml(titulo, texto, timbre = null, { repetir = false } = {}) {
+  const cabecalho = timbreHtml(timbre);
+  const conteudo = `<div class="conteudo">${esc(texto)}</div>`;
+  const corpo = cabecalho && repetir
+    ? `<table class="pagina"><thead><tr><td>${cabecalho}</td></tr></thead><tbody><tr><td>${conteudo}</td></tr></tbody></table>`
+    : cabecalho + conteudo;
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${esc(titulo)}</title><style>
     body { font-family: 'Times New Roman', Georgia, serif; font-size: 12pt; line-height: 1.6; margin: 40px auto; max-width: 800px; color: #000; }
     .conteudo { white-space: pre-wrap; word-wrap: break-word; text-align: justify; }
+    table.pagina { width: 100%; border-collapse: collapse; }
+    table.pagina td { padding: 0; }
+    ${TIMBRE_CSS}
     @media print { body { margin: 20mm; max-width: none; } }
-  </style></head><body><div class="conteudo">${esc(texto)}</div></body></html>`;
+  </style></head><body>${corpo}</body></html>`;
 }
 
 /** Abre o texto em uma janela formatada e chama a impressão (o navegador oferece "Salvar como PDF"). */
-export function imprimirTexto(titulo, texto) {
+export function imprimirTexto(titulo, texto, timbre = null) {
   const win = window.open('', '_blank', 'width=800,height=900');
   if (!win) return false;
-  win.document.write(documentoHtml(titulo, texto).replace('</body>',
+  // window.onload espera o logo carregar antes de imprimir.
+  win.document.write(documentoHtml(titulo, texto, timbre, { repetir: true }).replace('</body>',
     '<script>window.onload = function () { window.print(); }<\/script></body>'));
   win.document.close();
   return true;
 }
 
 /** Arquivo .doc (HTML que o Word abre) com o texto do documento. */
-export function arquivoWord(nome, texto) {
+export function arquivoWord(nome, texto, timbre = null) {
   const base = String(nome || 'Documento').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Documento';
-  return new File(['﻿', documentoHtml(base, texto)], `${base}.doc`, { type: 'application/msword' });
+  return new File(['﻿', documentoHtml(base, texto, timbre)], `${base}.doc`, { type: 'application/msword' });
 }
 
 /** Baixa o texto como .doc. */
-export function baixarWord(nome, texto) {
-  const arquivo = arquivoWord(nome, texto);
+export function baixarWord(nome, texto, timbre = null) {
+  const arquivo = arquivoWord(nome, texto, timbre);
   const url = URL.createObjectURL(arquivo);
   const a = document.createElement('a');
   a.href = url;
