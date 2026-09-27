@@ -469,8 +469,14 @@ app.Use(async (ctx, next) =>
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseRateLimiter();
+var assetVersioning = new AssetVersioning(app.Environment, app.Configuration);
+app.Use((ctx, next) => assetVersioning.RemoverPrefixo(ctx, next));
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.Use((ctx, next) => assetVersioning.ServirHtml(ctx, next));
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = c => assetVersioning.DefinirCache(c.Context)
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<RequestEnrichmentMiddleware>();
@@ -574,7 +580,7 @@ RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
 // Para ativar a Estratégia 4 (cancelar) em vez da 5, substituir por: job => job.SuspenderMonitoramentosAsync()
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapFallback("{*path:nonfile}", assetVersioning.ServirFallback);
 
 app.Run();
 
