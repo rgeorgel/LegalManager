@@ -60,6 +60,23 @@
     .filter-bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
     .filter-bar select, .filter-bar input { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); background:#fff; font-size:13px; }
 
+    /* View toggle (lista/blocos) — mesmo padrão visual de Contatos e Processos */
+    .view-toggle { display:flex; gap:4px; align-items:center; }
+    .view-btn { width:36px; height:36px; border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-bg); color:var(--color-text); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:.2s; }
+    .view-btn:hover { background:var(--color-border); }
+    .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+
+    .ci-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
+    .ci-grid .ci { margin-bottom:0; display:flex; flex-direction:column; }
+    .ci-grid .ci-actions { margin-top:auto; padding-top:12px; }
+    @media (max-width:480px) { .ci-grid { grid-template-columns:1fr; } }
+
+    .ct-table td, .ct-table th { white-space:nowrap; }
+    .ct-table td.ct-cliente { white-space:normal; min-width:180px; }
+    .ct-table .num { text-align:right; }
+    .ct-table .ct-obj { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+    .ct-table .danger { color:#dc2626; font-weight:700; }
+
     .empty { text-align:center; padding:38px 16px; color:var(--color-text-muted); }
     .empty p { margin-bottom:14px; }
   </style>
@@ -110,6 +127,10 @@
       <div class="hp-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div style="font-size:14px;font-weight:700">Contratos</div>
+          <div class="view-toggle">
+            <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
+            <button type="button" class="view-btn" id="viewCards" title="Visualização em blocos">⊞</button>
+          </div>
         </div>
         <div class="filter-bar">
           <select id="filtroStatus">
@@ -142,6 +163,16 @@
 
     const PAGE_SIZE = 50;
     let pageState = { page: 1, status: '', busca: '' };
+
+    // Visualização (lista/blocos) persistida em localStorage, como em Contatos.
+    const VIEW_KEY = 'honorariosContratos.view';
+    const VALID_VIEW = new Set(['list', 'cards']);
+    let currentView = 'cards';
+    try {
+      const v = localStorage.getItem(VIEW_KEY);
+      if (VALID_VIEW.has(v)) currentView = v;
+    } catch {}
+    let ultimosItens = [];
 
     const fmtStatus = (s) => STATUS_CONTRATO_LABELS[s] ?? { cls: 'badge-muted', label: s };
 
@@ -257,6 +288,7 @@
 
     async function carregarLista() {
       const el = document.getElementById('lista');
+      ultimosItens = [];
       el.innerHTML = '<span style="color:var(--color-text-muted)">Carregando...</span>';
       const dados = await listarContratos(pageState);
       if (!dados) { el.innerHTML = '<div class="empty">❌ Erro ao carregar contratos.</div>'; return; }
@@ -272,9 +304,87 @@
         `;
         return;
       }
-      el.innerHTML = items.map(c => renderCard(c)).join('');
+      ultimosItens = items;
+      renderItens();
       renderPaginacao(total);
     }
+
+    function renderItens() {
+      const el = document.getElementById('lista');
+      if (!ultimosItens.length) return;
+      if (currentView === 'list') {
+        el.innerHTML = `
+          <div class="table-wrapper">
+            <table class="ct-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Nº</th>
+                  <th>Processo</th>
+                  <th>Status</th>
+                  <th class="num">Total</th>
+                  <th class="num">A Receber</th>
+                  <th class="num">Pago</th>
+                  <th>Parcelas</th>
+                  <th>Forma</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>${ultimosItens.map(c => renderLinha(c)).join('')}</tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `<div class="ci-grid">${ultimosItens.map(c => renderCard(c)).join('')}</div>`;
+      }
+    }
+
+    function renderLinha(c) {
+      const st = statusContrato(c);
+      const info = fmtStatus(st);
+      const aReceber = (c.valorPendente ?? c.ValorPendente ?? 0) + (c.valorEmAtraso ?? c.ValorEmAtraso ?? 0);
+      const totalParc = c.totalParcelas ?? c.TotalParcelas ?? 0;
+      const pagas = c.parcelasPagas ?? c.ParcelasPagas ?? 0;
+      const id = c.id ?? c.Id;
+      const objeto = c.objeto ?? c.Objeto;
+      return `
+        <tr>
+          <td class="ct-cliente">
+            <a href="${contatoPerfilUrl(pick(c, 'contatoId'))}" style="color:inherit;font-weight:600">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
+            ${objeto ? `<div class="ct-obj">${escapeHtml(objeto.slice(0, 80))}</div>` : ''}
+          </td>
+          <td><span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span></td>
+          <td>${c.numeroProcesso || c.NumeroProcesso ? `<span class="badge-sm badge-proc" title="Processo">⚖ ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</span>` : '—'}</td>
+          <td><span class="badge-sm ${info.cls}">${info.label}</span></td>
+          <td class="num">${brl(c.valorTotal ?? c.ValorTotal)}</td>
+          <td class="num ${st === 'Inadimplente' ? 'danger' : ''}">${brl(aReceber)}</td>
+          <td class="num">${brl(c.valorPago ?? c.ValorPago)}</td>
+          <td>${pagas}/${totalParc}</td>
+          <td>${mapForma(c.formaPagamento ?? c.FormaPagamento)}</td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${id}" title="Ver">📄</a>
+              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${id}" title="Editar">✏️</a>
+              <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${id}')" title="Extrato">📑</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function applyView() {
+      document.getElementById('viewList').classList.toggle('active', currentView === 'list');
+      document.getElementById('viewCards').classList.toggle('active', currentView === 'cards');
+    }
+    function setView(v) {
+      currentView = v;
+      try { localStorage.setItem(VIEW_KEY, v); } catch {}
+      applyView();
+      renderItens();
+    }
+    document.getElementById('viewList').addEventListener('click', () => setView('list'));
+    document.getElementById('viewCards').addEventListener('click', () => setView('cards'));
+    applyView();
 
     function renderCard(c) {
       const st = statusContrato(c);
@@ -305,7 +415,7 @@
             <div><div class="cl">Forma</div><div class="cv" style="font-size:12px">${mapForma(c.formaPagamento ?? c.FormaPagamento)}</div></div>
           </div>
           <div class="prog"><div class="prog-fill" style="width:${prog.toFixed(0)}%"></div></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <div class="ci-actions" style="display:flex;gap:8px;flex-wrap:wrap">
             <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${c.id ?? c.Id}">📄 Ver</a>
             <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${c.id ?? c.Id}">✏️ Editar</a>
             <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${c.id ?? c.Id}')">📑 Extrato</button>
