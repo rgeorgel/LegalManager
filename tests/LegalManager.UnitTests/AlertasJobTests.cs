@@ -4,6 +4,7 @@ using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -834,5 +835,66 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoTarefasAsync(
             It.IsAny<string>(), It.IsAny<string>(),
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Dias == 0)), Times.Once);
+    }
+
+    [Fact]
+    public async Task Resumo_ComMuitosItens_DeveCaberNosLimitesDaNotificacao()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        for (var i = 0; i < 30; i++)
+            ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, $"Tarefa {i} " + new string('x', 80), hoje.AddDays(1)));
+        await ctx.SaveChangesAsync();
+
+        var job = new AlertasJob(ctx, Mock.Of<IEmailService>(), PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        var notif = await ctx.Notificacoes.SingleAsync(n => n.Tipo == TipoNotificacao.PrazoTarefa);
+        Assert.True(notif.Mensagem.Length <= 1000);
+        Assert.True(notif.Titulo.Length <= 300);
+    }
+
+    // Regressão: uma falha ao gravar o resumo de tarefas deixava a entidade no ChangeTracker e
+    // todo SaveChanges seguinte do job falhava — inclusive o que cria as preferências do admin
+    // do trial, antes do envio. Resultado: e-mails de fim de trial (7, 3 e 1 dia) não saíam.
+    [Fact]
+    public async Task FalhaAoGravarResumoDeTarefas_NaoDeveImpedirEmailDeTrial()
+    {
+        var (ctx, tenantId, responsavelId) = await SeedAsync();
+        var hoje = BrasiliaTime.Hoje;
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Tarefa", hoje.AddDays(1)));
+
+        var trialId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = trialId, Nome = "Trial Tenant", Plano = PlanoTipo.Plus,
+            Status = StatusTenant.Trial, TrialExpiraEm = hoje.AddDays(7), CriadoEm = DateTime.UtcNow
+        });
+        ctx.Users.Add(new Usuario
+        {
+            Id = adminId, TenantId = trialId, Nome = "Admin",
+            Email = "admin@trial.com", UserName = "admin@trial.com",
+            Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        // Simula o INSERT inválido do resumo (ex.: Mensagem acima do limite no PostgreSQL).
+        var mockEmail = new Mock<IEmailService>();
+        mockEmail.Setup(e => e.EnviarResumoTarefasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>()))
+            .Callback(() => ctx.Notificacoes.Add(new Notificacao
+            {
+                Id = Guid.NewGuid(), TenantId = tenantId, UsuarioId = responsavelId,
+                Titulo = null!, Mensagem = null!, CriadaEm = DateTime.UtcNow
+            }))
+            .Returns(Task.CompletedTask);
+
+        // Serviço real: sem preferências gravadas, ele as cria com SaveChanges no mesmo contexto.
+        var prefs = new PreferenciasNotificacaoService(ctx);
+        var job = new AlertasJob(ctx, mockEmail.Object, prefs, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarTrialExpirandoAsync("admin@trial.com", "Trial Tenant", 7), Times.Once);
+        Assert.True(await ctx.Notificacoes.AnyAsync(n => n.ChaveDedup!.StartsWith("email-trial-")));
     }
 }

@@ -35,10 +35,30 @@ public class AlertasJob
     {
         using var activity = Telemetry.Hangfire.StartActivity($"{nameof(AlertasJob)}.{nameof(ExecutarAsync)}");
         activity?.SetTag("job.cron", "alertas-diarios");
-        await AlertarTarefasAsync(hojeFixo);
-        await AlertarEventosAsync(hojeFixo);
-        await AlertarTrialExpirandoAsync(hojeFixo ?? BrasiliaTime.Hoje);
+        // Cada etapa é isolada: uma falha no resumo de tarefas não pode impedir os avisos de
+        // eventos nem os de fim de trial.
+        await EtapaAsync(nameof(AlertarTarefasAsync), () => AlertarTarefasAsync(hojeFixo));
+        await EtapaAsync(nameof(AlertarEventosAsync), () => AlertarEventosAsync(hojeFixo));
+        await EtapaAsync(nameof(AlertarTrialExpirandoAsync), () => AlertarTrialExpirandoAsync(hojeFixo ?? BrasiliaTime.Hoje));
     }
+
+    private async Task EtapaAsync(string nome, Func<Task> etapa)
+    {
+        try { await etapa(); }
+        catch (Exception ex)
+        {
+            DescartarPendentes();
+            _logger.LogError(ex, "Erro na etapa {Etapa} do AlertasJob", nome);
+        }
+    }
+
+    // O job usa um único DbContext. Se um SaveChanges falha, a entidade que não foi gravada
+    // continua no ChangeTracker e faz todo SaveChanges seguinte falhar também — inclusive o
+    // que cria as preferências de notificação de quem ainda não tem, antes do e-mail de trial.
+    private void DescartarPendentes() => _context.ChangeTracker.Clear();
+
+    private static string Limitar(string texto, int max) =>
+        texto.Length <= max ? texto : texto[..(max - 1)] + "…";
 
     private async Task<DateTime> HojeDoTenantAsync(Guid tenantId, DateTime? hojeFixo) =>
         hojeFixo?.Date ?? FusoHorario.HojeParede(await _context.DoTenantAsync(tenantId));
@@ -167,8 +187,8 @@ public class AlertasJob
                     TenantId = grupo.Key.TenantId,
                     UsuarioId = grupo.Key.DestinatarioId,
                     Tipo = TipoNotificacao.PrazoTarefa,
-                    Titulo = titulo,
-                    Mensagem = resumo,
+                    Titulo = Limitar(titulo, 300),
+                    Mensagem = Limitar(resumo, 1000),
                     Url = "/pages/tarefas.html",
                     Lida = itensInApp.Count == 0,
                     CriadaEm = DateTime.UtcNow,
@@ -178,6 +198,7 @@ public class AlertasJob
             }
             catch (Exception ex)
             {
+                DescartarPendentes();
                 _logger.LogError(ex, "Erro ao gerar resumo de tarefas para usuário {UsuarioId}", grupo.Key.DestinatarioId);
             }
         }
@@ -270,6 +291,7 @@ public class AlertasJob
             }
             catch (Exception ex)
             {
+                DescartarPendentes();
                 _logger.LogError(ex, "Erro ao alertar eventos do responsável {ResponsavelId}", key.ResponsavelId);
             }
         }
@@ -337,6 +359,7 @@ public class AlertasJob
                     }
                     catch (Exception ex)
                     {
+                        DescartarPendentes();
                         _logger.LogError(ex, "Erro ao alertar trial tenant {TenantId}", tenant.Id);
                     }
                 }
