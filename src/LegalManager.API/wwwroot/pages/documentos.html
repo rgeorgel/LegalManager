@@ -289,7 +289,7 @@
       <button class="tab-btn active" data-tab="documentos">📁 Documentos</button>
       <button class="tab-btn" data-tab="modelos" id="tabBtnModelos">
         📋 Modelos
-        <span id="modelosProBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle">PRO</span>
+        <span id="modelosPlusBadge" style="display:none;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;margin-left:4px;vertical-align:middle" title="Disponível a partir do plano Plus">PLUS</span>
       </button>
     </div>
 
@@ -702,7 +702,7 @@ document.head.insertAdjacentHTML('beforeend',
 initLayout();
 
 const free = isPlanoFree();
-if (free) document.getElementById('modelosProBadge').style.display = '';
+if (free) document.getElementById('modelosPlusBadge').style.display = '';
 
 // ============================================================
 // TAB SWITCHING
@@ -711,7 +711,7 @@ let modelosLoaded = false;
 
 function switchTab(name) {
   if (name === 'modelos' && free) {
-    showUpgradeToast();
+    showUpgradeToast('Plus');
     return;
   }
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));

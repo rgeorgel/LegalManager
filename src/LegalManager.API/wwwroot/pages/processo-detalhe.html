@@ -1742,7 +1742,7 @@ let gmModelos = [];
 let currentGmModelo = null;
 
 document.getElementById('btnGerarModeloDoc').addEventListener('click', async () => {
-  if (isPlanoFree()) { showUpgradeToast(); return; }
+  if (isPlanoFree()) { showUpgradeToast('Plus'); return; }
   const modal = document.getElementById('modalGerarModelo');
   document.getElementById('gerarModeloAlert').style.display = 'none';
   document.getElementById('gmVariaveis').innerHTML = '<p style="color:var(--color-text-muted)">Selecione um modelo...</p>';
