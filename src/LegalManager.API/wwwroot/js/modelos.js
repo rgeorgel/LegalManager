@@ -328,4 +328,65 @@ _______________________________________
 _______________________________________
 {{nome_advogado}}`,
   },
+  {
+    nome: 'Substabelecimento',
+    descricao: 'Transfere a outro advogado os poderes da procuração, com ou sem reserva.',
+    conteudo: `SUBSTABELECIMENTO {{com_ou_sem}} RESERVA DE PODERES
+
+SUBSTABELECENTE: {{nome_advogado}}, advogado(a) inscrito(a) na OAB/{{uf_oab}} sob o nº {{numero_oab}}, com escritório em {{endereco_escritorio}}.
+
+SUBSTABELECIDO: {{nome_substabelecido}}, advogado(a) inscrito(a) na OAB/{{uf_oab_substabelecido}} sob o nº {{numero_oab_substabelecido}}, com escritório em {{endereco_substabelecido}}.
+
+PODERES: pelo presente instrumento, o(a) substabelecente substabelece, {{com_ou_sem}} reserva de iguais poderes, na pessoa do(a) substabelecido(a), os poderes que lhe foram conferidos por {{nome_cliente}} no processo nº {{numero_processo}}, em trâmite perante a {{vara}} da comarca de {{comarca}}.
+
+{{comarca}}, {{data_atual}}.
+
+
+_______________________________________
+{{nome_advogado}}`,
+  },
+  {
+    nome: 'Notificação Extrajudicial',
+    descricao: 'Notifica formalmente a outra parte para cumprir uma obrigação em prazo determinado.',
+    conteudo: `NOTIFICAÇÃO EXTRAJUDICIAL
+
+NOTIFICANTE: {{nome_cliente}}, inscrito(a) no CPF/CNPJ sob o nº {{documento_cliente}}, residente e domiciliado(a) em {{endereco_cliente}}, neste ato representado(a) por seu(sua) advogado(a), {{nome_advogado}}, OAB/{{uf_oab}} nº {{numero_oab}}.
+
+NOTIFICADO(A): {{nome_notificado}}, inscrito(a) no CPF/CNPJ sob o nº {{documento_notificado}}, com endereço em {{endereco_notificado}}.
+
+Prezado(a) Senhor(a),
+
+Pela presente, o(a) NOTIFICANTE vem, respeitosamente, NOTIFICÁ-LO(A) acerca do seguinte:
+
+{{fatos}}
+
+Diante do exposto, fica V. Sa. notificado(a) para, no prazo de {{prazo_dias}} dias a contar do recebimento desta, {{providencia_exigida}}, sob pena da adoção das medidas judiciais cabíveis, inclusive com a cobrança de perdas e danos, custas processuais e honorários advocatícios.
+
+Sem mais para o momento, colocamo-nos à disposição para eventuais esclarecimentos.
+
+{{comarca}}, {{data_atual}}.
+
+
+_______________________________________
+{{nome_advogado}}
+OAB/{{uf_oab}} nº {{numero_oab}}`,
+  },
+  {
+    nome: 'Recibo de Honorários',
+    descricao: 'Recibo de pagamento de honorários advocatícios para entregar ao cliente.',
+    conteudo: `RECIBO DE HONORÁRIOS ADVOCATÍCIOS
+
+Quantia: {{quantia_recebida}}
+
+Recebi de {{nome_cliente}}, inscrito(a) no CPF/CNPJ sob o nº {{documento_cliente}}, a importância de {{quantia_recebida}} ({{quantia_por_extenso}}), referente a {{referente_a}}, dando plena e geral quitação quanto ao valor ora recebido.
+
+Forma de pagamento: {{forma_pagamento}}.
+
+{{comarca}}, {{data_atual}}.
+
+
+_______________________________________
+{{nome_advogado}}
+OAB/{{uf_oab}} nº {{numero_oab}}`,
+  },
 ];
