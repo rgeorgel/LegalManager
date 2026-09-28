@@ -87,6 +87,25 @@
     .recurso-row-titulo { font-size: 12px; font-weight: 600; color: var(--color-text); }
     .recurso-row-desc { font-size: 11px; color: var(--color-text-muted); margin-top: 1px; line-height: 1.4; }
     .recurso-row-valor { flex-shrink: 0; text-align: right; }
+    .data-table td.tenant-acoes .acoes { display: flex; gap: 4px; flex-wrap: wrap; }
+    .data-table td.tenant-acoes { white-space: nowrap; }
+    @media (max-width: 768px) {
+      .filters { flex-direction: column; align-items: stretch; }
+      .filters input, .filters select { width: 100%; min-width: 0; font-size: 16px; }
+      .data-table { border: none; background: transparent; border-radius: 0; overflow: visible; }
+      .data-table tbody tr { padding: 0; overflow: hidden; }
+      .data-table tr:hover td { background: transparent; }
+      .data-table tbody td { padding: 8px 12px; gap: 12px; text-align: left !important; white-space: normal !important; border-bottom: 1px solid var(--color-border); }
+      .data-table tbody td:not([data-label])::before { content: none; }
+      .data-table td > .cell { text-align: right; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; }
+      .data-table td > .cell .usage-bar { width: 120px; }
+      .data-table td.tenant-nome { display: block; font-size: 15px; font-weight: 600 !important; padding: 12px; background: var(--color-bg); word-break: break-word; }
+      .data-table td.tenant-acoes { display: block; padding: 10px 12px; border-bottom: none; }
+      .data-table td.tenant-acoes .acoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .data-table td.tenant-acoes .action-btn { padding: 8px 6px; font-size: 13px; }
+      .pagination { flex-wrap: wrap; justify-content: space-between; }
+      .pagination span { order: -1; width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -630,66 +649,82 @@ import { esc } from '/js/utils.js';
             const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
             return `
             <tr>
-              <td style="font-weight:500">${esc(t.nome)}</td>
-              <td style="color:var(--color-text-muted);font-size:12px">${esc(t.cnpj ?? '—')}</td>
-              <td>
-                <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
-                <div style="margin-top:3px">${paymentBadge(t)}</div>
-                ${t.trialConcedidoDias && t.trialExpiraEm && new Date(t.trialExpiraEm) > new Date() ? `
-                  <div style="margin-top:3px" title="Trial Plus concedido por superadmin">
-                    <span class="badge badge-blue" style="font-size:10px">🎁 trial plus ${t.trialConcedidoDias}d</span>
-                  </div>
-                ` : ''}
+              <td class="tenant-nome" style="font-weight:500">${esc(t.nome)}</td>
+              <td data-label="CNPJ" style="color:var(--color-text-muted);font-size:12px">${esc(t.cnpj ?? '—')}</td>
+              <td data-label="Plano">
+                <div class="cell">
+                  <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
+                  <div style="margin-top:3px">${paymentBadge(t)}</div>
+                  ${t.trialConcedidoDias && t.trialExpiraEm && new Date(t.trialExpiraEm) > new Date() ? `
+                    <div style="margin-top:3px" title="Trial Plus concedido por superadmin">
+                      <span class="badge badge-blue" style="font-size:10px">🎁 trial plus ${t.trialConcedidoDias}d</span>
+                    </div>
+                  ` : ''}
+                </div>
               </td>
-              <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
+              <td data-label="Status"><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
+              <td data-label="Usuários" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
                   title="${t.userCount} de ${t.usuariosLimite} usuários permitidos no plano">
-                <div>${t.userCount} / ${t.usuariosLimite}</div>
-                ${pctBar(usuariosPct, 'Usuários')}
+                <div class="cell">
+                  <div>${t.userCount} / ${t.usuariosLimite}</div>
+                  ${pctBar(usuariosPct, 'Usuários')}
+                </div>
               </td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
+              <td data-label="Processos" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
                   title="${t.monitoradoCount} de ${t.monitoradosLimite} monitoramentos permitidos">
-                <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total · ${t.monitoradoCount}/${t.monitoradosLimite} monit.</div>
-                ${pctBar(monitoradosPct, 'Monitorados')}
-                <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
-                  <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
-                  <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+                <div class="cell">
+                  <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total · ${t.monitoradoCount}/${t.monitoradosLimite} monit.</div>
+                  ${pctBar(monitoradosPct, 'Monitorados')}
+                  <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
+                    <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
+                    <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+                  </div>
                 </div>
               </td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3"
+              <td data-label="Docs" style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3"
                   title="Storage: ${fmtBytes(t.documentoTamanhoBytes)} de ${fmtMb(t.armazenamentoLimiteMB)} permitidos">
-                <div>${t.documentoCount} docs</div>
-                <div style="font-size:11px;color:var(--color-text-muted)">${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}</div>
-                ${pctBar(storagePct, 'Storage')}
-              </td>
-              <td style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
-                  title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
-                <div style="font-size:11px;color:var(--color-text-muted)">${t.tarefaCount} total</div>
-                <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
-                  <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
-                  <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
-                  <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
-                  <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
+                <div class="cell">
+                  <div>${t.documentoCount} docs</div>
+                  <div style="font-size:11px;color:var(--color-text-muted)">${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}</div>
+                  ${pctBar(storagePct, 'Storage')}
                 </div>
-                ${t.oabComErroSync > 0 ? `<div style="margin-top:3px"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB</span></div>` : ''}
               </td>
-              <td style="line-height:1.3">${recursosCell(t)}</td>
-              <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.criadoEm)}</td>
-              <td style="color:var(--color-text-muted);font-size:12px;line-height:1.3" title="Último acesso de qualquer usuário do tenant">
-                <div>${fmtDateTime(t.ultimoAcessoEm)}</div>
-                <div style="font-size:11px">${daysAgo(t.ultimoAcessoEm)}</div>
+              <td data-label="Tarefas" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
+                  title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
+                <div class="cell">
+                  <div style="font-size:11px;color:var(--color-text-muted)">${t.tarefaCount} total</div>
+                  <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
+                    <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
+                    <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
+                    <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
+                    <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
+                  </div>
+                  ${t.oabComErroSync > 0 ? `<div style="margin-top:3px"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB</span></div>` : ''}
+                </div>
               </td>
-              <td style="line-height:1.3;white-space:nowrap">
-                <div style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</div>
-                <div style="margin-top:2px">${t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano')}</div>
+              <td data-label="Recursos" style="line-height:1.3"><div class="cell">${recursosCell(t)}</div></td>
+              <td data-label="Cadastro" style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.criadoEm)}</td>
+              <td data-label="Último Acesso" style="color:var(--color-text-muted);font-size:12px;line-height:1.3" title="Último acesso de qualquer usuário do tenant">
+                <div class="cell">
+                  <div>${fmtDateTime(t.ultimoAcessoEm)}</div>
+                  <div style="font-size:11px">${daysAgo(t.ultimoAcessoEm)}</div>
+                </div>
               </td>
-              <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
-                <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
-                <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
-                <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
-                <button class="action-btn" onclick="openExportModal('${t.id}', '${esc(t.nome).replace(/'/g, "\\'")}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
-                <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
-                <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Excluir este tenant e todos os seus dados permanentemente">Excluir</button>
+              <td data-label="Expira" style="line-height:1.3;white-space:nowrap">
+                <div class="cell">
+                  <div style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</div>
+                  <div style="margin-top:2px">${t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano')}</div>
+                </div>
+              </td>
+              <td class="tenant-acoes">
+                <div class="acoes">
+                  <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
+                  <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
+                  <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
+                  <button class="action-btn" onclick="openExportModal('${t.id}', '${esc(t.nome).replace(/'/g, "\\'")}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
+                  <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
+                  <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Excluir este tenant e todos os seus dados permanentemente">Excluir</button>
+                </div>
               </td>
             </tr>`;
           }).join('');
