@@ -1,4 +1,5 @@
 import { apiFetch } from '/js/api.js';
+import { acompanharImportacao } from './importacao-bar.js';
 
 import { esc } from './utils.js';
 const UFS = [
@@ -86,6 +87,7 @@ export async function openReadOnlyModal(numero, uf) {
 
   showStep(4);
   showModal();
+  mostrarImportacaoEmAndamento(listaEl);
 
   try {
     const oabs = await apiFetch('/onboarding/oabs-importadas');
@@ -108,8 +110,24 @@ export async function openReadOnlyModal(numero, uf) {
   }
 }
 
+async function mostrarImportacaoEmAndamento(listaEl) {
+  document.getElementById('obImportacaoAndamento')?.remove();
+  if (!listaEl) return;
+  try {
+    const ativa = await apiFetch('/importacoes/ativa');
+    if (!ativa) return;
+    const aviso = document.createElement('div');
+    aviso.id = 'obImportacaoAndamento';
+    aviso.style.cssText = 'background:var(--color-primary-light);border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:12px';
+    aviso.textContent = ativa.status === 'Importando'
+      ? `Importação em andamento: ${ativa.processados} de ${ativa.total} processos. Acompanhe pela barra na parte inferior da tela.`
+      : 'Importação em andamento: pesquisando seus processos. Acompanhe pela barra na parte inferior da tela.';
+    listaEl.parentElement.insertBefore(aviso, listaEl.previousElementSibling ?? listaEl);
+  } catch { /* não crítico */ }
+}
+
 let _marcarCompleto = true;
-let _onImportSuccess = null;
+let _onImportStart = null;
 let _afterClose = null;
 let _oabResultados = [];
 let _oabAtual = { numero: '', uf: '' };
@@ -126,7 +144,7 @@ async function completar() {
 
 export function initOnboardingModal(opts = {}) {
   _marcarCompleto = opts.marcarCompleto !== false;
-  _onImportSuccess = opts.onImportSuccess ?? null;
+  _onImportStart = opts.onImportStart ?? null;
 
   const select = document.getElementById('obUf');
   UFS.forEach(uf => {
@@ -168,8 +186,22 @@ async function buscarPorOab() {
   const btn = document.getElementById('obBuscarBtn');
   const loadingEl = document.getElementById('obLoadingSearch');
   btn.disabled = true;
-  btn.textContent = 'Buscando...';
 
+  // "Importar todos": a busca e a importação rodam juntas em background (barra inferior).
+  if (document.getElementById('obImportarTodos')?.checked) {
+    btn.textContent = 'Iniciando...';
+    try {
+      await iniciarImportacao({ numeroOAB, uf });
+    } catch (e) {
+      erroEl.textContent = e?.message || 'Erro ao iniciar a importação. Tente novamente.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Buscar Processos';
+    }
+    return;
+  }
+
+  btn.textContent = 'Buscando...';
   loadingEl.style.display = 'flex';
   startDots('search', 'Consultando tribunais');
 
@@ -180,25 +212,13 @@ async function buscarPorOab() {
     });
 
     _oabResultados = processos ?? [];
-    loadingEl.style.display = 'none';
-    stopDots('search');
-
-    const importarTodos = document.getElementById('obImportarTodos')?.checked;
-
-    if (importarTodos && _oabResultados.length > 0) {
-      renderResultados(processos);
-      document.querySelectorAll('#obListaProcessos input[type=checkbox]:not(:disabled)')
-        .forEach(cb => cb.checked = true);
-      await importar();
-    } else {
-      renderResultados(processos);
-      showStep(2);
-    }
+    renderResultados(_oabResultados);
+    showStep(2);
   } catch {
-    loadingEl.style.display = 'none';
-    stopDots('search');
     erroEl.textContent = 'Erro ao buscar processos. Verifique o número OAB e tente novamente.';
   } finally {
+    loadingEl.style.display = 'none';
+    stopDots('search');
     btn.disabled = false;
     btn.textContent = 'Buscar Processos';
   }
@@ -289,48 +309,40 @@ async function importar() {
   }
 
   const btn = document.getElementById('obImportarBtn');
-  const loadingEl = document.getElementById('obLoadingImport');
   btn.disabled = true;
-  btn.textContent = `Importando ${processos.length} processo(s)...`;
-  loadingEl.style.display = 'flex';
-  startDots('import', 'Importando processos');
+  btn.textContent = 'Iniciando...';
   document.getElementById('obErroImportar').textContent = '';
 
   try {
-    const resultado = await apiFetch('/onboarding/importar', {
-      method: 'POST',
-      body: JSON.stringify({ processos })
-    });
-
-    document.getElementById('obResultadoTexto').textContent =
-      `${resultado.importados} processo(s) importado(s) com sucesso.`;
-
-    const detalheEl = document.getElementById('obResultadoDetalhe');
-    if (resultado.mensagens && resultado.mensagens.length > 0) {
-      detalheEl.textContent = resultado.mensagens.join('\n');
-      detalheEl.style.display = 'block';
-    } else {
-      detalheEl.style.display = 'none';
-    }
-
-    showStep(3);
-    try {
-      await apiFetch('/onboarding/registrar-oab-importada', {
-        method: 'POST',
-        body: JSON.stringify({ numero: _oabAtual.numero, uf: _oabAtual.uf })
-      });
-    } catch {}
-    if (_marcarCompleto) {
-      try { await apiFetch('/onboarding/completar', { method: 'POST' }); } catch {}
-    }
-    if (_onImportSuccess) _onImportSuccess(resultado.importados);
-  } catch {
-    document.getElementById('obErroImportar').textContent = 'Erro ao importar processos. Tente novamente.';
+    await iniciarImportacao({ numeroOAB: _oabAtual.numero, uf: _oabAtual.uf, processos });
+  } catch (e) {
+    document.getElementById('obErroImportar').textContent = e?.message || 'Erro ao iniciar a importação. Tente novamente.';
   } finally {
-    loadingEl.style.display = 'none';
-    stopDots('import');
     btn.disabled = false;
     btn.textContent = 'Importar Selecionados';
   }
+}
+
+// Cria a importação em background e passa o acompanhamento para a barra inferior
+// (importacao-bar.js). O modal só confirma que começou; o resultado chega por aviso
+// e notificação quando o job terminar.
+async function iniciarImportacao(body) {
+  const importacao = await apiFetch('/importacoes', { method: 'POST', body: JSON.stringify(body) });
+
+  document.getElementById('obResultadoTexto').innerHTML = `
+    Importação iniciada!
+    <div style="font-size:13px;font-weight:400;color:var(--color-text-muted);margin-top:8px;line-height:1.5">
+      Estamos pesquisando e importando seus processos em segundo plano — você pode continuar
+      usando o sistema. Acompanhe o progresso na barra na parte inferior da tela; avisaremos
+      quando terminar.
+    </div>`;
+  document.getElementById('obResultadoDetalhe').style.display = 'none';
+  showStep(3);
+
+  acompanharImportacao(importacao);
+  if (_marcarCompleto) {
+    try { await apiFetch('/onboarding/completar', { method: 'POST' }); } catch {}
+  }
+  _onImportStart?.(importacao);
 }
 

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="vu fu pu gu bu init Hu zu qu ju Gu Xl Bu Qu Du eh ih nh sh rh oh capture getExtension Uu cu hh calculateEventProperties uh register register_once register_for_session unregister unregister_for_session gh Nu dh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync mh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset yh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty fh Xu createPersonProfile setInternalOrTestUser ph wu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ju debug Yl Os getPageViewId captureTraceFeedback captureTraceMetric Ru".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Importação de Processos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .page-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .page-intro { color: var(--color-text-muted); font-size: 14px; margin: -12px 0 20px; }
+
+    .resumo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .resumo-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 14px 16px; }
+    .resumo-card .rotulo { font-size: 12px; color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .resumo-card .valor { font-size: 24px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .resumo-card.ok .valor { color: var(--color-success); }
+    .resumo-card.erro .valor { color: var(--color-danger); }
+
+    .status-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 14px; }
+    .status-linha .meta { color: var(--color-text-muted); font-size: 13px; }
+    .progresso { height: 8px; border-radius: 999px; background: var(--color-primary-light); overflow: hidden; margin-bottom: 20px; }
+    .progresso > div { height: 100%; background: var(--color-primary); transition: width .4s ease; }
+
+    .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filtro { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; min-height: 36px; }
+    .filtro.ativo { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+    .lista-wrap { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; }
+    .cnj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; white-space: nowrap; }
+    .mensagem { color: var(--color-text-muted); font-size: 13px; }
+    .badge-yellow { background: #fef3c7; color: #92400e; }
+    .vazio { padding: 40px 24px; text-align: center; color: var(--color-text-muted); }
+
+    @media (max-width: 768px) {
+      .resumo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .col-tribunal { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <ul class="sidebar-nav" id="sidebarNav"></ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title" id="titulo">Importações de processos</h1>
+      <a class="btn btn-secondary" href="/pages/processos.html">Ver processos</a>
+    </div>
+    <p class="page-intro" id="intro"></p>
+    <div id="conteudo"><div class="vazio">Carregando...</div></div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { esc } from '/js/utils.js';
+
+  initLayout();
+
+  const ATIVOS = ['Pendente', 'Buscando', 'Importando'];
+  const STATUS_IMPORTACAO = {
+    Pendente:   ['Na fila', 'badge-gray'],
+    Buscando:   ['Pesquisando', 'badge-blue'],
+    Importando: ['Importando', 'badge-blue'],
+    Concluida:  ['Concluída', 'badge-green'],
+    Erro:       ['Interrompida', 'badge-red'],
+  };
+  const STATUS_ITEM = {
+    Pendente:      ['Aguardando', 'badge-gray'],
+    Importado:     ['Importado', 'badge-green'],
+    JaCadastrado:  ['Já cadastrado', 'badge-gray'],
+    NaoEncontrado: ['Não encontrado', 'badge-yellow'],
+    Erro:          ['Erro', 'badge-red'],
+  };
+  const FILTROS = [
+    ['todos', 'Todos', () => true],
+    ['importados', 'Importados', i => i.status === 'Importado'],
+    ['ja', 'Já cadastrados', i => i.status === 'JaCadastrado'],
+    ['erros', 'Com erro', i => i.status === 'Erro' || i.status === 'NaoEncontrado'],
+    ['pendentes', 'Aguardando', i => i.status === 'Pendente'],
+  ];
+
+  const conteudo = document.getElementById('conteudo');
+  const id = new URLSearchParams(location.search).get('id');
+  let filtroAtual = 'todos';
+  let itens = [];
+
+  const badge = ([texto, classe]) => `<span class="badge ${classe}">${esc(texto)}</span>`;
+  // CriadoEm/ConcluidoEm são carimbos UTC reais do servidor (não hora "de parede").
+  const dataHora = v => v ? new Date(v).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+
+  if (id) carregarImportacao(); else carregarLista();
+
+  async function carregarLista() {
+    document.getElementById('intro').textContent = 'Suas importações de processos por OAB mais recentes.';
+    let lista;
+    try {
+      lista = await apiFetch('/importacoes');
+    } catch {
+      conteudo.innerHTML = '<div class="vazio">Erro ao carregar as importações.</div>';
+      return;
+    }
+    if (!lista.length) {
+      conteudo.innerHTML = '<div class="lista-wrap"><div class="vazio">Nenhuma importação realizada ainda.</div></div>';
+      return;
+    }
+    conteudo.innerHTML = `
+      <div class="lista-wrap table-wrapper">
+        <table>
+          <thead><tr><th>Início</th><th>OAB</th><th>Status</th><th>Importados</th><th></th></tr></thead>
+          <tbody>
+            ${lista.map(i => `
+              <tr>
+                <td>${dataHora(i.criadoEm)}</td>
+                <td class="cnj">${esc(i.numeroOab)}/${esc(i.uf)}</td>
+                <td>${badge(STATUS_IMPORTACAO[i.status] ?? [i.status, 'badge-gray'])}</td>
+                <td>${i.importados} de ${i.total}</td>
+                <td style="text-align:right"><a href="/pages/importacao.html?id=${encodeURIComponent(i.id)}">Ver detalhes</a></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  async function carregarImportacao() {
+    let importacao;
+    try {
+      [importacao, itens] = await Promise.all([
+        apiFetch(`/importacoes/${encodeURIComponent(id)}`),
+        apiFetch(`/importacoes/${encodeURIComponent(id)}/itens`),
+      ]);
+    } catch {
+      conteudo.innerHTML = '<div class="vazio">Importação não encontrada.</div>';
+      return;
+    }
+
+    document.getElementById('titulo').textContent = `Importação da OAB ${importacao.numeroOab}/${importacao.uf}`;
+    document.getElementById('intro').innerHTML =
+      `<a href="/pages/importacao.html">← Todas as importações</a>`;
+    renderImportacao(importacao);
+
+    // Enquanto roda, atualiza a página junto com a barra inferior.
+    if (ATIVOS.includes(importacao.status)) setTimeout(carregarImportacao, 3000);
+  }
+
+  function renderImportacao(i) {
+    const ativo = ATIVOS.includes(i.status);
+    const erros = i.erros;
+    const pct = i.total > 0 ? Math.round((i.processados / i.total) * 100) : 0;
+
+    conteudo.innerHTML = `
+      <div class="status-linha">
+        ${badge(STATUS_IMPORTACAO[i.status] ?? [i.status, 'badge-gray'])}
+        <span class="meta">Iniciada em ${dataHora(i.criadoEm)}${i.concluidoEm ? ` · concluída em ${dataHora(i.concluidoEm)}` : ''}</span>
+        ${i.mensagemErro ? `<span class="mensagem">${esc(i.mensagemErro)}</span>` : ''}
+      </div>
+      ${ativo ? `<div class="progresso" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div style="width:${i.status === 'Importando' ? pct : 0}%"></div></div>` : ''}
+      <div class="resumo-grid">
+        <div class="resumo-card"><div class="rotulo">Encontrados</div><div class="valor">${i.total}</div></div>
+        <div class="resumo-card ok"><div class="rotulo">Importados</div><div class="valor">${i.importados}</div></div>
+        <div class="resumo-card"><div class="rotulo">Já cadastrados</div><div class="valor">${i.jaCadastrados}</div></div>
+        <div class="resumo-card${erros > 0 ? ' erro' : ''}"><div class="rotulo">Com erro</div><div class="valor">${erros}</div></div>
+      </div>
+      <div class="filtros" id="filtros"></div>
+      <div class="lista-wrap table-wrapper" id="lista"></div>`;
+
+    renderFiltros();
+    renderItens();
+  }
+
+  function renderFiltros() {
+    const el = document.getElementById('filtros');
+    el.innerHTML = FILTROS
+      .map(([chave, rotulo, pred]) => {
+        const n = itens.filter(pred).length;
+        if (chave !== 'todos' && n === 0) return '';
+        return `<button type="button" class="filtro${chave === filtroAtual ? ' ativo' : ''}" data-filtro="${chave}">${esc(rotulo)} (${n})</button>`;
+      })
+      .join('');
+    el.querySelectorAll('.filtro').forEach(b => b.addEventListener('click', () => {
+      filtroAtual = b.dataset.filtro;
+      renderFiltros();
+      renderItens();
+    }));
+  }
+
+  function renderItens() {
+    const el = document.getElementById('lista');
+    const pred = (FILTROS.find(([c]) => c === filtroAtual) ?? FILTROS[0])[2];
+    const visiveis = itens.filter(pred);
+    if (!visiveis.length) {
+      el.innerHTML = `<div class="vazio">${itens.length ? 'Nenhum processo neste filtro.' : 'Os processos aparecem aqui assim que a pesquisa terminar.'}</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <table>
+        <thead><tr><th>Processo</th><th class="col-tribunal">Tribunal</th><th>Status</th></tr></thead>
+        <tbody>
+          ${visiveis.map(it => `
+            <tr>
+              <td class="cnj">${it.processoId
+                ? `<a href="/pages/processo-detalhe.html?id=${encodeURIComponent(it.processoId)}">${esc(it.numeroCNJ)}</a>`
+                : esc(it.numeroCNJ)}</td>
+              <td class="col-tribunal">${esc(it.tribunal ?? '—')}</td>
+              <td>${badge(STATUS_ITEM[it.status] ?? [it.status, 'badge-gray'])}
+                ${it.mensagem && it.status !== 'JaCadastrado' ? `<div class="mensagem">${esc(it.mensagem)}</div>` : ''}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+</script>
+</body>
+</html>

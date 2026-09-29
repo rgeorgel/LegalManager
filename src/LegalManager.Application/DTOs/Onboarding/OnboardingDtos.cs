@@ -4,8 +4,6 @@ namespace LegalManager.Application.DTOs.Onboarding;
 
 public record OnboardingStatusDto(bool Completo, string? OabImportadaNumero, string? OabImportadaUf);
 
-public record RegistrarOabImportadaDto([Required] string Numero, [Required] string Uf);
-
 public record OabImportadaDto(string Numero, string Uf, string NomeUsuario, int TotalProcessos);
 
 public record BuscarPorOabDto(
@@ -30,10 +28,6 @@ public record ProcessoOabPreviewDto(
     string? Assuntos = null
 );
 
-public record ImportarProcessosDto(
-    [Required, MinLength(1)] List<ImportarProcessoItem> Processos
-);
-
 public record ImportarProcessoItem(
     string NumeroCNJ,
     string? Tribunal = null,
@@ -48,10 +42,4 @@ public record ImportarProcessoItem(
     string? Classe = null,
     string? Assuntos = null,
     DateTime? DataAjuizamento = null
-);
-
-public record ImportarResultadoDto(
-    int Importados,
-    int Erros,
-    List<string> Mensagens
 );

@@ -147,12 +147,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantContext, TenantContext>();
+builder.Services.AddScoped<TenantContext>();
+builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
+builder.Services.AddScoped<IImportadorProcessosOab, ImportadorProcessosOab>();
 builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<INotificacaoService, NotificacaoService>();
@@ -177,6 +179,7 @@ builder.Services.AddScoped<TrialRevertJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<EscavadorMovimentacoesPollingJob>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
+builder.Services.AddScoped<ImportacaoProcessosJob>();
 builder.Services.AddScoped<PublicacaoClassificacaoService>();
 builder.Services.AddScoped<PublicacaoMapper>();
 builder.Services.AddScoped<ITenantOabService, TenantOabService>();

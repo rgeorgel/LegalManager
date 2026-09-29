@@ -106,3 +106,9 @@ public static class CategoriaLancamento
     public const string Marketing = "Marketing";
     public const string Outro = "Outro";
 }
+
+public enum ModoImportacao { Todos, Selecionados }
+
+public enum StatusImportacao { Pendente, Buscando, Importando, Concluida, Erro }
+
+public enum StatusItemImportacao { Pendente, Importado, JaCadastrado, NaoEncontrado, Erro }

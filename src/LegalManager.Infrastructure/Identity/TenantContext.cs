@@ -7,11 +7,11 @@ namespace LegalManager.Infrastructure.Identity;
 
 public class TenantContext : ITenantContext
 {
-    public Guid TenantId { get; }
-    public Guid UserId { get; }
-    public string UserRole { get; }
-    public PlanoTipo Plano { get; }
-    public Guid? ImpersonadoPorId { get; }
+    public Guid TenantId { get; private set; }
+    public Guid UserId { get; private set; }
+    public string UserRole { get; private set; }
+    public PlanoTipo Plano { get; private set; }
+    public Guid? ImpersonadoPorId { get; private set; }
 
     public TenantContext(IHttpContextAccessor httpContextAccessor)
     {
@@ -21,5 +21,18 @@ public class TenantContext : ITenantContext
         UserRole = user?.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
         Plano = Enum.TryParse<PlanoTipo>(user?.FindFirstValue("plano"), out var plano) ? plano : PlanoTipo.Free;
         ImpersonadoPorId = Guid.TryParse(user?.FindFirstValue("impersonadoPorId"), out var impersonadoPorId) ? impersonadoPorId : null;
+    }
+
+    /// <summary>
+    /// Assume o tenant/usuário fora de uma requisição HTTP (jobs do Hangfire), para que os
+    /// serviços tenant-scoped resolvidos no mesmo escopo gravem no tenant certo.
+    /// </summary>
+    public void Assumir(Guid tenantId, Guid userId, PlanoTipo plano)
+    {
+        TenantId = tenantId;
+        UserId = userId;
+        Plano = plano;
+        UserRole = string.Empty;
+        ImpersonadoPorId = null;
     }
 }

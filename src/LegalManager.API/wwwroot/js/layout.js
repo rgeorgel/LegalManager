@@ -4,6 +4,7 @@ import { applyTenantTheme, getStoredTheme } from './theme.js';
 import { injectTarefasWidget } from './tarefas-widget.js';
 import { injectTourWidget, resumeTourIfActive } from './tour.js';
 import { injectPerguntasWidget } from './perguntas-widget.js';
+import { initImportacaoBar } from './importacao-bar.js';
 
 import { esc } from './utils.js';
 const NAV_GROUPS = [
@@ -110,6 +111,11 @@ export function initLayout() {
   // pendente para o usuário, não injeta nada (nem o botão flutuante aparece).
   // Também é responsável por mostrar o modal de boas-vindas uma vez por sessão.
   injectPerguntasWidget();
+
+  // Barra inferior de progresso da importação de processos por OAB (em background).
+  // O fim da importação gera uma notificação — atualiza o contador do sino na hora.
+  initImportacaoBar();
+  window.addEventListener('importacao:concluida', () => loadNotifCount());
 
   // Retoma um tour guiado em andamento (se o passo atual for desta página).
   // Roda por último: pode precisar destacar elementos injetados acima
