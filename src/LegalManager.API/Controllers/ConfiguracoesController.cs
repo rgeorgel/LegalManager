@@ -22,17 +22,20 @@ public class ConfiguracoesController : ControllerBase
     private readonly ITenantContext _tenantContext;
     private readonly UserManager<Usuario> _userManager;
     private readonly IAuditService _audit;
+    private readonly ITenantDeletionService _tenantDeletion;
 
     public ConfiguracoesController(
         AppDbContext context,
         ITenantContext tenantContext,
         UserManager<Usuario> userManager,
-        IAuditService audit)
+        IAuditService audit,
+        ITenantDeletionService tenantDeletion)
     {
         _context = context;
         _tenantContext = tenantContext;
         _userManager = userManager;
         _audit = audit;
+        _tenantDeletion = tenantDeletion;
     }
 
     [HttpGet]
@@ -203,6 +206,20 @@ public class ConfiguracoesController : ControllerBase
                 .ToListAsync(ct)
         };
 
+        // Mesma exclusão completa usada pelo SuperAdmin: apaga todas as tabelas do tenant na
+        // ordem certa de FK (inclusive CreditosAI/CalculosPrazo, que têm FK Restrict e ficam
+        // fora do wipe de import). Remover só usuários + Tenant aqui estourava 500 por FK.
+        try
+        {
+            await _tenantDeletion.DeleteTenantAsync(tenant.Id, ct);
+        }
+        catch (InvalidOperationException ex) // tenant Sistema
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        // Auditoria só depois de excluir de fato — AuditLogs não tem FK para Tenants, então o
+        // registro sobrevive à exclusão.
         await _audit.LogAsync(_tenantContext.CreateEntry(
             AuditActions.Delete,
             "Tenant",
@@ -210,17 +227,6 @@ public class ConfiguracoesController : ControllerBase
             dadosAnteriores,
             null,
             HttpContext.GetClientIpAddress()), ct);
-
-        var usuariosTenant = await _context.Users
-            .Where(u => u.TenantId == tenant.Id)
-            .ToListAsync(ct);
-        foreach (var u in usuariosTenant)
-        {
-            await _userManager.DeleteAsync(u);
-        }
-
-        _context.Tenants.Remove(tenant);
-        await _context.SaveChangesAsync(ct);
 
         return NoContent();
     }

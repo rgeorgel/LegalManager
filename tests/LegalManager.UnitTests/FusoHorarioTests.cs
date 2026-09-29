@@ -96,7 +96,7 @@ public class FusoHorarioTests
     {
         var store = new Mock<IUserStore<Usuario>>();
         var mgr = new Mock<UserManager<Usuario>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
-        return new ConfiguracoesController(ctx, TenantCtx(t, u), mgr.Object, Mock.Of<IAuditService>());
+        return new ConfiguracoesController(ctx, TenantCtx(t, u), mgr.Object, Mock.Of<IAuditService>(), Mock.Of<ITenantDeletionService>());
     }
 
     private static string? Prop(object valor, string nome) =>
