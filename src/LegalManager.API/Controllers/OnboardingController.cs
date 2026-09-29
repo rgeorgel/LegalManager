@@ -275,9 +275,13 @@ public class OnboardingController : ControllerBase
             {
                 mensagens.Add($"{item.NumeroCNJ}: já cadastrado");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "[Import] Erro ao importar {CNJ}", item.NumeroCNJ);
                 mensagens.Add($"{item.NumeroCNJ}: erro ao importar");
+                // Entidades que falharam no SaveChanges continuam rastreadas e fariam
+                // todos os processos seguintes falharem junto; o que já foi salvo não é afetado.
+                _context.ChangeTracker.Clear();
             }
         }
 
@@ -512,7 +516,17 @@ public class OnboardingController : ControllerBase
                 ct: ct);
 
             _logger.LogInformation("[Escavador] {N} processos retornados para OAB {Oab}/{Uf}", todos.Count, oab, uf);
-            await SalvarCacheEscavadorAsync(todos, ct);
+
+            // O cache só enriquece a importação; falhar aqui não pode descartar os resultados.
+            try
+            {
+                await SalvarCacheEscavadorAsync(todos, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "[Escavador] Falha ao salvar cache de importação para OAB {Oab}/{Uf}", oab, uf);
+                DescartarPendentes<Domain.Entities.ProcessoImportacaoCache>();
+            }
 
             return todos
                 .GroupBy(p => p.Numero)
@@ -540,18 +554,27 @@ public class OnboardingController : ControllerBase
 
     private async Task SalvarCacheEscavadorAsync(List<EscavadorProcessoDto> processos, CancellationToken ct)
     {
-        if (processos.Count == 0) return;
+        // O Escavador pode devolver o mesmo CNJ mais de uma vez (ex.: instâncias diferentes);
+        // mantém o primeiro, como o preview, para não violar o índice único (TenantId, NumeroCNJ, Fonte).
+        var unicos = processos
+            .Where(p => !string.IsNullOrWhiteSpace(p.JsonBruto))
+            .GroupBy(p => p.Numero!)
+            .Select(g => g.First())
+            .ToList();
+        if (unicos.Count == 0) return;
         var expira = DateTime.UtcNow.AddHours(72);
         var agora = DateTime.UtcNow;
 
-        foreach (var p in processos.Where(p => !string.IsNullOrWhiteSpace(p.JsonBruto)))
-        {
-            var existing = await _context.ProcessosImportacaoCache.FirstOrDefaultAsync(
-                c => c.TenantId == _tenantContext.TenantId
-                  && c.NumeroCNJ == p.Numero!
-                  && c.Fonte == "escavador", ct);
+        var numeros = unicos.Select(p => p.Numero!).ToList();
+        var existentes = await _context.ProcessosImportacaoCache
+            .Where(c => c.TenantId == _tenantContext.TenantId
+                     && c.Fonte == "escavador"
+                     && numeros.Contains(c.NumeroCNJ))
+            .ToDictionaryAsync(c => c.NumeroCNJ, ct);
 
-            if (existing != null)
+        foreach (var p in unicos)
+        {
+            if (existentes.TryGetValue(p.Numero!, out var existing))
             {
                 existing.DadosJson = p.JsonBruto!;
                 existing.ExpiraEm = expira;
@@ -724,6 +747,7 @@ public class OnboardingController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[Import] Falha ao salvar partes Escavador para processo {Id}", processoId);
+            DescartarPendentes<ProcessoParte>();
         }
     }
 
@@ -765,7 +789,16 @@ public class OnboardingController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos para {CNJ}", cnj);
+            DescartarPendentes<Andamento>();
         }
+    }
+
+    /// <summary>Descarta inserções pendentes que falharam, para não contaminar os próximos SaveChanges.</summary>
+    private void DescartarPendentes<T>() where T : class
+    {
+        foreach (var entry in _context.ChangeTracker.Entries<T>()
+                     .Where(e => e.State == EntityState.Added).ToList())
+            entry.State = EntityState.Detached;
     }
 
     private static TipoAndamento MapearTipoAndamento(string? tipo, string? conteudo)
