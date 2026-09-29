@@ -54,8 +54,9 @@
   </script>
   <noscript><img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=10046324&fmt=gif" /></noscript>
 
-  <meta name="description" content="Crie sua conta no Causify em 1 minuto. Escolha entre Free, Plus ou Pro e comece a gerenciar processos, prazos e clientes.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="description" content="Processos, prazos, clientes e honorários em um só lugar. Crie sua conta grátis no Causify em 1 minuto — 15 dias do plano Plus liberados, sem cartão.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="canonical" href="https://causify.com.br/lp-linkedin.html">
@@ -63,17 +64,41 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://causify.com.br/lp-linkedin.html">
-  <meta property="og:title" content="Crie sua conta no Causify — Free, Plus ou Pro">
-  <meta property="og:description" content="Cadastro em 1 etapa. Escolha seu plano e comece agora.">
+  <meta property="og:title" content="Causify — gestão jurídica para advogados">
+  <meta property="og:description" content="Processos, prazos e clientes em um só lugar. Comece grátis, sem cartão.">
   <meta property="og:image" content="https://causify.com.br/images/causify-og.png">
 
-  <title>Criar conta no Causify — Free, Plus ou Pro</title>
+  <title>Causify — processos, prazos e clientes em um só lugar</title>
 
   <script>
-    // Definido de forma síncrona (fora do <script type="module"> no fim da página) porque o
-    // script do GSI abaixo é async e pode escanear #g_id_onload/data-callback antes do módulo
-    // rodar — se window.handleGoogleCredential ainda não existir nesse momento, o GSI ignora a
-    // configuração ("[GSI_LOGGER]: The value of 'callback' is not a function").
+    // Síncrono (fora do <script type="module"> no fim da página): o script do GSI é async e
+    // pode chamar data-callback antes do módulo rodar — window.handleGoogleCredential e os
+    // helpers de tracking precisam existir desde já.
+    window.LP_VARIANT = 'E';
+
+    window.lpTrack = function (event, params) {
+      var props = Object.assign({ lp_variant: window.LP_VARIANT }, params || {});
+      try { if (typeof gtag === 'function') gtag('event', event, props); } catch (e) {}
+      try { if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(event, props); } catch (e) {}
+    };
+
+    // Dispara as conversões (GA4 + LinkedIn) e só resolve depois de dar tempo aos pixels
+    // enviarem a requisição. Redirecionar logo após o lintrk() cancelava o envio e a campanha
+    // ficava sem nenhuma conversão registrada.
+    window.lpConversion = function (method) {
+      return new Promise(function (resolve) {
+        var done = false;
+        function finish() { if (!done) { done = true; resolve(); } }
+        try {
+          if (typeof gtag === 'function') {
+            gtag('event', 'sign_up', { method: 'LP_' + window.LP_VARIANT + '_' + method });
+          }
+        } catch (e) {}
+        try { if (typeof window.lintrk === 'function') window.lintrk('track', { conversion_id: 28925116 }); } catch (e) {}
+        setTimeout(finish, 900);
+      });
+    };
+
     window.handleGoogleCredential = function (response) {
       Promise.all([import('/js/auth.js'), import('/js/utm.js')]).then(function (mods) {
         var loginWithGoogle = mods[0].loginWithGoogle;
@@ -84,19 +109,16 @@
           msgEl.textContent = text;
           msgEl.className = 'form-msg ' + type;
         }
-        function track(event, params) {
-          try { if (typeof gtag === 'function') gtag('event', event, Object.assign({ lp_variant: 'D' }, params || {})); } catch (e) {}
-        }
         if (msgEl) msgEl.className = 'form-msg';
-        track('lp_signup_submit', { plano: 'google' });
+        window.lpTrack('lp_signup_submit', { plano: 'google' });
         loginWithGoogle(response.credential, getAttributionPayload()).then(function () {
-          track('lp_signup_success', { plano: 'google' });
-          if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_D_google' });
-          try { if (typeof window.lintrk === 'function') window.lintrk('track', { conversion_id: 28925116 }); } catch (e) {}
+          window.lpTrack('lp_signup_success', { plano: 'google' });
+          return window.lpConversion('google');
+        }).then(function () {
           window.location.href = '/pages/dashboard.html';
         }).catch(function (err) {
           showMsg((err && err.message) || 'Não foi possível entrar com o Google.', 'err');
-          track('lp_signup_error', { message: String((err && err.message) || '').slice(0, 80) });
+          window.lpTrack('lp_signup_error', { message: String((err && err.message) || '').slice(0, 80) });
         });
       });
     };
@@ -106,15 +128,19 @@
   <style>
     :root {
       --navy: #0f172a;
+      --navy-900: #0b1222;
       --navy-800: #1e293b;
       --navy-700: #334155;
       --gold: #f59e0b;
+      --gold-dark: #d97706;
       --gold-light: #fcd34d;
       --green: #10b981;
-      --red: #ef4444;
       --text: #e2e8f0;
+      --text-strong: #f8fafc;
       --text-muted: #94a3b8;
       --border: #334155;
+      --radius: 14px;
+      --gutter: 16px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -124,210 +150,177 @@
       color: var(--text);
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.25rem; }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
+    @media (min-width: 720px) { :root { --gutter: 24px; } }
 
+    /* ---------- NAV ---------- */
     .nav {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
-      padding: 0.85rem 1.25rem;
-      display: flex; align-items: center; justify-content: space-between;
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
     }
-    .nav .brand { font-size: 1.1rem; font-weight: 700; }
-    .nav .brand span { color: var(--gold); }
+    .nav .wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .brand { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; text-decoration: none; color: var(--text-strong); }
+    .brand span { color: var(--gold); }
+    .nav-actions { display: flex; align-items: center; gap: 1rem; }
     .nav a.login { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
     .nav a.login:hover { color: var(--text); }
+    .nav .btn-nav { display: none; }
+    @media (min-width: 960px) { .nav .btn-nav { display: inline-flex; } }
 
+    /* ---------- BUTTONS ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.9rem 1.4rem;
+      min-height: 48px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(245,158,11,0.3); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+    .btn:focus-visible, a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; }
+    .btn-sm { padding: 0.5rem 1rem; min-height: 38px; font-size: 0.88rem; }
+    .btn-block { width: 100%; }
+    .btn-ghost {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--gold); box-shadow: none; }
+
+    /* ---------- HERO ---------- */
     .hero {
-      padding: 3rem 0 1.5rem;
-      text-align: center;
+      padding: 1.75rem 0 2.5rem;
       background:
-        radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245,158,11,0.15) 0%, transparent 65%);
+        radial-gradient(ellipse 60% 45% at 20% 0%, rgba(245,158,11,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 90% 30%, rgba(59,130,246,0.08) 0%, transparent 70%);
+    }
+    .hero-grid { display: grid; gap: 1.5rem; align-items: start; }
+    @media (min-width: 960px) {
+      .hero { padding: 3.5rem 0 4rem; }
+      .hero-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 3.5rem; }
     }
     .eyebrow {
-      display: inline-block;
+      display: inline-flex; align-items: center; gap: 0.4rem;
       background: rgba(245,158,11,0.1);
-      color: var(--gold);
+      color: var(--gold-light);
       border: 1px solid rgba(245,158,11,0.3);
-      font-size: 0.75rem; font-weight: 700;
-      padding: 0.3rem 0.8rem;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 0.3rem 0.75rem;
       border-radius: 100px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.9rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
     h1 {
-      font-size: clamp(1.75rem, 4.5vw, 2.4rem);
+      font-size: clamp(1.75rem, 6.4vw, 3rem);
       font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.6rem;
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+      color: var(--text-strong);
+      margin-bottom: 0.8rem;
+      text-wrap: balance;
     }
     h1 .hl { color: var(--gold); }
-    .sub {
-      font-size: 1rem;
+    .lead {
+      font-size: clamp(1rem, 2.4vw, 1.15rem);
       color: var(--text-muted);
-      max-width: 520px;
-      margin: 0 auto;
+      max-width: 560px;
+      margin-bottom: 1.1rem;
     }
-
-    .section-label {
-      color: var(--gold);
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    h2 {
-      font-size: clamp(1.25rem, 3vw, 1.6rem);
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      text-align: center;
-      margin-bottom: 1.25rem;
-    }
-
-    .plans {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      gap: 0.75rem;
-      margin: 0 -1.25rem 0.75rem;
-      padding: 0.5rem 1.25rem;
-      scrollbar-width: none;
-      scroll-padding: 0 1.25rem;
-    }
-    .plans::-webkit-scrollbar { display: none; }
-
-    .plan {
-      flex: 0 0 78%;
-      max-width: 320px;
-      scroll-snap-align: start;
-      position: relative;
-      background: var(--navy-800);
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem 1.1rem;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.12s;
-    }
-
-    .plan-dots {
-      display: flex;
-      justify-content: center;
-      gap: 0.4rem;
-      margin-bottom: 1rem;
-    }
-    .plan-dots .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: background 0.2s, width 0.2s;
-    }
-    .plan-dots .dot.active {
-      background: var(--gold);
-      width: 18px;
-      border-radius: 3px;
-    }
-
-    @media (min-width: 720px) {
-      .plans {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.85rem;
-        margin: 0 0 1rem;
-        padding: 0;
-        overflow: visible;
-      }
-      .plan {
-        flex: none;
-        max-width: none;
-      }
-      .plan-dots { display: none; }
-    }
-    .plan:hover { border-color: rgba(245,158,11,0.4); }
-    .plan input[type=radio] {
-      position: absolute; opacity: 0; pointer-events: none;
-    }
-    .plan.selected {
-      border-color: var(--gold);
-      background: linear-gradient(180deg, rgba(245,158,11,0.08), var(--navy-800));
-    }
-    .plan.popular { border-color: rgba(245,158,11,0.35); }
-    .plan-badge {
-      position: absolute; top: -10px; right: 12px;
-      background: linear-gradient(135deg, var(--gold), #d97706);
-      color: #0f172a;
-      font-size: 0.65rem;
-      font-weight: 800;
-      padding: 0.2rem 0.6rem;
-      border-radius: 100px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .plan-name {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.4rem;
-    }
-    .plan-price {
-      display: flex; align-items: baseline; gap: 0.15rem;
-      margin-bottom: 0.85rem;
-    }
-    .plan-price .cur { font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
-    .plan-price .val { font-size: 2.1rem; font-weight: 800; line-height: 1; }
-    .plan-price .per { font-size: 0.8rem; color: var(--text-muted); }
-    .plan-desc {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 0.85rem;
-      min-height: 2.4rem;
-    }
-    .plan-feats { list-style: none; }
-    .plan-feats li {
-      font-size: 0.83rem;
-      padding: 0.25rem 0;
-      display: flex; align-items: flex-start; gap: 0.45rem;
-      color: var(--text);
-    }
-    .plan-feats li::before {
+    .checks { list-style: none; display: grid; gap: 0.55rem; margin-bottom: 1.25rem; }
+    .checks li { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.97rem; }
+    .checks li::before {
       content: '✓';
-      color: var(--green);
-      font-weight: 700;
       flex-shrink: 0;
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.15);
+      color: var(--green);
+      font-size: 0.75rem; font-weight: 800;
+      margin-top: 1px;
     }
+    /* No celular, só a 1ª linha de benefícios aparece acima do formulário */
+    @media (max-width: 959px) {
+      .checks li:nth-child(n+3) { display: none; }
+      .hero-shot { display: none; }
+    }
+    .hero-shot {
+      margin-top: 0.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+      background: var(--navy-800);
+    }
+    .hero-shot .bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .hero-shot .bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--navy-700); }
+    .hero-shot img { width: 100%; max-height: 360px; object-fit: cover; object-position: top left; }
 
+    /* ---------- FORM CARD ---------- */
     .form-card {
-      max-width: 520px;
-      margin: 1.5rem auto 0;
       background: var(--navy-800);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.5rem;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+      scroll-margin-top: 76px;
     }
-    .form-card h2 { margin-bottom: 0.25rem; }
-    .form-card .sub { margin-bottom: 1.25rem; font-size: 0.9rem; }
-
-    .field { margin-bottom: 0.85rem; }
-    .field label {
-      display: block;
-      font-size: 0.82rem;
-      font-weight: 600;
+    @media (min-width: 960px) {
+      .form-card { padding: 1.75rem; position: sticky; top: 84px; }
+    }
+    .offer {
+      display: flex; gap: 0.6rem; align-items: center;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .offer strong { color: var(--gold-light); }
+    .offer .ico { font-size: 1.2rem; flex-shrink: 0; }
+    .form-card h2 {
+      font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em;
+      color: var(--text-strong);
+      margin-bottom: 0.2rem;
+    }
+    .form-card .form-sub { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .signup-google { display: flex; justify-content: center; min-height: 44px; }
+    .signup-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 0.9rem 0;
       color: var(--text-muted);
-      margin-bottom: 0.3rem;
+      font-size: 0.78rem;
     }
+    .signup-divider::before, .signup-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .field { margin-bottom: 0.75rem; }
+    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; }
     .field input {
       width: 100%;
       padding: 0.75rem 0.9rem;
-      font-size: 0.95rem;
+      min-height: 48px;
+      font-size: 16px; /* < 16px faz o iOS dar zoom ao focar */
       background: var(--navy);
       color: var(--text);
       border: 1px solid var(--border);
@@ -337,391 +330,755 @@
       font-family: inherit;
     }
     .field input:focus { border-color: var(--gold); }
-
-    .selected-plan-pill {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.6rem 0.85rem;
-      background: var(--navy);
-      border: 1px solid rgba(245,158,11,0.3);
-      border-radius: 8px;
-      margin-bottom: 0.85rem;
-      font-size: 0.85rem;
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 4.5rem; }
+    .pw-toggle {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted);
+      font-size: 0.8rem; font-family: inherit; cursor: pointer;
+      padding: 0.5rem 0.6rem;
     }
-    .selected-plan-pill .lbl { color: var(--text-muted); }
-    .selected-plan-pill .name { color: var(--gold); font-weight: 700; }
-    .selected-plan-pill .change { color: var(--text-muted); font-size: 0.75rem; cursor: pointer; text-decoration: underline; }
-
-    .btn-primary {
-      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-      width: 100%;
-      padding: 0.9rem 1.4rem;
-      background: linear-gradient(135deg, var(--gold), #d97706);
-      color: #0f172a;
-      font-weight: 700;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: transform 0.12s, box-shadow 0.12s;
-      margin-top: 0.25rem;
+    .pw-toggle:hover { color: var(--text); }
+    .plan-note {
+      font-size: 0.8rem; color: var(--text-muted);
+      margin-bottom: 0.75rem;
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(245,158,11,0.3); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
-
-    .form-foot {
-      margin-top: 0.75rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-align: center;
+    .plan-note strong { color: var(--gold-light); }
+    .plan-note[hidden] { display: none; }
+    .legal { margin-top: 0.7rem; font-size: 0.74rem; color: var(--text-muted); text-align: center; }
+    .legal a { text-decoration: underline; }
+    .reassure {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 0.9rem;
+      margin-top: 0.7rem;
+      font-size: 0.78rem; color: var(--text-muted);
     }
-    .form-msg {
-      display: none;
-      margin-top: 0.85rem;
-      padding: 0.65rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-    }
+    .form-msg { display: none; margin-top: 0.8rem; padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.85rem; }
     .form-msg.ok { display: block; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
     .form-msg.err { display: block; background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
 
-    .signup-google {
-      display: flex;
-      justify-content: center;
-    }
-    .signup-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 1rem 0;
-      color: var(--text-muted);
-      font-size: 0.78rem;
-    }
-    .signup-divider::before,
-    .signup-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .terms {
-      display: flex; align-items: flex-start; gap: 0.5rem;
-      margin: 0.85rem 0 0.5rem;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-    .terms input { margin-top: 0.2rem; flex-shrink: 0; }
-    .terms a { color: var(--text-muted); text-decoration: underline; }
-    .terms a:hover { color: var(--text); }
-
+    /* ---------- TRUST STRIP ---------- */
     .trust {
-      display: flex; flex-wrap: wrap; justify-content: center;
-      gap: 1rem 1.75rem;
-      margin: 2rem 0 1rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      border-top: 1px solid rgba(51,65,85,0.5);
+      border-bottom: 1px solid rgba(51,65,85,0.5);
+      background: var(--navy-900);
     }
-    .trust-item { display: flex; align-items: center; gap: 0.35rem; }
+    .trust ul {
+      list-style: none;
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 1rem;
+      padding: 1rem 0;
+      font-size: 0.82rem; color: var(--text-muted);
+    }
+    .trust li { display: flex; align-items: center; gap: 0.45rem; }
+    @media (min-width: 720px) {
+      .trust ul { grid-template-columns: repeat(4, auto); justify-content: space-between; font-size: 0.88rem; }
+    }
+
+    /* ---------- SECTIONS ---------- */
+    section.block { padding: 3.25rem 0; }
+    @media (min-width: 960px) { section.block { padding: 5rem 0; } }
+    section.alt { background: var(--navy-900); }
+    .section-head { max-width: 640px; margin: 0 auto 2rem; text-align: center; }
+    .section-label {
+      color: var(--gold);
+      font-size: 0.74rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    h2.title {
+      font-size: clamp(1.4rem, 4.2vw, 2.1rem);
+      font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;
+      color: var(--text-strong);
+      margin-bottom: 0.6rem;
+      text-wrap: balance;
+    }
+    .section-head p { color: var(--text-muted); }
+
+    /* Dores → soluções */
+    .pains { display: grid; gap: 0.9rem; }
+    @media (min-width: 720px) { .pains { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .pains { grid-template-columns: repeat(4, 1fr); } }
+    .pain {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .pain .ico { font-size: 1.5rem; margin-bottom: 0.6rem; }
+    .pain .before { font-size: 0.82rem; color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.6); margin-bottom: 0.3rem; }
+    .pain h3 { font-size: 1.02rem; font-weight: 700; color: var(--text-strong); margin-bottom: 0.35rem; }
+    .pain p { font-size: 0.88rem; color: var(--text-muted); }
+    @media (max-width: 719px) {
+      .pain { display: grid; grid-template-columns: auto 1fr; column-gap: 0.8rem; padding: 1rem; }
+      .pain .ico { grid-row: span 3; margin: 0; font-size: 1.3rem; }
+    }
+
+    /* Tour de telas */
+    .tour-tabs {
+      display: flex; gap: 0.5rem;
+      overflow-x: auto; scrollbar-width: none;
+      margin: 0 calc(var(--gutter) * -1) 1rem;
+      padding: 0 var(--gutter);
+    }
+    .tour-tabs::-webkit-scrollbar { display: none; }
+    @media (min-width: 720px) { .tour-tabs { justify-content: center; margin: 0 0 1.25rem; padding: 0; } }
+    .tour-tab {
+      flex-shrink: 0;
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 100px;
+      padding: 0.55rem 1rem;
+      min-height: 40px;
+      font-size: 0.88rem; font-weight: 600; font-family: inherit;
+      cursor: pointer;
+    }
+    .tour-tab[aria-selected="true"] { background: rgba(245,158,11,0.12); border-color: var(--gold); color: var(--gold-light); }
+    .tour-panel { max-width: 960px; margin: 0 auto; }
+    .tour-panel[hidden] { display: none; }
+    .tour-frame {
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--navy-800);
+      box-shadow: 0 24px 50px rgba(0,0,0,0.4);
+    }
+    .tour-frame img { width: 100%; max-height: 560px; object-fit: cover; object-position: top left; }
+    .tour-caption { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 0.9rem; }
+    .tour-caption strong { color: var(--text); }
+
+    /* Para quem */
+    .personas { display: grid; gap: 0.9rem; }
+    @media (min-width: 860px) { .personas { grid-template-columns: repeat(3, 1fr); } }
+    .persona {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      display: flex; flex-direction: column;
+    }
+    .persona .tag { font-size: 0.72rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .persona h3 { font-size: 1.08rem; color: var(--text-strong); margin-bottom: 0.4rem; }
+    .persona p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.9rem; }
+    .persona ul { list-style: none; display: grid; gap: 0.35rem; margin-top: auto; }
+    .persona li { font-size: 0.86rem; display: flex; gap: 0.45rem; }
+    .persona li::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+    /* Como funciona */
+    .steps { list-style: none; display: grid; gap: 0.9rem; counter-reset: step; max-width: 960px; margin: 0 auto; }
+    @media (min-width: 720px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 1.25rem 1.25rem 1.25rem 3.6rem;
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute; left: 1.1rem; top: 1.2rem;
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #0f172a; font-weight: 800; font-size: 0.9rem;
+    }
+    .steps h3 { font-size: 1rem; color: var(--text-strong); margin-bottom: 0.25rem; }
+    .steps p { font-size: 0.88rem; color: var(--text-muted); }
+
+    /* Planos */
+    .plans { display: grid; gap: 0.9rem; max-width: 960px; margin: 0 auto; }
+    @media (min-width: 820px) { .plans { grid-template-columns: repeat(3, 1fr); align-items: stretch; } }
+    .plan {
+      position: relative;
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      display: flex; flex-direction: column;
+    }
+    .plan.popular { border: 2px solid var(--gold); background: linear-gradient(180deg, rgba(245,158,11,0.07), var(--navy-800) 45%); }
+    .plan-badge {
+      position: absolute; top: -11px; left: 1.35rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #0f172a;
+      font-size: 0.66rem; font-weight: 800;
+      padding: 0.22rem 0.65rem; border-radius: 100px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .plan-name { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .plan-price { display: flex; align-items: baseline; gap: 0.2rem; margin: 0.3rem 0 0.5rem; color: var(--text-strong); }
+    .plan-price .cur { font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
+    .plan-price .val { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .plan-price .per { font-size: 0.82rem; color: var(--text-muted); }
+    .plan-desc { font-size: 0.86rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+    .plan ul { list-style: none; display: grid; gap: 0.35rem; margin-bottom: 1.1rem; }
+    .plan li { font-size: 0.86rem; display: flex; gap: 0.45rem; }
+    .plan li::before { content: '✓'; color: var(--green); font-weight: 700; }
+    .plan .btn { margin-top: auto; }
+    .plans-foot { text-align: center; color: var(--text-muted); font-size: 0.86rem; margin-top: 1.25rem; }
+    .plans-foot a { color: var(--gold-light); }
+
+    /* FAQ */
+    .faq { max-width: 760px; margin: 0 auto; display: grid; gap: 0.6rem; }
+    .faq details {
+      background: var(--navy-800);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .faq details[open] { border-color: rgba(245,158,11,0.45); }
+    .faq summary {
+      list-style: none; cursor: pointer;
+      padding: 1rem 2.75rem 1rem 1.1rem;
+      font-weight: 600; color: var(--text-strong);
+      position: relative;
+      min-height: 48px;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: '+'; position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%);
+      color: var(--gold); font-size: 1.3rem; font-weight: 400;
+    }
+    .faq details[open] summary::after { content: '−'; }
+    .faq .answer { padding: 0 1.1rem 1rem; color: var(--text-muted); font-size: 0.92rem; }
+
+    /* CTA final */
+    .final {
+      text-align: center;
+      padding: 3.5rem 0 4rem;
+      background: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(245,158,11,0.14) 0%, transparent 70%);
+    }
+    .final p { color: var(--text-muted); max-width: 520px; margin: 0 auto 1.4rem; }
+    .final .btn { min-width: 260px; }
+    .final .reassure { margin-top: 0.9rem; }
 
     footer {
-      padding: 1.5rem 1rem;
+      padding: 1.5rem var(--gutter) calc(1.5rem + 76px);
       text-align: center;
       border-top: 1px solid var(--border);
       color: var(--text-muted);
       font-size: 0.78rem;
     }
-    footer a { color: var(--text-muted); text-decoration: none; margin: 0 0.4rem; }
+    @media (min-width: 960px) { footer { padding-bottom: 1.5rem; } }
+    footer nav { margin-bottom: 0.4rem; }
+    footer a { text-decoration: none; margin: 0 0.35rem; display: inline-block; padding: 0.25rem 0; }
     footer a:hover { color: var(--text); }
-    .variant-tag {
-      display: inline-block;
-      margin-top: 0.6rem;
-      padding: 0.15rem 0.5rem;
-      background: rgba(245,158,11,0.1);
-      border: 1px solid rgba(245,158,11,0.25);
-      color: var(--gold);
-      border-radius: 100px;
-      font-size: 0.65rem;
-      font-weight: 600;
-    }
 
-    @media (max-width: 480px) {
-      .form-card { padding: 1.1rem; }
-      .hero { padding: 2rem 0 1rem; }
+    /* ---------- STICKY CTA (celular) ---------- */
+    .sticky-cta {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      /* espaço à direita para o balão do chat (Crisp) */
+      padding: 0.65rem 84px calc(0.65rem + env(safe-area-inset-bottom)) var(--gutter);
+      background: rgba(11, 18, 34, 0.96);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transform: translateY(110%);
+      transition: transform 0.22s ease;
+    }
+    .sticky-cta.show { transform: translateY(0); }
+    .sticky-cta .btn { width: 100%; }
+    .sticky-cta small { display: block; text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem; }
+    @media (min-width: 960px) { .sticky-cta { display: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .btn, .sticky-cta { transition: none; }
     }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
-<body data-variant="D">
+<body data-variant="E">
 
-  <nav class="nav" role="banner">
-    <div class="brand">Causify<span>.</span></div>
-    <a class="login" href="/login.html">Já tenho conta →</a>
-  </nav>
-
-  <header class="hero">
+  <header class="nav">
     <div class="wrap">
-      <div class="eyebrow">🚀 Pronto em 1 minuto</div>
-      <h1>Crie sua conta <span class="hl">agora</span></h1>
-      <p class="sub">Preencha os 3 campos abaixo e comece a usar agora.</p>
+      <a class="brand" href="/index.html">Causify<span>.</span></a>
+      <div class="nav-actions">
+        <a class="login" href="/login.html">Entrar</a>
+        <a class="btn btn-sm btn-nav" href="#cadastro" data-cta="nav">Começar grátis</a>
+      </div>
     </div>
   </header>
 
-  <main class="wrap">
-
-    <section aria-labelledby="signup-title">
-      <div class="form-card">
-        <div class="section-label">1. Crie sua conta</div>
-        <h2 id="signup-title">Comece em 1 minuto</h2>
-        <p class="sub">Preencha seus dados para acessar agora.</p>
-
-        <div class="signup-google">
-          <div id="g_id_onload"
-               data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
-               data-callback="handleGoogleCredential"
-               data-auto_prompt="false">
-          </div>
-          <div class="g_id_signin"
-               data-type="standard"
-               data-shape="rectangular"
-               data-theme="filled_black"
-               data-text="signup_with"
-               data-size="large"
-               data-width="336"
-               data-locale="pt-BR">
-          </div>
+  <main>
+    <!-- HERO + FORMULÁRIO -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">⚖️ Para advogados e escritórios</div>
+          <h1 id="hero-title">Processos, prazos e clientes <span class="hl">em um só lugar</span></h1>
+          <p class="lead">Saia das planilhas e agendas soltas. O Causify acompanha seus processos, calcula prazos em dias úteis e avisa você antes de vencerem.</p>
+          <ul class="checks">
+            <li>Andamentos dos processos acompanhados automaticamente</li>
+            <li>Prazos com feriados nacionais e estaduais, e alertas antes do vencimento</li>
+            <li>Portal para o cliente ver o andamento sem precisar ligar para você</li>
+            <li>Honorários, despesas e horas trabalhadas por processo</li>
+          </ul>
+          <figure class="hero-shot">
+            <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img src="/images/dashboard_2.png" alt="Painel do Causify com processos, tarefas e prazos do escritório" width="2067" height="1913" loading="lazy" decoding="async">
+          </figure>
         </div>
 
-        <div class="signup-divider" aria-hidden="true"><span>ou preencha os dados</span></div>
-
-        <form id="signupForm" novalidate>
-          <div class="selected-plan-pill" aria-live="polite">
-            <span class="lbl">Plano:</span>
-            <span class="name" id="selectedPlanName">Free — R$ 0/mês</span>
-            <span class="change" onclick="document.getElementById('plans-title').scrollIntoView({behavior:'smooth'})">trocar</span>
+        <div class="form-card" id="cadastro">
+          <div class="offer">
+            <span class="ico" aria-hidden="true">🎁</span>
+            <span><strong>15 dias do plano Plus grátis.</strong> Depois, continue no Free sem pagar nada.</span>
           </div>
+          <h2>Crie sua conta grátis</h2>
+          <p class="form-sub">Leva menos de 1 minuto. Sem cartão de crédito.</p>
 
-          <div class="field">
-            <label for="nome">Nome</label>
-            <input id="nome" name="nome" type="text" placeholder="Dr. João Silva" required autocomplete="name">
+          <div class="signup-google" id="googleBtnWrap">
+            <div id="g_id_onload"
+                 data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
+                 data-callback="handleGoogleCredential"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" id="googleBtn"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="filled_black"
+                 data-text="signup_with"
+                 data-size="large"
+                 data-width="336"
+                 data-locale="pt-BR">
+            </div>
           </div>
+          <script>
+            // O botão do Google tem largura fixa (máx. 400px): ajusta ao cartão para não
+            // estourar a tela em celulares estreitos. Roda antes do GSI (async) renderizar.
+            (function () {
+              var wrap = document.getElementById('googleBtnWrap');
+              var btn = document.getElementById('googleBtn');
+              if (wrap && btn && wrap.clientWidth) btn.setAttribute('data-width', String(Math.min(400, Math.floor(wrap.clientWidth))));
+            })();
+          </script>
 
-          <div class="field">
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" placeholder="seu@email.com" required autocomplete="email" inputmode="email">
+          <div class="signup-divider" aria-hidden="true"><span>ou com seu e-mail</span></div>
+
+          <form id="signupForm" novalidate>
+            <p class="plan-note" id="planNote" hidden></p>
+
+            <div class="field">
+              <label for="nome">Seu nome</label>
+              <input id="nome" name="nome" type="text" placeholder="Dra. Ana Souza" required autocomplete="name" autocapitalize="words" enterkeyhint="next">
+            </div>
+
+            <div class="field">
+              <label for="email">E-mail</label>
+              <input id="email" name="email" type="email" placeholder="voce@escritorio.com.br" required autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+            </div>
+
+            <div class="field">
+              <label for="senha">Crie uma senha <span style="font-weight:400">(mín. 8 caracteres)</span></label>
+              <div class="pw-wrap">
+                <input id="senha" name="senha" type="password" required minlength="8" autocomplete="new-password" enterkeyhint="go">
+                <button type="button" class="pw-toggle" id="pwToggle" aria-controls="senha" aria-pressed="false">Mostrar</button>
+              </div>
+            </div>
+
+            <button id="submitBtn" type="submit" class="btn btn-block">Criar conta grátis</button>
+
+            <p class="legal">Ao criar sua conta, você concorda com os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</p>
+            <div id="formMsg" class="form-msg" role="status" aria-live="polite"></div>
+          </form>
+
+          <div class="reassure" aria-label="Garantias">
+            <span>🔒 Dados criptografados</span>
+            <span>✕ Sem cartão</span>
+            <span>↺ Cancele quando quiser</span>
           </div>
-
-          <div class="field">
-            <label for="senha">Senha <span style="color:var(--text-muted);font-weight:400">(mín. 8 caracteres)</span></label>
-            <input id="senha" name="senha" type="password" placeholder="••••••••" required minlength="8" autocomplete="new-password">
-          </div>
-
-          <label class="terms">
-            <input id="aceitoTermos" type="checkbox" required>
-            <span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos</a> e a <a href="/privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></span>
-          </label>
-
-          <button id="submitBtn" type="submit" class="btn-primary">Criar minha conta →</button>
-
-          <div class="form-foot">Sem cartão de crédito · Cancele quando quiser</div>
-          <div id="formMsg" class="form-msg" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-
-      <div class="trust">
-        <div class="trust-item">🔒 SSL · dados criptografados</div>
-        <div class="trust-item">⚖️ Feito para advogados brasileiros</div>
-        <div class="trust-item">🇧🇷 Suporte em português</div>
-      </div>
-    </section>
-
-    <section aria-labelledby="plans-title" id="plans-section">
-      <div class="section-label">2. Prefere outro plano?</div>
-      <h2 id="plans-title">Toque para trocar</h2>
-      <p class="sub" style="margin-bottom:1.25rem">Você pode mudar de plano a qualquer momento depois.</p>
-
-      <div class="plans" role="radiogroup" aria-label="Planos disponíveis">
-
-        <label class="plan selected" data-plan-value="0">
-          <input type="radio" name="plano" value="0" checked>
-          <div class="plan-name">Free</div>
-          <div class="plan-price">
-            <span class="cur">R$</span>
-            <span class="val">0</span>
-            <span class="per">/mês</span>
-          </div>
-          <p class="plan-desc">Para advogados autônomos começarem a organizar o escritório sem custo.</p>
-          <ul class="plan-feats">
-            <li>1 usuário</li>
-            <li>10 processos monitorados</li>
-            <li>Cadastro de clientes</li>
-            <li>Tarefas e timesheet</li>
-          </ul>
-        </label>
-
-        <label class="plan popular" data-plan-value="3">
-          <div class="plan-badge">Mais popular</div>
-          <input type="radio" name="plano" value="3">
-          <div class="plan-name">Plus</div>
-          <div class="plan-price">
-            <span class="cur">R$</span>
-            <span class="val">20</span>
-            <span class="per">/mês</span>
-          </div>
-          <p class="plan-desc">Para advogados que precisam de mais controle, portal do cliente e financeiro.</p>
-          <ul class="plan-feats">
-            <li>1 usuário</li>
-            <li>20 processos monitorados</li>
-            <li>Portal do cliente</li>
-            <li>Financeiro + indicadores</li>
-          </ul>
-        </label>
-
-        <label class="plan" data-plan-value="1">
-          <input type="radio" name="plano" value="1">
-          <div class="plan-name">Pro</div>
-          <div class="plan-price">
-            <span class="cur">R$</span>
-            <span class="val">50</span>
-            <span class="per">/mês</span>
-          </div>
-          <p class="plan-desc">Para escritórios que precisam de publicações automáticas e equipe.</p>
-          <ul class="plan-feats">
-            <li>2 usuários</li>
-            <li>40 processos monitorados</li>
-            <li>Captura de publicações</li>
-            <li>Templates de documentos</li>
-          </ul>
-        </label>
-
-      </div>
-
-      <div class="plan-dots" id="planDots" aria-hidden="true">
-        <span class="dot active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+        </div>
       </div>
     </section>
 
+    <!-- FAIXA DE CONFIANÇA -->
+    <div class="trust">
+      <div class="wrap">
+        <ul>
+          <li>🌐 100% web, sem instalar nada</li>
+          <li>📱 Funciona no celular</li>
+          <li>🛡️ Em conformidade com a LGPD</li>
+          <li>🇧🇷 Suporte em português</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- DORES → SOLUÇÕES -->
+    <section class="block" aria-labelledby="pains-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">O que muda no seu dia</div>
+          <h2 class="title" id="pains-title">Menos tempo com controle, mais tempo advogando</h2>
+          <p>Tudo o que hoje está espalhado em planilha, agenda, WhatsApp e e-mail — organizado em um lugar só.</p>
+        </div>
+        <div class="pains">
+          <article class="pain">
+            <div class="ico" aria-hidden="true">📅</div>
+            <div class="before">Contar prazo na mão, com calendário aberto</div>
+            <h3>Prazos calculados e lembrados</h3>
+            <p>Calculadora em dias úteis com feriados e recessos, e alertas antes do vencimento.</p>
+          </article>
+          <article class="pain">
+            <div class="ico" aria-hidden="true">📋</div>
+            <div class="before">Entrar no site de cada tribunal para ver novidades</div>
+            <h3>Processos monitorados</h3>
+            <p>Os andamentos chegam até você. No Pro, as publicações por OAB também.</p>
+          </article>
+          <article class="pain">
+            <div class="ico" aria-hidden="true">👥</div>
+            <div class="before">Cliente ligando para saber “como está o processo”</div>
+            <h3>Portal do cliente</h3>
+            <p>Seu cliente acompanha andamentos e documentos com login próprio.</p>
+          </article>
+          <article class="pain">
+            <div class="ico" aria-hidden="true">💰</div>
+            <div class="before">Honorário esquecido e horas sem registro</div>
+            <h3>Financeiro e timesheet</h3>
+            <p>Honorários, despesas e horas por processo, com indicadores do escritório.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOUR DE TELAS -->
+    <section class="block alt" aria-labelledby="tour-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Veja por dentro</div>
+          <h2 class="title" id="tour-title">Simples de usar desde o primeiro dia</h2>
+        </div>
+        <div class="tour-tabs" role="tablist" aria-label="Telas do Causify">
+          <button class="tour-tab" role="tab" id="tab-painel" aria-controls="panel-painel" aria-selected="true">Painel</button>
+          <button class="tour-tab" role="tab" id="tab-prazos" aria-controls="panel-prazos" aria-selected="false" tabindex="-1">Prazos</button>
+          <button class="tour-tab" role="tab" id="tab-financeiro" aria-controls="panel-financeiro" aria-selected="false" tabindex="-1">Financeiro</button>
+          <button class="tour-tab" role="tab" id="tab-honorarios" aria-controls="panel-honorarios" aria-selected="false" tabindex="-1">Honorários</button>
+        </div>
+        <div class="tour-panel" role="tabpanel" id="panel-painel" aria-labelledby="tab-painel">
+          <div class="tour-frame"><img src="/images/dashboard_1.png" alt="Painel com indicadores, tarefas e prazos do escritório" width="2067" height="1743" loading="lazy" decoding="async"></div>
+          <p class="tour-caption"><strong>Painel do escritório:</strong> prazos da semana, tarefas e indicadores em uma tela.</p>
+        </div>
+        <div class="tour-panel" role="tabpanel" id="panel-prazos" aria-labelledby="tab-prazos" hidden>
+          <div class="tour-frame"><img src="/images/calculadora_prazos_1.png" alt="Calculadora de prazos processuais em dias úteis" width="1808" height="1244" loading="lazy" decoding="async"></div>
+          <p class="tour-caption"><strong>Calculadora de prazos:</strong> dias úteis, feriados nacionais e estaduais e recessos forenses.</p>
+        </div>
+        <div class="tour-panel" role="tabpanel" id="panel-financeiro" aria-labelledby="tab-financeiro" hidden>
+          <div class="tour-frame"><img src="/images/financeiro_1.png" alt="Controle financeiro por processo" width="2067" height="1778" loading="lazy" decoding="async"></div>
+          <p class="tour-caption"><strong>Financeiro:</strong> honorários, despesas e lançamentos por processo e por cliente.</p>
+        </div>
+        <div class="tour-panel" role="tabpanel" id="panel-honorarios" aria-labelledby="tab-honorarios" hidden>
+          <div class="tour-frame"><img src="/images/calculadora_honorarios_1.png" alt="Calculadora de honorários advocatícios" width="2036" height="1909" loading="lazy" decoding="async"></div>
+          <p class="tour-caption"><strong>Calculadora de honorários:</strong> tabelas da OAB e correção monetária.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARA QUEM -->
+    <section class="block" aria-labelledby="personas-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Para quem é</div>
+          <h2 class="title" id="personas-title">Do primeiro cliente ao escritório com equipe</h2>
+        </div>
+        <div class="personas">
+          <article class="persona">
+            <div class="tag">Início de carreira</div>
+            <h3>Recém-formados e novos advogados</h3>
+            <p>Comece organizado desde os primeiros casos, sem gastar nada.</p>
+            <ul>
+              <li>Plano Free para sempre</li>
+              <li>Processos, clientes e tarefas</li>
+              <li>Timesheet para registrar suas horas</li>
+            </ul>
+          </article>
+          <article class="persona">
+            <div class="tag">Advocacia autônoma</div>
+            <h3>Advogados que atuam sozinhos</h3>
+            <p>Prazos, clientes e financeiro sob controle, sem depender de planilha.</p>
+            <ul>
+              <li>Calculadora de prazos e honorários</li>
+              <li>Portal do cliente</li>
+              <li>Financeiro e indicadores</li>
+            </ul>
+          </article>
+          <article class="persona">
+            <div class="tag">Escritórios</div>
+            <h3>Escritórios com equipe</h3>
+            <p>Divida o trabalho e saiba o que cada um está fazendo.</p>
+            <ul>
+              <li>Até 5 usuários com permissões</li>
+              <li>Captura de publicações por OAB</li>
+              <li>Modelos de documentos</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMO FUNCIONA -->
+    <section class="block alt" aria-labelledby="steps-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Como funciona</div>
+          <h2 class="title" id="steps-title">Em minutos você já está usando</h2>
+        </div>
+        <ol class="steps">
+          <li><h3>Crie sua conta</h3><p>Com o Google ou com seu e-mail. Sem cartão e sem instalar nada.</p></li>
+          <li><h3>Cadastre processos e clientes</h3><p>Comece pelos casos mais urgentes e adicione o resto aos poucos.</p></li>
+          <li><h3>Receba andamentos e alertas</h3><p>O Causify avisa sobre novidades e prazos para você não perder nada.</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- PLANOS -->
+    <section class="block" aria-labelledby="plans-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Planos</div>
+          <h2 class="title" id="plans-title">Comece grátis. Evolua quando precisar.</h2>
+          <p>Toda conta nova ganha 15 dias do Plus. Depois, você escolhe: continua no Free ou assina um plano.</p>
+        </div>
+        <div class="plans">
+          <article class="plan">
+            <div class="plan-name">Free</div>
+            <div class="plan-price"><span class="cur">R$</span><span class="val">0</span><span class="per">/mês</span></div>
+            <p class="plan-desc">Para começar a organizar o escritório sem custo.</p>
+            <ul>
+              <li>Processos ilimitados cadastrados</li>
+              <li>10 processos monitorados</li>
+              <li>Clientes, tarefas e timesheet</li>
+            </ul>
+            <a class="btn btn-ghost btn-block" href="#cadastro" data-cta="plan_free">Começar grátis</a>
+          </article>
+          <article class="plan popular">
+            <div class="plan-badge">Mais popular</div>
+            <div class="plan-name">Plus</div>
+            <div class="plan-price"><span class="cur">R$</span><span class="val">20</span><span class="per">/mês</span></div>
+            <p class="plan-desc">Para quem precisa de controle completo de prazos e financeiro.</p>
+            <ul>
+              <li>20 processos monitorados</li>
+              <li>Calculadoras de prazos e honorários</li>
+              <li>Portal do cliente</li>
+              <li>Financeiro e indicadores</li>
+            </ul>
+            <a class="btn btn-block" href="#cadastro" data-cta="plan_plus">Testar 15 dias grátis</a>
+          </article>
+          <article class="plan">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price"><span class="cur">R$</span><span class="val">50</span><span class="per">/mês</span></div>
+            <p class="plan-desc">Para escritórios com equipe e publicações.</p>
+            <ul>
+              <li>2 usuários</li>
+              <li>40 processos monitorados</li>
+              <li>Captura de publicações por OAB</li>
+              <li>Modelos de documentos</li>
+            </ul>
+            <a class="btn btn-ghost btn-block" href="#cadastro" data-cta="plan_pro">Começar grátis</a>
+          </article>
+        </div>
+        <p class="plans-foot">Precisa de até 5 usuários? Veja o plano Max e a comparação completa na <a href="/index.html#planos">página de planos</a>.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="block alt" aria-labelledby="faq-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-label">Dúvidas</div>
+          <h2 class="title" id="faq-title">Perguntas frequentes</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Preciso de cartão de crédito para começar?</summary>
+            <div class="answer">Não. Você cria a conta só com nome, e-mail e senha (ou com o Google) e começa a usar na hora.</div>
+          </details>
+          <details>
+            <summary>O que acontece depois dos 15 dias do Plus?</summary>
+            <div class="answer">Sua conta volta automaticamente para o plano Free, sem nenhuma cobrança. Seus processos, clientes e tarefas continuam lá. Se quiser manter os recursos do Plus, é só assinar dentro do sistema.</div>
+          </details>
+          <details>
+            <summary>Meus dados e os dos meus clientes ficam seguros?</summary>
+            <div class="answer">Sim. Todas as conexões usam criptografia SSL/TLS, as senhas são armazenadas com hash, os dados de cada escritório ficam separados e há backup diário. O tratamento de dados segue a LGPD.</div>
+          </details>
+          <details>
+            <summary>Preciso instalar algum programa?</summary>
+            <div class="answer">Não. O Causify funciona no navegador do computador, tablet ou celular.</div>
+          </details>
+          <details>
+            <summary>Serve para quem está começando na advocacia?</summary>
+            <div class="answer">Sim. O plano Free é gratuito para sempre e cobre o essencial para organizar os primeiros processos e clientes. Quando o volume crescer, você muda de plano sem perder nada.</div>
+          </details>
+          <details>
+            <summary>Posso cancelar quando quiser?</summary>
+            <div class="answer">Sim. Os planos pagos podem ser cancelados a qualquer momento, sem multa, e seus dados ficam disponíveis para exportação.</div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="final" aria-labelledby="final-title">
+      <div class="wrap">
+        <h2 class="title" id="final-title">Organize seu escritório hoje</h2>
+        <p>Crie sua conta em menos de 1 minuto e use o Plus por 15 dias, sem pagar nada.</p>
+        <a class="btn" href="#cadastro" data-cta="final">Criar conta grátis</a>
+        <div class="reassure"><span>Sem cartão de crédito</span><span>·</span><span>Volta ao Free sem cobrança</span></div>
+      </div>
+    </section>
   </main>
 
   <footer>
-    <div>
-      <a href="/index.html">Página principal</a> ·
-      <a href="/blog/index.html">Blog</a> ·
-      <a href="/login.html">Entrar</a> ·
-      <a href="/termos.html">Termos</a> ·
+    <nav aria-label="Links do rodapé">
+      <a href="/index.html">Página principal</a>
+      <a href="/blog/index.html">Blog</a>
+      <a href="/login.html">Entrar</a>
+      <a href="/termos.html">Termos</a>
       <a href="/privacidade.html">Privacidade</a>
-    </div>
+    </nav>
     <div>© 2026 Causify · Gestão jurídica para advogados</div>
-    <div class="variant-tag">A/B — Variante D (LinkedIn)</div>
   </footer>
+
+  <div class="sticky-cta" id="stickyCta" aria-hidden="true">
+    <a class="btn" href="#cadastro" data-cta="sticky" tabindex="-1">Criar conta grátis</a>
+    <small>15 dias do Plus · sem cartão</small>
+  </div>
 
 <script type="module">
   import { register } from '/js/auth.js';
   import { getAttributionPayload } from '/js/utm.js';
 
-  const LP_VARIANT = 'D';
-  const PLAN_LABELS = { '0': 'Free — R$ 0/mês', '3': 'Plus — R$ 20/mês', '1': 'Pro — R$ 50/mês' };
+  const track = window.lpTrack;
+  // Planos aceitos via ?plano= (links de anúncio). Sem parâmetro, o cadastro é Free, que o
+  // backend converte em 15 dias de Plus (trial de boas-vindas).
+  const PAID_PLANS = { '3': 'Plus', '1': 'Pro' };
 
-  function track(event, params) {
-    try { if (typeof gtag === 'function') gtag('event', event, Object.assign({ lp_variant: LP_VARIANT }, params || {})); } catch (e) {}
-  }
   track('lp_view');
 
-  let scrolled = false;
+  // ---- Profundidade de rolagem ----
+  const scrollMarks = [25, 50, 75, 100];
+  const hit = new Set();
   window.addEventListener('scroll', () => {
-    if (scrolled) return;
-    if (window.scrollY > 200) { scrolled = true; track('lp_scroll_25'); }
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max <= 0) return;
+    const pct = (window.scrollY / max) * 100;
+    for (const m of scrollMarks) {
+      if (pct >= m - 1 && !hit.has(m)) { hit.add(m); track('lp_scroll_' + m); }
+    }
   }, { passive: true });
 
-  const plans = document.querySelectorAll('.plan');
-  const radios = document.querySelectorAll('input[name="plano"]');
-  const selectedPlanName = document.getElementById('selectedPlanName');
-  const plansContainer = document.querySelector('.plans');
-  const planDots = document.querySelectorAll('#planDots .dot');
-
-  function updatePlanUI(value) {
-    plans.forEach(p => p.classList.toggle('selected', p.dataset.planValue === value));
-    if (selectedPlanName) selectedPlanName.textContent = PLAN_LABELS[value] || value;
-  }
-
-  function updateDots(value) {
-    const cards = Array.from(plansContainer.querySelectorAll('.plan'));
-    const index = cards.findIndex(c => c.dataset.planValue === value);
-    if (index >= 0) {
-      planDots.forEach((dot, i) => dot.classList.toggle('active', i === index));
-    }
-  }
-
-  function selectPlan(value) {
-    const radio = document.querySelector(`input[name="plano"][value="${value}"]`);
-    if (!radio) return;
-    radio.checked = true;
-  }
-
-  if (plansContainer && planDots.length) {
-    plansContainer.addEventListener('scroll', () => {
-      if (window.innerWidth >= 720) return;
-      const cards = Array.from(plansContainer.querySelectorAll('.plan'));
-      const scrollLeft = plansContainer.scrollLeft;
-      let activeIndex = 0;
-      let minDistance = Infinity;
-      cards.forEach((card, i) => {
-        const distance = Math.abs(card.offsetLeft - scrollLeft);
-        if (distance < minDistance) {
-          minDistance = distance;
-          activeIndex = i;
-        }
-      });
-      planDots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
-    }, { passive: true });
-  }
-
-  radios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        updatePlanUI(radio.value);
-        updateDots(radio.value);
-        track('lp_plan_selected', { plano: radio.value });
-      }
+  // ---- CTAs levam ao formulário e focam o 1º campo ----
+  const formCard = document.getElementById('cadastro');
+  const nomeInput = document.getElementById('nome');
+  document.querySelectorAll('[data-cta]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      track('lp_cta_click', { location: el.dataset.cta });
+      formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => nomeInput.focus({ preventScroll: true }), 450);
     });
   });
 
-  const params = new URLSearchParams(location.search);
-  const planoParam = params.get('plano');
-  if (planoParam !== null && PLAN_LABELS[planoParam]) {
-    selectPlan(planoParam);
+  // ---- Barra fixa de CTA no celular: aparece quando o formulário sai da tela ----
+  const sticky = document.getElementById('stickyCta');
+  const stickyLink = sticky.querySelector('a');
+  const finalSection = document.querySelector('.final');
+  if ('IntersectionObserver' in window) {
+    const visible = new Map([[formCard, true], [finalSection, false]]);
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(en => visible.set(en.target, en.isIntersecting));
+      const show = !visible.get(formCard) && !visible.get(finalSection) && window.scrollY > 200;
+      sticky.classList.toggle('show', show);
+      sticky.setAttribute('aria-hidden', show ? 'false' : 'true');
+      stickyLink.tabIndex = show ? 0 : -1;
+    });
+    io.observe(formCard);
+    io.observe(finalSection);
   }
 
+  // ---- Abas do tour de telas ----
+  const tabs = Array.from(document.querySelectorAll('.tour-tab'));
+  function selectTab(tab) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    track('lp_tour_tab', { tab: tab.id.replace('tab-', '') });
+  }
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus();
+      selectTab(next);
+    });
+  });
+
+  document.querySelectorAll('.faq details').forEach((d, i) => {
+    d.addEventListener('toggle', () => { if (d.open) track('lp_faq_open', { index: i }); });
+  });
+
+  // ---- Mostrar/ocultar senha ----
+  const senhaInput = document.getElementById('senha');
+  const pwToggle = document.getElementById('pwToggle');
+  pwToggle.addEventListener('click', () => {
+    const show = senhaInput.type === 'password';
+    senhaInput.type = show ? 'text' : 'password';
+    pwToggle.textContent = show ? 'Ocultar' : 'Mostrar';
+    pwToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+  });
+
+  // ---- Plano vindo do anúncio (?plano=3 / ?plano=1) ----
+  const planoParam = new URLSearchParams(location.search).get('plano');
+  const plano = PAID_PLANS[planoParam] ? planoParam : '0';
+  if (plano !== '0') {
+    const note = document.getElementById('planNote');
+    note.innerHTML = `Plano escolhido: <strong>${PAID_PLANS[plano]}</strong> — 10 dias grátis para testar.`;
+    note.hidden = false;
+  }
+
+  // ---- Formulário ----
   const form = document.getElementById('signupForm');
   const msgEl = document.getElementById('formMsg');
   const btn = document.getElementById('submitBtn');
+  const btnLabel = btn.textContent;
+
+  let started = false;
+  form.addEventListener('focusin', () => {
+    if (started) return;
+    started = true;
+    track('lp_form_start');
+  });
 
   function showMsg(text, type) {
     msgEl.textContent = text;
     msgEl.className = 'form-msg ' + type;
   }
 
+  function fail(text, field) {
+    showMsg(text, 'err');
+    if (field) field.focus();
+    track('lp_form_invalid', { field: field ? field.id : '' });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     msgEl.className = 'form-msg';
 
-    const nome = document.getElementById('nome').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value;
-    const aceito = document.getElementById('aceitoTermos').checked;
-    const checkedRadio = document.querySelector('input[name="plano"]:checked');
-    const plano = checkedRadio ? checkedRadio.value : '0';
+    const emailInput = document.getElementById('email');
+    const nome = nomeInput.value.trim();
+    const email = emailInput.value.trim();
+    const senha = senhaInput.value;
 
-    if (!nome) { showMsg('Informe seu nome.', 'err'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showMsg('Digite um e-mail válido.', 'err'); return; }
-    if (senha.length < 8) { showMsg('A senha precisa ter pelo menos 8 caracteres.', 'err'); return; }
-    if (!aceito) { showMsg('Você precisa aceitar os termos para continuar.', 'err'); return; }
+    if (!nome) return fail('Informe seu nome.', nomeInput);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Digite um e-mail válido.', emailInput);
+    if (senha.length < 8) return fail('A senha precisa ter pelo menos 8 caracteres.', senhaInput);
 
     btn.disabled = true;
-    btn.textContent = 'Criando conta...';
+    btn.textContent = 'Criando sua conta...';
     track('lp_signup_submit', { plano });
 
     try {
@@ -736,13 +1093,13 @@
         ...getAttributionPayload()
       });
       track('lp_signup_success', { plano });
-      if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'LP_D_' + plano });
-      try { if (typeof window.lintrk === 'function') window.lintrk('track', { conversion_id: 28925116 }); } catch (e) {}
+      btn.textContent = 'Conta criada! Entrando...';
+      await window.lpConversion(plano);
       window.location.href = '/pages/dashboard.html';
     } catch (err) {
       showMsg(err.message || 'Erro ao criar conta. Tente novamente.', 'err');
       btn.disabled = false;
-      btn.textContent = 'Criar minha conta →';
+      btn.textContent = btnLabel;
       track('lp_signup_error', { message: String(err.message || '').slice(0, 80) });
     }
   });
