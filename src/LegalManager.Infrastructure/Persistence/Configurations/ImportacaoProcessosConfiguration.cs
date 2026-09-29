@@ -15,6 +15,7 @@ public class ImportacaoProcessosConfiguration : IEntityTypeConfiguration<Importa
         builder.Property(i => i.Modo).HasConversion<string>().HasMaxLength(20);
         builder.Property(i => i.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(i => i.MensagemErro).HasMaxLength(1000);
+        builder.Property(i => i.CursorEscavador).HasMaxLength(2000);
 
         // Dado operacional (não entra no export/import de tenant): some junto com o tenant.
         builder.HasOne<Tenant>()

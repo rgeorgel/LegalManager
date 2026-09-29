@@ -28,6 +28,9 @@ public record EscavadorCallbackDto(
     DateTime CriadoEm
 );
 
+/// <summary>Uma página de uma listagem paginada por cursor (API v2). <c>ProximoCursor</c> null = última página.</summary>
+public record EscavadorPaginaCursor<T>(IReadOnlyList<T> Data, string? ProximoCursor);
+
 public record EscavadorPagedResult<T>(
     IReadOnlyList<T> Data,
     int Total,
@@ -80,6 +83,15 @@ public interface IEscavadorService
 {
     Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorOabAsync(
         string oab, string uf, int pagina = 1, CancellationToken ct = default);
+
+    /// <summary>
+    /// Uma página (100 processos) da busca por OAB, para quem precisa paginar até o fim
+    /// (importação em background). <paramref name="cursor"/> null = primeira página; depois,
+    /// o <c>ProximoCursor</c> da página anterior. Diferente de <see cref="BuscarPorOabAsync"/>,
+    /// lança em caso de falha — terminar em silêncio faria a importação achar que acabou.
+    /// </summary>
+    Task<EscavadorPaginaCursor<EscavadorProcessoDto>> BuscarPaginaPorOabAsync(
+        string oab, string uf, string? cursor, CancellationToken ct = default);
 
     Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorCpfCnpjAsync(
         string cpfCnpj, int pagina = 1, CancellationToken ct = default);

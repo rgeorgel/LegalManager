@@ -3,9 +3,9 @@ using LegalManager.Domain.Enums;
 namespace LegalManager.Domain.Entities;
 
 /// <summary>
-/// Importação de processos por OAB executada em background (Hangfire). No modo
-/// <see cref="ModoImportacao.Todos"/> o job também faz a busca nos tribunais; no modo
-/// <see cref="ModoImportacao.Selecionados"/> os itens já chegam escolhidos pelo usuário.
+/// Importação de processos por OAB executada em background (Hangfire): o job pesquisa
+/// todos os processos da OAB e importa um por um. <see cref="ModoImportacao.Selecionados"/>
+/// só existe em importações antigas (a tela não permite mais escolher processos).
 /// </summary>
 public class ImportacaoProcessos
 {
@@ -23,6 +23,12 @@ public class ImportacaoProcessos
     public int JaCadastrados { get; set; }
     public int Erros { get; set; }
     public string? MensagemErro { get; set; }
+
+    // Estado da pesquisa (modo Todos), para retomar de onde parou se o job reiniciar:
+    // primeiro pagina o Escavador (cursor da próxima página), depois DataJud/e-SAJ.
+    public string? CursorEscavador { get; set; }
+    public bool BuscaEscavadorConcluida { get; set; }
+    public bool BuscaTribunaisConcluida { get; set; }
 
     public DateTime CriadoEm { get; set; }
     // Último avanço do job — usado para detectar importações interrompidas (job morto).

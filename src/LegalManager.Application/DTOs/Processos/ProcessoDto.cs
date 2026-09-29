@@ -106,7 +106,9 @@ public record ProcessoResponseDto(
     string? SiglaTribunal,
     string? Segmento,
     DateTime? DataDistribuicao,
-    DateTime? UltimoAndamentoEm
+    DateTime? UltimoAndamentoEm,
+    // Importado sem andamentos: a tela do processo dispara a carga inicial (uma vez).
+    bool AndamentosPendentes = false
 );
 
 public record ProcessoParteResponseDto(

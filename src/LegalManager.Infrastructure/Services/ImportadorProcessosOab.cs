@@ -16,8 +16,7 @@ namespace LegalManager.Infrastructure.Services;
 
 public class ImportadorProcessosOab : IImportadorProcessosOab
 {
-    private const string OrigemBuscaOab = "Onboarding — Busca de processos por OAB";
-    private const string OrigemImportarProcesso = "Onboarding — Importar processo";
+    private const string OrigemBuscaOab = "Importação por OAB — Busca de processos";
 
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
@@ -60,31 +59,22 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         return (itens.Count, itens);
     }
 
-    public async Task<List<ProcessoOabPreviewDto>> BuscarAsync(string numeroOab, string uf, CancellationToken ct = default)
+    public async Task<PaginaBuscaOab> BuscarPaginaEscavadorAsync(
+        string numeroOab, string uf, string? cursor, CancellationToken ct = default)
     {
-        var parametrosBusca = new { oab = numeroOab, uf };
+        var pagina = await _consultaLog.RegistrarAsync(
+            "Escavador", "BuscaProcessosPorOab", OrigemBuscaOab,
+            new { oab = numeroOab, uf, continuacao = cursor != null },
+            () => _escavador.BuscarPaginaPorOabAsync(numeroOab.Trim(), uf.Trim(), cursor, ct),
+            r => (r.Data.Count, r.Data.Select(p => new { p.Numero, p.NomeTribunal, p.Classe, p.DataAjuizamento })),
+            ct: ct);
 
-        // TJSP usa ESAJ; demais tribunais estaduais usam DataJud; TRF/TRT usam Escavador
-        var tarefaDataJud = _consultaLog.RegistrarAsync(
-            "DataJud", "BuscaProcessosPorOab", OrigemBuscaOab, parametrosBusca,
-            () => _dataJud.BuscarPorOabAsync(numeroOab, uf, ct),
-            ResumoProcessosPreview, ct: ct);
-        var tarefaEsaj = uf.Equals("SP", StringComparison.OrdinalIgnoreCase)
-            ? _consultaLog.RegistrarAsync(
-                "EsajTjsp", "BuscaProcessosPorOab", OrigemBuscaOab, parametrosBusca,
-                () => _esaj.BuscarPorOabAsync(numeroOab, uf, ct),
-                ResumoProcessosPreview, ct: ct)
-            : Task.FromResult(new List<ProcessoOabPreviewDto>());
-        var tarefaEscavador = BuscarEscavadorOabAsync(numeroOab, uf, ct);
+        var processos = pagina.Data.Where(p => !string.IsNullOrWhiteSpace(p.Numero)).ToList();
 
-        await Task.WhenAll(tarefaDataJud, tarefaEsaj, tarefaEscavador);
-
-        // Gravado só depois do WhenAll: o DbContext não aceita operações concorrentes
-        // (as buscas acima gravam o log de consulta externa no mesmo contexto).
-        // O cache só enriquece a importação; falhar aqui não pode descartar os resultados.
+        // O cache só enriquece a importação; falhar aqui não pode descartar a página.
         try
         {
-            await SalvarCacheEscavadorAsync(tarefaEscavador.Result, ct);
+            await SalvarCacheEscavadorAsync(processos, ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -92,16 +82,40 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             DescartarPendentes<ProcessoImportacaoCache>();
         }
 
-        var processos = tarefaDataJud.Result
-            .Concat(tarefaEsaj.Result)
-            .Concat(PreviewsEscavador(tarefaEscavador.Result))
+        return new PaginaBuscaOab(await MarcarJaCadastradosAsync(PreviewsEscavador(processos), ct), pagina.ProximoCursor);
+    }
+
+    public async Task<List<ProcessoOabPreviewDto>> BuscarTribunaisAsync(
+        string numeroOab, string uf, CancellationToken ct = default)
+    {
+        var parametrosBusca = new { oab = numeroOab, uf };
+
+        // TJSP usa e-SAJ; os demais tribunais, DataJud. Ambos gratuitos.
+        var dataJud = await _consultaLog.RegistrarAsync(
+            "DataJud", "BuscaProcessosPorOab", OrigemBuscaOab, parametrosBusca,
+            () => _dataJud.BuscarPorOabAsync(numeroOab, uf, ct),
+            ResumoProcessosPreview, ct: ct);
+        var esaj = uf.Equals("SP", StringComparison.OrdinalIgnoreCase)
+            ? await _consultaLog.RegistrarAsync(
+                "EsajTjsp", "BuscaProcessosPorOab", OrigemBuscaOab, parametrosBusca,
+                () => _esaj.BuscarPorOabAsync(numeroOab, uf, ct),
+                ResumoProcessosPreview, ct: ct)
+            : [];
+
+        var processos = dataJud
+            .Concat(esaj)
             .GroupBy(p => p.NumeroCNJ)
             .Select(MergePreview)
             .OrderByDescending(p => p.DataAjuizamento)
             .ToList();
 
-        if (processos.Count == 0)
-            return processos;
+        return await MarcarJaCadastradosAsync(processos, ct);
+    }
+
+    private async Task<List<ProcessoOabPreviewDto>> MarcarJaCadastradosAsync(
+        List<ProcessoOabPreviewDto> processos, CancellationToken ct)
+    {
+        if (processos.Count == 0) return processos;
 
         var numeros = processos.Select(x => x.NumeroCNJ).ToList();
         var numerosExistentes = await _context.Processos
@@ -229,12 +243,14 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             Monitorado = false,
             EscavadorMonitoramentoId = null,
             AdvogadoResponsavelId = _tenantContext.UserId,
+            // Sem andamentos na importação em massa (seria 1 consulta paga por processo):
+            // buscados uma vez, quando o processo for aberto ou monitorado.
+            AndamentosPendentes = true,
             CriadoEm = DateTime.Now
         });
         await _context.SaveChangesAsync(ct);
 
         await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, ct);
-        await SalvarAndamentosEscavadorAsync(cnj, dataAjuizamento, processoId, cache?.DadosJson, ct);
 
         // TODO (5B — Estratégia 3): ao implementar monitoramento de Diários Oficiais,
         // criar aqui 1 único termo por tenant (idempotente) com o número OAB formatado
@@ -428,39 +444,6 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             Andamentos: resultado.Movimentos.Select(m =>
                 new AndamentoDto(m.Data, m.Descricao, m.CodigoCNJ, m.OrgaoJulgador)).ToList()
         );
-    }
-
-    private async Task<List<EscavadorProcessoDto>> BuscarEscavadorOabAsync(
-        string oab, string uf, CancellationToken ct)
-    {
-        try
-        {
-            var todos = await _consultaLog.RegistrarAsync(
-                "Escavador", "BuscaProcessosPorOab", OrigemBuscaOab, new { oab, uf },
-                async () =>
-                {
-                    var lista = new List<EscavadorProcessoDto>();
-                    for (var pagina = 1; pagina <= 2; pagina++)
-                    {
-                        var resultado = await _escavador.BuscarPorOabAsync(oab.Trim(), uf.Trim(), pagina, ct);
-                        foreach (var p in resultado.Data)
-                            if (!string.IsNullOrWhiteSpace(p.Numero))
-                                lista.Add(p);
-                        if (!resultado.TemProxima) break;
-                    }
-                    return lista;
-                },
-                lista => (lista.Count, lista.Select(p => new { p.Numero, p.NomeTribunal, p.Classe, p.DataAjuizamento })),
-                ct: ct);
-
-            _logger.LogInformation("[Escavador] {N} processos retornados para OAB {Oab}/{Uf}", todos.Count, oab, uf);
-            return todos;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            _logger.LogWarning(ex, "Escavador OAB search failed, continuing without results");
-            return [];
-        }
     }
 
     private static List<ProcessoOabPreviewDto> PreviewsEscavador(List<EscavadorProcessoDto> processos) =>
@@ -680,67 +663,12 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         }
     }
 
-    private async Task SalvarAndamentosEscavadorAsync(
-        string cnj, DateTime? dataAjuizamento, Guid processoId, string? dadosJson, CancellationToken ct)
-    {
-        try
-        {
-            var resultado = await _consultaLog.RegistrarAsync(
-                "Escavador", "BuscaMovimentacoesPorCnj", OrigemImportarProcesso, new { cnj },
-                () => _escavador.ListarMovimentacoesPorProcessoAsync(cnj, desde: null, pagina: 1, ct: ct),
-                r => (r.Data.Count, r.Data.Select(m => new { m.Data, m.Tipo, m.Diario, m.Snippet })),
-                ct: ct);
-
-            if (resultado.Data.Count == 0)
-            {
-                _logger.LogInformation("[Import] Nenhum andamento para {CNJ}", cnj);
-                return;
-            }
-
-            var agora = DateTime.UtcNow;
-            foreach (var mov in resultado.Data)
-            {
-                _context.Andamentos.Add(new Andamento
-                {
-                    Id = Guid.NewGuid(),
-                    ProcessoId = processoId,
-                    TenantId = _tenantContext.TenantId,
-                    Data = mov.Data ?? dataAjuizamento ?? DateTime.UtcNow,
-                    Tipo = MapearTipoAndamento(mov.Tipo, mov.ConteudoHtml),
-                    Descricao = mov.ConteudoHtml ?? mov.Snippet ?? "Movimentação",
-                    Fonte = FonteAndamento.Automatico,
-                    CriadoEm = agora
-                });
-            }
-            await _context.SaveChangesAsync(ct);
-            _logger.LogInformation("[Import] {N} andamento(s) salvos para {CNJ}", resultado.Data.Count, cnj);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "[Import] Falha ao buscar andamentos para {CNJ}", cnj);
-            DescartarPendentes<Andamento>();
-        }
-    }
-
     /// <summary>Descarta inserções pendentes que falharam, para não contaminar os próximos SaveChanges.</summary>
     private void DescartarPendentes<T>() where T : class
     {
         foreach (var entry in _context.ChangeTracker.Entries<T>()
                      .Where(e => e.State == EntityState.Added).ToList())
             entry.State = EntityState.Detached;
-    }
-
-    private static TipoAndamento MapearTipoAndamento(string? tipo, string? conteudo)
-    {
-        var texto = (conteudo ?? tipo ?? "").ToUpperInvariant();
-        if (texto.Contains("SENTEN")) return TipoAndamento.Sentenca;
-        if (texto.Contains("ACORD")) return TipoAndamento.Acordao;
-        if (texto.Contains("AUDIENC")) return TipoAndamento.Audiencia;
-        if (texto.Contains("INTIM") || texto.Contains("PUBLICAC") || texto.Contains("DJE"))
-            return TipoAndamento.Intimacao;
-        if (texto.Contains("DECIS")) return TipoAndamento.Decisao;
-        if (texto.Contains("PETIC")) return TipoAndamento.Peticao;
-        return TipoAndamento.Despacho;
     }
 
     private static TipoParteProcesso MapearPoloEscavador(string polo)

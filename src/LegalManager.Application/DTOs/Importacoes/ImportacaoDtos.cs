@@ -4,14 +4,10 @@ using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.Importacoes;
 
-/// <summary>
-/// Inicia uma importação em background. Sem <see cref="Processos"/>, o job busca e importa
-/// todos os processos da OAB; com eles, importa só os selecionados pelo usuário.
-/// </summary>
+/// <summary>Inicia uma importação em background de todos os processos da OAB.</summary>
 public record IniciarImportacaoDto(
     [Required] string NumeroOAB,
-    [Required] string Uf,
-    List<ImportarProcessoItem>? Processos = null
+    [Required] string Uf
 );
 
 public record ImportacaoResumoDto(
@@ -43,4 +39,10 @@ public record ResultadoImportacaoItem(
     StatusItemImportacao Status,
     string? Mensagem = null,
     Guid? ProcessoId = null
+);
+
+/// <summary>Uma página da busca por OAB. <c>ProximoCursor</c> null = última página.</summary>
+public record PaginaBuscaOab(
+    List<ProcessoOabPreviewDto> Processos,
+    string? ProximoCursor
 );

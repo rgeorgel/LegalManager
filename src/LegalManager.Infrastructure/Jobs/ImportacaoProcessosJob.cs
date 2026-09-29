@@ -9,38 +9,51 @@ using LegalManager.Infrastructure.Identity;
 using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Jobs;
 
 /// <summary>
-/// Executa uma <see cref="ImportacaoProcessos"/> em background: no modo Todos busca os
-/// processos da OAB e cria os itens; depois importa item a item, gravando o progresso
-/// (lido pela barra de progresso do frontend) e, no fim, notifica o usuário.
-/// Retomável: se o servidor reiniciar no meio, o Hangfire reenfileira o job e ele segue
-/// dos itens ainda pendentes.
+/// Executa uma <see cref="ImportacaoProcessos"/> em background: pesquisa todos os processos
+/// da OAB (Escavador página a página, depois DataJud/e-SAJ), criando os itens conforme
+/// encontra; depois importa item a item, gravando o progresso (lido pela barra de progresso
+/// do frontend) e, no fim, notifica o usuário.
+/// Retomável: se o servidor reiniciar no meio, o Hangfire reenfileira o job e ele segue do
+/// cursor do Escavador / dos itens ainda pendentes.
 /// </summary>
 public class ImportacaoProcessosJob
 {
     // Sem avanço há mais que isso = job morreu (ver ImportacoesController.Ativa).
     public static readonly TimeSpan TempoMaximoSemProgresso = TimeSpan.FromMinutes(30);
 
+    // Teto de processos por importação (Escavador:MaxProcessosImportacaoOab): cada página de
+    // 100 é uma consulta paga, e uma OAB gigante não pode gerar requisições sem fim.
+    private const int MaxProcessosPadrao = 20_000;
+    private static readonly TimeSpan[] EsperasEntreTentativas = [TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(10)];
+
     private readonly AppDbContext _context;
     private readonly TenantContext _tenantContext;
     private readonly IImportadorProcessosOab _importador;
     private readonly ILogger<ImportacaoProcessosJob> _logger;
+    private readonly int _maxProcessos;
 
     public ImportacaoProcessosJob(
         AppDbContext context,
         TenantContext tenantContext,
         IImportadorProcessosOab importador,
+        IConfiguration configuration,
         ILogger<ImportacaoProcessosJob> logger)
     {
         _context = context;
         _tenantContext = tenantContext;
         _importador = importador;
         _logger = logger;
+        _maxProcessos = configuration.GetValue("Escavador:MaxProcessosImportacaoOab", MaxProcessosPadrao);
     }
+
+    // Esperas entre tentativas de uma página; sobrescrito nos testes.
+    internal Func<TimeSpan, CancellationToken, Task> Esperar { get; set; } = Task.Delay;
 
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecutarAsync(Guid importacaoId, CancellationToken ct)
@@ -60,11 +73,8 @@ public class ImportacaoProcessosJob
 
         try
         {
-            if (importacao.Modo == ModoImportacao.Todos
-                && !await _context.ImportacaoProcessoItens.AnyAsync(i => i.ImportacaoId == importacaoId, ct))
-            {
-                await BuscarECriarItensAsync(importacao, ct);
-            }
+            if (importacao.Modo == ModoImportacao.Todos)
+                await PesquisarAsync(importacaoId, ct);
 
             importacao = await RecarregarAsync(importacaoId, ct);
             importacao.Status = StatusImportacao.Importando;
@@ -116,24 +126,91 @@ public class ImportacaoProcessosJob
         }
     }
 
-    private async Task BuscarECriarItensAsync(ImportacaoProcessos importacao, CancellationToken ct)
+    private async Task PesquisarAsync(Guid importacaoId, CancellationToken ct)
     {
+        var importacao = await RecarregarAsync(importacaoId, ct);
+        if (importacao.BuscaEscavadorConcluida && importacao.BuscaTribunaisConcluida) return;
+
         importacao.Status = StatusImportacao.Buscando;
         importacao.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
 
-        var previews = await _importador.BuscarAsync(importacao.NumeroOab, importacao.Uf, ct);
-
-        importacao = await RecarregarAsync(importacao.Id, ct);
-        var novos = previews.Where(p => !p.JaCadastrado).ToList();
-        for (var i = 0; i < novos.Count; i++)
+        // Escavador primeiro: traz capa/partes prontas no JSON da busca e a importação desses
+        // itens não chama nenhuma API. Os CNJs que só DataJud/e-SAJ acharem entram depois.
+        while (!importacao.BuscaEscavadorConcluida)
         {
-            var p = novos[i];
-            _context.ImportacaoProcessoItens.Add(NovoItem(importacao.Id, i, ItemDoPreview(p), p.Tribunal));
+            if (importacao.Total >= _maxProcessos)
+            {
+                _logger.LogWarning("[ImportacaoProcessosJob] {Id}: teto de {Max} processos atingido; pesquisa no Escavador encerrada",
+                    importacaoId, _maxProcessos);
+                importacao.BuscaEscavadorConcluida = true;
+                await _context.SaveChangesAsync(ct);
+                break;
+            }
+
+            var cursor = importacao.CursorEscavador;
+            var pagina = await ComTentativasAsync(
+                () => _importador.BuscarPaginaEscavadorAsync(importacao.NumeroOab, importacao.Uf, cursor, ct), ct);
+
+            importacao = await RecarregarAsync(importacaoId, ct);
+            await AdicionarItensAsync(importacao, pagina.Processos, ct);
+            importacao.CursorEscavador = pagina.ProximoCursor;
+            importacao.BuscaEscavadorConcluida = pagina.ProximoCursor == null;
+            importacao.AtualizadoEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync(ct);
         }
-        importacao.Total = novos.Count;
-        importacao.AtualizadoEm = DateTime.UtcNow;
-        await _context.SaveChangesAsync(ct);
+
+        if (!importacao.BuscaTribunaisConcluida)
+        {
+            var previews = await ComTentativasAsync(
+                () => _importador.BuscarTribunaisAsync(importacao.NumeroOab, importacao.Uf, ct), ct);
+
+            importacao = await RecarregarAsync(importacaoId, ct);
+            await AdicionarItensAsync(importacao, previews, ct);
+            importacao.BuscaTribunaisConcluida = true;
+            importacao.AtualizadoEm = DateTime.UtcNow;
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
+    /// <summary>
+    /// Cria itens para os processos ainda não cadastrados nem presentes nesta importação,
+    /// respeitando o teto. Não salva — quem chama grava junto com o avanço da pesquisa.
+    /// </summary>
+    private async Task AdicionarItensAsync(
+        ImportacaoProcessos importacao, List<ProcessoOabPreviewDto> previews, CancellationToken ct)
+    {
+        var jaNaImportacao = await _context.ImportacaoProcessoItens
+            .Where(i => i.ImportacaoId == importacao.Id)
+            .Select(i => i.NumeroCNJ)
+            .ToHashSetAsync(ct);
+
+        foreach (var p in previews)
+        {
+            if (importacao.Total >= _maxProcessos) break;
+            var cnj = p.NumeroCNJ.Trim();
+            if (p.JaCadastrado || !jaNaImportacao.Add(cnj)) continue;
+
+            _context.ImportacaoProcessoItens.Add(NovoItem(importacao.Id, importacao.Total, ItemDoPreview(p), p.Tribunal));
+            importacao.Total++;
+        }
+    }
+
+    /// <summary>Falhas transitórias (rede, 5xx, rate limit) não derrubam uma pesquisa de dezenas de páginas.</summary>
+    private async Task<T> ComTentativasAsync<T>(Func<Task<T>> acao, CancellationToken ct)
+    {
+        for (var tentativa = 0; ; tentativa++)
+        {
+            try
+            {
+                return await acao();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && tentativa < EsperasEntreTentativas.Length)
+            {
+                _logger.LogWarning(ex, "[ImportacaoProcessosJob] Falha na pesquisa (tentativa {N}); tentando de novo", tentativa + 1);
+                await Esperar(EsperasEntreTentativas[tentativa], ct);
+            }
+        }
     }
 
     private async Task ImportarItemAsync(Guid importacaoId, Guid itemId, CancellationToken ct)

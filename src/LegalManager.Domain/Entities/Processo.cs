@@ -53,6 +53,15 @@ public class Processo
     public string? EscavadorMonitoramentoId { get; set; }
     public bool MonitoramentoSemanal { get; set; }
 
+    // Importado em massa (importação por OAB) só com capa e partes: os andamentos são
+    // buscados uma única vez, quando o processo é aberto ou passa a ser monitorado
+    // (ProcessosController.CargaInicialAndamentos). Nunca volta a true depois disso.
+    public bool AndamentosPendentes { get; set; }
+
+    // Última consulta paga de andamentos no Escavador — limita o fallback pago do
+    // "Consultar" a uma vez a cada 24h por processo.
+    public DateTime? UltimaConsultaEscavadorEm { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public Usuario? AdvogadoResponsavel { get; set; }
     public ICollection<ProcessoParte> Partes { get; set; } = new List<ProcessoParte>();

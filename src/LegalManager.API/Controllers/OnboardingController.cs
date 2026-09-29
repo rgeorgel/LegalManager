@@ -1,5 +1,4 @@
 using LegalManager.Application.DTOs.Onboarding;
-using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -15,16 +14,11 @@ public class OnboardingController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
-    private readonly IImportadorProcessosOab _importador;
 
-    public OnboardingController(
-        AppDbContext context,
-        ITenantContext tenantContext,
-        IImportadorProcessosOab importador)
+    public OnboardingController(AppDbContext context, ITenantContext tenantContext)
     {
         _context = context;
         _tenantContext = tenantContext;
-        _importador = importador;
     }
 
     [HttpGet("status")]
@@ -53,15 +47,6 @@ public class OnboardingController : ControllerBase
             .ToListAsync(ct);
         return Ok(oabs);
     }
-
-    /// <summary>
-    /// Busca síncrona para o usuário escolher o que importar. A importação em si roda em
-    /// background — ver <see cref="ImportacoesController"/>.
-    /// </summary>
-    [HttpPost("buscar-por-oab")]
-    public async Task<ActionResult<List<ProcessoOabPreviewDto>>> BuscarPorOab(
-        BuscarPorOabDto dto, CancellationToken ct)
-        => Ok(await _importador.BuscarAsync(dto.NumeroOAB, dto.Uf, ct));
 
     [HttpPost("completar")]
     public async Task<ActionResult> Completar(CancellationToken ct)

@@ -201,6 +201,8 @@ public class ProcessosController : ControllerBase
     public async Task<IActionResult> AlternarMonitoramento(Guid id, CancellationToken ct)
     {
         var ativo = await _monitoramento.AlternarMonitoramentoAsync(id, ct);
+        // Passou a monitorar um processo importado sem andamentos: faz a carga inicial agora.
+        if (ativo && _context != null) await CarregarAndamentosIniciaisAsync(id);
         return Ok(new { monitorado = ativo });
     }
 
@@ -211,6 +213,74 @@ public class ProcessosController : ControllerBase
         var processo = await _service.GetByIdAsync(id, ct);
         if (processo == null) return NotFound("Processo não encontrado.");
 
+        // Consulta manual já cobre a carga inicial de um processo importado sem andamentos.
+        if (processo.AndamentosPendentes) await ReservarCargaInicialAsync(id, ct);
+
+        return Ok(await ConsultarAndamentosAsync(id, processo, ct));
+    }
+
+    /// <summary>
+    /// Carga inicial dos andamentos de um processo importado em massa sem eles (importação por
+    /// OAB). Chamada pela tela do processo ao abrir. Roda no máximo UMA vez por processo: a
+    /// reserva atômica desliga <c>AndamentosPendentes</c> antes de qualquer consulta externa, então
+    /// reaberturas, F5 e abas simultâneas não geram novas consultas (pagas ou não). Depois disso,
+    /// andamentos só chegam pelo monitoramento ou pelo "Consultar" explícito.
+    /// </summary>
+    [HttpPost("{id:guid}/andamentos/carga-inicial")]
+    public async Task<IActionResult> CargaInicialAndamentos(Guid id, CancellationToken ct)
+    {
+        var resultado = await CarregarAndamentosIniciaisAsync(id);
+        return Ok(resultado ?? new { Id = id, Sucesso = true, NovosAndamentos = 0, JaCarregado = true });
+    }
+
+    private async Task<object?> CarregarAndamentosIniciaisAsync(Guid id)
+    {
+        // Sem o CancellationToken da requisição: se o usuário sair da tela no meio, a consulta
+        // (já reservada) termina mesmo assim em vez de ser perdida.
+        if (!await ReservarCargaInicialAsync(id, CancellationToken.None)) return null;
+
+        var processo = await _service.GetByIdAsync(id, CancellationToken.None);
+        if (processo == null) return null;
+
+        try
+        {
+            return await ConsultarAndamentosAsync(id, processo, CancellationToken.None);
+        }
+        catch
+        {
+            // Falha técnica (exceção) — não um "não encontrado": libera para tentar na próxima abertura.
+            await DefinirAndamentosPendentesAsync(id, true, CancellationToken.None);
+            throw;
+        }
+    }
+
+    /// <summary>Desliga <c>AndamentosPendentes</c> se ainda estiver ligado; true = esta chamada ganhou a reserva.</summary>
+    private async Task<bool> ReservarCargaInicialAsync(Guid id, CancellationToken ct) =>
+        await DefinirAndamentosPendentesAsync(id, false, ct) == 1;
+
+    private async Task<int> DefinirAndamentosPendentesAsync(Guid id, bool pendente, CancellationToken ct)
+    {
+        var alvo = _context.Processos.Where(p =>
+            p.Id == id && p.TenantId == _tenantContext.TenantId && p.AndamentosPendentes != pendente);
+
+        // UPDATE ... WHERE condicional: atômico no Postgres (duas requisições nunca ganham as duas).
+        if (_context.Database.IsRelational())
+            return await alvo.ExecuteUpdateAsync(s => s.SetProperty(p => p.AndamentosPendentes, pendente), ct);
+
+        // EF InMemory (testes) não suporta ExecuteUpdate.
+        var processo = await alvo.FirstOrDefaultAsync(ct);
+        if (processo == null) return 0;
+        processo.AndamentosPendentes = pendente;
+        await _context.SaveChangesAsync(ct);
+        return 1;
+    }
+
+    /// <summary>
+    /// Busca andamentos novos em ordem de custo: e-SAJ (TJSP) e DataJud, gratuitos; o Escavador,
+    /// pago, só se nenhum dos dois encontrou o processo.
+    /// </summary>
+    private async Task<object> ConsultarAndamentosAsync(Guid id, ProcessoResponseDto processo, CancellationToken ct)
+    {
         int novos = 0;
         var encontradoEsaj = false;
 
@@ -268,16 +338,18 @@ public class ProcessosController : ControllerBase
 
             // Último recurso, pago (R$ 0,05/consulta): só quando nem e-SAJ nem DataJud encontraram
             // o processo — processo encontrado sem andamento novo não gasta com o Escavador.
-            if (resultado.Sucesso || encontradoEsaj) return Ok(resultado);
+            if (resultado.Sucesso || encontradoEsaj) return resultado;
 
             var novosEscavador = await ImportarAndamentosEscavadorAsync(id, ct);
-            if (novosEscavador == 0) return Ok(resultado);
+            if (novosEscavador == 0) return resultado;
 
-            return Ok(new { Id = id, NumeroCNJ = processo.NumeroCNJ, Sucesso = true, NovosAndamentos = novosEscavador, Mensagem = $"{novosEscavador} novo(s) andamento(s) importado(s) do Escavador." });
+            return new { Id = id, NumeroCNJ = processo.NumeroCNJ, Sucesso = true, NovosAndamentos = novosEscavador, Mensagem = $"{novosEscavador} novo(s) andamento(s) importado(s) do Escavador." };
         }
 
-        return Ok(new { Id = id, NumeroCNJ = processo.NumeroCNJ, Sucesso = true, NovosAndamentos = novos, Mensagem = $"{novos} novo(s) andamento(s) importado(s) do ESAJ." });
+        return new { Id = id, NumeroCNJ = processo.NumeroCNJ, Sucesso = true, NovosAndamentos = novos, Mensagem = $"{novos} novo(s) andamento(s) importado(s) do ESAJ." };
     }
+
+    private static readonly TimeSpan IntervaloConsultaEscavador = TimeSpan.FromHours(24);
 
     /// <summary>
     /// Fallback do "Consultar" (plano pago; nunca no Free): importa do Escavador só as movimentações posteriores ao último
@@ -291,6 +363,13 @@ public class ProcessosController : ControllerBase
 
         var processo = await _context.Processos.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct);
         if (processo == null) return 0;
+
+        // No máximo uma consulta paga por processo a cada 24h, por mais que "Consultar" seja
+        // clicado. Gravado antes da chamada para cliques simultâneos não passarem os dois.
+        var agoraConsulta = DateTime.UtcNow;
+        if (processo.UltimaConsultaEscavadorEm > agoraConsulta - IntervaloConsultaEscavador) return 0;
+        processo.UltimaConsultaEscavadorEm = agoraConsulta;
+        await _context.SaveChangesAsync(ct);
 
         var resultado = await _consultaLog.RegistrarAsync(
             "Escavador", "BuscaMovimentacoesPorCnj", "Processos — Consultar andamentos (fallback Escavador)",

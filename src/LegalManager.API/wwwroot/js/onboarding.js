@@ -51,7 +51,7 @@ export async function initOnboarding(onDone) {
 }
 
 export function openOnboardingModal() {
-  showStep(1);
+  showStep('oab');
   showModal();
 }
 
@@ -65,14 +65,19 @@ function hideModal() {
   if (overlay) overlay.classList.remove('open');
 }
 
-function showStep(n) {
-  document.querySelectorAll('.ob-step').forEach((el, i) => {
-    el.style.display = i + 1 === n ? 'block' : 'none';
-  });
-  const footers = ['obFooterStep1', 'obFooterStep2', 'obFooterStep3', 'obFooterLeitura'];
-  footers.forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = i + 1 === n ? 'flex' : 'none';
+// Passo → [conteúdo, rodapé]. O passo de leitura só existe na tela de processos.
+const PASSOS = {
+  oab: ['obStep1', 'obFooterStep1'],
+  iniciada: ['obStep3', 'obFooterStep3'],
+  leitura: ['obStepLeitura', 'obFooterLeitura'],
+};
+
+function showStep(passo) {
+  Object.entries(PASSOS).forEach(([nome, [stepId, footerId]]) => {
+    const step = document.getElementById(stepId);
+    const footer = document.getElementById(footerId);
+    if (step) step.style.display = nome === passo ? 'block' : 'none';
+    if (footer) footer.style.display = nome === passo ? 'flex' : 'none';
   });
 }
 
@@ -85,7 +90,7 @@ export async function openReadOnlyModal(numero, uf) {
 
   document.getElementById('obFecharLeituraBtn')?.addEventListener('click', hideModal, { once: true });
 
-  showStep(4);
+  showStep('leitura');
   showModal();
   mostrarImportacaoEmAndamento(listaEl);
 
@@ -129,8 +134,6 @@ async function mostrarImportacaoEmAndamento(listaEl) {
 let _marcarCompleto = true;
 let _onImportStart = null;
 let _afterClose = null;
-let _oabResultados = [];
-let _oabAtual = { numero: '', uf: '' };
 
 async function completar() {
   if (_marcarCompleto) {
@@ -154,19 +157,18 @@ export function initOnboardingModal(opts = {}) {
     select.appendChild(opt);
   });
 
-  document.getElementById('obBuscarBtn').addEventListener('click', buscarPorOab);
+  document.getElementById('obBuscarBtn').addEventListener('click', importarOab);
   document.getElementById('obOab').addEventListener('keydown', e => {
-    if (e.key === 'Enter') buscarPorOab();
+    if (e.key === 'Enter') importarOab();
   });
-  document.getElementById('obImportarBtn').addEventListener('click', importar);
   document.getElementById('obPularBtn').addEventListener('click', completar);
-  document.getElementById('obPularStep2Btn').addEventListener('click', completar);
   document.getElementById('obConcluirBtn').addEventListener('click', completar);
 
-  showStep(1);
+  showStep('oab');
 }
 
-async function buscarPorOab() {
+// Importa sempre todos os processos da OAB: a pesquisa e a importação rodam em background.
+async function importarOab() {
   const numeroOAB = document.getElementById('obOab').value.trim().replace(/\D/g, '');
   const uf = document.getElementById('obUf').value;
   const erroEl = document.getElementById('obErroBusca');
@@ -181,145 +183,16 @@ async function buscarPorOab() {
     return;
   }
 
-  _oabAtual = { numero: numeroOAB, uf };
-
   const btn = document.getElementById('obBuscarBtn');
-  const loadingEl = document.getElementById('obLoadingSearch');
-  btn.disabled = true;
-
-  // "Importar todos": a busca e a importação rodam juntas em background (barra inferior).
-  if (document.getElementById('obImportarTodos')?.checked) {
-    btn.textContent = 'Iniciando...';
-    try {
-      await iniciarImportacao({ numeroOAB, uf });
-    } catch (e) {
-      erroEl.textContent = e?.message || 'Erro ao iniciar a importação. Tente novamente.';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Buscar Processos';
-    }
-    return;
-  }
-
-  btn.textContent = 'Buscando...';
-  loadingEl.style.display = 'flex';
-  startDots('search', 'Consultando tribunais');
-
-  try {
-    const processos = await apiFetch('/onboarding/buscar-por-oab', {
-      method: 'POST',
-      body: JSON.stringify({ numeroOAB, uf })
-    });
-
-    _oabResultados = processos ?? [];
-    renderResultados(_oabResultados);
-    showStep(2);
-  } catch {
-    erroEl.textContent = 'Erro ao buscar processos. Verifique o número OAB e tente novamente.';
-  } finally {
-    loadingEl.style.display = 'none';
-    stopDots('search');
-    btn.disabled = false;
-    btn.textContent = 'Buscar Processos';
-  }
-}
-
-function renderResultados(processos) {
-  const lista = document.getElementById('obListaProcessos');
-  const semResultado = document.getElementById('obSemResultado');
-  const contagem = document.getElementById('obContagem');
-  lista.innerHTML = '';
-
-  if (!processos || processos.length === 0) {
-    semResultado.style.display = 'block';
-    contagem.textContent = '';
-    document.getElementById('obImportarBtn').style.display = 'none';
-    return;
-  }
-
-  semResultado.style.display = 'none';
-  document.getElementById('obImportarBtn').style.display = '';
-  contagem.textContent = `${processos.length} processo(s) encontrado(s)`;
-
-  processos.forEach(p => {
-    const item = document.createElement('label');
-    item.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px;cursor:pointer;margin-bottom:6px;';
-
-    const dataStr = p.dataAjuizamento
-      ? new Date(p.dataAjuizamento).toLocaleDateString('pt-BR')
-      : '—';
-
-    const badgeImportado = p.jaCadastrado
-      ? '<span style="font-size:10px;background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">Já importado</span>'
-      : '';
-
-    const badgeTribunal = (() => {
-      if (!p.siglaTribunal) return '';
-      if (p.siglaTribunal.startsWith('TRT'))
-        return `<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">${esc(p.siglaTribunal)}</span>`;
-      if (p.siglaTribunal.startsWith('TRF'))
-        return `<span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:100px;font-weight:600;margin-left:6px">${esc(p.siglaTribunal)}</span>`;
-      return '';
-    })();
-
-    item.innerHTML = `
-      <input type="checkbox" value="${esc(p.numeroCNJ)}" data-codigo="${esc(p.codigo ?? '')}" data-foro="${esc(p.foro ?? '')}" ${p.jaCadastrado ? 'disabled checked' : 'checked'} style="margin-top:3px;flex-shrink:0">
-      <div>
-        <div style="font-size:13px;font-weight:600;font-family:monospace">${esc(p.numeroCNJ)}${badgeTribunal}${badgeImportado}</div>
-        <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px">
-          ${esc(p.tribunal)}${p.vara ? ' · ' + esc(p.vara) : ''}${p.classe ? ' · ' + esc(p.classe) : ''} · Ajuizado: ${dataStr}
-        </div>
-      </div>`;
-
-    lista.appendChild(item);
-  });
-
-  document.getElementById('obSelecionarTodosBtn').addEventListener('click', () => {
-    lista.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(cb => cb.checked = true);
-  });
-}
-
-async function importar() {
-  const checkboxes = document.querySelectorAll('#obListaProcessos input[type=checkbox]:checked:not(:disabled)');
-  const processos = Array.from(checkboxes).map(cb => {
-    const found = _oabResultados.find(r => r.numeroCNJ === cb.value);
-    if (found?.fonte === 'escavador') {
-      return {
-        numeroCNJ: found.numeroCNJ,
-        fonte: 'escavador',
-        siglaTribunal: found.siglaTribunal ?? null,
-        nomeTribunal: found.tribunal ?? null,
-        vara: found.vara ?? null,
-        comarca: found.comarca ?? null,
-        classe: found.classe ?? null,
-        assuntos: found.assuntos ?? null,
-        dataAjuizamento: found.dataAjuizamento ?? null
-      };
-    }
-    return {
-      numeroCNJ: cb.value,
-      codigo: cb.dataset.codigo || null,
-      foro: cb.dataset.foro || null
-    };
-  });
-
-  if (processos.length === 0) {
-    document.getElementById('obErroImportar').textContent = 'Selecione ao menos um processo para importar.';
-    return;
-  }
-
-  const btn = document.getElementById('obImportarBtn');
   btn.disabled = true;
   btn.textContent = 'Iniciando...';
-  document.getElementById('obErroImportar').textContent = '';
-
   try {
-    await iniciarImportacao({ numeroOAB: _oabAtual.numero, uf: _oabAtual.uf, processos });
+    await iniciarImportacao({ numeroOAB, uf });
   } catch (e) {
-    document.getElementById('obErroImportar').textContent = e?.message || 'Erro ao iniciar a importação. Tente novamente.';
+    erroEl.textContent = e?.message || 'Erro ao iniciar a importação. Tente novamente.';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Importar Selecionados';
+    btn.textContent = 'Importar processos';
   }
 }
 
@@ -337,7 +210,7 @@ async function iniciarImportacao(body) {
       quando terminar.
     </div>`;
   document.getElementById('obResultadoDetalhe').style.display = 'none';
-  showStep(3);
+  showStep('iniciada');
 
   acompanharImportacao(importacao);
   if (_marcarCompleto) {

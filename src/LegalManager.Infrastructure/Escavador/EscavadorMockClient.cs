@@ -205,6 +205,14 @@ public class EscavadorMockClient : IEscavadorService
         return Task.FromResult(dto);
     }
 
+    public async Task<EscavadorPaginaCursor<EscavadorProcessoDto>> BuscarPaginaPorOabAsync(
+        string oab, string uf, string? cursor, CancellationToken ct = default)
+    {
+        // Mock: tudo numa página só.
+        var resultado = await BuscarPorOabAsync(oab, uf, 1, ct);
+        return new EscavadorPaginaCursor<EscavadorProcessoDto>(resultado.Data, null);
+    }
+
     public Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
         string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
     {

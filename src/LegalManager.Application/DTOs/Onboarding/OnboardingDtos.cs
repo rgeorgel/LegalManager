@@ -6,11 +6,6 @@ public record OnboardingStatusDto(bool Completo, string? OabImportadaNumero, str
 
 public record OabImportadaDto(string Numero, string Uf, string NomeUsuario, int TotalProcessos);
 
-public record BuscarPorOabDto(
-    [Required] string NumeroOAB,
-    [Required] string Uf
-);
-
 public record ProcessoOabPreviewDto(
     string NumeroCNJ,
     string Tribunal,

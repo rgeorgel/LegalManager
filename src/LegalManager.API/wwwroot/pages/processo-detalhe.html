@@ -1271,6 +1271,23 @@ window.excluirTarefa = async id => {
 };
 // ─────────────────────────────────────────────────────────
 
+// Processo importado em massa (importação por OAB) sem andamentos: busca-os agora, uma única
+// vez. O servidor reserva a carga antes de consultar os tribunais, então reabrir a tela, dar
+// F5 ou abrir em outra aba não repete a consulta (que pode ser paga).
+async function carregarAndamentosIniciais() {
+  if (!processo?.andamentosPendentes) return;
+  processo.andamentosPendentes = false;
+  const aviso = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Buscando andamentos nos tribunais…</div></div>';
+  ['andamentosLista', 'andamentosPreviewLista'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = aviso;
+  });
+  try {
+    await apiFetch(`/processos/${processoId}/andamentos/carga-inicial`, { method: 'POST' });
+  } catch { /* mostra o que houver; a próxima abertura tenta de novo se foi falha técnica */ }
+  await Promise.all([loadAndamentos(), loadAndamentosPreview()]);
+}
+
 async function loadAndamentos() {
   const lista = document.getElementById('andamentosLista');
   try {
@@ -2538,6 +2555,7 @@ await loadAdvogados();
 await loadCustomCatsFin();
 await loadProcesso();
 await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge(), loadTarefasPreview()]);
+carregarAndamentosIniciais();
 </script>
 </body>
 </html>

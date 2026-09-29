@@ -56,8 +56,12 @@ async function atualizar() {
 function textoStatus(i) {
   const oab = `${esc(i.numeroOab)}/${esc(i.uf)}`;
   if (i.status === 'Pendente') return `Preparando a importação da OAB ${oab}…`;
-  if (i.status === 'Buscando') return `Pesquisando processos da OAB ${oab} nos tribunais…`;
-  return `Importando processos da OAB ${oab}… <strong>${i.processados} de ${i.total}</strong>`;
+  if (i.status === 'Buscando') {
+    return i.total > 0
+      ? `Pesquisando processos da OAB ${oab}… <strong>${i.total.toLocaleString('pt-BR')} encontrados</strong>`
+      : `Pesquisando processos da OAB ${oab} nos tribunais…`;
+  }
+  return `Importando processos da OAB ${oab}… <strong>${i.processados.toLocaleString('pt-BR')} de ${i.total.toLocaleString('pt-BR')}</strong>`;
 }
 
 function renderBarra(i) {

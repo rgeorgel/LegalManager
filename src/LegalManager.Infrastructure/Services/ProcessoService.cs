@@ -497,7 +497,8 @@ public class ProcessoService : IProcessoService
             p.Ementa, p.DecisaoDataJud, p.Observacao, p.Relator, p.TipoDecisao, p.ResultadoJulgamento,
             p.CodigoClasse, p.Instancia, p.DataJulgamento, p.DataPublicacao,
             p.SiglaTribunal, p.Segmento, p.DataDistribuicao,
-            p.UltimoAndamentoEm);
+            p.UltimoAndamentoEm,
+            p.AndamentosPendentes);
     }
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>

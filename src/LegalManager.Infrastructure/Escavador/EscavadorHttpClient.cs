@@ -37,6 +37,33 @@ public class EscavadorHttpClient : IEscavadorService
         return await FetchAllByCursor(firstUrl, ct);
     }
 
+    public async Task<EscavadorPaginaCursor<EscavadorProcessoDto>> BuscarPaginaPorOabAsync(
+        string oab, string uf, string? cursor, CancellationToken ct = default)
+    {
+        using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarPaginaPorOabAsync));
+        activity?.SetTag("escavador.oab", oab);
+        activity?.SetTag("escavador.uf", uf);
+
+        string url;
+        if (cursor == null)
+        {
+            url = $"/api/v2/advogado/processos?oab_estado={Uri.EscapeDataString(uf)}&oab_numero={Uri.EscapeDataString(oab)}&limit=100";
+        }
+        else
+        {
+            // O cursor é o links.next devolvido pelo Escavador (URL absoluta). Só segue para o
+            // próprio host da API: o HttpClient manda o token em toda requisição.
+            if (Uri.TryCreate(cursor, UriKind.Absolute, out var abs)
+                && _http.BaseAddress != null
+                && !string.Equals(abs.Host, _http.BaseAddress.Host, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException($"Cursor do Escavador aponta para outro host: {abs.Host}");
+            url = cursor;
+        }
+
+        var (items, next) = await FetchOnePageCore(url, ct);
+        return new EscavadorPaginaCursor<EscavadorProcessoDto>(items, next);
+    }
+
     public async Task<EscavadorPagedResult<EscavadorProcessoDto>> BuscarPorCpfCnpjAsync(
         string cpfCnpj, int pagina = 1, CancellationToken ct = default)
     {
@@ -536,43 +563,50 @@ public class EscavadorHttpClient : IEscavadorService
     {
         try
         {
-            var resp = await _http.GetAsync(url, ct);
-            if (!resp.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
-                return ([], null);
-            }
-            var json = await resp.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            var items = new List<EscavadorProcessoDto>();
-            if (root.TryGetProperty("items", out var itemsEl))
-            {
-                foreach (var item in itemsEl.EnumerateArray())
-                {
-                    var rawText = item.GetRawText();
-                    var processoData = JsonSerializer.Deserialize<ProcessoData>(rawText, JsonOpts);
-                    if (processoData != null && !string.IsNullOrWhiteSpace(processoData.NumeroCnj))
-                        items.Add(MapProcesso(processoData, rawText));
-                }
-            }
-
-            string? nextUrl = null;
-            if (root.TryGetProperty("links", out var linksEl) &&
-                linksEl.TryGetProperty("next", out var nextEl) &&
-                nextEl.ValueKind == JsonValueKind.String)
-            {
-                nextUrl = nextEl.GetString();
-            }
-
-            return (items, nextUrl);
+            return await FetchOnePageCore(url, ct);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
             return ([], null);
         }
+    }
+
+    /// <summary>Uma página da listagem por cursor; lança em resposta de erro.</summary>
+    private async Task<(List<EscavadorProcessoDto> Items, string? NextUrl)> FetchOnePageCore(
+        string url, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync(url, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
+            throw new HttpRequestException($"Escavador respondeu {(int)resp.StatusCode} em GET {url}", null, resp.StatusCode);
+        }
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var items = new List<EscavadorProcessoDto>();
+        if (root.TryGetProperty("items", out var itemsEl))
+        {
+            foreach (var item in itemsEl.EnumerateArray())
+            {
+                var rawText = item.GetRawText();
+                var processoData = JsonSerializer.Deserialize<ProcessoData>(rawText, JsonOpts);
+                if (processoData != null && !string.IsNullOrWhiteSpace(processoData.NumeroCnj))
+                    items.Add(MapProcesso(processoData, rawText));
+            }
+        }
+
+        string? nextUrl = null;
+        if (root.TryGetProperty("links", out var linksEl) &&
+            linksEl.TryGetProperty("next", out var nextEl) &&
+            nextEl.ValueKind == JsonValueKind.String)
+        {
+            nextUrl = nextEl.GetString();
+        }
+
+        return (items, nextUrl);
     }
 
     private async Task<EscavadorPagedResult<EscavadorCallbackDto>> FetchCallbacksPaged(

@@ -17,6 +17,7 @@ using LegalManager.UnitTests.TestHelpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -69,9 +70,38 @@ public class ImportacaoProcessosTests
 
     // ── Job ────────────────────────────────────────────────────────────────
 
-    private ImportacaoProcessosJob CriarJob(AppDbContext db, Mock<IImportadorProcessosOab> importador, TenantContext? tenant = null) =>
-        new(db, tenant ?? new TenantContext(Mock.Of<IHttpContextAccessor>()), importador.Object,
-            NullLogger<ImportacaoProcessosJob>.Instance);
+    private ImportacaoProcessosJob CriarJob(
+        AppDbContext db, Mock<IImportadorProcessosOab> importador, TenantContext? tenant = null, int? maxProcessos = null)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(maxProcessos == null
+                ? new Dictionary<string, string?>()
+                : new Dictionary<string, string?> { ["Escavador:MaxProcessosImportacaoOab"] = maxProcessos.ToString() })
+            .Build();
+        return new ImportacaoProcessosJob(db, tenant ?? new TenantContext(Mock.Of<IHttpContextAccessor>()), importador.Object,
+            config, NullLogger<ImportacaoProcessosJob>.Instance)
+        {
+            Esperar = (_, _) => Task.CompletedTask
+        };
+    }
+
+    /// <summary>Importador cuja pesquisa devolve as páginas dadas (Escavador) e nada nos tribunais.</summary>
+    private static Mock<IImportadorProcessosOab> ImportadorComPaginas(params PaginaBuscaOab[] paginas)
+    {
+        var importador = new Mock<IImportadorProcessosOab>();
+        for (var i = 0; i < paginas.Length; i++)
+        {
+            var cursor = i == 0 ? null : paginas[i - 1].ProximoCursor;
+            var pagina = paginas[i];
+            importador.Setup(m => m.BuscarPaginaEscavadorAsync("116546", "MG", cursor, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pagina);
+        }
+        importador.Setup(m => m.BuscarTribunaisAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        importador.Setup(m => m.ImportarAsync(It.IsAny<ImportarProcessoItem>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResultadoImportacaoItem(StatusItemImportacao.Importado, null, Guid.NewGuid()));
+        return importador;
+    }
 
     [Fact]
     public async Task Job_ModoTodos_BuscaImportaNovosEConclui()
@@ -83,8 +113,11 @@ public class ImportacaoProcessosTests
 
         var tenant = new TenantContext(Mock.Of<IHttpContextAccessor>());
         var importador = new Mock<IImportadorProcessosOab>();
-        importador.Setup(i => i.BuscarAsync("116546", "MG", It.IsAny<CancellationToken>()))
-            .ReturnsAsync([Preview("0001"), Preview("0002"), Preview("0003", jaCadastrado: true)]);
+        importador.Setup(i => i.BuscarPaginaEscavadorAsync("116546", "MG", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginaBuscaOab([Preview("0001"), Preview("0003", jaCadastrado: true)], null));
+        // DataJud acha de novo o 0001 (não duplica) e um processo que o Escavador não tinha.
+        importador.Setup(i => i.BuscarTribunaisAsync("116546", "MG", It.IsAny<CancellationToken>()))
+            .ReturnsAsync([Preview("0001") with { Fonte = "datajud" }, Preview("0002") with { Fonte = "datajud" }]);
         importador.Setup(i => i.ImportarAsync(It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0001"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
@@ -138,7 +171,7 @@ public class ImportacaoProcessosTests
         // Só o pendente foi reimportado, com os dados enviados pela tela preservados.
         importador.Verify(i => i.ImportarAsync(It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0002" && x.Codigo == "X1"), It.IsAny<CancellationToken>()), Times.Once);
         importador.Verify(i => i.ImportarAsync(It.IsAny<ImportarProcessoItem>(), It.IsAny<CancellationToken>()), Times.Once);
-        importador.Verify(i => i.BuscarAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        importador.Verify(i => i.BuscarPaginaEscavadorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
 
         db.ChangeTracker.Clear();
         var final = await db.ImportacoesProcessos.SingleAsync();
@@ -184,7 +217,7 @@ public class ImportacaoProcessosTests
         await db.SaveChangesAsync();
 
         var importador = new Mock<IImportadorProcessosOab>();
-        importador.Setup(i => i.BuscarAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        importador.Setup(i => i.BuscarPaginaEscavadorAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("fora do ar"));
 
         await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
@@ -210,6 +243,99 @@ public class ImportacaoProcessosTests
         Assert.Empty(await db.Notificacoes.ToListAsync());
     }
 
+    [Fact]
+    public async Task Job_PaginaOEscavadorAteOFim()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos);
+        db.ImportacoesProcessos.Add(importacao);
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(
+            new PaginaBuscaOab([Preview("0001"), Preview("0002")], "c2"),
+            new PaginaBuscaOab([Preview("0002"), Preview("0003")], "c3"),
+            new PaginaBuscaOab([Preview("0004")], null));
+
+        await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        db.ChangeTracker.Clear();
+        var final = await db.ImportacoesProcessos.Include(i => i.Itens).SingleAsync();
+        Assert.Equal(StatusImportacao.Concluida, final.Status);
+        Assert.Equal(new[] { "0001", "0002", "0003", "0004" }, final.Itens.OrderBy(i => i.Ordem).Select(i => i.NumeroCNJ));
+        Assert.Equal(4, final.Total);
+        Assert.Equal(4, final.Importados);
+        Assert.True(final.BuscaEscavadorConcluida);
+        Assert.True(final.BuscaTribunaisConcluida);
+        Assert.Null(final.CursorEscavador);
+    }
+
+    [Fact]
+    public async Task Job_Retomado_ContinuaDoCursorDoEscavador()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos, StatusImportacao.Buscando);
+        importacao.CursorEscavador = "c2";
+        importacao.Total = 1;
+        importacao.Itens.Add(ImportacaoProcessosJob.NovoItem(importacao.Id, 0, new ImportarProcessoItem("0001", Fonte: "escavador")));
+        db.ImportacoesProcessos.Add(importacao);
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(
+            new PaginaBuscaOab([Preview("0001")], "c2"),
+            new PaginaBuscaOab([Preview("0002")], null));
+
+        await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        importador.Verify(m => m.BuscarPaginaEscavadorAsync(It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+        db.ChangeTracker.Clear();
+        var final = await db.ImportacoesProcessos.Include(i => i.Itens).SingleAsync();
+        Assert.Equal(new[] { "0001", "0002" }, final.Itens.OrderBy(i => i.Ordem).Select(i => i.NumeroCNJ));
+    }
+
+    [Fact]
+    public async Task Job_RespeitaOTetoDeProcessos()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos);
+        db.ImportacoesProcessos.Add(importacao);
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(
+            new PaginaBuscaOab([Preview("0001"), Preview("0002")], "c2"),
+            new PaginaBuscaOab([Preview("0003"), Preview("0004")], "c3"),
+            new PaginaBuscaOab([Preview("0005")], null));
+
+        await CriarJob(db, importador, maxProcessos: 3).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        db.ChangeTracker.Clear();
+        var final = await db.ImportacoesProcessos.SingleAsync();
+        Assert.Equal(3, final.Total);
+        // Parou no teto: a terceira página (paga) nem foi pedida.
+        importador.Verify(m => m.BuscarPaginaEscavadorAsync(It.IsAny<string>(), It.IsAny<string>(), "c3", It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Job_FalhaTransitoriaNaPagina_TentaDeNovo()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos);
+        db.ImportacoesProcessos.Add(importacao);
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(new PaginaBuscaOab([Preview("0001")], null));
+        var chamadas = 0;
+        importador.Setup(m => m.BuscarPaginaEscavadorAsync("116546", "MG", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => ++chamadas == 1
+                ? throw new HttpRequestException("503")
+                : new PaginaBuscaOab([Preview("0001")], null));
+
+        await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        Assert.Equal(2, chamadas);
+        db.ChangeTracker.Clear();
+        Assert.Equal(StatusImportacao.Concluida, (await db.ImportacoesProcessos.SingleAsync()).Status);
+    }
+
     // ── Controller ─────────────────────────────────────────────────────────
 
     private (ImportacoesController controller, Mock<IBackgroundJobClient> jobs) CriarController(AppDbContext db)
@@ -220,47 +346,24 @@ public class ImportacaoProcessosTests
     }
 
     [Fact]
-    public async Task Iniciar_Selecionados_CriaItensRegistraOabEEnfileira()
+    public async Task Iniciar_CriaImportacaoRegistraOabEEnfileira()
     {
         var db = await SeedAsync();
         var (controller, jobs) = CriarController(db);
 
-        var resposta = await controller.Iniciar(new IniciarImportacaoDto("116.546", "mg",
-        [
-            new ImportarProcessoItem("0001", Fonte: "escavador", NomeTribunal: "TRT3"),
-            new ImportarProcessoItem("0001", Fonte: "escavador"),
-            new ImportarProcessoItem("0002")
-        ]), CancellationToken.None);
+        var resposta = await controller.Iniciar(new IniciarImportacaoDto("116.546", "mg"), CancellationToken.None);
 
         var dto = Assert.IsType<ImportacaoResumoDto>(Assert.IsType<AcceptedResult>(resposta.Result).Value);
-        Assert.Equal(ModoImportacao.Selecionados, dto.Modo);
+        Assert.Equal(ModoImportacao.Todos, dto.Modo);
         Assert.Equal("116546", dto.NumeroOab);
         Assert.Equal("MG", dto.Uf);
-        Assert.Equal(2, dto.Total);
-
-        var itens = await db.ImportacaoProcessoItens.OrderBy(i => i.Ordem).ToListAsync();
-        Assert.Equal(new[] { "0001", "0002" }, itens.Select(i => i.NumeroCNJ));
-        Assert.Equal("TRT3", itens[0].Tribunal);
-        Assert.Equal("escavador", JsonSerializer.Deserialize<ImportarProcessoItem>(itens[0].DadosJson)!.Fonte);
+        Assert.Empty(await db.ImportacaoProcessoItens.ToListAsync());
 
         var usuario = await db.Users.SingleAsync();
         Assert.Equal("116546", usuario.OabImportadaNumero);
         Assert.Equal("MG", usuario.OabImportadaUf);
 
         jobs.Verify(j => j.Create(It.Is<Job>(job => job.Type == typeof(ImportacaoProcessosJob)), It.IsAny<EnqueuedState>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task Iniciar_SemProcessos_UsaModoTodos()
-    {
-        var db = await SeedAsync();
-        var (controller, _) = CriarController(db);
-
-        var resposta = await controller.Iniciar(new IniciarImportacaoDto("116546", "MG"), CancellationToken.None);
-
-        var dto = Assert.IsType<ImportacaoResumoDto>(Assert.IsType<AcceptedResult>(resposta.Result).Value);
-        Assert.Equal(ModoImportacao.Todos, dto.Modo);
-        Assert.Empty(await db.ImportacaoProcessoItens.ToListAsync());
     }
 
     [Fact]
@@ -324,7 +427,7 @@ public class ImportacaoProcessosTests
         new(1, cnj, "TRT3", "Tribunal Regional do Trabalho da 3ª Região", null, null, null, null, null, JsonBruto: json);
 
     [Fact]
-    public async Task Buscar_EscavadorComCnjRepetido_NaoPerdeResultadosEGravaCacheUmaVez()
+    public async Task BuscarPagina_EscavadorComCnjRepetido_NaoPerdeResultadosEGravaCacheUmaVez()
     {
         // Regressão: CNJ repetido no retorno do Escavador violava o índice único do cache e
         // o catch descartava todos os resultados do Escavador.
@@ -337,16 +440,17 @@ public class ImportacaoProcessosTests
         await db.SaveChangesAsync();
 
         var escavador = new Mock<IEscavadorService>();
-        escavador.Setup(e => e.BuscarPorOabAsync("116546", "ZZ", 1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new EscavadorPagedResult<EscavadorProcessoDto>(
+        escavador.Setup(e => e.BuscarPaginaPorOabAsync("116546", "MG", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorPaginaCursor<EscavadorProcessoDto>(
             [
                 ProcessoEscavador("0001", "{\"v\":1}"),
                 ProcessoEscavador("0001", "{\"v\":2}"),
                 ProcessoEscavador("0003", "{\"v\":3}")
-            ], 3, 1, 1, false));
+            ], "https://api.escavador.com/api/v2/advogado/processos?cursor=abc"));
 
-        // UF sem tribunais no DataJud e fora de SP: só o Escavador responde.
-        var resultado = await CriarImportador(db, escavador).BuscarAsync("116546", "ZZ");
+        var pagina = await CriarImportador(db, escavador).BuscarPaginaEscavadorAsync("116546", "MG", null);
+        var resultado = pagina.Processos;
+        Assert.Equal("https://api.escavador.com/api/v2/advogado/processos?cursor=abc", pagina.ProximoCursor);
 
         Assert.Equal(new[] { "0001", "0003" }, resultado.Select(p => p.NumeroCNJ).OrderBy(c => c));
         Assert.True(resultado.Single(p => p.NumeroCNJ == "0003").JaCadastrado);
@@ -358,7 +462,7 @@ public class ImportacaoProcessosTests
     }
 
     [Fact]
-    public async Task Importar_Escavador_CriaProcessoComDadosDoCache()
+    public async Task Importar_Escavador_CriaProcessoComDadosDoCacheSemBuscarAndamentos()
     {
         var db = await SeedAsync();
         db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
@@ -369,9 +473,7 @@ public class ImportacaoProcessosTests
         });
         await db.SaveChangesAsync();
 
-        var escavador = new Mock<IEscavadorService>();
-        escavador.Setup(e => e.ListarMovimentacoesPorProcessoAsync("0001", null, 1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new EscavadorPagedResult<EscavadorMovimentacaoDto>([], 0, 1, 1, false));
+        var escavador = new Mock<IEscavadorService>(MockBehavior.Strict);
 
         var resultado = await CriarImportador(db, escavador)
             .ImportarAsync(new ImportarProcessoItem("0001", Fonte: "escavador"));
@@ -383,6 +485,10 @@ public class ImportacaoProcessosTests
         Assert.Equal("TRT3", processo.SiglaTribunal);
         Assert.Equal("Belo Horizonte", processo.Comarca);
         Assert.Equal(AreaDireito.Trabalhista, processo.AreaDireito);
+        // Andamentos ficam para a carga inicial (quando o processo for aberto): nenhuma
+        // chamada ao Escavador na importação (o mock Strict falharia).
+        Assert.True(processo.AndamentosPendentes);
+        Assert.Empty(await db.Andamentos.ToListAsync());
     }
 
     [Fact]

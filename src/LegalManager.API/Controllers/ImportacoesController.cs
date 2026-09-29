@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore;
 namespace LegalManager.API.Controllers;
 
 /// <summary>
-/// Importação de processos por OAB em background (onboarding do dashboard e botão
-/// "Importar por OAB" da tela de processos). O frontend acompanha o progresso por polling.
+/// Importação de todos os processos de uma OAB em background (onboarding do dashboard e
+/// botão "Importar por OAB" da tela de processos). O frontend acompanha o progresso por polling.
 /// </summary>
 [ApiController]
 [Route("api/importacoes")]
@@ -44,25 +44,13 @@ public class ImportacoesController(
             Id = Guid.NewGuid(),
             TenantId = tenantContext.TenantId,
             UsuarioId = tenantContext.UserId,
-            Modo = dto.Processos is { Count: > 0 } ? ModoImportacao.Selecionados : ModoImportacao.Todos,
+            Modo = ModoImportacao.Todos,
             NumeroOab = numero,
             Uf = uf,
             Status = StatusImportacao.Pendente,
             CriadoEm = agora,
             AtualizadoEm = agora
         };
-
-        if (importacao.Modo == ModoImportacao.Selecionados)
-        {
-            var selecionados = dto.Processos!
-                .Where(p => !string.IsNullOrWhiteSpace(p.NumeroCNJ))
-                .GroupBy(p => p.NumeroCNJ.Trim())
-                .Select(g => g.First())
-                .ToList();
-            for (var i = 0; i < selecionados.Count; i++)
-                importacao.Itens.Add(ImportacaoProcessosJob.NovoItem(importacao.Id, i, selecionados[i]));
-            importacao.Total = selecionados.Count;
-        }
 
         db.ImportacoesProcessos.Add(importacao);
 
