@@ -161,6 +161,11 @@ export async function apiFetch(path, options = {}) {
   const contentType = res.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     const text = await res.text();
+    // `return Ok();` responde 200 com corpo vazio e sem Content-Type: sucesso sem payload, como o 204.
+    if (!text.trim()) {
+      trackApiCall('api', method, path, { ok: true });
+      return null;
+    }
     const err = new Error(
       `Resposta não-JSON do endpoint ${path} (Content-Type: ${contentType || 'vazio'}). ` +
       `Provavelmente o endpoint não existe e o servidor retornou a página padrão. ` +

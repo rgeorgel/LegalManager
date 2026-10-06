@@ -70,17 +70,6 @@
     .uso-card-limit { font-size:11px; color:var(--color-text-muted); margin-top:2px; }
     .progress-bar { height:6px; background:#e5e7eb; border-radius:3px; margin-top:8px; overflow:hidden; }
     .progress-bar-fill { height:100%; background:var(--color-primary); border-radius:3px; transition:.3s; }
-    .input-with-search { position:relative; display:flex; gap:8px; align-items:center; }
-    .input-with-search input { flex:1; min-width:200px; }
-    .search-btn { flex-shrink:0; width:42px; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:.2s; }
-    .search-btn:hover { background:#e5e7eb; }
-    .search-btn:disabled { opacity:.5; cursor:not-allowed; }
-    .process-preview { margin-top:8px; padding:10px 12px; border-radius:6px; font-size:13px; display:none; }
-    .process-preview.encontrado { background:#dcfce7; border:1px solid #86efac; color:#166534; }
-    .process-preview.nao-encontrado { background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
-    .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
-    .process-preview .preview-tribunal { font-weight:600; }
-    .process-preview .preview-vara { margin-top:4px; }
 
     .danger-zone { border-color: var(--color-danger); border-width: 2px; background: #fef2f2; }
     .danger-zone-title { color: var(--color-danger); border-bottom-color: #fecaca; }
@@ -202,28 +191,6 @@
           <div id="senhaMsg" class="alert" style="display:none"></div>
           <button type="submit" class="btn btn-primary">Alterar senha</button>
         </form>
-      </div>
-
-      <!-- Processos Monitorados -->
-      <div class="config-section" style="display:none;position:relative;overflow:hidden">
-        <div class="config-section-title">Processos Monitorados</div>
-        <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:16px">
-          Monitore publicações de processos específicos nos Diários Oficiais. Cadastre o número CNJ dos processos que deseja acompanhar.
-        </p>
-        <div id="listaNomes" style="margin-bottom:16px"></div>
-        <div id="formNomeWrapper">
-          <div class="input-with-search">
-            <input type="text" id="inputNome" class="form-control" placeholder="Número do processo (ex: 0000000-00.0000.0.00.0000)" maxlength="50">
-            <button class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
-            <button class="btn btn-primary" id="btnAdicionarNome">Adicionar</button>
-          </div>
-          <div id="processPreview" class="process-preview"></div>
-          <div id="nomeMsg" class="alert" style="display:none;margin-top:8px"></div>
-        </div>
-        <div style="margin-top:12px;padding:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:13px;color:#92400e">
-          <strong>📰 Integração DJE em desenvolvimento</strong><br>
-          A captura automática de publicações por nome de advogado ainda não está disponível. Cadastre os números dos processos que deseja monitorar — quando a integração JusBrasil estiver ativa, seus processos serão acompanhados automaticamente.
-        </div>
       </div>
 
       <!-- Preferências de alertas -->
@@ -681,98 +648,6 @@ import { esc } from '/js/utils.js';
     } catch (err) {
       msg.className = 'alert alert-error';
       msg.textContent = err.message ?? 'Erro ao alterar senha.';
-      msg.style.display = '';
-    }
-  });
-
-  // Processos monitorados
-  async function loadNomes() {
-    try {
-      const processos = await apiFetch('/processos-monitorados');
-      const lista = document.getElementById('listaNomes');
-      if (!processos.length) {
-        lista.innerHTML = '<p style="font-size:14px;color:var(--color-text-muted)">Nenhum processo monitorado.</p>';
-        return;
-      }
-      lista.innerHTML = processos.map(p => `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px">
-          <span style="flex:1;font-weight:500;font-family:monospace;font-size:13px">${esc(p.numeroCNJ)}</span>
-          ${p.nomeExibicao ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.nomeExibicao)}</span>` : ''}
-          <span style="font-size:12px;padding:3px 10px;border-radius:12px;background:${p.ativo ? '#dcfce7' : '#f3f4f6'};color:${p.ativo ? '#166534' : '#6b7280'}">${p.ativo ? 'Ativo' : 'Pausado'}</span>
-          <button class="btn btn-secondary btn-sm" data-id="${p.id}" data-action="toggle">${p.ativo ? 'Pausar' : 'Ativar'}</button>
-          <button class="btn btn-danger btn-sm" data-id="${p.id}" data-action="remover">Remover</button>
-        </div>`).join('');
-      lista.querySelectorAll('[data-action="toggle"]').forEach(btn =>
-        btn.addEventListener('click', async () => {
-          await apiFetch(`/processos-monitorados/${btn.dataset.id}/toggle`, { method: 'PATCH' });
-          loadNomes();
-        }));
-      lista.querySelectorAll('[data-action="remover"]').forEach(btn =>
-        btn.addEventListener('click', async () => {
-          if (!confirm('Remover este processo monitorado?')) return;
-          await apiFetch(`/processos-monitorados/${btn.dataset.id}`, { method: 'DELETE' });
-          loadNomes();
-        }));
-    } catch (e) { console.error(e); }
-  }
-
-  document.getElementById('btnBuscarProcesso').addEventListener('click', async () => {
-    const input = document.getElementById('inputNome');
-    const preview = document.getElementById('processPreview');
-    const btn = document.getElementById('btnBuscarProcesso');
-    const cnj = input.value.trim();
-    if (!cnj) {
-      preview.className = 'process-preview nao-encontrado';
-      preview.innerHTML = 'Digite um número de processo.';
-      preview.style.display = 'block';
-      return;
-    }
-    preview.className = 'process-preview loading';
-    preview.innerHTML = 'Buscando...';
-    preview.style.display = 'block';
-    btn.disabled = true;
-    try {
-      const result = await apiFetch(`/processos-monitorados/search?cnj=${encodeURIComponent(cnj)}`);
-      if (result.encontrado) {
-        preview.className = 'process-preview encontrado';
-        preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span><br>
-          <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
-          <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) disponível(is)</span>`;
-      } else {
-        preview.className = 'process-preview nao-encontrado';
-        preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>
-          <span class="preview-vara">Os dados serão preenchidos quando houver movimentação.</span>`;
-      }
-    } catch {
-      preview.className = 'process-preview nao-encontrado';
-      preview.innerHTML = 'Erro ao buscar processo. Tente novamente.';
-    } finally { btn.disabled = false; }
-  });
-
-  document.getElementById('inputNome').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnBuscarProcesso').click(); }
-  });
-
-  document.getElementById('btnAdicionarNome').addEventListener('click', async () => {
-    const input = document.getElementById('inputNome');
-    const msg = document.getElementById('nomeMsg');
-    const preview = document.getElementById('processPreview');
-    msg.style.display = 'none';
-    preview.style.display = 'none';
-    const numeroCNJ = input.value.trim();
-    if (!numeroCNJ) return;
-    try {
-      const result = await apiFetch('/processos-monitorados', { method: 'POST', body: JSON.stringify({ numeroCNJ }) });
-      input.value = '';
-      loadNomes();
-      msg.className = 'alert alert-success';
-      msg.textContent = result.processoEncontrado
-        ? `Processo adicionado! Tribunal: ${result.tribunal ?? 'N/A'}, Vara: ${result.vara ?? 'N/A'}`
-        : (result.mensagem || 'Processo adicionado com sucesso!');
-      msg.style.display = '';
-    } catch (err) {
-      msg.className = 'alert alert-error';
-      msg.textContent = err.message ?? 'Erro ao adicionar processo.';
       msg.style.display = '';
     }
   });
@@ -1341,7 +1216,6 @@ import { esc } from '/js/utils.js';
   // INIT
   // ============================================================
   load();
-  loadNomes();
   loadPrefs();
   loadAreas();
   loadCats();
