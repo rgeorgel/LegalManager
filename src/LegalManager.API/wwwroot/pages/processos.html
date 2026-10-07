@@ -211,6 +211,12 @@
       color: var(--color-text);
       font-weight: 500;
     }
+    .card-info-row .value.andamentos-pendentes {
+      color: var(--color-text-muted);
+      font-weight: 400;
+      font-style: italic;
+      cursor: help;
+    }
     .card-info-row .value.empty {
       color: var(--color-text-muted);
       font-style: italic;
@@ -933,7 +939,9 @@ function renderTable(items) {
         </div>
         <div class="card-info-row" style="margin-top:6px">
           <span class="label">Andamentos</span>
-          <span class="value">${p.totalAndamentos}</span>
+          ${p.andamentosPendentes && !p.totalAndamentos
+            ? `<span class="value andamentos-pendentes" title="Processo importado sem os andamentos. Eles são buscados automaticamente na primeira vez que você abrir o processo.">⏳ Buscados ao abrir o processo</span>`
+            : `<span class="value">${p.totalAndamentos}</span>`}
         </div>
       </div>
       </div>

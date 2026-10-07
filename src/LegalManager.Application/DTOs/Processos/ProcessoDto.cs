@@ -132,7 +132,9 @@ public record ProcessoListItemDto(
     string? NomeCliente,
     DateTime CriadoEm,
     int TotalAndamentos,
-    DateTime? UltimoAndamentoEm
+    DateTime? UltimoAndamentoEm,
+    // Importado sem andamentos: a busca só acontece ao abrir o processo (a lista não mostra "0").
+    bool AndamentosPendentes = false
 );
 
 public record ProcessoFiltroDto(
