@@ -608,6 +608,7 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
+import { createContatoPicker } from '/js/contato-picker.js';
 import { mascaraCnj } from '/js/mascaras.js';
 import { initOnboardingModal, openOnboardingModal, openReadOnlyModal, startDots, stopDots } from '/js/onboarding.js';
 
@@ -733,9 +734,7 @@ function nomesPartesNoFormulario() {
     if (row.dataset.parteDataJud) {
       try { return JSON.parse(row.dataset.parteDataJud).nome || ''; } catch { return ''; }
     }
-    const opt = row.querySelector('.parte-contato')?.selectedOptions?.[0];
-    if (!opt || !opt.value) return '';
-    return opt.textContent.replace(/\s*\([^)]*\)\s*$/, '');
+    return row.parteContatoPicker?.getLabel() || '';
   }).map(n => n.trim().toLowerCase()).filter(Boolean);
 }
 
@@ -745,7 +744,7 @@ document.getElementById('btnUsarPartes').addEventListener('click', () => {
   partes.forEach(p => {
     const nomeNorm = (p.nome || '').trim().toLowerCase();
     if (!nomeNorm || existentes.has(nomeNorm)) return; // já presente no formulário — evita duplicar em clique duplo
-    addParteRow('', 'Autor', p);
+    addParteRow(null, 'Autor', p);
     existentes.add(nomeNorm);
   });
 });
@@ -832,7 +831,6 @@ let currentFilters = {};
 let currentView = 'grid';
 let editingId = null;
 let encerrandoId = null;
-let contatos = [];
 let advogados = [];
 
 const modal = document.getElementById('modalProcesso');
@@ -848,11 +846,7 @@ function showAlert(msg, type = 'error') {
 
 async function loadReferenceData() {
   try {
-    const [contatosRes, usuariosRes] = await Promise.all([
-      apiFetch('/contatos?pageSize=200'),
-      apiFetch('/usuarios')
-    ]);
-    contatos = contatosRes?.items ?? [];
+    const usuariosRes = await apiFetch('/usuarios');
     advogados = (usuariosRes ?? []).filter(u => u.perfil !== 'Cliente' && u.ativo);
 
     const sel = document.getElementById('fAdvogado');
@@ -1026,23 +1020,17 @@ function mapearPoloParaTipo(polo) {
   return 'Terceiro';
 }
 
-function addParteRow(contatoId = '', tipoParte = 'Autor', parteDataJud = null) {
+// `contato` = { id, label } do contato já vinculado (edição) ou null.
+function addParteRow(contato = null, tipoParte = 'Autor', parteDataJud = null) {
   const container = document.getElementById('partesContainer');
   const div = document.createElement('div');
   div.className = 'form-row parte-row';
   div.style.marginBottom = '8px';
   if (parteDataJud) div.dataset.parteDataJud = JSON.stringify(parteDataJud);
   const tipoSugerido = parteDataJud ? mapearPoloParaTipo(parteDataJud.polo) : tipoParte;
-  const opcaoDataJud = parteDataJud
-    ? `<option value="__datajud__" selected>${esc(parteDataJud.nome)} (via busca)</option>`
-    : '';
   div.innerHTML = `
     <div class="form-group" style="flex:2">
-      <select class="form-control parte-contato">
-        <option value="">Selecionar contato...</option>
-        ${opcaoDataJud}
-        ${contatos.map(c => `<option value="${c.id}" ${c.id === contatoId ? 'selected' : ''}>${c.nome} (${c.tipoPessoa || c.tipo})</option>`).join('')}
-      </select>
+      <div class="parte-contato-picker"></div>
       ${parteDataJud ? '<div class="parte-datajud-hint">Dados da busca — o contato será localizado ou criado ao salvar.</div>' : ''}
     </div>
     <div class="form-group">
@@ -1055,18 +1043,19 @@ function addParteRow(contatoId = '', tipoParte = 'Autor', parteDataJud = null) {
     </div>`;
   container.appendChild(div);
 
-  if (parteDataJud) {
+  div.parteContatoPicker = createContatoPicker(div.querySelector('.parte-contato-picker'), {
+    valueClass: 'parte-contato',
+    value: parteDataJud ? { id: '__datajud__', label: `${parteDataJud.nome} (via busca)` } : contato,
     // Se o usuário trocar a seleção para um contato real já cadastrado, a linha deixa de ser
     // "bruta" e passa a se comportar como um vínculo manual normal (enviado em `partes`).
-    const sel = div.querySelector('.parte-contato');
-    sel.addEventListener('change', () => {
-      if (sel.value !== '__datajud__') {
-        delete div.dataset.parteDataJud;
-        div.querySelector('.parte-tipo').disabled = false;
-        div.querySelector('.parte-datajud-hint')?.remove();
-      }
-    });
-  }
+    onChange: () => {
+      if (!div.dataset.parteDataJud) return;
+      delete div.dataset.parteDataJud;
+      div.querySelector('.parte-tipo').disabled = false;
+      div.querySelector('.parte-datajud-hint')?.remove();
+    },
+  });
+  if (!contato && !parteDataJud) div.parteContatoPicker.focus();
 }
 
 document.getElementById('btnAddParte').addEventListener('click', () => addParteRow());
@@ -1085,7 +1074,7 @@ function fillForm(p) {
   document.getElementById('fMonitorado').value = String(p.monitorado);
   document.getElementById('fObservacoes').value = p.observacoes || '';
   document.getElementById('partesContainer').innerHTML = '';
-  (p.partes || []).forEach(pt => addParteRow(pt.contatoId, pt.tipoParte));
+  (p.partes || []).forEach(pt => addParteRow({ id: pt.contatoId, label: pt.nomeContato }, pt.tipoParte));
 }
 
 function readForm() {

@@ -605,9 +605,7 @@
       </div>
       <div class="form-group">
         <label>Contato *</label>
-        <select id="pContato" class="form-control" required>
-          <option value="">Carregando...</option>
-        </select>
+        <div id="pContatoPicker"></div>
         <small style="color:var(--color-text-muted);font-size:12px">Não encontrou? <a href="/pages/contatos.html" target="_blank">Cadastre um novo contato</a></small>
       </div>
     </div>
@@ -985,6 +983,7 @@ import { dataParede, esc } from '/js/utils.js';
 import { aplicarVariaveis, carregarTimbre, imprimirTexto, rotuloVariavel, timbreCarregado, valoresAutomaticos, valoresDoProcesso } from '/js/modelos.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
+import { createContatoPicker } from '/js/contato-picker.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
@@ -1858,26 +1857,13 @@ document.getElementById('gmSalvar').addEventListener('click', async () => {
 });
 
 // Partes do Processo
-let contatosList = [];
+const parteContatoPicker = createContatoPicker(document.getElementById('pContatoPicker'));
 
-document.getElementById('btnAddParte').addEventListener('click', async () => {
+document.getElementById('btnAddParte').addEventListener('click', () => {
   document.getElementById('parteAlert').style.display = 'none';
   document.getElementById('pTipo').value = '';
-  document.getElementById('pContato').value = '';
-  try {
-    const data = await apiFetch('/contatos?pageSize=500');
-    contatosList = (data?.items || []).filter(c => c.ativo);
-    const sel = document.getElementById('pContato');
-    sel.innerHTML = '<option value="">Selecione um contato...</option>';
-    contatosList.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = `${c.nome} ${c.cpfCnpj ? '(' + c.cpfCnpj + ')' : ''}`;
-      sel.appendChild(o);
-    });
-    document.getElementById('modalParte').classList.add('open');
-  } catch (err) {
-    showAlert(err.message);
-  }
+  parteContatoPicker.setValue(null);
+  document.getElementById('modalParte').classList.add('open');
 });
 
 [document.getElementById('parteClose'), document.getElementById('parteCancelar')].forEach(el =>
@@ -1885,7 +1871,7 @@ document.getElementById('btnAddParte').addEventListener('click', async () => {
 
 document.getElementById('parteSalvar').addEventListener('click', async () => {
   const tipo = document.getElementById('pTipo').value;
-  const contatoId = document.getElementById('pContato').value;
+  const contatoId = parteContatoPicker.getValue();
   if (!tipo || !contatoId) { showAlert('Preencha todos os campos.', 'error', 'parteAlert'); return; }
   try {
     await apiFetch(`/processos/${processoId}/partes`, {

@@ -176,12 +176,11 @@ test('clicar em "Usar partes encontradas" adiciona as partes ao formulário sem 
   await buscarEEsperarEncontrado(page);
 
   await page.locator('#btnUsarPartes').click();
-  const selects = page.locator('.parte-row .parte-contato');
-  await expect(selects).toHaveCount(2);
-  await expect(selects.nth(0)).toHaveValue('__datajud__');
-  await expect(selects.nth(1)).toHaveValue('__datajud__');
-  const nomeSelecionado = await selects.nth(0).evaluate((el: HTMLSelectElement) => el.selectedOptions[0].textContent);
-  expect(nomeSelecionado).toContain('João da Silva');
+  const valores = page.locator('.parte-row .parte-contato');
+  await expect(valores).toHaveCount(2);
+  await expect(valores.nth(0)).toHaveValue('__datajud__');
+  await expect(valores.nth(1)).toHaveValue('__datajud__');
+  await expect(page.locator('.parte-row .contato-picker-input').nth(0)).toHaveValue(/João da Silva/);
 
   // Clique duplo não deve duplicar (dedupe por nome)
   await page.locator('#btnUsarPartes').click();

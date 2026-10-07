@@ -390,6 +390,23 @@ tbody tr:last-child td { border-bottom: none; }
   font-size: 13px; padding: 6px 8px;
 }
 
+/* ── Busca de contato (js/contato-picker.js) ─────────── */
+.contato-picker { position: relative; }
+.contato-picker .contato-picker-input { width: 100%; }
+.contato-picker.has-value .contato-picker-input { border-color: var(--color-primary); }
+.contato-picker-panel {
+  position: fixed; z-index: 1100; max-height: 280px; overflow-y: auto;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 4px;
+}
+.contato-picker-option { padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.contato-picker-option.active { background: var(--color-bg); }
+.contato-picker-option.selected .contato-picker-nome { color: var(--color-primary); }
+.contato-picker-nome { font-size: 14px; font-weight: 500; color: var(--color-text); }
+.contato-picker-detalhe { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.contato-picker-msg { padding: 8px 10px; font-size: 13px; color: var(--color-text-muted); }
+.contato-picker-msg a { color: var(--color-primary); }
+
 /* ── Pagination ──────────────────────────────────────── */
 .pagination {
   display: flex;
