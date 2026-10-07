@@ -417,6 +417,34 @@ async function loadProcessos() {
   }).join('');
 }
 
+// ── Processos favoritos (do usuário logado) ────────────
+const STATUS_CHIP = { Ativo: 'green', Suspenso: 'amber', Arquivado: 'gray', Encerrado: 'gray' };
+
+async function loadFavoritos() {
+  const r = await apiFetch('/processos?favoritos=true&pageSize=8').catch(() => null);
+  const items = r?.items ?? [];
+  const count = $('fvCount');
+  count.textContent = r?.total ?? 0;
+  count.style.display = r?.total ? '' : 'none';
+  const el = $('fvList');
+  if (!items.length) {
+    el.innerHTML = '<div class="d2-empty">Nenhum processo favorito.<br>Marque com ☆ na <a href="/pages/processos.html" style="font-weight:600">lista de processos</a>.</div>';
+    return;
+  }
+  el.innerHTML = items.map(p => {
+    const meta = [p.nomeCliente, AREA_LABEL[p.areaDireito] ?? p.areaDireito, p.tribunal].filter(Boolean).map(esc).join(' · ');
+    return `<a class="d2-item" href="/pages/processo-detalhe.html?id=${p.id}" style="color:inherit">
+      <div class="d2-item-body">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <span class="d2-item-title" style="font-variant-numeric:tabular-nums">${esc(p.numeroCNJ)}</span>
+          <span class="d2-chip ${STATUS_CHIP[p.status] ?? 'gray'}">${esc(p.status)}</span>
+        </div>
+        ${meta ? `<div class="d2-item-meta">${meta}</div>` : ''}
+      </div>
+    </a>`;
+  }).join('');
+}
+
 // ── Indicadores (Plus+): áreas, financeiro, timesheet ──
 function renderAreas(porArea) {
   const el = $('arBars');
@@ -672,6 +700,7 @@ await Promise.all([
   loadAgenda(),
   loadNotificacoes(),
   loadProcessos(),
+  loadFavoritos(),
   loadIndicadores(),
   loadHonorarios(),
   loadTimer(),

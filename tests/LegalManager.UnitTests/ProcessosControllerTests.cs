@@ -123,7 +123,7 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         var tenantContext = CreateTenantContextMock();
         var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!, Mock.Of<IContatoResolverService>());
 
-        var result = await controller.GetAll(null, null, null, null, null, 1, 20, CancellationToken.None);
+        var result = await controller.GetAll(null, null, null, null, null, 1, 20, false, CancellationToken.None);
 
         Assert.IsType<OkObjectResult>(result.Result);
     }
@@ -139,7 +139,7 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         var advogadoId = Guid.NewGuid();
         var contatoId = Guid.NewGuid();
 
-        await controller.GetAll("busca", "Ativo", "Civil", advogadoId, contatoId, 2, 50, CancellationToken.None);
+        await controller.GetAll("busca", "Ativo", "Civil", advogadoId, contatoId, 2, 50, false, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ProcessoFiltroDto>(f =>
@@ -162,7 +162,7 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         var tenantContext = CreateTenantContextMock();
         var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!, Mock.Of<IContatoResolverService>());
 
-        await controller.GetAll("busca", "InvalidStatus", "InvalidArea", null, null, 1, 20, CancellationToken.None);
+        await controller.GetAll("busca", "InvalidStatus", "InvalidArea", null, null, 1, 20, false, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ProcessoFiltroDto>(f => f.Status == null && f.AreaDireito == null),

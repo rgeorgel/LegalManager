@@ -648,4 +648,101 @@ public class ProcessoServiceTests
         Assert.Equal(241, result.DescricaoAndamento.Length);
         Assert.EndsWith("…", result.DescricaoAndamento);
     }
+
+    // ── Favoritos ─────────────────────────────────────────────
+
+    private static Processo NovoProcesso(Guid tenantId, string cnj, DateTime criadoEm,
+        StatusProcesso status = StatusProcesso.Ativo) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = cnj,
+        AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+        Status = status, CriadoEm = criadoEm
+    };
+
+    [Fact]
+    public async Task GetAllAsync_FavoritosVemPrimeiro_EMarcadosComoFavorito()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var agora = DateTime.UtcNow;
+        var recente = NovoProcesso(tenant.Id, "RECENTE", agora);
+        var antigoFavorito = NovoProcesso(tenant.Id, "ANTIGO-FAV", agora.AddDays(-30));
+        var encerradoFavorito = NovoProcesso(tenant.Id, "ENCERRADO-FAV", agora.AddDays(-10), StatusProcesso.Encerrado);
+        ctx.Processos.AddRange(recente, antigoFavorito, encerradoFavorito);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        await service.DefinirFavoritoAsync(antigoFavorito.Id, true);
+        await service.DefinirFavoritoAsync(encerradoFavorito.Id, true);
+
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null));
+
+        // Favoritos primeiro (entre eles, a ordem de sempre: status, depois mais recente).
+        Assert.Equal(new[] { "ANTIGO-FAV", "ENCERRADO-FAV", "RECENTE" }, result.Items.Select(i => i.NumeroCNJ));
+        Assert.Equal(new[] { true, true, false }, result.Items.Select(i => i.Favorito));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SomenteFavoritos_FiltraPeloUsuarioLogado()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var colega = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Colega",
+            Email = "colega@teste.com", UserName = "colega@teste.com",
+            Perfil = PerfilUsuario.Advogado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Users.Add(colega);
+        var meu = NovoProcesso(tenant.Id, "MEU", DateTime.UtcNow);
+        var doColega = NovoProcesso(tenant.Id, "DO-COLEGA", DateTime.UtcNow);
+        ctx.Processos.AddRange(meu, doColega, NovoProcesso(tenant.Id, "NENHUM", DateTime.UtcNow));
+        await ctx.SaveChangesAsync();
+
+        var escavador = new Mock<IEscavadorService>().Object;
+        var meuService = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), escavador, FakeConsultaExternaLogService.Instance);
+        var colegaService = new ProcessoService(ctx, CreateTenantContext(tenant.Id, colega.Id), escavador, FakeConsultaExternaLogService.Instance);
+        await meuService.DefinirFavoritoAsync(meu.Id, true);
+        await colegaService.DefinirFavoritoAsync(doColega.Id, true);
+
+        var meus = await meuService.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, SomenteFavoritos: true));
+        var doOutro = await colegaService.GetAllAsync(new ProcessoFiltroDto(null, null, null, null, null, SomenteFavoritos: true));
+
+        Assert.Equal(1, meus.Total);
+        Assert.Equal("MEU", meus.Items.Single().NumeroCNJ);
+        Assert.Equal("DO-COLEGA", doOutro.Items.Single().NumeroCNJ);
+        Assert.True((await meuService.GetByIdAsync(meu.Id))!.Favorito);
+        Assert.False((await meuService.GetByIdAsync(doColega.Id))!.Favorito);
+    }
+
+    [Fact]
+    public async Task DefinirFavoritoAsync_EhIdempotente_EDesmarca()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var processo = NovoProcesso(tenant.Id, "P1", DateTime.UtcNow);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        await service.DefinirFavoritoAsync(processo.Id, true);
+        await service.DefinirFavoritoAsync(processo.Id, true);
+        Assert.Equal(1, await ctx.ProcessosFavoritos.CountAsync());
+
+        await service.DefinirFavoritoAsync(processo.Id, false);
+        await service.DefinirFavoritoAsync(processo.Id, false);
+        Assert.Equal(0, await ctx.ProcessosFavoritos.CountAsync());
+    }
+
+    [Fact]
+    public async Task DefinirFavoritoAsync_ProcessoDeOutroTenant_LancaNotFound()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var outroTenant = Guid.NewGuid();
+        var processo = NovoProcesso(outroTenant, "ALHEIO", DateTime.UtcNow);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DefinirFavoritoAsync(processo.Id, true));
+        Assert.Equal(0, await ctx.ProcessosFavoritos.CountAsync());
+    }
 }

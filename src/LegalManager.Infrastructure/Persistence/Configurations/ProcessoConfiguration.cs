@@ -72,6 +72,27 @@ public class ProcessoParteConfiguration : IEntityTypeConfiguration<ProcessoParte
     }
 }
 
+public class ProcessoFavoritoConfiguration : IEntityTypeConfiguration<ProcessoFavorito>
+{
+    public void Configure(EntityTypeBuilder<ProcessoFavorito> builder)
+    {
+        builder.ToTable("ProcessosFavoritos");
+        builder.HasKey(f => new { f.UsuarioId, f.ProcessoId });
+
+        builder.HasOne(f => f.Processo)
+            .WithMany(p => p.Favoritos)
+            .HasForeignKey(f => f.ProcessoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(f => f.Usuario)
+            .WithMany()
+            .HasForeignKey(f => f.UsuarioId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(f => f.ProcessoId);
+    }
+}
+
 public class AndamentoConfiguration : IEntityTypeConfiguration<Andamento>
 {
     public void Configure(EntityTypeBuilder<Andamento> builder)

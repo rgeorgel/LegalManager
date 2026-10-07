@@ -201,6 +201,7 @@ public class ProcessoService : IProcessoService
 
     public async Task<PagedResultDto<ProcessoListItemDto>> GetAllAsync(ProcessoFiltroDto filtro, CancellationToken ct = default)
     {
+        var userId = _tenantContext.UserId;
         var query = _context.Processos
             .Where(p => p.TenantId == _tenantContext.TenantId)
             .AsQueryable();
@@ -227,10 +228,15 @@ public class ProcessoService : IProcessoService
         if (filtro.ContatoId.HasValue)
             query = query.Where(p => p.Partes.Any(pt => pt.ContatoId == filtro.ContatoId.Value));
 
+        if (filtro.SomenteFavoritos)
+            query = query.Where(p => p.Favoritos.Any(f => f.UsuarioId == userId));
+
         var total = await query.CountAsync(ct);
 
         var items = await query
-            .OrderBy(p => (int)p.Status).ThenByDescending(p => p.CriadoEm)
+            // Favoritos do usuário primeiro; dentro de cada grupo, a ordem de sempre.
+            .OrderByDescending(p => p.Favoritos.Any(f => f.UsuarioId == userId))
+            .ThenBy(p => (int)p.Status).ThenByDescending(p => p.CriadoEm)
             .Skip((filtro.Page - 1) * filtro.PageSize)
             .Take(filtro.PageSize)
             .Select(p => new
@@ -242,7 +248,8 @@ public class ProcessoService : IProcessoService
                     .Where(pt => pt.TipoParte == TipoParteProcesso.Autor)
                     .Select(pt => pt.Contato.Nome)
                     .FirstOrDefault(),
-                TotalAndamentos = p.Andamentos.Count
+                TotalAndamentos = p.Andamentos.Count,
+                Favorito = p.Favoritos.Any(f => f.UsuarioId == userId)
             })
             .ToListAsync(ct);
 
@@ -250,7 +257,7 @@ public class ProcessoService : IProcessoService
             items.Select(p => new ProcessoListItemDto(
                 p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
                 p.Status, p.ValorCausa, p.NomeAdvogado, p.NomeCliente, p.CriadoEm, p.TotalAndamentos, p.UltimoAndamentoEm,
-                p.AndamentosPendentes)),
+                p.AndamentosPendentes, p.Favorito)),
             total, filtro.Page, filtro.PageSize,
             (int)Math.Ceiling((double)total / filtro.PageSize));
     }
@@ -483,6 +490,8 @@ public class ProcessoService : IProcessoService
         if (p == null) return null;
 
         var totalAndamentos = await _context.Andamentos.CountAsync(a => a.ProcessoId == id, ct);
+        var favorito = await _context.ProcessosFavoritos.AnyAsync(
+            f => f.ProcessoId == id && f.UsuarioId == _tenantContext.UserId, ct);
 
         return new ProcessoResponseDto(
             p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca,
@@ -499,7 +508,32 @@ public class ProcessoService : IProcessoService
             p.CodigoClasse, p.Instancia, p.DataJulgamento, p.DataPublicacao,
             p.SiglaTribunal, p.Segmento, p.DataDistribuicao,
             p.UltimoAndamentoEm,
-            p.AndamentosPendentes);
+            p.AndamentosPendentes,
+            favorito);
+    }
+
+    public async Task DefinirFavoritoAsync(Guid processoId, bool favorito, CancellationToken ct = default)
+    {
+        var existe = await _context.Processos.AnyAsync(
+            p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct);
+        if (!existe) throw new KeyNotFoundException("Processo não encontrado.");
+
+        var userId = _tenantContext.UserId;
+        var atual = await _context.ProcessosFavoritos.FirstOrDefaultAsync(
+            f => f.ProcessoId == processoId && f.UsuarioId == userId, ct);
+
+        // Idempotente: marcar o que já é favorito (ou desmarcar o que não é) não faz nada.
+        if (favorito && atual == null)
+            _context.ProcessosFavoritos.Add(new ProcessoFavorito
+            {
+                ProcessoId = processoId, UsuarioId = userId, CriadoEm = DateTime.UtcNow
+            });
+        else if (!favorito && atual != null)
+            _context.ProcessosFavoritos.Remove(atual);
+        else
+            return;
+
+        await _context.SaveChangesAsync(ct);
     }
 
     private static AndamentoResponseDto MapAndamento(Andamento a, string nomeUsuario) =>

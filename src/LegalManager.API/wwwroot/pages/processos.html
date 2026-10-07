@@ -105,6 +105,14 @@
     .view-btn { width:36px; height:36px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:.2s; }
     .view-btn:hover { background:#e5e7eb; }
     .view-btn.active { background:var(--color-primary); color:white; border-color:var(--color-primary); }
+    .fav-filter { height:36px; padding:0 12px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--color-text); white-space:nowrap; transition:.2s; }
+    .fav-filter:hover { background:#e5e7eb; }
+    .fav-filter[aria-pressed="true"] { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+    .fav-btn { background:none; border:none; padding:0 2px; font-size:18px; line-height:1; cursor:pointer; color:#d1d5db; transition:color .15s, transform .15s; }
+    .fav-btn:hover { color:#f59e0b; transform:scale(1.15); }
+    .fav-btn[aria-pressed="true"] { color:#f59e0b; }
+    .fav-btn:disabled { opacity:.5; cursor:wait; }
+    .processo-card.favorito { border-color:#fcd34d; }
 
     /* Card grid layout */
     .processos-grid {
@@ -180,6 +188,9 @@
     }
     .card-status {
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .card-badges {
       display: flex;
@@ -340,6 +351,7 @@
         <option value="Imobiliario">Imobiliário</option>
         <option value="Outro">Outro</option>
       </select>
+      <button type="button" class="fav-filter" id="filtFavoritos" aria-pressed="false" title="Mostrar só os seus processos favoritos">★ Favoritos</button>
       <div class="view-toggle" data-tour="processos-visualizacao">
         <button type="button" class="view-btn active" id="viewGrid" title="Visualização em grade">⊞</button>
         <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
@@ -357,8 +369,8 @@
     </div>
     <div id="processosEmpty" style="display:none;text-align:center;padding:48px">
       <div style="font-size:48px;margin-bottom:12px">⚖️</div>
-      <div style="font-weight:600;margin-bottom:4px">Nenhum processo encontrado</div>
-      <div style="color:var(--color-text-muted);font-size:13px">Tente ajustar os filtros ou cadastre um novo processo.</div>
+      <div style="font-weight:600;margin-bottom:4px" id="processosEmptyTitulo">Nenhum processo encontrado</div>
+      <div style="color:var(--color-text-muted);font-size:13px" id="processosEmptyTexto">Tente ajustar os filtros ou cadastre um novo processo.</div>
     </div>
     <div id="processosError" style="display:none;text-align:center;padding:48px;color:var(--color-danger)"></div>
     <div class="pagination" id="pagination"></div>
@@ -606,7 +618,7 @@
 <script type="module">
 import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
-import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso } from '/js/processos.js';
+import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { mascaraCnj } from '/js/mascaras.js';
@@ -878,6 +890,11 @@ function renderTable(items) {
   error.style.display = 'none';
 
   if (!items.length) {
+    const soFavoritos = currentFilters.favoritos && !currentFilters.busca && !currentFilters.status && !currentFilters.areaDireito;
+    document.getElementById('processosEmptyTitulo').textContent = soFavoritos ? 'Nenhum processo favorito' : 'Nenhum processo encontrado';
+    document.getElementById('processosEmptyTexto').textContent = soFavoritos
+      ? 'Clique na estrela ☆ de um processo para marcá-lo como favorito.'
+      : 'Tente ajustar os filtros ou cadastre um novo processo.';
     grid.style.display = 'none';
     empty.style.display = 'block';
     return;
@@ -898,10 +915,13 @@ function renderTable(items) {
       ? '<span class="monitoring-badge">🔄 Monitorado</span>'
       : '';
 
-    return `<div class="processo-card" onclick="window.location.href='/pages/processo-detalhe.html?id=${p.id}'">
+    return `<div class="processo-card${p.favorito ? ' favorito' : ''}" data-id="${p.id}" onclick="window.location.href='/pages/processo-detalhe.html?id=${p.id}'">
       <div class="card-header">
         <div class="card-cnj"><a href="/pages/processo-detalhe.html?id=${p.id}" onclick="event.stopPropagation()">${p.numeroCNJ}</a></div>
-        <div class="card-status"><span class="badge status-${statusCls}">${p.status}</span></div>
+        <div class="card-status">
+          ${favBtn(p.favorito)}
+          <span class="badge status-${statusCls}">${p.status}</span>
+        </div>
       </div>
       <div class="card-badges">
         <span class="badge badge-blue">${area}</span>
@@ -950,6 +970,36 @@ function renderTable(items) {
     </div>`;
   }).join('');
 }
+
+function favBtn(favorito) {
+  const titulo = favorito ? 'Remover dos favoritos' : 'Marcar como favorito';
+  return `<button type="button" class="fav-btn" aria-pressed="${favorito}" title="${titulo}" aria-label="${titulo}">${favorito ? '★' : '☆'}</button>`;
+}
+
+// Estrela do card: atualiza na hora, sem recarregar a lista (a reordenação — favoritos
+// primeiro — aparece na próxima carga). Com o filtro de favoritos ativo, o card desmarcado sai.
+// Fase de captura: o card tem onclick próprio (abre o processo), que rodaria antes no bubbling.
+document.getElementById('processosContainer').addEventListener('click', async e => {
+  const btn = e.target.closest('.fav-btn');
+  if (!btn) return;
+  e.stopPropagation();
+  const card = btn.closest('.processo-card');
+  const favorito = btn.getAttribute('aria-pressed') !== 'true';
+  btn.disabled = true;
+  try {
+    await setFavorito(card.dataset.id, favorito);
+    if (!favorito && currentFilters.favoritos) {
+      card.remove();
+      if (!document.querySelector('#processosContainer .processo-card')) loadProcessos();
+      return;
+    }
+    btn.outerHTML = favBtn(favorito);
+    card.classList.toggle('favorito', favorito);
+  } catch (err) {
+    btn.disabled = false;
+    showAlert(err.message);
+  }
+}, true);
 
 async function loadProcessos() {
   const grid = document.getElementById('processosContainer');
@@ -1213,18 +1263,33 @@ document.getElementById('viewList').addEventListener('click', () => {
   document.getElementById('processosContainer').classList.add('list-view');
 });
 
+const filtFavoritos = document.getElementById('filtFavoritos');
+
+function aplicarFiltros() {
+  currentFilters = {
+    busca: document.getElementById('filtBusca').value || undefined,
+    status: document.getElementById('filtStatus').value || undefined,
+    areaDireito: document.getElementById('filtArea').value || undefined,
+    favoritos: filtFavoritos.getAttribute('aria-pressed') === 'true' || undefined
+  };
+  currentPage = 1; loadProcessos();
+}
+
 ['filtBusca', 'filtStatus', 'filtArea'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      currentFilters = {
-        busca: document.getElementById('filtBusca').value || undefined,
-        status: document.getElementById('filtStatus').value || undefined,
-        areaDireito: document.getElementById('filtArea').value || undefined
-      };
-      currentPage = 1; loadProcessos();
-    }, 300);
+    debounce = setTimeout(aplicarFiltros, 300);
   });
+});
+
+// Atalho do dashboard: /pages/processos.html?favoritos=1 já abre filtrado.
+if (new URLSearchParams(location.search).has('favoritos')) filtFavoritos.setAttribute('aria-pressed', 'true');
+currentFilters.favoritos = filtFavoritos.getAttribute('aria-pressed') === 'true' || undefined;
+
+filtFavoritos.addEventListener('click', () => {
+  filtFavoritos.setAttribute('aria-pressed', String(filtFavoritos.getAttribute('aria-pressed') !== 'true'));
+  clearTimeout(debounce);
+  aplicarFiltros();
 });
 
 await loadReferenceData();

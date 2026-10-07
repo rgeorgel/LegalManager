@@ -62,6 +62,7 @@ public class ProcessosController : ControllerBase
         [FromQuery] Guid? contatoId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] bool favoritos = false,
         CancellationToken ct = default)
     {
         var filtro = new ProcessoFiltroDto(
@@ -70,7 +71,8 @@ public class ProcessosController : ControllerBase
             areaDireito != null && Enum.TryParse<AreaDireito>(areaDireito, true, out var a) ? a : null,
             advogadoResponsavelId,
             contatoId,
-            page, pageSize);
+            page, pageSize,
+            favoritos);
 
         return Ok(await _service.GetAllAsync(filtro, ct));
     }
@@ -195,6 +197,21 @@ public class ProcessosController : ControllerBase
     {
         var result = await _service.SetAndamentoVisivelClienteAsync(id, andamentoId, dto.Visivel, ct);
         return Ok(result);
+    }
+
+    /// <summary>Marca/desmarca o processo como favorito do usuário logado.</summary>
+    [HttpPut("{id:guid}/favorito")]
+    public async Task<IActionResult> SetFavorito(Guid id, [FromBody] SetFavoritoDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _service.DefinirFavoritoAsync(id, dto.Favorito, ct);
+            return Ok(new { favorito = dto.Favorito });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPost("{id:guid}/monitoramento/alternar")]

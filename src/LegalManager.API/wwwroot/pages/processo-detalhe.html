@@ -156,6 +156,10 @@
     .resumo-share-btn.shared { background:#dbeafe; border-color:#93c5fd; color:#1d4ed8; }
     .resumo-share-btn.shared:hover { background:#bfdbfe; }
     .resumo-share-btn:disabled { opacity:0.6; cursor:wait; }
+    .fav-btn { background:none; border:none; padding:0 4px; font-size:22px; line-height:1; cursor:pointer; color:#d1d5db; vertical-align:middle; transition:color .15s, transform .15s; }
+    .fav-btn:hover { color:#f59e0b; transform:scale(1.15); }
+    .fav-btn[aria-pressed="true"] { color:#f59e0b; }
+    .fav-btn:disabled { opacity:.5; cursor:wait; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -191,7 +195,10 @@
     <div class="page-header">
       <div>
         <a href="/pages/processos.html" style="font-size:13px;color:var(--color-text-muted)">← Processos</a>
-        <h1 class="page-title" id="pageTitle">Carregando...</h1>
+        <div style="display:flex;align-items:center;gap:6px">
+          <h1 class="page-title" id="pageTitle">Carregando...</h1>
+          <button type="button" class="fav-btn" id="btnFavorito" aria-pressed="false" style="display:none"></button>
+        </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
@@ -985,7 +992,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
-import { getProcesso, getAndamentos, updateProcesso, addAndamento } from '/js/processos.js';
+import { getProcesso, getAndamentos, updateProcesso, addAndamento, setFavorito } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
 
@@ -998,6 +1005,29 @@ let processo = null;
 let advogados = [];
 
 const alertMsg = document.getElementById('alertMsg');
+// Favorito é do usuário logado — aparece primeiro na lista de processos e no dashboard.
+function renderFavorito() {
+  const btn = document.getElementById('btnFavorito');
+  const titulo = processo.favorito ? 'Remover dos favoritos' : 'Marcar como favorito';
+  btn.textContent = processo.favorito ? '★' : '☆';
+  btn.title = titulo;
+  btn.setAttribute('aria-label', titulo);
+  btn.setAttribute('aria-pressed', String(processo.favorito));
+  btn.style.display = '';
+}
+
+document.getElementById('btnFavorito').addEventListener('click', async () => {
+  const btn = document.getElementById('btnFavorito');
+  btn.disabled = true;
+  try {
+    await setFavorito(processoId, !processo.favorito);
+    processo.favorito = !processo.favorito;
+    renderFavorito();
+  } catch (err) {
+    showAlert(err.message);
+  } finally { btn.disabled = false; }
+});
+
 function showAlert(msg, type = 'error') {
   alertMsg.className = `alert alert-${type}`;
   alertMsg.textContent = msg;
@@ -1045,6 +1075,8 @@ function renderProcesso() {
   document.getElementById('badgeStatus').textContent = processo.status;
   document.getElementById('badgeArea').textContent = label(areaLabels, processo.areaDireito);
   document.getElementById('badgeFase').textContent = label(faseLabels, processo.fase);
+
+  renderFavorito();
 
   const badgeMon = document.getElementById('badgeMonitorado');
   if (processo.monitorado) {

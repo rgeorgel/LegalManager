@@ -12,6 +12,8 @@ public interface IProcessoService
     Task<IEnumerable<ProcessoUltimoAndamentoDto>> GetUltimosAndamentosAsync(int limite, CancellationToken ct = default);
     Task EncerrarAsync(Guid id, EncerrarProcessoDto dto, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Marca/desmarca o processo como favorito do usuário logado (idempotente).</summary>
+    Task DefinirFavoritoAsync(Guid processoId, bool favorito, CancellationToken ct = default);
 
     Task<AndamentoResponseDto> AddAndamentoAsync(Guid processoId, CreateAndamentoDto dto, CancellationToken ct = default);
     Task<IEnumerable<AndamentoResponseDto>> GetAndamentosAsync(Guid processoId, CancellationToken ct = default);

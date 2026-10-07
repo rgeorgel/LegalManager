@@ -66,4 +66,5 @@ public class Processo
     public Usuario? AdvogadoResponsavel { get; set; }
     public ICollection<ProcessoParte> Partes { get; set; } = new List<ProcessoParte>();
     public ICollection<Andamento> Andamentos { get; set; } = new List<Andamento>();
+    public ICollection<ProcessoFavorito> Favoritos { get; set; } = new List<ProcessoFavorito>();
 }

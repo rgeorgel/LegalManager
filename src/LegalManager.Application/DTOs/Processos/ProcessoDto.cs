@@ -108,7 +108,9 @@ public record ProcessoResponseDto(
     DateTime? DataDistribuicao,
     DateTime? UltimoAndamentoEm,
     // Importado sem andamentos: a tela do processo dispara a carga inicial (uma vez).
-    bool AndamentosPendentes = false
+    bool AndamentosPendentes = false,
+    // Favorito do usuário logado (não do escritório).
+    bool Favorito = false
 );
 
 public record ProcessoParteResponseDto(
@@ -134,7 +136,9 @@ public record ProcessoListItemDto(
     int TotalAndamentos,
     DateTime? UltimoAndamentoEm,
     // Importado sem andamentos: a busca só acontece ao abrir o processo (a lista não mostra "0").
-    bool AndamentosPendentes = false
+    bool AndamentosPendentes = false,
+    // Favorito do usuário logado — favoritos vêm primeiro na listagem.
+    bool Favorito = false
 );
 
 public record ProcessoFiltroDto(
@@ -144,7 +148,9 @@ public record ProcessoFiltroDto(
     Guid? AdvogadoResponsavelId,
     Guid? ContatoId,
     int Page = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    // Só os favoritos do usuário logado.
+    bool SomenteFavoritos = false
 );
 
 public record CreateAndamentoDto(
@@ -176,6 +182,8 @@ public record EncerrarProcessoDto(
 );
 
 public record SetVisivelClienteDto(bool Visivel);
+
+public record SetFavoritoDto(bool Favorito);
 
 public record ProcessoUltimoAndamentoDto(
     Guid ProcessoId,

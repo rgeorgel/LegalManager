@@ -7,6 +7,7 @@ export async function getProcessos(filtro = {}) {
   if (filtro.areaDireito) p.set('areaDireito', filtro.areaDireito);
   if (filtro.advogadoResponsavelId) p.set('advogadoResponsavelId', filtro.advogadoResponsavelId);
   if (filtro.contatoId) p.set('contatoId', filtro.contatoId);
+  if (filtro.favoritos) p.set('favoritos', 'true');
   p.set('page', filtro.page || 1);
   p.set('pageSize', filtro.pageSize || 20);
   return apiFetch(`/processos?${p}`);
@@ -26,6 +27,11 @@ export async function updateProcesso(id, data) {
 
 export async function encerrarProcesso(id, data) {
   return apiFetch(`/processos/${id}/encerrar`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+// Favorito é do usuário logado (não do escritório).
+export async function setFavorito(id, favorito) {
+  return apiFetch(`/processos/${id}/favorito`, { method: 'PUT', body: JSON.stringify({ favorito }) });
 }
 
 export async function deleteProcesso(id) {

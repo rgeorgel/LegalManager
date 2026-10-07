@@ -30,6 +30,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<ConsultaExterna> ConsultasExternas => Set<ConsultaExterna>();
     public DbSet<Processo> Processos => Set<Processo>();
     public DbSet<ProcessoParte> ProcessoPartes => Set<ProcessoParte>();
+    public DbSet<ProcessoFavorito> ProcessosFavoritos => Set<ProcessoFavorito>();
     public DbSet<Andamento> Andamentos => Set<Andamento>();
     public DbSet<Tarefa> Tarefas => Set<Tarefa>();
     public DbSet<TarefaTag> TarefaTags => Set<TarefaTag>();
