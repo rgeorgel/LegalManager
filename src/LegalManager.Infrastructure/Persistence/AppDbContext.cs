@@ -70,6 +70,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<GrupoPergunta> GruposPergunta => Set<GrupoPergunta>();
     public DbSet<GrupoPerguntaMembro> GruposPerguntaMembros => Set<GrupoPerguntaMembro>();
     public DbSet<CodigoPromocional> CodigosPromocionais => Set<CodigoPromocional>();
+    public DbSet<Novidade> Novidades => Set<Novidade>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

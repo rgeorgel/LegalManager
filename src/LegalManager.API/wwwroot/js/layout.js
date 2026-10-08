@@ -5,6 +5,7 @@ import { injectTarefasWidget } from './tarefas-widget.js';
 import { injectTourWidget, resumeTourIfActive } from './tour.js';
 import { injectPerguntasWidget } from './perguntas-widget.js';
 import { initImportacaoBar } from './importacao-bar.js';
+import { injectNovidadesButton } from './novidades.js';
 
 import { esc } from './utils.js';
 const NAV_GROUPS = [
@@ -97,6 +98,7 @@ export function initLayout() {
   injectBottomNav();
   setupMobileMenu();
   injectNotificationBell();
+  injectNovidadesButton();
   injectImpersonationBanner();
 
   // Menu flutuante de tarefas: disponível a partir do plano Plus (mesma

@@ -11,6 +11,8 @@
 // }
 // Tour = {
 //   id, label, steps: TourStep[],
+//   oculto?,                        // true = fora da lista do widget "Tutorial"; aberto só
+//                                    // pelo "Me mostra" de uma novidade (ver novidades.js)
 //   onComplete?,                    // () => void — roda só quando o tour termina de
 //                                    // verdade (avançou pelo último passo, não ao
 //                                    // pular/fechar no meio); use para desfazer efeitos
@@ -496,6 +498,113 @@ export const TOURS = [
         text: 'No fim da lista, clique em "Salvar tema" para aplicar de verdade — até lá, tudo o que você viu é só pré-visualização.',
         placement: 'top',
         planRequired: 'Plus',
+      },
+    ],
+  },
+
+  // ── Tours de novidades ─────────────────────────────────────────────────
+  // Curtos (1–3 passos) e `oculto`: abertos pelo "Me mostra" do painel/modal de
+  // novidades (o id é o TourId da novidade, escolhido em superadmin/novidades.html).
+  {
+    id: 'novidade-favoritos',
+    label: '⭐ Processos favoritos',
+    oculto: true,
+    steps: [
+      {
+        id: 'favoritos-estrela',
+        page: '/pages/processos.html',
+        selector: '.processo-card .fav-btn',
+        title: 'Marque com a estrela',
+        text: 'Clique na estrela ☆ de um processo para marcá-lo como favorito. Os favoritos aparecem primeiro na lista.',
+        placement: 'bottom',
+      },
+      {
+        id: 'favoritos-filtro',
+        page: '/pages/processos.html',
+        selector: '#filtFavoritos',
+        title: 'Só os favoritos',
+        text: 'Este filtro mostra apenas os processos que você marcou.',
+        placement: 'bottom',
+      },
+      {
+        id: 'favoritos-dashboard',
+        page: '/pages/dashboard.html',
+        selector: '[data-widget="favoritos"]',
+        title: 'Favoritos no dashboard',
+        text: 'Seus favoritos também ficam à mão aqui, logo que você entra no sistema.',
+        placement: 'auto',
+      },
+    ],
+  },
+  {
+    id: 'novidade-dashboard',
+    label: '📊 Dashboard personalizável',
+    oculto: true,
+    steps: [
+      {
+        id: 'dashboard-personalizar',
+        page: '/pages/dashboard.html',
+        selector: '#d2Personalizar',
+        title: 'Personalize o dashboard',
+        text: 'Em "Personalizar" você escolhe quais blocos aparecem, arrasta para mudar a ordem e ajusta a altura de cada um (½, 1 ou 2).',
+        placement: 'bottom',
+      },
+      {
+        id: 'dashboard-tarefas-resumo',
+        page: '/pages/dashboard.html',
+        selector: '#trCard',
+        title: 'Indicadores no dashboard',
+        text: 'O resumo das tarefas e o timesheet do mês agora ficam aqui. Processos por fase e Financeiro do mês podem ser ligados em Personalizar.',
+        placement: 'auto',
+        planRequired: 'Plus',
+      },
+    ],
+  },
+  {
+    id: 'novidade-modelos',
+    label: '📄 Modelos com papel timbrado',
+    oculto: true,
+    steps: [
+      {
+        id: 'modelos-aba',
+        page: '/pages/documentos.html',
+        selector: '#tabBtnModelos',
+        title: 'Modelos de documento',
+        text: 'Crie modelos com variáveis, preencha a partir de um processo e baixe em Word, imprima ou salve direto no processo. Há exemplos prontos para começar.',
+        placement: 'bottom',
+        planRequired: 'Plus',
+      },
+      {
+        id: 'modelos-timbrado',
+        page: '/pages/configuracoes.html',
+        selector: '#cTimbradoComplemento',
+        title: 'Seu papel timbrado',
+        text: 'Logo, nome, CNPJ, endereço e contatos do escritório formam o papel timbrado dos documentos. Esta linha extra serve para algo como "Dra. Maria Souza — OAB/SP 123.456".',
+        placement: 'top',
+        planRequired: 'Plus',
+      },
+    ],
+  },
+  {
+    id: 'novidade-contatos',
+    label: '👥 Filtros de contatos',
+    oculto: true,
+    steps: [
+      {
+        id: 'contatos-categorias',
+        page: '/pages/contatos.html',
+        selector: '#filtTipoContato',
+        title: 'Várias categorias e tags',
+        text: 'Marque quantas categorias e tags quiser: aparecem os contatos que tenham qualquer uma delas.',
+        placement: 'bottom',
+      },
+      {
+        id: 'contatos-filtros-salvos',
+        page: '/pages/contatos.html',
+        selector: '#filtSalvo',
+        title: 'Guarde a combinação',
+        text: 'Salve os filtros que você mais usa para aplicá-los de novo com um clique.',
+        placement: 'bottom',
       },
     ],
   },

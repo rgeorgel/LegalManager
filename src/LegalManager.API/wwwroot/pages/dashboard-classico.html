@@ -409,6 +409,7 @@ import { esc, dataParede } from '/js/utils.js';
     import { apiFetch, isLoggedIn } from '/js/api.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
+    import { mostrarDestaqueNovidade } from '/js/novidades.js';
     import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 
     if (!isLoggedIn()) {
@@ -423,7 +424,7 @@ import { esc, dataParede } from '/js/utils.js';
     // guiado não inicia mais automaticamente (intrusivo demais) — fica
     // disponível sob demanda pelo widget "Tutorial" (injectTourWidget(), via
     // initLayout()).
-    initTrialBoasVindasModal(() => initOnboarding());
+    initTrialBoasVindasModal(() => initOnboarding(() => mostrarDestaqueNovidade()));
 
     const free = isPlanoFree();
 

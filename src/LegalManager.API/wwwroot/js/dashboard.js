@@ -4,6 +4,7 @@ import { initLayout, getPlano, isPlanoFree, showUpgradeToast } from '/js/layout.
 import { apiFetch, isLoggedIn, getUser } from '/js/api.js';
 import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
 import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
+import { mostrarDestaqueNovidade } from '/js/novidades.js';
 import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 import { esc, brl as brlOuTraco, dataParede, isoLocal } from '/js/utils.js';
 import { initDashboardLayout } from '/js/dashboard-layout.js';
@@ -15,8 +16,9 @@ if (!isLoggedIn()) {
 
 initLayout();
 initOnboardingModal();
-// Mesmo encadeamento do dashboard clássico: trial de boas-vindas → onboarding (importar por OAB).
-initTrialBoasVindasModal(() => initOnboarding());
+// Mesmo encadeamento do dashboard clássico: trial de boas-vindas → onboarding (importar por OAB)
+// → novidade em destaque. Um modal por vez.
+initTrialBoasVindasModal(() => initOnboarding(() => mostrarDestaqueNovidade()));
 injectDashboardSwitch(document.getElementById('dashVersao'), 'novo');
 
 // Temas escuros são presets com customCss (ver presets.js) — não há classe

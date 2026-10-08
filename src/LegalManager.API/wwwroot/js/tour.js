@@ -40,12 +40,12 @@ function getPlano() {
   return getUser()?.plano ?? 'Free';
 }
 
+// Hierarquia dos planos (igual a PlanoRestricoes.Atende no backend).
+const NIVEL_PLANO = { Free: 0, Plus: 1, Pro: 2, Max: 3, Enterprise: 4 };
+
 function planoAtende(planRequired) {
   if (!planRequired) return true;
-  const plano = getPlano();
-  if (planRequired === 'Plus') return plano === 'Plus' || plano === 'Pro';
-  if (planRequired === 'Pro') return plano === 'Pro';
-  return true;
+  return (NIVEL_PLANO[getPlano()] ?? 0) >= (NIVEL_PLANO[planRequired] ?? 0);
 }
 
 function eligibleSteps(tour) {
@@ -237,7 +237,8 @@ function waitForElement(selector) {
     const tick = () => {
       const el = document.querySelector(selector);
       if (el && isVisible(el)) return resolve(el);
-      if (Date.now() - start > WAIT_TIMEOUT_MS) return resolve(el ?? null);
+      // Invisível até o fim (ex.: bloco do dashboard desligado, botão escondido) = pula o passo.
+      if (Date.now() - start > WAIT_TIMEOUT_MS) return resolve(null);
       setTimeout(tick, WAIT_POLL_MS);
     };
     tick();
@@ -440,7 +441,8 @@ async function renderWidgetList() {
 
   const completedSet = await fetchStatus();
 
-  body.innerHTML = TOURS.map(tour => {
+  // Tours `oculto` (de novidades) só abrem pelo painel/modal de novidades.
+  body.innerHTML = TOURS.filter(tour => !tour.oculto).map(tour => {
     const bloqueado = eligibleSteps(tour).length === 0;
     const done = completedSet.has(tour.id);
     const badge = tourPlanBadge(tour);

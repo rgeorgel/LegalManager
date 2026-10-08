@@ -27,6 +27,17 @@ public static class PlanoRestricoes
         PlanoTipo.Max => 10 * 1024,
         _ => 20 * 1024
     };
+    // Ordem dos planos (o enum não segue a hierarquia: Plus = 3 veio depois de Pro = 1).
+    private static int Nivel(PlanoTipo plano) => plano switch
+    {
+        PlanoTipo.Free => 0,
+        PlanoTipo.Plus => 1,
+        PlanoTipo.Pro => 2,
+        PlanoTipo.Max => 3,
+        _ => 4 // Enterprise
+    };
+    public static bool Atende(PlanoTipo plano, PlanoTipo? minimo) => minimo is null || Nivel(plano) >= Nivel(minimo.Value);
+
     public static bool PermiteFinanceiro(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteIndicadores(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteHonorariosContratos(PlanoTipo plano) =>
