@@ -274,7 +274,7 @@
     .d2-bar-label { width: 110px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .d2-bar-track { flex: 1; height: 10px; background: var(--d2-soft); border-radius: 4px; overflow: hidden; }
     .d2-bar-fill { height: 100%; border-radius: 4px; background: var(--color-primary); }
-    .d2-bar-val { width: 32px; text-align: right; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+    .d2-bar-val { min-width: 32px; white-space: nowrap; text-align: right; color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 
     .d2-trend { display: flex; align-items: flex-end; gap: 10px; height: 130px; padding-top: 8px; }
     .d2-trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
@@ -301,7 +301,6 @@
     .d2-topbar-link { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); }
     .d2-topbar-link:hover { border-color: var(--color-primary); }
     button.d2-topbar-link { cursor: pointer; color: var(--color-text) !important; font-family: inherit; }
-    .d2-plus { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 100px; margin-left: 4px; }
 
     @media (max-width: 1200px) {
       .d2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -421,7 +420,6 @@
           </div>
           <div class="d2-topbar-actions">
             <button class="d2-topbar-link" id="d2Personalizar" type="button" aria-pressed="false">⚙️ Personalizar</button>
-            <a class="d2-topbar-link" id="d2Indicadores" href="/pages/dashboard-classico.html?tab=indicadores">📈 Indicadores<span class="d2-plus" id="d2IndPlus" style="display:none">PLUS</span></a>
             <div id="dashVersao"></div>
           </div>
         </div>
@@ -485,6 +483,16 @@
             <div class="d2-kpi-label">⏱️ Horas no mês</div>
             <div class="d2-kpi-value" id="kHoras">—</div>
             <div class="d2-kpi-sub" id="kHorasSub"></div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/processos.html" id="kEncLink" data-kpi="encerrados" data-titulo="Processos encerrados">
+            <div class="d2-kpi-label">📁 Encerrados</div>
+            <div class="d2-kpi-value" id="kEncerrados">—</div>
+            <div class="d2-kpi-sub" id="kEncerradosSub">processos</div>
+          </a>
+          <a class="d2-kpi d2-oculto" href="/pages/processos.html" id="kSusLink" data-kpi="suspensos" data-titulo="Processos suspensos">
+            <div class="d2-kpi-label">⏸️ Suspensos</div>
+            <div class="d2-kpi-value" id="kSuspensos">—</div>
+            <div class="d2-kpi-sub" id="kSuspensosSub">processos</div>
           </a>
           <a class="d2-kpi d2-oculto" href="/pages/contatos.html" data-kpi="contatos" data-titulo="Contatos">
             <div class="d2-kpi-label">👥 Contatos</div>
@@ -627,6 +635,21 @@
             <div id="arBars"><div class="d2-skel"></div><div class="d2-skel"></div></div>
           </div>
 
+          <div class="d2-card" id="trCard" data-widget="tarefas-resumo" data-titulo="Resumo de tarefas">
+            <div class="d2-card-head">
+              <div class="d2-card-title">✅ Resumo de tarefas</div>
+              <a class="d2-card-link" href="/pages/tarefas.html">Ver todas →</a>
+            </div>
+            <div class="d2-mini-stats" style="margin-bottom:12px">
+              <div class="d2-mini"><div class="d2-mini-label">Pendentes</div><div class="d2-mini-value" id="trPendentes">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Em andamento</div><div class="d2-mini-value" id="trAndamento">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Concluídas no mês</div><div class="d2-mini-value" style="color:var(--d2-green)" id="trConcluidasMes">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Atrasadas</div><div class="d2-mini-value" style="color:var(--d2-red)" id="trAtrasadas">—</div></div>
+            </div>
+            <div class="d2-mini-label" style="margin-bottom:8px">Abertas por prioridade</div>
+            <div id="trPrioridade"><div class="d2-skel"></div></div>
+          </div>
+
           <div class="d2-card d2-w2" id="finCard" data-tour="dashboard-financeiro" data-widget="financeiro" data-titulo="Financeiro">
             <div class="d2-card-head">
               <div class="d2-card-title">💵 Financeiro — 6 meses</div>
@@ -643,11 +666,45 @@
             </div>
           </div>
 
+          <div class="d2-card" id="tsCard" data-widget="timesheet" data-titulo="Timesheet do mês">
+            <div class="d2-card-head">
+              <div class="d2-card-title">⏱️ Timesheet do mês</div>
+              <a class="d2-card-link" href="/pages/timesheet.html">Detalhes →</a>
+            </div>
+            <div class="d2-mini-stats" style="margin-bottom:12px">
+              <div class="d2-mini"><div class="d2-mini-label">Horas no mês</div><div class="d2-mini-value" id="tsHoras">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Registros no mês</div><div class="d2-mini-value" id="tsRegistros">—</div></div>
+            </div>
+            <div class="d2-mini-label" style="margin-bottom:8px">Processos com mais horas</div>
+            <div id="tsTop"><div class="d2-skel"></div></div>
+          </div>
+
           <div class="d2-card" data-widget="aniversariantes" data-titulo="Aniversariantes do mês">
             <div class="d2-card-head">
               <div class="d2-card-title">🎂 Aniversariantes do mês</div>
             </div>
             <div id="anList"><div class="d2-skel"></div></div>
+          </div>
+
+          <!-- Extras ocultos por padrão (ligáveis em "Personalizar"). -->
+          <div class="d2-card d2-oculto" id="faCard" data-widget="fases" data-titulo="Processos por fase">
+            <div class="d2-card-head">
+              <div class="d2-card-title">🧭 Processos por fase</div>
+            </div>
+            <div id="faBars"><div class="d2-skel"></div><div class="d2-skel"></div></div>
+          </div>
+
+          <div class="d2-card d2-oculto" id="fmCard" data-widget="financeiro-mes" data-titulo="Financeiro do mês">
+            <div class="d2-card-head">
+              <div class="d2-card-title">💰 Financeiro do mês</div>
+              <a class="d2-card-link" href="/pages/financeiro.html">Detalhes →</a>
+            </div>
+            <div class="d2-mini-stats">
+              <div class="d2-mini"><div class="d2-mini-label">Receitas pagas</div><div class="d2-mini-value" style="color:var(--d2-green)" id="fmReceitas">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">Despesas pagas</div><div class="d2-mini-value" style="color:var(--d2-red)" id="fmDespesas">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">A receber</div><div class="d2-mini-value" id="fmAReceber">—</div></div>
+              <div class="d2-mini"><div class="d2-mini-label">A pagar</div><div class="d2-mini-value" id="fmAPagar">—</div></div>
+            </div>
           </div>
         </section>
 

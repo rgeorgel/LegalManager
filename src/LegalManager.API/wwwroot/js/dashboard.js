@@ -53,11 +53,6 @@ if (free) {
       showUpgradeToast(a.dataset.plano);
     });
   });
-  document.getElementById('d2IndPlus').style.display = '';
-  document.getElementById('d2Indicadores').addEventListener('click', e => {
-    e.preventDefault();
-    showUpgradeToast('Plus');
-  });
 }
 
 // ── Helpers ────────────────────────────────────────────
@@ -110,6 +105,11 @@ const AREA_LABEL = {
   Previdenciario: 'Previdenciário', Administrativo: 'Administrativo', Consumidor: 'Consumidor',
   Familia: 'Família', Empresarial: 'Empresarial', Ambiental: 'Ambiental', Imobiliario: 'Imobiliário', Outro: 'Outro'
 };
+const FASE_LABEL = {
+  Conhecimento: 'Conhecimento', Recursal: 'Recursal', Execucao: 'Execução', Cumprimento: 'Cumprimento',
+  InqueritoPolicial: 'Inquérito Policial', InvestigacaoDefensiva: 'Invest. Defensiva', Outro: 'Outro'
+};
+const PRIO_LABEL = { Urgente: 'Urgente', Alta: 'Alta', Media: 'Média', Baixa: 'Baixa' };
 
 // ── Atalhos: legenda mostra o nome do atalho sob o mouse/foco ─────────
 const atalhoDica = $('d2AtalhoDica');
@@ -445,17 +445,42 @@ async function loadFavoritos() {
   }).join('');
 }
 
-// ── Indicadores (Plus+): áreas, financeiro, timesheet ──
-function renderAreas(porArea) {
-  const el = $('arBars');
-  if (!porArea?.length) { el.innerHTML = '<div class="d2-empty">Sem dados</div>'; return; }
-  const max = Math.max(...porArea.map(x => x.count), 1);
-  el.innerHTML = porArea.slice(0, 6).map(x => `
-    <div class="d2-bar-row" title="${esc(AREA_LABEL[x.label] ?? x.label)}: ${x.count}">
-      <div class="d2-bar-label">${esc(AREA_LABEL[x.label] ?? x.label)}</div>
-      <div class="d2-bar-track"><div class="d2-bar-fill" style="width:${Math.max(3, x.count / max * 100)}%"></div></div>
-      <div class="d2-bar-val">${x.count}</div>
-    </div>`).join('');
+// ── Indicadores (Plus+): processos, tarefas, financeiro, timesheet ──
+/** Barras horizontais de { label, count }; `rotulos` traduz o label e `cores` colore por label. */
+function renderBars(el, itens, { rotulos = {}, cores = {}, fmt = String, vazio = 'Sem dados', max: limite = 6 } = {}) {
+  if (!itens?.length) { el.innerHTML = `<div class="d2-empty">${esc(vazio)}</div>`; return; }
+  const max = Math.max(...itens.map(x => x.count), 1);
+  el.innerHTML = itens.slice(0, limite).map(x => {
+    const nome = rotulos[x.label] ?? x.label;
+    const cor = cores[x.label] ? `;background:${cores[x.label]}` : '';
+    return `
+    <div class="d2-bar-row" title="${esc(nome)}: ${esc(fmt(x.count))}">
+      <div class="d2-bar-label">${esc(nome)}</div>
+      <div class="d2-bar-track"><div class="d2-bar-fill" style="width:${Math.max(3, x.count / max * 100)}%${cor}"></div></div>
+      <div class="d2-bar-val">${esc(fmt(x.count))}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTarefasResumo(t) {
+  $('trPendentes').textContent = t.pendentes;
+  $('trAndamento').textContent = t.emAndamento;
+  $('trConcluidasMes').textContent = t.concluidasEsteMes;
+  $('trAtrasadas').textContent = t.atrasadas;
+  renderBars($('trPrioridade'), t.porPrioridade, { rotulos: PRIO_LABEL, cores: PRIO_COR, vazio: 'Nenhuma tarefa aberta.' });
+}
+
+function renderTimesheet(ts) {
+  $('tsHoras').textContent = fmtDur(ts.minutosEsteMes);
+  $('tsRegistros').textContent = ts.totalRegistrosEsteMes;
+  renderBars($('tsTop'), ts.topProcessos, { fmt: fmtDur, max: 5, vazio: 'Nenhuma hora lançada em processos este mês.' });
+}
+
+function renderFinanceiroMes(f) {
+  $('fmReceitas').textContent = brlCompact(f.totalReceitasMes);
+  $('fmDespesas').textContent = brlCompact(f.totalDespesasMes);
+  $('fmAReceber').textContent = brlCompact(f.receitasPendentes);
+  $('fmAPagar').textContent = brlCompact(f.despesasPendentes);
 }
 
 function renderFinanceiro(f) {
@@ -478,11 +503,17 @@ function renderFinanceiro(f) {
 async function loadIndicadores() {
   if (free) {
     lock($('finCard'), 'Financeiro do escritório', 'Receitas, despesas e saldo mês a mês.');
+    lock($('trCard'), 'Resumo de tarefas', 'Tarefas por status e prioridade.');
+    lock($('tsCard'), 'Timesheet do mês', 'Horas lançadas e processos que mais consomem tempo.');
+    lock($('faCard'), 'Processos por fase', 'Distribuição dos processos ativos por fase processual.');
+    lock($('fmCard'), 'Financeiro do mês', 'Receitas, despesas, contas a receber e a pagar.');
     $('arBars').innerHTML = '<div class="d2-empty">Distribuição por área disponível no plano Plus.</div>';
     $('tmMes').textContent = '—';
     $('tmMesAnt').textContent = '—';
     kpiBloqueado('kSaldoLink', 'kSaldo', 'kSaldoSub', 'Plus');
     kpiBloqueado('kHorasLink', 'kHoras', 'kHorasSub', 'Plus');
+    kpiBloqueado('kEncLink', 'kEncerrados', 'kEncerradosSub', 'Plus');
+    kpiBloqueado('kSusLink', 'kSuspensos', 'kSuspensosSub', 'Plus');
     return;
   }
   try {
@@ -500,12 +531,20 @@ async function loadIndicadores() {
     $('kProcessosSub').textContent = d.processos.novosEsteMes
       ? `+${d.processos.novosEsteMes} este mês`
       : `${d.processos.suspensos} suspensos`;
-    renderAreas(d.processos.porArea);
+    $('kEncerrados').textContent = d.processos.encerrados;
+    $('kSuspensos').textContent = d.processos.suspensos;
+    renderBars($('arBars'), d.processos.porArea, { rotulos: AREA_LABEL });
+    renderBars($('faBars'), d.processos.porFase, { rotulos: FASE_LABEL, vazio: 'Nenhum processo ativo.' });
+    renderTarefasResumo(d.tarefas);
+    renderTimesheet(d.timesheet);
     renderFinanceiro(d.financeiro);
+    renderFinanceiroMes(d.financeiro);
     $('tmMes').textContent = fmtDur(d.timesheet.minutosEsteMes);
     $('tmMesAnt').textContent = fmtDur(d.timesheet.minutosMesAnterior);
   } catch {
-    $('arBars').innerHTML = '<div class="d2-empty">Não foi possível carregar.</div>';
+    for (const id of ['arBars', 'faBars', 'trPrioridade', 'tsTop']) {
+      $(id).innerHTML = '<div class="d2-empty">Não foi possível carregar.</div>';
+    }
   }
 }
 
