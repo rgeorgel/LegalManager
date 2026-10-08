@@ -90,11 +90,38 @@
       color: var(--color-text-muted);
       font-size: 13px;
     }
+    /* A rolagem é do body; com overflow:auto o .main-content viraria o
+       contêiner do sticky (sem rolar) e a barra de ações não grudaria. */
+    .main-content { overflow: visible; }
     .theme-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 50;
       display: flex;
+      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
       margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .theme-actions.dirty {
+      border-color: var(--color-primary);
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08), 0 0 0 2px var(--color-primary-light);
+    }
+    .theme-dirty-label {
+      display: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+    .theme-actions.dirty .theme-dirty-label { display: inline; }
+    @media (max-width: 768px) {
+      .theme-actions { bottom: var(--bottom-nav-height); }
     }
     .theme-locked {
       padding: 24px;
@@ -223,8 +250,8 @@
       <div class="config-section" data-tour="tema-presets">
         <div class="config-section-title">Temas predefinidos</div>
         <p style="font-size:13px;color:var(--color-text-muted);margin-bottom:14px">
-          Escolha um ponto de partida. Após aplicar, ajuste cores na seção
-          <strong>Personalizar</strong> abaixo e clique em <strong>Salvar tema</strong>.
+          Clique em um tema para pré-visualizar. Se quiser, ajuste as cores na seção
+          <strong>Personalizar</strong> abaixo — o tema só é aplicado ao clicar em <strong>Salvar tema</strong>.
         </p>
         <div class="preset-group-title">☀️ Temas claros</div>
         <div class="preset-grid" id="presetGridLight"></div>
@@ -301,7 +328,8 @@
         <textarea id="customCss" placeholder="/* Ex: .header-logo img { border-radius: 8px; } */"></textarea>
       </div>
 
-      <div class="theme-actions">
+      <div class="theme-actions" id="themeActions">
+        <span class="theme-dirty-label">● Alterações não salvas</span>
         <button class="btn btn-primary" id="btnSalvar">Salvar tema</button>
         <button class="btn btn-secondary" id="btnVisualizar">Visualizar sem salvar</button>
         <button class="btn btn-secondary" id="btnResetar">Restaurar padrão</button>
@@ -371,8 +399,28 @@ import { esc as escapeHtml } from '/js/utils.js';
       customCss: preset.customCss,
     });
 
-    showAlert(`Tema "${preset.name}" aplicado (clique em Salvar para persistir).`, 'success');
+    // Sem alerta de "aplicado": dava a impressão de que o clique já salvava o tema.
+    // O indicador "Alterações não salvas" na barra fixa cumpre esse papel.
+    hideAlert();
+    updateDirty();
   }
+
+  // Snapshot do que está salvo, para indicar alterações pendentes na barra de ações.
+  const themeActions = document.getElementById('themeActions');
+  let savedSnapshot = null;
+  const isDirty = () => savedSnapshot !== null && JSON.stringify(collectTheme()) !== savedSnapshot;
+  function markSaved() {
+    savedSnapshot = JSON.stringify(collectTheme());
+    updateDirty();
+  }
+  function updateDirty() {
+    themeActions.classList.toggle('dirty', isDirty());
+  }
+  form.addEventListener('input', updateDirty);
+  form.addEventListener('change', updateDirty);
+  window.addEventListener('beforeunload', (e) => {
+    if (isDirty()) e.preventDefault();
+  });
 
   function highlightActivePreset() {
     const active = findPresetByTheme(currentTheme);
@@ -425,6 +473,7 @@ import { esc as escapeHtml } from '/js/utils.js';
 
     renderLogo(currentLogo);
     document.getElementById('btnRemoverLogo').style.display = currentLogo ? 'inline-block' : 'none';
+    markSaved();
   }
 
   function renderLogo(url) {
@@ -494,6 +543,7 @@ import { esc as escapeHtml } from '/js/utils.js';
       sessionStorage.setItem('tenant_theme', JSON.stringify(currentTheme));
       applyTenantTheme(currentTheme);
       highlightActivePreset();
+      markSaved();
       showAlert('Tema salvo com sucesso.', 'success');
     } catch (e) {
       showAlert('Erro ao salvar: ' + e.message, 'error');
