@@ -537,6 +537,21 @@ export const TOURS = [
     ],
   },
   {
+    id: 'novidade-assistente',
+    label: '✨ Assistente de IA',
+    oculto: true,
+    steps: [
+      {
+        id: 'assistente-botao',
+        page: '/pages/dashboard.html',
+        selector: '#asxFab',
+        title: 'Seu assistente de IA',
+        text: 'Clique aqui e pergunte em linguagem natural: prazos da semana, audiências, clientes em atraso, resumo de um processo… Ele consulta os dados do escritório e responde com links para os registros.',
+        placement: 'left',
+      },
+    ],
+  },
+  {
     id: 'novidade-dashboard',
     label: '📊 Dashboard personalizável',
     oculto: true,

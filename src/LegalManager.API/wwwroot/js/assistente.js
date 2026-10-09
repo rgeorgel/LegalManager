@@ -1,8 +1,7 @@
 // Assistente de IA — chat flutuante (canto inferior direito) que responde perguntas sobre os
-// dados do escritório (POST /api/assistente/perguntar). EM TESTE: só aparece para quem tiver
-// a flag `localStorage.causify_assistente = "1"` (e plano Plus ou superior — o backend também
-// exige). Para ativar, no console do navegador:
-//   localStorage.setItem('causify_assistente', '1'); location.reload();
+// dados do escritório (POST /api/assistente/perguntar). Visível para todos os usuários do
+// escritório (não para o portal do cliente); uso a partir do plano Plus (o backend também
+// exige) — no Free o painel abre com uma conversa de exemplo e um convite para o Plus.
 // O histórico fica no sessionStorage, por usuário (sobrevive à navegação entre páginas e a
 // minimizar/restaurar o painel; some ao fechar a aba). O painel pode ser maximizado para
 // respostas grandes (tabelas).
@@ -11,8 +10,8 @@
 import { apiFetch } from './api.js';
 import { renderMarkdown } from './markdown.js';
 import { esc } from './utils.js';
+import { trackEvent } from './analytics.js';
 
-const FLAG = 'causify_assistente';
 const HIST_KEY = 'assistente_historico';
 const OPEN_KEY = 'assistente_aberto';
 const CONVERSA_KEY = 'assistente_conversa';
@@ -45,6 +44,7 @@ const ROTULOS_FERRAMENTA = {
 let historico = []; // [{ papel: 'user'|'assistant', conteudo, ferramentas? }]
 let enviando = false;
 let naoLida = false; // resposta chegou com o painel minimizado
+let bloqueado = false; // plano Free: mostra o convite para o Plus em vez do chat
 let modo = 'chat'; // 'chat' | 'historico' (lista de conversas anteriores)
 let conversas = null; // cache da lista de conversas (recarregada ao abrir o histórico)
 // Chaves do sessionStorage por usuário: se outra pessoa fizer login na mesma aba, não vê a
@@ -53,20 +53,19 @@ let sufixo = '';
 const chave = (k) => `${k}:${sufixo}`;
 
 export function assistenteHabilitado(user) {
-  if (!user || user.perfil === 'Cliente') return false;
-  if ((user.plano ?? 'Free') === 'Free') return false;
-  try { return localStorage.getItem(FLAG) === '1'; } catch { return false; }
+  return !!user && user.perfil !== 'Cliente';
 }
 
 export function injectAssistente(user) {
   if (!assistenteHabilitado(user) || document.getElementById('assistenteIA')) return;
   sufixo = `${user.tenantId ?? ''}:${user.id ?? ''}`;
-  historico = carregarHistorico();
+  bloqueado = (user.plano ?? 'Free') === 'Free';
+  historico = bloqueado ? [] : carregarHistorico();
   injectStyles();
 
   const wrap = document.createElement('div');
   wrap.id = 'assistenteIA';
-  wrap.className = 'asx';
+  wrap.className = bloqueado ? 'asx asx-bloqueado' : 'asx';
   wrap.innerHTML = `
     <button type="button" class="asx-fab" id="asxFab" title="Assistente de IA" aria-expanded="false" aria-controls="asxPanel">
       <span aria-hidden="true">✨</span><span class="asx-fab-label">Assistente</span>
@@ -90,6 +89,23 @@ export function injectAssistente(user) {
         <textarea id="asxInput" rows="1" maxlength="4000" placeholder="Digite sua pergunta…" aria-label="Pergunta"></textarea>
         <button type="submit" class="asx-send" id="asxSend" title="Enviar">➤</button>
       </form>
+      ${bloqueado ? `
+      <div class="asx-paywall" role="region" aria-labelledby="asxPaywallTitulo">
+        <div class="asx-paywall-card">
+          <div class="asx-paywall-icone" aria-hidden="true">✨</div>
+          <div class="asx-paywall-selo">Plano Plus</div>
+          <h3 id="asxPaywallTitulo">Seu assistente para o dia a dia do escritório</h3>
+          <p>Pergunte em linguagem natural e receba as respostas com os dados do seu escritório:</p>
+          <ul>
+            <li>Prazos e tarefas da semana, atrasados e por responsável</li>
+            <li>Audiências e compromissos da agenda</li>
+            <li>Clientes em atraso, honorários e financeiro</li>
+            <li>Resumo de processos e contatos, com links diretos</li>
+          </ul>
+          <a class="asx-paywall-cta" id="asxPaywallCta" href="/pages/assinatura.html">Conhecer o plano Plus</a>
+          <button type="button" class="asx-link" id="asxPaywallDepois">Agora não</button>
+        </div>
+      </div>` : ''}
       <div class="asx-aviso">As respostas são geradas por IA e podem conter erros. Confira nos registros. As conversas são registradas para auditoria.</div>
     </section>
   `;
@@ -98,6 +114,11 @@ export function injectAssistente(user) {
 
   document.getElementById('asxFab').addEventListener('click', () => alternar());
   document.getElementById('asxMin').addEventListener('click', () => alternar(false));
+  if (bloqueado) {
+    document.getElementById('asxPaywallDepois').addEventListener('click', () => alternar(false));
+    document.getElementById('asxPaywallCta').addEventListener('click', () =>
+      trackEvent('assistente_upgrade_cta_click', { plano_alvo: 'Plus' }));
+  }
   document.getElementById('asxMax').addEventListener('click', () => maximizar());
   document.getElementById('asxPanel').addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
@@ -129,8 +150,20 @@ export function injectAssistente(user) {
 
   render();
   if (sessionGet(chave(MAXIMIZADO_KEY)) === '1') maximizar(true);
-  if (sessionGet(chave(OPEN_KEY)) === '1') alternar(true);
+  if (sessionGet(chave(OPEN_KEY)) === '1' || abrirPelaUrl()) alternar(true);
   else atualizarFab();
+}
+
+// "?assistente=1" (ex.: botão da novidade do assistente) abre o painel; o parâmetro sai da URL
+// para não reabrir ao recarregar.
+function abrirPelaUrl() {
+  try {
+    const url = new URL(location.href);
+    if (url.searchParams.get('assistente') !== '1') return false;
+    url.searchParams.delete('assistente');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    return true;
+  } catch { return false; }
 }
 
 function maximizar(ligar) {
@@ -166,6 +199,7 @@ function alternar(abrir) {
   document.getElementById('assistenteIA').classList.toggle('open', aberto);
   sessionSet(chave(OPEN_KEY), aberto ? '1' : '0');
   if (aberto) naoLida = false;
+  if (aberto && bloqueado) trackEvent('assistente_paywall_visto', { plano_alvo: 'Plus' });
   atualizarFab();
   // O painel ocupa o canto do chat de suporte: esconde o botão do Crisp enquanto está aberto.
   crisp(aberto ? 'chat:hide' : 'chat:show');
@@ -208,7 +242,7 @@ function novaConversa() {
 
 async function enviar(texto) {
   texto = (texto || '').trim();
-  if (!texto || enviando) return;
+  if (!texto || enviando || bloqueado) return;
 
   const input = document.getElementById('asxInput');
   input.value = '';
@@ -241,7 +275,7 @@ async function enviar(texto) {
 // ── Conversas anteriores ──────────────────────────────────────────────────
 
 async function abrirHistorico() {
-  if (enviando) return;
+  if (enviando || bloqueado) return;
   modo = 'historico';
   conversas = null;
   render();
@@ -311,6 +345,25 @@ function renderHistorico(body) {
   body.scrollTop = 0;
 }
 
+// Plano Free: conversa de exemplo (desfocada, atrás do convite) e controles desativados.
+function renderExemplo(body) {
+  ['asxSend', 'asxNova', 'asxHist', 'asxInput'].forEach(id => { document.getElementById(id).disabled = true; });
+  document.getElementById('asxInput').placeholder = 'Disponível a partir do plano Plus';
+  body.setAttribute('aria-hidden', 'true');
+  body.innerHTML = `
+    <div class="asx-msg asx-user">Quais prazos vencem esta semana?</div>
+    <div class="asx-msg asx-bot"><div class="asx-md">${renderMarkdown(
+      'Você tem **3 prazos** nesta semana:\n\n' +
+      '| Prazo | Processo | Responsável |\n|---|---|---|\n' +
+      '| 14/10 | Contestação — 0001234-56.2026 | Ana |\n' +
+      '| 15/10 | Réplica — 0004567-89.2025 | Bruno |\n' +
+      '| 17/10 | Recurso — 0007890-12.2026 | Ana |\n\n' +
+      'O mais urgente é a **contestação**, que vence na terça.')}</div></div>
+    <div class="asx-msg asx-user">Quais clientes estão com honorários em atraso?</div>
+    <div class="asx-msg asx-bot"><div class="asx-md">${renderMarkdown(
+      '2 clientes estão em atraso: **Carlos M.** (R$ 1.253,60) e **Beatriz L.** (R$ 81,42).')}</div></div>`;
+}
+
 function render() {
   const body = document.getElementById('asxBody');
   if (!body) return;
@@ -320,6 +373,7 @@ function render() {
   document.getElementById('asxHist').setAttribute('aria-pressed', String(modo === 'historico'));
   document.getElementById('asxForm').hidden = modo === 'historico';
 
+  if (bloqueado) { renderExemplo(body); return; }
   if (modo === 'historico') { renderHistorico(body); return; }
 
   if (historico.length === 0 && !enviando) {
@@ -402,6 +456,35 @@ function injectStyles() {
       color: var(--color-text);
     }
     .asx-panel[hidden] { display: none; }
+    .asx-panel { position: relative; }
+    .asx-bloqueado .asx-body { filter: blur(3px); user-select: none; pointer-events: none; }
+    .asx-paywall {
+      position: absolute; inset: 0; z-index: 2; overflow-y: auto;
+      display: flex; align-items: center; justify-content: center; padding: 88px 20px 20px;
+      background: linear-gradient(to bottom,
+        color-mix(in srgb, var(--color-surface) 35%, transparent),
+        color-mix(in srgb, var(--color-surface) 88%, transparent));
+    }
+    /* Cabeçalho (minimizar/maximizar) continua acessível acima do convite. */
+    .asx-bloqueado .asx-header { position: relative; z-index: 3; background: var(--color-surface); }
+    .asx-paywall-card {
+      background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border);
+      border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 22px 20px 16px;
+      max-width: 340px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .asx-paywall-icone { font-size: 28px; line-height: 1; }
+    .asx-paywall-selo {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px;
+    }
+    .asx-paywall-card h3 { font-size: 15px; line-height: 1.35; margin: 2px 0 0; }
+    .asx-paywall-card p { font-size: 12.5px; color: var(--color-text-muted); }
+    .asx-paywall-card ul { text-align: left; font-size: 12.5px; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
+    .asx-paywall-cta {
+      margin-top: 6px; display: block; align-self: stretch; text-decoration: none; font-weight: 700; font-size: 14px;
+      background: var(--color-primary); color: #fff !important; padding: 10px 14px; border-radius: 8px;
+    }
+    .asx-paywall-cta:hover { background: var(--color-primary-dark); }
     /* Maximizado: ocupa quase a tela toda (respostas com tabelas grandes). */
     .asx.open.max { inset: 24px; z-index: 1100; }
     .asx.open.max .asx-panel { width: 100%; height: 100%; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.25); }

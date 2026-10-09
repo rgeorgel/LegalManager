@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace LegalManager.API.Controllers;
 
 /// <summary>
-/// Assistente de IA sobre os dados do escritório — em teste: no frontend só aparece com a flag
-/// <c>localStorage.causify_assistente = "1"</c>; sem cobrança de créditos; a partir do plano Plus.
+/// Assistente de IA sobre os dados do escritório — sem cobrança de créditos; a partir do plano Plus
+/// (no Free o frontend mostra o convite para o upgrade).
 /// </summary>
 [ApiController]
 [Route("api/assistente")]

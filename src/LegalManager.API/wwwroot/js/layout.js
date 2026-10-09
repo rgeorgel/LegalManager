@@ -115,7 +115,7 @@ export function initLayout() {
   // Também é responsável por mostrar o modal de boas-vindas uma vez por sessão.
   injectPerguntasWidget();
 
-  // Assistente de IA (em teste): só com a flag localStorage.causify_assistente = "1", plano Plus+.
+  // Assistente de IA: para todos; no Free o painel mostra o convite para o plano Plus.
   injectAssistente(user);
 
   // Barra inferior de progresso da importação de processos por OAB (em background).
