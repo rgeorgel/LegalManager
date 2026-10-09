@@ -60,6 +60,11 @@ services:
       IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}
       IA__BaseUrl: ${IA_BASE_URL:-}
       IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
+      # Assistente de IA (opcional): sem ASSISTENTE_PROVIDER, reaproveita a configuração IA__*.
+      Assistente__Provider: ${ASSISTENTE_PROVIDER:-}
+      Assistente__ApiKey: ${ASSISTENTE_API_KEY:-}
+      Assistente__Model: ${ASSISTENTE_MODEL:-}
+      Assistente__BaseUrl: ${ASSISTENTE_BASE_URL:-}
       DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
       DataJud__ApiKey: ${DATAJUD_API_KEY:-}
       Escavador__UseMock: ${ESCAVADOR_USE_MOCK:-false}

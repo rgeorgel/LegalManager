@@ -197,6 +197,10 @@ builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
 builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
+builder.Services.AddHttpClient<LegalManager.Infrastructure.Assistente.IAssistenteLlmClient,
+    LegalManager.Infrastructure.Assistente.AssistenteLlmClient>(client => client.Timeout = TimeSpan.FromSeconds(90));
+builder.Services.AddScoped<LegalManager.Infrastructure.Assistente.AssistenteFerramentas>();
+builder.Services.AddScoped<IAssistenteService, LegalManager.Infrastructure.Assistente.AssistenteService>();
 builder.Services.AddScoped<SeedService>();
 builder.Services.AddScoped<IHonorarioService, HonorarioService>();
 builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioService>();
@@ -355,6 +359,16 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 20,
                 QueueLimit = 0
             }));
+    // Assistente de IA (gratuito, em teste): por usuário, para conter custo com o provedor.
+    options.AddPolicy("assistente", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? httpContext.GetClientIpAddress(),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 10,
+                QueueLimit = 0
+            }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -471,7 +485,6 @@ app.Use(async (ctx, next) =>
 
 app.UseHttpsRedirection();
 app.UseCors();
-app.UseRateLimiter();
 var assetVersioning = new AssetVersioning(app.Environment, app.Configuration);
 app.Use((ctx, next) => assetVersioning.RemoverPrefixo(ctx, next));
 app.UseDefaultFiles();
@@ -482,6 +495,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 app.UseAuthentication();
 app.UseAuthorization();
+// Depois da autenticação: a política "assistente" particiona pelo usuário logado.
+app.UseRateLimiter();
 app.UseMiddleware<RequestEnrichmentMiddleware>();
 
 var hangfireDashboardUser = builder.Configuration["Hangfire:DashboardUser"] ?? "admin";

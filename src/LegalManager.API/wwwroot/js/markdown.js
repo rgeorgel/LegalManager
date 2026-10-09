@@ -10,8 +10,19 @@ function renderInline(text) {
   s = s.replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>');
   s = s.replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g,
     '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Links internos do sistema (ex.: respostas do assistente) abrem na mesma aba.
+  s = s.replace(/\[([^\]]+)\]\((\/pages\/[^\s)"'<>]+)\)/g, '<a href="$2">$1</a>');
 
   return s;
+}
+
+// Lista "solta" (itens separados por linha em branco): pula as linhas em branco quando a
+// próxima linha não vazia é outro item da mesma lista — senão cada item vira uma lista
+// separada e uma lista numerada sai como "1. 1. 1.".
+function proximoItem(lines, j, re) {
+  let k = j;
+  while (k < lines.length && !lines[k].trim()) k++;
+  return k < lines.length && re.test(lines[k]) ? k : j;
 }
 
 function isListItemStart(line) {
@@ -95,19 +106,22 @@ export function renderMarkdown(md) {
       const items = [];
       while (i < lines.length && /^[-*+]\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^[-*+]\s+/, ''));
-        i++;
+        i = proximoItem(lines, i + 1, /^[-*+]\s+/);
       }
       out.push('<ul>' + items.map(it => `<li>${renderInline(it)}</li>`).join('') + '</ul>');
       continue;
     }
 
     if (/^\d+\.\s+/.test(line)) {
+      // Respeita o número do primeiro item: uma lista "2. ... 3. ..." continua de onde parou.
+      const inicio = parseInt(line, 10);
       const items = [];
       while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^\d+\.\s+/, ''));
-        i++;
+        i = proximoItem(lines, i + 1, /^\d+\.\s+/);
       }
-      out.push('<ol>' + items.map(it => `<li>${renderInline(it)}</li>`).join('') + '</ol>');
+      const start = inicio > 1 ? ` start="${inicio}"` : '';
+      out.push(`<ol${start}>` + items.map(it => `<li>${renderInline(it)}</li>`).join('') + '</ol>');
       continue;
     }
 

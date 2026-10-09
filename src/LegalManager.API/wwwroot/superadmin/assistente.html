@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <!-- Microsoft Clarity — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x099iggkqu");
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Assistente IA</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .filters input, .filters select { padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); }
+    .filters input[type="text"] { flex: 1; min-width: 160px; }
+    .section-title { font-size: 13px; font-weight: 700; margin: 8px 0 10px; display: flex; align-items: center; gap: 10px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: var(--color-bg); border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); white-space: nowrap; }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.clickable { cursor: pointer; }
+    .data-table tr.clickable:hover td { background: var(--color-bg); }
+    .data-table tr.selected td { background: var(--color-primary-light); }
+    .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .muted { color: var(--color-text-muted); }
+    .clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-red { background: #fee2e2; color: #b91c1c; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: var(--color-primary-light); color: var(--color-primary); padding: 3px 4px 3px 10px; border-radius: 999px; }
+    .chip button { border: none; background: none; cursor: pointer; color: inherit; font-size: 12px; padding: 0 4px; }
+    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; }
+    .pagination button { padding: 5px 12px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-surface); cursor: pointer; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--color-surface); color: var(--color-text); border-radius: 10px; padding: 24px; width: 100%; max-width: 900px; max-height: 92vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 16px; font-size: 13px; margin-bottom: 8px; }
+    .meta span:first-child { display: block; color: var(--color-text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .detail-section-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin: 16px 0 8px; }
+    .bubble { border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+    .bubble-user { background: var(--color-primary-light); white-space: pre-wrap; }
+    .bubble-bot p { margin: 0 0 6px; } .bubble-bot p:last-child { margin: 0; }
+    .bubble-bot ul, .bubble-bot ol { margin: 4px 0 6px 18px; }
+    .bubble-bot table { border-collapse: collapse; font-size: 12px; margin: 6px 0; }
+    .bubble-bot th, .bubble-bot td { border: 1px solid var(--color-border); padding: 3px 6px; }
+    .bubble-bot a { color: var(--color-primary); text-decoration: underline dotted; cursor: help; }
+    details.tool { border: 1px solid var(--color-border); border-radius: 6px; margin-bottom: 6px; font-size: 12px; }
+    details.tool summary { padding: 7px 10px; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    details.tool[open] summary { border-bottom: 1px solid var(--color-border); }
+    pre.code { margin: 0; padding: 8px 10px; background: var(--color-bg); font-size: 11.5px; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow-y: auto; }
+    pre.error-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 6px; padding: 10px 12px; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    .turno { border-top: 1px dashed var(--color-border); padding-top: 12px; margin-top: 12px; }
+    .turno:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Assistente IA</h1>
+      </div>
+      <p style="color:var(--color-text-muted);font-size:13px;margin:-8px 0 16px">
+        Monitoramento e auditoria do assistente de IA: o que cada usuário perguntou, o que foi respondido e quais dados
+        do escritório foram consultados (ferramentas, argumentos e retorno).
+      </p>
+
+      <div class="filters">
+        <input type="text" id="tenantFilter" placeholder="Buscar por tenant...">
+        <input type="text" id="buscaFilter" placeholder="Buscar na pergunta ou resposta...">
+        <select id="statusFilter">
+          <option value="">Sucesso e erro</option>
+          <option value="true">Somente sucesso</option>
+          <option value="false">Somente erro</option>
+        </select>
+        <input type="date" id="deFilter" title="De">
+        <input type="date" id="ateFilter" title="Até">
+      </div>
+
+      <div class="section-title">Uso por tenant <span class="muted" style="font-weight:400" id="periodoInfo"></span></div>
+      <div style="overflow-x:auto;margin-bottom:24px">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tenant</th>
+              <th class="num">Perguntas</th>
+              <th class="num">Conversas</th>
+              <th class="num">Usuários</th>
+              <th class="num">Erros</th>
+              <th class="num">Tokens (entrada / saída)</th>
+              <th>Última pergunta</th>
+            </tr>
+          </thead>
+          <tbody id="resumoBody">
+            <tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section-title">Perguntas <span id="tenantChip"></span></div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Tenant</th>
+              <th>Usuário</th>
+              <th>Pergunta</th>
+              <th>Resposta</th>
+              <th class="num">Ferramentas</th>
+              <th>Status</th>
+              <th class="num">Duração</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <button id="prevBtn" disabled>← Anterior</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn" disabled>Próxima →</button>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="modal-title">
+        <span id="detailTitle">Detalhe da interação</span>
+        <button class="btn btn-sm" id="conversaBtn" hidden>Ver conversa completa</button>
+      </div>
+      <div id="detailContent">Carregando...</div>
+      <div class="modal-footer">
+        <button class="btn" id="closeModalBtn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { renderMarkdown } from '/js/markdown.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const pageSize = 30;
+    let page = 1;
+    let tenantSelecionado = null; // { id, nome } — clique numa linha do resumo
+    let conversaAtual = null;
+
+    const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('pt-BR') : '—';
+    const fmtNum = (n) => (n ?? 0).toLocaleString('pt-BR');
+    const fmtMs = (ms) => ms == null ? '—' : ms < 1000 ? `${ms} ms` : `${(ms / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} s`;
+    const statusBadge = (ok) => ok ? '<span class="badge badge-green">Sucesso</span>' : '<span class="badge badge-red">Erro</span>';
+    const isoDia = (d) => d.toISOString().slice(0, 10);
+
+    // Período padrão: últimos 30 dias.
+    const hoje = new Date();
+    document.getElementById('ateFilter').value = isoDia(hoje);
+    document.getElementById('deFilter').value = isoDia(new Date(hoje.getTime() - 30 * 86400000));
+
+    function filtros() {
+      const params = new URLSearchParams();
+      const tenantNome = document.getElementById('tenantFilter').value.trim();
+      const de = document.getElementById('deFilter').value;
+      const ate = document.getElementById('ateFilter').value;
+      if (tenantNome) params.set('tenantNome', tenantNome);
+      if (de) params.set('de', de);
+      if (ate) params.set('ate', ate);
+      return params;
+    }
+
+    async function loadResumo() {
+      const body = document.getElementById('resumoBody');
+      const params = filtros();
+      const de = params.get('de'), ate = params.get('ate');
+      document.getElementById('periodoInfo').textContent =
+        de || ate ? `(${de ? de.split('-').reverse().join('/') : '…'} a ${ate ? ate.split('-').reverse().join('/') : 'hoje'})` : '(últimos 30 dias)';
+      try {
+        const lista = await saFetch(`/superadmin/assistente/resumo?${params}`);
+        if (lista.length === 0) {
+          body.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Nenhum uso do assistente no período.</td></tr>';
+          return;
+        }
+        body.innerHTML = lista.map(r => `
+          <tr class="clickable${tenantSelecionado?.id === r.tenantId ? ' selected' : ''}" data-tenant="${r.tenantId}" data-nome="${esc(r.tenantNome || '')}">
+            <td>${esc(r.tenantNome) || `<span class="muted">${r.tenantId}</span>`}</td>
+            <td class="num">${fmtNum(r.perguntas)}</td>
+            <td class="num">${fmtNum(r.conversas)}</td>
+            <td class="num">${fmtNum(r.usuarios)}</td>
+            <td class="num">${r.erros ? `<span class="badge badge-red">${fmtNum(r.erros)}</span>` : '0'}</td>
+            <td class="num">${fmtNum(r.tokensEntrada)} / ${fmtNum(r.tokensSaida)}</td>
+            <td class="muted" style="white-space:nowrap">${fmtDateTime(r.ultimaPergunta)}</td>
+          </tr>`).join('');
+      } catch (e) {
+        body.innerHTML = `<tr><td colspan="7" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    async function loadInteracoes() {
+      const body = document.getElementById('tableBody');
+      const params = filtros();
+      params.set('page', page);
+      params.set('pageSize', pageSize);
+      if (tenantSelecionado) params.set('tenantId', tenantSelecionado.id);
+      const busca = document.getElementById('buscaFilter').value.trim();
+      const sucesso = document.getElementById('statusFilter').value;
+      if (busca) params.set('busca', busca);
+      if (sucesso) params.set('sucesso', sucesso);
+
+      document.getElementById('tenantChip').innerHTML = tenantSelecionado
+        ? `<span class="chip">${esc(tenantSelecionado.nome || 'tenant')} <button type="button" id="limparTenant" title="Remover filtro">✕</button></span>`
+        : '';
+      document.getElementById('limparTenant')?.addEventListener('click', () => { tenantSelecionado = null; page = 1; recarregar(); });
+
+      body.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>';
+      try {
+        const data = await saFetch(`/superadmin/assistente/interacoes?${params}`);
+        if (data.items.length === 0) {
+          body.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Nenhuma pergunta encontrada.</td></tr>';
+        } else {
+          body.innerHTML = data.items.map(i => `
+            <tr class="clickable" data-id="${i.id}">
+              <td class="muted" style="white-space:nowrap">${fmtDateTime(i.criadoEm)}</td>
+              <td>${esc(i.tenantNome) || '—'}</td>
+              <td>${esc(i.usuarioNome) || '—'}${i.impersonado ? ' <span class="badge badge-amber" title="Feita por super admin impersonando">impersonado</span>' : ''}</td>
+              <td><div class="clip">${esc(i.pergunta)}</div></td>
+              <td><div class="clip ${i.sucesso ? 'muted' : ''}" style="${i.sucesso ? '' : 'color:var(--color-danger)'}">${esc(i.resposta) || '—'}</div></td>
+              <td class="num">${i.quantidadeFerramentas}</td>
+              <td>${statusBadge(i.sucesso)}</td>
+              <td class="num muted">${fmtMs(i.duracaoMs)}</td>
+            </tr>`).join('');
+        }
+        const pages = Math.max(1, Math.ceil(data.total / pageSize));
+        document.getElementById('pageInfo').textContent = `Página ${page} de ${pages} (${fmtNum(data.total)} perguntas)`;
+        document.getElementById('prevBtn').disabled = page <= 1;
+        document.getElementById('nextBtn').disabled = page >= pages;
+      } catch (e) {
+        body.innerHTML = `<tr><td colspan="8" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    function recarregar() { loadResumo(); loadInteracoes(); }
+
+    // ── Detalhe ────────────────────────────────────────────────────────────
+    function pretty(json) {
+      if (json == null) return '';
+      if (typeof json !== 'string') return JSON.stringify(json, null, 2);
+      const truncado = json.endsWith('…');
+      try { return JSON.stringify(JSON.parse(json), null, 2); }
+      catch { return truncado ? `${json}\n\n(retorno truncado na auditoria)` : json; }
+    }
+
+    // Links da resposta apontam para telas do portal do escritório — no super admin só mostram o destino.
+    function respostaHtml(md) {
+      const div = document.createElement('div');
+      div.innerHTML = renderMarkdown(md || '');
+      div.querySelectorAll('a[href^="/pages/"]').forEach(a => {
+        a.title = a.getAttribute('href');
+        a.removeAttribute('href');
+      });
+      return div.innerHTML;
+    }
+
+    function ferramentasHtml(json) {
+      if (!json) return '<p class="muted" style="font-size:13px">Nenhuma ferramenta chamada.</p>';
+      let lista;
+      try { lista = JSON.parse(json); } catch { return `<pre class="code">${esc(json)}</pre>`; }
+      return lista.map((f, idx) => `
+        <details class="tool">
+          <summary>
+            <strong>${idx + 1}. ${esc(f.nome)}</strong>
+            ${f.erro ? '<span class="badge badge-red">erro</span>' : ''}
+            <span class="muted">${esc(JSON.stringify(f.argumentos ?? {}))}</span>
+            <span class="muted" style="margin-left:auto">${fmtNum(f.tamanhoResultado)} caracteres</span>
+          </summary>
+          <div class="detail-section-title" style="margin:8px 10px 4px">Argumentos</div>
+          <pre class="code">${esc(pretty(f.argumentos))}</pre>
+          <div class="detail-section-title" style="margin:8px 10px 4px">Retorno${f.tamanhoResultado > (f.resultado?.length ?? 0) ? ' (truncado)' : ''}</div>
+          <pre class="code">${esc(pretty(f.resultado))}</pre>
+        </details>`).join('');
+    }
+
+    function turnoHtml(i, completo) {
+      return `
+        <div class="turno">
+          <div class="meta">
+            <div><span>Data/Hora</span>${fmtDateTime(i.criadoEm)}</div>
+            ${completo ? `
+              <div><span>Tenant</span>${esc(i.tenantNome) || i.tenantId}</div>
+              <div><span>Usuário</span>${esc(i.usuarioNome) || i.usuarioId}</div>
+              ${i.impersonadoPorId ? `<div><span>Impersonado por</span>${esc(i.impersonadoPorNome) || i.impersonadoPorId}</div>` : ''}
+              <div><span>Modelo</span>${esc(i.provedor)} · ${esc(i.modelo)}</div>` : ''}
+            <div><span>Status</span>${statusBadge(i.sucesso)}${i.idiomaCorrigido ? ' <span class="badge badge-amber" title="A resposta original tinha trechos em outro idioma e foi reescrita em português">idioma corrigido</span>' : ''}</div>
+            <div><span>Tokens (entrada / saída)</span>${fmtNum(i.tokensEntrada)} / ${fmtNum(i.tokensSaida)}</div>
+            <div><span>Duração</span>${fmtMs(i.duracaoMs)}</div>
+          </div>
+          <div class="detail-section-title">Pergunta</div>
+          <div class="bubble bubble-user">${esc(i.pergunta)}</div>
+          ${i.sucesso ? `
+            <div class="detail-section-title">Resposta</div>
+            <div class="bubble bubble-bot">${respostaHtml(i.resposta)}</div>
+          ` : `
+            <div class="detail-section-title">Erro</div>
+            <pre class="error-box">${esc(i.mensagemErro) || 'Erro não informado.'}</pre>
+          `}
+          <div class="detail-section-title">Dados consultados (${i.ferramentasJson ? JSON.parse(i.ferramentasJson).length : 0})</div>
+          ${ferramentasHtml(i.ferramentasJson)}
+        </div>`;
+    }
+
+    async function abrirDetalhe(id) {
+      const content = document.getElementById('detailContent');
+      const btn = document.getElementById('conversaBtn');
+      document.getElementById('detailTitle').textContent = 'Detalhe da interação';
+      btn.hidden = true;
+      content.innerHTML = 'Carregando...';
+      document.getElementById('detailModal').classList.add('open');
+      try {
+        const i = await saFetch(`/superadmin/assistente/interacoes/${id}`);
+        conversaAtual = i.conversaId;
+        content.innerHTML = turnoHtml(i, true);
+        btn.hidden = false;
+      } catch (e) {
+        content.innerHTML = `<p style="color:var(--color-danger)">Erro ao carregar: ${esc(e.message)}</p>`;
+      }
+    }
+
+    async function abrirConversa() {
+      const content = document.getElementById('detailContent');
+      document.getElementById('conversaBtn').hidden = true;
+      content.innerHTML = 'Carregando...';
+      try {
+        const lista = await saFetch(`/superadmin/assistente/conversas/${conversaAtual}`);
+        const p = lista[0];
+        document.getElementById('detailTitle').textContent = `Conversa (${lista.length} pergunta${lista.length === 1 ? '' : 's'})`;
+        content.innerHTML = `
+          <div class="meta" style="margin-bottom:16px">
+            <div><span>Tenant</span>${esc(p.tenantNome) || p.tenantId}</div>
+            <div><span>Usuário</span>${esc(p.usuarioNome) || p.usuarioId}</div>
+            <div><span>Modelo</span>${esc(p.provedor)} · ${esc(p.modelo)}</div>
+          </div>
+          ${lista.map(i => turnoHtml(i, false)).join('')}`;
+      } catch (e) {
+        content.innerHTML = `<p style="color:var(--color-danger)">Erro ao carregar: ${esc(e.message)}</p>`;
+      }
+    }
+
+    function fecharModal() { document.getElementById('detailModal').classList.remove('open'); }
+
+    // ── Eventos ────────────────────────────────────────────────────────────
+    document.getElementById('resumoBody').addEventListener('click', (e) => {
+      const tr = e.target.closest('tr[data-tenant]');
+      if (!tr) return;
+      tenantSelecionado = tenantSelecionado?.id === tr.dataset.tenant ? null : { id: tr.dataset.tenant, nome: tr.dataset.nome };
+      page = 1;
+      recarregar();
+    });
+    document.getElementById('tableBody').addEventListener('click', (e) => {
+      const tr = e.target.closest('tr[data-id]');
+      if (tr) abrirDetalhe(tr.dataset.id);
+    });
+    document.getElementById('conversaBtn').addEventListener('click', abrirConversa);
+    document.getElementById('closeModalBtn').addEventListener('click', fecharModal);
+    document.getElementById('detailModal').addEventListener('click', (e) => { if (e.target.id === 'detailModal') fecharModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharModal(); });
+
+    document.getElementById('prevBtn').addEventListener('click', () => { page--; loadInteracoes(); });
+    document.getElementById('nextBtn').addEventListener('click', () => { page++; loadInteracoes(); });
+    ['statusFilter'].forEach(id => document.getElementById(id).addEventListener('change', () => { page = 1; loadInteracoes(); }));
+    ['deFilter', 'ateFilter'].forEach(id => document.getElementById(id).addEventListener('change', () => { page = 1; recarregar(); }));
+
+    let timer;
+    document.getElementById('tenantFilter').addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { page = 1; recarregar(); }, 350);
+    });
+    document.getElementById('buscaFilter').addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { page = 1; loadInteracoes(); }, 350);
+    });
+
+    recarregar();
+  </script>
+</body>
+</html>

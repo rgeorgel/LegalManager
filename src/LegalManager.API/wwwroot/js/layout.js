@@ -6,6 +6,7 @@ import { injectTourWidget, resumeTourIfActive } from './tour.js';
 import { injectPerguntasWidget } from './perguntas-widget.js';
 import { initImportacaoBar } from './importacao-bar.js';
 import { injectNovidadesButton } from './novidades.js';
+import { injectAssistente } from './assistente.js';
 
 import { esc } from './utils.js';
 const NAV_GROUPS = [
@@ -113,6 +114,9 @@ export function initLayout() {
   // pendente para o usuário, não injeta nada (nem o botão flutuante aparece).
   // Também é responsável por mostrar o modal de boas-vindas uma vez por sessão.
   injectPerguntasWidget();
+
+  // Assistente de IA (em teste): só com a flag localStorage.causify_assistente = "1", plano Plus+.
+  injectAssistente(user);
 
   // Barra inferior de progresso da importação de processos por OAB (em background).
   // O fim da importação gera uma notificação — atualiza o contador do sino na hora.
