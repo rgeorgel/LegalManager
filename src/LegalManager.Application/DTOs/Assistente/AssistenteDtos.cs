@@ -21,7 +21,30 @@ public record AssistentePerguntaDto(
 public record AssistenteRespostaDto(
     string Resposta,
     IReadOnlyList<string> FerramentasUsadas,
-    Guid ConversaId
+    Guid ConversaId,
+    // Alterações propostas nesta resposta, aguardando o usuário confirmar no chat.
+    IReadOnlyList<AssistenteAcaoDto>? Acoes = null
+);
+
+// ── Ações (alterações propostas pelo assistente) ────────────────────────────
+
+public record AssistenteAlteracaoDto(string Campo, string? Antes, string? Depois);
+
+/// <summary>
+/// Alteração proposta pelo assistente. Status: Pendente, Confirmada, Cancelada, Falhou, Desfeita —
+/// "Expirada" quando ficou pendente além do prazo de confirmação. DesfazerAte: até quando uma
+/// ação confirmada pode ser desfeita (null se não pode).
+/// </summary>
+public record AssistenteAcaoDto(
+    Guid Id,
+    string Tipo,
+    string Titulo,
+    IReadOnlyList<AssistenteAlteracaoDto> Alteracoes,
+    string Status,
+    DateTime ExpiraEm,
+    string? Link,
+    string? Erro,
+    DateTime? DesfazerAte = null
 );
 
 // ── Histórico do próprio usuário ────────────────────────────────────────────
@@ -39,7 +62,8 @@ public record AssistenteConversaMensagemDto(
     string Pergunta,
     string? Resposta,
     bool Sucesso,
-    IReadOnlyList<string> FerramentasUsadas
+    IReadOnlyList<string> FerramentasUsadas,
+    IReadOnlyList<AssistenteAcaoDto>? Acoes = null
 );
 
 // ── Super Admin: monitoramento/auditoria ────────────────────────────────────
@@ -59,7 +83,10 @@ public record InteracaoAssistenteListItemDto(
     int QuantidadeFerramentas,
     int TokensEntrada,
     int TokensSaida,
-    int DuracaoMs
+    int DuracaoMs,
+    // Alterações propostas na pergunta e quantas o usuário confirmou.
+    int Acoes = 0,
+    int AcoesConfirmadas = 0
 );
 
 public record InteracaoAssistentePagedResultDto(
@@ -85,7 +112,8 @@ public record InteracaoAssistenteDetalheDto(
     string Modelo,
     int TokensEntrada,
     int TokensSaida,
-    int DuracaoMs
+    int DuracaoMs,
+    IReadOnlyList<AssistenteAcaoDto>? Acoes = null
 );
 
 public record AssistenteResumoTenantDto(
@@ -97,5 +125,7 @@ public record AssistenteResumoTenantDto(
     int Erros,
     long TokensEntrada,
     long TokensSaida,
-    DateTime UltimaPergunta
+    DateTime UltimaPergunta,
+    int Acoes = 0,
+    int AcoesConfirmadas = 0
 );

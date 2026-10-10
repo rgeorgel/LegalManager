@@ -7,6 +7,10 @@
 // respostas grandes (tabelas).
 // Cada pergunta/resposta é registrada no servidor (auditoria do Super Admin → Assistente IA),
 // agrupada pelo id da conversa.
+// Alterações (contatos, tarefas, agenda, atendimentos, horas) vêm como cartões com "antes → depois":
+// nada é gravado até o usuário clicar em Confirmar (POST /api/assistente/acoes/{id}/confirmar), e
+// logo depois dá para Desfazer. Ao gravar/desfazer, dispara `assistente:alteracao` na janela para
+// a tela aberta recarregar os dados (detail: { entidade: 'contato'|'tarefa'|'evento'|'tempo', id }).
 import { apiFetch } from './api.js';
 import { renderMarkdown } from './markdown.js';
 import { esc } from './utils.js';
@@ -23,6 +27,7 @@ const SUGESTOES = [
   'Tenho tarefas atrasadas?',
   'Quais audiências tenho nos próximos 15 dias?',
   'Resumo financeiro do mês',
+  'Crie uma tarefa para amanhã às 10h',
 ];
 
 const ROTULOS_FERRAMENTA = {
@@ -39,9 +44,40 @@ const ROTULOS_FERRAMENTA = {
   listar_contratos_honorario: 'honorários',
   detalhar_contrato_honorario: 'honorários',
   listar_publicacoes: 'publicações',
+  atualizar_contato: 'contato',
+  registrar_atendimento: 'contato',
+  criar_tarefa: 'tarefas',
+  alterar_prazo_tarefa: 'tarefas',
+  atualizar_tarefa: 'tarefas',
+  criar_evento: 'agenda',
+  remarcar_evento: 'agenda',
+  registrar_horas: 'timesheet',
 };
 
-let historico = []; // [{ papel: 'user'|'assistant', conteudo, ferramentas? }]
+// Que dado cada ação altera — para avisar a tela aberta (ver `assistente:alteracao`).
+const ENTIDADE_ACAO = {
+  atualizar_contato: 'contato',
+  registrar_atendimento: 'contato',
+  criar_tarefa: 'tarefa',
+  alterar_prazo_tarefa: 'tarefa',
+  atualizar_tarefa: 'tarefa',
+  criar_evento: 'evento',
+  remarcar_evento: 'evento',
+  registrar_horas: 'tempo',
+};
+
+// Como cada situação da ação aparece no cartão e é contada ao modelo nas próximas perguntas.
+const STATUS_ACAO = {
+  Confirmada: { rotulo: '✓ Gravado', historico: 'confirmada pelo usuário e gravada' },
+  Cancelada: { rotulo: 'Cancelado', historico: 'cancelada pelo usuário (nada foi gravado)' },
+  Falhou: { rotulo: 'Não gravado', historico: 'falhou ao gravar' },
+  Desfeita: { rotulo: '↶ Desfeito', historico: 'confirmada e depois desfeita pelo usuário (nada ficou gravado)' },
+  Expirada: { rotulo: 'Expirou — peça de novo se ainda quiser', historico: 'expirou sem confirmação (nada foi gravado)' },
+  Pendente: { rotulo: '', historico: 'aguardando confirmação do usuário (ainda não gravada)' },
+};
+
+let historico = []; // [{ papel: 'user'|'assistant', conteudo, ferramentas?, acoes? }]
+const acoesEmAndamento = new Set(); // ids com confirmação/cancelamento em curso
 let enviando = false;
 let naoLida = false; // resposta chegou com o painel minimizado
 let bloqueado = false; // plano Free: mostra o convite para o Plus em vez do chat
@@ -75,7 +111,7 @@ export function injectAssistente(user) {
       <header class="asx-header">
         <div>
           <strong>Assistente</strong> <span class="asx-beta">beta</span>
-          <div class="asx-sub">Pergunte sobre processos, prazos, agenda, contatos e mais</div>
+          <div class="asx-sub">Consulte e atualize processos, tarefas, agenda, contatos e horas</div>
         </div>
         <div class="asx-header-actions">
           <button type="button" class="asx-icon-btn" id="asxHist" title="Conversas anteriores" aria-label="Conversas anteriores" aria-pressed="false">🕘</button>
@@ -101,6 +137,7 @@ export function injectAssistente(user) {
             <li>Audiências e compromissos da agenda</li>
             <li>Clientes em atraso, honorários e financeiro</li>
             <li>Resumo de processos e contatos, com links diretos</li>
+            <li>Cadastre e conclua tarefas, agende compromissos, registre atendimentos e horas pelo chat</li>
           </ul>
           <a class="asx-paywall-cta" id="asxPaywallCta" href="/pages/assinatura.html">Conhecer o plano Plus</a>
           <button type="button" class="asx-link" id="asxPaywallDepois">Agora não</button>
@@ -146,6 +183,12 @@ export function injectAssistente(user) {
     if (conversa) return continuarConversa(conversa.dataset.conversa);
     if (e.target.closest('[data-acao="voltar"]')) return voltarAoChat();
     if (e.target.closest('[data-acao="nova"]')) return novaConversa();
+    const confirmar = e.target.closest('[data-confirmar]');
+    if (confirmar) return resolverAcao(confirmar.dataset.confirmar, 'confirmar');
+    const cancelar = e.target.closest('[data-cancelar]');
+    if (cancelar) return resolverAcao(cancelar.dataset.cancelar, 'cancelar');
+    const desfazer = e.target.closest('[data-desfazer]');
+    if (desfazer) return resolverAcao(desfazer.dataset.desfazer, 'desfazer');
   });
 
   render();
@@ -255,11 +298,11 @@ async function enviar(texto) {
   atualizarFab();
 
   try {
-    const mensagens = historico.slice(-MAX_HIST).map(m => ({ papel: m.papel, conteudo: m.conteudo }));
+    const mensagens = historico.slice(-MAX_HIST).map(m => ({ papel: m.papel, conteudo: conteudoParaModelo(m) }));
     const conversaId = sessionGet(chave(CONVERSA_KEY)) || null;
     const r = await apiFetch('/assistente/perguntar', { method: 'POST', body: { mensagens, conversaId } });
     if (r.conversaId) sessionSet(chave(CONVERSA_KEY), r.conversaId);
-    historico.push({ papel: 'assistant', conteudo: r.resposta, ferramentas: r.ferramentasUsadas || [] });
+    historico.push({ papel: 'assistant', conteudo: r.resposta, ferramentas: r.ferramentasUsadas || [], acoes: r.acoes || [] });
   } catch (err) {
     historico.push({ papel: 'assistant', conteudo: err.message || 'Não foi possível obter resposta.', erro: true });
   } finally {
@@ -270,6 +313,83 @@ async function enviar(texto) {
     atualizarFab();
     if (!document.getElementById('asxPanel').hidden) input.focus();
   }
+}
+
+// ── Alterações propostas (confirmar/cancelar) ─────────────────────────────
+
+function statusAcao(a) {
+  return a.status === 'Pendente' && a.expiraEm && new Date(a.expiraEm) < new Date() ? 'Expirada' : a.status;
+}
+
+// O modelo não vê os cartões: cada resposta leva junto o que o usuário fez com as alterações,
+// para ele não repetir uma proposta já gravada nem achar que algo foi salvo sem ter sido.
+function conteudoParaModelo(m) {
+  if (m.papel !== 'assistant' || !m.acoes?.length) return m.conteudo;
+  const linhas = m.acoes.map(a => `[Ação "${a.titulo}": ${(STATUS_ACAO[statusAcao(a)] || STATUS_ACAO.Pendente).historico}]`);
+  return `${m.conteudo}\n\n${linhas.join('\n')}`;
+}
+
+async function resolverAcao(id, operacao) {
+  if (acoesEmAndamento.has(id)) return;
+  const msg = historico.find(m => m.acoes?.some(a => a.id === id));
+  if (!msg) return;
+  acoesEmAndamento.add(id);
+  render();
+  try {
+    const antes = msg.acoes.find(a => a.id === id);
+    const atualizada = await apiFetch(`/assistente/acoes/${encodeURIComponent(id)}/${operacao}`, { method: 'POST' });
+    msg.acoes = msg.acoes.map(a => (a.id === id ? atualizada : a));
+    trackEvent('assistente_acao', { tipo: atualizada.tipo, operacao, status: atualizada.status });
+    if (atualizada.status !== antes?.status && ['Confirmada', 'Desfeita'].includes(atualizada.status)) avisarAlteracao(atualizada);
+  } catch (err) {
+    // Falha no confirmar: a ação não foi gravada. Falha no desfazer: continua gravada (só mostra o erro).
+    msg.acoes = msg.acoes.map(a => (a.id !== id ? a
+      : operacao === 'desfazer' ? { ...a, erro: err.message || 'Não foi possível desfazer.' }
+      : { ...a, status: 'Falhou', erro: err.message || 'Não foi possível concluir.' }));
+  } finally {
+    acoesEmAndamento.delete(id);
+    salvarHistorico();
+    render();
+  }
+}
+
+function avisarAlteracao(acao) {
+  const entidade = ENTIDADE_ACAO[acao.tipo];
+  if (!entidade) return;
+  try {
+    window.dispatchEvent(new CustomEvent('assistente:alteracao', { detail: { entidade, id: acao.id, tipo: acao.tipo, status: acao.status } }));
+  } catch {}
+}
+
+function podeDesfazer(a) {
+  return statusAcao(a) === 'Confirmada' && a.desfazerAte && new Date(a.desfazerAte) > new Date();
+}
+
+function renderAcao(a) {
+  const status = statusAcao(a);
+  const ocupado = acoesEmAndamento.has(a.id);
+  const linhas = (a.alteracoes || []).map(x => `
+    <tr>
+      <th scope="row">${esc(x.campo)}</th>
+      <td>${x.antes != null
+        ? `<span class="asx-antes">${esc(x.antes)}</span> <span aria-label="para">→</span> `
+        : ''}<span class="asx-depois">${x.depois != null ? esc(x.depois) : '<em>(vazio)</em>'}</span></td>
+    </tr>`).join('');
+  const rodape = status === 'Pendente'
+    ? `<div class="asx-acao-botoes">
+        <button type="button" class="asx-acao-ok" data-confirmar="${esc(a.id)}"${ocupado ? ' disabled' : ''}>${ocupado ? 'Gravando…' : 'Confirmar'}</button>
+        <button type="button" class="asx-acao-nao" data-cancelar="${esc(a.id)}"${ocupado ? ' disabled' : ''}>Cancelar</button>
+      </div>`
+    : `<div class="asx-acao-status asx-acao-${esc(status.toLowerCase())}">
+        ${esc(STATUS_ACAO[status]?.rotulo || status)}${a.erro ? `: ${esc(a.erro)}` : ''}
+        ${status === 'Confirmada' && a.link ? ` · <a href="${esc(a.link)}">Abrir</a>` : ''}
+        ${podeDesfazer(a) ? ` · <button type="button" class="asx-link asx-acao-desfazer" data-desfazer="${esc(a.id)}"${ocupado ? ' disabled' : ''}>${ocupado ? 'Desfazendo…' : 'Desfazer'}</button>` : ''}
+      </div>`;
+  return `<div class="asx-acao" role="group" aria-label="${esc(a.titulo)}">
+      <div class="asx-acao-titulo">${esc(a.titulo)}</div>
+      <table class="asx-acao-tabela"><tbody>${linhas}</tbody></table>
+      ${rodape}
+    </div>`;
 }
 
 // ── Conversas anteriores ──────────────────────────────────────────────────
@@ -303,7 +423,7 @@ async function continuarConversa(id) {
     historico = msgs.flatMap(m => [
       { papel: 'user', conteudo: m.pergunta },
       m.sucesso
-        ? { papel: 'assistant', conteudo: m.resposta || '', ferramentas: m.ferramentasUsadas || [] }
+        ? { papel: 'assistant', conteudo: m.resposta || '', ferramentas: m.ferramentasUsadas || [], acoes: m.acoes || [] }
         : { papel: 'assistant', conteudo: m.resposta || 'Não foi possível obter resposta.', erro: true },
     ]);
     sessionSet(chave(CONVERSA_KEY), id);
@@ -379,7 +499,7 @@ function render() {
   if (historico.length === 0 && !enviando) {
     body.innerHTML = `
       <div class="asx-vazio">
-        <p>Olá! Posso consultar os dados do escritório para você. Experimente:</p>
+        <p>Olá! Posso consultar os dados do escritório e também cadastrar e concluir tarefas, agendar compromissos, atualizar contatos, registrar atendimentos e lançar horas — você confere e confirma antes de gravar. Experimente:</p>
         <div class="asx-sugestoes">
           ${SUGESTOES.map(s => `<button type="button" class="asx-chip" data-sugestao="${esc(s)}">${esc(s)}</button>`).join('')}
         </div>
@@ -393,6 +513,7 @@ function render() {
     const fontes = [...new Set((m.ferramentas || []).map(f => ROTULOS_FERRAMENTA[f] || f))];
     return `<div class="asx-msg asx-bot">
         <div class="asx-md">${renderMarkdown(m.conteudo)}</div>
+        ${(m.acoes || []).map(renderAcao).join('')}
         ${fontes.length ? `<div class="asx-fontes">Consultou: ${esc(fontes.join(', '))}</div>` : ''}
       </div>`;
   }).join('') + (enviando
@@ -523,6 +644,29 @@ function injectStyles() {
     .asx-md th, .asx-md td { border: 1px solid var(--color-border); padding: 4px 6px; text-align: left; }
     .asx-md code { font-size: 12px; background: var(--color-bg); padding: 1px 4px; border-radius: 4px; }
     .asx-md a { color: var(--color-primary); }
+    .asx-acao {
+      margin-top: 8px; border: 1px solid var(--color-primary); border-radius: 8px; padding: 8px 10px;
+      background: var(--color-primary-light);
+    }
+    .asx-acao-titulo { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .asx-acao-tabela { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+    .asx-acao-tabela th { text-align: left; font-weight: 500; color: var(--color-text-muted); padding: 2px 8px 2px 0; vertical-align: top; white-space: nowrap; }
+    .asx-acao-tabela td { padding: 2px 0; overflow-wrap: anywhere; }
+    .asx-antes { text-decoration: line-through; color: var(--color-text-muted); }
+    .asx-depois { font-weight: 600; }
+    .asx-acao-botoes { display: flex; gap: 8px; margin-top: 8px; }
+    .asx-acao-botoes button { border-radius: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .asx-acao-botoes button:disabled { opacity: .6; cursor: default; }
+    .asx-acao-ok { background: var(--color-primary); color: #fff !important; border: 1px solid var(--color-primary); }
+    .asx-acao-ok:hover:not(:disabled) { background: var(--color-primary-dark); }
+    .asx-acao-nao { background: var(--color-surface); color: var(--color-text) !important; border: 1px solid var(--color-border); }
+    .asx-acao-status { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
+    .asx-acao-confirmada { color: var(--color-success, #15803d); }
+    .asx-acao-falhou { color: var(--color-danger); }
+    .asx-acao-status a { color: var(--color-primary); }
+    .asx-acao-desfazer { font-size: 12.5px; font-weight: 600; padding: 0; }
+    .asx-acao-desfazer:disabled { opacity: .6; cursor: default; text-decoration: none; }
+    .asx-acao-desfeita { color: var(--color-text-muted); }
     .asx-fontes { margin-top: 6px; font-size: 11px; color: var(--color-text-muted); }
     .asx-pensando { color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; }
     .asx-pensando span {

@@ -885,6 +885,13 @@ const _initTipo = _urlParams.get('tipo');
 if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
 loadTarefas();
 const _abrirId = _urlParams.get('abrirId');
+
+// Tarefa criada/alterada pelo chat do assistente de IA: recarrega a lista ou o kanban.
+window.addEventListener('assistente:alteracao', (e) => {
+  if (e.detail?.entidade !== 'tarefa') return;
+  if (currentTab === 'kanban') { allKanbanTasks = []; loadBoard(); }
+  else loadTarefas(currentPage);
+});
 if (_abrirId) openEditModal(_abrirId);
 
 // Atalho "criar novo" (ex.: dashboard → ?novo=1).

@@ -656,6 +656,12 @@ import { esc, dataParede } from '/js/utils.js';
       loadStats();
       if (indicadoresLoaded) loadIndicadores();
     });
+
+    // Alteração confirmada (ou desfeita) no chat do assistente de IA.
+    window.addEventListener('assistente:alteracao', () => {
+      loadStats();
+      if (indicadoresLoaded) loadIndicadores();
+    });
   </script>
 </body>
 </html>

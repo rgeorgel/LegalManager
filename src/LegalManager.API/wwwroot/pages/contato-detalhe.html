@@ -238,6 +238,10 @@
     document.getElementById('perfilLoading').textContent = 'Contato não informado.';
   } else {
     carregar();
+    // Contato atualizado ou atendimento registrado pelo chat do assistente de IA.
+    window.addEventListener('assistente:alteracao', (e) => {
+      if (e.detail?.entidade === 'contato') carregar();
+    });
   }
 
   function showAlert(msg, type = 'error') {

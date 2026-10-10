@@ -665,6 +665,11 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       setTimeout(() => alertMsg.style.display = 'none', 4000);
     }
 
+    // Contato atualizado pelo chat do assistente de IA: recarrega a lista.
+    window.addEventListener('assistente:alteracao', (e) => {
+      if (e.detail?.entidade === 'contato') loadContatos();
+    });
+
     async function loadContatos() {
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px">Carregando...</td></tr>';

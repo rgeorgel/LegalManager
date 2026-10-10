@@ -63,4 +63,6 @@ public static class AuditEntities
     public const string ContratoHonorario = "ContratoHonorario";
     public const string ParcelaHonorario = "ParcelaHonorario";
     public const string ConfiguracaoHonorario = "ConfiguracaoHonorario";
+    public const string Atendimento = "Atendimento";
+    public const string RegistroTempo = "RegistroTempo";
 }

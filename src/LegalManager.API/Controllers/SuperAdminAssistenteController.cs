@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Assistente;
 using LegalManager.Domain.Entities;
+using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LegalManager.API.Controllers;
 
 /// <summary>
-/// Monitoramento/auditoria cross-tenant do assistente de IA: perguntas, respostas e ferramentas
-/// chamadas (ver <see cref="InteracaoAssistente"/>). Consumido pela página Super Admin "Assistente IA".
+/// Monitoramento/auditoria cross-tenant do assistente de IA: perguntas, respostas, ferramentas
+/// chamadas (ver <see cref="InteracaoAssistente"/>) e as alterações propostas, com o que o usuário
+/// fez com cada uma (<see cref="AcaoAssistente"/>). Consumido pela página Super Admin "Assistente IA".
 /// </summary>
 [ApiController]
 [Route("api/superadmin/assistente")]
@@ -29,6 +31,7 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
         [FromQuery] DateTime? ate,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 30,
+        [FromQuery] bool? comAcoes = null,
         CancellationToken ct = default)
     {
         page = Math.Max(1, page);
@@ -37,6 +40,7 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
         var query = await FiltrarAsync(tenantId, tenantNome, de, ate, ct);
         if (usuarioId.HasValue) query = query.Where(i => i.UsuarioId == usuarioId.Value);
         if (sucesso.HasValue) query = query.Where(i => i.Sucesso == sucesso.Value);
+        if (comAcoes == true) query = query.Where(i => db.AcoesAssistente.Any(a => a.InteracaoId == i.Id));
         if (!string.IsNullOrWhiteSpace(busca))
         {
             var b = busca.Trim().ToLower();
@@ -57,12 +61,14 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
 
         var tenants = await NomesTenantsAsync(itens.Select(i => i.TenantId), ct);
         var usuarios = await NomesUsuariosAsync(itens.Select(i => i.UsuarioId), ct);
+        var acoes = await ContarAcoesAsync(itens.Select(i => i.Id), ct);
 
         var items = itens.Select(i => new InteracaoAssistenteListItemDto(
             i.Id, i.CriadoEm, i.TenantId, tenants.GetValueOrDefault(i.TenantId),
             i.UsuarioId, usuarios.GetValueOrDefault(i.UsuarioId), i.ImpersonadoPorId.HasValue, i.ConversaId,
             Resumir(i.Pergunta)!, Resumir(i.Sucesso ? i.Resposta : i.MensagemErro),
-            i.Sucesso, i.QuantidadeFerramentas, i.TokensEntrada, i.TokensSaida, i.DuracaoMs)).ToList();
+            i.Sucesso, i.QuantidadeFerramentas, i.TokensEntrada, i.TokensSaida, i.DuracaoMs,
+            acoes.GetValueOrDefault(i.Id).Total, acoes.GetValueOrDefault(i.Id).Confirmadas)).ToList();
 
         return Ok(new InteracaoAssistentePagedResultDto(items, total, page, pageSize));
     }
@@ -98,8 +104,9 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
         // Agregação em memória: GroupBy com Count(distinct) não traduz bem em todos os provedores
         // (e o volume de uma tabela de log por período é pequeno para isso).
         var linhas = await query
-            .Select(i => new { i.TenantId, i.ConversaId, i.UsuarioId, i.Sucesso, i.TokensEntrada, i.TokensSaida, i.CriadoEm })
+            .Select(i => new { i.Id, i.TenantId, i.ConversaId, i.UsuarioId, i.Sucesso, i.TokensEntrada, i.TokensSaida, i.CriadoEm })
             .ToListAsync(ct);
+        var acoes = await ContarAcoesAsync(linhas.Select(l => l.Id), ct);
 
         var tenants = await NomesTenantsAsync(linhas.Select(l => l.TenantId), ct);
         var resumo = linhas
@@ -113,7 +120,9 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
                 g.Count(x => !x.Sucesso),
                 g.Sum(x => (long)x.TokensEntrada),
                 g.Sum(x => (long)x.TokensSaida),
-                g.Max(x => x.CriadoEm)))
+                g.Max(x => x.CriadoEm),
+                g.Sum(x => acoes.GetValueOrDefault(x.Id).Total),
+                g.Sum(x => acoes.GetValueOrDefault(x.Id).Confirmadas)))
             .OrderByDescending(r => r.Perguntas)
             .ToList();
 
@@ -144,13 +153,32 @@ public class SuperAdminAssistenteController(AppDbContext db) : ControllerBase
         var tenants = await NomesTenantsAsync(lista.Select(i => i.TenantId), ct);
         var usuarios = await NomesUsuariosAsync(
             lista.Select(i => i.UsuarioId).Concat(lista.Where(i => i.ImpersonadoPorId.HasValue).Select(i => i.ImpersonadoPorId!.Value)), ct);
+        var ids = lista.Select(i => i.Id).ToList();
+        var acoes = (await db.AcoesAssistente.AsNoTracking().Where(a => ids.Contains(a.InteracaoId)).ToListAsync(ct))
+            .OrderBy(a => a.CriadoEm)
+            .ToLookup(a => a.InteracaoId);
 
         return lista.Select(i => new InteracaoAssistenteDetalheDto(
             i.Id, i.CriadoEm, i.TenantId, tenants.GetValueOrDefault(i.TenantId),
             i.UsuarioId, usuarios.GetValueOrDefault(i.UsuarioId),
             i.ImpersonadoPorId, i.ImpersonadoPorId is { } sa ? usuarios.GetValueOrDefault(sa) : null,
             i.ConversaId, i.Pergunta, i.Resposta, i.Sucesso, i.MensagemErro, i.IdiomaCorrigido, i.FerramentasJson,
-            i.Provedor, i.Modelo, i.TokensEntrada, i.TokensSaida, i.DuracaoMs)).ToList();
+            i.Provedor, i.Modelo, i.TokensEntrada, i.TokensSaida, i.DuracaoMs,
+            acoes[i.Id].Select(AssistenteAcoes.ParaDto).ToList())).ToList();
+    }
+
+    /// <summary>Por interação: alterações propostas e quantas foram confirmadas (inclui as desfeitas depois).</summary>
+    private async Task<Dictionary<Guid, (int Total, int Confirmadas)>> ContarAcoesAsync(IEnumerable<Guid> interacoes, CancellationToken ct)
+    {
+        var ids = interacoes.Distinct().ToList();
+        if (ids.Count == 0) return [];
+        var linhas = await db.AcoesAssistente.AsNoTracking()
+            .Where(a => ids.Contains(a.InteracaoId))
+            .Select(a => new { a.InteracaoId, a.Status })
+            .ToListAsync(ct);
+        return linhas.GroupBy(a => a.InteracaoId).ToDictionary(g => g.Key, g => (
+            g.Count(),
+            g.Count(a => a.Status is StatusAcaoAssistente.Confirmada or StatusAcaoAssistente.Desfeita)));
     }
 
     private async Task<Dictionary<Guid, string>> NomesTenantsAsync(IEnumerable<Guid> ids, CancellationToken ct)

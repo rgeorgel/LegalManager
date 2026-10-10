@@ -493,7 +493,7 @@ public class AssistenteTests
     [Fact]
     public async Task Controller_PlanoFree_Retorna402()
     {
-        var controller = new AssistenteController(Mock.Of<IAssistenteService>(), Tenant(Guid.NewGuid(), PlanoTipo.Free));
+        var controller = new AssistenteController(Mock.Of<IAssistenteService>(), Mock.Of<IAssistenteAcoesService>(), Tenant(Guid.NewGuid(), PlanoTipo.Free));
 
         var r = await controller.Perguntar(new AssistentePerguntaDto([new("user", "oi")]), default);
 

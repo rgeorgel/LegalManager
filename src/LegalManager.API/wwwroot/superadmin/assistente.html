@@ -76,6 +76,12 @@
     pre.error-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 6px; padding: 10px 12px; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
     .turno { border-top: 1px dashed var(--color-border); padding-top: 12px; margin-top: 12px; }
     .turno:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .acao { border: 1px solid var(--color-border); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 12.5px; }
+    .acao-topo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+    .acao table { border-collapse: collapse; width: 100%; }
+    .acao th { text-align: left; font-weight: 500; color: var(--color-text-muted); padding: 2px 8px 2px 0; white-space: nowrap; vertical-align: top; width: 1%; }
+    .acao td { padding: 2px 0; overflow-wrap: anywhere; }
+    .acao .antes { text-decoration: line-through; color: var(--color-text-muted); }
   </style>
 </head>
 <body>
@@ -98,7 +104,7 @@
       </div>
       <p style="color:var(--color-text-muted);font-size:13px;margin:-8px 0 16px">
         Monitoramento e auditoria do assistente de IA: o que cada usuário perguntou, o que foi respondido e quais dados
-        do escritório foram consultados (ferramentas, argumentos e retorno).
+        do escritório foram consultados (ferramentas, argumentos e retorno), além das alterações que ele propôs e o que o usuário fez com cada uma.
       </p>
 
       <div class="filters">
@@ -109,6 +115,9 @@
           <option value="true">Somente sucesso</option>
           <option value="false">Somente erro</option>
         </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap">
+          <input type="checkbox" id="acoesFilter"> Só com alterações
+        </label>
         <input type="date" id="deFilter" title="De">
         <input type="date" id="ateFilter" title="Até">
       </div>
@@ -123,12 +132,13 @@
               <th class="num">Conversas</th>
               <th class="num">Usuários</th>
               <th class="num">Erros</th>
+              <th class="num" title="Alterações propostas pelo assistente / confirmadas pelos usuários">Alterações (confirmadas)</th>
               <th class="num">Tokens (entrada / saída)</th>
               <th>Última pergunta</th>
             </tr>
           </thead>
           <tbody id="resumoBody">
-            <tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
+            <tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -144,12 +154,13 @@
               <th>Pergunta</th>
               <th>Resposta</th>
               <th class="num">Ferramentas</th>
+              <th class="num" title="Alterações propostas / confirmadas">Alterações</th>
               <th>Status</th>
               <th class="num">Duração</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
+            <tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>
           </tbody>
         </table>
       </div>
@@ -219,7 +230,7 @@
       try {
         const lista = await saFetch(`/superadmin/assistente/resumo?${params}`);
         if (lista.length === 0) {
-          body.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Nenhum uso do assistente no período.</td></tr>';
+          body.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Nenhum uso do assistente no período.</td></tr>';
           return;
         }
         body.innerHTML = lista.map(r => `
@@ -229,11 +240,12 @@
             <td class="num">${fmtNum(r.conversas)}</td>
             <td class="num">${fmtNum(r.usuarios)}</td>
             <td class="num">${r.erros ? `<span class="badge badge-red">${fmtNum(r.erros)}</span>` : '0'}</td>
+            <td class="num">${r.acoes ? `${fmtNum(r.acoes)} (${fmtNum(r.acoesConfirmadas)})` : '0'}</td>
             <td class="num">${fmtNum(r.tokensEntrada)} / ${fmtNum(r.tokensSaida)}</td>
             <td class="muted" style="white-space:nowrap">${fmtDateTime(r.ultimaPergunta)}</td>
           </tr>`).join('');
       } catch (e) {
-        body.innerHTML = `<tr><td colspan="7" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
       }
     }
 
@@ -247,17 +259,18 @@
       const sucesso = document.getElementById('statusFilter').value;
       if (busca) params.set('busca', busca);
       if (sucesso) params.set('sucesso', sucesso);
+      if (document.getElementById('acoesFilter').checked) params.set('comAcoes', 'true');
 
       document.getElementById('tenantChip').innerHTML = tenantSelecionado
         ? `<span class="chip">${esc(tenantSelecionado.nome || 'tenant')} <button type="button" id="limparTenant" title="Remover filtro">✕</button></span>`
         : '';
       document.getElementById('limparTenant')?.addEventListener('click', () => { tenantSelecionado = null; page = 1; recarregar(); });
 
-      body.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>';
+      body.innerHTML = '<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Carregando...</td></tr>';
       try {
         const data = await saFetch(`/superadmin/assistente/interacoes?${params}`);
         if (data.items.length === 0) {
-          body.innerHTML = '<tr><td colspan="8" class="muted" style="text-align:center;padding:24px">Nenhuma pergunta encontrada.</td></tr>';
+          body.innerHTML = '<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">Nenhuma pergunta encontrada.</td></tr>';
         } else {
           body.innerHTML = data.items.map(i => `
             <tr class="clickable" data-id="${i.id}">
@@ -267,6 +280,7 @@
               <td><div class="clip">${esc(i.pergunta)}</div></td>
               <td><div class="clip ${i.sucesso ? 'muted' : ''}" style="${i.sucesso ? '' : 'color:var(--color-danger)'}">${esc(i.resposta) || '—'}</div></td>
               <td class="num">${i.quantidadeFerramentas}</td>
+              <td class="num">${i.acoes ? `${i.acoesConfirmadas}/${i.acoes}` : '<span class="muted">—</span>'}</td>
               <td>${statusBadge(i.sucesso)}</td>
               <td class="num muted">${fmtMs(i.duracaoMs)}</td>
             </tr>`).join('');
@@ -276,7 +290,7 @@
         document.getElementById('prevBtn').disabled = page <= 1;
         document.getElementById('nextBtn').disabled = page >= pages;
       } catch (e) {
-        body.innerHTML = `<tr><td colspan="8" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="9" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
       }
     }
 
@@ -321,6 +335,31 @@
         </details>`).join('');
     }
 
+    // Alterações propostas na pergunta e o que o usuário fez com cada uma (confirmou, cancelou...).
+    const STATUS_ACAO = {
+      Pendente: ['badge-gray', 'Aguardando'],
+      Confirmada: ['badge-green', 'Confirmada'],
+      Desfeita: ['badge-amber', 'Confirmada e desfeita'],
+      Cancelada: ['badge-gray', 'Cancelada'],
+      Expirada: ['badge-gray', 'Expirou'],
+      Falhou: ['badge-red', 'Falhou'],
+    };
+
+    function acoesHtml(acoes) {
+      if (!acoes?.length) return '';
+      return `<div class="detail-section-title">Alterações propostas (${acoes.length})</div>` + acoes.map(a => {
+        const [cls, rotulo] = STATUS_ACAO[a.status] || ['badge-gray', a.status];
+        const linhas = (a.alteracoes || []).map(x => `
+          <tr><th>${esc(x.campo)}</th><td>${x.antes != null ? `<span class="antes">${esc(x.antes)}</span> → ` : ''}${x.depois != null ? esc(x.depois) : '<em class="muted">(vazio)</em>'}</td></tr>`).join('');
+        return `
+          <div class="acao">
+            <div class="acao-topo"><strong>${esc(a.titulo)}</strong> <span class="badge ${cls}">${rotulo}</span> <span class="muted">${esc(a.tipo)}</span></div>
+            <table><tbody>${linhas}</tbody></table>
+            ${a.erro ? `<div style="color:var(--color-danger);margin-top:4px">${esc(a.erro)}</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
     function turnoHtml(i, completo) {
       return `
         <div class="turno">
@@ -344,7 +383,8 @@
             <div class="detail-section-title">Erro</div>
             <pre class="error-box">${esc(i.mensagemErro) || 'Erro não informado.'}</pre>
           `}
-          <div class="detail-section-title">Dados consultados (${i.ferramentasJson ? JSON.parse(i.ferramentasJson).length : 0})</div>
+          ${acoesHtml(i.acoes)}
+          <div class="detail-section-title">Ferramentas chamadas (${i.ferramentasJson ? JSON.parse(i.ferramentasJson).length : 0})</div>
           ${ferramentasHtml(i.ferramentasJson)}
         </div>`;
     }
@@ -407,7 +447,7 @@
 
     document.getElementById('prevBtn').addEventListener('click', () => { page--; loadInteracoes(); });
     document.getElementById('nextBtn').addEventListener('click', () => { page++; loadInteracoes(); });
-    ['statusFilter'].forEach(id => document.getElementById(id).addEventListener('change', () => { page = 1; loadInteracoes(); }));
+    ['statusFilter', 'acoesFilter'].forEach(id => document.getElementById(id).addEventListener('change', () => { page = 1; loadInteracoes(); }));
     ['deFilter', 'ateFilter'].forEach(id => document.getElementById(id).addEventListener('change', () => { page = 1; recarregar(); }));
 
     let timer;

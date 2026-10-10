@@ -23,6 +23,82 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.AcaoAssistente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AlteracoesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ConversaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DadosJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DesfazerJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DesfeitaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EntidadeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Erro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ImpersonadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InteracaoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ResolvidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InteracaoId");
+
+                    b.HasIndex("TenantId", "CriadoEm");
+
+                    b.ToTable("AcoesAssistente", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.AcessoCliente", b =>
                 {
                     b.Property<Guid>("Id")

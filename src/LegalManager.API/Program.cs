@@ -201,6 +201,7 @@ builder.Services.AddHttpClient<LegalManager.Infrastructure.Assistente.IAssistent
     LegalManager.Infrastructure.Assistente.AssistenteLlmClient>(client => client.Timeout = TimeSpan.FromSeconds(90));
 builder.Services.AddScoped<LegalManager.Infrastructure.Assistente.AssistenteFerramentas>();
 builder.Services.AddScoped<IAssistenteService, LegalManager.Infrastructure.Assistente.AssistenteService>();
+builder.Services.AddScoped<IAssistenteAcoesService, LegalManager.Infrastructure.Assistente.AssistenteAcoes>();
 builder.Services.AddScoped<SeedService>();
 builder.Services.AddScoped<IHonorarioService, HonorarioService>();
 builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioService>();

@@ -477,5 +477,10 @@ if (_initViewBtn) {
 }
 load();
 
+// Compromisso criado/remarcado pelo chat do assistente de IA: recarrega o período exibido.
+window.addEventListener('assistente:alteracao', (e) => {
+  if (e.detail?.entidade === 'evento') load();
+});
+
 // Atalho "criar novo" (ex.: dashboard → ?novo=1).
 abrirNovoPelaUrl('btnNovoEvento');

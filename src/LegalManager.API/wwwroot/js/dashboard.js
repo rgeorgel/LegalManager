@@ -747,6 +747,15 @@ window.addEventListener('importacao:concluida', () => {
   loadNotificacoes();
 });
 
+// Alteração confirmada (ou desfeita) no chat do assistente de IA: recarrega o widget afetado.
+window.addEventListener('assistente:alteracao', (e) => {
+  const entidade = e.detail?.entidade;
+  if (entidade === 'tarefa') { loadTarefas(); loadIndicadores(); }
+  else if (entidade === 'evento') loadAgenda();
+  else if (entidade === 'tempo') loadTimer();
+  else if (entidade === 'contato') { loadContatos(); loadAniversariantes(); }
+});
+
 // ── Boot ───────────────────────────────────────────────
 await Promise.all([
   loadTarefas(),

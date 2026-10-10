@@ -3,6 +3,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Assistente;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -11,12 +12,13 @@ namespace LegalManager.API.Controllers;
 
 /// <summary>
 /// Assistente de IA sobre os dados do escritório — sem cobrança de créditos; a partir do plano Plus
-/// (no Free o frontend mostra o convite para o upgrade).
+/// (no Free o frontend mostra o convite para o upgrade). As alterações que ele propõe só são
+/// gravadas quando o usuário confirma (acoes/{id}/confirmar) e podem ser desfeitas logo em seguida.
 /// </summary>
 [ApiController]
 [Route("api/assistente")]
 [Authorize(Roles = "Admin,Advogado,Colaborador")]
-public class AssistenteController(IAssistenteService service, ITenantContext tenantContext) : ControllerBase
+public class AssistenteController(IAssistenteService service, IAssistenteAcoesService acoes, ITenantContext tenantContext) : ControllerBase
 {
     [HttpGet("conversas")]
     public async Task<ActionResult<IReadOnlyList<AssistenteConversaResumoDto>>> Conversas([FromQuery] int limite = 30, CancellationToken ct = default)
@@ -58,5 +60,28 @@ public class AssistenteController(IAssistenteService service, ITenantContext ten
         {
             return StatusCode(504, new { message = "O assistente demorou demais para responder. Tente uma pergunta mais específica." });
         }
+    }
+
+    [HttpPost("acoes/{acaoId:guid}/confirmar")]
+    public async Task<ActionResult<AssistenteAcaoDto>> Confirmar(Guid acaoId, CancellationToken ct)
+    {
+        if (!PlanoRestricoes.PermiteAssistenteIA(tenantContext.Plano))
+            return StatusCode(402, new { message = "O assistente de IA está disponível a partir do plano Plus." });
+        var acao = await acoes.ConfirmarAsync(acaoId, HttpContext.GetClientIpAddress(), ct);
+        return acao is null ? NotFound(new { message = "Alteração não encontrada." }) : Ok(acao);
+    }
+
+    [HttpPost("acoes/{acaoId:guid}/desfazer")]
+    public async Task<ActionResult<AssistenteAcaoDto>> Desfazer(Guid acaoId, CancellationToken ct)
+    {
+        var acao = await acoes.DesfazerAsync(acaoId, HttpContext.GetClientIpAddress(), ct);
+        return acao is null ? NotFound(new { message = "Alteração não encontrada." }) : Ok(acao);
+    }
+
+    [HttpPost("acoes/{acaoId:guid}/cancelar")]
+    public async Task<ActionResult<AssistenteAcaoDto>> Cancelar(Guid acaoId, CancellationToken ct)
+    {
+        var acao = await acoes.CancelarAsync(acaoId, ct);
+        return acao is null ? NotFound(new { message = "Alteração não encontrada." }) : Ok(acao);
     }
 }

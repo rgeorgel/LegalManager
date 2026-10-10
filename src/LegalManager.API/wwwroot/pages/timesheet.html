@@ -176,6 +176,11 @@ import { esc } from '/js/utils.js';
     initCronometro();
     loadRegistros();
 
+    // Horas lançadas (ou desfeitas) pelo chat do assistente de IA.
+    window.addEventListener('assistente:alteracao', (e) => {
+      if (e.detail?.entidade === 'tempo') loadRegistros(currentPage);
+    });
+
     document.getElementById('btnIniciar').onclick = iniciar;
     document.getElementById('btnParar').onclick = parar;
     document.getElementById('btnManual').onclick = () => document.getElementById('modalManual').classList.add('open');

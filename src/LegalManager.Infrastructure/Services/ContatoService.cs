@@ -76,8 +76,12 @@ public class ContatoService : IContatoService
         contato.NotificacaoHabilitada = dto.NotificacaoHabilitada;
         contato.AtualizadoEm = DateTime.UtcNow;
 
+        // As novas tags entram explicitamente como Added: só atribuídas à navegação, com o Id já
+        // preenchido, o EF as trataria como existentes (UPDATE de linhas que não existem).
         _context.ContatoTags.RemoveRange(contato.Tags);
-        contato.Tags = dto.Tags?.Select(t => new ContatoTag { Id = Guid.NewGuid(), ContatoId = id, Tag = t }).ToList() ?? [];
+        var tags = dto.Tags?.Select(t => new ContatoTag { Id = Guid.NewGuid(), ContatoId = id, Tag = t }).ToList() ?? [];
+        _context.ContatoTags.AddRange(tags);
+        contato.Tags = tags;
 
         await _context.SaveChangesAsync(ct);
         return MapToResponse(contato);

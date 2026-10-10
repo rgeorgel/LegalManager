@@ -72,6 +72,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<CodigoPromocional> CodigosPromocionais => Set<CodigoPromocional>();
     public DbSet<Novidade> Novidades => Set<Novidade>();
     public DbSet<InteracaoAssistente> InteracoesAssistente => Set<InteracaoAssistente>();
+    public DbSet<AcaoAssistente> AcoesAssistente => Set<AcaoAssistente>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

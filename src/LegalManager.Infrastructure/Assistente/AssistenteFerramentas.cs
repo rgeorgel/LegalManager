@@ -11,8 +11,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LegalManager.Infrastructure.Assistente;
 
 /// <summary>
-/// Ferramentas (somente leitura) que o assistente de IA pode chamar para consultar os dados do
-/// escritório. Regras de segurança:
+/// Ferramentas que o assistente de IA pode chamar para consultar os dados do escritório — e, em
+/// <c>AssistenteFerramentas.Acoes.cs</c>, para propor alterações que o usuário confirma no chat.
+/// Regras de segurança:
 /// <list type="bullet">
 /// <item>O tenant vem SEMPRE do <see cref="ITenantContext"/> da requisição — nenhuma ferramenta
 /// recebe tenantId como argumento, e toda consulta filtra por ele.</item>
@@ -21,7 +22,7 @@ namespace LegalManager.Infrastructure.Assistente;
 /// </list>
 /// Prazos/eventos saem na hora "de parede" do escritório (ver CLAUDE.md → Datas).
 /// </summary>
-public class AssistenteFerramentas
+public partial class AssistenteFerramentas
 {
     private const int LimitePadrao = 20;
     private const int LimiteMaximo = 50;
@@ -42,7 +43,7 @@ public class AssistenteFerramentas
         _db = db;
         _tenant = tenant;
         _honorarios = honorarios;
-        _definicoes = CriarDefinicoes();
+        _definicoes = [.. CriarDefinicoes(), .. DefinicoesDeAcao()];
     }
 
     private Guid TenantId => _tenant.TenantId;
@@ -470,7 +471,7 @@ public class AssistenteFerramentas
         var itens = await q.OrderBy(e => e.DataHora).Take(Limite(a))
             .Select(e => new
             {
-                e.Titulo, e.Tipo, e.DataHora, e.DataHoraFim, e.Local, e.Observacoes, e.ProcessoId,
+                e.Id, e.Titulo, e.Tipo, e.DataHora, e.DataHoraFim, e.Local, e.Observacoes, e.ProcessoId,
                 Responsavel = e.Responsavel != null ? e.Responsavel.Nome : null,
                 Processo = e.Processo != null ? e.Processo.NumeroCNJ : null
             })
@@ -483,6 +484,7 @@ public class AssistenteFerramentas
             exibidos = itens.Count,
             eventos = itens.Select(e => new
             {
+                id = e.Id,
                 titulo = e.Titulo,
                 tipo = e.Tipo.ToString(),
                 inicio = DataHora(e.DataHora),
@@ -491,7 +493,8 @@ public class AssistenteFerramentas
                 observacoes = Cortar(e.Observacoes, 300),
                 responsavel = e.Responsavel,
                 processo = e.Processo,
-                processoLink = e.ProcessoId is { } p ? LinkProcesso(p) : null
+                processoLink = e.ProcessoId is { } p ? LinkProcesso(p) : null,
+                link = LinkEvento(e.Id, e.DataHora)
             }),
             link = "/pages/agenda.html"
         };
@@ -1029,6 +1032,8 @@ public class AssistenteFerramentas
 
     private static string LinkProcesso(Guid id) => $"/pages/processo-detalhe.html?id={id}";
     private static string LinkContato(Guid id) => $"/pages/contato-detalhe.html?id={id}";
+    internal static string LinkEvento(Guid id, DateTime dataHora) =>
+        $"/pages/agenda.html?date={dataHora.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&abrirId={id}";
 
     // Prazos/eventos: já estão na hora "de parede" — só formata.
     private static string? DataHora(DateTime? d) =>
