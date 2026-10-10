@@ -649,6 +649,13 @@ import { esc, dataParede } from '/js/utils.js';
 
 
     loadStats();
+
+    // Importação por OAB concluída em background (barra inferior): atualiza os números
+    // sem exigir F5 — o sino do topo já é atualizado pelo layout.
+    window.addEventListener('importacao:concluida', () => {
+      loadStats();
+      if (indicadoresLoaded) loadIndicadores();
+    });
   </script>
 </body>
 </html>

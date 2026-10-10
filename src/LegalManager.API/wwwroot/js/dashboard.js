@@ -127,7 +127,10 @@ atalhos.addEventListener('focusout', limparDica);
 const agora = new Date();
 const hora = agora.getHours();
 const saud = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-const primeiroNome = (user?.nome ?? '').trim().split(/\s+/)[0];
+// Pronome de tratamento no início ("Dr. Sidney Morbidelli") fica junto do primeiro nome.
+const [tratamento, ...resto] = (user?.nome ?? '').trim().split(/\s+/);
+const ehTratamento = /^(dra?|sra?|srta|profa?|me|ma|exm[oa]|il?m[oa])\.?$/i.test(tratamento ?? '');
+const primeiroNome = ehTratamento && resto.length ? `${tratamento} ${resto[0]}` : tratamento;
 $('d2Saudacao').textContent = primeiroNome ? `${saud}, ${primeiroNome}!` : `${saud}!`;
 $('d2Hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -735,6 +738,15 @@ async function loadContatos() {
   $('kContatos').textContent = r?.total ?? '—';
 }
 
+// Importação por OAB concluída em background (barra inferior): recarrega o que muda
+// com os processos novos e a notificação de conclusão, sem exigir F5.
+window.addEventListener('importacao:concluida', () => {
+  loadProcessos();
+  loadFavoritos();
+  loadIndicadores();
+  loadNotificacoes();
+});
+
 // ── Boot ───────────────────────────────────────────────
 await Promise.all([
   loadTarefas(),
@@ -749,3 +761,4 @@ await Promise.all([
   loadContatos(),
 ]);
 loadPublicacoes();
+

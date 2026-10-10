@@ -3,7 +3,7 @@
 // do servidor, então a barra sobrevive a troca de página/F5: initImportacaoBar() (chamado
 // pelo layout em toda página) retoma o acompanhamento se houver importação em andamento.
 // Ao terminar, mostra um aviso com link para o resultado e dispara o evento
-// `importacao:concluida` (detail = resumo) — a tela de processos o usa para recarregar a lista.
+// `importacao:concluida` (detail = resumo) — processos e dashboards o usam para recarregar os dados.
 import { apiFetch } from './api.js';
 import { esc } from './utils.js';
 
