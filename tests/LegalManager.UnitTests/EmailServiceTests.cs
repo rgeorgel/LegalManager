@@ -1,3 +1,4 @@
+using LegalManager.Domain.Enums;
 ﻿using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
@@ -105,6 +106,43 @@ public class EmailServiceTests
 
         Assert.NotNull(capture.Message);
         Assert.Contains("5 dia(s)", capture.Message!.HtmlBody);
+    }
+
+    [Fact]
+    public async Task EnviarPlanoPromocionalExpirandoAsync_ComparaFreeComPlano()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        var expiraEm = new DateTime(2026, 11, 11, 17, 10, 0, DateTimeKind.Utc);
+        await svc.EnviarPlanoPromocionalExpirandoAsync("admin@test.com", "Escritório Teste", PlanoTipo.Pro, expiraEm, 7, CancellationToken.None);
+
+        Assert.NotNull(capture.Message);
+        var html = capture.Message!.HtmlBody;
+        Assert.Contains("plano Pro termina em 7 dia(s)", capture.Message.Subject);
+        Assert.Contains("7 dia(s)", html);
+        Assert.Contains("11/11/2026", html);
+        Assert.Contains("Manter plano Pro", html);
+        Assert.Contains("Processos monitorados", html);
+        Assert.Contains("Templates de documentos", html); // só Pro+ tem
+        Assert.Contains("5 GB", html);
+    }
+
+    [Fact]
+    public async Task EnviarPlanoPromocionalExpirandoAsync_OmiteLinhasIguaisAoFree()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarPlanoPromocionalExpirandoAsync("admin@test.com", "Escritório Teste", PlanoTipo.Plus,
+            DateTime.UtcNow.AddDays(3), 3, CancellationToken.None);
+
+        var html = capture.Message!.HtmlBody;
+        Assert.DoesNotContain("Usuários", html);               // 1 × 1
+        Assert.DoesNotContain("Templates de documentos", html); // ✕ × ✕
+        Assert.Contains("Portal do Cliente", html);
     }
 
     [Fact]

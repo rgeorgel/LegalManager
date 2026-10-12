@@ -32,8 +32,6 @@ public class TrialRevertJob
                 && t.TrialExpiraEm.Value < agora)
             .ToListAsync();
 
-        if (trialsExpirados.Count == 0) return;
-
         foreach (var tenant in trialsExpirados)
         {
             tenant.Plano = PlanoTipo.Free;
@@ -45,7 +43,30 @@ public class TrialRevertJob
             tenant.TrialConcedidoMotivo = null;
         }
 
+        // Mesma regra de AuthService.VerificarExpiracaoPlanoAsync (que só roda no login): período
+        // grátis de código promocional ou assinatura cancelada que passou do fim do período.
+        // Sem este passo, quem não volta a logar continua aparecendo no plano antigo.
+        var planosExpirados = await _context.Tenants
+            .Where(t => t.Id != systemTenantId
+                && t.PlanoExpiraEm.HasValue
+                && t.PlanoExpiraEm.Value < agora)
+            .ToListAsync();
+
+        foreach (var tenant in planosExpirados)
+        {
+            tenant.Plano = PlanoTipo.Free;
+            tenant.Status = StatusTenant.Ativo;
+            tenant.PlanoExpiraEm = null;
+            tenant.AbacatePayBillingId = null;
+            tenant.StripeSubscriptionId = null;
+            tenant.PeriodoBilling = null;
+        }
+
+        if (trialsExpirados.Count == 0 && planosExpirados.Count == 0) return;
+
         await _context.SaveChangesAsync();
-        _logger.LogInformation("[TrialRevertJob] {Count} tenant(s) revertido(s) de trial expirado para Free.", trialsExpirados.Count);
+        _logger.LogInformation(
+            "[TrialRevertJob] {Trials} trial(s) e {Planos} plano(s) expirado(s) revertido(s) para Free.",
+            trialsExpirados.Count, planosExpirados.Count);
     }
 }

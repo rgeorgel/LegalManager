@@ -407,6 +407,62 @@ public class TrialConcedidoTests
         Assert.Equal(PlanoTipo.Enterprise, sistema!.Plano);
     }
 
+    [Theory]
+    [InlineData(StatusTenant.Ativo, null)]          // período grátis de código promocional
+    [InlineData(StatusTenant.Cancelado, "sub_123")] // assinatura cancelada após o fim do período
+    public async Task TrialRevertJob_PlanoExpirado_ReverteParaFree(StatusTenant status, string? stripeId)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Nome = "Promo expirado",
+            Plano = PlanoTipo.Plus,
+            Status = status,
+            CriadoEm = DateTime.UtcNow.AddDays(-31),
+            PlanoExpiraEm = DateTime.UtcNow.AddMinutes(-5),
+            StripeSubscriptionId = stripeId,
+            PeriodoBilling = stripeId is null ? null : "Mensal"
+        });
+        await ctx.SaveChangesAsync();
+        var job = new TrialRevertJob(ctx, NullLogger<TrialRevertJob>.Instance);
+
+        await job.ExecutarAsync();
+
+        var atualizado = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Free, atualizado!.Plano);
+        Assert.Equal(StatusTenant.Ativo, atualizado.Status);
+        Assert.Null(atualizado.PlanoExpiraEm);
+        Assert.Null(atualizado.StripeSubscriptionId);
+        Assert.Null(atualizado.PeriodoBilling);
+    }
+
+    [Fact]
+    public async Task TrialRevertJob_PlanoAindaVigente_NaoReverte()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var expiraEm = DateTime.UtcNow.AddDays(10);
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Nome = "Promo vigente",
+            Plano = PlanoTipo.Plus,
+            Status = StatusTenant.Ativo,
+            CriadoEm = DateTime.UtcNow.AddDays(-20),
+            PlanoExpiraEm = expiraEm
+        });
+        await ctx.SaveChangesAsync();
+        var job = new TrialRevertJob(ctx, NullLogger<TrialRevertJob>.Instance);
+
+        await job.ExecutarAsync();
+
+        var atualizado = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Plus, atualizado!.Plano);
+        Assert.Equal(expiraEm, atualizado.PlanoExpiraEm);
+    }
+
     [Fact]
     public async Task TrialRevertJob_SemTrialsExpirados_NaoFazNada()
     {

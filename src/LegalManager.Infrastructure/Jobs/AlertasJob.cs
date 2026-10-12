@@ -36,10 +36,11 @@ public class AlertasJob
         using var activity = Telemetry.Hangfire.StartActivity($"{nameof(AlertasJob)}.{nameof(ExecutarAsync)}");
         activity?.SetTag("job.cron", "alertas-diarios");
         // Cada etapa é isolada: uma falha no resumo de tarefas não pode impedir os avisos de
-        // eventos nem os de fim de trial.
+        // eventos nem os de fim de trial/período promocional.
         await EtapaAsync(nameof(AlertarTarefasAsync), () => AlertarTarefasAsync(hojeFixo));
         await EtapaAsync(nameof(AlertarEventosAsync), () => AlertarEventosAsync(hojeFixo));
         await EtapaAsync(nameof(AlertarTrialExpirandoAsync), () => AlertarTrialExpirandoAsync(hojeFixo ?? BrasiliaTime.Hoje));
+        await EtapaAsync(nameof(AlertarPlanoPromocionalExpirandoAsync), () => AlertarPlanoPromocionalExpirandoAsync(hojeFixo ?? BrasiliaTime.Hoje));
     }
 
     private async Task EtapaAsync(string nome, Func<Task> etapa)
@@ -362,6 +363,85 @@ public class AlertasJob
                         DescartarPendentes();
                         _logger.LogError(ex, "Erro ao alertar trial tenant {TenantId}", tenant.Id);
                     }
+                }
+            }
+        }
+    }
+
+    // Período grátis de código promocional: o tenant nasce Ativo (não Trial) com PlanoExpiraEm,
+    // então não entra em AlertarTrialExpirandoAsync. Ficam de fora assinaturas pagas (Stripe/
+    // AbacatePay) e canceladas (Status Cancelado, que também usam PlanoExpiraEm).
+    private async Task AlertarPlanoPromocionalExpirandoAsync(DateTime hoje)
+    {
+        var limites = new[] { 7, 3, 1 };
+        var janelaIni = hoje.AddDays(limites.Min() - FolgaFusoDias);
+        var janelaFim = hoje.AddDays(limites.Max() + 1 + FolgaFusoDias);
+
+        var candidatos = await _context.Tenants
+            .Where(t => t.Status == StatusTenant.Ativo &&
+                        t.Plano != PlanoTipo.Free &&
+                        t.PlanoExpiraEm.HasValue &&
+                        t.PlanoExpiraEm.Value >= janelaIni &&
+                        t.PlanoExpiraEm.Value < janelaFim &&
+                        t.StripeSubscriptionId == null &&
+                        t.AbacatePayBillingId == null)
+            .Select(t => new { t.Id, t.Nome, t.Plano, ExpiraEm = t.PlanoExpiraEm!.Value })
+            .ToListAsync();
+
+        foreach (var tenant in candidatos)
+        {
+            // PlanoExpiraEm é um instante UTC; o dia do fim é o do calendário de Brasília.
+            var dias = (BrasiliaTime.DeUtc(tenant.ExpiraEm).Date - hoje.Date).Days;
+            if (!limites.Contains(dias)) continue;
+
+            var admins = await _context.Users
+                .Where(u => u.TenantId == tenant.Id && u.Perfil == PerfilUsuario.Admin && u.Ativo)
+                .Select(u => new { u.Id, u.Nome, u.Email })
+                .ToListAsync();
+
+            foreach (var admin in admins)
+            {
+                try
+                {
+                    var chave = $"promo-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
+                    var permiteInApp = await _prefs.PermiteInAppAsync(tenant.Id, admin.Id, "TrialExpirando");
+
+                    if (!string.IsNullOrEmpty(admin.Email))
+                    {
+                        var chaveEmail = $"email-promo-{tenant.Id}-{dias}d-{hoje:yyyyMMdd}";
+                        var emailJaEnviado = await _context.Notificacoes.AnyAsync(n => n.ChaveDedup == chaveEmail);
+                        if (!emailJaEnviado)
+                        {
+                            await _emailService.EnviarPlanoPromocionalExpirandoAsync(
+                                admin.Email, tenant.Nome, tenant.Plano, tenant.ExpiraEm, dias);
+                            _context.Notificacoes.Add(new Domain.Entities.Notificacao
+                            {
+                                Id = Guid.NewGuid(),
+                                TenantId = tenant.Id,
+                                UsuarioId = admin.Id,
+                                Tipo = TipoNotificacao.TrialExpirando,
+                                Titulo = $"Email período promocional {tenant.Nome}",
+                                Mensagem = $"Email enviado para {admin.Email}",
+                                Lida = false,
+                                CriadaEm = DateTime.UtcNow,
+                                ChaveDedup = chaveEmail
+                            });
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    if (permiteInApp)
+                        await CriarNotificacaoAsync(
+                            tenant.Id, admin.Id,
+                            TipoNotificacao.TrialExpirando,
+                            $"Plano {tenant.Plano} expira em {dias} dia(s)",
+                            $"Seu período promocional do plano {tenant.Plano} expira em {dias} dia(s). Assine para continuar com os recursos.",
+                            "/pages/assinatura.html", chave);
+                }
+                catch (Exception ex)
+                {
+                    DescartarPendentes();
+                    _logger.LogError(ex, "Erro ao alertar período promocional tenant {TenantId}", tenant.Id);
                 }
             }
         }

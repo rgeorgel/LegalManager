@@ -539,7 +539,7 @@ RecurringJob.AddOrUpdate<AlertasJob>(
 RecurringJob.AddOrUpdate<TrialRevertJob>(
     "trial-revert",
     job => job.ExecutarAsync(),
-    "0 * * * *"); // hourly catch-up for expired trials whose users haven't logged in
+    "0 * * * *"); // hourly catch-up for expired trials and promo/cancelled plans whose users haven't logged in
 
 RecurringJob.AddOrUpdate<MonitoramentoJob>(
     "monitoramento-processos",

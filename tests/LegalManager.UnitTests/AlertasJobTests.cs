@@ -192,6 +192,85 @@ public class AlertasJobTests
         Assert.Equal(TipoNotificacao.TrialExpirando, notif.Tipo);
     }
 
+    private static async Task<(AppDbContext ctx, Guid tenantId, Guid adminId)> SeedPromoAsync(
+        AppDbContext ctx, StatusTenant status, DateTime planoExpiraEm, string? stripeSubscriptionId = null)
+    {
+        var tenantId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Promo Tenant", Plano = PlanoTipo.Plus,
+            Status = status, PlanoExpiraEm = planoExpiraEm,
+            StripeSubscriptionId = stripeSubscriptionId, CriadoEm = DateTime.UtcNow
+        });
+        ctx.Users.Add(new Usuario
+        {
+            Id = adminId, TenantId = tenantId, Nome = "Admin",
+            Email = "admin@promo.com", UserName = "admin@promo.com",
+            Perfil = PerfilUsuario.Admin, Ativo = true, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+        return (ctx, tenantId, adminId);
+    }
+
+    [Theory]
+    [InlineData(7)]
+    [InlineData(3)]
+    [InlineData(1)]
+    public async Task ExecutarAsync_DeveAlertarPlanoPromocionalExpirando(int dias)
+    {
+        var hoje = BrasiliaTime.Hoje;
+        // 17h UTC = 14h em Brasília, mesmo dia de calendário.
+        var expiraEm = DateTime.SpecifyKind(hoje.AddDays(dias).AddHours(17), DateTimeKind.Utc);
+        var (ctx, tenantId, adminId) = await SeedPromoAsync(CreateContext(), StatusTenant.Ativo, expiraEm);
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, adminId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+        await job.ExecutarAsync(hoje); // não reenvia no mesmo dia
+
+        mockEmail.Verify(e => e.EnviarPlanoPromocionalExpirandoAsync(
+            "admin@promo.com", "Promo Tenant", PlanoTipo.Plus, expiraEm, dias, It.IsAny<CancellationToken>()), Times.Once);
+        mockEmail.Verify(e => e.EnviarTrialExpirandoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Contains(await ctx.Notificacoes.ToListAsync(),
+            n => n.Tipo == TipoNotificacao.TrialExpirando && n.Titulo == $"Plano Plus expira em {dias} dia(s)");
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_NaoAlertaPlanoPromocional_ForaDosLimites()
+    {
+        var hoje = BrasiliaTime.Hoje;
+        var expiraEm = DateTime.SpecifyKind(hoje.AddDays(30).AddHours(17), DateTimeKind.Utc);
+        var (ctx, tenantId, adminId) = await SeedPromoAsync(CreateContext(), StatusTenant.Ativo, expiraEm);
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, adminId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarPlanoPromocionalExpirandoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<PlanoTipo>(), It.IsAny<DateTime>(), It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(StatusTenant.Ativo, "sub_123")]   // assinatura paga renova sozinha
+    [InlineData(StatusTenant.Cancelado, null)]   // assinatura cancelada também usa PlanoExpiraEm
+    public async Task ExecutarAsync_NaoAlertaPlanoPromocional_ParaAssinaturaPaga(StatusTenant status, string? stripeId)
+    {
+        var hoje = BrasiliaTime.Hoje;
+        var expiraEm = DateTime.SpecifyKind(hoje.AddDays(3).AddHours(17), DateTimeKind.Utc);
+        var (ctx, tenantId, adminId) = await SeedPromoAsync(CreateContext(), status, expiraEm, stripeId);
+
+        var mockEmail = new Mock<IEmailService>();
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, adminId).Object, Mock.Of<ILogger<AlertasJob>>());
+        await job.ExecutarAsync(hoje);
+
+        mockEmail.Verify(e => e.EnviarPlanoPromocionalExpirandoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<PlanoTipo>(), It.IsAny<DateTime>(), It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     [Fact]
     public async Task ExecutarAsync_DeveIncluirPrazoDeTarefaNoResumoUnico()
     {

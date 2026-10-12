@@ -1,5 +1,7 @@
 using System.Globalization;
 ﻿using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
+using LegalManager.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Resend;
@@ -243,6 +245,112 @@ public class EmailService : IEmailService
             </div>
             """;
         await EnviarAsync(CriarMensagem(email, $"Seu período de teste termina em {diasRestantes} dia(s)", html));
+    }
+
+    public async Task EnviarPlanoPromocionalExpirandoAsync(string email, string nomeEscritorio, PlanoTipo plano,
+        DateTime expiraEm, int diasRestantes, CancellationToken ct = default)
+    {
+        var frontendUrl = _config["App:FrontendUrl"];
+        var linkAssinatura = $"{frontendUrl}/pages/assinatura.html?from=promo";
+        var nomePlano = plano.ToString();
+        var dataFim = BrasiliaTime.DeUtc(expiraEm).ToString("dd/MM/yyyy", PtBr);
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Período promocional</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#b45309;margin-top:0">Seu período promocional está terminando</h2>
+                <p>Olá! O período promocional do <strong>plano {nomePlano}</strong> de <strong>{System.Net.WebUtility.HtmlEncode(nomeEscritorio)}</strong> termina em <strong>{diasRestantes} dia(s)</strong> ({dataFim}).</p>
+                <p style="background:#ecfdf5;border-left:4px solid #10b981;padding:12px 16px;margin:20px 0;color:#065f46;border-radius:4px">
+                  <strong>Boa notícia:</strong> você <strong>não perderá o acesso</strong> à sua conta. Ao final do período, o escritório será movido automaticamente para o <strong>plano Free</strong>, e você poderá continuar utilizando o Causify com os recursos essenciais.
+                </p>
+                <p>Se quiser manter os recursos avançados, veja abaixo o que muda entre o plano Free e o <strong>plano {nomePlano}</strong>:</p>
+
+            {TabelaComparativaPlanos(plano)}
+
+                <p style="text-align:center;margin:28px 0 8px">
+                  <a href="{linkAssinatura}"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Manter plano {nomePlano}
+                  </a>
+                </p>
+                <p style="text-align:center;margin:8px 0 0">
+                  <a href="{linkAssinatura}"
+                     style="color:#6b7280;font-size:13px;text-decoration:underline">
+                    Continuar com o plano Free
+                  </a>
+                </p>
+
+                <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+                  Se decidir permanecer no plano Free, nenhum dado será apagado. Você poderá fazer upgrade a qualquer momento.
+                </p>
+              </div>
+            </div>
+            """;
+        await EnviarAsync(CriarMensagem(email, $"Seu período promocional do plano {nomePlano} termina em {diasRestantes} dia(s)", html));
+    }
+
+    // Tabela Free × plano, montada a partir de PlanoRestricoes para não divergir dos limites
+    // reais. Só entram as linhas em que os dois planos diferem.
+    private static string TabelaComparativaPlanos(PlanoTipo plano)
+    {
+        static string Gb(int mb) => mb % 1024 == 0 ? $"{mb / 1024} GB" : $"{mb / 1024.0:0.#} GB";
+        var free = PlanoTipo.Free;
+        var linhas = new List<(string Recurso, string Free, string Plano)>
+        {
+            ("Usuários", PlanoRestricoes.MaxUsuarios(free).ToString(), PlanoRestricoes.MaxUsuarios(plano).ToString()),
+            ("Processos monitorados", PlanoRestricoes.MaxProcessosMonitorados(free).ToString(), PlanoRestricoes.MaxProcessosMonitorados(plano).ToString()),
+            ("Armazenamento", Gb(PlanoRestricoes.ArmazenamentoLimiteMB(free)), Gb(PlanoRestricoes.ArmazenamentoLimiteMB(plano))),
+            ("OABs monitoradas (publicações)", PlanoRestricoes.MaxOabsMonitoradas(free).ToString(), PlanoRestricoes.MaxOabsMonitoradas(plano).ToString()),
+        };
+        void Flag(string recurso, Func<PlanoTipo, bool> permite) =>
+            linhas.Add((recurso, permite(free) ? "✓" : "✕", permite(plano) ? "✓" : "✕"));
+        Flag("Módulo Financeiro", PlanoRestricoes.PermiteFinanceiro);
+        Flag("Honorários e Contratos", PlanoRestricoes.PermiteHonorariosContratos);
+        Flag("Indicadores e relatórios", PlanoRestricoes.PermiteIndicadores);
+        Flag("Calculadora de prazos", PlanoRestricoes.PermiteCalculadoraPrazos);
+        Flag("Portal do Cliente", PlanoRestricoes.PermitePortalCliente);
+        Flag("Assistente de IA", PlanoRestricoes.PermiteAssistenteIA);
+        Flag("Templates de documentos", PlanoRestricoes.PermiteTemplatesDocumentos);
+
+        static string Celula(string valor, bool destaque) => valor switch
+        {
+            "✕" => $"color:#b91c1c{(destaque ? ";background:#eff6ff" : "")}",
+            "✓" => $"{(destaque ? "background:#eff6ff;" : "")}color:#047857;font-weight:600",
+            _ => destaque ? "background:#eff6ff" : ""
+        };
+
+        var diferentes = linhas.Where(l => l.Free != l.Plano).ToList();
+        var sb = new System.Text.StringBuilder();
+        for (var i = 0; i < diferentes.Count; i++)
+        {
+            var (recurso, vFree, vPlano) = diferentes[i];
+            var borda = i < diferentes.Count - 1 ? "border-bottom:1px solid #f3f4f6;" : "";
+            sb.Append($"""
+                    <tr>
+                      <td style="padding:10px 16px;{borda}">{recurso}</td>
+                      <td style="text-align:center;padding:10px 16px;{borda}{Celula(vFree, false)}">{vFree}</td>
+                      <td style="text-align:center;padding:10px 16px;{borda}{Celula(vPlano, true)}">{vPlano}</td>
+                    </tr>
+
+                """);
+        }
+
+        return $"""
+                <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+                  <thead>
+                    <tr style="background:#f9fafb">
+                      <th style="text-align:left;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Recurso</th>
+                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;width:80px">Free</th>
+                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#1a56db;font-weight:700;border-bottom:1px solid #e5e7eb;width:80px;background:#eff6ff">{plano}</th>
+                    </tr>
+                  </thead>
+                  <tbody style="font-size:14px;color:#1f2937">
+            {sb}      </tbody>
+                </table>
+            """;
     }
 
     public async Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa,
