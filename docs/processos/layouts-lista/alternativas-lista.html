@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<!--
+  Protótipos da visualização em LISTA de /pages/processos.html (abrir direto no navegador).
+  Usa o styles.css real do app; dados de exemplo fixos no <script> abaixo.
+  Escolhida: A (implementada em processos.html, seletores .processos-grid.list-view).
+  Para testar novas ideias, adicione uma seção "D — ..." seguindo o mesmo padrão.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de processos — alternativas</title>
+<link rel="stylesheet" href="../../../src/LegalManager.API/wwwroot/css/styles.css">
+<style>
+  body { background:#f3f4f6; margin:0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color:#111827; }
+  .topo { position:sticky; top:0; z-index:10; background:#111827; color:#fff; padding:12px 24px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .topo h1 { font-size:16px; margin:0; font-weight:600; }
+  .topo .grupo { display:flex; gap:6px; align-items:center; font-size:13px; }
+  .topo button { background:#374151; color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer; font-size:13px; }
+  .topo button.ativo { background:#1a56db; }
+  .secao { padding:28px 24px 8px; }
+  .secao h2 { font-size:20px; margin:0 0 4px; }
+  .secao p.desc { margin:0 0 16px; color:#6b7280; font-size:14px; max-width:900px; }
+  .palco { margin:0 auto; }
+  .lista { display:flex; flex-direction:column; gap:10px; }
+
+  /* comum */
+  .cnj { font-family:'SF Mono','Consolas',monospace; font-size:14px; font-weight:600; letter-spacing:.02em; white-space:nowrap; color:#111827; }
+  .lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#9ca3af; }
+  .val { font-size:14px; font-weight:500; color:#111827; line-height:1.4; overflow-wrap:anywhere; }
+  .val.vazio { color:#9ca3af; font-weight:400; }
+  .val.pend { color:#6b7280; font-style:italic; font-weight:400; }
+  .fav { background:none; border:0; font-size:18px; color:#d1d5db; cursor:pointer; padding:0 2px; line-height:1; }
+  .fav.on { color:#f59e0b; }
+  .st-ativo { background:#d1fae5; color:#057a55; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; transition:box-shadow .15s,border-color .15s; cursor:pointer; }
+  .card:hover { border-color:#d1d5db; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+  .card.favorito { border-color:#fcd34d; }
+  .acoes { display:flex; gap:6px; flex-wrap:wrap; }
+  .badges { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .mon { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:600; padding:2px 6px; border-radius:99px; background:#dbeafe; color:#1d4ed8; }
+
+  /* ===== A — Cabeçalho + grade ===== */
+  .a { padding:16px 20px; display:flex; flex-direction:column; gap:14px; }
+  .a-top { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .a-top .badges { flex:1; }
+  .a-grid { display:grid; grid-template-columns: 1.3fr 1.5fr 1fr; gap:14px 28px; padding-top:14px; border-top:1px solid #f0f1f3; }
+  .a-campo { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .a-campo.parte .val { font-weight:600; }
+
+  /* ===== B — Parte em destaque ===== */
+  .b { padding:18px 20px; display:grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1.6fr) auto; gap:24px; align-items:center; }
+  .b-id { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .b-parte { font-size:16px; font-weight:700; color:#111827; line-height:1.3; }
+  .b-parte.vazio { color:#9ca3af; font-weight:500; font-style:italic; }
+  .b-cnj { display:flex; align-items:center; gap:6px; }
+  .b-cnj .cnj { font-size:13px; color:#4b5563; }
+  .b-det { display:grid; grid-template-columns: max-content 1fr; gap:6px 14px; align-items:baseline; min-width:0; padding-left:24px; border-left:1px solid #f0f1f3; }
+  .b-det .lbl { white-space:nowrap; }
+  .b-det .val { font-size:13.5px; }
+  .b-side { display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+
+  /* ===== C — Blocos + rodapé ===== */
+  .c { overflow:hidden; }
+  .c-corpo { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.2fr); }
+  .c-bloco { padding:16px 20px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .c-bloco + .c-bloco { border-left:1px solid #f0f1f3; }
+  .c-titulo { font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#1a56db; }
+  .c-campo { display:flex; flex-direction:column; gap:2px; }
+  .c-rod { display:flex; align-items:center; gap:20px; padding:10px 20px; background:#f9fafb; border-top:1px solid #f0f1f3; flex-wrap:wrap; }
+  .c-meta { display:flex; gap:20px; flex:1; font-size:13px; color:#6b7280; flex-wrap:wrap; }
+  .c-meta b { color:#111827; font-weight:600; }
+
+  /* responsivo (simulado pela largura do palco via container query) */
+  .palco { container-type:inline-size; }
+  @container (max-width: 900px) {
+    .a-grid { grid-template-columns: 1fr 1fr; }
+    .b { grid-template-columns: 1fr; gap:14px; }
+    .b-det { padding-left:0; border-left:0; padding-top:14px; border-top:1px solid #f0f1f3; }
+    .b-side { flex-direction:row; justify-content:space-between; align-items:center; }
+    .c-corpo { grid-template-columns: 1fr 1fr; }
+    .c-bloco:first-child { grid-column: 1 / -1; border-bottom:1px solid #f0f1f3; }
+    .c-bloco:nth-child(2) { border-left:0; }
+  }
+  @container (max-width: 520px) {
+    .a-grid { grid-template-columns: 1fr; }
+    .b-det { grid-template-columns: 1fr; gap:2px; }
+    .b-det .val { margin-bottom:6px; }
+    .b-side { flex-direction:column; align-items:flex-start; }
+    .c-corpo { grid-template-columns: 1fr; }
+    .c-bloco + .c-bloco { border-left:0; border-top:1px solid #f0f1f3; }
+  }
+</style>
+</head>
+<body>
+<div class="topo">
+  <h1>Lista de processos — 3 alternativas</h1>
+  <div class="grupo">Largura da área de conteúdo:
+    <button data-w="1600">1600px</button>
+    <button data-w="1250" class="ativo">1250px</button>
+    <button data-w="900">900px</button>
+    <button data-w="420">Celular</button>
+  </div>
+</div>
+
+<section class="secao">
+  <h2>A — Cabeçalho + grade de dados <span class="badge badge-green" style="vertical-align:middle">em uso</span></h2>
+  <p class="desc">Primeira linha com o CNJ inteiro, estrela, status, área e as ações. Abaixo de um divisor fica uma grade de 3 colunas com o rótulo acima do valor: Parte, Vara e Tribunal em cima; Responsável, Andamentos e Valor embaixo. Os textos longos quebram linha sem cortar.</p>
+  <div class="palco"><div class="lista" id="listaA"></div></div>
+</section>
+
+<section class="secao">
+  <h2>B — Parte em destaque</h2>
+  <p class="desc">O nome da parte vira o título do item, e o CNJ fica logo abaixo, menor. No meio, uma ficha "rótulo → valor" com Tribunal, Vara, Responsável e Andamentos. À direita ficam os badges, e as ações aparecem embaixo deles. Bom para quem procura pelo cliente.</p>
+  <div class="palco"><div class="lista" id="listaB"></div></div>
+</section>
+
+<section class="secao">
+  <h2>C — Blocos temáticos + rodapé</h2>
+  <p class="desc">O item é dividido em 3 blocos com título: Processo (CNJ, status, área), Juízo (Tribunal, Vara) e Pessoas (Parte, Responsável). Um rodapé cinza reúne andamentos, valor e as ações. É a opção mais organizada e a mais alta.</p>
+  <div class="palco"><div class="lista" id="listaC"></div></div>
+</section>
+<div style="height:40px"></div>
+
+<script>
+const dados = [
+  { cnj:'0049771-26.1999.4.03.0399', area:'Civil', fav:true, tribunal:'TRF3', vara:'1a Vara / SP - São Jose do Rio Preto', parte:'Maurilio Ferreira Dourado', resp:'Nahane Letícia', and:62 },
+  { cnj:'0709820-66.1998.4.03.6106', area:'Civil', tribunal:'TRF3', vara:'1a Vara / SP - São Jose do Rio Preto', parte:'Caixa Economica Federal - (PJ)', resp:'Nahane Letícia', pend:true },
+  { cnj:'0005662-83.2006.8.26.0664', area:'Outro', tribunal:'03 VARA CÍVEL DA COMARCA DE VOTUPORANGA', vara:'03 VARA CÍVEL DA COMARCA DE VOTUPORANGA', parte:null, resp:'Nahane Letícia', pend:true, valor:'R$ 125.000,00' },
+  { cnj:'0500559-67.2008.8.26.0664', area:'Outro', grau:'G1', mon:true, tribunal:'SAF DE VOTUPORANGA', vara:'SAF - Serviço de Anexo Fiscal - Foro de Votuporanga', parte:'Município de Votuporanga', resp:'Nahane Letícia', and:5 },
+];
+const v = (x, cls='') => x ? `<span class="val ${cls}">${x}</span>` : `<span class="val vazio">—</span>`;
+const andam = p => p.pend ? `<span class="val pend" title="Buscados automaticamente ao abrir o processo">⏳ Buscados ao abrir o processo</span>` : `<span class="val">${p.and}</span>`;
+const fav = p => `<button class="fav ${p.fav?'on':''}">${p.fav?'★':'☆'}</button>`;
+const status = `<span class="badge st-ativo">Ativo</span>`;
+const badges = p => `<span class="badge badge-blue">${p.area}</span>${p.grau?`<span class="badge badge-gray">${p.grau}</span>`:''}${p.mon?'<span class="mon">🔄 Monitorado</span>':''}`;
+const acoes = `<div class="acoes"><a class="btn btn-secondary btn-sm">Ver</a><button class="btn btn-secondary btn-sm">Editar</button><button class="btn btn-danger btn-sm">Encerrar</button></div>`;
+const campo = (cls, l, val) => `<div class="a-campo ${cls}"><span class="lbl">${l}</span>${val}</div>`;
+
+document.getElementById('listaA').innerHTML = dados.map(p => `
+  <div class="card a ${p.fav?'favorito':''}">
+    <div class="a-top">
+      <span class="cnj">${p.cnj}</span>${fav(p)}${status}
+      <div class="badges">${badges(p)}</div>
+      ${acoes}
+    </div>
+    <div class="a-grid">
+      ${campo('parte','Parte',v(p.parte))}
+      ${campo('','Vara',v(p.vara))}
+      ${campo('','Tribunal',v(p.tribunal))}
+      ${campo('','Responsável',v(p.resp))}
+      ${campo('','Andamentos',andam(p))}
+      ${campo('','Valor da causa',v(p.valor))}
+    </div>
+  </div>`).join('');
+
+document.getElementById('listaB').innerHTML = dados.map(p => `
+  <div class="card b ${p.fav?'favorito':''}">
+    <div class="b-id">
+      <div class="b-parte ${p.parte?'':'vazio'}">${p.parte || 'Parte não informada'}</div>
+      <div class="b-cnj"><span class="cnj">${p.cnj}</span>${fav(p)}</div>
+      ${p.valor ? `<div style="font-size:13px;color:#6b7280">Valor: <b style="color:#111827">${p.valor}</b></div>` : ''}
+    </div>
+    <div class="b-det">
+      <span class="lbl">Tribunal</span>${v(p.tribunal)}
+      <span class="lbl">Vara</span>${v(p.vara)}
+      <span class="lbl">Responsável</span>${v(p.resp)}
+      <span class="lbl">Andamentos</span>${andam(p)}
+    </div>
+    <div class="b-side">
+      <div class="badges">${status}${badges(p)}</div>
+      ${acoes}
+    </div>
+  </div>`).join('');
+
+const cc = (l, val) => `<div class="c-campo"><span class="lbl">${l}</span>${val}</div>`;
+document.getElementById('listaC').innerHTML = dados.map(p => `
+  <div class="card c ${p.fav?'favorito':''}">
+    <div class="c-corpo">
+      <div class="c-bloco">
+        <span class="c-titulo">Processo</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="cnj">${p.cnj}</span>${fav(p)}</div>
+        <div class="badges">${status}${badges(p)}</div>
+      </div>
+      <div class="c-bloco">
+        <span class="c-titulo">Juízo</span>
+        ${cc('Tribunal', v(p.tribunal))}
+        ${cc('Vara', v(p.vara))}
+      </div>
+      <div class="c-bloco">
+        <span class="c-titulo">Pessoas</span>
+        ${cc('Parte', v(p.parte))}
+        ${cc('Responsável', v(p.resp))}
+      </div>
+    </div>
+    <div class="c-rod">
+      <div class="c-meta">
+        <span>Andamentos: ${p.pend ? '<i>⏳ buscados ao abrir o processo</i>' : `<b>${p.and}</b>`}</span>
+        <span>Valor: <b>${p.valor || '—'}</b></span>
+      </div>
+      ${acoes}
+    </div>
+  </div>`).join('');
+
+function setW(w) {
+  document.querySelectorAll('.palco').forEach(e => e.style.maxWidth = w + 'px');
+  document.querySelectorAll('.topo button').forEach(b => b.classList.toggle('ativo', b.dataset.w == w));
+}
+document.querySelectorAll('.topo button').forEach(b => b.onclick = () => setW(b.dataset.w));
+setW(1250);
+</script>
+</body>
+</html>

@@ -121,42 +121,40 @@
       gap: 16px;
       padding: 4px 0;
     }
-    /* Visão em lista: uma linha por processo, com colunas alinhadas entre as linhas.
-       Rótulo em cima do valor (não ao lado) para os textos longos (vara, parte) terem
-       largura; valores passam de 2 linhas viram reticências, com o texto completo no title. */
+    /* Visão em lista (alternativa "A" de docs/processos/layouts-lista/alternativas-lista.html):
+       1ª linha com CNJ, estrela, status, badges e ações; abaixo de um divisor, grade de
+       3 colunas com rótulo acima do valor (Parte/Vara/Tribunal, Responsável/Andamentos/Valor). */
     .processos-grid.list-view {
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: 10px;
     }
     .processos-grid.list-view .processo-card {
       flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 16px;
-      padding: 12px 16px;
+      gap: 14px 12px;
+      padding: 16px 20px;
     }
     .processos-grid.list-view .card-divider { display: none; }
-    .processos-grid.list-view .card-header {
-      flex: 0 0 auto;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 6px;
+    .processos-grid.list-view .card-header { flex: 0 0 auto; align-items: center; gap: 10px; }
+    .processos-grid.list-view .card-cnj { white-space: nowrap; }
+    .processos-grid.list-view .card-badges { flex: 1 1 auto; }
+    .processos-grid.list-view .card-footer { flex: 0 0 auto; padding-top: 0; }
+    .processos-grid.list-view .card-actions { display: flex; gap: 6px; margin-top: 0; }
+    .processos-grid.list-view .card-body {
+      order: 1;
+      flex: 1 1 100%;
+      min-width: 0;
+      padding: 14px 0 0;
+      border-top: 1px solid #f0f1f3;
     }
-    .processos-grid.list-view .card-cnj { font-size: 13px; white-space: nowrap; }
-    .processos-grid.list-view .card-badges {
-      flex: 0 0 104px;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
-    .processos-grid.list-view .card-body { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0; }
     .processos-grid.list-view .card-info {
       display: grid;
-      grid-template-columns:
-        minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, .9fr) minmax(0, 1fr) minmax(0, .9fr);
-      grid-template-areas: "parte vara tribunal valor responsavel andamentos";
-      gap: 4px 16px;
-      width: 100%;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.5fr) minmax(0, 1fr);
+      grid-template-areas:
+        "parte vara tribunal"
+        "responsavel andamentos valor";
+      gap: 14px 28px;
     }
     .processos-grid.list-view .info-parte       { grid-area: parte; }
     .processos-grid.list-view .info-vara        { grid-area: vara; }
@@ -167,45 +165,28 @@
     .processos-grid.list-view .card-info-row {
       flex-direction: column;
       align-items: flex-start;
-      gap: 2px;
+      gap: 3px;
       min-width: 0;
     }
-    .processos-grid.list-view .card-info-row .label { min-width: 0; font-size: 10px; }
+    .processos-grid.list-view .card-info-row .label { min-width: 0; }
     .processos-grid.list-view .card-info-row .value {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      overflow: hidden;
+      font-size: 14px;
+      line-height: 1.4;
       overflow-wrap: anywhere;
-      line-height: 1.35;
-      max-width: 100%;
     }
     .processos-grid.list-view .info-parte .value { font-weight: 600; }
-    .processos-grid.list-view .card-footer { flex: 0 0 auto; padding-top: 0; }
-    .processos-grid.list-view .card-actions { display: flex; gap: 6px; margin-top: 0; }
-    /* Telas médias: as ações sobem para a linha do CNJ e os dados descem para uma
-       grade de 3 colunas embaixo. */
-    @media (max-width: 1400px) {
-      .processos-grid.list-view .processo-card { flex-wrap: wrap; row-gap: 10px; }
-      .processos-grid.list-view .card-header { flex-direction: row; align-items: center; gap: 10px; }
-      .processos-grid.list-view .card-badges { flex: 1 1 auto; flex-direction: row; align-items: center; }
-      .processos-grid.list-view .card-footer { order: 1; }
-      .processos-grid.list-view .card-body { order: 2; flex: 1 1 100%; }
-      .processos-grid.list-view .card-info {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        grid-template-areas:
-          "parte vara tribunal"
-          "responsavel andamentos valor";
-        gap: 10px 16px;
-      }
-    }
-    @media (max-width: 768px) {
-      .processos-grid.list-view .card-header { flex-wrap: wrap; }
-      .processos-grid.list-view .card-footer { order: 3; flex: 1 1 100%; justify-content: flex-start; }
+    @media (max-width: 900px) {
       .processos-grid.list-view .card-info {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-areas: "parte parte" "vara tribunal" "responsavel andamentos" "valor valor";
+        grid-template-areas: "parte vara" "tribunal responsavel" "andamentos valor";
+      }
+    }
+    @media (max-width: 520px) {
+      .processos-grid.list-view .card-header { flex-wrap: wrap; }
+      .processos-grid.list-view .card-footer { order: 2; flex: 1 1 100%; }
+      .processos-grid.list-view .card-info {
+        grid-template-columns: 1fr;
+        grid-template-areas: "parte" "vara" "tribunal" "responsavel" "andamentos" "valor";
       }
     }
     .card-info { display: flex; flex-direction: column; gap: 6px; }
