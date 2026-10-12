@@ -121,35 +121,95 @@
       gap: 16px;
       padding: 4px 0;
     }
+    /* Visão em lista: uma linha por processo, com colunas alinhadas entre as linhas.
+       Rótulo em cima do valor (não ao lado) para os textos longos (vara, parte) terem
+       largura; valores passam de 2 linhas viram reticências, com o texto completo no title. */
     .processos-grid.list-view {
       grid-template-columns: 1fr;
-      gap: 4px;
+      gap: 6px;
     }
     .processos-grid.list-view .processo-card {
       flex-direction: row;
       align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
+      gap: 16px;
+      padding: 12px 16px;
     }
     .processos-grid.list-view .card-divider { display: none; }
     .processos-grid.list-view .card-header {
-      flex: 0 0 210px;
+      flex: 0 0 auto;
       flex-direction: column;
       align-items: flex-start;
       justify-content: center;
-      gap: 5px;
+      gap: 6px;
     }
-    .processos-grid.list-view .card-badges { flex: 0 0 auto; }
-    .processos-grid.list-view .card-body { flex: 1; display: flex; align-items: center; }
-    .processos-grid.list-view .card-body > div:not(.card-divider) {
+    .processos-grid.list-view .card-cnj { font-size: 13px; white-space: nowrap; }
+    .processos-grid.list-view .card-badges {
+      flex: 0 0 104px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .processos-grid.list-view .card-body { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0; }
+    .processos-grid.list-view .card-info {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3px 16px;
+      grid-template-columns:
+        minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, .9fr) minmax(0, 1fr) minmax(0, .9fr);
+      grid-template-areas: "parte vara tribunal valor responsavel andamentos";
+      gap: 4px 16px;
       width: 100%;
     }
-    .processos-grid.list-view .card-body .card-info-row { margin-top: 0 !important; }
-    .processos-grid.list-view .card-footer { flex: 0 0 auto; }
+    .processos-grid.list-view .info-parte       { grid-area: parte; }
+    .processos-grid.list-view .info-vara        { grid-area: vara; }
+    .processos-grid.list-view .info-tribunal    { grid-area: tribunal; }
+    .processos-grid.list-view .info-valor       { grid-area: valor; display: flex; }
+    .processos-grid.list-view .info-responsavel { grid-area: responsavel; }
+    .processos-grid.list-view .info-andamentos  { grid-area: andamentos; }
+    .processos-grid.list-view .card-info-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      min-width: 0;
+    }
+    .processos-grid.list-view .card-info-row .label { min-width: 0; font-size: 10px; }
+    .processos-grid.list-view .card-info-row .value {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+      max-width: 100%;
+    }
+    .processos-grid.list-view .info-parte .value { font-weight: 600; }
+    .processos-grid.list-view .card-footer { flex: 0 0 auto; padding-top: 0; }
     .processos-grid.list-view .card-actions { display: flex; gap: 6px; margin-top: 0; }
+    /* Telas médias: as ações sobem para a linha do CNJ e os dados descem para uma
+       grade de 3 colunas embaixo. */
+    @media (max-width: 1400px) {
+      .processos-grid.list-view .processo-card { flex-wrap: wrap; row-gap: 10px; }
+      .processos-grid.list-view .card-header { flex-direction: row; align-items: center; gap: 10px; }
+      .processos-grid.list-view .card-badges { flex: 1 1 auto; flex-direction: row; align-items: center; }
+      .processos-grid.list-view .card-footer { order: 1; }
+      .processos-grid.list-view .card-body { order: 2; flex: 1 1 100%; }
+      .processos-grid.list-view .card-info {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-areas:
+          "parte vara tribunal"
+          "responsavel andamentos valor";
+        gap: 10px 16px;
+      }
+    }
+    @media (max-width: 768px) {
+      .processos-grid.list-view .card-header { flex-wrap: wrap; }
+      .processos-grid.list-view .card-footer { order: 3; flex: 1 1 100%; justify-content: flex-start; }
+      .processos-grid.list-view .card-info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "parte parte" "vara tribunal" "responsavel andamentos" "valor valor";
+      }
+    }
+    .card-info { display: flex; flex-direction: column; gap: 6px; }
+    .card-info-row.info-opcional { display: none; }
     .processo-card {
       background: #fff;
       border: 1px solid var(--color-border);
@@ -930,28 +990,13 @@ function renderTable(items) {
       </div>
       <div class="card-body">
       <div class="card-divider"></div>
-      <div>
-        <div class="card-info-row">
-          <span class="label">Tribunal</span>
-          <span class="value ${p.tribunal ? '' : 'empty'}">${p.tribunal || '—'}</span>
-        </div>
-        <div class="card-info-row" style="margin-top:6px">
-          <span class="label">Vara</span>
-          <span class="value ${p.vara ? '' : 'empty'}">${p.vara || '—'}</span>
-        </div>
-        <div class="card-info-row" style="margin-top:6px">
-          <span class="label">Parte</span>
-          <span class="value ${p.nomeCliente ? '' : 'empty'}">${p.nomeCliente || '—'}</span>
-        </div>
-        ${valor ? `<div class="card-info-row" style="margin-top:6px">
-          <span class="label">Valor</span>
-          <span class="value">${valor}</span>
-        </div>` : ''}
-        <div class="card-info-row" style="margin-top:6px">
-          <span class="label">Responsável</span>
-          <span class="value ${p.nomeAdvogadoResponsavel ? '' : 'empty'}">${p.nomeAdvogadoResponsavel || '—'}</span>
-        </div>
-        <div class="card-info-row" style="margin-top:6px">
+      <div class="card-info">
+        ${infoRow('tribunal', 'Tribunal', p.tribunal)}
+        ${infoRow('vara', 'Vara', p.vara)}
+        ${infoRow('parte', 'Parte', p.nomeCliente)}
+        ${infoRow('valor', 'Valor', valor)}
+        ${infoRow('responsavel', 'Responsável', p.nomeAdvogadoResponsavel)}
+        <div class="card-info-row info-andamentos">
           <span class="label">Andamentos</span>
           ${p.andamentosPendentes && !p.totalAndamentos
             ? `<span class="value andamentos-pendentes" title="Processo importado sem os andamentos. Eles são buscados automaticamente na primeira vez que você abrir o processo.">⏳ Buscados ao abrir o processo</span>`
@@ -969,6 +1014,16 @@ function renderTable(items) {
       </div>
     </div>`;
   }).join('');
+}
+
+// Linha "rótulo: valor" do card. Sem valor, mostra "—"; o Valor da causa vazio some na
+// visão em cards, mas fica como coluna na lista para manter as colunas alinhadas.
+function infoRow(campo, rotulo, valor) {
+  const vazio = valor == null || valor === '';
+  return `<div class="card-info-row info-${campo}${vazio && campo === 'valor' ? ' info-opcional' : ''}">
+          <span class="label">${rotulo}</span>
+          <span class="value${vazio ? ' empty' : ''}"${vazio ? '' : ` title="${esc(valor)}"`}>${vazio ? '—' : esc(valor)}</span>
+        </div>`;
 }
 
 function favBtn(favorito) {
