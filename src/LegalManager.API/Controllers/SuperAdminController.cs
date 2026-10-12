@@ -405,7 +405,10 @@ public class SuperAdminController(
             IsTemaCustomizado(tenant),
             honorarioContratosCount,
             calculadoraPrazosCount,
-            calculadoraHonorariosCount
+            calculadoraHonorariosCount,
+            tenant.VoucherUtilizado,
+            tenant.CodigoDesconto,
+            tenant.DescontoPromocionalUsadoEm
         );
 
         return Ok(dto);

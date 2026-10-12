@@ -72,7 +72,10 @@ public record TenantDetailDto(
     bool TemaCustomizado,
     int HonorarioContratosCount,
     int CalculadoraPrazosCount,
-    int CalculadoraHonorariosCount
+    int CalculadoraHonorariosCount,
+    string? VoucherUtilizado,
+    string? CodigoDesconto,
+    DateTime? DescontoPromocionalUsadoEm
 );
 
 public record TenantOabResumoDto(

@@ -235,4 +235,25 @@ public class TenantsUsageFlagsTests
         Assert.Equal(1, dto.CalculadoraPrazosCount);
         Assert.Equal(0, dto.CalculadoraHonorariosCount);
     }
+
+    [Fact]
+    public async Task GetTenant_Detalhe_IncluiCodigosPromocionais()
+    {
+        using var ctx = CreateContext();
+        var t = NewTenant("Promo");
+        t.VoucherUtilizado = "primeiros50";
+        t.CodigoDesconto = "volta20";
+        var usadoEm = DateTime.UtcNow.AddDays(-2);
+        t.DescontoPromocionalUsadoEm = usadoEm;
+        ctx.Tenants.Add(t);
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetTenant(t.Id, CancellationToken.None));
+        var dto = Assert.IsType<TenantDetailDto>(ok.Value);
+
+        Assert.Equal("primeiros50", dto.VoucherUtilizado);
+        Assert.Equal("volta20", dto.CodigoDesconto);
+        Assert.Equal(usadoEm, dto.DescontoPromocionalUsadoEm);
+    }
 }

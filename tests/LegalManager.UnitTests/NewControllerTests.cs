@@ -148,6 +148,45 @@ public class AssinaturaControllerTests
         Assert.IsType<OkObjectResult>(result);
     }
 
+    [Theory]
+    [InlineData(StatusTenant.Ativo, null, true)]        // período grátis de código promocional
+    [InlineData(StatusTenant.Ativo, "sub_123", false)]  // assinatura paga
+    [InlineData(StatusTenant.Cancelado, null, false)]   // assinatura cancelada
+    public async Task GetStatus_InformaCodigoPromocionalEPeriodoPromocional(StatusTenant status, string? stripeId, bool periodoPromocional)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId, Nome = "Promo", Plano = PlanoTipo.Plus, Status = status, CriadoEm = DateTime.UtcNow,
+            PlanoExpiraEm = DateTime.UtcNow.AddDays(10), StripeSubscriptionId = stripeId,
+            VoucherUtilizado = "primeiros50"
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetStatus(CancellationToken.None));
+        var json = AsJson(ok.Value);
+
+        Assert.Equal("primeiros50", json.GetProperty("codigoPromocional").GetString());
+        Assert.Equal(periodoPromocional, json.GetProperty("periodoPromocional").GetBoolean());
+    }
+
+    [Fact]
+    public async Task GetStatus_SemCodigo_CodigoPromocionalNulo()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Free, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, tenantId);
+
+        var json = AsJson(Assert.IsType<OkObjectResult>(await controller.GetStatus(CancellationToken.None)).Value);
+
+        Assert.Equal(JsonValueKind.Null, json.GetProperty("codigoPromocional").ValueKind);
+        Assert.False(json.GetProperty("periodoPromocional").GetBoolean());
+    }
+
     [Fact]
     public async Task GetHistorico_ReturnsOk()
     {

@@ -355,9 +355,19 @@
           <span id="statusInfo" style="font-size:13px;color:var(--color-text-muted)"></span>
         </div>
       </div>
-      <div style="margin-left:auto;text-align:right">
-        <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:4px">Membro desde</div>
-        <div id="membroDesde" style="font-size:13px;font-weight:600">—</div>
+      <div style="margin-left:auto;display:flex;gap:28px;flex-wrap:wrap;justify-content:flex-end;text-align:right">
+        <div id="vencimentoBox" style="display:none">
+          <div id="vencimentoLabel" style="font-size:12px;color:var(--color-text-muted);margin-bottom:4px">Plano vence em</div>
+          <div id="vencimentoData" style="font-size:13px;font-weight:600">—</div>
+        </div>
+        <div id="codigoUsadoBox" style="display:none">
+          <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:4px">Código promocional</div>
+          <div id="codigoUsado" style="font-size:13px;font-weight:600;font-family:monospace">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:4px">Membro desde</div>
+          <div id="membroDesde" style="font-size:13px;font-weight:600">—</div>
+        </div>
       </div>
     </div>
 
@@ -675,6 +685,9 @@ import { esc } from '/js/utils.js';
       } else if (data.status === 'Cancelado' && data.planoExpiraEm) {
         const expira = data.planoExpiraEm ? new Date(data.planoExpiraEm).toLocaleDateString('pt-BR') : '–';
         statusEl.innerHTML = `<span style="color:var(--color-danger)">Cancelado — acesso ${currentPlano} até ${expira}</span>`;
+      } else if (data.periodoPromocional && data.planoExpiraEm) {
+        const dias = Math.max(0, Math.ceil((new Date(data.planoExpiraEm) - Date.now()) / 86400000));
+        statusEl.innerHTML = `<span style="color:var(--color-primary)">Período promocional — ${dias} dia(s) restante(s)</span>`;
       } else if (data.periodo && (currentPlano === 'Pro' || currentPlano === 'Plus' || currentPlano === 'Max')) {
         statusEl.textContent = `${data.periodo} · Ativo`;
       } else {
@@ -684,6 +697,31 @@ import { esc } from '/js/utils.js';
       if (data.criadoEm) {
         const criado = new Date(data.criadoEm);
         document.getElementById('membroDesde').textContent = !isNaN(criado) ? criado.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '–';
+      }
+
+      // Quando o plano atual termina: trial, período promocional ou assinatura cancelada.
+      // Assinatura paga ativa não tem PlanoExpiraEm (renova sozinha).
+      const fimIso = data.status === 'Trial' ? data.trialExpiraEm : data.planoExpiraEm;
+      const fim = fimIso ? new Date(fimIso) : null;
+      const vencimentoBox = document.getElementById('vencimentoBox');
+      if (fim && !isNaN(fim)) {
+        document.getElementById('vencimentoLabel').textContent = data.status === 'Trial'
+          ? 'Trial termina em'
+          : data.status === 'Cancelado' ? 'Acesso até' : 'Plano vence em';
+        document.getElementById('vencimentoData').textContent =
+          fim.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        vencimentoBox.title = `Depois desta data o escritório passa para o plano Free. Nenhum dado é apagado.`;
+        vencimentoBox.style.display = '';
+      } else {
+        vencimentoBox.style.display = 'none';
+      }
+
+      const codigoUsadoBox = document.getElementById('codigoUsadoBox');
+      if (data.codigoPromocional) {
+        document.getElementById('codigoUsado').textContent = data.codigoPromocional.toUpperCase();
+        codigoUsadoBox.style.display = '';
+      } else {
+        codigoUsadoBox.style.display = 'none';
       }
 
       const descontoEl = document.getElementById('descontoPromo');

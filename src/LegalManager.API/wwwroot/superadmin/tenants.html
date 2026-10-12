@@ -528,6 +528,22 @@ import { esc } from '/js/utils.js';
       const ms = new Date(iso).getTime() - Date.now();
       return Math.ceil(ms / 86400000);
     }
+    // Código do cadastro (período grátis) e/ou de desconto — podem ser diferentes quando o
+    // desconto foi aplicado depois na tela de assinatura.
+    function codigoPromoDetalhe(t) {
+      const codigo = c => `<span style="font-family:monospace;font-weight:600">${esc(c.toUpperCase())}</span>`;
+      const partes = [];
+      if (t.voucherUtilizado) partes.push(`${codigo(t.voucherUtilizado)} <span style="color:var(--color-text-muted);font-size:12px">(cadastro)</span>`);
+      if (t.codigoDesconto && t.codigoDesconto !== t.voucherUtilizado) partes.push(`${codigo(t.codigoDesconto)} <span style="color:var(--color-text-muted);font-size:12px">(desconto)</span>`);
+      if (!partes.length) return '—';
+      if (t.codigoDesconto) {
+        partes.push(t.descontoPromocionalUsadoEm
+          ? `<span class="badge badge-green" title="Desconto aplicado numa assinatura">desconto usado em ${fmtDate(t.descontoPromocionalUsadoEm)}</span>`
+          : `<span class="badge badge-yellow" title="Desconto ainda não aproveitado numa assinatura">desconto pendente</span>`);
+      }
+      return partes.join(' ');
+    }
+
     function countdownBadge(iso, type) {
       const d = daysUntil(iso);
       if (d === null) return '';
@@ -786,6 +802,7 @@ import { esc } from '/js/utils.js';
             <div class="detail-row"><span class="detail-label">Plano expira</span>
               <span>${fmtDate(t.planoExpiraEm)} ${countdownBadge(t.planoExpiraEm, 'Plano')}</span>
             </div>
+            <div class="detail-row"><span class="detail-label">Código promocional</span><span>${codigoPromoDetalhe(t)}</span></div>
             <div class="detail-row"><span class="detail-label">Stripe Subscription ID</span><span style="font-size:11px;font-family:monospace">${esc(t.stripeSubscriptionId ?? '—')}</span></div>
             ${t.abacatePayBillingId ? `<div class="detail-row"><span class="detail-label">AbacatePay ID (legado)</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId)}</span></div>` : ''}
           </div>

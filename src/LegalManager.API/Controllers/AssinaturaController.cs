@@ -59,6 +59,11 @@ public class AssinaturaController(
             trialExpiraEm = tenant.TrialExpiraEm,
             criadoEm = tenant.CriadoEm,
             temBilling = tenant.StripeSubscriptionId != null,
+            // Código usado no cadastro (período grátis) ou aplicado depois (desconto).
+            codigoPromocional = tenant.VoucherUtilizado ?? tenant.CodigoDesconto,
+            // Plano grátis de código promocional: Ativo com data de fim e sem assinatura paga.
+            periodoPromocional = tenant.Status == StatusTenant.Ativo && tenant.PlanoExpiraEm != null
+                && tenant.StripeSubscriptionId == null && tenant.AbacatePayBillingId == null,
             podeAplicarCodigoPromocional = MotivoNaoPodeAplicarCodigo(tenant) is null,
             descontoPromocional = await ObterDescontoPendenteAsync(tenant, ct) is { } promo
                 ? new DescontoPromocionalDto(promo.Codigo, promo.DescontoPercentual!.Value, promo.DescontoMeses)
