@@ -64,11 +64,11 @@
     .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
     .info-item label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); display:block; margin-bottom:4px; }
     .info-item span { font-size:14px; }
-    .andamento-item { padding:14px 0; border-bottom:1px solid var(--color-border); display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; }
+    .andamento-item { padding:14px 0; border-bottom:1px solid var(--color-border); display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:start; }
     .andamento-item:last-child { border-bottom:none; }
     .andamento-date { font-size:12px; color:var(--color-text-muted); white-space:nowrap; min-width:80px; }
     .andamento-tipo { display:inline-flex; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600; background:var(--color-primary-light); color:var(--color-primary); margin-bottom:4px; }
-    .andamento-desc { font-size:14px; margin-top:2px; }
+    .andamento-desc { font-size:14px; margin-top:2px; overflow-wrap:anywhere; }
     .andamento-fonte { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
     .andamento-oculto { opacity:.5; }
     .andamento-oculto .andamento-desc { text-decoration:line-through; }
@@ -238,7 +238,7 @@
 
     <!-- Tab: Informações -->
     <div class="tab-content active" id="tab-info" role="tabpanel">
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start">
         <div>
           <!-- Informações gerais -->
           <div class="card" style="margin-bottom:20px">
