@@ -49,6 +49,13 @@ export async function addAndamento(processoId, data) {
   });
 }
 
+export async function updateAndamento(processoId, andamentoId, data) {
+  return apiFetch(`/processos/${processoId}/andamentos/${andamentoId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+}
+
 export async function deleteAndamento(processoId, andamentoId) {
   return apiFetch(`/processos/${processoId}/andamentos/${andamentoId}`, { method: 'DELETE' });
 }

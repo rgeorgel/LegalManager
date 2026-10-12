@@ -194,6 +194,64 @@ public class ProcessoServiceTests
     }
 
     [Fact]
+    public async Task UpdateAndamentoAsync_DeveAtualizarAndamentoManual()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0000005-00.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processo);
+        var andamento = new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, TenantId = tenant.Id,
+            Data = new DateTime(2026, 10, 1), Tipo = TipoAndamento.Despacho,
+            Descricao = "Texto antigo", Fonte = FonteAndamento.Manual,
+            DescricaoTraduzidaIA = "Tradução antiga", RegistradoPorId = usuario.Id, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Andamentos.Add(andamento);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        var result = await service.UpdateAndamentoAsync(processo.Id, andamento.Id,
+            new UpdateAndamentoDto(new DateTime(2026, 10, 5), TipoAndamento.Peticao, "Protocolada contestação"));
+
+        Assert.Equal("Protocolada contestação", result.Descricao);
+        Assert.Equal(TipoAndamento.Peticao, result.Tipo);
+        Assert.Null(result.DescricaoTraduzidaIA);
+        Assert.Equal(new DateTime(2026, 10, 5), (await ctx.Processos.FindAsync(processo.Id))!.UltimoAndamentoEm);
+    }
+
+    [Fact]
+    public async Task UpdateAndamentoAsync_NaoDeveEditarAndamentoAutomatico()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0000006-00.2024.8.26.0001",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Processos.Add(processo);
+        var andamento = new Andamento
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, TenantId = tenant.Id,
+            Data = DateTime.UtcNow, Tipo = TipoAndamento.Despacho,
+            Descricao = "Andamento automático", Fonte = FonteAndamento.Automatico,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Andamentos.Add(andamento);
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            service.UpdateAndamentoAsync(processo.Id, andamento.Id,
+                new UpdateAndamentoDto(DateTime.UtcNow, TipoAndamento.Outro, "Alterado")));
+    }
+
+    [Fact]
     public async Task GetAllAsync_DeveFilterPorStatus()
     {
         var (ctx, tenant, usuario, _) = await SeedAsync();

@@ -402,6 +402,37 @@ public class ProcessoService : IProcessoService
             .ToListAsync(ct);
     }
 
+    public async Task<AndamentoResponseDto> UpdateAndamentoAsync(Guid processoId, Guid andamentoId, UpdateAndamentoDto dto, CancellationToken ct = default)
+    {
+        // Só andamentos lançados pelo escritório; os vindos do tribunal refletem a fonte oficial.
+        var andamento = await _context.Andamentos
+            .FirstOrDefaultAsync(a => a.Id == andamentoId && a.ProcessoId == processoId
+                && a.TenantId == _tenantContext.TenantId && a.Fonte == FonteAndamento.Manual, ct)
+            ?? throw new KeyNotFoundException("Andamento não encontrado ou não pode ser editado.");
+
+        andamento.Data = dto.Data;
+        andamento.Tipo = dto.Tipo;
+        andamento.Descricao = dto.Descricao;
+        // A tradução por IA era do texto antigo.
+        andamento.DescricaoTraduzidaIA = null;
+        await _context.SaveChangesAsync(ct);
+
+        var processo = await _context.Processos
+            .FirstAsync(p => p.Id == processoId && p.TenantId == _tenantContext.TenantId, ct);
+        processo.UltimoAndamentoEm = await _context.Andamentos
+            .Where(a => a.ProcessoId == processoId && a.TenantId == _tenantContext.TenantId)
+            .MaxAsync(a => (DateTime?)a.Data, ct);
+        processo.AtualizadoEm = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+
+        var nomeUsuario = await _context.Users
+            .Where(u => u.Id == andamento.RegistradoPorId)
+            .Select(u => u.Nome)
+            .FirstOrDefaultAsync(ct) ?? "";
+
+        return MapAndamento(andamento, nomeUsuario);
+    }
+
     public async Task DeleteAndamentoAsync(Guid processoId, Guid andamentoId, CancellationToken ct = default)
     {
         var andamento = await _context.Andamentos

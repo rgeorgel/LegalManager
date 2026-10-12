@@ -43,6 +43,17 @@ export async function addAtendimento(contatoId, data) {
   });
 }
 
+export async function updateAtendimento(contatoId, atendimentoId, data) {
+  return apiFetch(`/contatos/${contatoId}/atendimentos/${atendimentoId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+}
+
+export async function deleteAtendimento(contatoId, atendimentoId) {
+  return apiFetch(`/contatos/${contatoId}/atendimentos/${atendimentoId}`, { method: 'DELETE' });
+}
+
 export async function getPortalAcesso(contatoId) {
   const token = sessionStorage.getItem('access_token');
   const res = await fetch(`/api/contatos/${contatoId}/portal-acesso`, {

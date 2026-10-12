@@ -187,13 +187,41 @@
 
         <div class="card">
           <div class="card-body">
-            <div class="card-title">Linha do tempo</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div class="card-title" style="margin-bottom:0">Linha do tempo</div>
+              <button class="btn btn-secondary btn-sm" id="btnNovoAtendimento">+ Atendimento</button>
+            </div>
             <div id="perfilTimeline"></div>
           </div>
         </div>
       </div>
     </div>
   </main>
+</div>
+
+<!-- Modal Atendimento -->
+<div class="modal-overlay" id="modalAtendimento">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title" id="atendimentoTitulo">Registrar atendimento</span>
+      <button class="modal-close" id="atendimentoClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="atendimentoAlert" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label>Data *</label>
+        <input type="date" id="atendimentoData" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Descrição *</label>
+        <textarea id="atendimentoDescricao" class="form-control" rows="4" required></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="atendimentoCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="atendimentoSalvar">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Agendar Retorno -->
@@ -223,7 +251,8 @@
 
 <script type="module">
   import { initLayout, isPlanoFree } from '/js/layout.js';
-  import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, getContatos, agendarRetorno } from '/js/contatos.js';
+  import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, getContatos, agendarRetorno,
+    addAtendimento, updateAtendimento, deleteAtendimento } from '/js/contatos.js';
   import { setupVoltarButton, contatoPerfilUrl } from '/js/contato-nav.js';
   import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
 
@@ -231,6 +260,8 @@
 
   const params = new URLSearchParams(location.search);
   const contatoId = params.get('id');
+  // Itens da linha do tempo renderizados, para preencher o modal ao editar.
+  let timelineAtual = [];
 
   setupVoltarButton(document.getElementById('btnVoltar'), '/pages/contatos.html');
 
@@ -333,6 +364,7 @@
 
     const timelineIcon = { Atendimento: '📋', Tarefa: '✅', Financeiro: '💰', Processo: '⚖️' };
     const tl = perfil.timeline;
+    timelineAtual = tl;
     const tlEl = document.getElementById('perfilTimeline');
     if (!tl.length) {
       tlEl.innerHTML = '<div style="color:var(--color-text-muted);font-size:13px;padding:12px 0">Nenhum evento registrado ainda.</div>';
@@ -346,6 +378,11 @@
           ${item.descricao ? `<div class="timeline-desc">${item.descricao}</div>` : ''}
           <div class="timeline-date">${formatDateBr(item.data)}</div>
         </div>
+        ${item.atendimentoId ? `
+        <div style="display:flex;gap:6px;align-items:flex-start">
+          <button class="btn btn-secondary btn-sm" onclick="editarAtendimento('${item.atendimentoId}')">✏️ Editar</button>
+          <button class="btn btn-secondary btn-sm" onclick="excluirAtendimento('${item.atendimentoId}')">✕</button>
+        </div>` : ''}
       </div>`).join('');
   }
 
@@ -438,6 +475,71 @@
       renderVinculos(await getVinculos(contatoId));
     } catch (err) {
       showAlert(err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // ── Atendimentos ──────────────────────────────────────────────────────
+  // Atendimento aberto no modal; null = modal em modo "novo".
+  let atendimentoEditandoId = null;
+  const modalAtendimento = document.getElementById('modalAtendimento');
+
+  function abrirModalAtendimento(item) {
+    atendimentoEditandoId = item?.atendimentoId ?? null;
+    document.getElementById('atendimentoTitulo').textContent = item ? 'Editar atendimento' : 'Registrar atendimento';
+    document.getElementById('atendimentoData').value = item
+      ? item.data.slice(0, 10)
+      : new Date().toISOString().split('T')[0];
+    document.getElementById('atendimentoDescricao').value = item?.descricao ?? '';
+    document.getElementById('atendimentoAlert').style.display = 'none';
+    modalAtendimento.classList.add('open');
+  }
+
+  document.getElementById('btnNovoAtendimento').addEventListener('click', () => abrirModalAtendimento(null));
+
+  window.editarAtendimento = (id) => {
+    const item = timelineAtual.find(t => t.atendimentoId === id);
+    if (item) abrirModalAtendimento(item);
+  };
+
+  window.excluirAtendimento = async (id) => {
+    if (!confirm('Excluir este atendimento?')) return;
+    try {
+      await deleteAtendimento(contatoId, id);
+      renderPerfil(await getContatoPerfil(contatoId));
+      showAlert('Atendimento excluído.', 'success');
+    } catch (err) {
+      showAlert(err.message);
+    }
+  };
+
+  [document.getElementById('atendimentoClose'), document.getElementById('atendimentoCancelar')].forEach(el =>
+    el.addEventListener('click', () => modalAtendimento.classList.remove('open')));
+
+  document.getElementById('atendimentoSalvar').addEventListener('click', async () => {
+    const alertEl = document.getElementById('atendimentoAlert');
+    const dados = {
+      data: document.getElementById('atendimentoData').value,
+      descricao: document.getElementById('atendimentoDescricao').value.trim()
+    };
+    if (!dados.data || !dados.descricao) {
+      alertEl.textContent = 'Informe a data e a descrição.';
+      alertEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('atendimentoSalvar');
+    btn.disabled = true;
+    alertEl.style.display = 'none';
+    try {
+      if (atendimentoEditandoId) await updateAtendimento(contatoId, atendimentoEditandoId, dados);
+      else await addAtendimento(contatoId, dados);
+      modalAtendimento.classList.remove('open');
+      renderPerfil(await getContatoPerfil(contatoId));
+      showAlert(atendimentoEditandoId ? 'Atendimento atualizado.' : 'Atendimento registrado.', 'success');
+    } catch (err) {
+      alertEl.textContent = err.message;
+      alertEl.style.display = 'block';
     } finally {
       btn.disabled = false;
     }

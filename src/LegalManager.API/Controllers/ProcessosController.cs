@@ -185,6 +185,14 @@ public class ProcessosController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("{id:guid}/andamentos/{andamentoId:guid}")]
+    public async Task<ActionResult<AndamentoResponseDto>> UpdateAndamento(Guid id, Guid andamentoId, UpdateAndamentoDto dto, CancellationToken ct)
+    {
+        var result = await _service.UpdateAndamentoAsync(id, andamentoId, dto, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo + ".Andamento", andamentoId, null, dto), ct);
+        return Ok(result);
+    }
+
     [HttpDelete("{id:guid}/andamentos/{andamentoId:guid}")]
     public async Task<IActionResult> DeleteAndamento(Guid id, Guid andamentoId, CancellationToken ct)
     {

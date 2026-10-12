@@ -200,6 +200,35 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
             atendimento.UsuarioId, nomeUsuario, atendimento.CriadoEm);
     }
 
+    public async Task<AtendimentoResponseDto> UpdateAtendimentoAsync(Guid contatoId, Guid atendimentoId, UpdateAtendimentoDto dto, CancellationToken ct = default)
+    {
+        var atendimento = await _context.Atendimentos
+            .FirstOrDefaultAsync(a => a.Id == atendimentoId && a.ContatoId == contatoId && a.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Atendimento não encontrado.");
+
+        atendimento.Descricao = dto.Descricao;
+        atendimento.Data = dto.Data;
+        await _context.SaveChangesAsync(ct);
+
+        var nomeUsuario = await _context.Users
+            .Where(u => u.Id == atendimento.UsuarioId)
+            .Select(u => u.Nome)
+            .FirstOrDefaultAsync(ct) ?? "";
+
+        return new AtendimentoResponseDto(atendimento.Id, atendimento.Descricao, atendimento.Data,
+            atendimento.UsuarioId, nomeUsuario, atendimento.CriadoEm);
+    }
+
+    public async Task DeleteAtendimentoAsync(Guid contatoId, Guid atendimentoId, CancellationToken ct = default)
+    {
+        var atendimento = await _context.Atendimentos
+            .FirstOrDefaultAsync(a => a.Id == atendimentoId && a.ContatoId == contatoId && a.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Atendimento não encontrado.");
+
+        _context.Atendimentos.Remove(atendimento);
+        await _context.SaveChangesAsync(ct);
+    }
+
     public async Task<IEnumerable<AtendimentoResponseDto>> GetAtendimentosAsync(Guid contatoId, CancellationToken ct = default)
     {
         var atendimentos = await _context.Atendimentos
@@ -269,7 +298,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         var atendimentos = await _context.Atendimentos
             .Where(a => a.ContatoId == contatoId && a.TenantId == tenantId)
             .ToListAsync(ct);
-        timeline.AddRange(atendimentos.Select(a => new TimelineItemDto("Atendimento", a.Data, "Atendimento registrado", a.Descricao)));
+        timeline.AddRange(atendimentos.Select(a => new TimelineItemDto("Atendimento", a.Data, "Atendimento registrado", a.Descricao, AtendimentoId: a.Id)));
 
         var tarefas = await _context.Tarefas
             .Where(t => t.ContatoId == contatoId && t.TenantId == tenantId)

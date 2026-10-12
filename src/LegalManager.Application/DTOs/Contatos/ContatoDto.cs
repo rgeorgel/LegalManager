@@ -94,6 +94,11 @@ public record CreateAtendimentoDto(
     [Required] DateTime Data
 );
 
+public record UpdateAtendimentoDto(
+    [Required] string Descricao,
+    [Required] DateTime Data
+);
+
 public record AtendimentoResponseDto(
     Guid Id,
     string Descricao,
@@ -125,7 +130,8 @@ public record TimelineItemDto(
     DateTime Data,
     string Titulo,
     string? Descricao,
-    string? Link = null // URL relativa da entidade de origem (processo, tarefa, contrato de honorário), se houver
+    string? Link = null, // URL relativa da entidade de origem (processo, tarefa, contrato de honorário), se houver
+    Guid? AtendimentoId = null // permite editar/excluir o atendimento direto da linha do tempo
 );
 
 public record ContatoPerfilDto(

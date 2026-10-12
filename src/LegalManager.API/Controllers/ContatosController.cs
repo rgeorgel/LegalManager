@@ -110,6 +110,20 @@ public class ContatosController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("{id:guid}/atendimentos/{atendimentoId:guid}")]
+    public async Task<ActionResult<AtendimentoResponseDto>> UpdateAtendimento(Guid id, Guid atendimentoId, UpdateAtendimentoDto dto, CancellationToken ct)
+    {
+        var result = await _service.UpdateAtendimentoAsync(id, atendimentoId, dto, ct);
+        return Ok(result);
+    }
+
+    [HttpDelete("{id:guid}/atendimentos/{atendimentoId:guid}")]
+    public async Task<IActionResult> DeleteAtendimento(Guid id, Guid atendimentoId, CancellationToken ct)
+    {
+        await _service.DeleteAtendimentoAsync(id, atendimentoId, ct);
+        return NoContent();
+    }
+
     [HttpGet("duplicados")]
     public async Task<ActionResult<IEnumerable<ContatoDuplicadoGrupoDto>>> GetDuplicados(CancellationToken ct)
     {

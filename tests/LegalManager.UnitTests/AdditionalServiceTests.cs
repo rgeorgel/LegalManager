@@ -316,6 +316,38 @@ public class ContatoServiceAdditionalTests
     }
 
     [Fact]
+    public async Task UpdateAtendimentoAsync_AtualizaAtendimento()
+    {
+        var (svc, _, _, _) = Build();
+        var created = await svc.CreateAsync(MakeDto());
+        var atendimento = await svc.AddAtendimentoAsync(created.Id, new CreateAtendimentoDto("Reunião inicial", DateTime.UtcNow));
+        var data = new DateTime(2026, 10, 10);
+        var result = await svc.UpdateAtendimentoAsync(created.Id, atendimento.Id, new UpdateAtendimentoDto("Reunião remarcada", data));
+        Assert.Equal("Reunião remarcada", result.Descricao);
+        Assert.Equal(data, result.Data);
+    }
+
+    [Fact]
+    public async Task UpdateAtendimentoAsync_AtendimentoDeOutroContato_Throws()
+    {
+        var (svc, _, _, _) = Build();
+        var created = await svc.CreateAsync(MakeDto());
+        var atendimento = await svc.AddAtendimentoAsync(created.Id, new CreateAtendimentoDto("X", DateTime.UtcNow));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            svc.UpdateAtendimentoAsync(Guid.NewGuid(), atendimento.Id, new UpdateAtendimentoDto("Y", DateTime.UtcNow)));
+    }
+
+    [Fact]
+    public async Task DeleteAtendimentoAsync_RemoveAtendimento()
+    {
+        var (svc, _, _, _) = Build();
+        var created = await svc.CreateAsync(MakeDto());
+        var atendimento = await svc.AddAtendimentoAsync(created.Id, new CreateAtendimentoDto("X", DateTime.UtcNow));
+        await svc.DeleteAtendimentoAsync(created.Id, atendimento.Id);
+        Assert.Empty(await svc.GetAtendimentosAsync(created.Id));
+    }
+
+    [Fact]
     public async Task GetAtendimentosAsync_RetornaAtendimentos()
     {
         var (svc, ctx, tenantId, userId) = Build();

@@ -697,7 +697,7 @@
 <div class="modal-overlay" id="modalAndamento">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <span class="modal-title">Novo Andamento</span>
+      <span class="modal-title" id="andamentoTitulo">Novo Andamento</span>
       <button class="modal-close" id="andamentoClose">✕</button>
     </div>
     <div class="modal-body">
@@ -992,7 +992,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
-import { getProcesso, getAndamentos, updateProcesso, addAndamento, deleteAndamento, setFavorito } from '/js/processos.js';
+import { getProcesso, getAndamentos, updateProcesso, addAndamento, updateAndamento, deleteAndamento, setFavorito } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
 
@@ -1002,6 +1002,10 @@ const processoId = new URLSearchParams(window.location.search).get('id');
 if (!processoId) window.location.href = '/pages/processos.html';
 
 let processo = null;
+// Andamentos da aba, para preencher o modal ao editar.
+let andamentosCarregados = [];
+// Andamento aberto no modal; null = modal em modo "novo".
+let andamentoEditandoId = null;
 let advogados = [];
 
 const alertMsg = document.getElementById('alertMsg');
@@ -1325,6 +1329,7 @@ async function loadAndamentos() {
   try {
     await carregarPrazosProcesso();
     const items = await getAndamentos(processoId);
+    andamentosCarregados = items;
     if (!items.length) {
       lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum andamento registrado</div></div>';
       return;
@@ -1343,6 +1348,7 @@ async function loadAndamentos() {
         <div style="display:flex;gap:6px;flex-direction:column;align-items:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="abrirModalCriarPrazo('${a.id}')">⏰ Criar Prazo</button>
           <button class="btn btn-secondary btn-sm" onclick="toggleVisivelCliente('${a.id}', ${a.visivelCliente})">${a.visivelCliente ? '🙈 Ocultar' : '👁️ Mostrar'}</button>
+          ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="editarAndamento('${a.id}')">✏️ Editar</button>` : ''}
           ${a.fonte === 'Manual' ? `<button class="btn btn-secondary btn-sm" onclick="removeAndamento('${a.id}')">✕</button>` : ''}
         </div>
       </div>`).join('');
@@ -1350,6 +1356,23 @@ async function loadAndamentos() {
     lista.innerHTML = `<p style="color:var(--color-danger)">${err.message}</p>`;
   }
 }
+
+function abrirModalAndamento(andamento) {
+  andamentoEditandoId = andamento?.id ?? null;
+  document.getElementById('andamentoTitulo').textContent = andamento ? 'Editar Andamento' : 'Novo Andamento';
+  document.getElementById('aData').value = andamento
+    ? andamento.data.slice(0, 10)
+    : new Date().toISOString().split('T')[0];
+  document.getElementById('aDescricao').value = andamento?.descricao ?? '';
+  document.getElementById('aTipo').value = andamento?.tipo ?? 'Despacho';
+  document.getElementById('andamentoAlert').style.display = 'none';
+  document.getElementById('modalAndamento').classList.add('open');
+}
+
+window.editarAndamento = id => {
+  const andamento = andamentosCarregados.find(a => a.id === id);
+  if (andamento) abrirModalAndamento(andamento);
+};
 
 window.removeAndamento = async id => {
   if (!confirm('Remover este andamento?')) return;
@@ -1595,15 +1618,17 @@ document.getElementById('andamentoSalvar').addEventListener('click', async () =>
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   alertEl.style.display = 'none';
   try {
-    await addAndamento(processoId, {
+    const dados = {
       data: document.getElementById('aData').value,
       tipo: document.getElementById('aTipo').value,
       descricao: document.getElementById('aDescricao').value
-    });
+    };
+    if (andamentoEditandoId) await updateAndamento(processoId, andamentoEditandoId, dados);
+    else await addAndamento(processoId, dados);
     document.getElementById('modalAndamento').classList.remove('open');
     await loadAndamentos();
     await loadAndamentosPreview();
-    showAlert('Andamento registrado.', 'success');
+    showAlert(andamentoEditandoId ? 'Andamento atualizado.' : 'Andamento registrado.', 'success');
   } catch (err) {
     alertEl.textContent = err.message; alertEl.style.display = 'block';
   } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
@@ -2231,13 +2256,7 @@ document.addEventListener('keydown', e => {
 
 // NovoAndamento buttons (both tabs)
 [document.getElementById('btnAddAndamentoTab')].forEach(btn => {
-  if (btn) btn.addEventListener('click', () => {
-    document.getElementById('aData').value = new Date().toISOString().split('T')[0];
-    document.getElementById('aDescricao').value = '';
-    document.getElementById('aTipo').value = 'Despacho';
-    document.getElementById('andamentoAlert').style.display = 'none';
-    document.getElementById('modalAndamento').classList.add('open');
-  });
+  if (btn) btn.addEventListener('click', () => abrirModalAndamento(null));
 });
 
 [document.getElementById('docClose'), document.getElementById('docCancelar')].forEach(el =>

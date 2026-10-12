@@ -160,6 +160,12 @@ public record CreateAndamentoDto(
     bool VisivelCliente = true
 );
 
+public record UpdateAndamentoDto(
+    [Required] DateTime Data,
+    [Required] TipoAndamento Tipo,
+    [Required] string Descricao
+);
+
 public record AndamentoResponseDto(
     Guid Id,
     DateTime Data,

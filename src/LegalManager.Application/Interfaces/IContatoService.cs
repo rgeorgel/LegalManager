@@ -11,6 +11,8 @@ public interface IContatoService
     Task<PagedResultDto<ContatoListItemDto>> GetAllAsync(ContatoFiltroDto filtro, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<AtendimentoResponseDto> AddAtendimentoAsync(Guid contatoId, CreateAtendimentoDto dto, CancellationToken ct = default);
+    Task<AtendimentoResponseDto> UpdateAtendimentoAsync(Guid contatoId, Guid atendimentoId, UpdateAtendimentoDto dto, CancellationToken ct = default);
+    Task DeleteAtendimentoAsync(Guid contatoId, Guid atendimentoId, CancellationToken ct = default);
     Task<IEnumerable<AtendimentoResponseDto>> GetAtendimentosAsync(Guid contatoId, CancellationToken ct = default);
 
     Task<ContatoPerfilDto> GetPerfilAsync(Guid contatoId, CancellationToken ct = default);
