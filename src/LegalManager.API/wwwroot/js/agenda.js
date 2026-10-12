@@ -104,7 +104,10 @@ function render(start, end) {
   const container = document.getElementById('calendarContainer');
   if (currentView === 'lista') container.innerHTML = renderListaView();
   else if (currentView === 'dia') container.innerHTML = renderDiaView(start);
-  else if (currentView === 'semana') container.innerHTML = renderSemanaView(start);
+  else if (currentView === 'semana') {
+    container.innerHTML = renderSemanaView(start);
+    rolarSemanaParaInicio(container);
+  }
   else if (currentView === 'mes') container.innerHTML = renderMesView(start);
   bindChipClicks();
   abrirPendente(container);
@@ -163,8 +166,22 @@ function renderListaView() {
 }
 
 // --- Week View ---
-const HOURS = Array.from({ length: 18 }, (_, i) => i + 6); // 06..24
+// Dia inteiro (00h..23h) para que eventos de madrugada também apareçam; ao renderizar,
+// a grade rola até o horário comercial (ou até o primeiro evento da semana, se antes).
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const SLOT_PX = 40;
+const HORA_INICIAL_SCROLL = 7;
+
+function rolarSemanaParaInicio(container) {
+  const scroller = container.querySelector('#semanaScroll');
+  if (!scroller) return;
+  const horas = agendaItems.map(it => {
+    const dt = dataParede(it.dataHora);
+    return dt.getHours() + dt.getMinutes() / 60;
+  });
+  const hora = Math.min(HORA_INICIAL_SCROLL, ...horas);
+  scroller.scrollTop = Math.max(0, (Math.floor(hora) - HOURS[0]) * SLOT_PX);
+}
 
 function renderSemanaView(start) {
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -217,7 +234,7 @@ function renderSemanaView(start) {
       <div class="semana-header"></div>
       ${headerCells}
     </div>
-    <div style="display:grid;grid-template-columns:60px repeat(7,1fr);overflow-y:auto;max-height:760px">
+    <div id="semanaScroll" style="display:grid;grid-template-columns:60px repeat(7,1fr);overflow-y:auto;max-height:760px">
       <div style="position:relative;height:${totalH}px;border-right:1px solid var(--color-border)">${timeLabels}</div>
       ${dayCols}
     </div>
