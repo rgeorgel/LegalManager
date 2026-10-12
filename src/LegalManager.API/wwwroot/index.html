@@ -76,53 +76,81 @@
       } catch (e) { /* fail silently — never break the page */ }
     })();
   </script>
-  <!-- Teste A/B da página inicial: sorteia a variante (A = esta página, B = home-clara, C = home-verde)
-       e guarda no localStorage, para o visitante sempre ver a mesma. Roda depois do redirect de
-       campanhas (tráfego de anúncio vai para as LPs) e antes de pintar a página, sem piscar.
-       Proporção: ajuste PESOS (peso 0 desliga a variante; quem já estava nela é sorteado de novo).
-       Para encerrar o teste, deixe só A com peso. Trocar CHAVE reinicia o sorteio de todo mundo.
-       QA: ?home=A|B|C força a variante (e grava); em localhost só sorteia com o ?home=. -->
+  <!-- Teste A/B da página inicial, controlado pela feature flag multivariada "home-ab" do PostHog
+       (A = esta página, B = home-clara, C = home-verde; proporção e encerramento são feitos no PostHog).
+       - Roda depois do redirect de campanhas (tráfego de anúncio vai para as LPs).
+       - A variante fica em cache no localStorage: da 2ª visita em diante o redirect é imediato.
+       - 1ª visita: esconde a página até a flag chegar (máx. ESPERA_MS). Se estourar o tempo, fica na A
+         sem registrar exposição nem cache — o visitante não entra no experimento e tenta de novo depois.
+       - A exposição ($feature_flag_called) é registrada na página que o visitante de fato vê
+         (aqui para A; nas variantes, pelo script do <head> delas).
+       - Robôs sempre veem esta página.
+       - QA: ?home=A|B|C força a variante neste navegador (fora do experimento); ?home=sorteio volta para a flag. -->
   <script>
     (function () {
+      var raiz = document.documentElement;
+      function mostrar() { raiz.classList.remove('ab-espera'); }
       try {
         if (window.__campanhaRedirect) return;
         var path = location.pathname;
         if (path !== '/' && path !== '/index.html') return;
 
-        var PESOS = { A: 1, B: 1, C: 1 };
-        var PAGINAS = { B: '/home-clara.html', C: '/home-verde.html' };
-        var CHAVE = 'home_ab_v1';
+        var FLAG = 'home-ab';
+        var CHAVE = 'home_ab_v2';
+        var CHAVE_QA = 'home_ab_qa';
+        var ESPERA_MS = 1000;
+        var PAGINAS = { A: null, B: '/home-clara.html', C: '/home-verde.html' };
 
         var params = new URLSearchParams(location.search);
         var forcada = (params.get('home') || '').toUpperCase();
-        var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        // Robôs (Googlebot etc.) sempre veem a página canônica — as variantes são noindex.
         var robo = /bot|crawl|spider|slurp|facebookexternalhit|lighthouse|headless|preview/i.test(navigator.userAgent || '');
         if (robo && !forcada) return;
 
-        var variante = null;
-        if (PESOS[forcada] !== undefined) {
-          variante = forcada;
-        } else {
-          if (local) return;
-          try { variante = localStorage.getItem(CHAVE); } catch (e) {}
-          if (!PESOS[variante]) {
-            var total = 0, k;
-            for (k in PESOS) total += PESOS[k];
-            if (total <= 0) return;
-            var r = Math.random() * total;
-            variante = 'A';
-            for (k in PESOS) { if (PESOS[k] <= 0) continue; r -= PESOS[k]; if (r < 0) { variante = k; break; } }
-          }
-        }
-        try { localStorage.setItem(CHAVE, variante); } catch (e) {}
-
-        if (PAGINAS[variante]) {
+        function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function gravar(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+        function ir(v) {
           params.delete('home');
           var qs = params.toString();
-          location.replace(PAGINAS[variante] + (qs ? '?' + qs : '') + location.hash);
+          location.replace(PAGINAS[v] + (qs ? '?' + qs : '') + location.hash);
         }
-      } catch (e) { /* nunca quebrar a página */ }
+
+        if (forcada === 'SORTEIO') { gravar(CHAVE_QA, null); params.delete('home'); }
+        else if (PAGINAS.hasOwnProperty(forcada)) gravar(CHAVE_QA, forcada);
+        var qa = ler(CHAVE_QA);
+        if (PAGINAS.hasOwnProperty(qa)) {
+          if (PAGINAS[qa]) ir(qa);
+          return;
+        }
+
+        var temFlags = window.posthog && typeof window.posthog.onFeatureFlags === 'function';
+        var cache = ler(CHAVE);
+        if (PAGINAS[cache]) { ir(cache); return; }
+        if (!temFlags) return; // localhost ou PostHog bloqueado: fica na A, fora do experimento
+
+        var esperando = cache !== 'A';
+        if (esperando) {
+          raiz.classList.add('ab-espera');
+          var st = document.createElement('style');
+          st.textContent = 'html.ab-espera{visibility:hidden}';
+          document.head.appendChild(st);
+        }
+        var estourou = false;
+        var timer = esperando ? setTimeout(function () { estourou = true; mostrar(); }, ESPERA_MS) : null;
+
+        // window.posthog de novo dentro do callback: ao carregar, a biblioteca troca o stub do snippet
+        // por outra instância — o getFeatureFlag do stub não devolve nada.
+        window.posthog.onFeatureFlags(function (flags, variantes, ctx) {
+          try {
+            if (estourou || (ctx && ctx.errorsLoading)) { mostrar(); return; }
+            clearTimeout(timer);
+            var v = window.posthog.getFeatureFlag(FLAG); // registra a exposição
+            v = PAGINAS.hasOwnProperty(v) ? v : 'A'; // flag desligada/fora do rollout = página atual
+            gravar(CHAVE, v);
+            if (PAGINAS[v] && esperando) ir(v);
+            else mostrar();
+          } catch (e) { mostrar(); }
+        });
+      } catch (e) { mostrar(); /* nunca quebrar a página */ }
     })();
   </script>
   <!-- Google tag (gtag.js) — only loads in non-local environments -->

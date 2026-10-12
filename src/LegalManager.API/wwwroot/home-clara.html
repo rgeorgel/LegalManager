@@ -96,8 +96,18 @@
     // Teste A/B da página inicial (index = 'A'). Registrado como super property no PostHog,
     // então o cadastro feito depois desta visita também carrega home_variant.
     window.HOME_VARIANT = 'B';
-    // Mesma chave do sorteio da index: quem chega direto aqui continua nesta variante ao voltar para /.
-    try { localStorage.setItem('home_ab_v1', window.HOME_VARIANT); } catch (e) {}
+    // Feature flag "home-ab" (ver o script do <head> da index): se o visitante chegou aqui pelo sorteio,
+    // registra a exposição nesta página e atualiza o cache. Quem chega direto (anúncio, link) não entra
+    // no experimento — senão a exposição poderia apontar uma variante diferente da que ele viu.
+    try {
+      if (localStorage.getItem('home_ab_v2') === window.HOME_VARIANT && !localStorage.getItem('home_ab_qa') && window.posthog && typeof window.posthog.onFeatureFlags === 'function') {
+        window.posthog.onFeatureFlags(function (flags, variantes, ctx) {
+          if (ctx && ctx.errorsLoading) return;
+          var v = window.posthog.getFeatureFlag('home-ab');
+          try { localStorage.setItem('home_ab_v2', v === 'A' || v === 'B' || v === 'C' ? v : 'A'); } catch (e) {}
+        });
+      }
+    } catch (e) {}
     try { if (window.posthog && typeof window.posthog.register === 'function') window.posthog.register({ home_variant: window.HOME_VARIANT }); } catch (e) {}
     try { if (typeof gtag === 'function') gtag('event', 'home_variant_view', { home_variant: window.HOME_VARIANT }); } catch (e) {}
   </script>

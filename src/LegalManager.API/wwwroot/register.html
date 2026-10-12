@@ -489,6 +489,10 @@
           ...getAttributionPayload()
         });
         const planNames = { 0: 'Free', 3: 'Plus', 1: 'Pro', 4: 'Max' };
+        // send_instantly: a página navega logo em seguida e o evento não pode ficar na fila.
+        if (window.posthog && typeof window.posthog.capture === 'function') {
+          window.posthog.capture('sign_up', { method: planNames[planoSelecionado] ?? 'Free' }, { send_instantly: true });
+        }
         if (typeof gtag === 'function') {
           gtag('event', 'sign_up', { method: planNames[planoSelecionado] ?? 'Free' });
         }
@@ -512,6 +516,10 @@
       alertEl.style.display = 'none';
       try {
         await loginWithGoogle(response.credential, getAttributionPayload());
+        // send_instantly: a página navega logo em seguida e o evento não pode ficar na fila.
+        if (window.posthog && typeof window.posthog.capture === 'function') {
+          window.posthog.capture('sign_up', { method: 'Google' }, { send_instantly: true });
+        }
         if (typeof gtag === 'function') {
           gtag('event', 'sign_up', { method: 'Google' });
         }

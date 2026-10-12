@@ -91,6 +91,11 @@
         var done = false;
         function finish() { if (!done) { done = true; resolve(); } }
         try {
+          if (window.posthog && typeof window.posthog.capture === 'function') {
+            window.posthog.capture('sign_up', { method: 'LP_' + window.LP_VARIANT + '_' + method }, { send_instantly: true });
+          }
+        } catch (e) {}
+        try {
           if (typeof gtag === 'function') {
             gtag('event', 'sign_up', { method: 'LP_' + window.LP_VARIANT + '_' + method });
           }
