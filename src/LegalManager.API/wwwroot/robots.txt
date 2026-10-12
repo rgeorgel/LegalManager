@@ -17,6 +17,10 @@ Disallow: /js/*
 # Landing page de campanha paga (não indexar)
 Disallow: /lp-facebook.html
 
+# Variantes de teste A/B da página inicial (não indexar)
+Disallow: /home-clara.html
+Disallow: /home-verde.html
+
 # LLMs discovery
 Allow: /llms.txt
 

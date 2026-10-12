@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- LinkedIn Insight Tag — only loads in non-local environments -->
+  <script type="text/javascript">
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      _linkedin_partner_id = "10046324";
+      window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+      window._linkedin_data_partner_ids.push(_linkedin_partner_id);
+      (function(l) {
+        if (!l){window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
+        window.lintrk.q=[]}
+        var s = document.getElementsByTagName("script")[0];
+        var b = document.createElement("script");
+        b.type = "text/javascript";b.async = true;
+        b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
+        s.parentNode.insertBefore(b, s);
+      })(window.lintrk);
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=10046324&fmt=gif" /></noscript>
+  <!-- Microsoft Clarity — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x099iggkqu");
+    }
+  </script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Causify é o software de gestão jurídica para advogados brasileiros. Controle processos, prazos processuais, clientes, honorários e timesheet em um só lugar. Plano Free para sempre.">
+  <!-- Variante de teste A/B da página inicial: não indexar; a versão canônica é a index -->
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://causify.com.br/">
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://causify.com.br/">
+  <meta property="og:title" content="Causify — Software de Gestão Jurídica para Advogados Brasileiros">
+  <meta property="og:description" content="Controle processos, prazos, clientes e honorários em um só lugar. Plano Free para sempre. Sem cartão de crédito.">
+  <meta property="og:image" content="https://causify.com.br/images/causify-og.png">
+  <meta property="og:locale" content="pt_BR">
+
+  <title>Causify — Software de Gestão Jurídica para Advogados</title>
+
+  <script>
+    // Teste A/B da página inicial (index = 'A'). Registrado como super property no PostHog,
+    // então o cadastro feito depois desta visita também carrega home_variant.
+    window.HOME_VARIANT = 'C';
+    // Mesma chave do sorteio da index: quem chega direto aqui continua nesta variante ao voltar para /.
+    try { localStorage.setItem('home_ab_v1', window.HOME_VARIANT); } catch (e) {}
+    try { if (window.posthog && typeof window.posthog.register === 'function') window.posthog.register({ home_variant: window.HOME_VARIANT }); } catch (e) {}
+    try { if (typeof gtag === 'function') gtag('event', 'home_variant_view', { home_variant: window.HOME_VARIANT }); } catch (e) {}
+  </script>
+
+  <style>
+    /* Variante C — verde: verde-escuro + creme + dourado, títulos com serifa (tom clássico de escritório) */
+    :root {
+      --font-head: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+      --head-weight: 700; --head-tracking: -0.01em;
+      --radius: 6px; --radius-lg: 10px;
+      --bg: #faf7f0; --bg-alt: #f1ebdd; --surface: #fffdf8;
+      --text: #24332c; --heading: #0d3b2e; --muted: #56655d; --muted-2: #a19c8c;
+      --border: #e2d9c5;
+      --accent-text: #8a6a12; --highlight: #e0b84a; --check: #1f7a55;
+      --primary: #d4a62a; --primary-hover: #e3b941; --on-primary: #0d2a20;
+      --primary-shadow: 0 6px 20px rgba(212,166,42,.35);
+      --outline: #0d3b2e; --outline-border: #c9bfa8;
+      --focus: #d4a62a;
+      --nav-bg: rgba(13,59,46,.94); --nav-solid: #0d3b2e; --nav-border: rgba(255,255,255,.1);
+      --nav-link: #c9d6cf; --nav-link-hover: #ffffff;
+      --hero-bg: radial-gradient(ellipse 60% 70% at 90% 20%, rgba(212,166,42,.16) 0%, transparent 60%), linear-gradient(160deg, #0d3b2e 0%, #0a2e24 100%);
+      --hero-text: #e8efe9; --hero-heading: #fbf8f1; --hero-muted: #bfd0c6;
+      --badge-bg: rgba(212,166,42,.12); --badge-text: #e9c766; --badge-border: rgba(212,166,42,.35); --badge-dot: #d4a62a;
+      --frame-border: rgba(255,255,255,.14); --frame-bar: #f3efe5; --frame-dot: #cfc6b1;
+      --frame-shadow: 0 30px 70px -20px rgba(0,0,0,.55);
+      --proof-bg: #fffdf8;
+      --icon-bg: #f4ead0;
+      --card-hover-border: #d4a62a; --card-shadow: 0 12px 30px -14px rgba(13,59,46,.25);
+      --featured-border: #0d3b2e; --on-featured: #f6e7b8;
+      --tab-active-bg: #0d3b2e; --tab-active-text: #fbf8f1;
+      --step-bg: #0d3b2e; --step-text: #e9c766;
+      --cta-bg: linear-gradient(160deg, #0d3b2e 0%, #0a2e24 100%); --cta-heading: #fbf8f1; --cta-muted: #bfd0c6;
+      --footer-bg: #0a2e24; --footer-text: #a9bdb2; --footer-hover: #ffffff;
+    }
+    .hero .btn-outline { color: #fbf8f1; border-color: rgba(251,248,241,.35); }
+    .hero .btn-outline:hover { border-color: #fbf8f1; }
+    .hero h1 .highlight { font-style: italic; }
+    .hero-trust li::before { color: #e9c766; }
+    .section-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .section-label::before, .section-label::after { content: '—'; margin: 0 .5rem; opacity: .6; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; }
+    h1, h2, h3 { font-family: var(--font-head); color: var(--heading); }
+
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* BOTÕES */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      padding: .65rem 1.4rem; border-radius: var(--radius); font-weight: 600; font-size: .95rem;
+      text-decoration: none; cursor: pointer; border: 2px solid transparent;
+      transition: background .2s, color .2s, border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .btn-primary { background: var(--primary); color: var(--on-primary); }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--primary-shadow); }
+    .btn-outline { background: transparent; color: var(--outline); border-color: var(--outline-border); }
+    .btn-outline:hover { border-color: var(--outline); }
+    .btn-ghost { background: transparent; color: var(--nav-link); }
+    .btn-ghost:hover { color: var(--nav-link-hover); }
+    .btn-lg { padding: .9rem 1.8rem; font-size: 1.02rem; }
+    .btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--nav-border);
+    }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+    .nav-logo img { height: 46px; width: auto; }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a { color: var(--nav-link); text-decoration: none; font-size: .92rem; font-weight: 500; }
+    .nav-links a:hover { color: var(--nav-link-hover); }
+    .nav-cta { display: flex; gap: .5rem; align-items: center; }
+    .hamburger { display: none; background: none; border: 0; cursor: pointer; padding: .5rem; }
+    .hamburger span { display: block; width: 22px; height: 2px; margin: 5px 0; background: var(--nav-link-hover); transition: transform .2s, opacity .2s; }
+    .hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-menu {
+      display: none; position: fixed; top: 72px; left: 0; right: 0; z-index: 99;
+      background: var(--nav-solid); border-bottom: 1px solid var(--nav-border);
+      flex-direction: column; padding: .5rem 1.5rem 1.25rem;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { padding: .8rem 0; color: var(--nav-link-hover); text-decoration: none; border-bottom: 1px solid var(--nav-border); }
+    .mobile-menu a.btn { margin-top: 1rem; border: 0; }
+
+    /* HERO */
+    .hero { background: var(--hero-bg); color: var(--hero-text); padding: 5rem 0 4.5rem; overflow: hidden; }
+    .hero .wrap { display: grid; grid-template-columns: 1fr 1.08fr; gap: 3.5rem; align-items: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .45rem;
+      background: var(--badge-bg); color: var(--badge-text); border: 1px solid var(--badge-border);
+      padding: .3rem .85rem; border-radius: 100px; font-size: .78rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase; margin-bottom: 1.4rem;
+    }
+    .hero-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--badge-dot); }
+    .hero h1 {
+      color: var(--hero-heading); font-size: clamp(2.3rem, 4.6vw, 3.7rem);
+      line-height: 1.08; letter-spacing: var(--head-tracking); font-weight: var(--head-weight); margin-bottom: 1.3rem;
+    }
+    .hero h1 .highlight { color: var(--highlight); }
+    .hero-lead { font-size: 1.15rem; color: var(--hero-muted); max-width: 520px; margin-bottom: 2rem; }
+    .hero-cta { display: flex; gap: .85rem; flex-wrap: wrap; }
+    .hero-trust { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; margin-top: 1.8rem; list-style: none; font-size: .9rem; color: var(--hero-muted); }
+    .hero-trust li { display: flex; align-items: center; gap: .4rem; }
+    .hero-trust li::before { content: '✓'; color: var(--check); font-weight: 800; }
+
+    .browser {
+      border-radius: 14px; overflow: hidden; background: #fff;
+      border: 1px solid var(--frame-border); box-shadow: var(--frame-shadow);
+    }
+    .browser-bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--frame-bar); border-bottom: 1px solid var(--frame-border); }
+    .browser-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--frame-dot); }
+    .browser-bar span { margin-left: 10px; font-size: .72rem; color: #64748b; background: #fff; border-radius: 6px; padding: 2px 10px; border: 1px solid #e2e8f0; }
+    .browser img { width: 100%; height: auto; aspect-ratio: 2067 / 1300; object-fit: cover; object-position: top left; }
+
+    /* FAIXA DE PROVA */
+    .proof { background: var(--proof-bg); border-bottom: 1px solid var(--border); }
+    .proof .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding-top: 1.6rem; padding-bottom: 1.6rem; }
+    .proof-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .proof-number { font-family: var(--font-head); font-size: 1.55rem; font-weight: 800; color: var(--accent-text); line-height: 1.2; }
+    .proof-label { font-size: .83rem; color: var(--muted); }
+
+    /* SEÇÕES */
+    section.block { padding: 5.5rem 0; }
+    section.alt { background: var(--bg-alt); }
+    .section-head { text-align: center; max-width: 680px; margin: 0 auto 3rem; }
+    .section-label { display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-text); margin-bottom: .7rem; }
+    .section-title { font-size: clamp(1.8rem, 3.4vw, 2.5rem); line-height: 1.15; letter-spacing: var(--head-tracking); font-weight: var(--head-weight); margin-bottom: .8rem; }
+    .section-subtitle { color: var(--muted); font-size: 1.05rem; }
+
+    /* MÓDULOS (abas) */
+    .tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem; margin-bottom: 2rem; }
+    .tab {
+      font: inherit; font-size: .92rem; font-weight: 600; cursor: pointer;
+      padding: .55rem 1.1rem; border-radius: 100px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); transition: all .2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab[aria-selected="true"] { background: var(--tab-active-bg); color: var(--tab-active-text); border-color: var(--tab-active-bg); }
+    .tab-panel { max-width: 960px; margin: 0 auto; }
+    .tab-panel[hidden] { display: none; }
+    .tab-panel p { text-align: center; color: var(--muted); margin-top: 1.1rem; }
+    .tab-panel .browser img { aspect-ratio: 16 / 10; }
+
+    /* FUNCIONALIDADES */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 1.6rem; transition: border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .feature-card:hover { border-color: var(--card-hover-border); box-shadow: var(--card-shadow); transform: translateY(-2px); }
+    .feature-icon {
+      width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+      font-size: 1.3rem; background: var(--icon-bg); margin-bottom: 1rem;
+    }
+    .feature-card h3 { font-size: 1.08rem; margin-bottom: .45rem; }
+    .feature-card p { color: var(--muted); font-size: .93rem; }
+
+    /* PLANOS */
+    .plans-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; align-items: start; }
+    .plan-card {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 1.8rem 1.4rem; display: flex; flex-direction: column;
+    }
+    .plan-card.featured { border: 2px solid var(--featured-border); box-shadow: var(--card-shadow); }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--featured-border); color: var(--on-featured); font-size: .72rem; font-weight: 700;
+      padding: .2rem .8rem; border-radius: 100px; white-space: nowrap; letter-spacing: .03em; text-transform: uppercase;
+    }
+    .plan-name { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--heading); }
+    .plan-price { display: flex; align-items: baseline; gap: .2rem; margin: .5rem 0 .4rem; }
+    .price-currency { font-size: 1rem; color: var(--muted); font-weight: 600; }
+    .price-value { font-family: var(--font-head); font-size: 2.6rem; font-weight: 800; color: var(--heading); line-height: 1; }
+    .price-period { color: var(--muted); font-size: .9rem; }
+    .plan-desc { color: var(--muted); font-size: .88rem; min-height: 4.2em; margin-bottom: 1rem; }
+    .plan-features { list-style: none; font-size: .86rem; margin-bottom: 1.5rem; flex: 1; }
+    .plan-features li { display: flex; gap: .5rem; padding: .28rem 0; }
+    .plan-features li.section-sep { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-top: .9rem; }
+    .plan-features li.off { color: var(--muted-2); }
+    .check { color: var(--check); font-weight: 800; }
+    .cross { color: var(--muted-2); }
+    .plan-card .btn { width: 100%; }
+
+    /* COMO FUNCIONA */
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; counter-reset: step; }
+    .step { position: relative; }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+      font-family: var(--font-head); font-weight: 800; font-size: 1.1rem;
+      background: var(--step-bg); color: var(--step-text); margin-bottom: 1rem;
+    }
+    .step h3 { font-size: 1.05rem; margin-bottom: .4rem; }
+    .step p { color: var(--muted); font-size: .92rem; }
+
+    /* FAQ */
+    .faq-list { max-width: 780px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item summary {
+      list-style: none; cursor: pointer; padding: 1.15rem 2rem 1.15rem 0; position: relative;
+      font-weight: 600; color: var(--heading); font-size: 1.02rem;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      font-size: 1.4rem; font-weight: 400; color: var(--accent-text); transition: transform .2s;
+    }
+    .faq-item[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+    .faq-answer { color: var(--muted); padding: 0 0 1.2rem; font-size: .96rem; }
+    .faq-answer strong { color: var(--text); }
+
+    /* BLOG */
+    .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .blog-card {
+      display: flex; flex-direction: column; gap: .5rem; text-decoration: none;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .blog-card:hover { border-color: var(--card-hover-border); box-shadow: var(--card-shadow); }
+    .blog-tag { align-self: flex-start; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-text); background: var(--icon-bg); padding: .15rem .6rem; border-radius: 6px; }
+    .blog-card h3 { font-size: 1.05rem; }
+    .blog-card p { color: var(--muted); font-size: .9rem; flex: 1; }
+    .blog-cta { color: var(--accent-text); font-weight: 600; font-size: .9rem; }
+    .blog-footer { text-align: center; margin-top: 2rem; }
+
+    /* CTA FINAL */
+    .cta-section { background: var(--cta-bg); color: var(--cta-muted); text-align: center; padding: 5rem 1.5rem; }
+    .cta-section h2 { color: var(--cta-heading); font-size: clamp(1.8rem, 3.6vw, 2.6rem); letter-spacing: var(--head-tracking); font-weight: var(--head-weight); margin-bottom: .7rem; }
+    .cta-section p { font-size: 1.08rem; margin-bottom: 2rem; }
+
+    /* RODAPÉ */
+    footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 2rem 1.5rem 6rem; font-size: .88rem; }
+    footer a { color: var(--footer-text); text-decoration: none; }
+    footer a:hover { color: var(--footer-hover); }
+
+    /* CTA flutuante (mobile) */
+    #floating-cta {
+      position: fixed; left: 1rem; right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom));
+      z-index: 90; display: none; justify-content: center;
+      opacity: 0; transform: translateY(20px); transition: opacity .25s, transform .25s;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    #floating-cta.visible { opacity: 1; transform: none; }
+
+    /* ENTRADA SUAVE */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+      .reveal.is-in { opacity: 1; transform: none; }
+      .hero-copy > * { animation: fade-up .7s cubic-bezier(.16,1,.3,1) both; }
+      .hero-copy > :nth-child(2) { animation-delay: .1s; }
+      .hero-copy > :nth-child(3) { animation-delay: .2s; }
+      .hero-copy > :nth-child(4) { animation-delay: .3s; }
+      .hero-copy > :nth-child(5) { animation-delay: .4s; }
+      .hero-visual { animation: fade-up .9s .25s cubic-bezier(.16,1,.3,1) both; }
+      @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    }
+
+    /* RESPONSIVO */
+    @media (max-width: 1024px) {
+      .plans-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid, .blog-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: block; }
+      .hero { padding: 3rem 0 3.5rem; }
+      .hero .wrap { grid-template-columns: 1fr; gap: 2.5rem; }
+      .proof .wrap { grid-template-columns: repeat(2, 1fr); row-gap: 1.4rem; }
+    }
+    @media (max-width: 600px) {
+      .wrap { padding: 0 1rem; }
+      section.block { padding: 4rem 0; }
+      .features-grid, .blog-grid, .plans-grid, .steps { grid-template-columns: 1fr; }
+      .plan-desc { min-height: 0; }
+      .hero-cta .btn { flex: 1 1 100%; }
+      .tab { font-size: .85rem; padding: .45rem .9rem; }
+    }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav aria-label="Navegação principal">
+  <div class="wrap">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#planos">Planos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#faq">FAQ</a>
+      <a href="/blog/index.html">Blog</a>
+    </div>
+    <div class="nav-cta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary" data-cta="nav">Começar grátis</a>
+    </div>
+    <button class="hamburger" aria-label="Abrir menu" aria-controls="mobileMenu" aria-expanded="false" onclick="toggleMobileMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#funcionalidades" onclick="closeMobileMenu()">Funcionalidades</a>
+  <a href="#planos" onclick="closeMobileMenu()">Planos</a>
+  <a href="#como-funciona" onclick="closeMobileMenu()">Como funciona</a>
+  <a href="#faq" onclick="closeMobileMenu()">FAQ</a>
+  <a href="/blog/index.html" onclick="closeMobileMenu()">Blog</a>
+  <a href="/login.html" onclick="closeMobileMenu()">Entrar</a>
+  <a href="/register.html" class="btn btn-primary" data-cta="menu-mobile" onclick="closeMobileMenu()">Começar grátis</a>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="hero-badge">Plano Free disponível agora</div>
+      <h1>Gestão jurídica <span class="highlight">inteligente</span> para escritórios modernos</h1>
+      <p class="hero-lead">Gerencie processos, prazos, clientes e finanças em um só lugar. Do controle de tarefas ao timesheet — tudo integrado e seguro.</p>
+      <div class="hero-cta">
+        <a href="/register.html" class="btn btn-primary btn-lg" data-cta="hero">Criar conta gratuita</a>
+        <a href="#planos" class="btn btn-outline btn-lg">Ver planos</a>
+      </div>
+      <ul class="hero-trust" aria-label="Diferenciais">
+        <li>Sem cartão de crédito</li>
+        <li>100% web, sem instalação</li>
+        <li>Dados criptografados</li>
+      </ul>
+    </div>
+    <div class="hero-visual">
+      <div class="browser">
+        <div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>app.causify.com.br</span></div>
+        <img src="/images/dashboard_2.png" alt="Painel de indicadores do Causify com processos, tarefas e financeiro" width="2067" height="1913" fetchpriority="high">
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FAIXA DE PROVA -->
+<div class="proof" aria-label="Diferenciais Causify">
+  <div class="wrap">
+    <div class="proof-item"><span class="proof-number">R$ 0</span><span class="proof-label">Plano Free para sempre</span></div>
+    <div class="proof-item"><span class="proof-number">1 min</span><span class="proof-label">Para criar sua conta</span></div>
+    <div class="proof-item"><span class="proof-number">100%</span><span class="proof-label">Web, em qualquer dispositivo</span></div>
+    <div class="proof-item"><span class="proof-number">LGPD</span><span class="proof-label">SSL e backup diário</span></div>
+  </div>
+</div>
+
+<main>
+<!-- MÓDULOS -->
+<section class="block" id="modulos" aria-labelledby="modulos-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Conheça o Causify</span>
+      <h2 id="modulos-title" class="section-title">Todos os módulos em uma só plataforma</h2>
+      <p class="section-subtitle">Veja como fica o dia a dia do escritório dentro do sistema.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Módulos">
+      <button class="tab" role="tab" id="tab-dash" aria-controls="panel-dash" aria-selected="true">Dashboard</button>
+      <button class="tab" role="tab" id="tab-prazos" aria-controls="panel-prazos" aria-selected="false" tabindex="-1">Calculadora de Prazos</button>
+      <button class="tab" role="tab" id="tab-hon" aria-controls="panel-hon" aria-selected="false" tabindex="-1">Honorários</button>
+      <button class="tab" role="tab" id="tab-fin" aria-controls="panel-fin" aria-selected="false" tabindex="-1">Financeiro</button>
+    </div>
+    <div class="tab-panel" role="tabpanel" id="panel-dash" aria-labelledby="tab-dash">
+      <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="/images/dashboard_1.png" alt="Dashboard visão geral do escritório" loading="lazy" width="2067" height="1743"></div>
+      <p>Visão geral do escritório: prazos da semana, tarefas e indicadores logo ao entrar.</p>
+    </div>
+    <div class="tab-panel" role="tabpanel" id="panel-prazos" aria-labelledby="tab-prazos" hidden>
+      <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="/images/calculadora_prazos_1.png" alt="Calculadora de prazos processuais" loading="lazy" width="1808" height="1244"></div>
+      <p>Prazos em dias úteis, considerando feriados nacionais e recessos forenses.</p>
+    </div>
+    <div class="tab-panel" role="tabpanel" id="panel-hon" aria-labelledby="tab-hon" hidden>
+      <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="/images/calculadora_honorarios_1.png" alt="Calculadora de honorários advocatícios" loading="lazy" width="2036" height="1909"></div>
+      <p>Honorários pelas tabelas da OAB, com correção monetária e adicional de especialidade.</p>
+    </div>
+    <div class="tab-panel" role="tabpanel" id="panel-fin" aria-labelledby="tab-fin" hidden>
+      <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="/images/financeiro_1.png" alt="Controle financeiro por processo" loading="lazy" width="2067" height="1778"></div>
+      <p>Honorários, despesas e cobranças com PIX, separados por processo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section class="block alt" id="funcionalidades" aria-labelledby="features-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Funcionalidades</span>
+      <h2 id="features-title" class="section-title">Tudo que seu escritório precisa</h2>
+      <p class="section-subtitle">Uma plataforma completa pensada para advogados que valorizam organização e produtividade.</p>
+    </div>
+    <div class="features-grid">
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">📋</div>
+      <h3>Gestão de Processos</h3>
+      <p>Cadastre e monitore processos jurídicos com acompanhamento automático de andamentos, classificação e filtros avançados.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">⏱️</div>
+      <h3>Timesheet e Timer</h3>
+      <p>Registre horas trabalhadas por processo com timer integrado. Controle sua produtividade e gere relatórios de horas.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">👥</div>
+      <h3>Gestão de Clientes</h3>
+      <p>Centralize informações de clientes e contatos. Acesso personalizado para que o cliente acompanhe seus próprios processos.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">✅</div>
+      <h3>Tarefas e Agenda</h3>
+      <p>Controle tarefas e eventos com visão Kanban, tags, comentários, menções e gestão de prazos integrada.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">💰</div>
+      <h3>Controle Financeiro</h3>
+      <p>Gerencie honorários, despesas e lançamentos por processo. Emissão de cobranças com PIX e automação financeira.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">📊</div>
+      <h3>Indicadores e Relatórios</h3>
+      <p>Painéis com indicadores pessoais, por processo e por cliente. Visualize a performance do escritório em tempo real.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">📅</div>
+      <h3>Calculadora de Prazos</h3>
+      <p>Calcule prazos processuais com precisão, considerando dias úteis e feriados. Nunca perca um prazo importante.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">🔔</div>
+      <h3>Alertas Inteligentes</h3>
+      <p>Receba alertas sobre novos andamentos, prazos vencendo e atualizações importantes nos seus processos.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">🔒</div>
+      <h3>Multi-usuário com Permissões</h3>
+      <p>Convide advogados e assistentes com diferentes níveis de acesso. Controle quem vê o quê no seu escritório.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">📁</div>
+      <h3>Documentos e Templates</h3>
+      <p>Armazene arquivos vinculados a cada processo e crie templates reutilizáveis de contratos, petições e procurações.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">🧮</div>
+      <h3>Calculadora de Honorários</h3>
+      <p>Calcule honorários com base em tabelas da OAB, índices de correção monetária e adicional de especialidade configurável.</p>
+    </div>
+
+    <div class="feature-card reveal">
+      <div class="feature-icon" aria-hidden="true">🌐</div>
+      <h3>Portal do Cliente</h3>
+      <p>Ofereça ao seu cliente uma área exclusiva para acompanhar andamentos, documentos e prazos dos próprios processos.</p>
+    </div>
+
+  </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="block" id="planos" aria-labelledby="pricing-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Planos</span>
+      <h2 id="pricing-title" class="section-title">Simples e transparente</h2>
+      <p class="section-subtitle">Comece grátis e evolua quando precisar. Sem surpresas na fatura.</p>
+    </div>
+    <div class="plans-grid">
+
+    <!-- FREE -->
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">0</span>
+        <span class="price-period">/mês</span>
+      </div>
+            <div class="plan-desc">Ideal para advogados autônomos que querem começar a organizar o escritório sem custo.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 10 processos monitorados</li>
+        <li class="off"><span class="cross">✗</span> Captura de publicações</li>
+        <li><span class="check">✓</span> 1 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> 1 usuário</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li class="off"><span class="cross">✗</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li class="off"><span class="cross">✗</span> Gestão Kanban</li>
+        <li class="off"><span class="cross">✗</span> Calculadora de honorários</li>
+        <li class="off"><span class="cross">✗</span> Calculadora de prazos</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li class="off"><span class="cross">✗</span> Controle financeiro por processo</li>
+
+        <li class="off"><span class="cross">✗</span> Indicadores e relatórios</li>
+        <li class="off"><span class="cross">✗</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html" class="btn btn-outline" data-cta="plano-free">Começar grátis</a>
+    </div>
+
+    <!-- PLUS -->
+    <div class="plan-card featured">
+      <div class="plan-badge">Mais popular</div>
+      <div class="plan-name">Plus</div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">20</span>
+        <span class="price-period">/mês</span>
+      </div>
+            <div class="plan-desc">Para advogados que precisam de mais controle, com portal do cliente e financeiro incluídos.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 20 processos monitorados</li>
+        <li class="off"><span class="cross">✗</span> Captura de publicações</li>
+        <li><span class="check">✓</span> 2 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> 1 usuário</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li><span class="check">✓</span> Gestão Kanban</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
+        <li><span class="check">✓</span> Calculadora de prazos</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li><span class="check">✓</span> Controle financeiro por processo</li>
+
+        <li><span class="check">✓</span> Indicadores e relatórios</li>
+        <li class="off"><span class="cross">✗</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html?plano=3" class="btn btn-primary" data-cta="plano-plus">Assinar Plus</a>
+    </div>
+
+    <!-- PRO -->
+    <div class="plan-card">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">50</span>
+        <span class="price-period">/mês</span>
+      </div>
+            <div class="plan-desc">Para escritórios que precisam de controle completo, publicações e equipe.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 40 processos monitorados</li>
+        <li><span class="check">✓</span> 1 captura de publicações por OAB</li>
+        <li><span class="check">✓</span> 5 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> 2 usuários</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li><span class="check">✓</span> Gestão Kanban</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
+        <li><span class="check">✓</span> Calculadora de prazos</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li><span class="check">✓</span> Controle financeiro por processo</li>
+        <li><span class="check">✓</span> Indicadores e relatórios completos</li>
+        <li><span class="check">✓</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html?plano=1" class="btn btn-primary" data-cta="plano-pro">Assinar Pro</a>
+    </div>
+
+    <!-- MAX -->
+    <div class="plan-card">
+      <div class="plan-name">Max</div>
+      <div class="plan-price">
+        <span class="price-currency">R$</span>
+        <span class="price-value">125</span>
+        <span class="price-period">/mês</span>
+      </div>
+            <div class="plan-desc">Para grandes escritórios com alto volume de processos e equipe completa.</div>
+
+      <ul class="plan-features">
+        <li class="section-sep">Processos</li>
+        <li><span class="check">✓</span> Processos ilimitados cadastrados</li>
+        <li><span class="check">✓</span> 80 processos monitorados</li>
+        <li><span class="check">✓</span> 3 capturas de publicações por OAB</li>
+        <li><span class="check">✓</span> 10 GB de armazenamento</li>
+
+        <li class="section-sep">Usuários e Clientes</li>
+        <li><span class="check">✓</span> Até 5 usuários</li>
+        <li><span class="check">✓</span> Cadastro de clientes e contatos</li>
+        <li><span class="check">✓</span> Acesso personalizado ao cliente</li>
+
+        <li class="section-sep">Produtividade</li>
+        <li><span class="check">✓</span> Controle de tarefas e eventos</li>
+        <li><span class="check">✓</span> Timesheet e timer</li>
+        <li><span class="check">✓</span> Gestão Kanban</li>
+        <li><span class="check">✓</span> Calculadora de honorários</li>
+        <li><span class="check">✓</span> Calculadora de prazos</li>
+
+        <li class="section-sep">Financeiro e Relatórios</li>
+        <li><span class="check">✓</span> Controle financeiro por processo</li>
+        <li><span class="check">✓</span> Indicadores e relatórios completos</li>
+        <li><span class="check">✓</span> Templates de documentos</li>
+      </ul>
+
+      <a href="/register.html?plano=4" class="btn btn-primary" data-cta="plano-max">Assinar Max</a>
+    </div>
+
+  </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="block alt" id="como-funciona" aria-labelledby="how-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Como funciona</span>
+      <h2 id="how-title" class="section-title">Em minutos você já está operando</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <h3>Crie seu escritório</h3>
+        <p>Cadastre-se gratuitamente, informe o nome do escritório e pronto. Sem cartão de crédito.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <h3>Importe processos e clientes</h3>
+        <p>Cadastre processos e clientes manualmente ou importe os dados existentes. Interface intuitiva e rápida.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <h3>Convide sua equipe</h3>
+        <p>Adicione advogados e assistentes com diferentes permissões de acesso. Cada um vê apenas o que precisa.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">4</div>
+        <h3>Trabalhe com mais produtividade</h3>
+        <p>Acompanhe prazos, registre horas, gerencie tarefas e tenha todos os indicadores do escritório na palma da mão.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="block" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Perguntas frequentes</span>
+      <h2 id="faq-title" class="section-title">Tire suas dúvidas</h2>
+      <p class="section-subtitle">As respostas mais buscadas por advogados brasileiros sobre o Causify.</p>
+    </div>
+    <div class="faq-list">
+
+    <details class="faq-item">
+      <summary>O que é o Causify?</summary>
+      <div class="faq-answer">Causify é um software brasileiro de gestão jurídica em nuvem, feito para advogados autônomos e escritórios de advocacia. Reúne em um só lugar o controle de processos, prazos processuais, clientes, tarefas, timesheet, honorários e portal do cliente, substituindo planilhas e sistemas dispersos.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Quanto custa o Causify?</summary>
+      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ 20/mês), <strong>Pro</strong> (R$ 50/mês) e <strong>Max</strong> (R$ 125/mês). Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>O Causify tem plano gratuito?</summary>
+      <div class="faq-answer">Sim. O plano Free é gratuito permanente, sem cartão de crédito, e inclui processos ilimitados cadastrados, 10 processos monitorados, 1 GB de armazenamento, cadastro de clientes, tarefas e timesheet. Ideal para advogados autônomos que querem organizar o escritório sem custo.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Funciona para escritório pequeno?</summary>
+      <div class="faq-answer">Sim. O Causify foi pensado para advogados autônomos e escritórios de pequeno e médio porte. O plano Plus é o mais popular entre advogados solos, e os planos Pro e Max atendem equipes de 2 a 5 advogados com permissões individuais e divisão de tarefas.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Preciso instalar algum programa?</summary>
+      <div class="faq-answer">Não. O Causify é 100% web: você acessa pelo navegador, em qualquer dispositivo (computador, tablet ou celular), sem instalação. Os dados ficam na nuvem com criptografia SSL e backup automático.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Tem calculadora de prazos processuais?</summary>
+      <div class="faq-answer">Sim. A calculadora de prazos do Causify considera dias úteis, feriados nacionais e recessos forenses, seguindo as regras do CPC (Código de Processo Civil). Está disponível nos planos Plus, Pro e Max.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Como funciona a calculadora de honorários?</summary>
+      <div class="faq-answer">A calculadora de honorários do Causify utiliza as tabelas da OAB, índices de correção monetária e adicional de especialidade configurável, ajudando o advogado a precificar serviços com critérios objetivos.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>O cliente consegue acompanhar o processo?</summary>
+      <div class="faq-answer">Sim. O Portal do Cliente é uma área exclusiva onde o cliente acessa com login próprio para acompanhar andamentos, prazos e documentos dos próprios processos, sem precisar ligar para o escritório. Disponível nos planos Plus, Pro e Max.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Posso cancelar a qualquer momento?</summary>
+      <div class="faq-answer">Sim. Os planos pagos podem ser cancelados a qualquer momento, sem multa. Ao cancelar, você mantém acesso até o fim do ciclo já pago e seus dados ficam disponíveis para exportação.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Meus dados estão seguros?</summary>
+      <div class="faq-answer">Sim. O Causify usa criptografia SSL/TLS em todas as conexões, autenticação com tokens JWT, senhas armazenadas com hash bcrypt e hospedagem em conformidade com a LGPD. Os dados têm backup diário e são segregados por escritório.</div>
+    </details>
+
+  </div>
+  </div>
+</section>
+
+<!-- BLOG -->
+<section class="block alt" id="blog" aria-labelledby="blog-teaser-title">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="section-label">Blog</span>
+      <h2 id="blog-teaser-title" class="section-title">Conteúdo para advogados</h2>
+      <p class="section-subtitle">Guias práticos, comparativos e táticas para organizar seu escritório.</p>
+    </div>
+    <div class="blog-grid">
+
+    <a class="blog-card" href="/blog/como-calcular-prazos-processuais.html">
+      <span class="blog-tag">Prazos</span>
+      <h3>Como calcular prazos processuais no Brasil</h3>
+      <p>Regras do CPC, dias úteis, feriados e recessos forenses. Nunca mais perca um prazo.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+    <a class="blog-card" href="/blog/como-calcular-honorarios-advocaticios.html">
+      <span class="blog-tag">Honorários</span>
+      <h3>Honorários advocatícios: como calcular pela tabela OAB</h3>
+      <p>Tabelas por estado, correção monetária e adicional de especialidade configurável.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+    <a class="blog-card" href="/blog/como-organizar-escritorio-de-advocacia.html">
+      <span class="blog-tag">Gestão</span>
+      <h3>Como organizar escritório de advocacia em 10 passos</h3>
+      <p>Checklist prático para advogados autônomos e pequenos escritórios.</p>
+      <span class="blog-cta">Ler artigo →</span>
+    </a>
+
+  </div>
+  <div class="blog-footer">
+    <a href="/blog/index.html" class="btn btn-outline">Ver todos os artigos</a>
+  </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section" aria-labelledby="cta-title">
+  <h2 id="cta-title">Pronto para organizar seu escritório?</h2>
+  <p>Comece grátis hoje. Sem burocracia, sem cartão de crédito.</p>
+  <a href="/register.html" class="btn btn-primary btn-lg" data-cta="final">Criar conta gratuita agora</a>
+</section>
+</main>
+
+<!-- RODAPÉ -->
+<footer>
+  <p>⚖️ Causify &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="#planos">Planos</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p style="margin-top:.5rem; font-size:.75rem">© 2026 Causify. Todos os direitos reservados.</p>
+</footer>
+
+<a id="floating-cta" class="btn btn-primary btn-lg" href="/register.html" data-cta="flutuante">Criar conta gratuita</a>
+
+<script>
+  // Teste A/B da página inicial: o clique em qualquer CTA de cadastro vira evento com a variante.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="/register.html"]');
+    if (!a) return;
+    var props = { home_variant: window.HOME_VARIANT, cta: a.getAttribute('data-cta') || 'outro', href: a.getAttribute('href') };
+    try { if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture('home_cta_click', props); } catch (err) {}
+    try { if (typeof gtag === 'function') gtag('event', 'home_cta_click', props); } catch (err) {}
+  });
+
+  function toggleMobileMenu() {
+    var menu = document.getElementById('mobileMenu');
+    var btn = document.querySelector('.hamburger');
+    var open = menu.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+    var btn = document.querySelector('.hamburger');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  // Abas de módulos (setas do teclado alternam entre abas)
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+    function select(tab) {
+      tabs.forEach(function (t) {
+        var on = t === tab;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+      });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { select(t); });
+      t.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        var next = tabs[(i + d + tabs.length) % tabs.length];
+        select(next); next.focus();
+      });
+    });
+  })();
+
+  // Entrada suave das seções
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) { els.forEach(function (el) { el.classList.add('is-in'); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  })();
+
+  // CTA flutuante no mobile: aparece depois do hero e some perto do rodapé
+  (function () {
+    var cta = document.getElementById('floating-cta');
+    var hero = document.querySelector('header.hero');
+    var footer = document.querySelector('footer');
+    var visible = false;
+    function update() {
+      if (window.innerWidth > 600) { cta.style.display = 'none'; visible = false; cta.classList.remove('visible'); return; }
+      var show = hero.getBoundingClientRect().bottom < 0 && footer.getBoundingClientRect().top >= window.innerHeight + 60;
+      if (show && !visible) {
+        visible = true; cta.style.display = 'flex';
+        requestAnimationFrame(function () { cta.classList.add('visible'); });
+      } else if (!show && visible) {
+        visible = false; cta.classList.remove('visible');
+      }
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    update();
+  })();
+</script>
+
+</body>
+</html>

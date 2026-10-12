@@ -49,6 +49,7 @@
         var fromLinkedInUtm = linkedInSources.indexOf(utmSource) !== -1;
 
         if (fromLinkedInReferrer || hasLiFatId || fromLinkedInUtm) {
+          window.__campanhaRedirect = true;
           location.replace('/lp-linkedin.html' + location.search + location.hash);
           return;
         }
@@ -69,9 +70,59 @@
         var fromSyndicatedSearch = isExternal && referrer.indexOf('syndicatedsearch.goog') !== -1;
 
         if (fromSocialReferrer || hasFbclid || fromUtm || fromSocialMedium || (fromSyndicatedSearch && isMobile)) {
+          window.__campanhaRedirect = true;
           location.replace('/lp-facebook.html' + location.search + location.hash);
         }
       } catch (e) { /* fail silently — never break the page */ }
+    })();
+  </script>
+  <!-- Teste A/B da página inicial: sorteia a variante (A = esta página, B = home-clara, C = home-verde)
+       e guarda no localStorage, para o visitante sempre ver a mesma. Roda depois do redirect de
+       campanhas (tráfego de anúncio vai para as LPs) e antes de pintar a página, sem piscar.
+       Proporção: ajuste PESOS (peso 0 desliga a variante; quem já estava nela é sorteado de novo).
+       Para encerrar o teste, deixe só A com peso. Trocar CHAVE reinicia o sorteio de todo mundo.
+       QA: ?home=A|B|C força a variante (e grava); em localhost só sorteia com o ?home=. -->
+  <script>
+    (function () {
+      try {
+        if (window.__campanhaRedirect) return;
+        var path = location.pathname;
+        if (path !== '/' && path !== '/index.html') return;
+
+        var PESOS = { A: 1, B: 1, C: 1 };
+        var PAGINAS = { B: '/home-clara.html', C: '/home-verde.html' };
+        var CHAVE = 'home_ab_v1';
+
+        var params = new URLSearchParams(location.search);
+        var forcada = (params.get('home') || '').toUpperCase();
+        var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        // Robôs (Googlebot etc.) sempre veem a página canônica — as variantes são noindex.
+        var robo = /bot|crawl|spider|slurp|facebookexternalhit|lighthouse|headless|preview/i.test(navigator.userAgent || '');
+        if (robo && !forcada) return;
+
+        var variante = null;
+        if (PESOS[forcada] !== undefined) {
+          variante = forcada;
+        } else {
+          if (local) return;
+          try { variante = localStorage.getItem(CHAVE); } catch (e) {}
+          if (!PESOS[variante]) {
+            var total = 0, k;
+            for (k in PESOS) total += PESOS[k];
+            if (total <= 0) return;
+            var r = Math.random() * total;
+            variante = 'A';
+            for (k in PESOS) { if (PESOS[k] <= 0) continue; r -= PESOS[k]; if (r < 0) { variante = k; break; } }
+          }
+        }
+        try { localStorage.setItem(CHAVE, variante); } catch (e) {}
+
+        if (PAGINAS[variante]) {
+          params.delete('home');
+          var qs = params.toString();
+          location.replace(PAGINAS[variante] + (qs ? '?' + qs : '') + location.hash);
+        }
+      } catch (e) { /* nunca quebrar a página */ }
     })();
   </script>
   <!-- Google tag (gtag.js) — only loads in non-local environments -->
@@ -1701,6 +1752,9 @@
 </div>
 
 <script>
+  // Teste A/B da página inicial: esta é a variante 'A' (home-clara.html = 'B', home-verde.html = 'C').
+  try { if (window.posthog && typeof window.posthog.register === 'function') window.posthog.register({ home_variant: 'A' }); } catch (e) {}
+
   function abrirWaitlist(plano) {
     document.getElementById('wPlano').textContent = plano;
     document.getElementById('wNome').value = '';
