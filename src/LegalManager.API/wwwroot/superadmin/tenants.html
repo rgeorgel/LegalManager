@@ -107,6 +107,11 @@
       .pagination { flex-wrap: wrap; justify-content: space-between; }
       .pagination span { order: -1; width: 100%; text-align: center; }
     }
+    /* Mascote do assistente (js/mascotes.js). Sem o CSS do assistente as pálpebras ficariam
+       fechadas: aqui elas só somem (olhos abertos). */
+    .mascote-mini { display: inline-block; width: 22px; height: 22px; vertical-align: middle; flex-shrink: 0; color: var(--color-text); }
+    .mascote-mini .asx-palpebras { display: none; }
+    .mascote-uso { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-text-muted); }
   </style>
 </head>
 <body>
@@ -159,7 +164,7 @@
               <th>Processos</th>
               <th>Docs</th>
               <th>Tarefas</th>
-              <th title="Tema personalizado e adoção dos módulos de honorários/contratos, calculadora de prazos e calculadora de honorários">Recursos</th>
+              <th title="Tema personalizado, adoção dos módulos de honorários/contratos, calculadora de prazos e calculadora de honorários, e mascotes do assistente">Recursos</th>
               <th class="sortable" data-sort="cadastro">Cadastro<span class="sort-indicator" data-indicator="cadastro"></span></th>
               <th class="sortable" data-sort="ultimoAcesso">Último Acesso<span class="sort-indicator" data-indicator="ultimoAcesso"></span></th>
               <th>Expira</th>
@@ -424,6 +429,7 @@
 import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
+    import { getMascote, MASCOTE_PADRAO } from '/js/mascotes.js';
     import { exportarTenant, importarTenant, excluirTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
 
     initAdminLayout();
@@ -595,6 +601,28 @@ import { esc } from '/js/utils.js';
       }
       return '<span class="badge badge-green" title="Billing ativo no AbacatePay">✓ pago</span>';
     }
+    // Mascote do assistente: id salvo pelo usuário, ou null = nunca escolheu (vale o padrão).
+    function mascoteMini(id) {
+      const m = getMascote(id);
+      const titulo = id ? m.nome : `${m.nome} (padrão — nunca escolheu)`;
+      return `<span class="mascote-mini" title="${esc(titulo)}" aria-label="${esc(titulo)}">${m.svg}</span>`;
+    }
+    function mascotesCell(t) {
+      const usos = t.mascotes ?? [];
+      if (!usos.length) return '';
+      return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" title="Mascote do assistente escolhido pelos usuários">
+        ${usos.map(u => `<span class="mascote-uso">${mascoteMini(u.mascote)}${u.usuarios > 1 ? `×${u.usuarios}` : ''}</span>`).join('')}
+      </div>`;
+    }
+    function mascotesDetalhado(t) {
+      const usuarios = (t.usuarios ?? []).filter(u => u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin');
+      if (!usuarios.length) return '<span class="badge badge-gray">—</span>';
+      const contagem = new Map();
+      usuarios.forEach(u => contagem.set(u.assistenteMascote ?? null, (contagem.get(u.assistenteMascote ?? null) ?? 0) + 1));
+      return `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">${[...contagem]
+        .sort((a, b) => b[1] - a[1])
+        .map(([id, n]) => `<span class="mascote-uso">${mascoteMini(id)}${n > 1 ? `×${n}` : ''}</span>`).join('')}</div>`;
+    }
     function recursosCell(t) {
       const tema = t.temaCustomizado
         ? '<span class="badge badge-blue" title="Tema personalizado (cores/layout/CSS) configurado por este tenant">🎨 tema custom</span>'
@@ -606,7 +634,8 @@ import { esc } from '/js/utils.js';
           ${usoBadge(t.honorarioContratosCount, '📄', 'Contratos de honorário cadastrados')}
           ${usoBadge(t.calculadoraPrazosCount, '⏱', 'Cálculos na calculadora de prazos')}
           ${usoBadge(t.calculadoraHonorariosCount, '🧮', 'Cálculos salvos na calculadora de honorários')}
-        </div>`;
+        </div>
+        ${mascotesCell(t)}`;
     }
     // Versão explicada da mesma informação de recursosCell() — usada só no modal de detalhes,
     // que tem espaço de sobra pra descrever o que cada indicador significa (a tabela precisa
@@ -635,6 +664,7 @@ import { esc } from '/js/utils.js';
         ${recursoRow('📄', 'Honorários · Contratos', 'Contratos de honorário cadastrados no módulo de Honorários (cobrança por parcelas, multa e juros).', usoValor(t.honorarioContratosCount))}
         ${recursoRow('⏱', 'Calculadora de prazos', 'Quantidade de vezes que usuários do tenant calcularam um prazo processual (dias úteis/corridos) na calculadora de prazos.', usoValor(t.calculadoraPrazosCount))}
         ${recursoRow('🧮', 'Calculadora de honorários', 'Cálculos de honorários (base na tabela OAB) salvos no histórico da calculadora de honorários.', usoValor(t.calculadoraHonorariosCount))}
+        ${recursoRow(mascoteMini(MASCOTE_PADRAO), 'Mascote do assistente', 'Mascote escolhido por cada usuário em Sistema → Assistente (passe o mouse para ver o nome). Quem nunca escolheu usa o padrão.', mascotesDetalhado(t))}
       `;
     }
 
@@ -878,6 +908,7 @@ import { esc } from '/js/utils.js';
               ? '<div style="padding:10px;text-align:center;color:var(--color-text-muted)">Sem usuários</div>'
               : t.usuarios.map(u => `
                 <div class="users-list-row">
+                  ${u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin' ? mascoteMini(u.assistenteMascote) : ''}
                   <span style="flex:1;font-weight:500">${esc(u.nome)}</span>
                   <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
                   <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${fmtDateTime(u.ultimoAcessoEm)} (${daysAgo(u.ultimoAcessoEm)})</span>

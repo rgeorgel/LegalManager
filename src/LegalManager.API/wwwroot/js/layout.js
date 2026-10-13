@@ -55,6 +55,7 @@ const NAV_GROUPS = [
       { href: '/pages/alertas.html',          label: '🔔 Alertas' },
       { href: '/pages/configuracoes.html',  label: '⚙️ Configurações' },
       { href: '/pages/tema.html',            label: '🎨 Tema', plus: true },
+      { href: '/pages/assistente.html',      label: '🦊 Assistente' },
       { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
     ],
   },

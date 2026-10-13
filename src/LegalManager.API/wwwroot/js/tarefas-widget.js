@@ -350,7 +350,7 @@ function injectStyles() {
     #twDetailBody .tag { display: inline-block; background: var(--color-bg); color: var(--color-text); font-size: 11px; padding: 2px 8px; border-radius: 999px; margin: 0 4px 4px 0; }
 
     @media (max-width: 768px) {
-      .tw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px); transform: none; }
+      .tw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--widget-bottom-mobile, 0px)); transform: none; }
       .tw-panel { top: auto; bottom: 0; transform: translateX(12px); max-height: min(420px, calc(100vh - var(--bottom-nav-height, 0px) - 96px)); }
       .tw.open .tw-panel { transform: translateX(0); }
     }

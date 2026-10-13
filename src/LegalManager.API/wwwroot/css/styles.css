@@ -701,3 +701,16 @@ tbody tr:last-child td { border-bottom: none; }
 body.theme-compact .app-layout { gap: 12px; }
 body.theme-compact .stat-card { padding: 14px 16px; }
 body.theme-compact .dashboard-grid { gap: 10px; }
+
+/* ── Respiro para os botões flutuantes da lateral direita ───────────────
+   Assistente, tarefas, tutorial e perguntas ficam fixos na borda direita; o conteúdo ganha
+   um respiro do tamanho deles (largura medida em js/widget-stack.js, que também liga a classe)
+   para não ficar por baixo. No celular as abas ficam só no canto inferior e a tela é estreita:
+   o respiro cobre só a largura da aba (sem a cabeça do mascote). */
+body.com-widgets-laterais .main-content {
+  padding-right: calc(16px + var(--widgets-laterais-largura, 54px));
+}
+@media (max-width: 768px) {
+  body.com-widgets-laterais .main-content { padding-right: 44px; }
+}
+

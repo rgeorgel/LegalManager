@@ -17,7 +17,7 @@ namespace LegalManager.UnitTests;
 
 /// <summary>
 /// GET /superadmin/tenants — indicadores de "tema customizado" e adoção de módulos
-/// (contratos de honorário, calculadora de prazos, calculadora de honorários).
+/// (contratos de honorário, calculadora de prazos, calculadora de honorários) e mascotes do assistente.
 /// </summary>
 public class TenantsUsageFlagsTests
 {
@@ -255,5 +255,64 @@ public class TenantsUsageFlagsTests
         Assert.Equal("primeiros50", dto.VoucherUtilizado);
         Assert.Equal("volta20", dto.CodigoDesconto);
         Assert.Equal(usadoEm, dto.DescontoPromocionalUsadoEm);
+    }
+
+    private static Usuario NovoUsuario(Guid tenantId, PerfilUsuario perfil, string? mascote)
+    {
+        var email = $"{Guid.NewGuid():N}@teste.com";
+        return new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Nome = "U", Email = email, UserName = email,
+            Perfil = perfil, Ativo = true, CriadoEm = DateTime.UtcNow, AssistenteMascote = mascote
+        };
+    }
+
+    [Fact]
+    public async Task Mascotes_AgrupaPorEscolha_SemClientes()
+    {
+        using var ctx = CreateContext();
+        var t = NewTenant("Com mascotes");
+        ctx.Tenants.Add(t);
+        ctx.Users.AddRange(
+            NovoUsuario(t.Id, PerfilUsuario.Admin, "panda"),
+            NovoUsuario(t.Id, PerfilUsuario.Advogado, "panda"),
+            NovoUsuario(t.Id, PerfilUsuario.Colaborador, null),
+            NovoUsuario(t.Id, PerfilUsuario.Cliente, "gato")); // portal do cliente não tem assistente
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var item = (await CallAsync(controller)).Single(i => i.Id == t.Id);
+
+        Assert.Equal(new[] { new MascoteUsoDto("panda", 2), new MascoteUsoDto(null, 1) }, item.Mascotes);
+    }
+
+    [Fact]
+    public async Task Mascotes_VazioQuandoSemUsuarios()
+    {
+        using var ctx = CreateContext();
+        var t = NewTenant("Sem usuários");
+        ctx.Tenants.Add(t);
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var item = (await CallAsync(controller)).Single(i => i.Id == t.Id);
+
+        Assert.Empty(item.Mascotes!);
+    }
+
+    [Fact]
+    public async Task Detalhe_TrazMascoteDeCadaUsuario()
+    {
+        using var ctx = CreateContext();
+        var t = NewTenant("Detalhe");
+        var u = NovoUsuario(t.Id, PerfilUsuario.Admin, "raposa");
+        ctx.Tenants.Add(t);
+        ctx.Users.Add(u);
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetTenant(t.Id, CancellationToken.None));
+
+        Assert.Equal("raposa", Assert.IsType<TenantDetailDto>(ok.Value).Usuarios.Single(x => x.Id == u.Id).AssistenteMascote);
     }
 }

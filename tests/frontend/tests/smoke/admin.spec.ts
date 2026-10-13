@@ -24,6 +24,7 @@ const ADMIN_PAGES = [
   '/pages/usuarios.html',
   '/pages/configuracoes.html',
   '/pages/tema.html',
+  '/pages/assistente.html',
   '/pages/assinatura.html',
   '/pages/indicadores.html',
   '/pages/modelos.html',

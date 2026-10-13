@@ -3,10 +3,12 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Assistente;
+using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.API.Controllers;
 
@@ -76,6 +78,32 @@ public class AssistenteController(IAssistenteService service, IAssistenteAcoesSe
     {
         var acao = await acoes.DesfazerAsync(acaoId, HttpContext.GetClientIpAddress(), ct);
         return acao is null ? NotFound(new { message = "Alteração não encontrada." }) : Ok(acao);
+    }
+
+    /// <summary>Ids dos mascotes que o usuário pode escolher — os mesmos de MASCOTES em wwwroot/js/mascotes.js.</summary>
+    public static readonly IReadOnlySet<string> Mascotes = new HashSet<string>
+    {
+        "coruja", "coruja-classica", "coruja-doutora", "coruja-capelo", "coruja-geometrica", "coruja-piscadinha",
+        "coruja-kawaii", "coruja-dourada", "coruja-espiando", "coruja-traco", "coruja-headset", "gato", "cachorro",
+        "raposa", "panda", "coelho", "pinguim", "leao", "guaxinim", "urso", "coruja-gato",
+    };
+
+    /// <summary>
+    /// Mascote do assistente escolhido pelo usuário (pages/assistente.html). Vale para todos os planos:
+    /// no Free o mascote aparece no botão e no convite para o Plus.
+    /// </summary>
+    [HttpPut("mascote")]
+    public async Task<IActionResult> SalvarMascote([FromBody] AssistenteMascoteDto dto, [FromServices] AppDbContext db, CancellationToken ct)
+    {
+        if (dto.Mascote is null || !Mascotes.Contains(dto.Mascote))
+            return BadRequest(new { message = "Mascote inválido." });
+
+        var usuario = await db.Users.FirstOrDefaultAsync(u => u.Id == tenantContext.UserId, ct);
+        if (usuario == null) return NotFound();
+
+        usuario.AssistenteMascote = dto.Mascote;
+        await db.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     [HttpPost("acoes/{acaoId:guid}/cancelar")]

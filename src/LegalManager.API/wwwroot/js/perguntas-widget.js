@@ -26,14 +26,9 @@ export async function injectPerguntasWidget() {
 function renderWidget() {
   if (document.getElementById('perguntasWidget')) return;
 
-  // Empilhamento no mobile continua one-way, de baixo pra cima (sem noção de
-  // "centro" na tela pequena) — soma 1 "andar" por widget já presente.
-  const before = ['tarefasWidget', 'tourWidget'].filter(id => document.getElementById(id)).length;
-
   const wrap = document.createElement('div');
   wrap.id = 'perguntasWidget';
   wrap.className = 'pw';
-  wrap.style.setProperty('--pw-stack-mobile', `${before * 122}px`);
   wrap.innerHTML = `
     <button type="button" class="pw-toggle" id="pwToggle" title="Sua opinião importa">
       <span class="pw-toggle-icon" aria-hidden="true">💬</span>
@@ -239,7 +234,7 @@ function injectStyles() {
     .pw-card + .pw-card { border-top: 1px solid var(--color-border); padding-top: 12px; }
 
     @media (max-width: 768px) {
-      .pw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--pw-stack-mobile, 0px)); transform: none; }
+      .pw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--widget-bottom-mobile, 0px)); transform: none; }
       .pw-panel { top: auto; bottom: 0; transform: translateX(12px); max-height: min(420px, calc(100vh - var(--bottom-nav-height, 0px) - 96px)); }
       .pw.open .pw-panel { transform: translateX(0); }
     }

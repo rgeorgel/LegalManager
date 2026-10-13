@@ -38,7 +38,9 @@ public record UsuarioInfoDto(
     TenantThemeDto? Tema,
     // "novo" | "classico" | null (padrão = novo). Vem no login para o <head> de
     // pages/dashboard.html decidir o redirecionamento sem esperar outra requisição.
-    string? DashboardVersao = null
+    string? DashboardVersao = null,
+    // Id do mascote do assistente (ver wwwroot/js/mascotes.js); null = padrão.
+    string? AssistenteMascote = null
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

@@ -500,6 +500,65 @@ public class AssistenteTests
         Assert.Equal(402, Assert.IsType<ObjectResult>(r.Result).StatusCode);
     }
 
+    // ── Mascote ──────────────────────────────────────────────────────────────
+
+    private static async Task<(AppDbContext db, AssistenteController controller, Usuario usuario)> SetupMascoteAsync(PlanoTipo plano)
+    {
+        var db = CreateContext();
+        var usuario = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = Guid.NewGuid(), Nome = "Adv", Email = "adv@teste.com",
+            UserName = "adv@teste.com", Perfil = PerfilUsuario.Advogado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        db.Users.Add(usuario);
+        await db.SaveChangesAsync();
+        var controller = new AssistenteController(Mock.Of<IAssistenteService>(), Mock.Of<IAssistenteAcoesService>(),
+            Tenant(usuario.TenantId, plano, usuario.Id));
+        return (db, controller, usuario);
+    }
+
+    [Theory]
+    [InlineData("raposa", PlanoTipo.Plus)]
+    [InlineData("coruja-gato", PlanoTipo.Free)] // escolher o mascote vale para todos os planos
+    public async Task SalvarMascote_Valido_Persiste(string mascote, PlanoTipo plano)
+    {
+        var (db, controller, usuario) = await SetupMascoteAsync(plano);
+
+        Assert.IsType<NoContentResult>(await controller.SalvarMascote(new AssistenteMascoteDto(mascote), db, default));
+
+        Assert.Equal(mascote, (await db.Users.FindAsync(usuario.Id))!.AssistenteMascote);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Raposa")]
+    [InlineData("dragao")]
+    public async Task SalvarMascote_Invalido_RetornaBadRequest(string? mascote)
+    {
+        var (db, controller, usuario) = await SetupMascoteAsync(PlanoTipo.Plus);
+
+        Assert.IsType<BadRequestObjectResult>(await controller.SalvarMascote(new AssistenteMascoteDto(mascote), db, default));
+
+        Assert.Null((await db.Users.FindAsync(usuario.Id))!.AssistenteMascote);
+    }
+
+    [Fact]
+    public void Mascotes_MesmaListaDoFrontend()
+    {
+        // Os ids vivem em wwwroot/js/mascotes.js; o backend só aceita os que estiverem nas duas listas.
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !File.Exists(Path.Combine(dir.FullName, "LegalManager.slnx"))) dir = dir.Parent;
+        Assert.NotNull(dir);
+        var js = File.ReadAllText(Path.Combine(dir!.FullName, "src", "LegalManager.API", "wwwroot", "js", "mascotes.js"));
+
+        var ids = System.Text.RegularExpressions.Regex.Matches(js, @"\bid: '([a-z-]+)'").Select(m => m.Groups[1].Value).ToHashSet();
+        var padrao = System.Text.RegularExpressions.Regex.Match(js, @"MASCOTE_PADRAO = '([a-z-]+)'").Groups[1].Value;
+
+        Assert.True(AssistenteController.Mascotes.SetEquals(ids), $"Diferença: {string.Join(", ", ids.Except(AssistenteController.Mascotes).Concat(AssistenteController.Mascotes.Except(ids)))}");
+        Assert.Contains(padrao, ids);
+    }
+
     // ── Cliente LLM: formatos dos provedores ─────────────────────────────────
 
     private sealed class HandlerCaptura(string resposta) : HttpMessageHandler

@@ -267,6 +267,18 @@ public class SuperAdminController(
             .Select(g => new { TenantId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(g => g.TenantId, g => g.Count, ct);
 
+        // Mascote do assistente por usuário (ver wwwroot/js/mascotes.js); null = padrão. Clientes
+        // não têm assistente, então ficam de fora.
+        var mascotesPorTenant = (await db.Users
+            .Where(u => tenantIds.Contains(u.TenantId) && u.Perfil != PerfilUsuario.Cliente)
+            .GroupBy(u => new { u.TenantId, u.AssistenteMascote })
+            .Select(g => new { g.Key.TenantId, g.Key.AssistenteMascote, Count = g.Count() })
+            .ToListAsync(ct))
+            .GroupBy(x => x.TenantId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<MascoteUsoDto>)g
+                .OrderByDescending(x => x.Count).ThenBy(x => x.AssistenteMascote)
+                .Select(x => new MascoteUsoDto(x.AssistenteMascote, x.Count)).ToList());
+
         // A ordem de exibição já foi decidida por tenantIds acima (nome/cadastro/ultimoAcesso);
         // reordenar aqui de novo por CriadoEm bagunçaria a página quando o sort não for cadastro.
         var tenantsById = await db.Tenants
@@ -307,7 +319,8 @@ public class SuperAdminController(
                 honorarioContratosCounts.GetValueOrDefault(t.Id),
                 calculadoraPrazosCounts.GetValueOrDefault(t.Id),
                 calculadoraHonorariosCounts.GetValueOrDefault(t.Id),
-                t.StripeSubscriptionId != null || t.AbacatePayBillingId != null
+                t.StripeSubscriptionId != null || t.AbacatePayBillingId != null,
+                mascotesPorTenant.GetValueOrDefault(t.Id, [])
             );
         }).ToList();
 
@@ -400,7 +413,7 @@ public class SuperAdminController(
             oabComErro,
             publicacoesMesCount,
             ultimoAcesso,
-            tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm)).ToList(),
+            tenant.Usuarios.Select(u => new TenantUserDto(u.Id, u.Nome, u.Email, u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm, u.AssistenteMascote)).ToList(),
             oabs,
             IsTemaCustomizado(tenant),
             honorarioContratosCount,

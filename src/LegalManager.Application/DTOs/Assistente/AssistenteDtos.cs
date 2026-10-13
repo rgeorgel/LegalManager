@@ -129,3 +129,6 @@ public record AssistenteResumoTenantDto(
     int Acoes = 0,
     int AcoesConfirmadas = 0
 );
+
+/// <summary>Mascote do assistente escolhido pelo usuário (id de wwwroot/js/mascotes.js).</summary>
+public record AssistenteMascoteDto(string? Mascote);

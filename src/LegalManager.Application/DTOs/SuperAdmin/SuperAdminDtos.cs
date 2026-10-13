@@ -32,8 +32,13 @@ public record TenantListItemDto(
     int HonorarioContratosCount,
     int CalculadoraPrazosCount,
     int CalculadoraHonorariosCount,
-    bool TemBilling
+    bool TemBilling,
+    // Mascotes do assistente escolhidos pelos usuários do escritório (sem os do portal do cliente).
+    IReadOnlyList<MascoteUsoDto>? Mascotes = null
 );
+
+/// <summary>Quantos usuários usam cada mascote; Mascote null = nunca escolheu (padrão do frontend).</summary>
+public record MascoteUsoDto(string? Mascote, int Usuarios);
 
 public record TenantDetailDto(
     Guid Id,
@@ -95,7 +100,8 @@ public record TenantUserDto(
     string? Email,
     string Perfil,
     bool Ativo,
-    DateTime? UltimoAcessoEm
+    DateTime? UltimoAcessoEm,
+    string? AssistenteMascote = null
 );
 
 public record UpdateTenantPlanoDto(string Plano, string? PeriodoBilling);

@@ -2985,6 +2985,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AssistenteMascote")
+                        .HasColumnType("text");
+
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 

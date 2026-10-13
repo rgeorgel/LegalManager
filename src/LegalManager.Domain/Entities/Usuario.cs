@@ -29,6 +29,10 @@ public class Usuario : IdentityUser<Guid>
     // Versão do dashboard escolhida pelo usuário: "novo" | "classico" (null = novo).
     public string? DashboardVersao { get; set; }
 
+    // Mascote do assistente de IA escolhido pelo usuário (id de wwwroot/js/mascotes.js, validado
+    // em AssistenteController.Mascotes). Null = padrão do frontend (MASCOTE_PADRAO).
+    public string? AssistenteMascote { get; set; }
+
     // Última vez que o usuário abriu o painel de novidades (UTC). Novidades publicadas depois
     // disso contam como não lidas; null = nunca abriu (conta a partir de CriadoEm).
     public DateTime? NovidadesVistasEm { get; set; }

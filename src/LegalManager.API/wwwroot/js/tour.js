@@ -401,10 +401,9 @@ export function injectTourWidget() {
   if (document.getElementById('tourWidget')) return;
   injectWidgetStyles();
 
-  const stacked = !!document.getElementById('tarefasWidget');
   const wrap = document.createElement('div');
   wrap.id = 'tourWidget';
-  wrap.className = 'tour-widget' + (stacked ? ' stacked' : '');
+  wrap.className = 'tour-widget';
   wrap.innerHTML = `
     <button type="button" class="tour-widget-toggle" id="tourWidgetToggle" title="Tutorial guiado">
       <span class="tour-widget-icon" aria-hidden="true">🎓</span>
@@ -619,8 +618,7 @@ function injectWidgetStyles() {
     }
 
     @media (max-width: 768px) {
-      .tour-widget { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px); transform: none; }
-      .tour-widget.stacked { bottom: calc(var(--bottom-nav-height, 0px) + 16px + 122px); transform: none; }
+      .tour-widget { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--widget-bottom-mobile, 0px)); transform: none; }
       .tour-widget-panel { top: auto; bottom: 0; transform: translateX(12px); }
       .tour-widget.open .tour-widget-panel { transform: translateX(0); }
     }

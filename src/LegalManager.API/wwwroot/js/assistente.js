@@ -1,4 +1,4 @@
-// Assistente de IA — chat flutuante (canto inferior direito) que responde perguntas sobre os
+// Assistente de IA — chat aberto pelo botão do mascote (topo da pilha lateral direita) que responde perguntas sobre os
 // dados do escritório (POST /api/assistente/perguntar). Visível para todos os usuários do
 // escritório (não para o portal do cliente); uso a partir do plano Plus (o backend também
 // exige) — no Free o painel abre com uma conversa de exemplo e um convite para o Plus.
@@ -16,6 +16,8 @@ import { renderMarkdown } from './markdown.js';
 import { onSuporte, fecharSuporte } from './suporte.js';
 import { esc } from './utils.js';
 import { trackEvent } from './analytics.js';
+import { layoutWidgetStack } from './widget-stack.js';
+import { getMascote } from './mascotes.js';
 
 const HIST_KEY = 'assistente_historico';
 const OPEN_KEY = 'assistente_aberto';
@@ -97,6 +99,7 @@ export function injectAssistente(user) {
   if (!assistenteHabilitado(user) || document.getElementById('assistenteIA')) return;
   sufixo = `${user.tenantId ?? ''}:${user.id ?? ''}`;
   bloqueado = (user.plano ?? 'Free') === 'Free';
+  const mascote = getMascote(user.assistenteMascote);
   historico = bloqueado ? [] : carregarHistorico();
   injectStyles();
 
@@ -104,17 +107,30 @@ export function injectAssistente(user) {
   wrap.id = 'assistenteIA';
   wrap.className = bloqueado ? 'asx asx-bloqueado' : 'asx';
   wrap.innerHTML = `
-    <button type="button" class="asx-fab" id="asxFab" title="Assistente de IA" aria-expanded="false" aria-controls="asxPanel">
-      <span aria-hidden="true">✨</span><span class="asx-fab-label">Assistente</span>
-      <span class="asx-fab-dot" id="asxDot" hidden title="Nova resposta"></span>
-    </button>
+    <div class="asx-lado" id="assistenteWidget">
+      <div class="asx-balao" id="asxBalao" hidden>
+        <button type="button" class="asx-balao-fechar" id="asxBalaoFechar" title="Fechar" aria-label="Fechar">✕</button>
+        <strong>Olá! Posso ajudar?</strong>
+        <span id="asxBalaoTexto"></span>
+      </div>
+      <button type="button" class="asx-fab" id="asxFab" title="Assistente de IA" aria-expanded="false" aria-controls="asxPanel">
+        <span class="asx-fab-mascote asx-mascote" aria-hidden="true">${mascote.svg}</span>
+        <span class="asx-fab-aba">
+          <span class="asx-fab-label">Assistente</span>
+          <span class="asx-fab-ia" aria-hidden="true">IA</span>
+        </span>
+        <span class="asx-fab-dot" id="asxDot" hidden title="Nova resposta"></span>
+      </button>
+    </div>
     <section class="asx-panel" id="asxPanel" role="dialog" aria-label="Assistente de IA" hidden>
       <header class="asx-header">
-        <div>
+        <span class="asx-header-mascote asx-mascote" aria-hidden="true">${mascote.svg}</span>
+        <div class="asx-header-titulo">
           <strong>Assistente</strong> <span class="asx-beta">beta</span>
           <div class="asx-sub">Consulte e atualize processos, tarefas, agenda, contatos e horas</div>
         </div>
         <div class="asx-header-actions">
+          <a class="asx-icon-btn" href="/pages/assistente.html" title="Escolher o mascote do assistente" aria-label="Escolher o mascote do assistente">🎨</a>
           <button type="button" class="asx-icon-btn" id="asxHist" title="Conversas anteriores" aria-label="Conversas anteriores" aria-pressed="false">🕘</button>
           <button type="button" class="asx-icon-btn" id="asxNova" title="Nova conversa" aria-label="Nova conversa">↺</button>
           <button type="button" class="asx-icon-btn asx-btn-max" id="asxMax" title="Maximizar" aria-label="Maximizar" aria-pressed="false">⤢</button>
@@ -129,7 +145,7 @@ export function injectAssistente(user) {
       ${bloqueado ? `
       <div class="asx-paywall" role="region" aria-labelledby="asxPaywallTitulo">
         <div class="asx-paywall-card">
-          <div class="asx-paywall-icone" aria-hidden="true">✨</div>
+          <div class="asx-paywall-icone asx-mascote" aria-hidden="true">${mascote.svg}</div>
           <div class="asx-paywall-selo">Plano Plus</div>
           <h3 id="asxPaywallTitulo">Seu assistente para o dia a dia do escritório</h3>
           <p>Pergunte em linguagem natural e receba as respostas com os dados do seu escritório:</p>
@@ -148,9 +164,11 @@ export function injectAssistente(user) {
     </section>
   `;
   document.body.appendChild(wrap);
+  layoutWidgetStack();
   integrarSuporte(wrap);
 
   document.getElementById('asxFab').addEventListener('click', () => alternar());
+  document.getElementById('asxBalaoFechar').addEventListener('click', esconderBalao);
   document.getElementById('asxMin').addEventListener('click', () => alternar(false));
   if (bloqueado) {
     document.getElementById('asxPaywallDepois').addEventListener('click', () => alternar(false));
@@ -195,7 +213,45 @@ export function injectAssistente(user) {
   render();
   if (sessionGet(chave(MAXIMIZADO_KEY)) === '1') maximizar(true);
   if (sessionGet(chave(OPEN_KEY)) === '1' || abrirPelaUrl()) alternar(true);
-  else atualizarFab();
+  else {
+    atualizarFab();
+    agendarBalao();
+  }
+}
+
+// Balão de convite ao lado do mascote: aparece uma vez por sessão, alguns segundos depois de a
+// página carregar, só para quem ainda não conversou nesta sessão. Some sozinho, ao fechar ou
+// ao abrir o painel.
+const BALAO_KEY = 'assistente_balao_visto';
+let balaoTimer = null;
+
+function agendarBalao() {
+  if (historico.length || sessionGet(chave(BALAO_KEY)) === '1') return;
+  balaoTimer = setTimeout(() => {
+    if (!document.getElementById('asxPanel').hidden) return;
+    sessionSet(chave(BALAO_KEY), '1');
+    const sugestao = SUGESTOES[Math.floor(Math.random() * SUGESTOES.length)];
+    document.getElementById('asxBalaoTexto').textContent = bloqueado
+      ? 'Pergunte sobre prazos, agenda e financeiro do escritório em linguagem natural.'
+      : `Experimente perguntar: “${sugestao}”`;
+    document.getElementById('asxBalao').hidden = false;
+    document.getElementById('assistenteIA').classList.add('asx-chamando');
+    trackEvent('assistente_balao_visto', { plano: bloqueado ? 'Free' : 'pago' });
+    balaoTimer = setTimeout(esconderBalao, 12000);
+  }, 2500);
+}
+
+function esconderBalao() {
+  clearTimeout(balaoTimer);
+  const balao = document.getElementById('asxBalao');
+  if (balao) balao.hidden = true;
+  document.getElementById('assistenteIA')?.classList.remove('asx-chamando');
+}
+
+// Troca o desenho do mascote na hora (página de personalização), sem recarregar.
+export function trocarMascote(id) {
+  const { svg } = getMascote(id);
+  document.querySelectorAll('#assistenteIA .asx-mascote').forEach(el => { el.innerHTML = svg; });
 }
 
 // "?assistente=1" (ex.: botão da novidade do assistente) abre o painel; o parâmetro sai da URL
@@ -243,9 +299,10 @@ function alternar(abrir) {
   document.getElementById('assistenteIA').classList.toggle('open', aberto);
   sessionSet(chave(OPEN_KEY), aberto ? '1' : '0');
   if (aberto) naoLida = false;
+  if (aberto) esconderBalao();
   if (aberto && bloqueado) trackEvent('assistente_paywall_visto', { plano_alvo: 'Plus' });
   atualizarFab();
-  // O painel ocupa o mesmo canto da janela do suporte: abrir um fecha o outro.
+  // O painel fica por cima da janela do suporte: abrir um fecha o outro.
   if (aberto) fecharSuporte();
   if (aberto) {
     rolarFim();
@@ -253,9 +310,8 @@ function alternar(abrir) {
   }
 }
 
-// Chat de suporte (Crisp) abre pelo botão do header (ver suporte.js) no mesmo canto inferior
-// direito: o botão do assistente some enquanto a janela do suporte estiver aberta (senão fica
-// por cima da conversa).
+// Chat de suporte (Crisp) abre pelo botão do header (ver suporte.js) no canto inferior direito:
+// enquanto ele estiver aberto, o balão de convite do mascote não aparece (ficaria por cima).
 function integrarSuporte(wrap) {
   onSuporte('aberto', () => wrap.classList.add('asx-suporte-aberto'));
   onSuporte('fechado', () => wrap.classList.remove('asx-suporte-aberto'));
@@ -539,31 +595,95 @@ function injectStyles() {
   const s = document.createElement('style');
   s.id = 'assistenteStyles';
   s.textContent = `
-    .asx { position: fixed; right: 24px; bottom: 24px; z-index: 960; }
-    .asx-fab {
-      display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;
-      background: var(--color-primary); color: #fff !important; font-weight: 600; font-size: 14px;
-      padding: 12px 16px; border-radius: 999px; box-shadow: var(--shadow-md);
+    /* Botão lateral (topo da pilha de tarefas/tutorial/perguntas — ver widget-stack.js): uma aba
+       dourada com o mascote "espiando" por cima, mais larga que a aba, para chamar a atenção.
+       Cores fixas (não do tema) de propósito: o dourado da marca destaca o botão em qualquer tema,
+       e o texto branco sobre o dourado escuro mantém o contraste. */
+    .asx-lado {
+      position: fixed; top: 50%; right: 0; z-index: 955;
+      transform: translateY(-50%) translateY(var(--widget-offset, 0px));
     }
-    .asx-fab:hover { background: var(--color-primary-dark); }
-    .asx-fab { position: relative; }
+    .asx-fab {
+      position: relative; display: flex; flex-direction: column; align-items: flex-end;
+      background: none; border: none; padding: 0; cursor: pointer; color: #fff !important;
+    }
+    .asx-fab-mascote {
+      color: var(--color-text); display: block; width: 54px; height: 54px; margin-bottom: -18px; margin-right: 0; position: relative; z-index: 1;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+      transform-origin: 70% 100%; animation: asx-espiar 7s ease-in-out infinite;
+    }
+    .asx-fab-aba {
+      display: flex; flex-direction: column; align-items: center; gap: 6px; width: 36px;
+      padding: 24px 7px 10px; border-radius: 12px 0 0 12px;
+      background: linear-gradient(180deg, #B98428, #8A5A12); box-shadow: var(--shadow-md);
+    }
+    .asx-fab:hover .asx-fab-aba { filter: brightness(1.12); }
+    .asx-fab:hover .asx-fab-mascote { animation: asx-pulo .5s ease-out; }
+    .asx-fab:focus-visible { outline: none; }
+    .asx-fab:focus-visible .asx-fab-aba { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .asx-fab-label {
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-size: 11px; font-weight: 700; letter-spacing: .04em; line-height: 1;
+    }
+    .asx-fab-ia {
+      font-size: 9px; font-weight: 800; letter-spacing: .03em; line-height: 1;
+      background: #fff; color: #8A5A12; padding: 2px 4px; border-radius: 999px;
+    }
     .asx-fab-dot {
-      position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%;
+      position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; z-index: 2;
       background: var(--color-danger); border: 2px solid var(--color-surface);
     }
     .asx-fab-dot[hidden] { display: none; }
-    .asx-fab-ativo { animation: asx-pulse-fab 1.4s infinite ease-in-out; }
-    @keyframes asx-pulse-fab { 0%, 100% { box-shadow: var(--shadow-md); } 50% { box-shadow: 0 0 0 6px var(--color-primary-light); } }
-    .asx.open .asx-fab { display: none; }
-    .asx.asx-suporte-aberto:not(.open) { display: none; }
+    /* Piscar: as pálpebras ficam recolhidas e fecham rapidamente de tempos em tempos. */
+    .asx-palpebras rect { transform-box: fill-box; transform-origin: center top; transform: scaleY(0); animation: asx-piscar 5s infinite; }
+    .asx-header-mascote .asx-palpebras rect, .asx-paywall-icone .asx-palpebras rect { animation: none; }
+    @keyframes asx-piscar { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
+    /* De vez em quando o mascote "estica o pescoço" para fora da aba. */
+    @keyframes asx-espiar {
+      0%, 80%, 100% { transform: translate(0, 0) rotate(0); }
+      85% { transform: translate(-4px, -3px) rotate(-10deg); }
+      92% { transform: translate(-4px, -3px) rotate(6deg); }
+    }
+    @keyframes asx-pulo { 0% { transform: translateY(0); } 40% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
+    /* Consultando os dados: o mascote balança enquanto pensa. */
+    .asx-fab-ativo .asx-fab-mascote { animation: asx-pensar 1.2s ease-in-out infinite; }
+    @keyframes asx-pensar { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+    /* Chamando (balão aberto): anel pulsando em volta da aba. */
+    .asx-chamando .asx-fab-aba { animation: asx-anel 1.6s ease-out 3; }
+    @keyframes asx-anel { 0% { box-shadow: 0 0 0 0 rgba(185,132,40,.6); } 100% { box-shadow: 0 0 0 12px rgba(185,132,40,0); } }
+    .asx-balao {
+      position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+      width: 230px; padding: 12px 28px 12px 14px; border-radius: 12px; font-size: 12.5px; line-height: 1.45;
+      background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border);
+      box-shadow: 0 8px 24px rgba(0,0,0,.16); display: flex; flex-direction: column; gap: 4px;
+      animation: asx-balao-entra .3s ease-out;
+    }
+    .asx-balao::after {
+      content: ""; position: absolute; right: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px;
+      background: var(--color-surface); border-right: 1px solid var(--color-border); border-top: 1px solid var(--color-border);
+      transform: rotate(45deg);
+    }
+    .asx-balao[hidden] { display: none; }
+    .asx-balao strong { font-size: 13px; }
+    .asx-balao-fechar {
+      position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer;
+      font-size: 12px; line-height: 1; padding: 4px; color: var(--color-text-muted) !important;
+    }
+    @keyframes asx-balao-entra { from { opacity: 0; transform: translateY(-50%) translateX(8px); } to { opacity: 1; transform: translateY(-50%); } }
+    .asx.asx-suporte-aberto .asx-balao { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .asx-fab-mascote, .asx-fab:hover .asx-fab-mascote, .asx-fab-ativo .asx-fab-mascote,
+      .asx-palpebras rect, .asx-chamando .asx-fab-aba, .asx-balao { animation: none; }
+    }
+    /* Painel: abre à esquerda da pilha de botões laterais, centralizado na altura. */
     .asx-panel {
+      position: fixed; right: 52px; top: 50%; transform: translateY(-50%); z-index: 960;
       width: 400px; height: min(620px, calc(100vh - 48px));
       background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,.18); display: flex; flex-direction: column; overflow: hidden;
       color: var(--color-text);
     }
     .asx-panel[hidden] { display: none; }
-    .asx-panel { position: relative; }
     .asx-bloqueado .asx-body { filter: blur(3px); user-select: none; pointer-events: none; }
     .asx-paywall {
       position: absolute; inset: 0; z-index: 2; overflow-y: auto;
@@ -579,7 +699,9 @@ function injectStyles() {
       border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 22px 20px 16px;
       max-width: 340px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
-    .asx-paywall-icone { font-size: 28px; line-height: 1; }
+    .asx-paywall-icone { width: 56px; height: 56px; color: var(--color-text); }
+    .asx-header-mascote { width: 30px; height: 30px; flex-shrink: 0; color: var(--color-text); }
+    .asx-header-titulo { flex: 1; }
     .asx-paywall-selo {
       font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
       background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 999px;
@@ -593,8 +715,7 @@ function injectStyles() {
     }
     .asx-paywall-cta:hover { background: var(--color-primary-dark); }
     /* Maximizado: ocupa quase a tela toda (respostas com tabelas grandes). */
-    .asx.open.max { inset: 24px; z-index: 1100; }
-    .asx.open.max .asx-panel { width: 100%; height: 100%; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.25); }
+    .asx.open.max .asx-panel { inset: 24px; transform: none; z-index: 1100; width: auto; height: auto; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35), 0 10px 30px rgba(0,0,0,.25); }
     .asx.max .asx-body { padding: 20px max(20px, calc((100% - 1100px) / 2)); }
     .asx.max .asx-msg { max-width: 100%; font-size: 14px; }
     .asx.max .asx-user { max-width: 75%; }
@@ -615,6 +736,7 @@ function injectStyles() {
       background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1;
       color: var(--color-text-muted) !important; padding: 6px; border-radius: 6px;
     }
+    a.asx-icon-btn { text-decoration: none; }
     .asx-icon-btn:hover:not(:disabled) { background: var(--color-bg); color: var(--color-text) !important; }
     .asx-icon-btn:disabled { opacity: .4; cursor: default; }
     .asx-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--color-bg); }
@@ -698,14 +820,10 @@ function injectStyles() {
     .asx-send:disabled { opacity: .5; cursor: default; }
     .asx-aviso { font-size: 10.5px; color: var(--color-text-muted); text-align: center; padding: 0 12px 8px; }
     @media (max-width: 768px) {
-      .asx { right: 16px; bottom: calc(var(--bottom-nav-height) + 16px); }
-      .asx-fab-label { display: none; }
-      .asx-fab { padding: 12px 14px; }
-      .asx.open { inset: 0; right: 0; bottom: 0; z-index: 1100; }
-      .asx-panel { width: 100%; height: 100%; border-radius: 0; border: none; }
+      .asx-lado { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--widget-bottom-mobile, 0px)); transform: none; }
+      .asx-balao { width: min(230px, calc(100vw - 80px)); }
+      .asx-panel, .asx.open.max .asx-panel { inset: 0; transform: none; width: 100%; height: 100%; border-radius: 0; border: none; z-index: 1100; box-shadow: none; }
       .asx-btn-max { display: none; } /* no celular o painel já ocupa a tela toda */
-      .asx.open.max { inset: 0; }
-      .asx.open.max .asx-panel { box-shadow: none; }
     }
   `;
   document.head.appendChild(s);

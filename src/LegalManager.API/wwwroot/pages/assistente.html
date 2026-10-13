@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <!-- Google tag (gtag.js) — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Personalizar assistente</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .mascote-destaque {
+      display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 20px 24px; margin-bottom: 24px;
+    }
+    .mascote-destaque-arte { width: 96px; height: 96px; color: var(--color-text); flex-shrink: 0; }
+    .mascote-destaque-info { flex: 1; min-width: 200px; }
+    .mascote-destaque-rotulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+    .mascote-destaque-nome { font-size: 20px; font-weight: 700; margin: 2px 0 4px; }
+    .mascote-destaque-desc { color: var(--color-text-muted); }
+    .mascote-destaque-dica { font-size: 12.5px; color: var(--color-text-muted); margin-top: 8px; }
+    .mascote-secao { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin: 8px 0 12px; }
+    .mascote-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    /* !important nas cores: o preset escuro força `button { color: inherit !important }`. */
+    .mascote-card {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius);
+      padding: 16px 10px 12px; cursor: pointer; color: var(--color-text) !important; font: inherit;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+    .mascote-card:hover { border-color: var(--color-primary); transform: translateY(-2px); }
+    .mascote-card:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+    .mascote-card[aria-checked="true"] { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary); }
+    .mascote-card[aria-checked="true"]::after {
+      content: "✓"; position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%;
+      background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; line-height: 20px;
+    }
+    .mascote-card:disabled { cursor: progress; opacity: .7; }
+    .mascote-card-arte { width: 72px; height: 72px; }
+    .mascote-card-nome { font-weight: 600; font-size: 13.5px; }
+    .mascote-card-desc { font-size: 11.5px; color: var(--color-text-muted); line-height: 1.4; }
+    .mascote-padrao { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    /* Piscar, como no botão do assistente (as pálpebras vêm no SVG de js/mascotes.js). */
+    .mascote-pisca .asx-palpebras rect { transform-box: fill-box; transform-origin: center top; transform: scaleY(0); animation: mascote-piscar 5s infinite; }
+    @keyframes mascote-piscar { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
+    @media (prefers-reduced-motion: reduce) { .mascote-pisca .asx-palpebras rect { animation: none; } }
+    @media (max-width: 480px) {
+      .mascote-grade { grid-template-columns: repeat(2, 1fr); }
+      .mascote-destaque { padding: 16px; gap: 16px; }
+      .mascote-destaque-arte { width: 72px; height: 72px; }
+    }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">🎨 Personalizar assistente</h1>
+      <p class="page-subtitle">Escolha o mascote do seu assistente de IA. A escolha é só sua: cada pessoa do escritório pode ter o seu.</p>
+    </div>
+
+    <section class="mascote-destaque" aria-live="polite">
+      <div class="mascote-destaque-arte mascote-pisca" id="destaqueArte" aria-hidden="true"></div>
+      <div class="mascote-destaque-info">
+        <div class="mascote-destaque-rotulo">Seu assistente</div>
+        <div class="mascote-destaque-nome" id="destaqueNome"></div>
+        <div class="mascote-destaque-desc" id="destaqueDesc"></div>
+        <div class="mascote-destaque-dica">Ele aparece no botão “Assistente” na lateral direita e no topo da conversa.</div>
+      </div>
+      <button type="button" class="btn btn-primary" id="abrirAssistente">Conversar com o assistente</button>
+    </section>
+    <div id="mascoteMsg" class="alert" style="display:none;margin-bottom:16px"></div>
+
+    <div role="radiogroup" aria-label="Mascote do assistente" id="mascotes"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch, getUser } from '/js/api.js';
+  import { esc } from '/js/utils.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { MASCOTES, MASCOTE_PADRAO, getMascote } from '/js/mascotes.js';
+  import { trocarMascote } from '/js/assistente.js';
+
+  initLayout();
+
+  const GRUPOS = [
+    { titulo: 'Corujas', filtro: m => m.id.startsWith('coruja') && m.id !== 'coruja-gato' },
+    { titulo: 'Outros animais', filtro: m => !m.id.startsWith('coruja') || m.id === 'coruja-gato' },
+  ];
+
+  let atual = getMascote(getUser()?.assistenteMascote).id;
+  let salvando = false;
+
+  const lista = document.getElementById('mascotes');
+  lista.innerHTML = GRUPOS.map(g => `
+    <h2 class="mascote-secao">${g.titulo}</h2>
+    <div class="mascote-grade">${MASCOTES.filter(g.filtro).map(m => `
+      <button type="button" class="mascote-card" role="radio" data-mascote="${m.id}" aria-checked="false">
+        <span class="mascote-card-arte mascote-pisca" aria-hidden="true">${m.svg}</span>
+        <span class="mascote-card-nome">${esc(m.nome)}</span>
+        ${m.id === MASCOTE_PADRAO ? '<span class="mascote-padrao">Padrão</span>' : ''}
+        <span class="mascote-card-desc">${esc(m.desc)}</span>
+      </button>`).join('')}
+    </div>`).join('');
+
+  function marcar(id) {
+    const m = getMascote(id);
+    document.getElementById('destaqueArte').innerHTML = m.svg;
+    document.getElementById('destaqueNome').textContent = m.nome;
+    document.getElementById('destaqueDesc').textContent = m.desc;
+    lista.querySelectorAll('[data-mascote]').forEach(b => {
+      const sel = b.dataset.mascote === m.id;
+      b.setAttribute('aria-checked', String(sel));
+      b.tabIndex = sel ? 0 : -1;
+    });
+    trocarMascote(m.id);
+  }
+
+  function aviso(texto, tipo) {
+    const el = document.getElementById('mascoteMsg');
+    el.className = `alert alert-${tipo}`;
+    el.textContent = texto;
+    el.style.display = 'block';
+    clearTimeout(aviso.t);
+    if (tipo === 'success') aviso.t = setTimeout(() => { el.style.display = 'none'; }, 2500);
+  }
+
+  // Salva ao clicar: a troca aparece na hora (destaque e botão lateral) e volta atrás se a API falhar.
+  async function escolher(id) {
+    if (salvando || id === atual) return;
+    const anterior = atual;
+    salvando = true;
+    atual = id;
+    marcar(id);
+    lista.querySelectorAll('[data-mascote]').forEach(b => { b.disabled = true; });
+    try {
+      await apiFetch('/assistente/mascote', { method: 'PUT', body: { mascote: id } });
+      try {
+        const user = getUser();
+        if (user) sessionStorage.setItem('user', JSON.stringify({ ...user, assistenteMascote: id }));
+      } catch { /* sessão ilegível: o servidor já tem a escolha */ }
+      trackEvent('assistente_mascote_alterado', { de: anterior, para: id });
+      aviso(`${getMascote(id).nome} agora é o seu assistente.`, 'success');
+    } catch (err) {
+      atual = anterior;
+      marcar(anterior);
+      aviso(err.message || 'Não foi possível salvar o mascote.', 'error');
+    } finally {
+      salvando = false;
+      lista.querySelectorAll('[data-mascote]').forEach(b => { b.disabled = false; });
+      lista.querySelector(`[data-mascote="${atual}"]`)?.focus();
+    }
+  }
+
+  lista.addEventListener('click', e => {
+    const card = e.target.closest('[data-mascote]');
+    if (card) escolher(card.dataset.mascote);
+  });
+  // Setas navegam entre os cards (padrão de radiogroup).
+  lista.addEventListener('keydown', e => {
+    if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
+    const cards = [...lista.querySelectorAll('[data-mascote]')];
+    const i = cards.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const prox = cards[(i + (['ArrowRight', 'ArrowDown'].includes(e.key) ? 1 : -1) + cards.length) % cards.length];
+    prox.focus();
+  });
+
+  document.getElementById('abrirAssistente').addEventListener('click', () => {
+    document.getElementById('asxFab')?.click();
+  });
+
+  marcar(atual);
+</script>
+</body>
+</html>
