@@ -323,8 +323,15 @@
     .field-tip:hover .field-tip-popup, .field-tip:focus .field-tip-popup { display:block; }
     .field-tip-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1f2937; color:#f3f4f6; border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; width:280px; line-height:1.55; z-index:300; white-space:normal; box-shadow:0 4px 16px rgba(0,0,0,.2); pointer-events:none; }
     .field-tip-popup::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#1f2937; }
+    .paginacao-bar { display:flex; align-items:center; justify-content:space-between; gap:12px 16px; flex-wrap:wrap; margin-top:20px; }
+    .paginacao-bar .pagination { margin-top:0; flex-wrap:wrap; }
+    .paginacao-bar .pagination .reticencias { padding:6px 4px; color:var(--color-text-muted); }
+    .paginacao-info { font-size:13px; color:var(--color-text-muted); }
+    .paginacao-tamanho { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--color-text-muted); margin:0; }
+    .paginacao-tamanho select { width:auto; height:34px; padding:0 28px 0 10px; font-size:13px; }
     @media(max-width:768px) {
       .processos-grid { grid-template-columns: 1fr; }
+      .paginacao-bar { justify-content:center; }
       .field-tip-popup { left:auto; right:0; transform:none; }
       .field-tip-popup::after { left:auto; right:10px; transform:none; }
     }
@@ -414,7 +421,18 @@
       <div style="color:var(--color-text-muted);font-size:13px" id="processosEmptyTexto">Tente ajustar os filtros ou cadastre um novo processo.</div>
     </div>
     <div id="processosError" style="display:none;text-align:center;padding:48px;color:var(--color-danger)"></div>
-    <div class="pagination" id="pagination"></div>
+    <div class="paginacao-bar" id="paginacaoBar" style="display:none">
+      <span class="paginacao-info" id="paginacaoInfo"></span>
+      <div class="pagination" id="pagination"></div>
+      <label class="paginacao-tamanho">Por página
+        <select id="processosPageSize">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </label>
+    </div>
   </main>
 </div>
 
@@ -880,6 +898,13 @@ document.getElementById('fNumeroCNJ').addEventListener('keydown', e => {
 });
 
 let currentPage = 1;
+// Itens por página: escolha do usuário lembrada no navegador; padrão 50.
+const PAGE_SIZES = [10, 20, 50, 100];
+let pageSize = 50;
+try {
+  const salvo = Number(localStorage.getItem('processos.pageSize'));
+  if (PAGE_SIZES.includes(salvo)) pageSize = salvo;
+} catch { /* storage indisponível: fica o padrão */ }
 let currentFilters = {};
 let currentView = 'grid';
 let editingId = null;
@@ -1050,30 +1075,62 @@ async function loadProcessos() {
   startDots('processos', 'Procurando processos');
 
   try {
-    const result = await getProcessos({ ...currentFilters, page: currentPage });
+    const result = await getProcessos({ ...currentFilters, page: currentPage, pageSize });
     loading.style.display = 'none';
     stopDots('processos');
     renderTable(result.items);
-    renderPagination(result.totalPages, result.page);
+    renderPagination(result);
   } catch (err) {
     loading.style.display = 'none';
     stopDots('processos');
+    document.getElementById('paginacaoBar').style.display = 'none';
     error.textContent = err.message;
     error.style.display = 'block';
   }
 }
 
-function renderPagination(total, current) {
+function renderPagination({ total, page: current, pageSize: tamanho, totalPages }) {
+  const bar = document.getElementById('paginacaoBar');
   const el = document.getElementById('pagination');
-  if (total <= 1) { el.innerHTML = ''; return; }
-  let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})">‹</button>`;
-  for (let i = 1; i <= total; i++)
-    html += `<button class="${i === current ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
-  html += `<button ${current >= total ? 'disabled' : ''} onclick="goPage(${current + 1})">›</button>`;
+  // Abaixo do menor tamanho não há o que paginar nem escolher.
+  if (!total || total <= PAGE_SIZES[0]) { bar.style.display = 'none'; el.innerHTML = ''; return; }
+  bar.style.display = '';
+
+  const inicio = (current - 1) * tamanho + 1;
+  const fim = Math.min(current * tamanho, total);
+  const fmt = n => n.toLocaleString('pt-BR');
+  document.getElementById('paginacaoInfo').textContent =
+    `Mostrando ${fmt(inicio)}–${fmt(fim)} de ${fmt(total)} processo${total === 1 ? '' : 's'}`;
+
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  // Primeira, última e uma janela em volta da atual (menor no celular); o resto vira "…".
+  const janela = window.innerWidth < 600 ? 1 : 2;
+  const paginas = [];
+  for (let i = 1; i <= totalPages; i++)
+    if (i === 1 || i === totalPages || Math.abs(i - current) <= janela) paginas.push(i);
+  let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})" aria-label="Página anterior">‹</button>`;
+  paginas.forEach((i, idx) => {
+    if (idx > 0 && i - paginas[idx - 1] > 1) html += '<span class="reticencias">…</span>';
+    html += `<button class="${i === current ? 'active' : ''}" onclick="goPage(${i})"${i === current ? ' aria-current="page"' : ''}>${i}</button>`;
+  });
+  html += `<button ${current >= totalPages ? 'disabled' : ''} onclick="goPage(${current + 1})" aria-label="Próxima página">›</button>`;
   el.innerHTML = html;
 }
 
-window.goPage = p => { currentPage = p; loadProcessos(); };
+window.goPage = p => {
+  currentPage = p;
+  loadProcessos();
+  document.getElementById('processosContainer').parentElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const pageSizeSelect = document.getElementById('processosPageSize');
+pageSizeSelect.value = String(pageSize);
+pageSizeSelect.addEventListener('change', () => {
+  pageSize = Number(pageSizeSelect.value);
+  try { localStorage.setItem('processos.pageSize', String(pageSize)); } catch { /* sem storage: vale só nesta visita */ }
+  currentPage = 1;
+  loadProcessos();
+});
 
 window.editProcesso = async id => {
   const { getProcesso } = await import('/js/processos.js');
