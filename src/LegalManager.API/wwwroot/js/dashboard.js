@@ -134,12 +134,11 @@ const primeiroNome = ehTratamento && resto.length ? `${tratamento} ${resto[0]}` 
 $('d2Saudacao').textContent = primeiroNome ? `${saud}, ${primeiroNome}!` : `${saud}!`;
 $('d2Hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-const resumo = { prazosHoje: null, eventosHoje: null, atrasadas: null };
+const resumo = { hoje: null, atrasadas: null };
 function renderResumo() {
   if (Object.values(resumo).some(v => v === null)) return;
   const partes = [];
-  if (resumo.prazosHoje) partes.push(`<strong>${plural(resumo.prazosHoje, 'prazo vence', 'prazos vencem')} hoje</strong>`);
-  if (resumo.eventosHoje) partes.push(`${plural(resumo.eventosHoje, 'compromisso', 'compromissos')} na agenda`);
+  if (resumo.hoje) partes.push(`<strong>${plural(resumo.hoje, 'compromisso', 'compromissos')} na agenda</strong>`);
   if (resumo.atrasadas) partes.push(`<span style="color:var(--d2-red);font-weight:600">${plural(resumo.atrasadas, 'item atrasado', 'itens atrasados')}</span>`);
   $('d2Resumo').innerHTML = partes.length
     ? `Hoje você tem ${partes.join(', ').replace(/, ([^,]*)$/, ' e $1')}.`
@@ -166,10 +165,7 @@ async function loadTarefas() {
   $('kTarefas').textContent = tot.abertas;
   $('kTarefasSub').textContent = `${tot.emAndamento} em andamento`;
   $('kAtrasadas').textContent = tot.atrasadas;
-  $('kPrazos').textContent = tot.prazosProximosDias;
-  $('kPrazosSub').textContent = tot.prazosHoje ? `${plural(tot.prazosHoje, 'vence', 'vencem')} hoje` : 'nenhum vence hoje';
 
-  resumo.prazosHoje = tot.prazosHoje;
   resumo.atrasadas = tot.atrasadas;
   renderResumo();
 
@@ -259,23 +255,28 @@ async function loadAgenda(inicio = ag.inicio) {
   renderSemana();
   $('agEvents').innerHTML = '<div class="d2-skel"></div><div class="d2-skel"></div>';
   const itens = await apiFetch(`/agenda?de=${isoLocal(ag.inicio)}&ate=${isoLocal(fim)}`).catch(() => []);
-  // Inclui tarefas com prazo na janela (como a página da agenda); o KPI
-  // "Eventos hoje" continua contando só eventos.
+  // Inclui tarefas com prazo na janela (como a página da agenda).
   ag.eventos = (itens ?? [])
     .sort((a, b) => dataParede(a.dataHora) - dataParede(b.dataHora));
   renderSemana();
   renderEventos();
 
   const hoje = startOfDay(new Date());
-  if (+ag.inicio === +hoje && resumo.eventosHoje === null) {
-    const soEventos = ag.eventos.filter(e => e.tipo !== 'Tarefa');
-    const doDia = soEventos.filter(e => isoDate(dataParede(e.dataHora)) === isoDate(hoje));
-    resumo.eventosHoje = doDia.length;
+  // KPIs "Próximos 7 dias" e "Hoje" contam os mesmos itens do calendário
+  // (eventos + tarefas), calculados só na janela que começa hoje.
+  if (+ag.inicio === +hoje && resumo.hoje === null) {
+    const noDia = d => ag.eventos.filter(e => isoDate(dataParede(e.dataHora)) === isoDate(d));
+    const doDia = noDia(hoje);
+    const amanha = noDia(addDays(hoje, 1)).length;
+    $('kPrazos').textContent = ag.eventos.length;
+    $('kPrazosSub').textContent = amanha ? `${amanha} amanhã` : 'nenhum amanhã';
+
+    resumo.hoje = doDia.length;
     $('kEventos').textContent = doDia.length;
     const futuros = doDia.filter(e => dataParede(e.dataHora) > new Date());
     $('kEventosSub').textContent = futuros.length
       ? `próximo às ${hm(dataParede(futuros[0].dataHora))}`
-      : doDia.length ? 'todos já passaram' : `${plural(soEventos.length, 'compromisso', 'compromissos')} em 7 dias`;
+      : doDia.length ? 'todos já passaram' : 'nada para hoje';
     renderResumo();
   }
 }
