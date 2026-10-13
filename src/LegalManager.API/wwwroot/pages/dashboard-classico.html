@@ -576,7 +576,9 @@ import { esc, dataParede } from '/js/utils.js';
       document.getElementById('tAtrasadas').textContent = t.atrasadas;
       document.getElementById('tConcluidasMes').textContent = t.concluidasEsteMes;
       const PRIO_COLOR = { Urgente:'#dc2626', Alta:'#ea580c', Media:'#ca8a04', Baixa:'#16a34a' };
-      renderBars('barPrioridade', t.porPrioridade, null, PRIO_COLOR);
+      const ordem = Object.keys(PRIO_COLOR); // Urgente, Alta, Media, Baixa
+      const porPrioridade = [...(t.porPrioridade ?? [])].sort((a, b) => ordem.indexOf(a.label) - ordem.indexOf(b.label));
+      renderBars('barPrioridade', porPrioridade, null, PRIO_COLOR);
     }
 
     function renderFinanceiro(f) {

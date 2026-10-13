@@ -486,7 +486,9 @@ function renderTarefasResumo(t) {
   $('trAndamento').textContent = t.emAndamento;
   $('trConcluidasMes').textContent = t.concluidasEsteMes;
   $('trAtrasadas').textContent = t.atrasadas;
-  renderBars($('trPrioridade'), t.porPrioridade, { rotulos: PRIO_LABEL, cores: PRIO_COR, vazio: 'Nenhuma tarefa aberta.' });
+  const ordem = Object.keys(PRIO_LABEL); // Urgente, Alta, Media, Baixa
+  const porPrioridade = [...(t.porPrioridade ?? [])].sort((a, b) => ordem.indexOf(a.label) - ordem.indexOf(b.label));
+  renderBars($('trPrioridade'), porPrioridade, { rotulos: PRIO_LABEL, cores: PRIO_COR, vazio: 'Nenhuma tarefa aberta.' });
 }
 
 function renderTimesheet(ts) {
