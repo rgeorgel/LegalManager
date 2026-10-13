@@ -86,7 +86,7 @@
     if (window.LP_IN_APP) document.documentElement.classList.add('in-app');
 
     window.lpTrack = function (event, params) {
-      var props = Object.assign({ lp_variant: window.LP_VARIANT, in_app: window.LP_IN_APP || 'no' }, params || {});
+      var props = Object.assign({ lp_variant: window.LP_VARIANT, lp_tema: window.LP_TEMA || 'A', in_app: window.LP_IN_APP || 'no' }, params || {});
       try { if (typeof gtag === 'function') gtag('event', event, props); } catch (e) {}
       try { if (window.posthog && typeof window.posthog.capture === 'function') window.posthog.capture(event, props); } catch (e) {}
       try { if (typeof fbq === 'function') fbq('trackCustom', event, props); } catch (e) {}
@@ -142,6 +142,10 @@
     };
   </script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Teste A/B de tema (flag "lp-facebook-ab" no PostHog): A = este visual, B = clara, C = verde. Ver /js/lp-ab.js -->
+  <link rel="stylesheet" href="/css/lp-temas.css">
+  <script src="/js/lp-ab.js" data-flag="lp-facebook-ab"></script>
 
   <style>
     :root {
@@ -1012,7 +1016,8 @@
   // backend converte em 15 dias de Plus (trial de boas-vindas).
   const PAID_PLANS = { '3': 'Plus', '1': 'Pro' };
 
-  track('lp_view');
+  // Espera o tema do teste A/B (lp-ab.js) para o evento sair com o lp_tema certo.
+  (window.quandoTemaDefinido || function (fn) { fn(); })(function () { track('lp_view'); });
 
   // ---- Profundidade de rolagem ----
   const scrollMarks = [25, 50, 75, 100];

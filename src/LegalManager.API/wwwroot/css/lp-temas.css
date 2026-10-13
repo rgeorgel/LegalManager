@@ -1,0 +1,135 @@
+/* Temas das landing pages de campanha (lp-facebook.html, lp-linkedin.html) — teste A/B.
+   O tema é aplicado por /js/lp-ab.js como <html data-tema="clara|verde"> antes da página aparecer;
+   sem o atributo vale o visual original (escuro, variante A).
+   As LPs foram escritas para fundo escuro: aqui remapeamos os tokens delas (--navy*, --text*, --gold*)
+   e corrigimos as cores fixas (rgba/hex) que não passam por token. */
+
+/* ---------- Tokens ---------- */
+html[data-tema="clara"] {
+  --navy: #ffffff;            /* fundo da página e dos inputs */
+  --navy-900: #f8fafc;        /* seções alternadas, faixa de confiança */
+  --navy-800: #ffffff;        /* cards */
+  --navy-700: #cbd5e1;
+  --gold: #f59e0b;            /* preenchimento (botões, badges) */
+  --gold-dark: #d97706;
+  --gold-light: #b45309;      /* usado como texto de destaque: escurecido para contraste no branco */
+  --green: #059669;
+  --red: #dc2626;
+  --text: #1e293b;
+  --text-strong: #0f172a;
+  --text-muted: #475569;
+  --border: #e2e8f0;
+
+  --lt-accent-text: #b45309;
+  --lt-soft: #fffbeb;
+  --lt-soft-border: #fde68a;
+  --lt-nav: rgba(255, 255, 255, 0.92);
+  --lt-sticky: rgba(255, 255, 255, 0.96);
+  --lt-shadow: 0 24px 50px -24px rgba(15, 23, 42, 0.28);
+  --lt-hero-bg:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(245, 158, 11, 0.14) 0%, transparent 70%),
+    linear-gradient(180deg, #fffbeb 0%, #ffffff 80%);
+  --lt-final-bg: radial-gradient(ellipse 60% 70% at 50% 100%, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
+  --lt-head-font: inherit;
+}
+
+html[data-tema="verde"] {
+  --navy: #fffdf8;
+  --navy-900: #f1ebdd;
+  --navy-800: #fffdf8;
+  --navy-700: #cfc6b1;
+  --gold: #d4a62a;
+  --gold-dark: #b98f1c;
+  --gold-light: #8a6a12;
+  --green: #1f7a55;
+  --red: #b42318;
+  --text: #24332c;
+  --text-strong: #0d3b2e;
+  --text-muted: #56655d;
+  --border: #e2d9c5;
+
+  --lt-accent-text: #8a6a12;
+  --lt-soft: #f8f0da;
+  --lt-soft-border: #e6d29a;
+  --lt-nav: rgba(13, 59, 46, 0.96);
+  --lt-sticky: rgba(13, 59, 46, 0.97);
+  --lt-shadow: 0 24px 50px -24px rgba(13, 59, 46, 0.35);
+  --lt-hero-bg:
+    radial-gradient(ellipse 60% 70% at 90% 15%, rgba(212, 166, 42, 0.16) 0%, transparent 60%),
+    linear-gradient(160deg, #0d3b2e 0%, #0a2e24 100%);
+  --lt-final-bg: linear-gradient(160deg, #0d3b2e 0%, #0a2e24 100%);
+  --lt-head-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+}
+html[data-tema="verde"] body { background: #faf7f0; }
+
+/* ---------- Comum aos temas claros ---------- */
+html[data-tema] .nav { background: var(--lt-nav); border-bottom-color: var(--border); }
+html[data-tema] .brand span,
+html[data-tema] h1 .hl,
+html[data-tema] .section-label,
+html[data-tema] .faq summary::after { color: var(--lt-accent-text); }
+html[data-tema] .btn:hover { box-shadow: 0 8px 22px rgba(245, 158, 11, 0.28); }
+html[data-tema] .btn:focus-visible,
+html[data-tema] a:focus-visible,
+html[data-tema] button:focus-visible,
+html[data-tema] summary:focus-visible { outline-color: var(--lt-accent-text); }
+html[data-tema] .btn-ghost { background: #fff; }
+
+html[data-tema] .hero { background: var(--lt-hero-bg); }
+html[data-tema] .alert-pill { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+html[data-tema] .eyebrow { background: var(--lt-soft); border-color: var(--lt-soft-border); color: var(--lt-accent-text); }
+html[data-tema] .chips li { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+html[data-tema] .checks li::before { background: #d1fae5; }
+
+html[data-tema] .hero-shot,
+html[data-tema] .form-card,
+html[data-tema] .shot-frame,
+html[data-tema] .tour-frame { box-shadow: var(--lt-shadow); }
+html[data-tema] .hero-shot .bar { background: #f1f5f9; }
+html[data-tema] .toast { background: #fff; border-color: var(--lt-soft-border); box-shadow: var(--lt-shadow); }
+html[data-tema] .offer { background: var(--lt-soft); border-color: var(--lt-soft-border); }
+
+html[data-tema] .form-msg.ok { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+html[data-tema] .form-msg.err { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+html[data-tema] .trust { border-color: var(--border); }
+html[data-tema] .compare-col.after { border-color: #a7f3d0; background: linear-gradient(180deg, rgba(16, 185, 129, 0.07), var(--navy-800) 55%); }
+html[data-tema] .price-card.highlight,
+html[data-tema] .plan.popular { background: linear-gradient(180deg, var(--lt-soft), var(--navy-800) 50%); }
+html[data-tema] .tour-tab[aria-selected="true"] { background: var(--lt-soft); color: var(--lt-accent-text); }
+html[data-tema] .faq details[open] { border-color: var(--lt-soft-border); }
+html[data-tema] .final { background: var(--lt-final-bg); }
+html[data-tema] .sticky-cta { background: var(--lt-sticky); }
+html[data-tema] h1,
+html[data-tema] h2.title,
+html[data-tema] .form-card h2 { font-family: var(--lt-head-font); }
+
+/* ---------- Verde: nav, hero, CTA final e barra fixa em verde-escuro; o resto em creme ---------- */
+html[data-tema="verde"] .nav { border-bottom-color: rgba(255, 255, 255, 0.1); }
+html[data-tema="verde"] .brand { color: #fbf8f1; }
+html[data-tema="verde"] .brand span { color: #e9c766; }
+html[data-tema="verde"] .nav a.login { color: #c9d6cf; }
+html[data-tema="verde"] .nav a.login:hover { color: #fff; }
+
+html[data-tema="verde"] .hero-copy { color: #e8efe9; }
+html[data-tema="verde"] .hero h1 { color: #fbf8f1; letter-spacing: -0.01em; }
+html[data-tema="verde"] .hero h1 .hl { color: #e9c766; font-style: italic; }
+html[data-tema="verde"] .hero .lead { color: #bfd0c6; }
+html[data-tema="verde"] .hero .lead strong { color: #fbf8f1; }
+html[data-tema="verde"] .hero .checks li::before { background: rgba(212, 166, 42, 0.18); color: #e9c766; }
+html[data-tema="verde"] .hero .chips li { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); color: #e8efe9; }
+html[data-tema="verde"] .hero .alert-pill { background: rgba(255, 255, 255, 0.08); border-color: rgba(248, 113, 113, 0.45); color: #fecaca; }
+html[data-tema="verde"] .hero .eyebrow { background: rgba(212, 166, 42, 0.12); border-color: rgba(212, 166, 42, 0.35); color: #e9c766; }
+html[data-tema="verde"] .hero-shot { border-color: rgba(255, 255, 255, 0.14); box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.55); }
+html[data-tema="verde"] .hero-shot .bar { background: #f3efe5; }
+html[data-tema="verde"] .form-card { box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.5); border-color: transparent; }
+
+html[data-tema="verde"] .final h2.title { color: #fbf8f1; }
+html[data-tema="verde"] .final p,
+html[data-tema="verde"] .final .reassure { color: #bfd0c6; }
+html[data-tema="verde"] .sticky-cta { border-top-color: rgba(255, 255, 255, 0.1); }
+html[data-tema="verde"] .sticky-cta small { color: #bfd0c6; }
+html[data-tema="verde"] footer { background: #0a2e24; border-top: 0; color: #a9bdb2; }
+html[data-tema="verde"] footer a:hover { color: #fff; }
+html[data-tema="verde"] .section-label::before,
+html[data-tema="verde"] .section-label::after { content: '—'; margin: 0 0.45rem; opacity: 0.6; }
