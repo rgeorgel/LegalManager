@@ -13,6 +13,7 @@
 // a tela aberta recarregar os dados (detail: { entidade: 'contato'|'tarefa'|'evento'|'tempo', id }).
 import { apiFetch } from './api.js';
 import { renderMarkdown } from './markdown.js';
+import { onSuporte, fecharSuporte } from './suporte.js';
 import { esc } from './utils.js';
 import { trackEvent } from './analytics.js';
 
@@ -244,33 +245,20 @@ function alternar(abrir) {
   if (aberto) naoLida = false;
   if (aberto && bloqueado) trackEvent('assistente_paywall_visto', { plano_alvo: 'Plus' });
   atualizarFab();
-  // O painel ocupa o canto do chat de suporte: esconde o botão do Crisp enquanto está aberto.
-  crisp(aberto ? 'chat:hide' : 'chat:show');
+  // O painel ocupa o mesmo canto da janela do suporte: abrir um fecha o outro.
+  if (aberto) fecharSuporte();
   if (aberto) {
     rolarFim();
     document.getElementById('asxInput').focus();
   }
 }
 
-// Chat de suporte (Crisp, carregado em boa parte das páginas) fica no mesmo canto inferior
-// direito: o botão do assistente sobe para ficar empilhado acima dele, e some enquanto a
-// janela do suporte estiver aberta (senão fica por cima da conversa).
-function temSuporte() {
-  return Array.isArray(window.$crisp) || typeof window.$crisp?.push === 'function';
-}
-
-function crisp(...cmd) {
-  if (!temSuporte()) return;
-  try { window.$crisp.push(['do', ...cmd]); } catch {}
-}
-
+// Chat de suporte (Crisp) abre pelo botão do header (ver suporte.js) no mesmo canto inferior
+// direito: o botão do assistente some enquanto a janela do suporte estiver aberta (senão fica
+// por cima da conversa).
 function integrarSuporte(wrap) {
-  if (!temSuporte()) return;
-  wrap.classList.add('asx-com-suporte');
-  try {
-    window.$crisp.push(['on', 'chat:opened', () => wrap.classList.add('asx-suporte-aberto')]);
-    window.$crisp.push(['on', 'chat:closed', () => wrap.classList.remove('asx-suporte-aberto')]);
-  } catch {}
+  onSuporte('aberto', () => wrap.classList.add('asx-suporte-aberto'));
+  onSuporte('fechado', () => wrap.classList.remove('asx-suporte-aberto'));
 }
 
 function novaConversa() {
@@ -567,8 +555,6 @@ function injectStyles() {
     .asx-fab-ativo { animation: asx-pulse-fab 1.4s infinite ease-in-out; }
     @keyframes asx-pulse-fab { 0%, 100% { box-shadow: var(--shadow-md); } 50% { box-shadow: 0 0 0 6px var(--color-primary-light); } }
     .asx.open .asx-fab { display: none; }
-    /* Acima do botão do Crisp (60px + margem de 20px), com folga. */
-    .asx.asx-com-suporte:not(.open) { bottom: 96px; right: 20px; }
     .asx.asx-suporte-aberto:not(.open) { display: none; }
     .asx-panel {
       width: 400px; height: min(620px, calc(100vh - 48px));
@@ -713,7 +699,6 @@ function injectStyles() {
     .asx-aviso { font-size: 10.5px; color: var(--color-text-muted); text-align: center; padding: 0 12px 8px; }
     @media (max-width: 768px) {
       .asx { right: 16px; bottom: calc(var(--bottom-nav-height) + 16px); }
-      .asx.asx-com-suporte:not(.open) { right: 16px; bottom: calc(var(--bottom-nav-height) + 88px); }
       .asx-fab-label { display: none; }
       .asx-fab { padding: 12px 14px; }
       .asx.open { inset: 0; right: 0; bottom: 0; z-index: 1100; }

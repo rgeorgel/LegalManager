@@ -7,6 +7,7 @@ import { injectPerguntasWidget } from './perguntas-widget.js';
 import { initImportacaoBar } from './importacao-bar.js';
 import { injectNovidadesButton } from './novidades.js';
 import { injectAssistente } from './assistente.js';
+import { injectSuporteButton } from './suporte.js';
 
 import { esc } from './utils.js';
 const NAV_GROUPS = [
@@ -100,6 +101,8 @@ export function initLayout() {
   setupMobileMenu();
   injectNotificationBell();
   injectNovidadesButton();
+  // Chat de suporte (Crisp) abre pelo header; o balão flutuante fica escondido.
+  injectSuporteButton();
   injectImpersonationBanner();
 
   // Menu flutuante de tarefas: disponível a partir do plano Plus (mesma
