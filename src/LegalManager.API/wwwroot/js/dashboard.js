@@ -147,7 +147,7 @@ function renderResumo() {
 }
 
 // ── Prazos e tarefas ───────────────────────────────────
-const tt = { prazos: [], minhas: [], atrasadas: [], aba: 'prazos' };
+const tt = { prazos: [], minhas: [], atrasadas: [], aba: 'prazos', abaEscolhida: false };
 
 // Totais e listas calculados no backend (GET /api/tarefas/dashboard), com
 // limites de dia no horário de Brasília.
@@ -172,7 +172,11 @@ async function loadTarefas() {
   resumo.prazosHoje = tot.prazosHoje;
   resumo.atrasadas = tot.atrasadas;
   renderResumo();
-  renderTarefas();
+
+  // Sem prazos, abre em "Minhas" para o bloco não ficar vazio — só enquanto o
+  // usuário não escolheu uma aba.
+  if (!tt.abaEscolhida) selecionarAba(!tt.prazos.length && tt.minhas.length ? 'minhas' : 'prazos');
+  else renderTarefas();
 }
 
 function renderTarefas() {
@@ -209,10 +213,15 @@ function renderTarefas() {
   }).join('');
 }
 
-document.querySelectorAll('.d2-tab').forEach(b => b.addEventListener('click', () => {
-  tt.aba = b.dataset.tt;
-  document.querySelectorAll('.d2-tab').forEach(x => x.classList.toggle('active', x === b));
+function selecionarAba(aba) {
+  tt.aba = aba;
+  document.querySelectorAll('.d2-tab').forEach(x => x.classList.toggle('active', x.dataset.tt === aba));
   renderTarefas();
+}
+
+document.querySelectorAll('.d2-tab').forEach(b => b.addEventListener('click', () => {
+  tt.abaEscolhida = true;
+  selecionarAba(b.dataset.tt);
 }));
 
 $('ttList').addEventListener('click', async e => {
@@ -250,21 +259,23 @@ async function loadAgenda(inicio = ag.inicio) {
   renderSemana();
   $('agEvents').innerHTML = '<div class="d2-skel"></div><div class="d2-skel"></div>';
   const itens = await apiFetch(`/agenda?de=${isoLocal(ag.inicio)}&ate=${isoLocal(fim)}`).catch(() => []);
+  // Inclui tarefas com prazo na janela (como a página da agenda); o KPI
+  // "Eventos hoje" continua contando só eventos.
   ag.eventos = (itens ?? [])
-    .filter(e => e.tipo !== 'Tarefa')
     .sort((a, b) => dataParede(a.dataHora) - dataParede(b.dataHora));
   renderSemana();
   renderEventos();
 
   const hoje = startOfDay(new Date());
   if (+ag.inicio === +hoje && resumo.eventosHoje === null) {
-    const doDia = ag.eventos.filter(e => isoDate(dataParede(e.dataHora)) === isoDate(hoje));
+    const soEventos = ag.eventos.filter(e => e.tipo !== 'Tarefa');
+    const doDia = soEventos.filter(e => isoDate(dataParede(e.dataHora)) === isoDate(hoje));
     resumo.eventosHoje = doDia.length;
     $('kEventos').textContent = doDia.length;
     const futuros = doDia.filter(e => dataParede(e.dataHora) > new Date());
     $('kEventosSub').textContent = futuros.length
       ? `próximo às ${hm(dataParede(futuros[0].dataHora))}`
-      : doDia.length ? 'todos já passaram' : `${plural(ag.eventos.length, 'compromisso', 'compromissos')} em 7 dias`;
+      : doDia.length ? 'todos já passaram' : `${plural(soEventos.length, 'compromisso', 'compromissos')} em 7 dias`;
     renderResumo();
   }
 }
@@ -315,7 +326,10 @@ function renderEventos() {
     ultimoDia = iso;
     const fim = ev.dataHoraFim ? dataParede(ev.dataHoraFim) : null;
     const meta = [esc(ev.tipo), fim ? `até ${hm(fim)}` : null, ev.local ? '📍 ' + esc(ev.local) : null, ev.numeroCNJProcesso ? esc(ev.numeroCNJProcesso) : null].filter(Boolean).join(' · ');
-    return `${grupo}<a class="d2-event" href="/pages/agenda.html?view=dia&date=${iso}&abrirId=${ev.id}">
+    const href = ev.tipo === 'Tarefa'
+      ? `/pages/tarefas.html?abrirId=${ev.id}`
+      : `/pages/agenda.html?view=dia&date=${iso}&abrirId=${ev.id}`;
+    return `${grupo}<a class="d2-event" href="${href}">
       <div class="d2-event-time">${hm(dt)}</div>
       <div class="d2-event-bar" style="background:${esc(ev.cor || 'var(--color-primary)')}"></div>
       <div class="d2-item-body">
