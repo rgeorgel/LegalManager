@@ -1,4 +1,5 @@
 using LegalManager.Application.DTOs.Processos;
+using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.Interfaces;
 
@@ -12,4 +13,11 @@ public interface IContatoResolverService
 {
     Task<List<ProcessoParteDto>> ResolverPartesDataJudAsync(
         IReadOnlyList<TribunalParte> partes, CancellationToken ct = default);
+
+    /// <summary>
+    /// Igual à outra sobrecarga, mas os contatos novos recebem a categoria de
+    /// <paramref name="categoria"/> (ex.: importação por OAB separa cliente de parte contrária).
+    /// </summary>
+    Task<List<ProcessoParteDto>> ResolverPartesDataJudAsync(
+        IReadOnlyList<TribunalParte> partes, Func<TribunalParte, TipoContato> categoria, CancellationToken ct = default);
 }

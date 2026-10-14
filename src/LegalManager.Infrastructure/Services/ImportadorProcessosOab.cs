@@ -138,9 +138,9 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             CreateProcessoDto? createDto;
 
             if (EhTjsp(item.NumeroCNJ, item.Tribunal))
-                createDto = await MontarDtoEsajAsync(item.NumeroCNJ, item.Codigo, item.Foro, ct);
+                createDto = await MontarDtoEsajAsync(item, ct);
             else
-                createDto = await MontarDtoDataJudAsync(item.NumeroCNJ, ct);
+                createDto = await MontarDtoDataJudAsync(item, ct);
 
             if (createDto == null)
                 return new ResultadoImportacaoItem(StatusItemImportacao.NaoEncontrado, "Processo não encontrado no tribunal");
@@ -250,7 +250,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         });
         await _context.SaveChangesAsync(ct);
 
-        await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, ct);
+        await SalvarPartesEscavadorAsync(cache?.DadosJson, processoId, item, ct);
 
         // TODO (5B — Estratégia 3): ao implementar monitoramento de Diários Oficiais,
         // criar aqui 1 único termo por tenant (idempotente) com o número OAB formatado
@@ -259,8 +259,9 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         return new ResultadoImportacaoItem(StatusItemImportacao.Importado, null, processoId);
     }
 
-    private async Task<CreateProcessoDto?> MontarDtoEsajAsync(string cnj, string? codigo, string? foro, CancellationToken ct)
+    private async Task<CreateProcessoDto?> MontarDtoEsajAsync(ImportarProcessoItem item, CancellationToken ct)
     {
+        var (cnj, codigo, foro) = (item.NumeroCNJ, item.Codigo, item.Foro);
         foreach (var grau in new[] { "G1", "G2" })
         {
             var detalhe = await _esaj.ObterDetalhesAsync(cnj, grau, ct, codigo, foro);
@@ -268,7 +269,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             if (string.IsNullOrEmpty(detalhe.Vara) && string.IsNullOrEmpty(detalhe.Classe)
                 && string.IsNullOrEmpty(detalhe.Foro)) continue;
 
-            var partesDto = await ResolverPartesAsync(detalhe.Partes, ct);
+            var partesDto = await ResolverPartesAsync(detalhe.Partes, item, ct);
 
             return new CreateProcessoDto(
                 NumeroCNJ: cnj,
@@ -299,16 +300,27 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
     }
 
     private async Task<List<ProcessoParteDto>> ResolverPartesAsync(
-        List<ParteEsajDto> partes, CancellationToken ct)
+        List<ParteEsajDto> partes, ImportarProcessoItem item, CancellationToken ct)
     {
         var resultado = new List<ProcessoParteDto>();
+
+        // O e-SAJ lista o advogado de cada parte só pelo nome ("Advogado: FULANA DE TAL").
+        var lado = CategoriaPartesImportacao.LadoUnico(partes
+            .Where(p => p.Advogados.Any(a => CategoriaPartesImportacao.CitaNome(a, item.NomeAdvogado)))
+            .Select(p => CategoriaPartesImportacao.MapearPolo(p.Polo)));
 
         foreach (var parte in partes)
         {
             if (string.IsNullOrWhiteSpace(parte.Nome)) continue;
 
+            var tipoParte = CategoriaPartesImportacao.MapearPolo(parte.Polo);
+            var categoria = CategoriaPartesImportacao.Categoria(tipoParte, lado);
             var contato = await _contatoService.GetByNomeAsync(parte.Nome, ct);
-            if (contato == null)
+            if (contato != null)
+            {
+                await PromoverParaClienteAsync(contato.Id, categoria, ct);
+            }
+            else
             {
                 var tipoPessoa = DetectarTipoPessoa(parte.Nome, parte.Polo);
                 var obs = parte.Advogados.Count > 0
@@ -316,7 +328,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                     : null;
                 contato = await _contatoService.CreateAsync(new CreateContatoDto(
                     Tipo: tipoPessoa,
-                    TipoContato: TipoContato.Cliente,
+                    TipoContato: categoria,
                     Nome: parte.Nome,
                     CpfCnpj: null,
                     Oab: null,
@@ -334,28 +346,27 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                 ), ct);
             }
 
-            var tipoParte = MapearPolo(parte.Polo);
             resultado.Add(new ProcessoParteDto(contato.Id, tipoParte));
         }
 
         return resultado;
     }
 
-    private static TipoParteProcesso MapearPolo(string polo)
+    /// <summary>
+    /// Contato já existente que, neste processo, está do lado do advogado: se veio de uma
+    /// importação (como parte contrária ou outro), passa a Cliente. Nunca rebaixa um Cliente
+    /// nem mexe em contato cadastrado à mão.
+    /// </summary>
+    private async Task PromoverParaClienteAsync(Guid contatoId, TipoContato categoria, CancellationToken ct)
     {
-        var upper = polo.ToUpperInvariant();
-        if (upper.Contains("EXEQUENTE") || upper.Contains("EXEQTE") ||
-            upper.Contains("AUTOR") || upper.Contains("RECLAMANTE") ||
-            upper.Contains("IMPETRANTE") || upper.Contains("REQUERENTE"))
-            return TipoParteProcesso.Autor;
-        if (upper.Contains("EXECUTADO") || upper.Contains("EXECTDO") ||
-            upper.Contains("RÉU") || upper.Contains("REU") ||
-            upper.Contains("RECLAMADO") || upper.Contains("INDICIADO") ||
-            upper.Contains("REQUERIDO"))
-            return TipoParteProcesso.Reu;
-        if (upper.Contains("INTERESSADO"))
-            return TipoParteProcesso.Interessado;
-        return TipoParteProcesso.Terceiro;
+        if (categoria != TipoContato.Cliente) return;
+        var contato = await _context.Contatos.FirstOrDefaultAsync(
+            c => c.Id == contatoId && c.TenantId == _tenantContext.TenantId, ct);
+        if (contato is not { ImportadoAutomaticamente: true } || contato.TipoContato == TipoContato.Cliente) return;
+
+        contato.TipoContato = TipoContato.Cliente;
+        contato.AtualizadoEm = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
     }
 
     private static TipoPessoa DetectarTipoPessoa(string nome, string polo)
@@ -415,14 +426,26 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             && normalizado.Substring(14, 2) == "26";
     }
 
-    private async Task<CreateProcessoDto?> MontarDtoDataJudAsync(string cnj, CancellationToken ct)
+    private async Task<CreateProcessoDto?> MontarDtoDataJudAsync(ImportarProcessoItem item, CancellationToken ct)
     {
+        var cnj = item.NumeroCNJ;
         var resultado = await _dataJud.ConsultarAsync(cnj, ct);
         if (!resultado.Encontrado) return null;
 
-        var partesDto = resultado.Partes != null
-            ? await _contatoResolver.ResolverPartesDataJudAsync(resultado.Partes, ct)
-            : new List<ProcessoParteDto>();
+        List<ProcessoParteDto> partesDto = [];
+        if (resultado.Partes != null)
+        {
+            // No DataJud o advogado vem como parte com OAB, no polo de quem representa.
+            var lado = CategoriaPartesImportacao.LadoUnico(resultado.Partes
+                .Where(p => CategoriaPartesImportacao.MesmaOab(p.OAB, item.OabAdvogado, item.UfAdvogado))
+                .Select(p => CategoriaPartesImportacao.MapearPolo(p.Polo)));
+            partesDto = await _contatoResolver.ResolverPartesDataJudAsync(
+                resultado.Partes,
+                p => string.IsNullOrWhiteSpace(p.OAB)
+                    ? CategoriaPartesImportacao.Categoria(CategoriaPartesImportacao.MapearPolo(p.Polo), lado)
+                    : TipoContato.Outro,
+                ct);
+        }
 
         return new CreateProcessoDto(
             NumeroCNJ: cnj,
@@ -574,7 +597,8 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt) ? dt : null;
     }
 
-    private async Task SalvarPartesEscavadorAsync(string? dadosJson, Guid processoId, CancellationToken ct)
+    private async Task SalvarPartesEscavadorAsync(
+        string? dadosJson, Guid processoId, ImportarProcessoItem item, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dadosJson)) return;
         try
@@ -588,6 +612,8 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
 
             var nomesVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var salvouAlguma = false;
+            var lado = CategoriaPartesImportacao.LadoNoEscavador(fontesEl, item.OabAdvogado, item.UfAdvogado);
+            var nomesDoAdvogado = CategoriaPartesImportacao.NomesDoAdvogadoNoEscavador(fontesEl, item.OabAdvogado, item.UfAdvogado);
 
             foreach (var fonte in fontesEl.EnumerateArray())
             {
@@ -600,7 +626,14 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                     var nome = JsonStr(envEl, "nome");
                     if (string.IsNullOrWhiteSpace(nome) || !nomesVistos.Add(nome)) continue;
 
+                    // O próprio advogado da importação não vira contato.
+                    if (nomesDoAdvogado.Contains(nome)) continue;
+
                     var polo = JsonStr(envEl, "polo") ?? "";
+                    var tipoParte = CategoriaPartesImportacao.MapearPolo(polo);
+                    var categoria = CategoriaPartesImportacao.EhAdvogadoEscavador(envEl)
+                        ? TipoContato.Outro
+                        : CategoriaPartesImportacao.Categoria(tipoParte, lado);
                     var cpf = JsonStr(envEl, "cpf");
                     var cnpj = JsonStr(envEl, "cnpj");
                     var tipoPessoa = cnpj != null ? TipoPessoa.PJ : TipoPessoa.PF;
@@ -621,11 +654,15 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                     }
 
                     var contato = await _contatoService.GetByNomeAsync(nome, ct);
-                    if (contato == null)
+                    if (contato != null)
+                    {
+                        await PromoverParaClienteAsync(contato.Id, categoria, ct);
+                    }
+                    else
                     {
                         contato = await _contatoService.CreateAsync(new CreateContatoDto(
                             Tipo: tipoPessoa,
-                            TipoContato: TipoContato.Cliente,
+                            TipoContato: categoria,
                             Nome: nome,
                             CpfCnpj: cpf ?? cnpj,
                             Oab: oabFormatada,
@@ -648,7 +685,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                         Id = Guid.NewGuid(),
                         ProcessoId = processoId,
                         ContatoId = contato.Id,
-                        TipoParte = MapearPoloEscavador(polo)
+                        TipoParte = tipoParte
                     });
                     salvouAlguma = true;
                 }
@@ -669,19 +706,5 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         foreach (var entry in _context.ChangeTracker.Entries<T>()
                      .Where(e => e.State == EntityState.Added).ToList())
             entry.State = EntityState.Detached;
-    }
-
-    private static TipoParteProcesso MapearPoloEscavador(string polo)
-    {
-        var upper = polo.ToUpperInvariant();
-        if (upper is "ATIVO" || upper.Contains("AUTOR") || upper.Contains("RECLAMANTE") ||
-            upper.Contains("IMPETRANTE") || upper.Contains("REQUERENTE") || upper.Contains("EXEQUENTE"))
-            return TipoParteProcesso.Autor;
-        if (upper is "PASSIVO" || upper.Contains("RÉU") || upper.Contains("REU") ||
-            upper.Contains("RECLAMADO") || upper.Contains("REQUERIDO") || upper.Contains("EXECUTADO"))
-            return TipoParteProcesso.Reu;
-        if (upper.Contains("INTERESSADO"))
-            return TipoParteProcesso.Interessado;
-        return TipoParteProcesso.Terceiro;
     }
 }

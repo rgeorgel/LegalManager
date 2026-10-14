@@ -412,13 +412,14 @@ public class ImportacaoProcessosTests
 
     // ── Importador ─────────────────────────────────────────────────────────
 
-    private ImportadorProcessosOab CriarImportador(AppDbContext db, Mock<IEscavadorService> escavador) =>
+    private ImportadorProcessosOab CriarImportador(
+        AppDbContext db, Mock<IEscavadorService> escavador, IContatoService? contatos = null) =>
         new(db, CriarTenantContext(),
             new DataJudAdapter(new HttpClient(), NullLogger<DataJudAdapter>.Instance),
             new EsajTjspProcessosAdapter(new HttpClient(), NullLogger<EsajTjspProcessosAdapter>.Instance),
             escavador.Object,
             Mock.Of<IProcessoService>(),
-            Mock.Of<IContatoService>(),
+            contatos ?? Mock.Of<IContatoService>(),
             Mock.Of<IContatoResolverService>(),
             FakeConsultaExternaLogService.Instance,
             NullLogger<ImportadorProcessosOab>.Instance);
@@ -509,5 +510,142 @@ public class ImportacaoProcessosTests
         Assert.Equal(StatusItemImportacao.JaCadastrado, resultado.Status);
         Assert.Equal(existenteId, resultado.ProcessoId);
         Assert.Equal(1, await db.Processos.CountAsync());
+    }
+
+    // ── Categoria das partes importadas ────────────────────────────────────
+
+    private async Task<Dictionary<string, TipoContato>> ImportarEscavadorComPartesAsync(
+        AppDbContext db, string envolvidosJson, string? oab = "116546", string? uf = "MG")
+    {
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = $"{{\"fontes\":[{{\"envolvidos\":{envolvidosJson}}}]}}",
+            ExpiraEm = DateTime.UtcNow.AddHours(1), CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var contatos = new ContatoService(db, CriarTenantContext(), new HonorarioService(db, Mock.Of<IAuditService>()));
+        var resultado = await CriarImportador(db, new Mock<IEscavadorService>(), contatos)
+            .ImportarAsync(new ImportarProcessoItem("0001", Fonte: "escavador", OabAdvogado: oab, UfAdvogado: uf));
+        Assert.Equal(StatusItemImportacao.Importado, resultado.Status);
+
+        db.ChangeTracker.Clear();
+        return await db.Contatos.ToDictionaryAsync(c => c.Nome, c => c.TipoContato);
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_AdvogadoComoEnvolvido_SeparaClienteDaParteContraria()
+    {
+        var db = await SeedAsync();
+
+        var contatos = await ImportarEscavadorComPartesAsync(db, """
+            [{"nome":"Advogada","polo":"ATIVO","tipo_normalizado":"Advogado","oabs":[{"numero":116546,"uf":"MG"}]},
+             {"nome":"Cliente Um","polo":"ATIVO"},
+             {"nome":"Empresa Ré","polo":"PASSIVO"},
+             {"nome":"Advogado da Ré","polo":"PASSIVO","oabs":[{"numero":999,"uf":"MG"}]}]
+            """);
+
+        Assert.Equal(TipoContato.Cliente, contatos["Cliente Um"]);
+        Assert.Equal(TipoContato.ParteContraria, contatos["Empresa Ré"]);
+        Assert.Equal(TipoContato.Outro, contatos["Advogado da Ré"]);
+        Assert.False(contatos.ContainsKey("Advogada")); // a própria advogada não vira contato
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_AdvogadoAninhadoNaParte_UsaPoloDaParte()
+    {
+        var db = await SeedAsync();
+
+        var contatos = await ImportarEscavadorComPartesAsync(db, """
+            [{"nome":"Autor","polo":"ATIVO"},
+             {"nome":"Réu Cliente","polo":"PASSIVO","advogados":[{"nome":"Advogada","oabs":[{"numero":"0116546","uf":"mg"}]}]}]
+            """);
+
+        Assert.Equal(TipoContato.Cliente, contatos["Réu Cliente"]);
+        Assert.Equal(TipoContato.ParteContraria, contatos["Autor"]);
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_FormatoReal_AdvogadoAninhadoEPoloAdvogadoSemOab()
+    {
+        // Formato visto em produção: a parte traz o advogado (com OAB) em "advogados", e o advogado
+        // aparece também como envolvido próprio com polo "ADVOGADO" — às vezes sem "oabs".
+        var db = await SeedAsync();
+
+        var contatos = await ImportarEscavadorComPartesAsync(db, """
+            [{"nome":"Cliente Autora","polo":"ATIVO","tipo_normalizado":"Autor",
+              "advogados":[{"nome":"Advogada da Importacao","polo":"ADVOGADO","tipo_normalizado":"Advogado",
+                            "oabs":[{"uf":"MG","tipo":"ADVOGADO","numero":116546}]}]},
+             {"nome":"Empresa Ré","polo":"PASSIVO","tipo_normalizado":"Réu",
+              "advogados":[{"nome":"Advogado da Ré","oabs":[{"uf":"MG","tipo":"ADVOGADO","numero":999}]}]},
+             {"nome":"Advogada da Importacao","polo":"ADVOGADO","tipo_normalizado":"Advogado","oabs":null},
+             {"nome":"Advogado da Ré","polo":"ADVOGADO","tipo_normalizado":"Advogado","oabs":[{"uf":"MG","numero":999}]}]
+            """);
+
+        Assert.Equal(TipoContato.Cliente, contatos["Cliente Autora"]);
+        Assert.Equal(TipoContato.ParteContraria, contatos["Empresa Ré"]);
+        Assert.Equal(TipoContato.Outro, contatos["Advogado da Ré"]);
+        Assert.False(contatos.ContainsKey("Advogada da Importacao"));
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_OabNaoEncontrada_NaoMarcaNinguemComoCliente()
+    {
+        var db = await SeedAsync();
+
+        var contatos = await ImportarEscavadorComPartesAsync(db, """
+            [{"nome":"Autor","polo":"ATIVO"},{"nome":"Réu","polo":"PASSIVO"}]
+            """);
+
+        Assert.All(contatos.Values, t => Assert.Equal(TipoContato.Outro, t));
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_ContatoImportadoDoLadoDaAdvogada_ViraClienteSemRebaixarOutros()
+    {
+        var db = await SeedAsync();
+        Contato Existente(string nome, TipoContato tipo, bool importado) => new()
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, Nome = nome, TipoContato = tipo,
+            ImportadoAutomaticamente = importado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        db.Contatos.AddRange(
+            Existente("Cliente Um", TipoContato.ParteContraria, importado: true),
+            Existente("Perito Manual", TipoContato.Perito, importado: false),
+            Existente("Cliente Antigo", TipoContato.Cliente, importado: true));
+        await db.SaveChangesAsync();
+
+        var contatos = await ImportarEscavadorComPartesAsync(db, """
+            [{"nome":"Cliente Um","polo":"ATIVO","advogados":[{"oabs":[{"numero":116546,"uf":"MG"}]}]},
+             {"nome":"Perito Manual","polo":"ATIVO"},
+             {"nome":"Cliente Antigo","polo":"PASSIVO"}]
+            """);
+
+        Assert.Equal(TipoContato.Cliente, contatos["Cliente Um"]);
+        Assert.Equal(TipoContato.Perito, contatos["Perito Manual"]); // cadastrado à mão: não mexe
+        Assert.Equal(TipoContato.Cliente, contatos["Cliente Antigo"]); // nunca rebaixa
+    }
+
+    [Fact]
+    public async Task Job_PassaOabENomeDoAdvogadoParaOImportador()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos);
+        db.ImportacoesProcessos.Add(importacao);
+        db.TenantOabs.Add(new TenantOab
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, Numero = "116546", Uf = "MG", Nome = "Dra. Fulana de Tal", CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(new PaginaBuscaOab([Preview("0001")], null));
+
+        await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        importador.Verify(i => i.ImportarAsync(
+            It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0001" && x.OabAdvogado == "116546"
+                                             && x.UfAdvogado == "MG" && x.NomeAdvogado == "Dra. Fulana de Tal"),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

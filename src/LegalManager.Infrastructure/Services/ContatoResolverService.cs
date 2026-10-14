@@ -12,8 +12,12 @@ namespace LegalManager.Infrastructure.Services;
 /// </summary>
 public class ContatoResolverService(IContatoService contatoService) : IContatoResolverService
 {
+    public Task<List<ProcessoParteDto>> ResolverPartesDataJudAsync(
+        IReadOnlyList<TribunalParte> partes, CancellationToken ct = default) =>
+        ResolverPartesDataJudAsync(partes, _ => TipoContato.Cliente, ct);
+
     public async Task<List<ProcessoParteDto>> ResolverPartesDataJudAsync(
-        IReadOnlyList<TribunalParte> partes, CancellationToken ct = default)
+        IReadOnlyList<TribunalParte> partes, Func<TribunalParte, TipoContato> categoria, CancellationToken ct = default)
     {
         var resultado = new List<ProcessoParteDto>();
 
@@ -32,7 +36,7 @@ public class ContatoResolverService(IContatoService contatoService) : IContatoRe
 
                 contato = await contatoService.CreateAsync(new CreateContatoDto(
                     Tipo: tipoPessoa,
-                    TipoContato: TipoContato.Cliente,
+                    TipoContato: categoria(parte),
                     Nome: parte.Nome,
                     CpfCnpj: parte.Cpf ?? parte.Cnpj,
                     Oab: parte.OAB,

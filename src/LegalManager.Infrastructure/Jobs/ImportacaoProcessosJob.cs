@@ -223,6 +223,8 @@ public class ImportacaoProcessosJob
         {
             var dados = JsonSerializer.Deserialize<ImportarProcessoItem>(item.DadosJson)
                         ?? new ImportarProcessoItem(item.NumeroCNJ);
+            var (oab, uf, nome) = await AdvogadoDaImportacaoAsync(importacaoId, ct);
+            dados = dados with { OabAdvogado = oab, UfAdvogado = uf, NomeAdvogado = nome };
             resultado = await _importador.ImportarAsync(dados, ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -251,6 +253,27 @@ public class ImportacaoProcessosJob
         }
         importacao.AtualizadoEm = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// OAB pesquisada e o nome do advogado (o da OAB cadastrada no escritório, senão o de quem
+    /// importou). O importador usa isso para separar clientes da parte contrária.
+    /// </summary>
+    private async Task<(string Oab, string Uf, string? Nome)> AdvogadoDaImportacaoAsync(Guid importacaoId, CancellationToken ct)
+    {
+        var importacao = await _context.ImportacoesProcessos.AsNoTracking()
+            .Where(i => i.Id == importacaoId)
+            .Select(i => new { i.TenantId, i.UsuarioId, i.NumeroOab, i.Uf })
+            .FirstAsync(ct);
+        var nome = await _context.TenantOabs.AsNoTracking()
+                       .Where(o => o.TenantId == importacao.TenantId && o.Numero == importacao.NumeroOab && o.Uf == importacao.Uf)
+                       .Select(o => o.Nome)
+                       .FirstOrDefaultAsync(ct)
+                   ?? await _context.Users.AsNoTracking()
+                       .Where(u => u.Id == importacao.UsuarioId)
+                       .Select(u => u.Nome)
+                       .FirstOrDefaultAsync(ct);
+        return (importacao.NumeroOab, importacao.Uf, nome);
     }
 
     private async Task<ImportacaoProcessos> RecarregarAsync(Guid importacaoId, CancellationToken ct)

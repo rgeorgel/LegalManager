@@ -36,5 +36,9 @@ public record ImportarProcessoItem(
     string? Comarca = null,
     string? Classe = null,
     string? Assuntos = null,
-    DateTime? DataAjuizamento = null
+    DateTime? DataAjuizamento = null,
+    // Advogado da importação (preenchido pelo job): define quem é cliente entre as partes
+    string? OabAdvogado = null,
+    string? UfAdvogado = null,
+    string? NomeAdvogado = null
 );
