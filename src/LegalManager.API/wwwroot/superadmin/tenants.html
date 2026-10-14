@@ -42,6 +42,11 @@
     .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background: var(--color-bg); }
+    /* Assinantes (pagam assinatura) em verde claro para chamar atenção */
+    .data-table tr.assinante td { background: rgba(34, 197, 94, .08); }
+    .data-table tr.assinante:hover td { background: rgba(34, 197, 94, .14); }
+    .data-table tr.assinante td:first-child { box-shadow: inset 3px 0 0 #22c55e; }
+    .tenant-card.assinante { background: rgba(34, 197, 94, .08); border-color: rgba(34, 197, 94, .55); box-shadow: inset 4px 0 0 #22c55e; }
     /* A grade do layout usa 1fr (min-width auto): sem isto a tabela empurra a página para além da tela. */
     .main-content { min-width: 0; }
     .data-table th, .data-table td { vertical-align: top; }
@@ -204,7 +209,7 @@
     import { saFetch } from '/superadmin/js/superAdminApi.js';
     import { initTenantAcoes, showToast } from '/superadmin/js/tenantAcoes.js';
     import {
-      fmtDate, fmtDateTime, fmtBytes, fmtMb, pctBar, daysAgo, countdownBadge, recursosCell, planoHtml, mascotesInline
+      fmtDate, fmtDateTime, fmtBytes, fmtMb, pctBar, daysAgo, countdownBadge, recursosCell, planoHtml, mascotesInline, ehAssinante
     } from '/superadmin/js/tenantFormat.js';
 
     initAdminLayout();
@@ -334,7 +339,7 @@
     }
 
     function linhaTabela(t) {
-      return `<tr>
+      return `<tr${ehAssinante(t) ? ' class="assinante"' : ''}>
         <td class="tenant-nome">
           <div class="t-nome-linha"><a class="t-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>${mascotesInline(t)}</div>
           <div class="t-sub">${esc(t.cnpj ?? 'sem CNPJ')}</div>
@@ -349,7 +354,7 @@
       </tr>`;
     }
     function cardTenant(t) {
-      return `<div class="tenant-card">
+      return `<div class="tenant-card${ehAssinante(t) ? ' assinante' : ''}">
         <div class="tenant-card-head">
           <div style="min-width:0">
             <div class="t-nome-linha"><a class="tenant-card-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>${mascotesInline(t)}</div>

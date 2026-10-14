@@ -84,12 +84,17 @@ export function daysAgo(iso) {
   if (d < 365) return `há ${Math.floor(d / 30)}m`;
   return `há ${Math.floor(d / 365)}a`;
 }
+function temBilling(t) {
+  return t.temBilling !== undefined ? t.temBilling : !!(t.stripeSubscriptionId || t.abacatePayBillingId);
+}
+// Assinante = paga assinatura: plano pago, com billing, fora do trial e não cancelado/suspenso.
+export function ehAssinante(t) {
+  return t.plano !== 'Free' && temBilling(t) && t.status === 'Ativo';
+}
 export function paymentBadge(t) {
   // Na listagem vem `temBilling` (já calculado no backend); no modal de detalhes
   // vêm os IDs crus (stripeSubscriptionId/abacatePayBillingId) — cobrimos os dois formatos.
-  const hasBilling = t.temBilling !== undefined
-    ? t.temBilling
-    : !!(t.stripeSubscriptionId || t.abacatePayBillingId);
+  const hasBilling = temBilling(t);
   // Plano: Free não tem billing
   if (t.plano === 'Free') {
     return '<span class="badge badge-gray" title="Plano Free, sem cobrança">—</span>';
