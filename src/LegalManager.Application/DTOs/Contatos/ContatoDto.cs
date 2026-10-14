@@ -89,6 +89,18 @@ public record ContatoFiltroDto(
     string? SortDir = null
 );
 
+/// <summary>Ação em massa na lista de contatos (excluir, restaurar).</summary>
+public record ContatosEmMassaDto(
+    [Required, MinLength(1), MaxLength(ContatosEmMassaDto.MaxContatos)] IReadOnlyList<Guid> Ids)
+{
+    public const int MaxContatos = 2000;
+}
+
+public record AdicionarTagsEmMassaDto(
+    [Required, MinLength(1), MaxLength(ContatosEmMassaDto.MaxContatos)] IReadOnlyList<Guid> Ids,
+    [Required, MinLength(1)] IReadOnlyList<string> Tags
+);
+
 public record CreateAtendimentoDto(
     [Required] string Descricao,
     [Required] DateTime Data

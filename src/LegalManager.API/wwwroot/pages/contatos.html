@@ -125,6 +125,14 @@
     .contato-card .card-info-row .value.empty { color:var(--color-text-muted); font-style:italic; }
     .contato-card .card-footer { display:flex; align-items:center; justify-content:flex-end; padding-top:4px; }
     @media(max-width:768px) { .contatos-grid { grid-template-columns:1fr; } }
+    .bulk-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; margin-bottom:12px; border:1px solid var(--color-primary); border-radius:8px; background:var(--color-surface); font-size:14px; }
+    .bulk-bar .bulk-link { background:none; border:none; padding:0; font:inherit; color:var(--color-primary); text-decoration:underline; cursor:pointer; }
+    .bulk-bar .bulk-spacer { flex:1; }
+    .col-select { width:36px; }
+    .col-select input, .card-select { width:16px; height:16px; cursor:pointer; }
+    tr.contato-excluido td:not(.col-select) { opacity:.6; }
+    .contato-card.contato-excluido { opacity:.7; }
+    .contato-card .card-header .card-select { flex-shrink:0; margin-top:2px; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -180,6 +188,11 @@
           <option value="manual">Cadastrados manualmente</option>
           <option value="importado">Importados automaticamente</option>
         </select>
+        <select id="filtSituacao" class="form-control" style="width:auto" title="Mostrar ou ocultar contatos excluídos">
+          <option value="ativos">Sem excluídos</option>
+          <option value="excluidos">Só excluídos</option>
+          <option value="todos">Ativos e excluídos</option>
+        </select>
         <select id="filtSalvo" class="form-control" style="width:auto">
           <option value="">Filtros salvos...</option>
         </select>
@@ -193,11 +206,22 @@
 
       <div id="alertMsg" class="alert" style="display:none"></div>
 
+      <div id="bulkBar" class="bulk-bar" style="display:none" role="region" aria-label="Ações nos contatos selecionados">
+        <span id="bulkInfo"></span>
+        <button type="button" class="bulk-link" id="bulkSelecionarTodos" style="display:none"></button>
+        <span class="bulk-spacer"></span>
+        <button type="button" class="btn btn-secondary btn-sm" id="bulkTags">🏷️ Adicionar tags</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="bulkRestaurar">↩️ Restaurar</button>
+        <button type="button" class="btn btn-danger btn-sm" id="bulkExcluir">🗑️ Excluir</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="bulkLimpar">Limpar seleção</button>
+      </div>
+
       <div class="card" id="contatosListWrap">
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
+                <th class="col-select"><input type="checkbox" id="selectAllContatos" title="Selecionar os contatos desta página" aria-label="Selecionar os contatos desta página"></th>
                 <th class="sortable" data-sort="nome">Nome<span class="sort-indicator" data-indicator="nome"></span></th>
                 <th class="sortable" data-sort="tipo">Tipo<span class="sort-indicator" data-indicator="tipo"></span></th>
                 <th class="sortable" data-sort="tipoContato">Categoria<span class="sort-indicator" data-indicator="tipoContato"></span></th>
@@ -209,7 +233,7 @@
               </tr>
             </thead>
             <tbody id="tableBody">
-              <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
+              <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--color-text-muted)">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -412,6 +436,32 @@
     </div>
   </div>
 
+  <!-- Modal Tags em massa -->
+  <div class="modal-overlay" id="modalTagsEmMassa">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-header">
+        <span class="modal-title">Adicionar tags</span>
+        <button class="modal-close" id="tagsEmMassaClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="tagsEmMassaAlert" class="alert alert-error" style="display:none"></div>
+        <form id="tagsEmMassaForm">
+          <p id="tagsEmMassaInfo" style="margin-bottom:12px;color:var(--color-text-muted)"></p>
+          <div class="form-group">
+            <label for="tagsEmMassaInput">Tags *</label>
+            <input type="text" id="tagsEmMassaInput" class="form-control" list="tagsEmMassaSugestoes" placeholder="Ex.: Cliente ativo, Trabalhista" required autocomplete="off">
+            <datalist id="tagsEmMassaSugestoes"></datalist>
+            <small style="color:var(--color-text-muted)">Separe várias tags com vírgula. As tags que o contato já tem são mantidas.</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="tagsEmMassaCancel">Cancelar</button>
+        <button type="submit" form="tagsEmMassaForm" class="btn btn-primary" id="tagsEmMassaSalvar">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Atendimento -->
   <div class="modal-overlay" id="modalAtendimento">
     <div class="modal" style="max-width:440px">
@@ -586,7 +636,7 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       getPortalAcesso, criarPortalAcesso, revogarPortalAcesso,
       getDuplicados, getAniversariantes,
       getFiltrosSalvos, addFiltroSalvo, removeFiltroSalvo, getContatoTags,
-      agendarRetorno
+      agendarRetorno, getContatoIds, excluirContatosEmMassa, restaurarContatosEmMassa, adicionarTagsEmMassa
     } from '/js/contatos.js';
     import { createMultiSelect } from '/js/multiselect.js';
     import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
@@ -615,6 +665,7 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 
     const VALID_VIEW = new Set(['list', 'cards']);
     const VALID_ORIGEM = new Set(['', 'manual', 'importado']);
+    const VALID_SITUACAO = new Set(['ativos', 'excluidos', 'todos']);
 
     function loadListState() {
       try {
@@ -630,11 +681,12 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         const page = Number.isInteger(s.page) && s.page > 0 ? s.page : 1;
         const view = VALID_VIEW.has(s.view) ? s.view : 'list';
         const origem = VALID_ORIGEM.has(s.origem) ? s.origem : '';
-        return { sortBy, sortDir, tags, page, view, origem };
+        const situacao = VALID_SITUACAO.has(s.situacao) ? s.situacao : 'ativos';
+        return { sortBy, sortDir, tags, page, view, origem, situacao };
       } catch { return null; }
     }
     function saveListState() {
-      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tags: currentTags, page: currentPage, view: currentView, origem: currentOrigem })); } catch {}
+      try { localStorage.setItem(STATE_KEY, JSON.stringify({ sortBy: currentSortBy, sortDir: currentSortDir, tags: currentTags, page: currentPage, view: currentView, origem: currentOrigem, situacao: currentSituacao })); } catch {}
     }
 
     const initialState = loadListState();
@@ -644,6 +696,8 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
     currentPage = initialState?.page ?? 1;
     let currentView = initialState?.view ?? 'list';
     let currentOrigem = initialState?.origem ?? '';
+    // Excluir só desativa o contato: por padrão a lista esconde os excluídos.
+    let currentSituacao = initialState?.situacao ?? 'ativos';
 
     function updateSortIndicators() {
       document.querySelectorAll('th.sortable').forEach(th => {
@@ -672,25 +726,163 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 
     async function loadContatos() {
       const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px">Carregando...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:32px">Carregando...</td></tr>';
 
       try {
-        const result = await getContatos({
-          ...currentFilters,
-          tag: currentTags,
-          importadoAutomaticamente: currentOrigem === 'importado' ? true : currentOrigem === 'manual' ? false : undefined,
-          sortBy: currentSortBy,
-          sortDir: currentSortDir,
-          page: currentPage
-        });
+        const filtro = filtroAtual();
+        // A seleção vale para um filtro: mudou o filtro, começa do zero (paginar mantém).
+        const chave = JSON.stringify(filtro);
+        if (chave !== chaveFiltroSelecao) { selecionados.clear(); chaveFiltroSelecao = chave; }
+
+        const result = await getContatos({ ...filtro, page: currentPage });
+        itensPagina = result.items;
+        totalFiltro = result.total;
         renderTable(result.items);
         renderCards(result.items);
         attachRowMenus(result.items);
         renderPagination(result.totalPages, result.page);
+        atualizarSelecao();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-danger)">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--color-danger)">${err.message}</td></tr>`;
       }
     }
+
+    function filtroAtual() {
+      return {
+        ...currentFilters,
+        tag: currentTags,
+        importadoAutomaticamente: currentOrigem === 'importado' ? true : currentOrigem === 'manual' ? false : undefined,
+        ativo: currentSituacao === 'ativos' ? true : currentSituacao === 'excluidos' ? false : undefined,
+        sortBy: currentSortBy,
+        sortDir: currentSortDir
+      };
+    }
+
+    // ── Seleção e ações em massa ──────────────────────────────────────────
+    const selecionados = new Set();
+    let chaveFiltroSelecao = null;
+    let itensPagina = [];
+    let totalFiltro = 0;
+    const LIMITE_SELECAO = 2000; // mesmo limite do backend (ContatosEmMassaDto.MaxContatos)
+
+    function atualizarSelecao() {
+      document.querySelectorAll('.contato-check').forEach(cb => { cb.checked = selecionados.has(cb.value); });
+      const daPagina = itensPagina.filter(c => selecionados.has(c.id)).length;
+      const todos = document.getElementById('selectAllContatos');
+      todos.checked = itensPagina.length > 0 && daPagina === itensPagina.length;
+      todos.indeterminate = daPagina > 0 && daPagina < itensPagina.length;
+
+      const n = selecionados.size;
+      document.getElementById('bulkBar').style.display = n > 0 ? '' : 'none';
+      document.getElementById('bulkInfo').textContent = n === 1 ? '1 contato selecionado' : `${n} contatos selecionados`;
+
+      const linkTodos = document.getElementById('bulkSelecionarTodos');
+      const podeSelecionarMais = todos.checked && n < Math.min(totalFiltro, LIMITE_SELECAO);
+      linkTodos.style.display = podeSelecionarMais ? '' : 'none';
+      linkTodos.textContent = totalFiltro > LIMITE_SELECAO
+        ? `Selecionar os primeiros ${LIMITE_SELECAO} de ${totalFiltro}`
+        : `Selecionar todos os ${totalFiltro} contatos do filtro`;
+
+      document.getElementById('bulkExcluir').style.display = currentSituacao === 'excluidos' ? 'none' : '';
+      document.getElementById('bulkRestaurar').style.display = currentSituacao === 'ativos' ? 'none' : '';
+    }
+
+    function onCheckContato(e) {
+      if (!e.target.classList.contains('contato-check')) return;
+      if (e.target.checked) selecionados.add(e.target.value);
+      else selecionados.delete(e.target.value);
+      atualizarSelecao();
+    }
+    document.getElementById('tableBody').addEventListener('change', onCheckContato);
+    document.getElementById('contatosCardsContainer').addEventListener('change', onCheckContato);
+    // O card inteiro abre o perfil: o clique no checkbox não pode chegar até ele.
+    document.getElementById('contatosCardsContainer').addEventListener('click', (e) => {
+      if (e.target.classList.contains('contato-check')) e.stopPropagation();
+    }, true);
+
+    document.getElementById('selectAllContatos').addEventListener('change', (e) => {
+      itensPagina.forEach(c => e.target.checked ? selecionados.add(c.id) : selecionados.delete(c.id));
+      atualizarSelecao();
+    });
+
+    document.getElementById('bulkSelecionarTodos').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      try {
+        (await getContatoIds(filtroAtual())).forEach(id => selecionados.add(id));
+        atualizarSelecao();
+      } catch (err) { showAlert(err.message); }
+      finally { btn.disabled = false; }
+    });
+
+    document.getElementById('bulkLimpar').addEventListener('click', () => {
+      selecionados.clear();
+      atualizarSelecao();
+    });
+
+    function plural(n) { return n === 1 ? '1 contato' : `${n} contatos`; }
+
+    async function executarEmMassa(btn, acao, mensagem) {
+      btn.disabled = true;
+      try {
+        const { alterados } = await acao([...selecionados]);
+        selecionados.clear();
+        showAlert(mensagem(alterados), 'success');
+        await loadContatos();
+      } catch (err) { showAlert(err.message); }
+      finally { btn.disabled = false; }
+    }
+
+    document.getElementById('bulkExcluir').addEventListener('click', (e) => {
+      const n = selecionados.size;
+      if (!confirm(`Excluir ${plural(n)}?\n\nEles deixam de aparecer na lista. Para ver ou restaurar, use o filtro "Só excluídos".`)) return;
+      executarEmMassa(e.currentTarget, excluirContatosEmMassa, a => `${plural(a)} excluído(s).`);
+    });
+
+    document.getElementById('bulkRestaurar').addEventListener('click', (e) => {
+      executarEmMassa(e.currentTarget, restaurarContatosEmMassa, a => `${plural(a)} restaurado(s).`);
+    });
+
+    const modalTagsEmMassa = document.getElementById('modalTagsEmMassa');
+    function fecharTagsEmMassa() { modalTagsEmMassa.classList.remove('open'); }
+    document.getElementById('tagsEmMassaClose').addEventListener('click', fecharTagsEmMassa);
+    document.getElementById('tagsEmMassaCancel').addEventListener('click', fecharTagsEmMassa);
+
+    document.getElementById('bulkTags').addEventListener('click', async () => {
+      document.getElementById('tagsEmMassaInfo').textContent = `As tags serão adicionadas a ${plural(selecionados.size)}.`;
+      document.getElementById('tagsEmMassaInput').value = '';
+      document.getElementById('tagsEmMassaAlert').style.display = 'none';
+      modalTagsEmMassa.classList.add('open');
+      document.getElementById('tagsEmMassaInput').focus();
+      try {
+        document.getElementById('tagsEmMassaSugestoes').innerHTML =
+          (await getContatoTags()).map(t => `<option value="${esc(t)}"></option>`).join('');
+      } catch { /* sem sugestões */ }
+    });
+
+    document.getElementById('tagsEmMassaForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tags = document.getElementById('tagsEmMassaInput').value.split(',').map(t => t.trim()).filter(Boolean);
+      const alertEl = document.getElementById('tagsEmMassaAlert');
+      if (!tags.length) {
+        alertEl.textContent = 'Informe ao menos uma tag.';
+        alertEl.style.display = 'block';
+        return;
+      }
+      const btn = document.getElementById('tagsEmMassaSalvar');
+      btn.disabled = true;
+      try {
+        const { alterados } = await adicionarTagsEmMassa([...selecionados], tags);
+        fecharTagsEmMassa();
+        selecionados.clear();
+        showAlert(`Tags adicionadas a ${plural(alterados)}.`, 'success');
+        loadTags();
+        await loadContatos();
+      } catch (err) {
+        alertEl.textContent = err.message;
+        alertEl.style.display = 'block';
+      } finally { btn.disabled = false; }
+    });
 
     async function loadTags() {
       try { filtTag.setOptions(await getContatoTags()); } catch { /* mantém as opções atuais */ }
@@ -699,7 +891,7 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
     function renderTable(items) {
       const tbody = document.getElementById('tableBody');
       if (!items.length) {
-        tbody.innerHTML = `<tr><td colspan="8">
+        tbody.innerHTML = `<tr><td colspan="9">
           <div class="empty-state">
             <div class="empty-state-icon">👥</div>
             <div class="empty-state-text">Nenhum contato encontrado</div>
@@ -708,8 +900,9 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         return;
       }
       tbody.innerHTML = items.map(c => `
-        <tr>
-          <td data-label="Nome"><strong><a href="${contatoPerfilUrl(c.id)}">${c.nome}</a></strong>${c.importadoAutomaticamente ? ' <span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}</td>
+        <tr class="${c.ativo ? '' : 'contato-excluido'}">
+          <td class="col-select" data-label="Selecionar"><input type="checkbox" class="contato-check" value="${c.id}" aria-label="Selecionar ${esc(c.nome)}"></td>
+          <td data-label="Nome"><strong><a href="${contatoPerfilUrl(c.id)}">${c.nome}</a></strong>${c.ativo ? '' : ' <span class="badge badge-red">Excluído</span>'}${c.importadoAutomaticamente ? ' <span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}</td>
           <td data-label="Tipo"><span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span></td>
           <td data-label="Categoria">${formatTipoContato(c.tipoContato)}</td>
           <td data-label="CPF/CNPJ">${c.cpfCnpj || '—'}</td>
@@ -732,13 +925,15 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         return;
       }
       grid.innerHTML = items.map(c => `
-        <div class="contato-card" onclick="window.location.href='${contatoPerfilUrl(c.id)}'">
+        <div class="contato-card${c.ativo ? '' : ' contato-excluido'}" onclick="window.location.href='${contatoPerfilUrl(c.id)}'">
           <div class="card-header">
-            <div class="card-name"><a href="${contatoPerfilUrl(c.id)}" onclick="event.stopPropagation()">${c.nome}</a></div>
+            <input type="checkbox" class="contato-check card-select" value="${c.id}" aria-label="Selecionar ${esc(c.nome)}">
+            <div class="card-name" style="flex:1"><a href="${contatoPerfilUrl(c.id)}" onclick="event.stopPropagation()">${c.nome}</a></div>
             <span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span>
           </div>
           <div class="card-badges">
             <span class="badge badge-gray">${formatTipoContato(c.tipoContato)}</span>
+            ${c.ativo ? '' : '<span class="badge badge-red">Excluído</span>'}
             ${c.importadoAutomaticamente ? '<span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}
             ${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join('')}
           </div>
@@ -779,7 +974,9 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
           <div onclick="openAgendarRetorno('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📅</span><span>Agendar retorno</span></div>
           <div onclick="openDocContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>📄</span><span>Docs</span></div>
           <div onclick="openPortal('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}','${(c.email||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>🔑</span><span>Portal</span></div>
-          <div onclick="removeContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)"><span>🗑️</span><span>Excluir</span></div>`;
+          ${c.ativo
+            ? `<div onclick="removeContato('${c.id}','${(c.nome||'').replace(/'/g, "\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px;color:var(--color-danger)"><span>🗑️</span><span>Excluir</span></div>`
+            : `<div onclick="restaurarContato('${c.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-radius:4px;display:flex;align-items:center;gap:8px"><span>↩️</span><span>Restaurar</span></div>`}`;
         document.body.appendChild(menu);
       });
     }
@@ -834,10 +1031,18 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
     };
 
     window.removeContato = async (id, nome) => {
-      if (!confirm(`Desativar contato "${nome}"?`)) return;
+      if (!confirm(`Excluir o contato "${nome}"?\n\nPara ver ou restaurar, use o filtro "Só excluídos".`)) return;
       try {
         await deleteContato(id);
-        showAlert('Contato desativado.', 'success');
+        showAlert('Contato excluído.', 'success');
+        loadContatos();
+      } catch (err) { showAlert(err.message); }
+    };
+
+    window.restaurarContato = async (id) => {
+      try {
+        await restaurarContatosEmMassa([id]);
+        showAlert('Contato restaurado.', 'success');
         loadContatos();
       } catch (err) { showAlert(err.message); }
     };
@@ -993,6 +1198,14 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       }
     });
     loadTags();
+
+    document.getElementById('filtSituacao').addEventListener('change', (e) => {
+      currentSituacao = VALID_SITUACAO.has(e.target.value) ? e.target.value : 'ativos';
+      currentPage = 1;
+      saveListState();
+      loadContatos();
+    });
+    document.getElementById('filtSituacao').value = currentSituacao;
 
     document.getElementById('filtOrigem').addEventListener('change', (e) => {
       currentOrigem = e.target.value || '';

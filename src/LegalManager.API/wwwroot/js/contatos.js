@@ -1,6 +1,6 @@
 import { apiFetch } from './api.js';
 
-export async function getContatos(filtro = {}) {
+function filtroParams(filtro) {
   const params = new URLSearchParams();
   if (filtro.busca) params.set('busca', filtro.busca);
   // tipoContato e tag aceitam um valor ou uma lista (contatos com qualquer um deles).
@@ -11,9 +11,33 @@ export async function getContatos(filtro = {}) {
   if (filtro.importadoAutomaticamente !== undefined) params.set('importadoAutomaticamente', filtro.importadoAutomaticamente);
   if (filtro.sortBy) params.set('sortBy', filtro.sortBy);
   if (filtro.sortDir) params.set('sortDir', filtro.sortDir);
+  return params;
+}
+
+export async function getContatos(filtro = {}) {
+  const params = filtroParams(filtro);
   params.set('page', filtro.page || 1);
   params.set('pageSize', filtro.pageSize || 20);
   return apiFetch(`/contatos?${params}`);
+}
+
+// ── Ações em massa ────────────────────────────────────────────────────────
+
+/** Ids de todos os contatos do filtro (até 2000), para "selecionar todos". */
+export async function getContatoIds(filtro = {}) {
+  return apiFetch(`/contatos/ids?${filtroParams(filtro)}`);
+}
+
+export async function excluirContatosEmMassa(ids) {
+  return apiFetch('/contatos/em-massa/excluir', { method: 'POST', body: JSON.stringify({ ids }) });
+}
+
+export async function restaurarContatosEmMassa(ids) {
+  return apiFetch('/contatos/em-massa/restaurar', { method: 'POST', body: JSON.stringify({ ids }) });
+}
+
+export async function adicionarTagsEmMassa(ids, tags) {
+  return apiFetch('/contatos/em-massa/tags', { method: 'POST', body: JSON.stringify({ ids, tags }) });
 }
 
 export async function getContato(id) {

@@ -805,4 +805,74 @@ public class ContatoServiceTests
         var itemFinanceiro = Assert.Single(perfil.Timeline, i => i.Tipo == "Financeiro");
         Assert.Null(itemFinanceiro.Link);
     }
+
+    // ── Ações em massa ─────────────────────────────────────────────────────
+
+    private static Contato NovoContato(Guid tenantId, string nome, bool ativo = true, params string[] tags)
+    {
+        var id = Guid.NewGuid();
+        return new Contato
+        {
+            Id = id, TenantId = tenantId, Nome = nome, TipoContato = TipoContato.Cliente, Ativo = ativo, CriadoEm = DateTime.UtcNow,
+            Tags = tags.Select(t => new ContatoTag { Id = Guid.NewGuid(), ContatoId = id, Tag = t }).ToList()
+        };
+    }
+
+    [Fact]
+    public async Task DefinirAtivoEmMassa_ExcluiSoDoProprioEscritorio_ERestaura()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var a = NovoContato(tenant.Id, "A");
+        var b = NovoContato(tenant.Id, "B");
+        var deOutro = NovoContato(Guid.NewGuid(), "Outro escritório");
+        ctx.Contatos.AddRange(a, b, deOutro);
+        await ctx.SaveChangesAsync();
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateHonorarioService(ctx));
+
+        var excluidos = await service.DefinirAtivoEmMassaAsync([a.Id, b.Id, deOutro.Id], ativo: false);
+
+        Assert.Equal(new[] { a.Id, b.Id }.OrderBy(x => x), excluidos.OrderBy(x => x));
+        Assert.True((await ctx.Contatos.FindAsync(deOutro.Id))!.Ativo);
+
+        var ativos = await service.GetAllAsync(new ContatoFiltroDto(null, null, null, null, Ativo: true));
+        Assert.Equal(0, ativos.Total);
+
+        var restaurados = await service.DefinirAtivoEmMassaAsync([a.Id], ativo: true);
+        Assert.Equal([a.Id], restaurados);
+        Assert.True((await ctx.Contatos.FindAsync(a.Id))!.Ativo);
+    }
+
+    [Fact]
+    public async Task AdicionarTagsEmMassa_MantemTagsExistentesSemDuplicar()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var a = NovoContato(tenant.Id, "A", tags: "vip");
+        var b = NovoContato(tenant.Id, "B", tags: ["Trabalhista", "vip"]);
+        ctx.Contatos.AddRange(a, b);
+        await ctx.SaveChangesAsync();
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateHonorarioService(ctx));
+
+        var alterados = await service.AdicionarTagsEmMassaAsync([a.Id, b.Id], [" trabalhista ", "", "VIP"]);
+
+        Assert.Equal(1, alterados); // só A ganhou tag; B já tinha as duas
+        ctx.ChangeTracker.Clear();
+        var tagsA = await ctx.ContatoTags.Where(t => t.ContatoId == a.Id).Select(t => t.Tag).OrderBy(t => t).ToListAsync();
+        Assert.Equal(["trabalhista", "vip"], tagsA);
+        Assert.Equal(2, await ctx.ContatoTags.CountAsync(t => t.ContatoId == b.Id));
+    }
+
+    [Fact]
+    public async Task GetIds_DevolveTodosDoFiltroSemPaginar()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        ctx.Contatos.AddRange(Enumerable.Range(1, 30).Select(i => NovoContato(tenant.Id, $"C{i:00}", ativo: i % 3 != 0)));
+        await ctx.SaveChangesAsync();
+        var service = new ContatoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateHonorarioService(ctx));
+
+        var ids = await service.GetIdsAsync(new ContatoFiltroDto(null, null, null, null, Ativo: false, PageSize: 5), limite: 2000);
+        Assert.Equal(10, ids.Count);
+
+        var limitados = await service.GetIdsAsync(new ContatoFiltroDto(null, null, null, null, null), limite: 7);
+        Assert.Equal(7, limitados.Count);
+    }
 }

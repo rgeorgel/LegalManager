@@ -110,10 +110,72 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
 
     public async Task<PagedResultDto<ContatoListItemDto>> GetAllAsync(ContatoFiltroDto filtro, CancellationToken ct = default)
     {
-        var query = _context.Contatos
+        var query = Filtrar(_context.Contatos.Include(c => c.Tags), filtro);
+
+        var total = await query.CountAsync(ct);
+        var items = await query
+            .ApplySort(filtro.SortBy, filtro.SortDir)
+            .Skip((filtro.Page - 1) * filtro.PageSize)
+            .Take(filtro.PageSize)
+            .ToListAsync(ct);
+
+        return new PagedResultDto<ContatoListItemDto>(
+            items.Select(MapToListItem),
+            total,
+            filtro.Page,
+            filtro.PageSize,
+            (int)Math.Ceiling((double)total / filtro.PageSize)
+        );
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetIdsAsync(ContatoFiltroDto filtro, int limite, CancellationToken ct = default) =>
+        await Filtrar(_context.Contatos, filtro)
+            .ApplySort(filtro.SortBy, filtro.SortDir)
+            .Select(c => c.Id)
+            .Take(limite)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Guid>> DefinirAtivoEmMassaAsync(IReadOnlyList<Guid> ids, bool ativo, CancellationToken ct = default)
+    {
+        var contatos = await _context.Contatos
+            .Where(c => c.TenantId == _tenantContext.TenantId && ids.Contains(c.Id) && c.Ativo != ativo)
+            .ToListAsync(ct);
+        foreach (var c in contatos)
+        {
+            c.Ativo = ativo;
+            c.AtualizadoEm = DateTime.UtcNow;
+        }
+        await _context.SaveChangesAsync(ct);
+        return contatos.Select(c => c.Id).ToList();
+    }
+
+    public async Task<int> AdicionarTagsEmMassaAsync(IReadOnlyList<Guid> ids, IReadOnlyList<string> tags, CancellationToken ct = default)
+    {
+        var novas = tags.Select(t => t.Trim()).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (novas.Count == 0) return 0;
+
+        var contatos = await _context.Contatos
             .Include(c => c.Tags)
-            .Where(c => c.TenantId == _tenantContext.TenantId)
-            .AsQueryable();
+            .Where(c => c.TenantId == _tenantContext.TenantId && ids.Contains(c.Id))
+            .ToListAsync(ct);
+
+        var alterados = 0;
+        foreach (var c in contatos)
+        {
+            var faltando = novas.Where(t => !c.Tags.Any(x => string.Equals(x.Tag, t, StringComparison.OrdinalIgnoreCase))).ToList();
+            if (faltando.Count == 0) continue;
+            // Explicitamente Added (ver UpdateAsync): com Id preenchido o EF as trataria como existentes.
+            _context.ContatoTags.AddRange(faltando.Select(t => new ContatoTag { Id = Guid.NewGuid(), ContatoId = c.Id, Tag = t }));
+            c.AtualizadoEm = DateTime.UtcNow;
+            alterados++;
+        }
+        await _context.SaveChangesAsync(ct);
+        return alterados;
+    }
+
+    private IQueryable<Contato> Filtrar(IQueryable<Contato> contatos, ContatoFiltroDto filtro)
+    {
+        var query = contatos.Where(c => c.TenantId == _tenantContext.TenantId);
 
         if (!string.IsNullOrWhiteSpace(filtro.Busca))
         {
@@ -143,20 +205,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         if (tags is { Count: > 0 })
             query = query.Where(c => c.Tags.Any(t => tags.Contains(t.Tag)));
 
-        var total = await query.CountAsync(ct);
-        var items = await query
-            .ApplySort(filtro.SortBy, filtro.SortDir)
-            .Skip((filtro.Page - 1) * filtro.PageSize)
-            .Take(filtro.PageSize)
-            .ToListAsync(ct);
-
-        return new PagedResultDto<ContatoListItemDto>(
-            items.Select(MapToListItem),
-            total,
-            filtro.Page,
-            filtro.PageSize,
-            (int)Math.Ceiling((double)total / filtro.PageSize)
-        );
+        return query;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)

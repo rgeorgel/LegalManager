@@ -40,6 +40,57 @@ public class ContatosController : ControllerBase
         [FromQuery] string? sortDir = null,
         CancellationToken ct = default)
     {
+        var filtro = MontarFiltro(busca, tipoContato, tipo, tag, ativo, importadoAutomaticamente, page, pageSize, sortBy, sortDir);
+        var result = await _service.GetAllAsync(filtro, ct);
+        return Ok(result);
+    }
+
+    /// <summary>Ids de todos os contatos do filtro — para "selecionar todos" nas ações em massa.</summary>
+    [HttpGet("ids")]
+    public async Task<ActionResult<IReadOnlyList<Guid>>> GetIds(
+        [FromQuery] string? busca,
+        [FromQuery] string[]? tipoContato,
+        [FromQuery] string? tipo,
+        [FromQuery] string[]? tag,
+        [FromQuery] bool? ativo,
+        [FromQuery] bool? importadoAutomaticamente,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null,
+        CancellationToken ct = default)
+    {
+        var filtro = MontarFiltro(busca, tipoContato, tipo, tag, ativo, importadoAutomaticamente, 1, 1, sortBy, sortDir);
+        return Ok(await _service.GetIdsAsync(filtro, ContatosEmMassaDto.MaxContatos, ct));
+    }
+
+    [HttpPost("em-massa/excluir")]
+    public Task<IActionResult> ExcluirEmMassa([FromBody] ContatosEmMassaDto dto, CancellationToken ct) =>
+        DefinirAtivoEmMassaAsync(dto, ativo: false, ct);
+
+    [HttpPost("em-massa/restaurar")]
+    public Task<IActionResult> RestaurarEmMassa([FromBody] ContatosEmMassaDto dto, CancellationToken ct) =>
+        DefinirAtivoEmMassaAsync(dto, ativo: true, ct);
+
+    [HttpPost("em-massa/tags")]
+    public async Task<IActionResult> AdicionarTagsEmMassa([FromBody] AdicionarTagsEmMassaDto dto, CancellationToken ct)
+    {
+        var alterados = await _service.AdicionarTagsEmMassaAsync(dto.Ids, dto.Tags, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Contato, null, null,
+            new { acao = "adicionar_tags_em_massa", dto.Ids, dto.Tags }, HttpContext.GetClientIpAddress()), ct);
+        return Ok(new { alterados });
+    }
+
+    private async Task<IActionResult> DefinirAtivoEmMassaAsync(ContatosEmMassaDto dto, bool ativo, CancellationToken ct)
+    {
+        var alterados = await _service.DefinirAtivoEmMassaAsync(dto.Ids, ativo, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(ativo ? AuditActions.Update : AuditActions.Delete, AuditEntities.Contato, null, null,
+            new { acao = ativo ? "restaurar_em_massa" : "excluir_em_massa", ids = alterados }, HttpContext.GetClientIpAddress()), ct);
+        return Ok(new { alterados = alterados.Count });
+    }
+
+    private static ContatoFiltroDto MontarFiltro(
+        string? busca, string[]? tipoContato, string? tipo, string[]? tag, bool? ativo, bool? importadoAutomaticamente,
+        int page, int pageSize, string? sortBy, string? sortDir)
+    {
         var allowedSortBy = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nome", "tipo", "tipoContato", "cpfCnpj", "email", "telefone" };
         var allowedSortDir = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "asc", "desc" };
 
@@ -49,7 +100,7 @@ public class ContatosController : ControllerBase
         var normalizedSortDir = sortDir?.Trim().ToLowerInvariant();
         if (normalizedSortDir != null && !allowedSortDir.Contains(normalizedSortDir)) normalizedSortDir = null;
 
-        var filtro = new ContatoFiltroDto(
+        return new ContatoFiltroDto(
             busca,
             tipoContato?
                 .Select(v => Enum.TryParse<Domain.Enums.TipoContato>(v, true, out var tc) ? tc : (Domain.Enums.TipoContato?)null)
@@ -58,9 +109,6 @@ public class ContatosController : ControllerBase
             tipo != null && Enum.TryParse<Domain.Enums.TipoPessoa>(tipo, true, out var tp) ? tp : null,
             tag, ativo, importadoAutomaticamente, page, pageSize,
             normalizedSortBy, normalizedSortDir);
-
-        var result = await _service.GetAllAsync(filtro, ct);
-        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
