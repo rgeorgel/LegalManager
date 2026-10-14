@@ -437,6 +437,7 @@ public class SuperAdminController(
     /// Timeline do tenant (página de detalhes no superadmin). Pagina por dia de Brasília:
     /// passe em <paramref name="antes"/> o <c>proximoAntes</c> da página anterior.
     /// <paramref name="categorias"/> é uma lista separada por vírgula (vazio = todas).
+    /// <paramref name="acessosSuperAdmin"/> inclui os "entrar como" do superadmin (ocultos por padrão).
     /// </summary>
     [HttpGet("tenants/{id:guid}/timeline")]
     public async Task<IActionResult> GetTimeline(
@@ -444,14 +445,15 @@ public class SuperAdminController(
         [FromServices] TenantTimelineService timeline,
         [FromQuery] DateOnly? antes,
         [FromQuery] string? categorias,
-        CancellationToken ct)
+        CancellationToken ct,
+        [FromQuery] bool acessosSuperAdmin = false)
     {
         if (id == SystemTenantId) return NotFound();
         var filtro = string.IsNullOrWhiteSpace(categorias)
             ? null
             : categorias.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Where(TenantTimelineService.Categorias.Contains).ToHashSet();
-        var pagina = await timeline.ObterAsync(id, antes, filtro, ct);
+        var pagina = await timeline.ObterAsync(id, antes, filtro, ct, acessosSuperAdmin);
         return pagina is null ? NotFound() : Ok(pagina);
     }
 

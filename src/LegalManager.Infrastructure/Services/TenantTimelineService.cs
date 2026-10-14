@@ -35,7 +35,10 @@ public sealed class TenantTimelineService(AppDbContext db)
          TimelineAcoes.AssinaturaEncerrada, TimelineAcoes.PlanoExpirado];
     private static readonly string[] AcoesSuperAdmin =
         [TimelineAcoes.PlanoAlterado, TimelineAcoes.StatusAlterado, TimelineAcoes.TrialPlusConcedido,
-         "EXPORT", "IMPORT", AuditActions.ImpersonationStart];
+         "EXPORT", "IMPORT"];
+    // "Entrar como" do superadmin: só aparece quando pedido (incluirAcessosSuperAdmin), para
+    // não misturar o suporte com o uso real do escritório.
+    private static readonly string[] AcoesSuperAdminComAcessos = [.. AcoesSuperAdmin, AuditActions.ImpersonationStart];
     private static readonly string[] AcoesConfiguracao =
         [TimelineAcoes.TemaAlterado, TimelineAcoes.LogoAlterado, TimelineAcoes.LogoRemovido, TimelineAcoes.FusoAlterado];
 
@@ -85,7 +88,8 @@ public sealed class TenantTimelineService(AppDbContext db)
     // ── API pública ─────────────────────────────────────────────────────────
 
     public async Task<TimelinePaginaDto?> ObterAsync(
-        Guid tenantId, DateOnly? antes, IReadOnlyCollection<string>? categorias, CancellationToken ct)
+        Guid tenantId, DateOnly? antes, IReadOnlyCollection<string>? categorias, CancellationToken ct,
+        bool incluirAcessosSuperAdmin = false)
     {
         var tenant = await db.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tenantId, ct);
         if (tenant is null) return null;
@@ -95,7 +99,8 @@ public sealed class TenantTimelineService(AppDbContext db)
 
         if (Quer("conta")) await ContaAsync(c, tenant, ct);
         if (Quer("assinatura")) await AssinaturaAsync(c, ct);
-        if (Quer("superadmin")) await AuditoriaAsync(c, "superadmin", AcoesSuperAdmin, ct);
+        if (Quer("superadmin"))
+            await AuditoriaAsync(c, "superadmin", incluirAcessosSuperAdmin ? AcoesSuperAdminComAcessos : AcoesSuperAdmin, ct);
         if (Quer("configuracoes")) await ConfiguracoesAsync(c, ct);
         if (Quer("oab")) await OabAsync(c, ct);
         if (Quer("processos")) await ProcessosAsync(c, ct);

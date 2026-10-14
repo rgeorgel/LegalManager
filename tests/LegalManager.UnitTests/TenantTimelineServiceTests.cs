@@ -157,6 +157,30 @@ public class TenantTimelineServiceTests
     }
 
     [Fact]
+    public async Task Timeline_OcultaEntrarComoDoSuperAdminPorPadrao()
+    {
+        using var db = CreateContext();
+        var t0 = new DateTime(2026, 9, 1, 15, 0, 0, DateTimeKind.Utc);
+        var (tenant, admin) = Seed(db, t0);
+        var acesso = AuditExtensions.NovoAuditLog(tenant.Id, Guid.NewGuid(), AuditActions.ImpersonationStart, AuditEntities.Usuario,
+            admin.Id.ToString(), null, new { UsuarioAlvo = "ana@teste.com" });
+        acesso.CriadoEm = t0.AddDays(1);
+        var plano = AuditExtensions.NovoAuditLog(tenant.Id, null, TimelineAcoes.PlanoAlterado, "Tenant", tenant.Id.ToString(),
+            new { Plano = "Pro" }, new { Plano = "Max" });
+        plano.CriadoEm = t0.AddDays(2);
+        db.AuditLogs.AddRange(acesso, plano);
+        await db.SaveChangesAsync();
+        var service = new TenantTimelineService(db);
+
+        var padrao = await service.ObterAsync(tenant.Id, null, ["superadmin"], CancellationToken.None);
+        Assert.Equal([TimelineAcoes.PlanoAlterado], padrao!.Eventos.Select(e => e.Tipo));
+
+        var comAcessos = await service.ObterAsync(tenant.Id, null, ["superadmin"], CancellationToken.None, incluirAcessosSuperAdmin: true);
+        Assert.Equal([TimelineAcoes.PlanoAlterado, AuditActions.ImpersonationStart], comAcessos!.Eventos.Select(e => e.Tipo));
+        Assert.Equal("Superadmin entrou como ana@teste.com", comAcessos.Eventos[1].Titulo);
+    }
+
+    [Fact]
     public async Task Timeline_AgrupaLoginsPorDiaComOsEmails()
     {
         using var db = CreateContext();

@@ -42,7 +42,8 @@
     .tab-btn .tab-count { font-size: 11px; color: var(--color-text-muted); margin-left: 4px; }
 
     /* Timeline */
-    .tl-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tl-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tl-opcoes { font-size: 12px; color: var(--color-text-muted); margin-bottom: 18px; display: flex; align-items: center; gap: 6px; cursor: pointer; width: fit-content; }
     .tl-chip { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); border-radius: 100px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
     .tl-chip:hover { background: var(--color-bg); }
     .tl-chip.ativo { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
@@ -128,6 +129,7 @@
 
         <section class="tab-content" id="tab-timeline">
           <div class="tl-filtros" id="tlFiltros"></div>
+          <label class="tl-opcoes"><input type="checkbox" id="tlAcessosSuperAdmin"> Mostrar acessos do superadmin ("entrar como")</label>
           <div id="tlEventos"></div>
           <div class="tl-rodape" id="tlRodape"></div>
         </section>
@@ -361,6 +363,15 @@
       if (Array.isArray(salvo)) filtro = new Set(salvo.filter(c => c in CATEGORIAS));
     } catch { /* storage indisponível: todas as categorias */ }
 
+    // "Entrar como" do superadmin fica oculto por padrão.
+    const ACESSOS_SA_STORAGE_KEY = 'superadmin.tenant.timeline.acessosSuperAdmin';
+    const acessosSaCheck = document.getElementById('tlAcessosSuperAdmin');
+    try { acessosSaCheck.checked = localStorage.getItem(ACESSOS_SA_STORAGE_KEY) === '1'; } catch { /* padrão: oculto */ }
+    acessosSaCheck.addEventListener('change', () => {
+      try { localStorage.setItem(ACESSOS_SA_STORAGE_KEY, acessosSaCheck.checked ? '1' : '0'); } catch { /* vale só nesta visita */ }
+      recarregarTimeline();
+    });
+
     let proximoAntes = null;
     let carregandoTimeline = false;
     let ultimoDiaRenderizado = null;
@@ -500,6 +511,7 @@
         const params = new URLSearchParams();
         if (proximoAntes) params.set('antes', proximoAntes);
         if (filtro.size) params.set('categorias', [...filtro].join(','));
+        if (acessosSaCheck.checked) params.set('acessosSuperAdmin', 'true');
         const pagina = await saFetch(`/superadmin/tenants/${tenantId}/timeline?${params}`);
         if (req !== requisicaoAtual) return; // filtro mudou durante a requisição
         renderEventos(pagina.eventos);
