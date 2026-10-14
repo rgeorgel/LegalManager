@@ -55,9 +55,17 @@
     .uso-linha + .uso-linha { margin-top: 6px; }
     .uso-linha-topo { display: flex; justify-content: space-between; gap: 8px; color: var(--color-text-muted); }
     .uso-linha-topo strong { color: var(--color-text); font-weight: 500; font-variant-numeric: tabular-nums; }
-    .ativ-linha { font-size: 11px; line-height: 1.3; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-    .ativ-linha + .ativ-linha { margin-top: 5px; }
-    .ativ-linha > .ativ-label { color: var(--color-text-muted); min-width: 58px; }
+    /* Atividade em grade (rótulo | número | badges): as colunas se alinham entre as linhas. */
+    .ativ-grid { display: grid; grid-template-columns: auto auto auto; gap: 5px 8px; align-items: center; font-size: 11px; line-height: 1.3; }
+    .ativ-linha { display: contents; }
+    .ativ-linha > .ativ-label { color: var(--color-text-muted); }
+    .ativ-linha > strong { text-align: right; font-variant-numeric: tabular-nums; }
+    .ativ-badges { display: flex; gap: 3px; }
+    .t-nome-linha { display: flex; align-items: center; gap: 4px; }
+    .t-nome-linha > a { min-width: 0; }
+    .t-nome-linha .mascotes-inline { flex-shrink: 0; }
+    .t-plano { margin-top: 8px; }
+    .t-plano .badges-col { flex-direction: row; flex-wrap: wrap; align-items: center; }
     .datas-linha { font-size: 11px; line-height: 1.35; color: var(--color-text-muted); white-space: nowrap; }
     .datas-linha + .datas-linha { margin-top: 5px; }
     .datas-linha strong { color: var(--color-text); font-weight: 500; }
@@ -164,7 +172,6 @@
           <thead>
             <tr>
               <th class="sortable" data-sort="nome">Escritório<span class="sort-indicator" data-indicator="nome"></span></th>
-              <th>Plano / Status</th>
               <th title="Uso dos limites do plano">Uso do plano</th>
               <th>Atividade</th>
               <th title="Tema personalizado, adoção dos módulos de honorários/contratos, calculadora de prazos e calculadora de honorários, e mascotes do assistente">Recursos</th>
@@ -197,7 +204,7 @@
     import { saFetch } from '/superadmin/js/superAdminApi.js';
     import { initTenantAcoes, showToast } from '/superadmin/js/tenantAcoes.js';
     import {
-      fmtDate, fmtDateTime, fmtBytes, fmtMb, pctBar, daysAgo, countdownBadge, recursosCell, planoHtml
+      fmtDate, fmtDateTime, fmtBytes, fmtMb, pctBar, daysAgo, countdownBadge, recursosCell, planoHtml, mascotesInline
     } from '/superadmin/js/tenantFormat.js';
 
     initAdminLayout();
@@ -266,20 +273,29 @@
           `Storage: ${fmtBytes(t.documentoTamanhoBytes)} de ${fmtMb(t.armazenamentoLimiteMB)} permitidos`);
     }
     function atividadeHtml(t) {
-      return `<div class="ativ-linha" title="${t.processoCount} processos · monitoramento diário ${t.monitoradoDiarioCount} · semanal ${t.monitoradoSemanalCount}">
-          <span class="ativ-label">Processos</span><strong>${t.processoCount}</strong>
-          <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
-          <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+      // Linhas com display:contents (as células entram direto na grade), então o title fica nos badges.
+      return `<div class="ativ-grid">
+          <div class="ativ-linha">
+            <span class="ativ-label">Processos</span><strong>${t.processoCount}</strong>
+            <span class="ativ-badges" title="Monitoramento diário ${t.monitoradoDiarioCount} · semanal ${t.monitoradoSemanalCount} (Escavador)">
+              <span class="badge badge-red">D ${t.monitoradoDiarioCount}</span>
+              <span class="badge badge-blue">S ${t.monitoradoSemanalCount}</span>
+            </span>
+          </div>
+          <div class="ativ-linha">
+            <span class="ativ-label">Docs</span><strong>${t.documentoCount}</strong><span></span>
+          </div>
+          <div class="ativ-linha">
+            <span class="ativ-label">Tarefas</span><strong>${t.tarefaCount}</strong>
+            <span class="ativ-badges" title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
+              <span class="badge badge-amber">P ${t.tarefaPendenteCount}</span>
+              <span class="badge badge-blue">A ${t.tarefaEmAndamentoCount}</span>
+              <span class="badge badge-green">C ${t.tarefaConcluidaCount}</span>
+              <span class="badge badge-red">X ${t.tarefaPerdidaCount}</span>
+            </span>
+          </div>
         </div>
-        <div class="ativ-linha"><span class="ativ-label">Docs</span><strong>${t.documentoCount}</strong></div>
-        <div class="ativ-linha" title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
-          <span class="ativ-label">Tarefas</span><strong>${t.tarefaCount}</strong>
-          <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
-          <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
-          <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
-          <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
-        </div>
-        ${t.oabComErroSync > 0 ? `<div class="ativ-linha"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB com erro</span></div>` : ''}`;
+        ${t.oabComErroSync > 0 ? `<div style="margin-top:5px"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB com erro</span></div>` : ''}`;
     }
     function datasHtml(t) {
       const expira = t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano');
@@ -320,14 +336,14 @@
     function linhaTabela(t) {
       return `<tr>
         <td class="tenant-nome">
-          <a class="t-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>
+          <div class="t-nome-linha"><a class="t-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>${mascotesInline(t)}</div>
           <div class="t-sub">${esc(t.cnpj ?? 'sem CNPJ')}</div>
           <div class="t-sub">desde ${fmtDate(t.criadoEm)}</div>
+          <div class="t-plano">${planoHtml(t)}</div>
         </td>
-        <td>${planoHtml(t)}</td>
         <td>${usoHtml(t)}</td>
         <td>${atividadeHtml(t)}</td>
-        <td style="line-height:1.3">${recursosCell(t)}</td>
+        <td style="line-height:1.3">${recursosCell(t, { comMascotes: false })}</td>
         <td>${datasHtml(t)}</td>
         <td class="tenant-acoes">${acoesMenuHtml(t)}</td>
       </tr>`;
@@ -336,7 +352,7 @@
       return `<div class="tenant-card">
         <div class="tenant-card-head">
           <div style="min-width:0">
-            <a class="tenant-card-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>
+            <div class="t-nome-linha"><a class="tenant-card-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>${mascotesInline(t)}</div>
             <div class="tenant-card-sub">${esc(t.cnpj ?? 'sem CNPJ')} · desde ${fmtDate(t.criadoEm)}</div>
           </div>
           ${planoHtml(t)}
@@ -350,7 +366,7 @@
           ${atividadeHtml(t)}
         </div>
         <div class="tenant-card-secao tenant-card-2col">
-          <div><div class="tenant-card-secao-titulo">Recursos</div><div style="line-height:1.3">${recursosCell(t)}</div></div>
+          <div><div class="tenant-card-secao-titulo">Recursos</div><div style="line-height:1.3">${recursosCell(t, { comMascotes: false })}</div></div>
           <div><div class="tenant-card-secao-titulo">Acesso / Expira</div>${datasHtml(t)}</div>
         </div>
         <div class="tenant-card-acoes">${acoesBotoesHtml(t)}</div>

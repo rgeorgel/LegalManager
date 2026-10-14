@@ -129,19 +129,28 @@ export function mascotesDetalhado(t) {
     .sort((a, b) => b[1] - a[1])
     .map(([id, n]) => `<span class="mascote-uso">${mascoteMini(id)}${n > 1 ? `×${n}` : ''}</span>`).join('')}</div>`;
 }
-export function recursosCell(t) {
+// Mascotes lado a lado, sem margem — para ficar ao lado do nome do escritório.
+export function mascotesInline(t) {
+  const usos = t.mascotes ?? [];
+  if (!usos.length) return '';
+  return `<span class="mascotes-inline" title="Mascote do assistente escolhido pelos usuários">
+    ${usos.map(u => `<span class="mascote-uso">${mascoteMini(u.mascote)}${u.usuarios > 1 ? `×${u.usuarios}` : ''}</span>`).join('')}
+  </span>`;
+}
+/** @param {{ comMascotes?: boolean }} opcoes comMascotes=false quando o mascote já aparece ao lado do nome. */
+export function recursosCell(t, { comMascotes = true } = {}) {
   const tema = t.temaCustomizado
     ? '<span class="badge badge-blue" title="Tema personalizado (cores/layout/CSS) configurado por este tenant">🎨 tema custom</span>'
     : '<span class="badge badge-gray" title="Usando o tema padrão do Causify">🎨 tema padrão</span>';
   const usoBadge = (count, icon, label) =>
     `<span class="badge badge-${count > 0 ? 'green' : 'gray'}" title="${label}: ${count}">${icon} ${count}</span>`;
   return `<div>${tema}</div>
-    <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
+    <div class="badges-row" style="margin-top:3px">
       ${usoBadge(t.honorarioContratosCount, '📄', 'Contratos de honorário cadastrados')}
       ${usoBadge(t.calculadoraPrazosCount, '⏱', 'Cálculos na calculadora de prazos')}
       ${usoBadge(t.calculadoraHonorariosCount, '🧮', 'Cálculos salvos na calculadora de honorários')}
     </div>
-    ${mascotesCell(t)}`;
+    ${comMascotes ? mascotesCell(t) : ''}`;
 }
 // Versão explicada da mesma informação de recursosCell() — usada só no modal de detalhes,
 // que tem espaço de sobra pra descrever o que cada indicador significa (a tabela precisa
