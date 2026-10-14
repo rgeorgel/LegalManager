@@ -54,6 +54,9 @@ public class SuperAdminController(
             || !string.IsNullOrWhiteSpace(t.CustomCss);
     }
 
+    private Guid? SuperAdminId() =>
+        Guid.TryParse(User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
     [HttpGet("metrics")]
     public async Task<IActionResult> GetMetrics(CancellationToken ct)
     {
@@ -111,6 +114,9 @@ public class SuperAdminController(
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var query = db.Tenants
             .Where(t => t.Id != SystemTenantId)
             .AsQueryable();
@@ -427,6 +433,42 @@ public class SuperAdminController(
         return Ok(dto);
     }
 
+    /// <summary>
+    /// Timeline do tenant (página de detalhes no superadmin). Pagina por dia de Brasília:
+    /// passe em <paramref name="antes"/> o <c>proximoAntes</c> da página anterior.
+    /// <paramref name="categorias"/> é uma lista separada por vírgula (vazio = todas).
+    /// </summary>
+    [HttpGet("tenants/{id:guid}/timeline")]
+    public async Task<IActionResult> GetTimeline(
+        Guid id,
+        [FromServices] TenantTimelineService timeline,
+        [FromQuery] DateOnly? antes,
+        [FromQuery] string? categorias,
+        CancellationToken ct)
+    {
+        if (id == SystemTenantId) return NotFound();
+        var filtro = string.IsNullOrWhiteSpace(categorias)
+            ? null
+            : categorias.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(TenantTimelineService.Categorias.Contains).ToHashSet();
+        var pagina = await timeline.ObterAsync(id, antes, filtro, ct);
+        return pagina is null ? NotFound() : Ok(pagina);
+    }
+
+    /// <summary>
+    /// Refaz um cálculo da calculadora de prazos com os parâmetros gravados e a regra de
+    /// feriados atual — mostra se o resultado mudaria hoje.
+    /// </summary>
+    [HttpGet("tenants/{id:guid}/calculos-prazo/{calculoId:guid}/recalcular")]
+    public async Task<IActionResult> RecalcularPrazo(
+        Guid id, Guid calculoId, [FromServices] TenantTimelineService timeline, CancellationToken ct)
+    {
+        var resultado = await timeline.RecalcularPrazoAsync(id, calculoId, ct);
+        return resultado is null
+            ? NotFound(new { message = "Cálculo não encontrado ou registrado antes de os parâmetros serem gravados." })
+            : Ok(resultado);
+    }
+
     [HttpPut("tenants/{id:guid}/plano")]
     public async Task<IActionResult> UpdatePlano(Guid id, [FromBody] UpdateTenantPlanoDto dto, CancellationToken ct)
     {
@@ -436,8 +478,13 @@ public class SuperAdminController(
         if (!Enum.TryParse<PlanoTipo>(dto.Plano, true, out var plano))
             return BadRequest(new { message = "Plano inválido." });
 
+        var anterior = new { Plano = tenant.Plano.ToString(), tenant.PeriodoBilling };
         tenant.Plano = plano;
         tenant.PeriodoBilling = dto.PeriodoBilling;
+        await audit.LogAsync(new AuditLogEntry(
+            tenant.Id, SuperAdminId(), TimelineAcoes.PlanoAlterado, "Tenant", tenant.Id.ToString(),
+            anterior, new { Plano = plano.ToString(), dto.PeriodoBilling },
+            HttpContext.GetClientIpAddress()), ct);
         await db.SaveChangesAsync(ct);
 
         return NoContent();
@@ -452,7 +499,12 @@ public class SuperAdminController(
         if (!Enum.TryParse<StatusTenant>(dto.Status, true, out var status))
             return BadRequest(new { message = "Status inválido." });
 
+        var statusAnterior = tenant.Status;
         tenant.Status = status;
+        await audit.LogAsync(new AuditLogEntry(
+            tenant.Id, SuperAdminId(), TimelineAcoes.StatusAlterado, "Tenant", tenant.Id.ToString(),
+            new { Status = statusAnterior.ToString() }, new { Status = status.ToString() },
+            HttpContext.GetClientIpAddress()), ct);
         await db.SaveChangesAsync(ct);
 
         return NoContent();
@@ -496,7 +548,7 @@ public class SuperAdminController(
         tenant.BillingCycleStart = null;
 
         await audit.LogAsync(new AuditLogEntry(
-            tenant.Id, adminGuid, "trial-plus-concedido", "Tenant",
+            tenant.Id, adminGuid, TimelineAcoes.TrialPlusConcedido, "Tenant",
             tenant.Id.ToString(),
             new { PlanoAnterior = planoAnterior.ToString(), StatusAnterior = statusAnterior.ToString() },
             new { Dias = dto.Dias, TrialExpiraEm = tenant.TrialExpiraEm, Motivo = motivo },

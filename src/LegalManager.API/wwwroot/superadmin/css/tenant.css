@@ -1,0 +1,54 @@
+/* Estilos compartilhados entre a listagem de tenants (tenants.html) e a página de um tenant
+   (tenant-detalhe.html): badges, botões de ação, modais de ação e blocos de uso. */
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
+.badge-green { background: #dcfce7; color: #15803d; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-red { background: #fee2e2; color: #b91c1c; }
+.badge-gray { background: #f3f4f6; color: #4b5563; }
+.action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); }
+.action-btn:hover { background: var(--color-bg); }
+.action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--color-surface); border-radius: 10px; padding: 24px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.detail-section { margin-bottom: 16px; }
+.detail-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.detail-label { color: var(--color-text-muted); min-width: 120px; }
+.users-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
+.users-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
+.users-list-row:last-child { border-bottom: none; }
+.usage-bar { position: relative; height: 4px; background: #e5e7eb; border-radius: 100px; overflow: hidden; margin-top: 3px; }
+.usage-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #22c55e; transition: width .2s; }
+.usage-bar-fill.amber { background: #f59e0b; }
+.usage-bar-fill.red { background: #ef4444; }
+.oabs-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
+.oabs-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
+.oabs-list-row:last-child { border-bottom: none; }
+.oabs-list-row.has-error { background: #fef2f2; }
+.health-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+.detail-stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px; text-align: center; }
+.health-section-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+.health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
+.health-bar-label { min-width: 110px; color: var(--color-text-muted); }
+.health-bar-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
+.health-bar-fill { height: 100%; background: #22c55e; }
+.health-bar-fill.amber { background: #f59e0b; }
+.health-bar-fill.red { background: #ef4444; }
+.health-bar-value { min-width: 90px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.recurso-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--color-border); }
+.recurso-row:last-child { border-bottom: none; }
+.recurso-row-icon { font-size: 16px; line-height: 1.4; }
+.recurso-row-titulo { font-size: 12px; font-weight: 600; color: var(--color-text); }
+.recurso-row-desc { font-size: 11px; color: var(--color-text-muted); margin-top: 1px; line-height: 1.4; }
+.recurso-row-valor { flex-shrink: 0; text-align: right; }
+.badges-col { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.badges-row { display: flex; gap: 3px; flex-wrap: wrap; }
+/* Mascote do assistente (js/mascotes.js). Sem o CSS do assistente as pálpebras ficariam
+   fechadas: aqui elas só somem (olhos abertos). */
+.mascote-mini { display: inline-block; width: 22px; height: 22px; vertical-align: middle; flex-shrink: 0; color: var(--color-text); }
+.mascote-mini .asx-palpebras { display: none; }
+.mascote-uso { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-text-muted); }
+.badge-yellow { background: #fef3c7; color: #92400e; }

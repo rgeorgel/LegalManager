@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <!-- Microsoft Clarity — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x099iggkqu");
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Tenant</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/superadmin/css/tenant.css">
+  <style>
+    .main-content { min-width: 0; }
+    .voltar-link { font-size: 13px; color: var(--color-text-muted); text-decoration: none; }
+    .voltar-link:hover { color: var(--color-text); }
+    .tenant-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin: 8px 0 20px; }
+    .tenant-header h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; word-break: break-word; }
+    .tenant-header-sub { font-size: 13px; color: var(--color-text-muted); display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+    .tenant-header-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tab-nav { overflow-x: auto; margin-bottom: 20px; }
+    .tab-btn .tab-count { font-size: 11px; color: var(--color-text-muted); margin-left: 4px; }
+
+    /* Timeline */
+    .tl-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+    .tl-chip { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); border-radius: 100px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+    .tl-chip:hover { background: var(--color-bg); }
+    .tl-chip.ativo { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+    .tl-dia { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); margin: 22px 0 8px; }
+    .tl-dia:first-child { margin-top: 0; }
+    .tl-lista { position: relative; border-left: 2px solid var(--color-border); margin-left: 15px; }
+    .tl-item { position: relative; padding: 0 0 12px 24px; }
+    .tl-icone { position: absolute; left: -16px; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--color-surface); border: 2px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .tl-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 9px 12px; }
+    .tl-card.expansivel { cursor: pointer; }
+    .tl-card.expansivel:hover { border-color: var(--color-text-muted); }
+    .tl-topo { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .tl-titulo { font-size: 13px; font-weight: 600; color: var(--color-text); flex: 1; min-width: 180px; word-break: break-word; }
+    .tl-hora { font-size: 11px; color: var(--color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tl-desc { font-size: 12px; color: var(--color-text-muted); margin-top: 3px; word-break: break-word; }
+    .tl-meta { font-size: 11px; color: var(--color-text-muted); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tl-seta { font-size: 11px; color: var(--color-text-muted); }
+    .tl-seta::after { content: '▸ detalhes'; }
+    .tl-item.aberto .tl-seta::after { content: '▾ fechar'; }
+    .tl-corpo { display: none; margin-top: 10px; border-top: 1px dashed var(--color-border); padding-top: 10px; cursor: default; }
+    .tl-item.aberto .tl-corpo { display: block; }
+    .tl-kv { display: grid; grid-template-columns: minmax(110px, max-content) 1fr; gap: 4px 12px; font-size: 12px; }
+    .tl-kv dt { color: var(--color-text-muted); }
+    .tl-kv dd { margin: 0; color: var(--color-text); word-break: break-word; min-width: 0; }
+    .tl-kv pre, .tl-sub pre { margin: 0; font-size: 11px; background: var(--color-bg); border-radius: 6px; padding: 8px; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    .tl-subs { margin-top: 10px; border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; }
+    .tl-sub { padding: 7px 10px; border-bottom: 1px solid var(--color-border); font-size: 12px; }
+    .tl-sub:last-child { border-bottom: none; }
+    .tl-sub-topo { display: flex; gap: 8px; align-items: baseline; }
+    .tl-sub-titulo { flex: 1; min-width: 0; color: var(--color-text); word-break: break-word; }
+    .tl-sub details { margin-top: 4px; }
+    .tl-sub summary { font-size: 11px; color: var(--color-text-muted); cursor: pointer; }
+    .tl-sub-mais { padding: 7px 10px; font-size: 11px; color: var(--color-text-muted); background: var(--color-bg); }
+    .tl-recalculo { margin-top: 10px; border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.5; }
+    .tl-recalculo.igual { background: #dcfce7; color: #14532d; }
+    .tl-recalculo.diferente { background: #fef3c7; color: #78350f; }
+    .tl-recalculo.erro { background: #fee2e2; color: #7f1d1d; }
+    .tl-rodape { text-align: center; margin: 18px 0 8px; }
+    .tl-vazio { text-align: center; color: var(--color-text-muted); padding: 32px 12px; font-size: 13px; }
+    @media (max-width: 600px) {
+      .tl-kv { grid-template-columns: 1fr; }
+      .tl-kv dt { margin-top: 6px; }
+      .detail-stats { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <a href="/superadmin/tenants.html" class="voltar-link">← Tenants</a>
+
+      <div id="carregando" style="color:var(--color-text-muted);padding:24px 0">Carregando...</div>
+      <div id="erro" style="display:none;color:var(--color-danger);padding:24px 0"></div>
+
+      <div id="conteudo" style="display:none">
+        <div class="tenant-header">
+          <div style="min-width:0">
+            <h1 id="tenantNome"></h1>
+            <div id="tenantBadges" class="badges-row"></div>
+            <div id="tenantSub" class="tenant-header-sub"></div>
+          </div>
+          <div id="tenantAcoes" class="tenant-header-acoes"></div>
+        </div>
+
+        <div class="tab-nav" role="tablist">
+          <button type="button" class="tab-btn" data-tab="timeline" role="tab">Timeline</button>
+          <button type="button" class="tab-btn" data-tab="resumo" role="tab">Resumo</button>
+          <button type="button" class="tab-btn" data-tab="usuarios" role="tab">Usuários<span class="tab-count" id="countUsuarios"></span></button>
+          <button type="button" class="tab-btn" data-tab="oabs" role="tab">OABs<span class="tab-count" id="countOabs"></span></button>
+        </div>
+
+        <section class="tab-content" id="tab-timeline">
+          <div class="tl-filtros" id="tlFiltros"></div>
+          <div id="tlEventos"></div>
+          <div class="tl-rodape" id="tlRodape"></div>
+        </section>
+        <section class="tab-content" id="tab-resumo"></section>
+        <section class="tab-content" id="tab-usuarios"></section>
+        <section class="tab-content" id="tab-oabs"></section>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
+    import { initTenantAcoes } from '/superadmin/js/tenantAcoes.js';
+    import {
+      PLAN_COLORS, STATUS_COLORS, fmtDate, fmtDateTime, fmtBytes, fmtMb, pctColor, daysAgo, daysUntil,
+      countdownBadge, paymentBadge, codigoPromoDetalhe, mascoteMini, recursosDetalhado
+    } from '/superadmin/js/tenantFormat.js';
+
+    initAdminLayout();
+    window.impersonarUsuario = impersonarUsuario;
+
+    const tenantId = new URLSearchParams(location.search).get('id');
+    let tenant = null;
+
+    initTenantAcoes({
+      onAlterado: () => { carregarTenant(); recarregarTimeline(); },
+      onExcluido: () => { location.href = '/superadmin/tenants.html'; },
+    });
+
+    const aspas = s => esc(s).replace(/'/g, "\\'");
+
+    // ── Abas (lembradas no hash: #timeline, #resumo…) ──
+    const ABAS = ['timeline', 'resumo', 'usuarios', 'oabs'];
+    function abrirAba(aba) {
+      if (!ABAS.includes(aba)) aba = 'timeline';
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const ativa = b.dataset.tab === aba;
+        b.classList.toggle('active', ativa);
+        b.setAttribute('aria-selected', ativa ? 'true' : 'false');
+      });
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === `tab-${aba}`));
+      if (location.hash !== `#${aba}`) history.replaceState(null, '', `#${aba}`);
+    }
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => abrirAba(b.dataset.tab)));
+    window.addEventListener('hashchange', () => abrirAba(location.hash.slice(1)));
+
+    // ── Dados do tenant (cabeçalho, resumo, usuários, OABs) ──
+    async function carregarTenant() {
+      try {
+        const [t, trialInfo] = await Promise.all([
+          saFetch(`/superadmin/tenants/${tenantId}`),
+          saFetch(`/superadmin/tenants/${tenantId}/trial-info`).catch(() => null),
+        ]);
+        tenant = t;
+        document.title = `Causify — ${t.nome}`;
+        renderCabecalho(t);
+        document.getElementById('tab-resumo').innerHTML = resumoHtml(t, trialInfo);
+        document.getElementById('tab-usuarios').innerHTML = usuariosHtml(t);
+        document.getElementById('tab-oabs').innerHTML = oabsHtml(t);
+        document.getElementById('countUsuarios').textContent = t.usuarios.length;
+        document.getElementById('countOabs').textContent = (t.oabs ?? []).length;
+        document.getElementById('carregando').style.display = 'none';
+        document.getElementById('conteudo').style.display = '';
+      } catch (e) {
+        document.getElementById('carregando').style.display = 'none';
+        const erro = document.getElementById('erro');
+        erro.textContent = `Não foi possível carregar o tenant: ${e.message}`;
+        erro.style.display = '';
+      }
+    }
+
+    function renderCabecalho(t) {
+      document.getElementById('tenantNome').textContent = t.nome;
+      document.getElementById('tenantBadges').innerHTML = `
+        <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
+        <span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span>
+        ${paymentBadge(t)}`;
+      document.getElementById('tenantSub').innerHTML = `
+        <span>${esc(t.cnpj ?? 'sem CNPJ')}</span>
+        <span>Cadastro em ${fmtDate(t.criadoEm)}</span>
+        <span title="${fmtDateTime(t.ultimoAcessoEm)}">Último acesso ${daysAgo(t.ultimoAcessoEm)}</span>`;
+      const nome = aspas(t.nome);
+      document.getElementById('tenantAcoes').innerHTML = `
+        <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
+        <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
+        <button class="action-btn" onclick="openExportModal('${t.id}','${nome}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
+        <button class="action-btn danger" onclick="openImportModal('${t.id}','${nome}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
+        <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${nome}')" title="Excluir este tenant e todos os seus dados permanentemente">Excluir</button>`;
+    }
+
+    function resumoHtml(t, trialInfo) {
+      const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
+      const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
+      const storagePct = t.armazenamentoLimiteMB > 0 ? ((t.documentoTamanhoBytes || 0) / 1048576 / t.armazenamentoLimiteMB) * 100 : 0;
+      const healthBar = (label, valor, pct) => `<div class="health-bar">
+          <span class="health-bar-label">${label}</span>
+          <div class="health-bar-track"><div class="health-bar-fill ${pctColor(pct)}" style="width:${Math.min(100, pct).toFixed(0)}%"></div></div>
+          <span class="health-bar-value">${valor}</span>
+        </div>`;
+      const statTitulo = 'font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em';
+
+      let trialHtml = '';
+      if (trialInfo?.trialConcedido) {
+        const dias = trialInfo.expiraEm ? daysUntil(trialInfo.expiraEm) : null;
+        const badgeDias = dias === null ? '' : dias < 0
+          ? `<span class="badge badge-red">expirado há ${-dias}d</span>`
+          : `<span class="badge badge-${dias <= 7 ? 'amber' : 'green'}">expira em ${dias}d</span>`;
+        trialHtml = `<div class="health-section">
+            <div class="health-section-title">🎁 Trial Plus concedido pelo superadmin</div>
+            <div style="font-size:13px;line-height:1.6">
+              <span class="badge badge-blue">${trialInfo.dias} dias</span> ${badgeDias}
+              <div><strong>Concedido em:</strong> ${fmtDate(trialInfo.concedidoEm)}${trialInfo.concedidoPorNome ? ` por <strong>${esc(trialInfo.concedidoPorNome)}</strong>` : ''}</div>
+              <div><strong>Expira em:</strong> ${fmtDate(trialInfo.expiraEm)}</div>
+              ${trialInfo.motivo ? `<div><strong>Motivo:</strong> ${esc(trialInfo.motivo)}</div>` : ''}
+            </div>
+          </div>`;
+      }
+
+      return `
+        <div class="health-section detail-section">
+          <div class="detail-row"><span class="detail-label">Endereço</span><span>${esc(t.endereco ?? '—')}</span></div>
+          <div class="detail-row"><span class="detail-label">Período</span><span>${esc(t.periodoBilling ?? '—')}</span></div>
+          <div class="detail-row"><span class="detail-label">Trial expira</span><span>${fmtDate(t.trialExpiraEm)} ${countdownBadge(t.trialExpiraEm, 'Trial')}</span></div>
+          <div class="detail-row"><span class="detail-label">Plano expira</span><span>${fmtDate(t.planoExpiraEm)} ${countdownBadge(t.planoExpiraEm, 'Plano')}</span></div>
+          <div class="detail-row"><span class="detail-label">Código promocional</span><span>${codigoPromoDetalhe(t)}</span></div>
+          <div class="detail-row"><span class="detail-label">Stripe Subscription</span><span style="font-size:11px;font-family:monospace;word-break:break-all">${esc(t.stripeSubscriptionId ?? '—')}</span></div>
+          ${t.abacatePayBillingId ? `<div class="detail-row"><span class="detail-label">AbacatePay (legado)</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId)}</span></div>` : ''}
+        </div>
+
+        ${trialHtml}
+
+        <div class="detail-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+          <div class="detail-stat-card">
+            <div style="${statTitulo}">Processos</div>
+            <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
+            <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.monitoradoCount} monitorados</div>
+            <div class="badges-row" style="justify-content:center;margin-top:4px">
+              <span class="badge badge-red" title="Diário">D ${t.monitoradoDiarioCount}</span>
+              <span class="badge badge-blue" title="Semanal">S ${t.monitoradoSemanalCount}</span>
+            </div>
+          </div>
+          <div class="detail-stat-card">
+            <div style="${statTitulo}">Docs</div>
+            <div style="font-size:22px;font-weight:700;margin-top:4px">${t.documentoCount}</div>
+            <div style="font-size:11px;color:var(--color-text-muted);margin-top:1px">${fmtBytes(t.documentoTamanhoBytes)}</div>
+          </div>
+          <div class="detail-stat-card">
+            <div style="${statTitulo}">Tarefas</div>
+            <div style="font-size:22px;font-weight:700;margin-top:4px">${t.tarefaCount}</div>
+            <div class="badges-row" style="justify-content:center;margin-top:4px">
+              <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
+              <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
+              <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
+              <span class="badge badge-red" title="Perdida">X ${t.tarefaPerdidaCount}</span>
+            </div>
+          </div>
+          <div class="detail-stat-card">
+            <div style="${statTitulo}">Usuários</div>
+            <div style="font-size:22px;font-weight:700;margin-top:4px">${t.userCount}</div>
+          </div>
+        </div>
+
+        <div class="health-section">
+          <div class="health-section-title">Saúde · uso do plano</div>
+          ${healthBar('Usuários', `${t.userCount} / ${t.usuariosLimite}`, usuariosPct)}
+          ${healthBar('Monitorados', `${t.monitoradoCount} / ${t.monitoradosLimite}`, monitoradosPct)}
+          ${healthBar('Storage', `${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}`, storagePct)}
+          <div style="margin-top:8px;font-size:12px;color:var(--color-text-muted)">
+            Publicações capturadas no mês: <strong>${t.publicacoesMesAtual}</strong>
+            ${t.oabComErroSync > 0 ? ` · <span style="color:#b91c1c"><strong>${t.oabComErroSync}</strong> OAB(s) com erro de sync</span>` : ''}
+          </div>
+        </div>
+
+        <div class="health-section">
+          <div class="health-section-title">Recursos · tema e uso de módulos</div>
+          ${recursosDetalhado(t)}
+        </div>`;
+    }
+
+    function usuariosHtml(t) {
+      if (!t.usuarios.length) return '<div class="tl-vazio">Sem usuários.</div>';
+      return `<div class="users-list">${t.usuarios.map(u => `
+        <div class="users-list-row" style="flex-wrap:wrap">
+          ${u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin' ? mascoteMini(u.assistenteMascote) : ''}
+          <span style="flex:1;min-width:140px;font-weight:500">${esc(u.nome)}</span>
+          <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
+          <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${fmtDateTime(u.ultimoAcessoEm)} (${daysAgo(u.ultimoAcessoEm)})</span>
+          <span class="badge badge-${u.ativo ? 'green' : 'gray'}">${u.perfil}</span>
+          ${u.ativo && u.perfil !== 'SuperAdmin'
+            ? `<button class="action-btn" onclick="impersonarUsuario('${u.id}','${aspas(u.nome)}')">Entrar como</button>`
+            : ''}
+        </div>`).join('')}</div>`;
+    }
+
+    function oabsHtml(t) {
+      const oabs = t.oabs ?? [];
+      if (!oabs.length) return '<div class="tl-vazio">Nenhuma OAB cadastrada.</div>';
+      return `<div class="oabs-list">${oabs.map(o => `
+        <div class="oabs-list-row ${o.syncError ? 'has-error' : ''}" style="flex-wrap:wrap">
+          <span style="font-weight:600;min-width:60px">${esc(o.uf)}/${esc(o.numero)}</span>
+          <span style="flex:1;min-width:120px">${esc(o.nome)}</span>
+          <span class="badge badge-${o.ativo ? 'blue' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span>
+          <span class="badge badge-${o.sincronizada ? 'green' : 'amber'}" title="${o.sincronizada ? 'Sincronizada com Escavador' : 'Sem ID no Escavador'}">${o.sincronizada ? '✓ sync' : 'pendente'}</span>
+          ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
+        </div>`).join('')}</div>`;
+    }
+
+    // ── Timeline ──
+    const CATEGORIAS = {
+      conta:         { label: 'Conta', icone: '👤' },
+      assinatura:    { label: 'Assinatura', icone: '💳' },
+      superadmin:    { label: 'Superadmin', icone: '🛡️' },
+      configuracoes: { label: 'Configurações', icone: '⚙️' },
+      oab:           { label: 'OAB', icone: '🪪' },
+      processos:     { label: 'Processos', icone: '⚖️' },
+      tarefas:       { label: 'Tarefas', icone: '✅' },
+      agenda:        { label: 'Agenda', icone: '📅' },
+      contatos:      { label: 'Contatos', icone: '📇' },
+      documentos:    { label: 'Documentos', icone: '📄' },
+      financeiro:    { label: 'Financeiro', icone: '💰' },
+      calculadoras:  { label: 'Calculadoras', icone: '🧮' },
+      ia:            { label: 'IA', icone: '✨' },
+      integracoes:   { label: 'Integrações', icone: '🔌' },
+    };
+    const FILTRO_STORAGE_KEY = 'superadmin.tenant.timeline.categorias';
+    let filtro = new Set();
+    try {
+      const salvo = JSON.parse(localStorage.getItem(FILTRO_STORAGE_KEY) || '[]');
+      if (Array.isArray(salvo)) filtro = new Set(salvo.filter(c => c in CATEGORIAS));
+    } catch { /* storage indisponível: todas as categorias */ }
+
+    let proximoAntes = null;
+    let carregandoTimeline = false;
+    let ultimoDiaRenderizado = null;
+    let requisicaoAtual = 0;
+    const eventosPorId = new Map();
+
+    const TZ = 'America/Sao_Paulo';
+    const diaChave = iso => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+    const hora = iso => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+    function rotuloDia(chave) {
+      const hoje = diaChave(new Date().toISOString());
+      const ontem = diaChave(new Date(Date.now() - 86400000).toISOString());
+      if (chave === hoje) return 'Hoje';
+      if (chave === ontem) return 'Ontem';
+      const [a, m, d] = chave.split('-').map(Number);
+      return new Date(Date.UTC(a, m - 1, d, 12)).toLocaleDateString('pt-BR', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function renderFiltros() {
+      const chips = [`<button type="button" class="tl-chip${filtro.size === 0 ? ' ativo' : ''}" data-cat="">Tudo</button>`]
+        .concat(Object.entries(CATEGORIAS).map(([id, c]) =>
+          `<button type="button" class="tl-chip${filtro.has(id) ? ' ativo' : ''}" data-cat="${id}">${c.icone} ${c.label}</button>`));
+      document.getElementById('tlFiltros').innerHTML = chips.join('');
+    }
+    document.getElementById('tlFiltros').addEventListener('click', e => {
+      const chip = e.target.closest('.tl-chip');
+      if (!chip) return;
+      const cat = chip.dataset.cat;
+      if (!cat) filtro.clear();
+      else if (filtro.has(cat)) filtro.delete(cat);
+      else filtro.add(cat);
+      try { localStorage.setItem(FILTRO_STORAGE_KEY, JSON.stringify([...filtro])); } catch { /* vale só nesta visita */ }
+      renderFiltros();
+      recarregarTimeline();
+    });
+
+    // Valores de "detalhes": datas ISO viram dd/mm/aaaa, objetos/listas viram JSON formatado.
+    function fmtValor(v) {
+      if (v === true) return 'Sim';
+      if (v === false) return 'Não';
+      if (typeof v === 'number') return v.toLocaleString('pt-BR');
+      if (typeof v === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v.split('-').reverse().join('/');
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) {
+          // Carimbos do servidor são UTC; sem fuso explícito, assume UTC.
+          const d = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(v) ? v : `${v}Z`);
+          return isNaN(d) ? esc(v) : d.toLocaleString('pt-BR', { timeZone: TZ, dateStyle: 'short', timeStyle: 'short' });
+        }
+        return esc(v);
+      }
+      return `<pre>${esc(JSON.stringify(v, null, 2))}</pre>`;
+    }
+    function kvHtml(detalhes) {
+      const entradas = Object.entries(detalhes ?? {}).filter(([k]) => k !== 'calculoPrazoId');
+      if (!entradas.length) return '';
+      return `<dl class="tl-kv">${entradas.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${fmtValor(v)}</dd>`).join('')}</dl>`;
+    }
+
+    function subitensHtml(ev) {
+      if (!ev.itens?.length) return '';
+      const resto = ev.quantidade - ev.itens.length;
+      return `<div class="tl-subs">${ev.itens.map(s => `
+          <div class="tl-sub">
+            <div class="tl-sub-topo">
+              <span class="tl-hora">${hora(s.data)}</span>
+              <span class="tl-sub-titulo">${esc(s.titulo)}</span>
+              ${s.usuarioNome ? `<span class="tl-hora">${esc(s.usuarioNome)}</span>` : ''}
+            </div>
+            ${s.descricao ? `<div class="tl-desc">${esc(s.descricao)}</div>` : ''}
+            ${s.detalhes ? `<details><summary>detalhes</summary>${kvHtml(s.detalhes)}</details>` : ''}
+          </div>`).join('')}
+          ${resto > 0 ? `<div class="tl-sub-mais">e mais ${resto.toLocaleString('pt-BR')} não exibido(s)</div>` : ''}
+        </div>`;
+    }
+
+    function eventoHtml(ev) {
+      const cat = CATEGORIAS[ev.categoria] ?? { label: ev.categoria, icone: '•' };
+      const calculoId = ev.detalhes?.calculoPrazoId;
+      const corpo = kvHtml(ev.detalhes) + subitensHtml(ev)
+        + (calculoId ? `<div style="margin-top:10px"><button type="button" class="action-btn" data-recalcular="${calculoId}">↻ Recalcular hoje</button><div data-recalculo="${calculoId}"></div></div>` : '');
+      return `<div class="tl-item" data-id="${esc(ev.id)}">
+          <div class="tl-icone" title="${cat.label}">${cat.icone}</div>
+          <div class="tl-card${corpo ? ' expansivel' : ''}">
+            <div class="tl-topo">
+              <span class="tl-titulo">${esc(ev.titulo)}</span>
+              <span class="tl-hora">${hora(ev.data)}</span>
+            </div>
+            ${ev.descricao ? `<div class="tl-desc">${esc(ev.descricao)}</div>` : ''}
+            <div class="tl-meta">
+              <span>${cat.label}</span>
+              ${ev.usuarioNome ? `<span>· ${esc(ev.usuarioNome)}</span>` : ''}
+              ${corpo ? '<span class="tl-seta"></span>' : ''}
+            </div>
+            ${corpo ? `<div class="tl-corpo">${corpo}</div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function renderEventos(eventos) {
+      const alvo = document.getElementById('tlEventos');
+      let html = '';
+      const listas = alvo.querySelectorAll('.tl-lista');
+      let lista = listas[listas.length - 1];
+      for (const ev of eventos) {
+        eventosPorId.set(ev.id, ev);
+        const dia = diaChave(ev.data);
+        if (dia !== ultimoDiaRenderizado) {
+          if (html) { lista.insertAdjacentHTML('beforeend', html); html = ''; }
+          alvo.insertAdjacentHTML('beforeend', `<div class="tl-dia">${rotuloDia(dia)}</div><div class="tl-lista"></div>`);
+          lista = alvo.lastElementChild;
+          ultimoDiaRenderizado = dia;
+        }
+        html += eventoHtml(ev);
+      }
+      if (html) lista.insertAdjacentHTML('beforeend', html);
+    }
+
+    function renderRodape(temMais) {
+      const rodape = document.getElementById('tlRodape');
+      if (!document.querySelector('#tlEventos .tl-item')) {
+        rodape.innerHTML = '<div class="tl-vazio">Nenhum evento registrado para os filtros escolhidos.</div>';
+        return;
+      }
+      rodape.innerHTML = temMais
+        ? '<button type="button" class="btn" id="tlMais">Carregar mais</button>'
+        : '<span style="font-size:12px;color:var(--color-text-muted)">Início da história deste tenant.</span>';
+      document.getElementById('tlMais')?.addEventListener('click', carregarTimeline);
+    }
+
+    async function carregarTimeline() {
+      if (carregandoTimeline) return;
+      carregandoTimeline = true;
+      const req = requisicaoAtual;
+      const rodape = document.getElementById('tlRodape');
+      rodape.innerHTML = '<span style="font-size:13px;color:var(--color-text-muted)">Carregando...</span>';
+      try {
+        const params = new URLSearchParams();
+        if (proximoAntes) params.set('antes', proximoAntes);
+        if (filtro.size) params.set('categorias', [...filtro].join(','));
+        const pagina = await saFetch(`/superadmin/tenants/${tenantId}/timeline?${params}`);
+        if (req !== requisicaoAtual) return; // filtro mudou durante a requisição
+        renderEventos(pagina.eventos);
+        proximoAntes = pagina.proximoAntes;
+        renderRodape(pagina.temMais);
+      } catch (e) {
+        if (req === requisicaoAtual)
+          rodape.innerHTML = `<div style="color:var(--color-danger);font-size:13px">Erro ao carregar a timeline: ${esc(e.message)}</div>`;
+      } finally {
+        carregandoTimeline = false;
+      }
+    }
+
+    function recarregarTimeline() {
+      requisicaoAtual++;
+      carregandoTimeline = false;
+      proximoAntes = null;
+      ultimoDiaRenderizado = null;
+      eventosPorId.clear();
+      document.getElementById('tlEventos').innerHTML = '';
+      carregarTimeline();
+    }
+
+    document.getElementById('tlEventos').addEventListener('click', async e => {
+      const botao = e.target.closest('[data-recalcular]');
+      if (botao) {
+        e.stopPropagation();
+        await recalcular(botao);
+        return;
+      }
+      // Clique dentro do conteúdo aberto (texto, <details>, JSON) não fecha o card.
+      if (e.target.closest('.tl-corpo')) return;
+      const card = e.target.closest('.tl-card.expansivel');
+      if (card) card.parentElement.classList.toggle('aberto');
+    });
+
+    async function recalcular(botao) {
+      const id = botao.dataset.recalcular;
+      const alvo = document.querySelector(`[data-recalculo="${id}"]`);
+      botao.disabled = true;
+      try {
+        const r = await saFetch(`/superadmin/tenants/${tenantId}/calculos-prazo/${id}/recalcular`);
+        const data = iso => iso ? iso.slice(0, 10).split('-').reverse().join('/') : '—';
+        alvo.className = `tl-recalculo ${r.igual ? 'igual' : 'diferente'}`;
+        alvo.innerHTML = `
+          <strong>${r.igual ? '✓ Mesmo resultado hoje' : '⚠ O resultado mudaria hoje'}</strong>
+          <div>Data final registrada: <strong>${data(r.dataFinalOriginal)}</strong> · recalculada agora: <strong>${data(r.dataFinalRecalculada)}</strong></div>
+          <div>Feriados no intervalo: ${r.feriadosNoIntervalo.length ? r.feriadosNoIntervalo.map(esc).join(', ') : 'nenhum'}</div>`;
+      } catch (e) {
+        alvo.className = 'tl-recalculo erro';
+        alvo.textContent = `Não foi possível recalcular: ${e.message}`;
+      } finally {
+        botao.disabled = false;
+      }
+    }
+
+    if (!tenantId) {
+      document.getElementById('carregando').style.display = 'none';
+      const erro = document.getElementById('erro');
+      erro.textContent = 'Tenant não informado.';
+      erro.style.display = '';
+    } else {
+      abrirAba(location.hash.slice(1));
+      renderFiltros();
+      carregarTenant();
+      carregarTimeline();
+    }
+  </script>
+</body>
+</html>

@@ -315,6 +315,12 @@ public class AssinaturaController(
             return BadRequest(new { message = "Não foi possível processar o upgrade. Tente novamente em instantes." });
         }
 
+        context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+            tenant.Id, tenantContext.UserId, TimelineAcoes.AssinaturaAlterada, TimelineAcoes.EntidadeAssinatura,
+            atualizado.SubscriptionId,
+            new { Plano = tenant.Plano.ToString(), tenant.PeriodoBilling },
+            new { Plano = planoAlvo.ToString(), PeriodoBilling = dto.Periodo, ValorCobrado = atualizado.ValorCobradoImediato }));
+
         tenant.Plano = planoAlvo;
         tenant.Status = StatusTenant.Ativo;
         tenant.PlanoExpiraEm = null;
@@ -369,6 +375,12 @@ public class AssinaturaController(
         expiraEm ??= tenant.PeriodoBilling == "Anual"
             ? DateTime.UtcNow.AddYears(1).Date
             : DateTime.UtcNow.AddMonths(1).Date;
+
+        context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+            tenant.Id, tenantContext.UserId, TimelineAcoes.AssinaturaCancelada, TimelineAcoes.EntidadeAssinatura,
+            tenant.StripeSubscriptionId,
+            new { Plano = tenant.Plano.ToString(), Status = tenant.Status.ToString(), tenant.PeriodoBilling },
+            new { PlanoExpiraEm = expiraEm }));
 
         tenant.Status = StatusTenant.Cancelado;
         tenant.PlanoExpiraEm = expiraEm;
@@ -518,6 +530,7 @@ public class WebhookController(
 
         var plano = session.Metadata.GetValueOrDefault("plano");
         var periodo = session.Metadata.GetValueOrDefault("periodo") ?? tenant.PeriodoBilling ?? "Mensal";
+        var anterior = new { Plano = tenant.Plano.ToString(), Status = tenant.Status.ToString() };
 
         tenant.Plano = plano switch { "Plus" => PlanoTipo.Plus, "Max" => PlanoTipo.Max, _ => PlanoTipo.Pro };
         tenant.Status = StatusTenant.Ativo;
@@ -546,6 +559,16 @@ public class WebhookController(
             DataCriacao = DateTime.UtcNow,
             Descricao = $"Assinatura {tenant.Plano} {periodo}"
         });
+        context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+            tenant.Id, null, TimelineAcoes.AssinaturaIniciada, TimelineAcoes.EntidadeAssinatura,
+            session.SubscriptionId, anterior,
+            new
+            {
+                Plano = tenant.Plano.ToString(),
+                Periodo = periodo,
+                Valor = (session.AmountTotal ?? 0) / 100m,
+                CodigoPromocional = session.Metadata.GetValueOrDefault("codigoPromocional")
+            }));
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Plano {Plano} ativado via webhook Stripe para tenant {TenantId}", tenant.Plano, tenant.Id);
@@ -622,6 +645,12 @@ public class WebhookController(
 
         var tenant = await context.Tenants.FirstOrDefaultAsync(t => t.StripeSubscriptionId == subscription.Id, ct);
         if (tenant is null) return;
+
+        context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+            tenant.Id, null, TimelineAcoes.AssinaturaEncerrada, TimelineAcoes.EntidadeAssinatura,
+            subscription.Id,
+            new { Plano = tenant.Plano.ToString(), Status = tenant.Status.ToString() },
+            new { Motivo = subscription.CancellationDetails?.Reason }));
 
         tenant.Status = StatusTenant.Cancelado;
         tenant.PlanoExpiraEm ??= DateTime.UtcNow;

@@ -60,7 +60,9 @@ function injectSidebarNav() {
   const navEl = document.querySelector('.sidebar-nav');
   if (!navEl) return;
 
-  const current = window.location.pathname;
+  // Subpáginas sem item próprio no menu destacam a página-mãe.
+  const PAGINA_MAE = { '/superadmin/tenant-detalhe.html': '/superadmin/tenants.html' };
+  const current = PAGINA_MAE[window.location.pathname] ?? window.location.pathname;
 
   let collapsedGroups = {};
   try { collapsedGroups = JSON.parse(localStorage.getItem('saCollapsed') || '{}'); } catch {}

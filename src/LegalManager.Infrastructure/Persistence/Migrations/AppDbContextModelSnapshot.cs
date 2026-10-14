@@ -333,8 +333,23 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DataFinal")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FeriadosAdicionaisJson")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("QuantidadeDias")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("TipoCalculo")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uuid");

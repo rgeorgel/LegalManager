@@ -2,6 +2,7 @@ using LegalManager.Application.DTOs.Tenants;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,6 +36,7 @@ public class TenantsThemeController : ControllerBase
     [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<TenantThemeDto>> UpdateTheme(
         [FromBody] UpdateTenantThemeDto dto,
+        [FromServices] IAuditService audit,
         CancellationToken ct)
     {
         if (!dto.HasAnyChange)
@@ -45,6 +47,11 @@ public class TenantsThemeController : ControllerBase
             return StatusCode(403, new { message = "Personalização de tema disponível a partir do plano Plus." });
 
         var theme = await _service.UpdateThemeAsync(_tenantContext.TenantId, dto, ct);
+        // CSS customizado pode ter até 20 mil caracteres: na timeline basta saber o tamanho.
+        await audit.LogAsync(_tenantContext.CreateEntry(
+            TimelineAcoes.TemaAlterado, AuditEntities.Configuracao, _tenantContext.TenantId, null,
+            new { dto.PrimaryColor, dto.SidebarColor, dto.AccentColor, dto.LayoutMode, CustomCssCaracteres = dto.CustomCss?.Length },
+            HttpContext.GetClientIpAddress()), ct);
         return Ok(theme);
     }
 
@@ -53,6 +60,7 @@ public class TenantsThemeController : ControllerBase
     public async Task<IActionResult> UploadLogo(
         [FromBody] UploadLogoDto dto,
         [FromServices] IStorageService storage,
+        [FromServices] IAuditService audit,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.Base64) || string.IsNullOrWhiteSpace(dto.ContentType))
@@ -113,18 +121,25 @@ public class TenantsThemeController : ControllerBase
             try { await storage.DeleteAsync(oldObjectKey, ct); } catch { /* best-effort cleanup */ }
         }
 
+        await audit.LogAsync(_tenantContext.CreateEntry(
+            TimelineAcoes.LogoAlterado, AuditEntities.Configuracao, tenant.Id, null,
+            new { dto.ContentType, TamanhoBytes = bytes.Length }, HttpContext.GetClientIpAddress()), ct);
+
         return Ok(new { logoUrl });
     }
 
     [HttpDelete("current/logo")]
     [Authorize(Roles = "Admin,SuperAdmin")]
-    public async Task<IActionResult> RemoveLogo(CancellationToken ct)
+    public async Task<IActionResult> RemoveLogo([FromServices] IAuditService audit, CancellationToken ct)
     {
         var permite = await _service.PermitePersonalizacaoAsync(_tenantContext.Plano, ct);
         if (!permite)
             return StatusCode(403, new { message = "Personalização de tema disponível a partir do plano Plus." });
 
         await _service.RemoveLogoAsync(_tenantContext.TenantId, ct);
+        await audit.LogAsync(_tenantContext.CreateEntry(
+            TimelineAcoes.LogoRemovido, AuditEntities.Configuracao, _tenantContext.TenantId,
+            ipAddress: HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 }

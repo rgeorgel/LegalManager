@@ -74,6 +74,8 @@ public class ConfiguracoesController : ControllerBase
         if (dto.FusoHorario is not null && !FusosHorarios.EhValido(dto.FusoHorario))
             return BadRequest(new { message = "Fuso horário inválido." });
 
+        var fusoAnterior = tenant.FusoHorario ?? FusosHorarios.Padrao;
+
         tenant.Nome = dto.Nome;
         tenant.Cnpj = dto.Cnpj;
         tenant.Endereco = dto.Endereco;
@@ -85,6 +87,13 @@ public class ConfiguracoesController : ControllerBase
 
         await _context.SaveChangesAsync(ct);
         LegalManager.Infrastructure.FusoHorario.Invalidar(tenant.Id);
+
+        var fusoNovo = tenant.FusoHorario ?? FusosHorarios.Padrao;
+        if (fusoNovo != fusoAnterior)
+            await _audit.LogAsync(_tenantContext.CreateEntry(
+                TimelineAcoes.FusoAlterado, AuditEntities.Configuracao, tenant.Id,
+                new { FusoHorario = fusoAnterior }, new { FusoHorario = fusoNovo },
+                HttpContext.GetClientIpAddress()), ct);
         return NoContent();
     }
 

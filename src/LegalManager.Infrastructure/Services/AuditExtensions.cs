@@ -26,6 +26,25 @@ public static class AuditExtensions
         );
     }
 
+    /// <summary>
+    /// Registro de auditoria para adicionar ao mesmo SaveChanges da operação — para quem não
+    /// passa por IAuditService (webhooks sem usuário logado, AuthService).
+    /// </summary>
+    public static Domain.Entities.AuditLog NovoAuditLog(
+        Guid tenantId, Guid? usuarioId, string acao, string entidade, string? entidadeId,
+        object? dadosAnteriores = null, object? dadosNovos = null) => new()
+    {
+        Id = Guid.NewGuid(),
+        TenantId = tenantId,
+        UsuarioId = usuarioId,
+        Acao = acao,
+        Entidade = entidade,
+        EntidadeId = entidadeId,
+        DadosAnteriores = dadosAnteriores is null ? null : System.Text.Json.JsonSerializer.Serialize(dadosAnteriores),
+        DadosNovos = dadosNovos is null ? null : System.Text.Json.JsonSerializer.Serialize(dadosNovos),
+        CriadoEm = DateTime.UtcNow
+    };
+
     public static string GetClientIpAddress(this Microsoft.AspNetCore.Http.HttpContext? context)
     {
         if (context == null) return null;
@@ -36,6 +55,29 @@ public static class AuditExtensions
 
         return context.Connection.RemoteIpAddress?.ToString();
     }
+}
+
+/// <summary>
+/// Ações de auditoria que alimentam a timeline do tenant no superadmin
+/// (TenantTimelineService). Ficam em AuditLog como as demais.
+/// </summary>
+public static class TimelineAcoes
+{
+    public const string AssinaturaIniciada = "assinatura-iniciada";
+    public const string AssinaturaAlterada = "assinatura-alterada";
+    public const string AssinaturaCancelada = "assinatura-cancelada";
+    public const string AssinaturaEncerrada = "assinatura-encerrada";
+    public const string PlanoExpirado = "plano-expirado";
+    public const string PlanoAlterado = "plano-alterado";
+    public const string StatusAlterado = "status-alterado";
+    public const string TrialPlusConcedido = "trial-plus-concedido";
+    public const string TemaAlterado = "tema-alterado";
+    public const string LogoAlterado = "logo-alterado";
+    public const string LogoRemovido = "logo-removido";
+    public const string FusoAlterado = "fuso-alterado";
+    public const string MonitoramentoAlternado = "monitoramento-alternado";
+
+    public const string EntidadeAssinatura = "Assinatura";
 }
 
 public static class AuditActions

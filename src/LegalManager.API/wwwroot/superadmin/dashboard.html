@@ -170,7 +170,7 @@ import { esc } from '/js/utils.js';
           ? '<tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:16px">Nenhum cadastro</td></tr>'
           : m.recentSignups.map(t => `
             <tr>
-              <td><a href="/superadmin/tenants.html?id=${t.id}" style="color:var(--color-primary);text-decoration:none;font-weight:500">${esc(t.nome)}</a></td>
+              <td><a href="/superadmin/tenant-detalhe.html?id=${t.id}" style="color:var(--color-primary);text-decoration:none;font-weight:500">${esc(t.nome)}</a></td>
               <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
               <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
               <td style="color:var(--color-text-muted)">${fmtDate(t.criadoEm)}</td>

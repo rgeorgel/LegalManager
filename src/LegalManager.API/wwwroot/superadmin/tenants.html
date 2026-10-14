@@ -29,6 +29,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Tenants</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/superadmin/css/tenant.css">
   <style>
     .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
     .filters input, .filters select { padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); }
@@ -41,77 +42,69 @@
     .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background: var(--color-bg); }
-    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
-    .badge-green { background: #dcfce7; color: #15803d; }
-    .badge-amber { background: #fef3c7; color: #92400e; }
-    .badge-blue { background: #dbeafe; color: #1e40af; }
-    .badge-red { background: #fee2e2; color: #b91c1c; }
-    .badge-gray { background: #f3f4f6; color: #4b5563; }
-    .action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); }
-    .action-btn:hover { background: var(--color-bg); }
-    .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
-    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; }
-    .pagination button { padding: 5px 12px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-surface); cursor: pointer; }
-    .pagination button:disabled { opacity: .4; cursor: default; }
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: var(--color-surface); border-radius: 10px; padding: 24px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; }
-    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-    .detail-section { margin-bottom: 16px; }
-    .detail-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
-    .detail-label { color: var(--color-text-muted); min-width: 120px; }
-    .users-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
-    .users-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
-    .users-list-row:last-child { border-bottom: none; }
-    .usage-bar { position: relative; height: 4px; background: #e5e7eb; border-radius: 100px; overflow: hidden; margin-top: 3px; }
-    .usage-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #22c55e; transition: width .2s; }
-    .usage-bar-fill.amber { background: #f59e0b; }
-    .usage-bar-fill.red { background: #ef4444; }
-    .oabs-list { border: 1px solid var(--color-border); border-radius: 6px; overflow: hidden; font-size: 12px; }
-    .oabs-list-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--color-border); }
-    .oabs-list-row:last-child { border-bottom: none; }
-    .oabs-list-row.has-error { background: #fef2f2; }
-    .health-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
-    .detail-stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px; text-align: center; }
-    .health-section-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
-    .health-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; }
-    .health-bar-label { min-width: 110px; color: var(--color-text-muted); }
-    .health-bar-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
-    .health-bar-fill { height: 100%; background: #22c55e; }
-    .health-bar-fill.amber { background: #f59e0b; }
-    .health-bar-fill.red { background: #ef4444; }
-    .health-bar-value { min-width: 90px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
-    .recurso-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--color-border); }
-    .recurso-row:last-child { border-bottom: none; }
-    .recurso-row-icon { font-size: 16px; line-height: 1.4; }
-    .recurso-row-titulo { font-size: 12px; font-weight: 600; color: var(--color-text); }
-    .recurso-row-desc { font-size: 11px; color: var(--color-text-muted); margin-top: 1px; line-height: 1.4; }
-    .recurso-row-valor { flex-shrink: 0; text-align: right; }
-    .data-table td.tenant-acoes .acoes { display: flex; gap: 4px; flex-wrap: wrap; }
-    .data-table td.tenant-acoes { white-space: nowrap; }
+    /* A grade do layout usa 1fr (min-width auto): sem isto a tabela empurra a página para além da tela. */
+    .main-content { min-width: 0; }
+    .data-table th, .data-table td { vertical-align: top; }
+    .data-table td.tenant-nome { min-width: 160px; }
+    .data-table .t-nome { display: block; font-weight: 600; word-break: break-word; color: var(--color-text); text-decoration: none; }
+    .data-table .t-nome:hover, .tenant-card-nome:hover { color: var(--color-primary); text-decoration: underline; }
+    a.action-btn { display: inline-block; text-decoration: none; }
+    .data-table .t-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .data-table td.tenant-acoes { white-space: nowrap; width: 1%; }
+    .uso-linha { font-size: 11px; line-height: 1.3; min-width: 120px; }
+    .uso-linha + .uso-linha { margin-top: 6px; }
+    .uso-linha-topo { display: flex; justify-content: space-between; gap: 8px; color: var(--color-text-muted); }
+    .uso-linha-topo strong { color: var(--color-text); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .ativ-linha { font-size: 11px; line-height: 1.3; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .ativ-linha + .ativ-linha { margin-top: 5px; }
+    .ativ-linha > .ativ-label { color: var(--color-text-muted); min-width: 58px; }
+    .datas-linha { font-size: 11px; line-height: 1.35; color: var(--color-text-muted); white-space: nowrap; }
+    .datas-linha + .datas-linha { margin-top: 5px; }
+    .datas-linha strong { color: var(--color-text); font-weight: 500; }
+    /* Menu "⋯" das ações secundárias (tabela) */
+    .acoes { display: flex; gap: 4px; align-items: flex-start; }
+    .acoes-menu { position: relative; }
+    .acoes-menu > summary { list-style: none; }
+    .acoes-menu > summary::-webkit-details-marker { display: none; }
+    .acoes-menu-itens { position: fixed; z-index: 900; min-width: 150px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 4px; display: flex; flex-direction: column; }
+    .acoes-menu-itens button { background: none; border: none; text-align: left; padding: 7px 10px; font-size: 13px; border-radius: 5px; cursor: pointer; color: var(--color-text); }
+    .acoes-menu-itens button:hover { background: var(--color-bg); }
+    .acoes-menu-itens button.danger { color: #dc2626; }
+    .acoes-menu-itens button.danger:hover { background: #fef2f2; }
+    .acoes-menu-itens hr { border: none; border-top: 1px solid var(--color-border); margin: 4px 0; }
+    /* Alternância blocos/lista (mesmo visual de Processos) */
+    .view-toggle { display: flex; gap: 4px; align-items: center; }
+    .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
+    .view-btn:hover { background: var(--color-bg); }
+    .view-btn.active { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+    /* Visão em blocos */
+    .tenants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    .tenant-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+    .tenant-card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+    .tenant-card-nome { display: block; font-size: 15px; font-weight: 600; word-break: break-word; color: var(--color-text); text-decoration: none; }
+    .tenant-card-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+    .tenant-card-head .badges-col { align-items: flex-end; flex-shrink: 0; }
+    .tenant-card-secao { border-top: 1px solid var(--color-border); padding-top: 10px; }
+    .tenant-card-secao-titulo { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin-bottom: 6px; }
+    .tenant-card-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tenant-card-acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; border-top: 1px solid var(--color-border); padding-top: 10px; }
+    /* Paginação (mesmo padrão de Processos) */
+    .paginacao-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; margin-top: 20px; }
+    .paginacao-bar .pagination { margin-top: 0; flex-wrap: wrap; gap: 4px; }
+    .paginacao-bar .pagination button { padding: 6px 12px; min-width: 36px; min-height: 36px; }
+    .paginacao-bar .pagination button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .paginacao-bar .pagination .reticencias { padding: 6px 4px; color: var(--color-text-muted); }
+    .paginacao-info { font-size: 13px; color: var(--color-text-muted); }
+    .paginacao-tamanho { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-muted); margin: 0; }
+    .paginacao-tamanho select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); }
     @media (max-width: 768px) {
       .filters { flex-direction: column; align-items: stretch; }
       .filters input, .filters select { width: 100%; min-width: 0; font-size: 16px; }
-      .data-table { border: none; background: transparent; border-radius: 0; overflow: visible; }
-      .data-table tbody tr { padding: 0; overflow: hidden; }
-      .data-table tr:hover td { background: transparent; }
-      .data-table tbody td { padding: 8px 12px; gap: 12px; text-align: left !important; white-space: normal !important; border-bottom: 1px solid var(--color-border); }
-      .data-table tbody td:not([data-label])::before { content: none; }
-      .data-table td > .cell { text-align: right; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; }
-      .data-table td > .cell .usage-bar { width: 120px; }
-      .data-table td.tenant-nome { display: block; font-size: 15px; font-weight: 600 !important; padding: 12px; background: var(--color-bg); word-break: break-word; }
-      .data-table td.tenant-acoes { display: block; padding: 10px 12px; border-bottom: none; }
-      .data-table td.tenant-acoes .acoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-      .data-table td.tenant-acoes .action-btn { padding: 8px 6px; font-size: 13px; }
-      .pagination { flex-wrap: wrap; justify-content: space-between; }
-      .pagination span { order: -1; width: 100%; text-align: center; }
+      /* No celular a lista não cabe: fica sempre em blocos. */
+      .view-toggle { display: none; }
+      .tenants-grid { grid-template-columns: 1fr; }
+      .paginacao-bar { justify-content: center; }
     }
-    /* Mascote do assistente (js/mascotes.js). Sem o CSS do assistente as pálpebras ficariam
-       fechadas: aqui elas só somem (olhos abertos). */
-    .mascote-mini { display: inline-block; width: 22px; height: 22px; vertical-align: middle; flex-shrink: 0; color: var(--color-text); }
-    .mascote-mini .asx-palpebras { display: none; }
-    .mascote-uso { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: var(--color-text-muted); }
   </style>
 </head>
 <body>
@@ -150,334 +143,87 @@
           <option value="Max">Max</option>
           <option value="Enterprise">Enterprise</option>
         </select>
+        <select id="sortSelect" title="Ordenação">
+          <option value="cadastro:desc">Cadastro: mais recentes</option>
+          <option value="cadastro:asc">Cadastro: mais antigos</option>
+          <option value="nome:asc">Nome: A–Z</option>
+          <option value="nome:desc">Nome: Z–A</option>
+          <option value="ultimoAcesso:desc">Último acesso: mais recente</option>
+          <option value="ultimoAcesso:asc">Último acesso: mais antigo</option>
+        </select>
+        <div class="view-toggle">
+          <button type="button" class="view-btn" id="viewGrid" title="Visualização em blocos">⊞</button>
+          <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
+        </div>
       </div>
 
-      <div style="overflow-x:auto">
+      <div id="tenantsStatus" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</div>
+      <div id="tenantsGrid" class="tenants-grid" style="display:none"></div>
+      <div id="tenantsTableWrap" style="overflow-x:auto;display:none">
         <table class="data-table">
           <thead>
             <tr>
-              <th class="sortable" data-sort="nome">Nome<span class="sort-indicator" data-indicator="nome"></span></th>
-              <th>CNPJ</th>
-              <th>Plano</th>
-              <th>Status</th>
-              <th>Usuários</th>
-              <th>Processos</th>
-              <th>Docs</th>
-              <th>Tarefas</th>
+              <th class="sortable" data-sort="nome">Escritório<span class="sort-indicator" data-indicator="nome"></span></th>
+              <th>Plano / Status</th>
+              <th title="Uso dos limites do plano">Uso do plano</th>
+              <th>Atividade</th>
               <th title="Tema personalizado, adoção dos módulos de honorários/contratos, calculadora de prazos e calculadora de honorários, e mascotes do assistente">Recursos</th>
-              <th class="sortable" data-sort="cadastro">Cadastro<span class="sort-indicator" data-indicator="cadastro"></span></th>
-              <th class="sortable" data-sort="ultimoAcesso">Último Acesso<span class="sort-indicator" data-indicator="ultimoAcesso"></span></th>
-              <th>Expira</th>
-              <th>Ações</th>
+              <th class="sortable" data-sort="ultimoAcesso">Acesso / Expira<span class="sort-indicator" data-indicator="ultimoAcesso"></span></th>
+              <th></th>
             </tr>
           </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="13" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
-          </tbody>
+          <tbody id="tableBody"></tbody>
         </table>
       </div>
 
-      <div class="pagination">
-        <button id="prevBtn" disabled>← Anterior</button>
-        <span id="pageInfo"></span>
-        <button id="nextBtn" disabled>Próxima →</button>
+      <div class="paginacao-bar" id="paginacaoBar" style="display:none">
+        <span class="paginacao-info" id="paginacaoInfo"></span>
+        <div class="pagination" id="pagination"></div>
+        <label class="paginacao-tamanho">Por página
+          <select id="pageSizeSelect">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
       </div>
     </main>
   </div>
 
-  <!-- Modal: Detalhes do Tenant -->
-  <div class="modal-overlay" id="detailModal">
-    <div class="modal">
-      <div class="modal-title" id="detailTitle">Detalhes</div>
-      <div id="detailContent"></div>
-      <div class="modal-footer">
-        <button class="btn" onclick="closeModal('detailModal')">Fechar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Alterar Plano -->
-  <div class="modal-overlay" id="planoModal">
-    <div class="modal">
-      <div class="modal-title">Alterar Plano</div>
-      <div class="form-group">
-        <label class="form-label">Novo Plano</label>
-        <select id="novoPlano" class="form-control">
-          <option value="Free">Free</option>
-          <option value="Plus">Plus</option>
-          <option value="Pro">Pro</option>
-          <option value="Max">Max</option>
-          <option value="Enterprise">Enterprise</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Período de Billing</label>
-        <select id="periodoBilling" class="form-control">
-          <option value="">— (não aplicável)</option>
-          <option value="Mensal">Mensal</option>
-          <option value="Anual">Anual</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" onclick="closeModal('planoModal')">Cancelar</button>
-        <button class="btn btn-primary" id="savePlanoBtn">Salvar</button>
-      </div>
-
-      <div id="trialBlock" style="display:none;margin-top:24px;padding-top:20px;border-top:1px dashed var(--color-border)">
-        <div style="font-size:13px;font-weight:600;color:var(--color-text);margin-bottom:4px;display:flex;align-items:center;gap:6px">
-          <span>🎁</span><span>Conceder Trial Plus</span>
-        </div>
-        <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:12px">
-          Libera o plano Plus temporariamente. Após o prazo, o tenant volta automaticamente para o plano Free.
-        </div>
-        <div class="form-group">
-          <label class="form-label">Duração do trial</label>
-          <select id="trialDias" class="form-control">
-            <option value="15">15 dias</option>
-            <option value="30" selected>30 dias</option>
-            <option value="45">45 dias</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Motivo (opcional, máx. 500 caracteres)</label>
-          <textarea id="trialMotivo" class="form-control" rows="3" maxlength="500" placeholder="Ex: Migração do plano Pro, parceria, etc."></textarea>
-        </div>
-        <div class="modal-footer" style="margin-top:12px">
-          <button class="btn btn-primary" id="saveTrialBtn">Conceder Trial Plus</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Alterar Status -->
-  <div class="modal-overlay" id="statusModal">
-    <div class="modal">
-      <div class="modal-title">Alterar Status</div>
-      <div class="form-group">
-        <label class="form-label">Novo Status</label>
-        <select id="novoStatus" class="form-control">
-          <option value="Ativo">Ativo</option>
-          <option value="Trial">Trial</option>
-          <option value="Suspenso">Suspenso</option>
-          <option value="Cancelado">Cancelado</option>
-        </select>
-      </div>
-      <div id="statusModalMsg" style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;display:none">
-        Suspenso/Cancelado bloqueia o acesso dos usuários do tenant.
-      </div>
-      <div class="modal-footer">
-        <button class="btn" onclick="closeModal('statusModal')">Cancelar</button>
-        <button class="btn btn-primary" id="saveStatusBtn">Confirmar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Importar dados para este tenant -->
-  <div class="modal-overlay" id="importModal">
-    <div class="modal" style="max-width:580px">
-      <div class="modal-title">Importar dados para <span id="importTenantNome"></span></div>
-
-      <div class="form-group">
-        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
-          <input type="checkbox" id="importAnonymize" checked style="margin-top:3px">
-          <div>
-            <div style="font-weight:500">Anonimizar dados ao importar (recomendado)</div>
-            <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
-              E-mails do arquivo viram <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">*@causify-replica.com</code>
-              e telefones <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">+5511900000000</code>.
-              Desmarque apenas para restaurar um backup com dados reais preservados.
-              Senhas de usuários são sempre resetadas para
-              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">Causify@Replic@2026!</code>, independente desta opção.
-            </div>
-          </div>
-        </label>
-        <div id="importFileHint" style="display:none;font-size:11px;margin-top:8px;padding:8px 10px;border-radius:6px;line-height:1.5"></div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Modo de import</label>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
-            <input type="radio" name="importMode" id="importModeReplace" value="replace" checked style="margin-top:3px">
-            <div>
-              <div style="font-weight:500">Substituir dados deste tenant</div>
-              <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
-                Apaga todos os dados do tenant atual e importa o arquivo no lugar. Destrutivo.
-              </div>
-            </div>
-          </label>
-          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
-            <input type="radio" name="importMode" id="importModeNew" value="new" style="margin-top:3px">
-            <div>
-              <div style="font-weight:500">Criar um tenant novo a partir do arquivo</div>
-              <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
-                Cria um tenant novo (plano Free, sem billing) com os dados do arquivo. Não toca no tenant atual.
-              </div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-group" id="importReplaceGroup">
-        <div style="background:#fee2e2;border:1px solid #fecaca;color:#7f1d1d;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:10px;line-height:1.5">
-          <strong>⚠ Operação destrutiva.</strong> Todos os dados atuais deste tenant
-          (contatos, processos, tarefas, documentos, financeiro, honorários,
-          usuários e configurações) serão <strong>apagados permanentemente</strong>
-          e substituídos pelo conteúdo do arquivo.
-        </div>
-        <label class="form-label">Digite o nome do tenant para confirmar</label>
-        <input type="text" id="importConfirmation" class="form-control" placeholder='Digite exatamente "Nome do Escritório"'>
-      </div>
-
-      <div class="form-group" id="importNewGroup" style="display:none">
-        <label class="form-label">Nome do novo tenant</label>
-        <input type="text" id="importNewName" class="form-control" placeholder="Ex: Escritório X [replica]" maxlength="200">
-        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
-          Será criado com plano Free, status Ativo e sem dados de billing.
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Arquivo JSON exportado</label>
-        <input type="file" id="importFile" accept=".json,application/json" class="form-control">
-        <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">
-          Apenas arquivos gerados pelo botão "Exportar" deste painel.
-        </div>
-      </div>
-
-      <div id="importMsg" style="display:none;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;line-height:1.5"></div>
-
-      <div class="modal-footer">
-        <button class="btn" onclick="closeImportModal()">Cancelar</button>
-        <button class="btn btn-danger" id="importConfirmBtn" style="background:#dc2626;color:white;border-color:#dc2626">Importar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Exportar dados deste tenant -->
-  <div class="modal-overlay" id="exportModal">
-    <div class="modal" style="max-width:560px">
-      <div class="modal-title">Exportar dados de <span id="exportTenantNome"></span></div>
-
-      <div style="color:var(--color-text-muted);font-size:12px;margin-bottom:14px;line-height:1.5">
-        Gera um arquivo JSON com todos os dados deste tenant (contatos, processos,
-        tarefas, documentos, financeiro, honorários, usuários e configurações).
-      </div>
-
-      <div class="form-group">
-        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:10px 12px;border:1px solid var(--color-border);border-radius:6px">
-          <input type="checkbox" id="exportKeepPersonalData" style="margin-top:3px">
-          <div>
-            <div style="font-weight:500">Manter e-mails e telefones reais (backup)</div>
-            <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">
-              Por padrão, e-mails viram <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">*@causify-replica.com</code>
-              e telefones <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">+5511900000000</code>.
-              Marque esta opção para manter os dados reais de contatos e usuários —
-              use apenas para backup interno, pois o arquivo passa a conter dados
-              pessoais reais.
-            </div>
-          </div>
-        </label>
-      </div>
-
-      <div id="exportRealDataWarning" style="display:none;background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:4px;line-height:1.5">
-        ⚠ O arquivo gerado terá dados pessoais reais (e-mails e telefones). Guarde-o
-        em local seguro e não o compartilhe.
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn" onclick="closeExportModal()">Cancelar</button>
-        <button class="btn btn-primary" id="exportConfirmBtn">⬇ Exportar JSON</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Excluir tenant -->
-  <div class="modal-overlay" id="deleteModal">
-    <div class="modal" style="max-width:520px">
-      <div class="modal-title">Excluir <span id="deleteTenantNome"></span></div>
-
-      <div style="background:#fee2e2;border:2px solid #dc2626;color:#7f1d1d;border-radius:6px;padding:12px 14px;font-size:13px;margin-bottom:14px;line-height:1.6">
-        <strong>⚠ Esta ação é PERMANENTE e IRREVERSÍVEL.</strong>
-        <div style="margin-top:6px">
-          Todo o conteúdo deste tenant será apagado para sempre: contatos, processos,
-          andamentos, tarefas, documentos, financeiro, contratos e parcelas de honorário,
-          usuários e configurações. Não existe backup automático nem forma de desfazer
-          esta operação depois de confirmada.
-        </div>
-        <div style="margin-top:6px">
-          Se precisar apenas de uma cópia dos dados antes de excluir, use
-          <strong>Exportar</strong> primeiro.
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Digite o nome do tenant para confirmar a exclusão</label>
-        <input type="text" id="deleteConfirmation" class="form-control" placeholder='Digite exatamente "Nome do Escritório"'>
-      </div>
-
-      <div id="deleteMsg" style="display:none;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:4px;line-height:1.5"></div>
-
-      <div class="modal-footer">
-        <button class="btn" onclick="closeDeleteModal()">Cancelar</button>
-        <button class="btn btn-danger" id="deleteConfirmBtn" style="background:#dc2626;color:white;border-color:#dc2626">Excluir permanentemente</button>
-      </div>
-    </div>
-  </div>
-
   <script type="module">
-import { esc } from '/js/utils.js';
+    import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
-    import { saFetch, impersonarUsuario } from '/superadmin/js/superAdminApi.js';
-    import { getMascote, MASCOTE_PADRAO } from '/js/mascotes.js';
-    import { exportarTenant, importarTenant, excluirTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+    import { initTenantAcoes, showToast } from '/superadmin/js/tenantAcoes.js';
+    import {
+      fmtDate, fmtDateTime, fmtBytes, fmtMb, pctBar, daysAgo, countdownBadge, recursosCell, planoHtml
+    } from '/superadmin/js/tenantFormat.js';
 
     initAdminLayout();
-    window.impersonarUsuario = impersonarUsuario;
-    let exportTenantId = null;
-
-    window.openExportModal = function(id, nome) {
-      exportTenantId = id;
-      document.getElementById('exportTenantNome').textContent = nome;
-      document.getElementById('exportKeepPersonalData').checked = false;
-      document.getElementById('exportRealDataWarning').style.display = 'none';
-      openModal('exportModal');
-    };
-
-    window.closeExportModal = function() {
-      closeModal('exportModal');
-      exportTenantId = null;
-    };
-
-    document.getElementById('exportKeepPersonalData').addEventListener('change', (e) => {
-      document.getElementById('exportRealDataWarning').style.display = e.target.checked ? 'block' : 'none';
+    initTenantAcoes({
+      onAlterado: () => load(),
+      onExcluido: nome => { showToast(`Tenant "${nome}" excluído permanentemente.`); load(); },
     });
+    // Link antigo (dashboard, usuários, favoritos): a ficha do tenant agora é uma página própria.
+    const urlId = new URLSearchParams(location.search).get('id');
+    if (urlId) location.replace(`/superadmin/tenant-detalhe.html?id=${encodeURIComponent(urlId)}`);
 
-    document.getElementById('exportConfirmBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('exportConfirmBtn');
-      const keepPersonalData = document.getElementById('exportKeepPersonalData').checked;
-      const original = btn.textContent;
-      try {
-        btn.disabled = true;
-        btn.textContent = 'Baixando...';
-        const filename = await exportarTenant(exportTenantId, { anonymize: !keepPersonalData });
-        showToast(`Exportação concluída: ${filename}`);
-        closeExportModal();
-      } catch (e) {
-        alert('Erro ao exportar: ' + e.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
-    });
-
-    const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
-    const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
-
+    const detalheUrl = id => `/superadmin/tenant-detalhe.html?id=${id}`;
     let page = 1;
-    const pageSize = 20;
     let total = 0;
-    let currentTenantId = null;
+    // Itens por página e modo de visualização: escolhas do superadmin lembradas no navegador.
+    const PAGE_SIZES = [10, 20, 50, 100];
+    const PAGE_SIZE_STORAGE_KEY = 'superadmin.tenants.pageSize';
+    const VIEW_STORAGE_KEY = 'superadmin.tenants.view';
+    let pageSize = 20;
+    let view = 'list';
+    try {
+      const salvo = Number(localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
+      if (PAGE_SIZES.includes(salvo)) pageSize = salvo;
+      if (localStorage.getItem(VIEW_STORAGE_KEY) === 'grid') view = 'grid';
+    } catch { /* storage indisponível: ficam os padrões */ }
+    let ultimosItens = [];
     // Ordenação persistida em localStorage (sobrevive a atualização de página e reabertura do
     // navegador) -- validado contra os mesmos valores aceitos pelo backend (GetTenants), caindo
     // no default de hoje (cadastro desc) se o valor salvo for inválido ou o storage não puder ser
@@ -500,172 +246,171 @@ import { esc } from '/js/utils.js';
     let sortBy = savedSort?.sortBy ?? 'cadastro';
     let sortDir = savedSort?.sortDir ?? 'desc';
 
-    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—'; }
-    function fmtDateTime(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
-    function fmtBytes(b) {
-      if (!b) return '0 B';
-      if (b < 1024) return b + ' B';
-      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
-      if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
-      return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-    }
-    function pctColor(pct) {
-      if (pct >= 90) return 'red';
-      if (pct >= 70) return 'amber';
-      return '';
-    }
-    function pctBar(pct, label) {
-      const w = Math.min(100, Math.max(0, pct)).toFixed(0);
-      const cls = pctColor(pct);
-      return `<div class="usage-bar" title="${label} — ${w}%">
-        <div class="usage-bar-fill ${cls}" style="width:${w}%"></div>
+    // ── Fragmentos da lista e dos blocos ──
+    function usoLinha(label, valor, pct, titulo) {
+      return `<div class="uso-linha" title="${titulo}">
+        <div class="uso-linha-topo"><span>${label}</span><strong>${valor}</strong></div>
+        ${pctBar(pct, label)}
       </div>`;
     }
-    function fmtMb(mb) {
-      if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
-      return mb + ' MB';
+    function usoHtml(t) {
+      const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
+      const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
+      const storageMb = (t.documentoTamanhoBytes || 0) / 1048576;
+      const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
+      return usoLinha('Usuários', `${t.userCount}/${t.usuariosLimite}`, usuariosPct,
+          `${t.userCount} de ${t.usuariosLimite} usuários permitidos no plano`)
+        + usoLinha('Monitorados', `${t.monitoradoCount}/${t.monitoradosLimite}`, monitoradosPct,
+          `${t.monitoradoCount} de ${t.monitoradosLimite} monitoramentos permitidos`)
+        + usoLinha('Storage', `${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}`, storagePct,
+          `Storage: ${fmtBytes(t.documentoTamanhoBytes)} de ${fmtMb(t.armazenamentoLimiteMB)} permitidos`);
     }
-    function daysUntil(iso) {
-      if (!iso) return null;
-      const ms = new Date(iso).getTime() - Date.now();
-      return Math.ceil(ms / 86400000);
+    function atividadeHtml(t) {
+      return `<div class="ativ-linha" title="${t.processoCount} processos · monitoramento diário ${t.monitoradoDiarioCount} · semanal ${t.monitoradoSemanalCount}">
+          <span class="ativ-label">Processos</span><strong>${t.processoCount}</strong>
+          <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
+          <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
+        </div>
+        <div class="ativ-linha"><span class="ativ-label">Docs</span><strong>${t.documentoCount}</strong></div>
+        <div class="ativ-linha" title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
+          <span class="ativ-label">Tarefas</span><strong>${t.tarefaCount}</strong>
+          <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
+          <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
+          <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
+          <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
+        </div>
+        ${t.oabComErroSync > 0 ? `<div class="ativ-linha"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB com erro</span></div>` : ''}`;
     }
-    // Código do cadastro (período grátis) e/ou de desconto — podem ser diferentes quando o
-    // desconto foi aplicado depois na tela de assinatura.
-    function codigoPromoDetalhe(t) {
-      const codigo = c => `<span style="font-family:monospace;font-weight:600">${esc(c.toUpperCase())}</span>`;
-      const partes = [];
-      if (t.voucherUtilizado) partes.push(`${codigo(t.voucherUtilizado)} <span style="color:var(--color-text-muted);font-size:12px">(cadastro)</span>`);
-      if (t.codigoDesconto && t.codigoDesconto !== t.voucherUtilizado) partes.push(`${codigo(t.codigoDesconto)} <span style="color:var(--color-text-muted);font-size:12px">(desconto)</span>`);
-      if (!partes.length) return '—';
-      if (t.codigoDesconto) {
-        partes.push(t.descontoPromocionalUsadoEm
-          ? `<span class="badge badge-green" title="Desconto aplicado numa assinatura">desconto usado em ${fmtDate(t.descontoPromocionalUsadoEm)}</span>`
-          : `<span class="badge badge-yellow" title="Desconto ainda não aproveitado numa assinatura">desconto pendente</span>`);
-      }
-      return partes.join(' ');
+    function datasHtml(t) {
+      const expira = t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano');
+      return `<div class="datas-linha" title="Último acesso de qualquer usuário do tenant">
+          Acesso <strong>${daysAgo(t.ultimoAcessoEm)}</strong><br>${fmtDateTime(t.ultimoAcessoEm)}
+        </div>
+        <div class="datas-linha">Expira <strong>${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</strong> ${expira}</div>`;
+    }
+    // Ações secundárias ficam num menu "⋯" na lista (economiza largura) e soltas nos blocos.
+    function acoesSecundarias(t) {
+      const nome = esc(t.nome).replace(/'/g, "\\'");
+      return [
+        { label: 'Plano', onclick: `openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')` },
+        { label: 'Status', onclick: `openStatus('${t.id}','${t.status}')` },
+        { label: 'Exportar', onclick: `openExportModal('${t.id}', '${nome}')`, title: 'Baixar JSON com todos os dados deste tenant' },
+        { label: 'Importar', onclick: `openImportModal('${t.id}','${nome}')`, title: 'Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado', danger: true },
+        { label: 'Excluir', onclick: `openDeleteModal('${t.id}','${nome}')`, title: 'Excluir este tenant e todos os seus dados permanentemente', danger: true },
+      ];
+    }
+    function acoesMenuHtml(t) {
+      const itens = acoesSecundarias(t);
+      const primeiroPerigo = itens.findIndex(a => a.danger);
+      return `<div class="acoes">
+        <a class="action-btn" href="${detalheUrl(t.id)}">Detalhes</a>
+        <details class="acoes-menu">
+          <summary class="action-btn" title="Mais ações" aria-label="Mais ações">⋯</summary>
+          <div class="acoes-menu-itens">
+            ${itens.map((a, i) => `${i === primeiroPerigo ? '<hr>' : ''}<button type="button" class="${a.danger ? 'danger' : ''}" onclick="${a.onclick}"${a.title ? ` title="${a.title}"` : ''}>${a.label}</button>`).join('')}
+          </div>
+        </details>
+      </div>`;
+    }
+    function acoesBotoesHtml(t) {
+      return `<a class="action-btn" href="${detalheUrl(t.id)}">Detalhes</a>`
+        + acoesSecundarias(t).map(a => `<button class="action-btn${a.danger ? ' danger' : ''}" onclick="${a.onclick}"${a.title ? ` title="${a.title}"` : ''}>${a.label}</button>`).join('');
     }
 
-    function countdownBadge(iso, type) {
-      const d = daysUntil(iso);
-      if (d === null) return '';
-      if (d < 0) {
-        return `<span class="badge badge-red" title="${type} venceu há ${-d} dia(s)">vencido há ${-d}d</span>`;
-      }
-      if (d <= 7) {
-        return `<span class="badge badge-red" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
-      }
-      if (d <= 30) {
-        return `<span class="badge badge-amber" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
-      }
-      return `<span class="badge badge-gray" title="${type} expira em ${d} dia(s)">em ${d}d</span>`;
+    function linhaTabela(t) {
+      return `<tr>
+        <td class="tenant-nome">
+          <a class="t-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>
+          <div class="t-sub">${esc(t.cnpj ?? 'sem CNPJ')}</div>
+          <div class="t-sub">desde ${fmtDate(t.criadoEm)}</div>
+        </td>
+        <td>${planoHtml(t)}</td>
+        <td>${usoHtml(t)}</td>
+        <td>${atividadeHtml(t)}</td>
+        <td style="line-height:1.3">${recursosCell(t)}</td>
+        <td>${datasHtml(t)}</td>
+        <td class="tenant-acoes">${acoesMenuHtml(t)}</td>
+      </tr>`;
     }
-    function daysAgo(iso) {
-      if (!iso) return 'nunca';
-      const ms = Date.now() - new Date(iso).getTime();
-      const d = Math.floor(ms / 86400000);
-      if (d === 0) {
-        const h = Math.floor(ms / 3600000);
-        if (h === 0) return 'agora';
-        return `há ${h}h`;
-      }
-      if (d === 1) return 'há 1 dia';
-      if (d < 30) return `há ${d} dias`;
-      if (d < 365) return `há ${Math.floor(d / 30)}m`;
-      return `há ${Math.floor(d / 365)}a`;
-    }
-    function paymentBadge(t) {
-      // Na listagem vem `temBilling` (já calculado no backend); no modal de detalhes
-      // vêm os IDs crus (stripeSubscriptionId/abacatePayBillingId) — cobrimos os dois formatos.
-      const hasBilling = t.temBilling !== undefined
-        ? t.temBilling
-        : !!(t.stripeSubscriptionId || t.abacatePayBillingId);
-      // Plano: Free não tem billing
-      if (t.plano === 'Free') {
-        return '<span class="badge badge-gray" title="Plano Free, sem cobrança">—</span>';
-      }
-      if (!hasBilling) {
-        // Pago ou Plus trial sem billing ainda
-        const isTrial = t.status === 'Trial';
-        if (isTrial) return '<span class="badge badge-blue" title="Em trial, ainda sem billing">trial</span>';
-        return '<span class="badge badge-amber" title="Plano pago sem billing — verifique">⚠ sem billing</span>';
-      }
-      // Tem billing
-      const planoDias = daysUntil(t.planoExpiraEm);
-      if (planoDias !== null && planoDias < 0) {
-        return '<span class="badge badge-red" title="Plano vencido, billing pode estar inadimplente">⚠ vencido</span>';
-      }
-      return '<span class="badge badge-green" title="Billing ativo no AbacatePay">✓ pago</span>';
-    }
-    // Mascote do assistente: id salvo pelo usuário, ou null = nunca escolheu (vale o padrão).
-    function mascoteMini(id) {
-      const m = getMascote(id);
-      const titulo = id ? m.nome : `${m.nome} (padrão — nunca escolheu)`;
-      return `<span class="mascote-mini" title="${esc(titulo)}" aria-label="${esc(titulo)}">${m.svg}</span>`;
-    }
-    function mascotesCell(t) {
-      const usos = t.mascotes ?? [];
-      if (!usos.length) return '';
-      return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" title="Mascote do assistente escolhido pelos usuários">
-        ${usos.map(u => `<span class="mascote-uso">${mascoteMini(u.mascote)}${u.usuarios > 1 ? `×${u.usuarios}` : ''}</span>`).join('')}
+    function cardTenant(t) {
+      return `<div class="tenant-card">
+        <div class="tenant-card-head">
+          <div style="min-width:0">
+            <a class="tenant-card-nome" href="${detalheUrl(t.id)}">${esc(t.nome)}</a>
+            <div class="tenant-card-sub">${esc(t.cnpj ?? 'sem CNPJ')} · desde ${fmtDate(t.criadoEm)}</div>
+          </div>
+          ${planoHtml(t)}
+        </div>
+        <div class="tenant-card-secao">
+          <div class="tenant-card-secao-titulo">Uso do plano</div>
+          ${usoHtml(t)}
+        </div>
+        <div class="tenant-card-secao">
+          <div class="tenant-card-secao-titulo">Atividade</div>
+          ${atividadeHtml(t)}
+        </div>
+        <div class="tenant-card-secao tenant-card-2col">
+          <div><div class="tenant-card-secao-titulo">Recursos</div><div style="line-height:1.3">${recursosCell(t)}</div></div>
+          <div><div class="tenant-card-secao-titulo">Acesso / Expira</div>${datasHtml(t)}</div>
+        </div>
+        <div class="tenant-card-acoes">${acoesBotoesHtml(t)}</div>
       </div>`;
     }
-    function mascotesDetalhado(t) {
-      const usuarios = (t.usuarios ?? []).filter(u => u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin');
-      if (!usuarios.length) return '<span class="badge badge-gray">—</span>';
-      const contagem = new Map();
-      usuarios.forEach(u => contagem.set(u.assistenteMascote ?? null, (contagem.get(u.assistenteMascote ?? null) ?? 0) + 1));
-      return `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">${[...contagem]
-        .sort((a, b) => b[1] - a[1])
-        .map(([id, n]) => `<span class="mascote-uso">${mascoteMini(id)}${n > 1 ? `×${n}` : ''}</span>`).join('')}</div>`;
-    }
-    function recursosCell(t) {
-      const tema = t.temaCustomizado
-        ? '<span class="badge badge-blue" title="Tema personalizado (cores/layout/CSS) configurado por este tenant">🎨 tema custom</span>'
-        : '<span class="badge badge-gray" title="Usando o tema padrão do Causify">🎨 tema padrão</span>';
-      const usoBadge = (count, icon, label) =>
-        `<span class="badge badge-${count > 0 ? 'green' : 'gray'}" title="${label}: ${count}">${icon} ${count}</span>`;
-      return `<div>${tema}</div>
-        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
-          ${usoBadge(t.honorarioContratosCount, '📄', 'Contratos de honorário cadastrados')}
-          ${usoBadge(t.calculadoraPrazosCount, '⏱', 'Cálculos na calculadora de prazos')}
-          ${usoBadge(t.calculadoraHonorariosCount, '🧮', 'Cálculos salvos na calculadora de honorários')}
-        </div>
-        ${mascotesCell(t)}`;
-    }
-    // Versão explicada da mesma informação de recursosCell() — usada só no modal de detalhes,
-    // que tem espaço de sobra pra descrever o que cada indicador significa (a tabela precisa
-    // ficar compacta com ícone + número, sem contexto).
-    function recursoRow(icon, titulo, descricao, valorHtml) {
-      return `<div class="recurso-row">
-        <div class="recurso-row-icon">${icon}</div>
-        <div style="flex:1;min-width:0">
-          <div class="recurso-row-titulo">${titulo}</div>
-          <div class="recurso-row-desc">${descricao}</div>
-        </div>
-        <div class="recurso-row-valor">${valorHtml}</div>
-      </div>`;
-    }
-    function recursosDetalhado(t) {
-      const temaValor = t.temaCustomizado
-        ? '<span class="badge badge-blue">Personalizado</span>'
-        : '<span class="badge badge-gray">Padrão</span>';
-      const temaDesc = t.temaCustomizado
-        ? 'O tenant salvou cores, layout ou CSS próprios em Configurações → Tema, diferentes do padrão do Causify.'
-        : 'Nenhuma personalização visual salva — o tenant usa as cores e o layout padrão do Causify.';
-      const usoValor = count => `<span class="badge badge-${count > 0 ? 'green' : 'gray'}">${count}</span>`;
 
-      return `
-        ${recursoRow('🎨', 'Tema personalizado', temaDesc, temaValor)}
-        ${recursoRow('📄', 'Honorários · Contratos', 'Contratos de honorário cadastrados no módulo de Honorários (cobrança por parcelas, multa e juros).', usoValor(t.honorarioContratosCount))}
-        ${recursoRow('⏱', 'Calculadora de prazos', 'Quantidade de vezes que usuários do tenant calcularam um prazo processual (dias úteis/corridos) na calculadora de prazos.', usoValor(t.calculadoraPrazosCount))}
-        ${recursoRow('🧮', 'Calculadora de honorários', 'Cálculos de honorários (base na tabela OAB) salvos no histórico da calculadora de honorários.', usoValor(t.calculadoraHonorariosCount))}
-        ${recursoRow(mascoteMini(MASCOTE_PADRAO), 'Mascote do assistente', 'Mascote escolhido por cada usuário em Sistema → Assistente (passe o mouse para ver o nome). Quem nunca escolheu usa o padrão.', mascotesDetalhado(t))}
-      `;
+    // No celular a lista não cabe: sempre blocos (o CSS também esconde a alternância).
+    const modoEfetivo = () => window.matchMedia('(max-width: 768px)').matches ? 'grid' : view;
+
+    function renderItens() {
+      const statusEl = document.getElementById('tenantsStatus');
+      const grid = document.getElementById('tenantsGrid');
+      const tableWrap = document.getElementById('tenantsTableWrap');
+      if (!ultimosItens.length) {
+        statusEl.textContent = 'Nenhum tenant encontrado.';
+        statusEl.style.display = '';
+        grid.style.display = tableWrap.style.display = 'none';
+        return;
+      }
+      statusEl.style.display = 'none';
+      if (modoEfetivo() === 'grid') {
+        grid.innerHTML = ultimosItens.map(cardTenant).join('');
+        grid.style.display = '';
+        tableWrap.style.display = 'none';
+        document.getElementById('tableBody').innerHTML = '';
+      } else {
+        document.getElementById('tableBody').innerHTML = ultimosItens.map(linhaTabela).join('');
+        tableWrap.style.display = '';
+        grid.style.display = 'none';
+        grid.innerHTML = '';
+      }
+    }
+
+    function renderPagination() {
+      const bar = document.getElementById('paginacaoBar');
+      const el = document.getElementById('pagination');
+      // Abaixo do menor tamanho não há o que paginar nem escolher.
+      if (!total || total <= PAGE_SIZES[0]) { bar.style.display = 'none'; el.innerHTML = ''; return; }
+      bar.style.display = '';
+
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const inicio = (page - 1) * pageSize + 1;
+      const fim = Math.min(page * pageSize, total);
+      const fmt = n => n.toLocaleString('pt-BR');
+      document.getElementById('paginacaoInfo').textContent =
+        `Mostrando ${fmt(inicio)}–${fmt(fim)} de ${fmt(total)} tenant${total === 1 ? '' : 's'}`;
+
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      // Primeira, última e uma janela em volta da atual (menor no celular); o resto vira "…".
+      const janela = window.innerWidth < 600 ? 1 : 2;
+      const paginas = [];
+      for (let i = 1; i <= totalPages; i++)
+        if (i === 1 || i === totalPages || Math.abs(i - page) <= janela) paginas.push(i);
+      let html = `<button ${page <= 1 ? 'disabled' : ''} onclick="goPage(${page - 1})" aria-label="Página anterior">‹</button>`;
+      paginas.forEach((i, idx) => {
+        if (idx > 0 && i - paginas[idx - 1] > 1) html += '<span class="reticencias">…</span>';
+        html += `<button class="${i === page ? 'active' : ''}" onclick="goPage(${i})"${i === page ? ' aria-current="page"' : ''}>${i}</button>`;
+      });
+      html += `<button ${page >= totalPages ? 'disabled' : ''} onclick="goPage(${page + 1})" aria-label="Próxima página">›</button>`;
+      el.innerHTML = html;
     }
 
     async function load() {
@@ -678,648 +423,85 @@ import { esc } from '/js/utils.js';
       if (status) params.set('status', status);
       if (plano) params.set('plano', plano);
 
-      document.getElementById('tableBody').innerHTML =
-        '<tr><td colspan="13" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>';
+      const statusEl = document.getElementById('tenantsStatus');
+      statusEl.style.color = 'var(--color-text-muted)';
+      statusEl.textContent = 'Carregando...';
+      statusEl.style.display = '';
+      document.getElementById('tenantsGrid').style.display = 'none';
+      document.getElementById('tenantsTableWrap').style.display = 'none';
 
       try {
         const data = await saFetch(`/superadmin/tenants?${params}`);
         total = data.total;
-
-        if (data.items.length === 0) {
-          document.getElementById('tableBody').innerHTML =
-            '<tr><td colspan="13" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum tenant encontrado.</td></tr>';
-        } else {
-          document.getElementById('tableBody').innerHTML = data.items.map(t => {
-            const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
-            const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
-            const storageMb = (t.documentoTamanhoBytes || 0) / 1048576;
-            const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
-            return `
-            <tr>
-              <td class="tenant-nome" style="font-weight:500">${esc(t.nome)}</td>
-              <td data-label="CNPJ" style="color:var(--color-text-muted);font-size:12px">${esc(t.cnpj ?? '—')}</td>
-              <td data-label="Plano">
-                <div class="cell">
-                  <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
-                  <div style="margin-top:3px">${paymentBadge(t)}</div>
-                  ${t.trialConcedidoDias && t.trialExpiraEm && new Date(t.trialExpiraEm) > new Date() ? `
-                    <div style="margin-top:3px" title="Trial Plus concedido por superadmin">
-                      <span class="badge badge-blue" style="font-size:10px">🎁 trial plus ${t.trialConcedidoDias}d</span>
-                    </div>
-                  ` : ''}
-                </div>
-              </td>
-              <td data-label="Status"><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
-              <td data-label="Usuários" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
-                  title="${t.userCount} de ${t.usuariosLimite} usuários permitidos no plano">
-                <div class="cell">
-                  <div>${t.userCount} / ${t.usuariosLimite}</div>
-                  ${pctBar(usuariosPct, 'Usuários')}
-                </div>
-              </td>
-              <td data-label="Processos" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
-                  title="${t.monitoradoCount} de ${t.monitoradosLimite} monitoramentos permitidos">
-                <div class="cell">
-                  <div style="font-size:11px;color:var(--color-text-muted)">${t.processoCount} total · ${t.monitoradoCount}/${t.monitoradosLimite} monit.</div>
-                  ${pctBar(monitoradosPct, 'Monitorados')}
-                  <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
-                    <span class="badge badge-red" title="Monitoramento diário (Escavador)">D ${t.monitoradoDiarioCount}</span>
-                    <span class="badge badge-blue" title="Monitoramento semanal (Escavador)">S ${t.monitoradoSemanalCount}</span>
-                  </div>
-                </div>
-              </td>
-              <td data-label="Docs" style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3"
-                  title="Storage: ${fmtBytes(t.documentoTamanhoBytes)} de ${fmtMb(t.armazenamentoLimiteMB)} permitidos">
-                <div class="cell">
-                  <div>${t.documentoCount} docs</div>
-                  <div style="font-size:11px;color:var(--color-text-muted)">${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}</div>
-                  ${pctBar(storagePct, 'Storage')}
-                </div>
-              </td>
-              <td data-label="Tarefas" style="text-align:right;font-variant-numeric:tabular-nums;line-height:1.3"
-                  title="Pendente ${t.tarefaPendenteCount} · Em andamento ${t.tarefaEmAndamentoCount} · Concluída ${t.tarefaConcluidaCount} · Perdida ${t.tarefaPerdidaCount}">
-                <div class="cell">
-                  <div style="font-size:11px;color:var(--color-text-muted)">${t.tarefaCount} total</div>
-                  <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;flex-wrap:wrap;font-size:11px">
-                    <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
-                    <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
-                    <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
-                    <span class="badge badge-red" title="Perdida (prazo estourado)">X ${t.tarefaPerdidaCount}</span>
-                  </div>
-                  ${t.oabComErroSync > 0 ? `<div style="margin-top:3px"><span class="badge badge-red" title="${t.oabComErroSync} OAB(s) com erro de sync no Escavador">⚠ ${t.oabComErroSync} OAB</span></div>` : ''}
-                </div>
-              </td>
-              <td data-label="Recursos" style="line-height:1.3"><div class="cell">${recursosCell(t)}</div></td>
-              <td data-label="Cadastro" style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.criadoEm)}</td>
-              <td data-label="Último Acesso" style="color:var(--color-text-muted);font-size:12px;line-height:1.3" title="Último acesso de qualquer usuário do tenant">
-                <div class="cell">
-                  <div>${fmtDateTime(t.ultimoAcessoEm)}</div>
-                  <div style="font-size:11px">${daysAgo(t.ultimoAcessoEm)}</div>
-                </div>
-              </td>
-              <td data-label="Expira" style="line-height:1.3;white-space:nowrap">
-                <div class="cell">
-                  <div style="color:var(--color-text-muted);font-size:12px">${fmtDate(t.trialExpiraEm ?? t.planoExpiraEm)}</div>
-                  <div style="margin-top:2px">${t.status === 'Trial' ? countdownBadge(t.trialExpiraEm, 'Trial') : countdownBadge(t.planoExpiraEm, 'Plano')}</div>
-                </div>
-              </td>
-              <td class="tenant-acoes">
-                <div class="acoes">
-                  <button class="action-btn" onclick="openDetail('${t.id}')">Detalhes</button>
-                  <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
-                  <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
-                  <button class="action-btn" onclick="openExportModal('${t.id}', '${esc(t.nome).replace(/'/g, "\\'")}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
-                  <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
-                  <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')" title="Excluir este tenant e todos os seus dados permanentemente">Excluir</button>
-                </div>
-              </td>
-            </tr>`;
-          }).join('');
-        }
-
-        const pages = Math.ceil(total / pageSize);
-        document.getElementById('pageInfo').textContent = `Página ${page} de ${Math.max(1, pages)} (${total} tenants)`;
-        document.getElementById('prevBtn').disabled = page <= 1;
-        document.getElementById('nextBtn').disabled = page >= pages;
+        // Filtro/exclusão pode ter encolhido o total: volta para a última página que existe.
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        if (page > totalPages) { page = totalPages; return load(); }
+        ultimosItens = data.items;
+        renderItens();
+        renderPagination();
       } catch (e) {
-        document.getElementById('tableBody').innerHTML =
-          `<tr><td colspan="13" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+        ultimosItens = [];
+        statusEl.style.color = 'var(--color-danger)';
+        statusEl.textContent = `Erro: ${e.message}`;
+        document.getElementById('paginacaoBar').style.display = 'none';
       }
     }
 
-    window.openDetail = async function(id) {
-      document.getElementById('detailContent').innerHTML = '<p style="color:var(--color-text-muted)">Carregando...</p>';
-      openModal('detailModal');
-      try {
-        const t = await saFetch(`/superadmin/tenants/${id}`);
-        let trialInfo = null;
-        try {
-          trialInfo = await saFetch(`/superadmin/tenants/${id}/trial-info`);
-        } catch {}
-        document.getElementById('detailTitle').textContent = t.nome;
-        const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
-        const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
-
-        const usuariosPct = t.usuariosLimite > 0 ? (t.userCount / t.usuariosLimite) * 100 : 0;
-        const monitoradosPct = t.monitoradosLimite > 0 ? (t.monitoradoCount / t.monitoradosLimite) * 100 : 0;
-        const storageMb = (t.documentoTamanhoBytes || 0) / 1048576;
-        const storagePct = t.armazenamentoLimiteMB > 0 ? (storageMb / t.armazenamentoLimiteMB) * 100 : 0;
-        const barCls = pctColor;
-        const healthBar = (label, valueText, pct) => {
-          const cls = barCls(pct);
-          return `<div class="health-bar">
-            <span class="health-bar-label">${label}</span>
-            <div class="health-bar-track"><div class="health-bar-fill ${cls}" style="width:${Math.min(100, pct).toFixed(0)}%"></div></div>
-            <span class="health-bar-value">${valueText}</span>
-          </div>`;
-        };
-
-        let html = `
-          <div class="detail-section">
-            <div class="detail-row"><span class="detail-label">CNPJ</span><span>${esc(t.cnpj ?? '—')}</span></div>
-            <div class="detail-row"><span class="detail-label">Endereço</span><span>${esc(t.endereco ?? '—')}</span></div>
-            <div class="detail-row"><span class="detail-label">Plano</span>
-              <span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span>
-              <span style="margin-left:6px">${paymentBadge(t)}</span>
-            </div>
-            <div class="detail-row"><span class="detail-label">Período</span><span>${esc(t.periodoBilling ?? '—')}</span></div>
-            <div class="detail-row"><span class="detail-label">Status</span><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></div>
-            <div class="detail-row"><span class="detail-label">Cadastro</span><span>${fmtDate(t.criadoEm)}</span></div>
-            <div class="detail-row"><span class="detail-label">Último login</span><span>${fmtDateTime(t.ultimoAcessoEm)} <span style="color:var(--color-text-muted);font-size:12px">(${daysAgo(t.ultimoAcessoEm)})</span></span></div>
-            <div class="detail-row"><span class="detail-label">Trial expira</span>
-              <span>${fmtDate(t.trialExpiraEm)} ${countdownBadge(t.trialExpiraEm, 'Trial')}</span>
-            </div>
-            <div class="detail-row"><span class="detail-label">Plano expira</span>
-              <span>${fmtDate(t.planoExpiraEm)} ${countdownBadge(t.planoExpiraEm, 'Plano')}</span>
-            </div>
-            <div class="detail-row"><span class="detail-label">Código promocional</span><span>${codigoPromoDetalhe(t)}</span></div>
-            <div class="detail-row"><span class="detail-label">Stripe Subscription ID</span><span style="font-size:11px;font-family:monospace">${esc(t.stripeSubscriptionId ?? '—')}</span></div>
-            ${t.abacatePayBillingId ? `<div class="detail-row"><span class="detail-label">AbacatePay ID (legado)</span><span style="font-size:11px;font-family:monospace">${esc(t.abacatePayBillingId)}</span></div>` : ''}
-          </div>
-
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-            <div class="detail-stat-card">
-              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Processos</div>
-              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
-              <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.monitoradoCount} monitorados</div>
-              <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap">
-                <span class="badge badge-red" title="Diário">D ${t.monitoradoDiarioCount}</span>
-                <span class="badge badge-blue" title="Semanal">S ${t.monitoradoSemanalCount}</span>
-              </div>
-            </div>
-            <div class="detail-stat-card">
-              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Docs</div>
-              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.documentoCount}</div>
-              <div style="font-size:11px;color:var(--color-text-muted);margin-top:1px">${fmtBytes(t.documentoTamanhoBytes)}</div>
-            </div>
-            <div class="detail-stat-card">
-              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Tarefas</div>
-              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.tarefaCount}</div>
-              <div style="display:flex;gap:4px;justify-content:center;margin-top:4px;flex-wrap:wrap">
-                <span class="badge badge-amber" title="Pendente">P ${t.tarefaPendenteCount}</span>
-                <span class="badge badge-blue" title="Em andamento">A ${t.tarefaEmAndamentoCount}</span>
-                <span class="badge badge-green" title="Concluída">C ${t.tarefaConcluidaCount}</span>
-                <span class="badge badge-red" title="Perdida">X ${t.tarefaPerdidaCount}</span>
-              </div>
-            </div>
-            <div class="detail-stat-card">
-              <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em">Usuários</div>
-              <div style="font-size:22px;font-weight:700;margin-top:4px">${t.userCount}</div>
-            </div>
-          </div>
-
-          <div class="health-section">
-            <div class="health-section-title">Saúde · uso do plano</div>
-            ${healthBar('Usuários', `${t.userCount} / ${t.usuariosLimite}`, usuariosPct)}
-            ${healthBar('Monitorados', `${t.monitoradoCount} / ${t.monitoradosLimite}`, monitoradosPct)}
-            ${healthBar('Storage', `${fmtBytes(t.documentoTamanhoBytes)} / ${fmtMb(t.armazenamentoLimiteMB)}`, storagePct)}
-            <div style="margin-top:8px;font-size:12px;color:var(--color-text-muted)">
-              Publicações capturadas no mês: <strong>${t.publicacoesMesAtual}</strong>
-              ${t.oabComErroSync > 0 ? ` · <span style="color:#b91c1c"><strong>${t.oabComErroSync}</strong> OAB(s) com erro de sync</span>` : ''}
-            </div>
-          </div>
-
-          <div class="health-section">
-            <div class="health-section-title">Recursos · tema e uso de módulos</div>
-            ${recursosDetalhado(t)}
-          </div>
-
-          <div style="font-size:12px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
-            OABs monitoradas (${(t.oabs ?? []).length})
-          </div>
-          <div class="oabs-list">
-            ${(t.oabs ?? []).length === 0
-              ? '<div style="padding:10px;text-align:center;color:var(--color-text-muted)">Nenhuma OAB cadastrada</div>'
-              : t.oabs.map(o => `
-                <div class="oabs-list-row ${o.syncError ? 'has-error' : ''}">
-                  <span style="font-weight:600;min-width:60px">${esc(o.uf)}/${esc(o.numero)}</span>
-                  <span style="flex:1">${esc(o.nome)}</span>
-                  <span class="badge badge-${o.ativo ? 'blue' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span>
-                  <span class="badge badge-${o.sincronizada ? 'green' : 'amber'}" title="${o.sincronizada ? 'Sincronizada com Escavador' : 'Sem ID no Escavador'}">${o.sincronizada ? '✓ sync' : 'pendente'}</span>
-                  ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
-                </div>`).join('')}
-          </div>
-
-          <div style="font-size:12px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px">
-            Usuários (${t.usuarios.length})
-          </div>
-          <div class="users-list">
-            ${t.usuarios.length === 0
-              ? '<div style="padding:10px;text-align:center;color:var(--color-text-muted)">Sem usuários</div>'
-              : t.usuarios.map(u => `
-                <div class="users-list-row">
-                  ${u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin' ? mascoteMini(u.assistenteMascote) : ''}
-                  <span style="flex:1;font-weight:500">${esc(u.nome)}</span>
-                  <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
-                  <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${fmtDateTime(u.ultimoAcessoEm)} (${daysAgo(u.ultimoAcessoEm)})</span>
-                  <span class="badge badge-${u.ativo ? 'green' : 'gray'}" style="margin-left:4px">${u.perfil}</span>
-                  ${u.ativo && u.perfil !== 'SuperAdmin'
-                    ? `<button class="action-btn" style="margin-left:6px" onclick="impersonarUsuario('${u.id}','${esc(u.nome).replace(/'/g, "\\'")}')">Entrar como</button>`
-                    : ''}
-                </div>`).join('')}
-          </div>`;
-
-        html += `
-          <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;padding:12px 14px;margin-top:16px;font-size:13px">
-            <div style="font-size:11px;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
-              Dados do tenant · exportar / importar
-            </div>
-            <div style="color:var(--color-text-muted);font-size:12px;margin-bottom:10px;line-height:1.5">
-              Exporte todos os dados deste tenant (por padrão anonimizados: emails viram
-              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">*@causify-replica.com</code>,
-              telefones viram
-              <code style="background:#f1f5f9;padding:1px 4px;border-radius:3px">+551190000XXXX</code>,
-              com a opção de manter os dados reais para backup)
-              e importe em outro ambiente para reproduzir bugs de produção ou restaurar um backup.
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="action-btn" onclick="openExportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬇ Exportar JSON</button>
-              <button class="action-btn danger" onclick="openImportModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">⬆ Importar (substituir)</button>
-            </div>
-          </div>
-
-          <div style="background:var(--color-surface);border:1px solid #dc2626;border-radius:8px;padding:12px 14px;margin-top:16px;font-size:13px">
-            <div style="font-size:11px;font-weight:600;color:#dc2626;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
-              Zona de perigo
-            </div>
-            <div style="color:var(--color-text-muted);font-size:12px;margin-bottom:10px;line-height:1.5">
-              Exclui este tenant e todos os seus dados permanentemente. Não pode ser desfeito.
-            </div>
-            <button class="action-btn danger" onclick="openDeleteModal('${t.id}','${esc(t.nome).replace(/'/g, "\\'")}')">🗑 Excluir tenant</button>
-          </div>`;
-
-        if (trialInfo && trialInfo.trialConcedido) {
-          const diasRestantes = trialInfo.expiraEm ? daysUntil(trialInfo.expiraEm) : null;
-          const badgeDias = diasRestantes === null ? '' :
-            diasRestantes < 0
-              ? `<span class="badge badge-red">expirado há ${-diasRestantes}d</span>`
-              : `<span class="badge badge-${diasRestantes <= 7 ? 'amber' : 'green'}">expira em ${diasRestantes}d</span>`;
-          html += `
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:18px">🎁</span>
-              <strong>SuperAdmin concedeu Trial Plus</strong>
-              <span class="badge badge-blue">${trialInfo.dias} dias</span>
-              ${badgeDias}
-            </div>
-            <div style="color:var(--color-text-muted);font-size:12px;line-height:1.5">
-              <div><strong>Concedido em:</strong> ${fmtDate(trialInfo.concedidoEm)}${trialInfo.concedidoPorNome ? ` por <strong>${esc(trialInfo.concedidoPorNome)}</strong>` : ''}</div>
-              <div><strong>Expira em:</strong> ${fmtDate(trialInfo.expiraEm)}</div>
-              ${trialInfo.motivo ? `<div style="margin-top:4px"><strong>Motivo:</strong> ${esc(trialInfo.motivo)}</div>` : ''}
-            </div>
-          </div>`;
-        }
-
-        document.getElementById('detailContent').innerHTML = html;
-      } catch (e) {
-        document.getElementById('detailContent').innerHTML = `<p style="color:var(--color-danger)">Erro: ${esc(e.message)}</p>`;
-      }
+    window.goPage = p => {
+      page = p;
+      load();
+      document.querySelector('.filters').scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    window.openPlano = function(id, planoAtual, periodoAtual, statusAtual) {
-      currentTenantId = id;
-      document.getElementById('novoPlano').value = planoAtual;
-      document.getElementById('periodoBilling').value = periodoAtual || '';
-      const trialBlock = document.getElementById('trialBlock');
-      const isFreeActive = planoAtual === 'Free' && statusAtual === 'Ativo';
-      trialBlock.style.display = isFreeActive ? '' : 'none';
-      if (isFreeActive) {
-        document.getElementById('trialDias').value = '30';
-        document.getElementById('trialMotivo').value = '';
-      }
-      openModal('planoModal');
-    };
-
-    document.getElementById('savePlanoBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('savePlanoBtn');
-      btn.disabled = true;
-      try {
-        await saFetch(`/superadmin/tenants/${currentTenantId}/plano`, {
-          method: 'PUT',
-          body: JSON.stringify({
-            plano: document.getElementById('novoPlano').value,
-            periodoBilling: document.getElementById('periodoBilling').value || null
-          })
-        });
-        closeModal('planoModal');
-        load();
-      } catch (e) {
-        alert('Erro: ' + e.message);
-      } finally {
-        btn.disabled = false;
-      }
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+    pageSizeSelect.value = String(pageSize);
+    pageSizeSelect.addEventListener('change', () => {
+      pageSize = Number(pageSizeSelect.value);
+      try { localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(pageSize)); } catch { /* vale só nesta visita */ }
+      page = 1;
+      load();
     });
 
-    document.getElementById('saveTrialBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('saveTrialBtn');
-      const dias = parseInt(document.getElementById('trialDias').value, 10);
-      const motivo = document.getElementById('trialMotivo').value.trim() || null;
-      if (!confirm(`Conceder Trial Plus de ${dias} dias para este tenant? O plano voltará automaticamente para Free após o prazo.`)) return;
-      btn.disabled = true;
-      try {
-        await saFetch(`/superadmin/tenants/${currentTenantId}/trial-plus`, {
-          method: 'PUT',
-          body: JSON.stringify({ dias, motivo })
-        });
-        closeModal('planoModal');
-        load();
-      } catch (e) {
-        alert('Erro: ' + e.message);
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    window.openStatus = function(id, statusAtual) {
-      currentTenantId = id;
-      document.getElementById('novoStatus').value = statusAtual;
-      document.getElementById('statusModalMsg').style.display = 'none';
-      openModal('statusModal');
-    };
-
-    let importTenantId = null;
-    let importTenantNome = null;
-
-    function getImportMode() {
-      const replaceRadio = document.getElementById('importModeReplace');
-      return replaceRadio && replaceRadio.checked ? 'replace' : 'new';
+    function updateViewButtons() {
+      document.getElementById('viewGrid').classList.toggle('active', view === 'grid');
+      document.getElementById('viewList').classList.toggle('active', view === 'list');
     }
-
-    function syncImportModeUi() {
-      const mode = getImportMode();
-      const replaceGroup = document.getElementById('importReplaceGroup');
-      const newGroup = document.getElementById('importNewGroup');
-      const btn = document.getElementById('importConfirmBtn');
-      if (mode === 'replace') {
-        replaceGroup.style.display = '';
-        newGroup.style.display = 'none';
-        btn.textContent = 'Importar e substituir';
-      } else {
-        replaceGroup.style.display = 'none';
-        newGroup.style.display = '';
-        btn.textContent = 'Criar tenant e importar';
-      }
+    function setView(v) {
+      view = v;
+      try { localStorage.setItem(VIEW_STORAGE_KEY, v); } catch { /* vale só nesta visita */ }
+      updateViewButtons();
+      renderItens();
     }
+    document.getElementById('viewGrid').addEventListener('click', () => setView('grid'));
+    document.getElementById('viewList').addEventListener('click', () => setView('list'));
+    updateViewButtons();
+    // Cruzar o breakpoint do celular troca lista ⇄ blocos sem recarregar.
+    window.matchMedia('(max-width: 768px)').addEventListener('change', () => { if (ultimosItens.length) renderItens(); });
 
-    window.openImportModal = function(id, nome) {
-      importTenantId = id;
-      importTenantNome = nome;
-      document.getElementById('importTenantNome').textContent = nome;
-      document.getElementById('importFile').value = '';
-      document.getElementById('importConfirmation').value = '';
-      document.getElementById('importNewName').value = '';
-      document.getElementById('importAnonymize').checked = true;
-      const hint = document.getElementById('importFileHint');
-      hint.style.display = 'none';
-      hint.textContent = '';
-      const msg = document.getElementById('importMsg');
-      msg.style.display = 'none';
-      msg.textContent = '';
-      document.getElementById('importModeReplace').checked = true;
-      syncImportModeUi();
-      openModal('importModal');
-    };
-
-    // Espia só o início do arquivo (o bloco "anonymization" vem antes da lista de
-    // tabelas no JSON gerado pelo export) para avisar se o backup contém dados reais,
-    // sem precisar carregar o arquivo inteiro na memória.
-    document.getElementById('importFile').addEventListener('change', async (e) => {
-      const hint = document.getElementById('importFileHint');
-      hint.style.display = 'none';
-      hint.textContent = '';
-
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-
-      try {
-        const head = await file.slice(0, 8192).text();
-        const match = /"anonymization"\s*:\s*\{\s*"enabled"\s*:\s*(true|false)/.exec(head);
-        if (!match) return;
-
-        if (match[1] === 'false') {
-          hint.style.background = '#fef3c7';
-          hint.style.border = '1px solid #fde68a';
-          hint.style.color = '#92400e';
-          hint.textContent = '⚠ Este arquivo contém dados reais (e-mails/telefones não anonimizados). Desmarque "Anonimizar dados ao importar" acima para preservá-los.';
-        } else {
-          hint.style.background = '#eff6ff';
-          hint.style.border = '1px solid #bfdbfe';
-          hint.style.color = '#1e3a8a';
-          hint.textContent = '✓ Este arquivo já está anonimizado.';
-        }
-        hint.style.display = 'block';
-      } catch {
-        // Leitura parcial falhou (arquivo não é o esperado) — deixa a validação normal
-        // do backend lidar com isso ao importar.
-      }
+    // Menu "⋯": um aberto por vez; fecha ao clicar fora ou ao escolher uma ação.
+    document.addEventListener('click', e => {
+      document.querySelectorAll('details.acoes-menu[open]').forEach(d => {
+        if (!d.contains(e.target) || e.target.closest('.acoes-menu-itens button')) d.open = false;
+      });
     });
-
-    window.closeImportModal = function() {
-      closeModal('importModal');
-      importTenantId = null;
-      importTenantNome = null;
-    };
-
-    document.getElementById('importConfirmBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('importConfirmBtn');
-      const fileInput = document.getElementById('importFile');
-      const confirmInput = document.getElementById('importConfirmation');
-      const newNameInput = document.getElementById('importNewName');
-      const msg = document.getElementById('importMsg');
-
-      msg.style.display = 'none';
-      msg.textContent = '';
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        msg.style.background = '#fef3c7';
-        msg.style.border = '1px solid #fde68a';
-        msg.style.color = '#92400e';
-        msg.textContent = 'Selecione um arquivo JSON.';
-        msg.style.display = 'block';
-        return;
-      }
-
-      const file = fileInput.files[0];
-      if (file.size > 500 * 1024 * 1024) {
-        msg.style.background = '#fee2e2';
-        msg.style.border = '1px solid #fecaca';
-        msg.style.color = '#7f1d1d';
-        msg.textContent = 'Arquivo maior que 500 MB.';
-        msg.style.display = 'block';
-        return;
-      }
-
-      const mode = getImportMode();
-      let confirmation = null;
-      let newTenantName = null;
-
-      if (mode === 'replace') {
-        const typed = confirmInput.value.trim();
-        if (typed !== importTenantNome) {
-          msg.style.background = '#fef3c7';
-          msg.style.border = '1px solid #fde68a';
-          msg.style.color = '#92400e';
-          msg.textContent = `Confirmação inválida. Digite exatamente "${importTenantNome}".`;
-          msg.style.display = 'block';
-          return;
-        }
-        confirmation = typed;
-      } else {
-        const name = newNameInput.value.trim();
-        if (!name) {
-          msg.style.background = '#fef3c7';
-          msg.style.border = '1px solid #fde68a';
-          msg.style.color = '#92400e';
-          msg.textContent = 'Informe o nome do novo tenant.';
-          msg.style.display = 'block';
-          return;
-        }
-        if (name.length > 200) {
-          msg.style.background = '#fef3c7';
-          msg.style.border = '1px solid #fde68a';
-          msg.style.color = '#92400e';
-          msg.textContent = 'Nome do tenant deve ter no máximo 200 caracteres.';
-          msg.style.display = 'block';
-          return;
-        }
-        newTenantName = name;
-      }
-
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = 'Importando...';
-
-      try {
-        const result = await importarTenant(importTenantId, file, {
-          mode,
-          confirmation,
-          newTenantName,
-          anonymize: document.getElementById('importAnonymize').checked
-        });
-        msg.style.background = '#dcfce7';
-        msg.style.border = '1px solid #bbf7d0';
-        msg.style.color = '#15803d';
-        msg.style.whiteSpace = 'pre-line';
-        msg.textContent = 'Importação concluída com sucesso!\n\n' + formatarResultadoImport(result);
-        msg.style.display = 'block';
-        load();
-      } catch (e) {
-        msg.style.background = '#fee2e2';
-        msg.style.border = '1px solid #fecaca';
-        msg.style.color = '#7f1d1d';
-        msg.style.whiteSpace = 'pre-line';
-        msg.textContent = 'Erro: ' + e.message;
-        msg.style.display = 'block';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
-      }
-    });
-
-    let deleteTenantId = null;
-    let deleteTenantNome = null;
-
-    window.openDeleteModal = function(id, nome) {
-      deleteTenantId = id;
-      deleteTenantNome = nome;
-      document.getElementById('deleteTenantNome').textContent = nome;
-      document.getElementById('deleteConfirmation').value = '';
-      const msg = document.getElementById('deleteMsg');
-      msg.style.display = 'none';
-      msg.textContent = '';
-      openModal('deleteModal');
-    };
-
-    window.closeDeleteModal = function() {
-      closeModal('deleteModal');
-      deleteTenantId = null;
-      deleteTenantNome = null;
-    };
-
-    document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('deleteConfirmBtn');
-      const confirmInput = document.getElementById('deleteConfirmation');
-      const msg = document.getElementById('deleteMsg');
-
-      msg.style.display = 'none';
-      msg.textContent = '';
-
-      const typed = confirmInput.value.trim();
-      if (typed !== deleteTenantNome) {
-        msg.style.background = '#fef3c7';
-        msg.style.border = '1px solid #fde68a';
-        msg.style.color = '#92400e';
-        msg.textContent = `Confirmação inválida. Digite exatamente "${deleteTenantNome}".`;
-        msg.style.display = 'block';
-        return;
-      }
-
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = 'Excluindo...';
-
-      try {
-        await excluirTenant(deleteTenantId, typed);
-        const nomeExcluido = deleteTenantNome;
-        closeDeleteModal();
-        closeModal('detailModal');
-        showToast(`Tenant "${nomeExcluido}" excluído permanentemente.`);
-        load();
-      } catch (e) {
-        msg.style.background = '#fee2e2';
-        msg.style.border = '1px solid #fecaca';
-        msg.style.color = '#7f1d1d';
-        msg.textContent = 'Erro: ' + e.message;
-        msg.style.display = 'block';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
-      }
-    });
-
-    function showToast(message) {
-      const toast = document.createElement('div');
-      toast.textContent = message;
-      toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#15803d;color:white;padding:12px 18px;border-radius:8px;font-size:14px;z-index:2000;box-shadow:0 4px 12px rgba(0,0,0,.15);max-width:380px';
-      document.body.appendChild(toast);
-      setTimeout(() => { toast.remove(); }, 4000);
-    }
-
-    document.getElementById('novoStatus').addEventListener('change', e => {
-      const msg = document.getElementById('statusModalMsg');
-      msg.style.display = (e.target.value === 'Suspenso' || e.target.value === 'Cancelado') ? '' : 'none';
-    });
-
-    document.querySelectorAll('input[name="importMode"]').forEach(r => {
-      r.addEventListener('change', syncImportModeUi);
-    });
-
-    document.getElementById('saveStatusBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('saveStatusBtn');
-      btn.disabled = true;
-      try {
-        await saFetch(`/superadmin/tenants/${currentTenantId}/status`, {
-          method: 'PUT',
-          body: JSON.stringify({ status: document.getElementById('novoStatus').value })
-        });
-        closeModal('statusModal');
-        load();
-      } catch (e) {
-        alert('Erro: ' + e.message);
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    function openModal(id) { document.getElementById(id).classList.add('open'); }
-    window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
-
-    document.querySelectorAll('.modal-overlay').forEach(m => {
-      m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-    });
-
-    document.getElementById('prevBtn').addEventListener('click', () => { page--; load(); });
-    document.getElementById('nextBtn').addEventListener('click', () => { page++; load(); });
+    const fecharMenus = () => document.querySelectorAll('details.acoes-menu[open]').forEach(d => { d.open = false; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharMenus(); });
+    window.addEventListener('resize', fecharMenus);
+    document.querySelector('.main-content').addEventListener('scroll', fecharMenus, { passive: true });
+    document.getElementById('tenantsTableWrap').addEventListener('scroll', fecharMenus, { passive: true });
+    // O menu é position:fixed para não ser cortado pelo overflow da tabela; abre para baixo,
+    // alinhado à direita do botão, ou para cima quando não cabe.
+    document.getElementById('tableBody').addEventListener('toggle', e => {
+      const d = e.target;
+      if (!d.matches?.('details.acoes-menu') || !d.open) return;
+      const btn = d.querySelector('summary').getBoundingClientRect();
+      const menu = d.querySelector('.acoes-menu-itens');
+      const alto = menu.offsetHeight;
+      menu.style.left = `${Math.max(8, btn.right - menu.offsetWidth)}px`;
+      menu.style.top = btn.bottom + 4 + alto > window.innerHeight
+        ? `${Math.max(8, btn.top - 4 - alto)}px`
+        : `${btn.bottom + 4}px`;
+    }, true);
 
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', () => {
@@ -1329,32 +511,33 @@ import { esc } from '/js/utils.js';
     document.getElementById('statusFilter').addEventListener('change', () => { page = 1; load(); });
     document.getElementById('planoFilter').addEventListener('change', () => { page = 1; load(); });
 
+    const sortSelect = document.getElementById('sortSelect');
     function updateSortIndicators() {
       document.querySelectorAll('.sort-indicator').forEach(el => {
         el.textContent = el.dataset.indicator === sortBy ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
       });
+      sortSelect.value = `${sortBy}:${sortDir}`;
     }
-
+    function applySort(col, dir) {
+      sortBy = col;
+      sortDir = dir;
+      page = 1;
+      saveSort();
+      updateSortIndicators();
+      load();
+    }
+    sortSelect.addEventListener('change', () => {
+      const [col, dir] = sortSelect.value.split(':');
+      applySort(col, dir);
+    });
     document.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
         const col = th.dataset.sort;
-        if (sortBy === col) {
-          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-          sortBy = col;
-          sortDir = 'asc';
-        }
-        page = 1;
-        saveSort();
-        updateSortIndicators();
-        load();
+        applySort(col, sortBy === col ? (sortDir === 'asc' ? 'desc' : 'asc') : 'asc');
       });
     });
     updateSortIndicators();
 
-    // Open tenant detail via URL param
-    const urlId = new URLSearchParams(location.search).get('id');
-    if (urlId) window.openDetail(urlId);
 
     load();
   </script>

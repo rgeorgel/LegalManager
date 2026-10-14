@@ -226,6 +226,9 @@ public class ProcessosController : ControllerBase
     public async Task<IActionResult> AlternarMonitoramento(Guid id, CancellationToken ct)
     {
         var ativo = await _monitoramento.AlternarMonitoramentoAsync(id, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(
+            TimelineAcoes.MonitoramentoAlternado, AuditEntities.Processo, id, null, new { Monitorado = ativo },
+            HttpContext.GetClientIpAddress()), ct);
         // Passou a monitorar um processo importado sem andamentos: faz a carga inicial agora.
         if (ativo && _context != null) await CarregarAndamentosIniciaisAsync(id);
         return Ok(new { monitorado = ativo });

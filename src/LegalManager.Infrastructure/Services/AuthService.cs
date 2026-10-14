@@ -366,6 +366,10 @@ public class AuthService : IAuthService
     {
         if (tenant.Status == StatusTenant.Trial && tenant.TrialExpiraEm < DateTime.UtcNow)
         {
+            _context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+                tenant.Id, null, TimelineAcoes.PlanoExpirado, "Tenant", tenant.Id.ToString(),
+                new { Plano = tenant.Plano.ToString(), Motivo = "trial", ExpirouEm = tenant.TrialExpiraEm },
+                new { Plano = nameof(PlanoTipo.Free) }));
             tenant.Plano = PlanoTipo.Free;
             tenant.Status = StatusTenant.Ativo;
             tenant.TrialExpiraEm = null;
@@ -379,6 +383,10 @@ public class AuthService : IAuthService
         // Downgrade to Free if Pro subscription expired (cancelled and past billing period)
         if (tenant.PlanoExpiraEm.HasValue && tenant.PlanoExpiraEm.Value < DateTime.UtcNow)
         {
+            _context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
+                tenant.Id, null, TimelineAcoes.PlanoExpirado, "Tenant", tenant.Id.ToString(),
+                new { Plano = tenant.Plano.ToString(), Motivo = "assinatura", ExpirouEm = tenant.PlanoExpiraEm },
+                new { Plano = nameof(PlanoTipo.Free) }));
             tenant.Plano = PlanoTipo.Free;
             tenant.Status = StatusTenant.Ativo;
             tenant.PlanoExpiraEm = null;

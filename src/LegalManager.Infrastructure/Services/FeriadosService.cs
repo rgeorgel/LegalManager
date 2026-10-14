@@ -1,3 +1,5 @@
+using LegalManager.Domain.Enums;
+
 namespace LegalManager.Infrastructure.Services;
 
 public static class FeriadosService
@@ -70,6 +72,20 @@ public static class FeriadosService
             if (IsDiaUtil(current, GetFeriados(current.Year))) added++;
         }
         return current;
+    }
+
+    /// <summary>
+    /// Cálculo da calculadora de prazos: usado pela tela (POST /api/prazos/calcular) e pelo
+    /// "recalcular" da timeline do superadmin, para os dois darem sempre o mesmo resultado.
+    /// </summary>
+    public static (DateTime DataFinal, IReadOnlyList<string> Feriados) CalcularPrazo(
+        DateTime dataInicio, int quantidadeDias, TipoCalculo tipo, IEnumerable<DateOnly>? feriadosAdicionais = null)
+    {
+        var extras = feriadosAdicionais?.ToList();
+        var dataFinal = tipo == TipoCalculo.DiasUteis
+            ? AdicionarDiasUteis(dataInicio, quantidadeDias, extras)
+            : dataInicio.Date.AddDays(quantidadeDias);
+        return (dataFinal, ListarFeriadosNoIntervalo(dataInicio, dataFinal, extras));
     }
 
     public static IReadOnlyList<string> ListarFeriadosNoIntervalo(DateTime inicio, DateTime fim, IEnumerable<DateOnly>? feriadosAdicionais = null)
