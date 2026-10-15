@@ -133,6 +133,13 @@
     tr.contato-excluido td:not(.col-select) { opacity:.6; }
     .contato-card.contato-excluido { opacity:.7; }
     .contato-card .card-header .card-select { flex-shrink:0; margin-top:2px; }
+    .paginacao-bar { display:flex; align-items:center; justify-content:space-between; gap:12px 16px; flex-wrap:wrap; margin-top:20px; }
+    .paginacao-bar .pagination { margin-top:0; flex-wrap:wrap; }
+    .paginacao-bar .pagination .reticencias { padding:6px 4px; color:var(--color-text-muted); }
+    .paginacao-info { font-size:13px; color:var(--color-text-muted); }
+    .paginacao-tamanho { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--color-text-muted); margin:0; }
+    .paginacao-tamanho select { width:auto; height:34px; padding:0 28px 0 10px; font-size:13px; }
+    @media(max-width:768px) { .paginacao-bar { justify-content:center; } }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -241,7 +248,18 @@
 
       <div id="contatosCardsContainer" class="contatos-grid" style="display:none"></div>
 
-      <div class="pagination" id="pagination"></div>
+      <div class="paginacao-bar" id="paginacaoBar" style="display:none">
+        <span class="paginacao-info" id="paginacaoInfo"></span>
+        <div class="pagination" id="pagination"></div>
+        <label class="paginacao-tamanho">Por página
+          <select id="contatosPageSize">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+      </div>
 
       <!-- Seção de Documentos do Contato — agora dentro de modal -->
       <div id="contatoDocsSection" style="display:none;margin-top:32px"></div>
@@ -651,6 +669,13 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
     document.getElementById('fOab').addEventListener('input', (e) => mascaraOab(e.target));
 
     let currentPage = 1;
+    // Itens por página: escolha do usuário lembrada no navegador; padrão 50.
+    const PAGE_SIZES = [10, 20, 50, 100];
+    let pageSize = 50;
+    try {
+      const salvo = Number(localStorage.getItem('contatos.pageSize'));
+      if (PAGE_SIZES.includes(salvo)) pageSize = salvo;
+    } catch { /* storage indisponível: fica o padrão */ }
     let currentFilters = {};
     let editingId = null;
     let atendimentoContatoId = null;
@@ -734,15 +759,22 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         const chave = JSON.stringify(filtro);
         if (chave !== chaveFiltroSelecao) { selecionados.clear(); chaveFiltroSelecao = chave; }
 
-        const result = await getContatos({ ...filtro, page: currentPage });
+        const result = await getContatos({ ...filtro, page: currentPage, pageSize });
+        // Página lembrada de outro tamanho pode ter passado do fim: vai para a última.
+        if (!result.items.length && result.totalPages > 0 && currentPage > result.totalPages) {
+          currentPage = result.totalPages;
+          saveListState();
+          return loadContatos();
+        }
         itensPagina = result.items;
         totalFiltro = result.total;
         renderTable(result.items);
         renderCards(result.items);
         attachRowMenus(result.items);
-        renderPagination(result.totalPages, result.page);
+        renderPagination(result);
         atualizarSelecao();
       } catch (err) {
+        document.getElementById('paginacaoBar').style.display = 'none';
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--color-danger)">${err.message}</td></tr>`;
       }
     }
@@ -1006,18 +1038,44 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       return map[t] || t;
     }
 
-    function renderPagination(total, current) {
+    function renderPagination({ total, page: current, pageSize: tamanho, totalPages }) {
+      const bar = document.getElementById('paginacaoBar');
       const el = document.getElementById('pagination');
-      if (total <= 1) { el.innerHTML = ''; return; }
-      let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})">‹</button>`;
-      for (let i = 1; i <= total; i++) {
-        html += `<button class="${i === current ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
-      }
-      html += `<button ${current >= total ? 'disabled' : ''} onclick="goPage(${current + 1})">›</button>`;
+      if (!total) { bar.style.display = 'none'; el.innerHTML = ''; return; }
+      bar.style.display = '';
+
+      const inicio = (current - 1) * tamanho + 1;
+      const fim = Math.min(current * tamanho, total);
+      const fmt = n => n.toLocaleString('pt-BR');
+      document.getElementById('paginacaoInfo').textContent =
+        `Mostrando ${fmt(inicio)}–${fmt(fim)} de ${fmt(total)} contato${total === 1 ? '' : 's'}`;
+
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      // Primeira, última e uma janela em volta da atual (menor no celular); o resto vira "…".
+      const janela = window.innerWidth < 600 ? 1 : 2;
+      const paginas = [];
+      for (let i = 1; i <= totalPages; i++)
+        if (i === 1 || i === totalPages || Math.abs(i - current) <= janela) paginas.push(i);
+      let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="goPage(${current - 1})" aria-label="Página anterior">‹</button>`;
+      paginas.forEach((i, idx) => {
+        if (idx > 0 && i - paginas[idx - 1] > 1) html += '<span class="reticencias">…</span>';
+        html += `<button class="${i === current ? 'active' : ''}" onclick="goPage(${i})"${i === current ? ' aria-current="page"' : ''}>${i}</button>`;
+      });
+      html += `<button ${current >= totalPages ? 'disabled' : ''} onclick="goPage(${current + 1})" aria-label="Próxima página">›</button>`;
       el.innerHTML = html;
     }
 
     window.goPage = (p) => { currentPage = p; loadContatos(); };
+
+    const pageSizeSelect = document.getElementById('contatosPageSize');
+    pageSizeSelect.value = String(pageSize);
+    pageSizeSelect.addEventListener('change', () => {
+      pageSize = Number(pageSizeSelect.value);
+      try { localStorage.setItem('contatos.pageSize', String(pageSize)); } catch { /* sem storage: vale só nesta visita */ }
+      currentPage = 1;
+      saveListState();
+      loadContatos();
+    });
 
     window.editContato = async (id) => {
       try {
