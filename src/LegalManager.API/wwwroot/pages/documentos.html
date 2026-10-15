@@ -425,9 +425,7 @@
         </div>
         <div class="form-group">
           <label>Vincular a Cliente</label>
-          <select id="fCliente" class="form-control">
-            <option value="">Nenhum</option>
-          </select>
+          <div id="fClientePicker"></div>
         </div>
         <div class="form-group">
           <label>Pasta</label>
@@ -690,6 +688,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
 import { esc } from '/js/utils.js';
+import { createContatoPicker } from '/js/contato-picker.js';
 import {
   VARIAVEIS_SUGERIDAS, MODELOS_EXEMPLO, extrairVariaveis, contarVariaveis, aplicarVariaveis, previewHtml,
   rotuloVariavel, normalizarNomeVariavel, valoresDoProcesso, valoresAutomaticos, imprimirTexto, baixarWord, arquivoWord,
@@ -1006,7 +1005,10 @@ async function populateFolderSelect() {
 // ============================================================
 let documentos = [];
 let processos = [];
-let clientes = [];
+// Busca no servidor (só contatos ativos), em vez de um <select> com os primeiros 200 contatos.
+const clientePicker = createContatoPicker(document.getElementById('fClientePicker'), {
+  placeholder: 'Nenhum — digite para buscar um cliente...',
+});
 
 function showDocAlert(msg, type = 'error') {
   const el = document.getElementById('docAlertMsg');
@@ -1160,25 +1162,14 @@ async function loadDocumentos() {
 
 async function loadReferenceData() {
   try {
-    const [procRes, contRes] = await Promise.all([
-      apiFetch('/processos?pageSize=200'),
-      apiFetch('/contatos?pageSize=200')
-    ]);
+    const procRes = await apiFetch('/processos?pageSize=200');
     processos = procRes?.items || [];
-    clientes = (contRes?.items || []).filter(c => c.ativo);
 
     const procSel = document.getElementById('fProcesso');
     processos.forEach(p => {
       const o = document.createElement('option');
       o.value = p.id; o.textContent = `${p.numeroCNJ} - ${p.nomeCliente || 'Sem cliente'}`;
       procSel.appendChild(o);
-    });
-
-    const cliSel = document.getElementById('fCliente');
-    clientes.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.nome;
-      cliSel.appendChild(o);
     });
   } catch {}
 }
@@ -1257,6 +1248,7 @@ const modalUpload = document.getElementById('modalUpload');
 
 function resetUploadModal() {
   document.getElementById('uploadForm').reset();
+  clientePicker.setValue(null);
   document.getElementById('uploadAlert').style.display = 'none';
   document.getElementById('uploadProgress').style.display = 'none';
   document.getElementById('progressBar').style.width = '0%';
@@ -1280,7 +1272,7 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
   formData.append('file', file);
   formData.append('tipo', document.getElementById('fTipo').value);
   const processoId = document.getElementById('fProcesso').value;
-  const clienteId = document.getElementById('fCliente').value;
+  const clienteId = clientePicker.getValue();
   const pastaId = document.getElementById('fPasta').value;
   if (processoId) formData.append('processoId', processoId);
   if (clienteId) formData.append('clienteId', clienteId);

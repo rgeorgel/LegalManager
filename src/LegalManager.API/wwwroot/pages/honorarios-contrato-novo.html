@@ -64,9 +64,7 @@
           <div class="form-grid-2">
             <div class="form-group" style="grid-column:1/-1">
               <label class="form-label">Cliente *</label>
-              <select id="contatoId" class="form-control" required>
-                <option value="">Selecione um cliente...</option>
-              </select>
+              <div id="contatoPicker"></div>
             </div>
             <div class="form-group" style="grid-column:1/-1">
               <label class="form-label">Processo (opcional)</label>
@@ -207,14 +205,18 @@
     import { initLayout } from '/js/layout.js';
     import {
       brl, fmtDateInput, notify, escapeHtml, getQueryParam,
-      getContatos, getProcessos,
+      getProcessos,
       getContrato, criarContrato, atualizarContrato
     } from '/js/honorarios.js';
+    import { createContatoPicker } from '/js/contato-picker.js';
     initLayout();
 
     const id = getQueryParam('id');
-    let contatoSelecionado = null;
     let processoSelecionado = null;
+    // Busca no servidor (só contatos ativos), em vez de um <select> com os primeiros 200 contatos.
+    const contatoPicker = createContatoPicker(document.getElementById('contatoPicker'), {
+      placeholder: 'Digite nome, CPF/CNPJ ou e-mail do cliente...',
+    });
 
     function hojeISO() {
       const d = new Date();
@@ -230,19 +232,6 @@
       const d = new Date(iso);
       d.setMonth(d.getMonth() + months);
       return d.toISOString().slice(0, 10);
-    }
-
-    async function carregarContatos() {
-      const sel = document.getElementById('contatoId');
-      try {
-        const r = await getContatos();
-        const items = r?.items ?? r?.Items ?? r ?? [];
-        const opt = items.map(c => `<option value="${c.id ?? c.Id}">${escapeHtml(c.nome ?? c.Nome)}${c.cpfCnpj ?? c.CpfCnpj ? ' — ' + escapeHtml(c.cpfCnpj ?? c.CpfCnpj) : ''}</option>`).join('');
-        sel.innerHTML = '<option value="">Selecione um cliente...</option>' + opt;
-        if (contatoSelecionado) sel.value = contatoSelecionado;
-      } catch (e) {
-        sel.innerHTML = '<option value="">Erro ao carregar</option>';
-      }
     }
 
     async function carregarProcessos() {
@@ -316,7 +305,7 @@
       const isEntrada = f === 'EntradaParcelado';
 
       const common = {
-        contatoId: document.getElementById('contatoId').value,
+        contatoId: contatoPicker.getValue(),
         processoId: document.getElementById('processoId').value || null,
         objeto: document.getElementById('objeto').value.trim(),
         valorTotal: parseFloat(document.getElementById('valorTotal').value),
@@ -329,7 +318,7 @@
         dataFim: null,
       };
 
-      if (!common.contatoId) { alert('Selecione um cliente'); btn.disabled = false; return; }
+      if (!common.contatoId) { alert('Selecione um cliente'); contatoPicker.focus(); btn.disabled = false; return; }
       if (!common.objeto) { alert('Descreva o objeto'); btn.disabled = false; return; }
       if (!common.valorTotal || common.valorTotal <= 0) { alert('Informe o valor total'); btn.disabled = false; return; }
       if (!common.dataInicio) { alert('Informe a data de início'); btn.disabled = false; return; }
@@ -378,14 +367,13 @@
     });
 
     (async () => {
-      await Promise.all([carregarContatos(), carregarProcessos()]);
+      await carregarProcessos();
       if (id) {
         document.getElementById('pageTitle').textContent = '✏️ Editar Contrato';
         const c = await getContrato(id);
         if (c) {
-          contatoSelecionado = c.contatoId ?? c.ContatoId;
+          contatoPicker.setValue({ id: c.contatoId ?? c.ContatoId, label: c.nomeContato ?? c.NomeContato });
           processoSelecionado = c.processoId ?? c.ProcessoId ?? '';
-          document.getElementById('contatoId').value = contatoSelecionado;
           document.getElementById('processoId').value = processoSelecionado;
           document.getElementById('objeto').value = c.objeto ?? c.Objeto ?? '';
           document.getElementById('valorTotal').value = c.valorTotal ?? c.ValorTotal;

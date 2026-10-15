@@ -751,7 +751,7 @@ async function loadPublicacoes() {
 }
 
 async function loadContatos() {
-  const r = await apiFetch('/contatos?pageSize=1').catch(() => null);
+  const r = await apiFetch('/contatos?pageSize=1&ativo=true').catch(() => null);
   $('kContatos').textContent = r?.total ?? '—';
 }
 

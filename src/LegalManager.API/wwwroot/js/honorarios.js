@@ -146,10 +146,6 @@ export async function salvarConfiguracao(body) {
   return apiFetch('/honorarios/contratos/configuracao', { method: 'PUT', body: JSON.stringify(body) });
 }
 
-export async function getContatos() {
-  return apiFetch('/contatos?page=1&pageSize=200');
-}
-
 export async function getProcessos() {
   return apiFetch('/processos?page=1&pageSize=200');
 }

@@ -152,7 +152,7 @@
               <div id="formNovoVinculo" style="display:none;background:var(--color-bg);border-radius:var(--radius);padding:12px;margin-top:12px">
                 <div class="form-group">
                   <label>Contato relacionado</label>
-                  <select id="vContatoRelacionado" class="form-control"></select>
+                  <div id="vContatoRelacionado"></div>
                 </div>
                 <div class="form-group">
                   <label>Tipo de vínculo</label>
@@ -251,9 +251,10 @@
 
 <script type="module">
   import { initLayout, isPlanoFree } from '/js/layout.js';
-  import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, getContatos, agendarRetorno,
+  import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, agendarRetorno,
     addAtendimento, updateAtendimento, deleteAtendimento } from '/js/contatos.js';
   import { setupVoltarButton, contatoPerfilUrl } from '/js/contato-nav.js';
+  import { createContatoPicker } from '/js/contato-picker.js';
   import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
 
   initLayout();
@@ -440,19 +441,13 @@
     } catch (err) { showAlert(err.message); }
   };
 
-  document.getElementById('btnNovoVinculo').addEventListener('click', async () => {
-    const sel = document.getElementById('vContatoRelacionado');
-    sel.innerHTML = '<option>Carregando...</option>';
+  // Busca no servidor (só contatos ativos), em vez de um <select> com os primeiros 200 contatos.
+  const vinculoPicker = createContatoPicker(document.getElementById('vContatoRelacionado'));
+
+  document.getElementById('btnNovoVinculo').addEventListener('click', () => {
+    vinculoPicker.setValue(null);
     document.getElementById('formNovoVinculo').style.display = 'block';
-    try {
-      const result = await getContatos({ pageSize: 200, ativo: true });
-      const opcoes = result.items.filter(c => c.id !== contatoId);
-      sel.innerHTML = opcoes.length
-        ? opcoes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('')
-        : '<option value="">Nenhum contato disponível</option>';
-    } catch {
-      sel.innerHTML = '<option value="">Erro ao carregar contatos</option>';
-    }
+    vinculoPicker.focus();
   });
 
   document.getElementById('btnCancelarVinculo').addEventListener('click', () => {
@@ -460,8 +455,9 @@
   });
 
   document.getElementById('btnSalvarVinculo').addEventListener('click', async () => {
-    const contatoRelacionadoId = document.getElementById('vContatoRelacionado').value;
+    const contatoRelacionadoId = vinculoPicker.getValue();
     if (!contatoRelacionadoId) return;
+    if (contatoRelacionadoId === contatoId) { showAlert('Escolha outro contato — não é possível vincular o contato a ele mesmo.'); return; }
     const btn = document.getElementById('btnSalvarVinculo');
     btn.disabled = true;
     try {

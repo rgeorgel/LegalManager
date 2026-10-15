@@ -464,7 +464,7 @@ import { esc, dataParede } from '/js/utils.js';
 
         const [me, contatos, processosAtivos, processosEncerrados, tarefas, tarefasAtrasadas, tarefasUrgentes, eventos, financeiro] = await Promise.all([
           apiFetch('/usuarios/me').catch(() => null),
-          apiFetch('/contatos?pageSize=1').catch(() => null),
+          apiFetch('/contatos?pageSize=1&ativo=true').catch(() => null),
           apiFetch('/processos?status=Ativo&pageSize=1').catch(() => null),
           apiFetch('/processos?status=Encerrado&pageSize=1').catch(() => null),
           apiFetch('/tarefas?status=Pendente&pageSize=1').catch(() => null),
