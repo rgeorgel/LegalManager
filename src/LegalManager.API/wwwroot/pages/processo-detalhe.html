@@ -160,6 +160,10 @@
     .fav-btn:hover { color:#f59e0b; transform:scale(1.15); }
     .fav-btn[aria-pressed="true"] { color:#f59e0b; }
     .fav-btn:disabled { opacity:.5; cursor:wait; }
+    #pageTitle.copiavel { cursor:pointer; }
+    #pageTitle.copiavel:hover { text-decoration:underline dotted; text-underline-offset:4px; }
+    .copy-btn { background:none; border:none; padding:0 4px; font-size:16px; line-height:1; cursor:pointer; color:var(--color-text-muted); opacity:.7; transition:opacity .15s, transform .15s; }
+    .copy-btn:hover { opacity:1; transform:scale(1.15); }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -197,6 +201,7 @@
         <a href="/pages/processos.html" style="font-size:13px;color:var(--color-text-muted)">← Processos</a>
         <div style="display:flex;align-items:center;gap:6px">
           <h1 class="page-title" id="pageTitle">Carregando...</h1>
+          <button type="button" class="copy-btn" id="btnCopiarNumero" title="Copiar número do processo" aria-label="Copiar número do processo" style="display:none">📋</button>
           <button type="button" class="fav-btn" id="btnFavorito" aria-pressed="false" style="display:none"></button>
         </div>
       </div>
@@ -1073,7 +1078,11 @@ async function loadProcesso() {
 
 function renderProcesso() {
   document.title = `${processo.numeroCNJ} — Causify`;
-  document.getElementById('pageTitle').textContent = processo.numeroCNJ;
+  const pageTitle = document.getElementById('pageTitle');
+  pageTitle.textContent = processo.numeroCNJ;
+  pageTitle.classList.add('copiavel');
+  pageTitle.title = 'Clique para copiar o número do processo';
+  document.getElementById('btnCopiarNumero').style.display = '';
 
   document.getElementById('badgeStatus').className = statusCls(processo.status);
   document.getElementById('badgeStatus').textContent = processo.status;
@@ -1725,6 +1734,16 @@ document.getElementById('pecaCopiar').addEventListener('click', () => {
     setTimeout(() => btn.textContent = original, 2000);
   });
 });
+
+// Copiar número do processo (botão ao lado do título ou clique no próprio número)
+function copiarNumeroProcesso() {
+  if (!processo?.numeroCNJ) return;
+  navigator.clipboard.writeText(processo.numeroCNJ)
+    .then(() => showAlert('Número do processo copiado!', 'success'))
+    .catch(() => showAlert('Não foi possível copiar o número do processo.'));
+}
+document.getElementById('btnCopiarNumero').addEventListener('click', copiarNumeroProcesso);
+document.getElementById('pageTitle').addEventListener('click', copiarNumeroProcesso);
 
 // Monitorar / Consultar DataJud
 document.getElementById('btnMonitorar').addEventListener('click', async () => {
