@@ -28,23 +28,24 @@ public class TarefasController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<TarefaListItemDto>>> GetAll(
         [FromQuery] string? busca,
-        [FromQuery] string? status,
-        [FromQuery] string? prioridade,
+        [FromQuery] string[]? status,
+        [FromQuery] string[]? prioridade,
         [FromQuery] Guid? responsavelId,
         [FromQuery] Guid? processoId,
         [FromQuery] Guid? contatoId,
         [FromQuery] bool? atrasada,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? tipo = null,
+        [FromQuery] string[]? tipo = null,
         CancellationToken ct = default)
     {
+        // status, prioridade e tipo aceitam um valor ou vários (?status=Pendente&status=EmAndamento).
         var filtro = new TarefaFiltroDto(
             busca,
-            status != null && Enum.TryParse<StatusTarefa>(status, true, out var s) ? s : null,
-            prioridade != null && Enum.TryParse<PrioridadeTarefa>(prioridade, true, out var p) ? p : null,
+            FiltroEnums.Parse<StatusTarefa>(status),
+            FiltroEnums.Parse<PrioridadeTarefa>(prioridade),
             responsavelId, processoId, contatoId, atrasada, page, pageSize,
-            tipo != null && Enum.TryParse<TipoTarefa>(tipo, true, out var tp) ? tp : null);
+            FiltroEnums.Parse<TipoTarefa>(tipo));
 
         return Ok(await _service.GetAllAsync(filtro, ct));
     }

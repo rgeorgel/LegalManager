@@ -87,15 +87,16 @@ public record TarefaListItemDto(
 
 public record TarefaFiltroDto(
     string? Busca,
-    StatusTarefa? Status,
-    PrioridadeTarefa? Prioridade,
+    // Status, Prioridade e Tipo: vários valores = tarefas com qualquer um deles; null ou vazio = todas.
+    IReadOnlyCollection<StatusTarefa>? Status,
+    IReadOnlyCollection<PrioridadeTarefa>? Prioridade,
     Guid? ResponsavelId,
     Guid? ProcessoId,
     Guid? ContatoId,
     bool? Atrasada,
     int Page = 1,
     int PageSize = 20,
-    TipoTarefa? Tipo = null
+    IReadOnlyCollection<TipoTarefa>? Tipo = null
 );
 
 // ── Dashboard: prazos e tarefas (cálculo no backend, payload enxuto) ──────

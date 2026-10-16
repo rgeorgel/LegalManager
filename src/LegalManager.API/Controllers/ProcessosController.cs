@@ -106,21 +106,12 @@ public class ProcessosController : ControllerBase
         bool favoritos, int page = 1, int pageSize = 20) =>
         new(
             busca,
-            ParseEnums<StatusProcesso>(status),
-            ParseEnums<AreaDireito>(areaDireito),
+            FiltroEnums.Parse<StatusProcesso>(status),
+            FiltroEnums.Parse<AreaDireito>(areaDireito),
             advogadoResponsavelId,
             contatoId,
             page, pageSize,
             favoritos);
-
-    // Valores inválidos são ignorados; nenhum válido = sem filtro (todos).
-    private static List<T>? ParseEnums<T>(string[]? valores) where T : struct, Enum
-    {
-        var lista = (valores ?? [])
-            .Select(v => Enum.TryParse<T>(v, true, out var e) && Enum.IsDefined(e) ? (T?)e : null)
-            .OfType<T>().Distinct().ToList();
-        return lista.Count > 0 ? lista : null;
-    }
 
     /// <summary>Processos ordenados pelo andamento mais recente, com o resumo desse andamento.</summary>
     [HttpGet("ultimos-andamentos")]

@@ -113,11 +113,11 @@ public class TarefaService : ITarefaService
         if (!string.IsNullOrWhiteSpace(filtro.Busca))
             query = query.Where(t => t.Titulo.Contains(filtro.Busca));
 
-        if (filtro.Status.HasValue)
-            query = query.Where(t => t.Status == filtro.Status.Value);
+        if (filtro.Status is { Count: > 0 } status)
+            query = query.Where(t => status.Contains(t.Status));
 
-        if (filtro.Prioridade.HasValue)
-            query = query.Where(t => t.Prioridade == filtro.Prioridade.Value);
+        if (filtro.Prioridade is { Count: > 0 } prioridades)
+            query = query.Where(t => prioridades.Contains(t.Prioridade));
 
         if (filtro.ResponsavelId.HasValue)
             query = query.Where(t => t.ResponsavelId == filtro.ResponsavelId.Value);
@@ -131,8 +131,8 @@ public class TarefaService : ITarefaService
         if (filtro.Atrasada == true)
             query = query.Where(t => t.Prazo < agora && t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada);
 
-        if (filtro.Tipo.HasValue)
-            query = query.Where(t => t.Tipo == filtro.Tipo.Value);
+        if (filtro.Tipo is { Count: > 0 } tipos)
+            query = query.Where(t => tipos.Contains(t.Tipo));
 
         var total = await query.CountAsync(ct);
 

@@ -162,25 +162,9 @@
     <div class="tab-content active" id="tab-tarefas">
       <div class="filter-bar" data-tour="tarefas-filtros">
         <input type="search" id="filtBusca" class="form-control" placeholder="Buscar tarefas...">
-        <select id="filtStatus" class="form-control" style="width:auto">
-          <option value="">Todos os status</option>
-          <option value="Pendente">Pendente</option>
-          <option value="EmAndamento">Em Andamento</option>
-          <option value="Concluida">Concluída</option>
-          <option value="Cancelada">Cancelada</option>
-        </select>
-        <select id="filtPrioridade" class="form-control" style="width:auto">
-          <option value="">Todas as prioridades</option>
-          <option value="Baixa">Baixa</option>
-          <option value="Media">Média</option>
-          <option value="Alta">Alta</option>
-          <option value="Urgente">Urgente</option>
-        </select>
-        <select id="filtTipo" class="form-control" style="width:auto">
-          <option value="">Todos os tipos</option>
-          <option value="Tarefa">Tarefas</option>
-          <option value="Prazo">Prazos</option>
-        </select>
+        <div id="filtStatus" style="flex:0 1 200px"></div>
+        <div id="filtPrioridade" style="flex:0 1 200px"></div>
+        <div id="filtTipo" style="flex:0 1 170px"></div>
         <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
           <input type="checkbox" id="filtAtrasada"> Apenas atrasadas
         </label>
@@ -197,18 +181,8 @@
     <div class="tab-content" id="tab-kanban">
       <div class="filter-bar">
         <input type="search" id="filtBuscaKanban" class="form-control" placeholder="Buscar tarefas...">
-        <select id="filtPrioridadeKanban" class="form-control" style="width:auto">
-          <option value="">Todas as prioridades</option>
-          <option value="Baixa">Baixa</option>
-          <option value="Media">Média</option>
-          <option value="Alta">Alta</option>
-          <option value="Urgente">Urgente</option>
-        </select>
-        <select id="filtTipoKanban" class="form-control" style="width:auto">
-          <option value="">Todos os tipos</option>
-          <option value="Tarefa">Tarefas</option>
-          <option value="Prazo">Prazos</option>
-        </select>
+        <div id="filtPrioridadeKanban" style="flex:0 1 200px"></div>
+        <div id="filtTipoKanban" style="flex:0 1 170px"></div>
         <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
           <input type="checkbox" id="filtAtrasadaKanban"> Apenas atrasadas
         </label>
@@ -325,6 +299,7 @@
 import { esc, dataParede, abrirNovoPelaUrl } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch, getUser } from '/js/api.js';
+import { createMultiSelect } from '/js/multiselect.js';
 
 initLayout();
 
@@ -394,12 +369,26 @@ document.getElementById('viewBlocos').addEventListener('click', () => {
 });
 applyView();
 
+// Status, prioridade e tipo: seleção múltipla (nada marcado = todos). Criados aqui, antes do
+// primeiro uso; o onChange chama loadTarefas, que é hoisted.
+const opcoes = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }));
+const TIPO_LABEL = { Tarefa: 'Tarefas', Prazo: 'Prazos' };
+const filtStatus = createMultiSelect(document.getElementById('filtStatus'), {
+  placeholder: 'Todos os status', plural: 'status', options: opcoes(STATUS_LABEL), onChange: () => loadTarefas(1)
+});
+const filtPrioridade = createMultiSelect(document.getElementById('filtPrioridade'), {
+  placeholder: 'Todas as prioridades', plural: 'prioridades', options: opcoes(PRIORIDADE_LABEL), onChange: () => loadTarefas(1)
+});
+const filtTipo = createMultiSelect(document.getElementById('filtTipo'), {
+  placeholder: 'Todos os tipos', plural: 'tipos', options: opcoes(TIPO_LABEL), onChange: () => loadTarefas(1)
+});
+
 function getFilters() {
   return {
     busca: document.getElementById('filtBusca').value.trim(),
-    status: document.getElementById('filtStatus').value,
-    prioridade: document.getElementById('filtPrioridade').value,
-    tipo: document.getElementById('filtTipo').value,
+    status: filtStatus.getValues(),
+    prioridade: filtPrioridade.getValues(),
+    tipo: filtTipo.getValues(),
     atrasada: document.getElementById('filtAtrasada').checked ? 'true' : '',
   };
 }
@@ -409,9 +398,9 @@ async function loadTarefas(page = 1) {
   const f = getFilters();
   const params = new URLSearchParams({ page, pageSize: 50 });
   if (f.busca) params.set('busca', f.busca);
-  if (f.status) params.set('status', f.status);
-  if (f.prioridade) params.set('prioridade', f.prioridade);
-  if (f.tipo) params.set('tipo', f.tipo);
+  f.status.forEach(v => params.append('status', v));
+  f.prioridade.forEach(v => params.append('prioridade', v));
+  f.tipo.forEach(v => params.append('tipo', v));
   if (f.atrasada) params.set('atrasada', 'true');
 
   try {
@@ -423,7 +412,7 @@ async function loadTarefas(page = 1) {
     // Só na página 1 (evita duplicar em toda página) e só quando os filtros de
     // status/prioridade não estão ativos, já que evento de agenda não tem essas
     // propriedades (não daria pra classificá-lo corretamente sob um filtro desses).
-    if (page === 1 && !f.status && !f.prioridade && f.tipo !== 'Tarefa') {
+    if (page === 1 && !f.status.length && !f.prioridade.length && (!f.tipo.length || f.tipo.includes('Prazo'))) {
       const eventosPrazo = await loadEventosPrazo(f);
       items = mergePorPrazo(items, eventosPrazo);
     }
@@ -693,16 +682,21 @@ document.getElementById('filtBusca').addEventListener('input', () => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => loadTarefas(1), 400);
 });
-['filtStatus', 'filtPrioridade', 'filtTipo', 'filtAtrasada'].forEach(id =>
-  document.getElementById(id).addEventListener('change', () => loadTarefas(1))
-);
+document.getElementById('filtAtrasada').addEventListener('change', () => loadTarefas(1));
 
 // ── Kanban filters ─────────────────────────────────────────────
+const filtPrioridadeKanban = createMultiSelect(document.getElementById('filtPrioridadeKanban'), {
+  placeholder: 'Todas as prioridades', plural: 'prioridades', options: opcoes(PRIORIDADE_LABEL), onChange: () => renderBoard()
+});
+const filtTipoKanban = createMultiSelect(document.getElementById('filtTipoKanban'), {
+  placeholder: 'Todos os tipos', plural: 'tipos', options: opcoes(TIPO_LABEL), onChange: () => renderBoard()
+});
+
 function getKanbanFilters() {
   return {
     busca: document.getElementById('filtBuscaKanban').value.trim(),
-    prioridade: document.getElementById('filtPrioridadeKanban').value,
-    tipo: document.getElementById('filtTipoKanban').value,
+    prioridade: filtPrioridadeKanban.getValues(),
+    tipo: filtTipoKanban.getValues(),
     atrasada: document.getElementById('filtAtrasadaKanban').checked,
   };
 }
@@ -712,9 +706,6 @@ document.getElementById('filtBuscaKanban').addEventListener('input', () => {
   clearTimeout(debounceKanban);
   debounceKanban = setTimeout(() => renderBoard(), 400);
 });
-['filtPrioridadeKanban', 'filtTipoKanban'].forEach(id =>
-  document.getElementById(id).addEventListener('change', () => renderBoard())
-);
 document.getElementById('filtAtrasadaKanban').addEventListener('change', () => renderBoard());
 
 // ── Kanban ─────────────────────────────────────────────────────
@@ -745,8 +736,8 @@ function renderBoard() {
     const tasks = allKanbanTasks.filter(t => {
       if (t.status !== s) return false;
       if (f.busca && !t.titulo.toLowerCase().includes(f.busca.toLowerCase())) return false;
-      if (f.prioridade && t.prioridade !== f.prioridade) return false;
-      if (f.tipo && t.tipo !== f.tipo) return false;
+      if (f.prioridade.length && !f.prioridade.includes(t.prioridade)) return false;
+      if (f.tipo.length && !f.tipo.includes(t.tipo)) return false;
       if (f.atrasada && !t.atrasada) return false;
       return true;
     });
@@ -882,7 +873,7 @@ document.getElementById('modalDetalhe').addEventListener('click', e => {
 
 // ── Init ───────────────────────────────────────────────────────
 const _initTipo = _urlParams.get('tipo');
-if (_initTipo) document.getElementById('filtTipo').value = _initTipo;
+if (_initTipo && TIPO_LABEL[_initTipo]) filtTipo.setValues([_initTipo]);
 loadTarefas();
 const _abrirId = _urlParams.get('abrirId');
 

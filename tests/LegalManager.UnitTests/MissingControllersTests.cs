@@ -233,6 +233,30 @@ public class TarefasControllerTests
     }
 
     [Fact]
+    public async Task GetAll_ComVariosValores_RepassaListas_IgnorandoInvalidosERepetidos()
+    {
+        var service = CreateServiceMock();
+        await CreateController(service).GetAll(null, ["Pendente", "emandamento", "Pendente", "Xyz"], ["Urgente", "Alta"],
+            null, null, null, null, 1, 20, ["Prazo"], CancellationToken.None);
+
+        service.Verify(s => s.GetAllAsync(It.Is<TarefaFiltroDto>(f =>
+                f.Status!.SequenceEqual(new[] { StatusTarefa.Pendente, StatusTarefa.EmAndamento }) &&
+                f.Prioridade!.SequenceEqual(new[] { PrioridadeTarefa.Urgente, PrioridadeTarefa.Alta }) &&
+                f.Tipo!.SequenceEqual(new[] { TipoTarefa.Prazo })),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAll_SemValoresValidos_NaoFiltra()
+    {
+        var service = CreateServiceMock();
+        await CreateController(service).GetAll(null, ["Xyz"], null, null, null, null, null, 1, 20, null, CancellationToken.None);
+
+        service.Verify(s => s.GetAllAsync(It.Is<TarefaFiltroDto>(f => f.Status == null && f.Prioridade == null && f.Tipo == null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task GetById_ReturnsNotFound_QuandoNulo()
     {
         var result = await CreateController().GetById(Guid.NewGuid(), CancellationToken.None);

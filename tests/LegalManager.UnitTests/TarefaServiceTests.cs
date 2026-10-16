@@ -148,11 +148,37 @@ public class TarefaServiceTests
         var t2 = await svc.CreateAsync(new CreateTarefaDto("T2", null, null, null, PrioridadeTarefa.Alta, null, null, null));
         await svc.ConcluirAsync(t2.Id);
 
-        var filtro = new TarefaFiltroDto(null, StatusTarefa.Concluida, null, null, null, null, null);
+        var filtro = new TarefaFiltroDto(null, [StatusTarefa.Concluida], null, null, null, null, null);
         var result = await svc.GetAllAsync(filtro);
 
         Assert.Equal(1, result.Total);
         Assert.Equal("T2", result.Items.First().Titulo);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ComVariosValores_TrazTarefasComQualquerUmDeles()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var prazo = DateTime.UtcNow.AddDays(5);
+
+        await svc.CreateAsync(new CreateTarefaDto("Baixa", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.CreateAsync(new CreateTarefaDto("Alta", null, null, null, PrioridadeTarefa.Alta, null, null, null));
+        await svc.CreateAsync(new CreateTarefaDto("Urgente prazo", null, null, prazo, PrioridadeTarefa.Urgente, null, null, null, TipoTarefa.Prazo));
+        var concluida = await svc.CreateAsync(new CreateTarefaDto("Urgente concluída", null, null, null, PrioridadeTarefa.Urgente, null, null, null));
+        await svc.ConcluirAsync(concluida.Id);
+
+        var porPrioridade = await svc.GetAllAsync(new TarefaFiltroDto(null, null,
+            [PrioridadeTarefa.Alta, PrioridadeTarefa.Urgente], null, null, null, null));
+        Assert.Equal(["Alta", "Urgente concluída", "Urgente prazo"], porPrioridade.Items.Select(t => t.Titulo).Order());
+
+        var combinados = await svc.GetAllAsync(new TarefaFiltroDto(null,
+            [StatusTarefa.Pendente, StatusTarefa.EmAndamento], [PrioridadeTarefa.Alta, PrioridadeTarefa.Urgente],
+            null, null, null, null, Tipo: [TipoTarefa.Tarefa, TipoTarefa.Prazo]));
+        Assert.Equal(["Alta", "Urgente prazo"], combinados.Items.Select(t => t.Titulo).Order());
+
+        var soPrazos = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null, Tipo: [TipoTarefa.Prazo]));
+        Assert.Equal("Urgente prazo", Assert.Single(soPrazos.Items).Titulo);
     }
 
     [Fact]
