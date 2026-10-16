@@ -27,15 +27,39 @@ const CABECA_ATUAL = 'M10 14 L20 24 L44 24 L54 14 L52 34 C52 50 44 58 32 58 C20 
 const ROSTO_ATUAL = 'M18 30 C18 22 24 20 32 26 C40 20 46 22 46 30 C46 40 40 46 32 46 C24 46 18 40 18 30 Z';
 const svg = (corpo) => `<svg viewBox="0 0 64 64" width="100%" height="100%" focusable="false">${corpo}</svg>`;
 
+// Braço do mascote (o que aparece apontando e puxando o menu de perguntas, ver perguntas-widget.js):
+// viewBox 32x16, ombro à esquerda (x=0, escondido atrás do corpo) e a ponta encostando na borda
+// direita. Corujas têm asa de penas; o pinguim, nadadeira; os demais, pata com dedos/almofadas.
+// Membros escuros ganham contorno claro para não sumirem ao encostar no botão (também escuro).
+const aro = (cor) => (cor === N ? 'rgba(243,227,195,.75)' : 'rgba(0,0,0,.28)');
+const svgBraco = (corpo) => `<svg viewBox="0 0 32 16" width="100%" height="100%" focusable="false" overflow="visible">${corpo}</svg>`;
+
+const asa = (cor, pena, facetada = false, traco = aro(cor)) => svgBraco(facetada
+  ? `<path d="M0 2.5 L21 3 L32 8 L22 10.5 L24 13.5 L14 13 L8 14.5 L0 14 Z" fill="${cor}" stroke="${traco}" stroke-width="1" stroke-linejoin="round"/>
+     <path d="M8 7.5 L24 8 M8 11 L19 11" stroke="${pena}" stroke-width="1.1" opacity=".6"/>`
+  : `<path d="M0 2.5 Q13 .5 23 4 Q29 6.2 32 8 Q27.5 9.2 24.5 9.6 Q27 11.2 25 12.8 Q20.5 12.2 18 13.6 Q14 12.6 11 14.2 Q6 13.2 0 14 Z"
+       fill="${cor}" stroke="${traco}" stroke-width="1" stroke-linejoin="round"/>
+     <path d="M8 6.8 Q17 6 25.5 7.6 M8 10 Q14 9.6 21.5 10.8" stroke="${pena}" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".6"/>`);
+
+const pata = (cor, mao, almofada) => svgBraco(`
+  <path d="M0 3.6 Q10 2.8 19 4 L19 12 Q10 13.2 0 12.4 Z" fill="${cor}" stroke="${aro(cor)}" stroke-width="1"/>
+  <path d="M17 8 C17 2.6 21 1.4 25 1.4 C29.5 1.4 32 4.4 32 8 C32 11.6 29.5 14.6 25 14.6 C21 14.6 17 13.4 17 8 Z" fill="${mao}" stroke="${aro(mao)}" stroke-width="1"/>
+  <path d="M27.2 2.6 Q28.4 4.6 30.6 4.8 M28.4 8 L32 8 M27.2 13.4 Q28.4 11.4 30.6 11.2" stroke="${aro(mao)}" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <ellipse cx="23.2" cy="8" rx="2.6" ry="3" fill="${almofada}" opacity=".85"/>`);
+
+const nadadeira = (cor, borda) => svgBraco(`
+  <path d="M0 2.5 Q17 1.5 32 8.5 Q17 14.5 0 13.5 Z" fill="${cor}" stroke="${aro(cor)}" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M6 12 Q18 12.4 29 9.4" stroke="${borda}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".75"/>`);
+
 export const MASCOTES = [
   {
-    id: 'coruja', nome: 'Coruja',
+    id: 'coruja', braco: asa(N, C), nome: 'Coruja',
     desc: 'O mascote da Causify, sábia e sempre atenta.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${N}"/><path d="${ROSTO_ATUAL}" fill="${C}"/>${olhosPadrao()}
       ${palpebras(N, [[24.5, 31], [39.5, 31]])}<path d="M29 38 L35 38 L32 43 Z" fill="${G}"/>`),
   },
   {
-    id: 'coruja-classica', nome: 'Coruja arredondada',
+    id: 'coruja-classica', braco: asa(N, C), nome: 'Coruja arredondada',
     desc: 'A coruja em versão mais fofinha, de contorno macio.',
     svg: svg(`<path d="M14 18 Q12 7 21 12 Q26 9 32 10 Q38 9 43 12 Q52 7 50 18 Q56 26 55 36 Q54 57 32 57 Q10 57 9 36 Q8 26 14 18 Z" fill="${N}"/>
       <circle cx="24" cy="32" r="11" fill="${C}"/><circle cx="40" cy="32" r="11" fill="${C}"/>
@@ -44,7 +68,7 @@ export const MASCOTES = [
       <path d="M26 51 q3 2 6 0 q3 2 6 0" stroke="${C}" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/>`),
   },
   {
-    id: 'coruja-doutora', nome: 'Coruja doutora',
+    id: 'coruja-doutora', braco: asa(N, C), nome: 'Coruja doutora',
     desc: 'De óculos e gravata-borboleta, pronta para a audiência.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${N}"/><path d="${ROSTO_ATUAL}" fill="${C}"/>${olhosPadrao(24.5, 39.5, 31, 6, '#fff', 3)}
       ${palpebras(C, [[24.5, 31], [39.5, 31]], 6.5)}
@@ -55,7 +79,7 @@ export const MASCOTES = [
       <path d="M25 50 L32 53.5 L25 57 Z M39 50 L32 53.5 L39 57 Z" fill="${G}"/><circle cx="32" cy="53.5" r="2" fill="${GD}"/>`),
   },
   {
-    id: 'coruja-capelo', nome: 'Coruja formanda',
+    id: 'coruja-capelo', braco: asa(N, C), nome: 'Coruja formanda',
     desc: 'Com capelo e borla dourada: estudou tudo sobre o seu escritório.',
     svg: svg(`<path d="M14 28 Q14 16 32 16 Q50 16 50 28 L50 38 Q50 58 32 58 Q14 58 14 38 Z" fill="${N}"/>
       <path d="${ROSTO_ATUAL}" fill="${C}" transform="translate(0 2)"/>
@@ -66,7 +90,7 @@ export const MASCOTES = [
       <path d="M46 25 L50 25 L49 30 L47 30 Z" fill="${G}"/><circle cx="32" cy="13" r="1.6" fill="${G}"/>`),
   },
   {
-    id: 'coruja-geometrica', nome: 'Coruja geométrica',
+    id: 'coruja-geometrica', braco: asa(N, C, true), nome: 'Coruja geométrica',
     desc: 'Traços retos e facetados, com visual moderno.',
     svg: svg(`<path d="M10 9 L24 20 L40 20 L54 9 L54 40 L32 59 L10 40 Z" fill="${N}"/>
       <path d="M10 40 L32 59 L32 50 Z" fill="#11111f"/><path d="M54 40 L32 59 L32 50 Z" fill="#26263f"/>
@@ -78,7 +102,7 @@ export const MASCOTES = [
       <path d="M29 38 L35 38 L32 44 Z" fill="${G}"/>`),
   },
   {
-    id: 'coruja-piscadinha', nome: 'Coruja piscadinha',
+    id: 'coruja-piscadinha', braco: asa(N, C), nome: 'Coruja piscadinha',
     desc: 'Pisca um olho e fica corada: cúmplice nas suas tarefas.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${N}"/><path d="${ROSTO_ATUAL}" fill="${C}"/>
       <circle cx="24.5" cy="31" r="7" fill="#fff" stroke="${G}" stroke-width="2"/>
@@ -90,7 +114,7 @@ export const MASCOTES = [
       <path d="M29 38 L35 38 L32 43 Z" fill="${G}"/>`),
   },
   {
-    id: 'coruja-kawaii', nome: 'Corujinha',
+    id: 'coruja-kawaii', braco: asa(N, C), nome: 'Corujinha',
     desc: 'Filhote de olhos enormes e bochechas rosadas.',
     svg: svg(`<path d="M13 20 L17 7 L25 15 Z M51 20 L47 7 L39 15 Z" fill="${N}"/>
       <circle cx="32" cy="36" r="24" fill="${N}"/>
@@ -104,7 +128,7 @@ export const MASCOTES = [
       <path d="M30.5 42.5 L33.5 42.5 L32 45 Z" fill="${G}"/>`),
   },
   {
-    id: 'coruja-dourada', nome: 'Coruja dourada',
+    id: 'coruja-dourada', braco: asa(G, GD), nome: 'Coruja dourada',
     desc: 'Penas douradas que brilham ainda mais nos temas escuros.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${G}"/><path d="${ROSTO_ATUAL}" fill="#FFF4DD"/>
       <path d="M10 14 L20 24 L16 25 Z M54 14 L44 24 L48 25 Z" fill="${GD}"/>
@@ -113,7 +137,7 @@ export const MASCOTES = [
       <path d="M24 50 l2.5 2.5 l2.5 -2.5 M30 52 l2 2 l2 -2 M35 50 l2.5 2.5 l2.5 -2.5" stroke="${GD}" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`),
   },
   {
-    id: 'coruja-espiando', nome: 'Coruja espiã',
+    id: 'coruja-espiando', braco: asa(N, C), nome: 'Coruja espiã',
     desc: 'Agarrada à borda, espiando a tela para não perder nada.',
     svg: svg(`<path d="M14 22 Q12 9 21 14 Q32 8 43 14 Q52 9 50 22 Q54 30 52 42 Q50 53 32 53 Q14 53 12 42 Q10 30 14 22 Z" fill="${N}"/>
       <circle cx="24" cy="32" r="10" fill="${C}"/><circle cx="40" cy="32" r="10" fill="${C}"/>
@@ -126,7 +150,7 @@ export const MASCOTES = [
       <path d="M8.5 54 v-2.5 M12 54 v-3 M15.5 54 v-2.5 M48.5 54 v-2.5 M52 54 v-3 M55.5 54 v-2.5" stroke="${C}" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>`),
   },
   {
-    id: 'coruja-traco', nome: 'Coruja traço',
+    id: 'coruja-traco', braco: asa('none', 'currentColor', false, 'currentColor'), nome: 'Coruja traço',
     desc: 'Só o contorno, discreta e elegante.',
     svg: svg(`<g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="${CABECA_ATUAL}"/><path d="${ROSTO_ATUAL}" stroke-width="2"/>
@@ -135,7 +159,7 @@ export const MASCOTES = [
       <circle cx="24.5" cy="31" r="6.6" fill="${G}" opacity=".25"/><circle cx="39.5" cy="31" r="6.6" fill="${G}" opacity=".25"/>`),
   },
   {
-    id: 'coruja-headset', nome: 'Coruja atendente',
+    id: 'coruja-headset', braco: asa(N, C), nome: 'Coruja atendente',
     desc: 'De fone e microfone, sempre pronta para atender.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${N}"/><path d="${ROSTO_ATUAL}" fill="${C}"/>${olhosPadrao()}
       ${palpebras(N, [[24.5, 31], [39.5, 31]])}<path d="M29 38 L35 38 L32 43 Z" fill="${G}"/>
@@ -146,7 +170,7 @@ export const MASCOTES = [
       <rect x="21" y="47.5" width="7" height="5" rx="2.5" fill="#fff"/>`),
   },
   {
-    id: 'gato', nome: 'Gato',
+    id: 'gato', braco: pata(N, N, '#F2A3A3'), nome: 'Gato',
     desc: 'Curioso e atento, de olho nos seus prazos.',
     svg: svg(`<path d="M12 22 L14 6 L26 16 Q32 14 38 16 L50 6 L52 22 Q56 30 54 40 Q52 56 32 56 Q12 56 10 40 Q8 30 12 22 Z" fill="${N}"/>
       <path d="M16 18 L17 10 L23 15 Z M48 18 L47 10 L41 15 Z" fill="#F2A3A3"/>
@@ -160,7 +184,7 @@ export const MASCOTES = [
       <path d="M21 44 L9 42 M21 46.5 L9 48 M43 44 L55 42 M43 46.5 L55 48" stroke="${C}" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>`),
   },
   {
-    id: 'cachorro', nome: 'Cachorro',
+    id: 'cachorro', braco: pata(G, '#FFF4DD', GD), nome: 'Cachorro',
     desc: 'Fiel escudeiro, sempre disposto a ajudar.',
     svg: svg(`<ellipse cx="32" cy="35" rx="18" ry="19" fill="${G}"/>
       <path d="M32 16 Q28 30 21 42 Q32 55 43 42 Q36 30 32 16 Z" fill="#FFF4DD"/>
@@ -174,7 +198,7 @@ export const MASCOTES = [
       <path d="M32 45.5 q-3 3 -6 1 M32 45.5 q3 3 6 1" stroke="${N}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`),
   },
   {
-    id: 'raposa', nome: 'Raposa',
+    id: 'raposa', braco: pata('#D9822B', N, '#4a4a5e'), nome: 'Raposa',
     desc: 'Esperta e ágil, encontra o que você precisa num instante.',
     svg: svg(`<path d="M8 9 L24 22 L40 22 L56 9 L53 33 L32 56 L11 33 Z" fill="#D9822B"/>
       <path d="M12 15 L21 22 L15 26 Z M52 15 L43 22 L49 26 Z" fill="${N}"/>
@@ -185,7 +209,7 @@ export const MASCOTES = [
       <circle cx="32" cy="53.5" r="2.8" fill="${N}"/>`),
   },
   {
-    id: 'panda', nome: 'Panda',
+    id: 'panda', braco: pata(N, N, '#4a4a5e'), nome: 'Panda',
     desc: 'Calmo e simpático, mesmo nos dias de prazo apertado.',
     svg: svg(`<circle cx="15" cy="17" r="7.5" fill="${N}"/><circle cx="49" cy="17" r="7.5" fill="${N}"/>
       <circle cx="32" cy="35" r="21" fill="#fff" stroke="#d8d4cc" stroke-width="1.5"/>
@@ -199,7 +223,7 @@ export const MASCOTES = [
       <ellipse cx="17" cy="43" rx="3" ry="1.8" fill="#F4A6A6" opacity=".6"/><ellipse cx="47" cy="43" rx="3" ry="1.8" fill="#F4A6A6" opacity=".6"/>`),
   },
   {
-    id: 'coelho', nome: 'Coelho',
+    id: 'coelho', braco: pata(N, C, '#F2A3A3'), nome: 'Coelho',
     desc: 'Rápido nas respostas, de orelhas sempre em pé.',
     svg: svg(`<ellipse cx="23" cy="15" rx="5.5" ry="13" fill="${N}" transform="rotate(-12 23 15)"/>
       <ellipse cx="41" cy="15" rx="5.5" ry="13" fill="${N}" transform="rotate(12 41 15)"/>
@@ -216,7 +240,7 @@ export const MASCOTES = [
       <ellipse cx="21" cy="47" rx="2.6" ry="1.6" fill="#F4A6A6" opacity=".7"/><ellipse cx="43" cy="47" rx="2.6" ry="1.6" fill="#F4A6A6" opacity=".7"/>`),
   },
   {
-    id: 'pinguim', nome: 'Pinguim',
+    id: 'pinguim', braco: nadadeira(N, '#fff'), nome: 'Pinguim',
     desc: 'Já nasceu de terno e gravata, o mais formal da turma.',
     svg: svg(`<ellipse cx="32" cy="35" rx="20" ry="22" fill="${N}"/>
       <path d="M17 30 C17 21 25 19 32 25 C39 19 47 21 47 30 C47 44 40 52 32 52 C24 52 17 44 17 30 Z" fill="#fff"/>
@@ -228,7 +252,7 @@ export const MASCOTES = [
       <path d="M25 46 L32 49.5 L25 53 Z M39 46 L32 49.5 L39 53 Z" fill="${G}"/><circle cx="32" cy="49.5" r="2" fill="${GD}"/>`),
   },
   {
-    id: 'leao', nome: 'Leão',
+    id: 'leao', braco: pata(G, '#FFF4DD', GD), nome: 'Leão',
     desc: 'Juba dourada e olhar sereno, símbolo de justiça.',
     svg: svg(`${Array.from({ length: 12 }, (_, k) => {
         const a = (k / 12) * Math.PI * 2;
@@ -245,7 +269,7 @@ export const MASCOTES = [
       <path d="M32 41.5 v2 M32 43.5 q-2 2 -4 .8 M32 43.5 q2 2 4 .8" stroke="${N}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`),
   },
   {
-    id: 'guaxinim', nome: 'Guaxinim',
+    id: 'guaxinim', braco: pata('#8A8F99', N, '#4a4a5e'), nome: 'Guaxinim',
     desc: 'Detetive mascarado, ótimo para achar processos e publicações.',
     svg: svg(`<path d="M10 18 L17 7 L26 16 Q32 14 38 16 L47 7 L54 18 Q58 30 54 41 Q48 55 32 55 Q16 55 10 41 Q6 30 10 18 Z" fill="#8A8F99"/>
       <path d="M14 14 L17 10 L21 15 Z M50 14 L47 10 L43 15 Z" fill="${N}"/>
@@ -259,7 +283,7 @@ export const MASCOTES = [
       <path d="M32 44.5 q-2 2.4 -4 1 M32 44.5 q2 2.4 4 1" stroke="${N}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`),
   },
   {
-    id: 'urso', nome: 'Urso',
+    id: 'urso', braco: pata('#7A4E1D', '#E9B872', '#7A4E1D'), nome: 'Urso',
     desc: 'Grandão e acolhedor: pode deixar com ele.',
     svg: svg(`<circle cx="16" cy="17" r="7.5" fill="#7A4E1D"/><circle cx="48" cy="17" r="7.5" fill="#7A4E1D"/>
       <circle cx="16" cy="17" r="3.8" fill="#E9B872"/><circle cx="48" cy="17" r="3.8" fill="#E9B872"/>
@@ -272,7 +296,7 @@ export const MASCOTES = [
       <path d="M32 43.3 v1.7 M32 45 q-2.4 2.4 -4.6 .8 M32 45 q2.4 2.4 4.6 .8" stroke="${N}" stroke-width="1.4" fill="none" stroke-linecap="round"/>`),
   },
   {
-    id: 'coruja-gato', nome: 'Coruja-gato',
+    id: 'coruja-gato', braco: asa(N, '#F2A3A3'), nome: 'Coruja-gato',
     desc: 'Metade coruja, metade gato, com bigodes e orelhas rosadas.',
     svg: svg(`<path d="${CABECA_ATUAL}" fill="${N}"/>
       <path d="M13.5 18 L19 23.5 L15 24.5 Z M50.5 18 L45 23.5 L49 24.5 Z" fill="#F2A3A3"/>

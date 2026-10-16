@@ -114,7 +114,7 @@ export function injectAssistente(user) {
         <span id="asxBalaoTexto"></span>
       </div>
       <button type="button" class="asx-fab" id="asxFab" title="Assistente de IA" aria-expanded="false" aria-controls="asxPanel">
-        <span class="asx-fab-mascote asx-mascote" aria-hidden="true">${mascote.svg}</span>
+        <span class="asx-fab-mascote asx-mascote" data-mascote="${mascote.id}" aria-hidden="true">${mascote.svg}</span>
         <span class="asx-fab-aba">
           <span class="asx-fab-label">Assistente</span>
           <span class="asx-fab-ia" aria-hidden="true">IA</span>
@@ -250,8 +250,10 @@ function esconderBalao() {
 
 // Troca o desenho do mascote na hora (página de personalização), sem recarregar.
 export function trocarMascote(id) {
-  const { svg } = getMascote(id);
-  document.querySelectorAll('#assistenteIA .asx-mascote').forEach(el => { el.innerHTML = svg; });
+  const mascote = getMascote(id);
+  document.querySelectorAll('#assistenteIA .asx-mascote').forEach(el => { el.innerHTML = mascote.svg; });
+  const fab = document.querySelector('#assistenteIA .asx-fab-mascote');
+  if (fab) fab.dataset.mascote = mascote.id; // lido pelo mascote que puxa o menu de perguntas
 }
 
 // "?assistente=1" (ex.: botão da novidade do assistente) abre o painel; o parâmetro sai da URL
