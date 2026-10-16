@@ -49,6 +49,7 @@ public static class PlanoRestricoes
     public static bool PermiteTemplatesDocumentos(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;
     // Assistente de IA (perguntas sobre os dados do escritório) — em teste, sem cobrança de créditos.
     public static bool PermiteAssistenteIA(PlanoTipo plano) => Atende(plano, PlanoTipo.Plus);
+    public static bool PermiteRelatorioProcessos(PlanoTipo plano) => Atende(plano, PlanoTipo.Plus);
     /// <summary>
     /// Número MÁXIMO de OABs que o tenant pode cadastrar para monitoramento.
     /// Não confundir com quantidade de publicações — esse limite é sobre quantos

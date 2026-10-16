@@ -92,6 +92,44 @@ async function refreshTokenIfNeeded() {
   return false;
 }
 
+/**
+ * Baixa um arquivo da API (CSV, PDF...) com o token da sessão, renovando-o se preciso.
+ * Retorna { blob, nomeArquivo } — o nome vem do Content-Disposition do servidor.
+ * Em erro, lança Error com a mensagem do backend e a propriedade `status` (ex.: 402 = plano).
+ */
+export async function apiDownload(path) {
+  const doFetch = () => fetch(`${API_BASE}${path}`, {
+    headers: getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}
+  });
+
+  let res = await doFetch();
+  if (res.status === 401) {
+    if (await refreshTokenIfNeeded()) {
+      res = await doFetch();
+    } else {
+      clearSession();
+      const back = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login.html?redirect=${back}`;
+      throw new Error('Unauthorized');
+    }
+  }
+
+  if (!res.ok) {
+    let msg = '';
+    try { msg = (await res.json()).message || ''; } catch {}
+    const err = new Error(msg || `HTTP ${res.status}`);
+    err.status = res.status;
+    trackApiCall('api', 'GET', path, { ok: false, error: err, status: res.status });
+    throw err;
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition) || /filename="?([^";]+)"?/i.exec(disposition);
+  const nomeArquivo = match ? decodeURIComponent(match[1]) : 'download';
+  trackApiCall('api', 'GET', path, { ok: true });
+  return { blob: await res.blob(), nomeArquivo };
+}
+
 export async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const token = getToken();

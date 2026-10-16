@@ -92,9 +92,9 @@ public class ProcessoServiceAdditionalTests
     {
         var (svc, _, _, _) = Build();
         await svc.CreateAsync(MakeCreateDto());
-        var found = await svc.GetAllAsync(new ProcessoFiltroDto(null, null, AreaDireito.Civil, null, null));
+        var found = await svc.GetAllAsync(new ProcessoFiltroDto(null, null, [AreaDireito.Civil], null, null));
         Assert.Equal(1, found.Total);
-        var notFound = await svc.GetAllAsync(new ProcessoFiltroDto(null, null, AreaDireito.Trabalhista, null, null));
+        var notFound = await svc.GetAllAsync(new ProcessoFiltroDto(null, null, [AreaDireito.Trabalhista], null, null));
         Assert.Equal(0, notFound.Total);
     }
 

@@ -1,16 +1,37 @@
-import { apiFetch } from './api.js';
+import { apiFetch, apiDownload } from './api.js';
 
 export async function getProcessos(filtro = {}) {
   const p = new URLSearchParams();
   if (filtro.busca) p.set('busca', filtro.busca);
-  if (filtro.status) p.set('status', filtro.status);
-  if (filtro.areaDireito) p.set('areaDireito', filtro.areaDireito);
+  // status e areaDireito aceitam um valor ou uma lista (processos com qualquer um deles).
+  for (const v of [].concat(filtro.status || [])) p.append('status', v);
+  for (const v of [].concat(filtro.areaDireito || [])) p.append('areaDireito', v);
   if (filtro.advogadoResponsavelId) p.set('advogadoResponsavelId', filtro.advogadoResponsavelId);
   if (filtro.contatoId) p.set('contatoId', filtro.contatoId);
   if (filtro.favoritos) p.set('favoritos', 'true');
   p.set('page', filtro.page || 1);
   p.set('pageSize', filtro.pageSize || 20);
   return apiFetch(`/processos?${p}`);
+}
+
+// Relatório com os mesmos filtros da listagem (sem paginação). formato: 'csv' (Excel) | 'pdf'.
+export async function baixarRelatorioProcessos(filtro = {}, formato = 'csv') {
+  const p = new URLSearchParams({ formato });
+  if (filtro.busca) p.set('busca', filtro.busca);
+  for (const v of [].concat(filtro.status || [])) p.append('status', v);
+  for (const v of [].concat(filtro.areaDireito || [])) p.append('areaDireito', v);
+  if (filtro.advogadoResponsavelId) p.set('advogadoResponsavelId', filtro.advogadoResponsavelId);
+  if (filtro.contatoId) p.set('contatoId', filtro.contatoId);
+  if (filtro.favoritos) p.set('favoritos', 'true');
+  const { blob, nomeArquivo } = await apiDownload(`/processos/relatorio?${p}`);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function getProcesso(id) {

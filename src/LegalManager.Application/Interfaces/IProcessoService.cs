@@ -9,6 +9,8 @@ public interface IProcessoService
     Task<ProcessoResponseDto> UpdateAsync(Guid id, UpdateProcessoDto dto, CancellationToken ct = default);
     Task<ProcessoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<PagedResultDto<ProcessoListItemDto>> GetAllAsync(ProcessoFiltroDto filtro, CancellationToken ct = default);
+    /// <summary>Todos os processos que atendem o filtro (paginação ignorada), para o relatório CSV/PDF.</summary>
+    Task<ProcessoRelatorioDto> GetRelatorioAsync(ProcessoFiltroDto filtro, CancellationToken ct = default);
     Task<IEnumerable<ProcessoUltimoAndamentoDto>> GetUltimosAndamentosAsync(int limite, CancellationToken ct = default);
     Task EncerrarAsync(Guid id, EncerrarProcessoDto dto, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);

@@ -199,7 +199,8 @@ public class ProcessoService : IProcessoService
     public async Task<ProcessoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await LoadResponseAsync(id, ct);
 
-    public async Task<PagedResultDto<ProcessoListItemDto>> GetAllAsync(ProcessoFiltroDto filtro, CancellationToken ct = default)
+    // Filtros da listagem — compartilhados com o relatório, para exportar exatamente o que a tela mostra.
+    private IQueryable<Processo> Filtrar(ProcessoFiltroDto filtro)
     {
         var userId = _tenantContext.UserId;
         var query = _context.Processos
@@ -216,11 +217,11 @@ public class ProcessoService : IProcessoService
                 (p.TipoAcao != null && p.TipoAcao.ToLower().Contains(busca)));
         }
 
-        if (filtro.Status.HasValue)
-            query = query.Where(p => p.Status == filtro.Status.Value);
+        if (filtro.Status is { Count: > 0 } status)
+            query = query.Where(p => status.Contains(p.Status));
 
-        if (filtro.AreaDireito.HasValue)
-            query = query.Where(p => p.AreaDireito == filtro.AreaDireito.Value);
+        if (filtro.AreaDireito is { Count: > 0 } areas)
+            query = query.Where(p => areas.Contains(p.AreaDireito));
 
         if (filtro.AdvogadoResponsavelId.HasValue)
             query = query.Where(p => p.AdvogadoResponsavelId == filtro.AdvogadoResponsavelId.Value);
@@ -230,6 +231,14 @@ public class ProcessoService : IProcessoService
 
         if (filtro.SomenteFavoritos)
             query = query.Where(p => p.Favoritos.Any(f => f.UsuarioId == userId));
+
+        return query;
+    }
+
+    public async Task<PagedResultDto<ProcessoListItemDto>> GetAllAsync(ProcessoFiltroDto filtro, CancellationToken ct = default)
+    {
+        var userId = _tenantContext.UserId;
+        var query = Filtrar(filtro);
 
         var total = await query.CountAsync(ct);
 
@@ -260,6 +269,82 @@ public class ProcessoService : IProcessoService
                 p.AndamentosPendentes, p.Favorito)),
             total, filtro.Page, filtro.PageSize,
             (int)Math.Ceiling((double)total / filtro.PageSize));
+    }
+
+    public async Task<ProcessoRelatorioDto> GetRelatorioAsync(ProcessoFiltroDto filtro, CancellationToken ct = default)
+    {
+        var tenantId = _tenantContext.TenantId;
+        // Último andamento em subqueries escalares (LIMIT 1 por processo) — projetar a entidade
+        // inteira faz o EF gerar um ROW_NUMBER() sobre a tabela Andamentos toda.
+        var linhas = await Filtrar(filtro)
+            .OrderBy(p => (int)p.Status).ThenByDescending(p => p.CriadoEm)
+            .Select(p => new
+            {
+                p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.TipoAcao, p.Fase,
+                p.Status, p.ValorCausa, p.DataDistribuicao,
+                Advogado = p.AdvogadoResponsavel != null ? p.AdvogadoResponsavel.Nome : null,
+                Partes = p.Partes.Select(pt => new { pt.TipoParte, pt.Contato.Nome }).ToList(),
+                UltimoAndamentoData = p.Andamentos
+                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .Select(a => (DateTime?)a.Data)
+                    .FirstOrDefault(),
+                UltimoAndamentoDescricao = p.Andamentos
+                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .Select(a => a.Descricao)
+                    .FirstOrDefault()
+            })
+            .ToListAsync(ct);
+
+        static string? Nomes(IEnumerable<string> nomes) =>
+            string.Join(", ", nomes.Where(n => !string.IsNullOrWhiteSpace(n))) is { Length: > 0 } s ? s : null;
+
+        const int maxDescricao = 500;
+        var itens = linhas.Select(p => new ProcessoRelatorioItemDto(
+            p.NumeroCNJ,
+            Nomes(p.Partes.Where(pt => pt.TipoParte == TipoParteProcesso.Autor).Select(pt => pt.Nome)),
+            Nomes(p.Partes.Where(pt => pt.TipoParte == TipoParteProcesso.Reu).Select(pt => pt.Nome)),
+            p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.TipoAcao, p.Fase, p.Status,
+            p.Advogado, p.ValorCausa, p.DataDistribuicao, p.UltimoAndamentoData,
+            p.UltimoAndamentoDescricao is { Length: > maxDescricao } d ? d[..maxDescricao].TrimEnd() + "…" : p.UltimoAndamentoDescricao
+        )).ToList();
+
+        var tenant = await _context.Tenants
+            .Where(t => t.Id == tenantId)
+            .Select(t => new { t.Nome, t.LogoUrl })
+            .FirstOrDefaultAsync(ct);
+
+        return new ProcessoRelatorioDto(
+            string.IsNullOrWhiteSpace(tenant?.Nome) ? "Escritório de Advocacia" : tenant.Nome,
+            tenant?.LogoUrl,
+            FusoHorario.AgoraParede(await _context.DoTenantAsync(tenantId, ct)),
+            await DescreverFiltrosAsync(filtro, ct),
+            itens);
+    }
+
+    private async Task<List<string>> DescreverFiltrosAsync(ProcessoFiltroDto filtro, CancellationToken ct)
+    {
+        var filtros = new List<string>();
+        if (filtro.Status is { Count: > 0 } status)
+            filtros.Add($"Status: {string.Join(", ", status.Select(ProcessoRotulos.Status))}");
+        if (filtro.AreaDireito is { Count: > 0 } areas)
+            filtros.Add($"Área: {string.Join(", ", areas.Select(ProcessoRotulos.Area))}");
+        if (filtro.AdvogadoResponsavelId.HasValue)
+        {
+            var nome = await _context.Users
+                .Where(u => u.Id == filtro.AdvogadoResponsavelId.Value && u.TenantId == _tenantContext.TenantId)
+                .Select(u => u.Nome).FirstOrDefaultAsync(ct);
+            filtros.Add($"Responsável: {nome ?? "—"}");
+        }
+        if (filtro.ContatoId.HasValue)
+        {
+            var nome = await _context.Contatos
+                .Where(c => c.Id == filtro.ContatoId.Value && c.TenantId == _tenantContext.TenantId)
+                .Select(c => c.Nome).FirstOrDefaultAsync(ct);
+            filtros.Add($"Contato: {nome ?? "—"}");
+        }
+        if (!string.IsNullOrWhiteSpace(filtro.Busca)) filtros.Add($"Busca: \"{filtro.Busca.Trim()}\"");
+        if (filtro.SomenteFavoritos) filtros.Add("Só favoritos");
+        return filtros;
     }
 
     public async Task<IEnumerable<ProcessoUltimoAndamentoDto>> GetUltimosAndamentosAsync(int limite, CancellationToken ct = default)

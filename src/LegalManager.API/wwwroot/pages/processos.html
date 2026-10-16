@@ -108,6 +108,11 @@
     .fav-filter { height:36px; padding:0 12px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--color-text); white-space:nowrap; transition:.2s; }
     .fav-filter:hover { background:#e5e7eb; }
     .fav-filter[aria-pressed="true"] { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+    .relatorio-menu { position:relative; }
+    .relatorio-opcoes { position:absolute; top:calc(100% + 4px); right:0; z-index:50; min-width:170px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); box-shadow:0 8px 24px rgba(0,0,0,.12); padding:4px; }
+    .relatorio-opcoes button { display:block; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-radius:6px; font-size:13px; color:var(--color-text); cursor:pointer; }
+    .relatorio-opcoes button:hover { background:var(--color-bg); }
+    .plus-badge { background:#f59e0b; color:#0f172a; font-size:10px; font-weight:600; padding:1px 6px; border-radius:100px; letter-spacing:.04em; }
     .fav-btn { background:none; border:none; padding:0 2px; font-size:18px; line-height:1; cursor:pointer; color:#d1d5db; transition:color .15s, transform .15s; }
     .fav-btn:hover { color:#f59e0b; transform:scale(1.15); }
     .fav-btn[aria-pressed="true"] { color:#f59e0b; }
@@ -377,29 +382,16 @@
 
     <div class="filter-bar" data-tour="processos-filtros">
       <input type="search" id="filtBusca" class="form-control" placeholder="Buscar por número CNJ, tribunal, comarca...">
-      <select id="filtStatus" class="form-control" style="width:auto">
-        <option value="">Todos os status</option>
-        <option value="Ativo">Ativo</option>
-        <option value="Suspenso">Suspenso</option>
-        <option value="Arquivado">Arquivado</option>
-        <option value="Encerrado">Encerrado</option>
-      </select>
-      <select id="filtArea" class="form-control" style="width:auto">
-        <option value="">Todas as áreas</option>
-        <option value="Civil">Civil</option>
-        <option value="Trabalhista">Trabalhista</option>
-        <option value="Criminal">Criminal</option>
-        <option value="Tributario">Tributário</option>
-        <option value="Previdenciario">Previdenciário</option>
-        <option value="Administrativo">Administrativo</option>
-        <option value="Consumidor">Consumidor</option>
-        <option value="Familia">Família</option>
-        <option value="Empresarial">Empresarial</option>
-        <option value="Ambiental">Ambiental</option>
-        <option value="Imobiliario">Imobiliário</option>
-        <option value="Outro">Outro</option>
-      </select>
+      <div id="filtStatus" style="flex:0 1 200px"></div>
+      <div id="filtArea" style="flex:0 1 200px"></div>
       <button type="button" class="fav-filter" id="filtFavoritos" aria-pressed="false" title="Mostrar só os seus processos favoritos">★ Favoritos</button>
+      <div class="relatorio-menu">
+        <button type="button" class="fav-filter" id="btnRelatorio" aria-haspopup="menu" aria-expanded="false" title="Exportar os processos filtrados na tela (Excel ou PDF)">⬇ Relatório <span class="plus-badge" id="relatorioPlusBadge" style="display:none" title="Disponível a partir do plano Plus">PLUS</span></button>
+        <div class="relatorio-opcoes" id="relatorioOpcoes" role="menu" hidden>
+          <button type="button" role="menuitem" data-formato="csv">Excel (CSV)</button>
+          <button type="button" role="menuitem" data-formato="pdf">PDF</button>
+        </div>
+      </div>
       <div class="view-toggle" data-tour="processos-visualizacao">
         <button type="button" class="view-btn active" id="viewGrid" title="Visualização em grade">⊞</button>
         <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
@@ -677,9 +669,10 @@
 <script type="module">
 import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
-import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito } from '/js/processos.js';
+import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito, baixarRelatorioProcessos } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
+import { createMultiSelect } from '/js/multiselect.js';
 import { mascaraCnj } from '/js/mascaras.js';
 import { initOnboardingModal, openOnboardingModal, openReadOnlyModal, startDots, stopDots } from '/js/onboarding.js';
 
@@ -1358,21 +1351,44 @@ document.getElementById('viewList').addEventListener('click', () => {
 
 const filtFavoritos = document.getElementById('filtFavoritos');
 
-function aplicarFiltros() {
-  currentFilters = {
+// Status e área: seleção múltipla (nada marcado = todos).
+const filtStatus = createMultiSelect(document.getElementById('filtStatus'), {
+  placeholder: 'Todos os status',
+  plural: 'status',
+  options: ['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'].map(v => ({ value: v, label: v })),
+  onChange: () => aplicarFiltros()
+});
+const filtArea = createMultiSelect(document.getElementById('filtArea'), {
+  placeholder: 'Todas as áreas',
+  plural: 'áreas',
+  options: [
+    ['Civil', 'Civil'], ['Trabalhista', 'Trabalhista'], ['Criminal', 'Criminal'], ['Tributario', 'Tributário'],
+    ['Previdenciario', 'Previdenciário'], ['Administrativo', 'Administrativo'], ['Consumidor', 'Consumidor'],
+    ['Familia', 'Família'], ['Empresarial', 'Empresarial'], ['Ambiental', 'Ambiental'],
+    ['Imobiliario', 'Imobiliário'], ['Outro', 'Outro']
+  ].map(([value, label]) => ({ value, label })),
+  onChange: () => aplicarFiltros()
+});
+
+function lerFiltrosDaTela() {
+  const status = filtStatus.getValues();
+  const areas = filtArea.getValues();
+  return {
     busca: document.getElementById('filtBusca').value || undefined,
-    status: document.getElementById('filtStatus').value || undefined,
-    areaDireito: document.getElementById('filtArea').value || undefined,
+    status: status.length ? status : undefined,
+    areaDireito: areas.length ? areas : undefined,
     favoritos: filtFavoritos.getAttribute('aria-pressed') === 'true' || undefined
   };
+}
+
+function aplicarFiltros() {
+  currentFilters = lerFiltrosDaTela();
   currentPage = 1; loadProcessos();
 }
 
-['filtBusca', 'filtStatus', 'filtArea'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(aplicarFiltros, 300);
-  });
+document.getElementById('filtBusca').addEventListener('input', () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(aplicarFiltros, 300);
 });
 
 // Atalho do dashboard: /pages/processos.html?favoritos=1 já abre filtrado.
@@ -1384,6 +1400,46 @@ filtFavoritos.addEventListener('click', () => {
   clearTimeout(debounce);
   aplicarFiltros();
 });
+
+// Relatório (Excel/PDF) dos processos com os filtros da tela — a partir do plano Plus.
+// No Free o botão mostra o badge e o toast de upgrade; o bloqueio real é no backend (402).
+const btnRelatorio = document.getElementById('btnRelatorio');
+const relatorioOpcoes = document.getElementById('relatorioOpcoes');
+if (isPlanoFree()) document.getElementById('relatorioPlusBadge').style.display = '';
+
+function fecharMenuRelatorio() {
+  relatorioOpcoes.hidden = true;
+  btnRelatorio.setAttribute('aria-expanded', 'false');
+}
+
+btnRelatorio.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (isPlanoFree()) {
+    showUpgradeToast('Plus', 'O relatório de processos (Excel e PDF) está disponível a partir do plano Plus.');
+    return;
+  }
+  relatorioOpcoes.hidden = !relatorioOpcoes.hidden;
+  btnRelatorio.setAttribute('aria-expanded', String(!relatorioOpcoes.hidden));
+});
+document.addEventListener('click', fecharMenuRelatorio);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharMenuRelatorio(); });
+
+relatorioOpcoes.querySelectorAll('[data-formato]').forEach(op => op.addEventListener('click', async () => {
+  fecharMenuRelatorio();
+  const textoOriginal = btnRelatorio.firstChild.textContent;
+  btnRelatorio.disabled = true;
+  btnRelatorio.firstChild.textContent = 'Gerando relatório… ';
+  try {
+    // Lê os filtros da tela agora (e não currentFilters, que só atualiza 300 ms depois de digitar).
+    await baixarRelatorioProcessos(lerFiltrosDaTela(), op.dataset.formato);
+  } catch (err) {
+    if (err.status === 402) showUpgradeToast('Plus', err.message);
+    else showAlert('Erro ao gerar o relatório: ' + err.message);
+  } finally {
+    btnRelatorio.disabled = false;
+    btnRelatorio.firstChild.textContent = textoOriginal;
+  }
+}));
 
 await loadReferenceData();
 loadProcessos();

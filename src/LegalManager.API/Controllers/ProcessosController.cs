@@ -1,3 +1,5 @@
+using System.Globalization;
+using LegalManager.API.Reports;
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.DTOs.Processos;
 using LegalManager.Application.Interfaces;
@@ -56,8 +58,8 @@ public class ProcessosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResultDto<ProcessoListItemDto>>> GetAll(
         [FromQuery] string? busca,
-        [FromQuery] string? status,
-        [FromQuery] string? areaDireito,
+        [FromQuery] string[]? status,
+        [FromQuery] string[]? areaDireito,
         [FromQuery] Guid? advogadoResponsavelId,
         [FromQuery] Guid? contatoId,
         [FromQuery] int page = 1,
@@ -65,16 +67,59 @@ public class ProcessosController : ControllerBase
         [FromQuery] bool favoritos = false,
         CancellationToken ct = default)
     {
-        var filtro = new ProcessoFiltroDto(
+        var filtro = CriarFiltro(busca, status, areaDireito, advogadoResponsavelId, contatoId, favoritos, page, pageSize);
+        return Ok(await _service.GetAllAsync(filtro, ct));
+    }
+
+    /// <summary>Relatório dos processos (mesmos filtros da listagem, sem paginação) em CSV para Excel ou PDF.</summary>
+    [HttpGet("relatorio")]
+    public async Task<IActionResult> Relatorio(
+        [FromQuery] string? formato,
+        [FromQuery] string? busca,
+        [FromQuery] string[]? status,
+        [FromQuery] string[]? areaDireito,
+        [FromQuery] Guid? advogadoResponsavelId,
+        [FromQuery] Guid? contatoId,
+        [FromServices] IWebHostEnvironment env,
+        [FromQuery] bool favoritos = false,
+        CancellationToken ct = default)
+    {
+        if (!PlanoRestricoes.PermiteRelatorioProcessos(_tenantContext.Plano))
+            return StatusCode(402, new { message = "Relatório de processos disponível a partir do plano Plus." });
+
+        formato = formato?.Trim().ToLowerInvariant();
+        if (formato is not ("csv" or "pdf"))
+            return BadRequest(new { message = "Formato inválido. Use \"csv\" ou \"pdf\"." });
+
+        var dados = await _service.GetRelatorioAsync(
+            CriarFiltro(busca, status, areaDireito, advogadoResponsavelId, contatoId, favoritos), ct);
+        var nome = $"processos-{dados.GeradoEm.ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture)}";
+
+        return formato == "csv"
+            ? File(ProcessosRelatorioCsv.Gerar(dados), "text/csv; charset=utf-8", nome + ".csv")
+            : File(ProcessosRelatorioPdfRenderer.Renderizar(dados, env.WebRootPath), "application/pdf", nome + ".pdf");
+    }
+
+    // status e areaDireito aceitam um valor ou vários (?status=Arquivado&status=Encerrado).
+    private static ProcessoFiltroDto CriarFiltro(
+        string? busca, string[]? status, string[]? areaDireito, Guid? advogadoResponsavelId, Guid? contatoId,
+        bool favoritos, int page = 1, int pageSize = 20) =>
+        new(
             busca,
-            status != null && Enum.TryParse<StatusProcesso>(status, true, out var s) ? s : null,
-            areaDireito != null && Enum.TryParse<AreaDireito>(areaDireito, true, out var a) ? a : null,
+            ParseEnums<StatusProcesso>(status),
+            ParseEnums<AreaDireito>(areaDireito),
             advogadoResponsavelId,
             contatoId,
             page, pageSize,
             favoritos);
 
-        return Ok(await _service.GetAllAsync(filtro, ct));
+    // Valores inválidos são ignorados; nenhum válido = sem filtro (todos).
+    private static List<T>? ParseEnums<T>(string[]? valores) where T : struct, Enum
+    {
+        var lista = (valores ?? [])
+            .Select(v => Enum.TryParse<T>(v, true, out var e) && Enum.IsDefined(e) ? (T?)e : null)
+            .OfType<T>().Distinct().ToList();
+        return lista.Count > 0 ? lista : null;
     }
 
     /// <summary>Processos ordenados pelo andamento mais recente, com o resumo desse andamento.</summary>

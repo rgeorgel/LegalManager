@@ -139,13 +139,13 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         var advogadoId = Guid.NewGuid();
         var contatoId = Guid.NewGuid();
 
-        await controller.GetAll("busca", "Ativo", "Civil", advogadoId, contatoId, 2, 50, false, CancellationToken.None);
+        await controller.GetAll("busca", ["Ativo"], ["Civil"], advogadoId, contatoId, 2, 50, false, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ProcessoFiltroDto>(f =>
                 f.Busca == "busca" &&
-                f.Status == StatusProcesso.Ativo &&
-                f.AreaDireito == AreaDireito.Civil &&
+                f.Status!.SequenceEqual(new[] { StatusProcesso.Ativo }) &&
+                f.AreaDireito!.SequenceEqual(new[] { AreaDireito.Civil }) &&
                 f.AdvogadoResponsavelId == advogadoId &&
                 f.ContatoId == contatoId &&
                 f.Page == 2 &&
@@ -162,10 +162,25 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         var tenantContext = CreateTenantContextMock();
         var controller = new ProcessosController(service.Object, monitoramento.Object, audit.Object, tenantContext.Object, null!, null!, Mock.Of<IContatoResolverService>());
 
-        await controller.GetAll("busca", "InvalidStatus", "InvalidArea", null, null, 1, 20, false, CancellationToken.None);
+        await controller.GetAll("busca", ["InvalidStatus"], ["InvalidArea"], null, null, 1, 20, false, CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(
             It.Is<ProcessoFiltroDto>(f => f.Status == null && f.AreaDireito == null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAll_ComVariosStatusEAreas_RepassaTodos_IgnorandoInvalidosERepetidos()
+    {
+        var service = CreateProcessoServiceMock();
+        var controller = new ProcessosController(service.Object, CreateMonitoramentoServiceMock().Object, CreateAuditServiceMock().Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        await controller.GetAll(null, ["Arquivado", "encerrado", "Arquivado", "Fechado"], ["Civil", "Trabalhista"], null, null, 1, 20, false, CancellationToken.None);
+
+        service.Verify(s => s.GetAllAsync(
+            It.Is<ProcessoFiltroDto>(f =>
+                f.Status!.SequenceEqual(new[] { StatusProcesso.Arquivado, StatusProcesso.Encerrado }) &&
+                f.AreaDireito!.SequenceEqual(new[] { AreaDireito.Civil, AreaDireito.Trabalhista })),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

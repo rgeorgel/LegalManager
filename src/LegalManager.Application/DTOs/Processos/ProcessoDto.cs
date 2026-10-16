@@ -143,8 +143,9 @@ public record ProcessoListItemDto(
 
 public record ProcessoFiltroDto(
     string? Busca,
-    StatusProcesso? Status,
-    AreaDireito? AreaDireito,
+    // Vários valores = processos com qualquer um deles; null ou vazio = todos.
+    IReadOnlyCollection<StatusProcesso>? Status,
+    IReadOnlyCollection<AreaDireito>? AreaDireito,
     Guid? AdvogadoResponsavelId,
     Guid? ContatoId,
     int Page = 1,
@@ -201,4 +202,33 @@ public record ProcessoUltimoAndamentoDto(
     DateTime DataAndamento,
     TipoAndamento TipoAndamento,
     string DescricaoAndamento
+);
+
+// Relatório de processos (CSV/PDF) — mesmos filtros da listagem, sem paginação.
+public record ProcessoRelatorioItemDto(
+    string NumeroCNJ,
+    string? Autores,
+    string? Reus,
+    string? Tribunal,
+    string? Vara,
+    string? Comarca,
+    AreaDireito AreaDireito,
+    string? TipoAcao,
+    FaseProcessual Fase,
+    StatusProcesso Status,
+    string? AdvogadoResponsavel,
+    decimal? ValorCausa,
+    DateTime? DataDistribuicao,
+    DateTime? UltimoAndamentoData,
+    string? UltimoAndamentoDescricao
+);
+
+public record ProcessoRelatorioDto(
+    string NomeEscritorio,
+    string? LogoUrl,
+    // Hora "de parede" no fuso do escritório.
+    DateTime GeradoEm,
+    // Filtros aplicados, já em texto ("Status: Ativo", ...); vazio = todos os processos.
+    IReadOnlyList<string> Filtros,
+    IReadOnlyList<ProcessoRelatorioItemDto> Itens
 );

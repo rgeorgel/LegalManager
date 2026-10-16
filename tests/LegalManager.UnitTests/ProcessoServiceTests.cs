@@ -266,7 +266,7 @@ public class ProcessoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
-        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, StatusProcesso.Ativo, null, null, null));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, [StatusProcesso.Ativo], null, null, null));
 
         Assert.Equal(1, result.Total);
         Assert.Equal(StatusProcesso.Ativo, result.Items.First().Status);
@@ -287,7 +287,7 @@ public class ProcessoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
-        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, AreaDireito.Trabalhista, null, null));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, null, [AreaDireito.Trabalhista], null, null));
 
         Assert.Equal(1, result.Total);
         Assert.Equal(AreaDireito.Trabalhista, result.Items.First().AreaDireito);
@@ -368,7 +368,7 @@ public class ProcessoServiceTests
         await ctx.SaveChangesAsync();
 
         var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
-        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, StatusProcesso.Encerrado, AreaDireito.Trabalhista, null, null));
+        var result = await service.GetAllAsync(new ProcessoFiltroDto(null, [StatusProcesso.Encerrado], [AreaDireito.Trabalhista], null, null));
 
         Assert.Equal(1, result.Total);
         Assert.Equal(AreaDireito.Trabalhista, result.Items.First().AreaDireito);
