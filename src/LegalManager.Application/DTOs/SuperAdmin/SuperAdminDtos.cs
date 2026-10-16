@@ -80,8 +80,12 @@ public record TenantDetailDto(
     int CalculadoraHonorariosCount,
     string? VoucherUtilizado,
     string? CodigoDesconto,
-    DateTime? DescontoPromocionalUsadoEm
+    DateTime? DescontoPromocionalUsadoEm,
+    List<OabImportadaResumoDto> OabsImportadas
 );
+
+/// <summary>OAB usada na importação de processos do onboarding (gravada no usuário, não em TenantOabs).</summary>
+public record OabImportadaResumoDto(string Uf, string Numero, string NomeUsuario, int TotalProcessos);
 
 public record TenantOabResumoDto(
     Guid Id,

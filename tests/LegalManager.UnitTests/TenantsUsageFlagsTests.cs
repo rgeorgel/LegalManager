@@ -315,4 +315,25 @@ public class TenantsUsageFlagsTests
 
         Assert.Equal("raposa", Assert.IsType<TenantDetailDto>(ok.Value).Usuarios.Single(x => x.Id == u.Id).AssistenteMascote);
     }
+
+    [Fact]
+    public async Task Detalhe_TrazOabUsadaNaImportacaoDoOnboarding()
+    {
+        using var ctx = CreateContext();
+        var t = NewTenant("Detalhe");
+        var u = NovoUsuario(t.Id, PerfilUsuario.Admin, null);
+        u.OabImportadaNumero = "123456";
+        u.OabImportadaUf = "SP";
+        ctx.Tenants.Add(t);
+        ctx.Users.Add(u);
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetTenant(t.Id, CancellationToken.None));
+        var dto = Assert.IsType<TenantDetailDto>(ok.Value);
+
+        Assert.Empty(dto.Oabs);
+        var oab = Assert.Single(dto.OabsImportadas);
+        Assert.Equal(("SP", "123456", u.Nome), (oab.Uf, oab.Numero, oab.NomeUsuario));
+    }
 }

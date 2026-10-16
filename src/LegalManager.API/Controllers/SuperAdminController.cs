@@ -384,6 +384,16 @@ public class SuperAdminController(
                 o.SyncError, o.UltimoSyncEm))
             .ToListAsync(ct);
 
+        var oabsImportadas = await db.Users
+            .Where(u => u.TenantId == id && u.OabImportadaNumero != null)
+            .OrderBy(u => u.Nome)
+            .Select(u => new OabImportadaResumoDto(
+                u.OabImportadaUf ?? "",
+                u.OabImportadaNumero!,
+                u.Nome,
+                db.Processos.Count(p => p.TenantId == id && p.AdvogadoResponsavelId == u.Id)))
+            .ToListAsync(ct);
+
         var oabTotal = oabs.Count;
         var oabComErro = oabs.Count(o => o.SyncError != null);
 
@@ -427,7 +437,8 @@ public class SuperAdminController(
             calculadoraHonorariosCount,
             tenant.VoucherUtilizado,
             tenant.CodigoDesconto,
-            tenant.DescontoPromocionalUsadoEm
+            tenant.DescontoPromocionalUsadoEm,
+            oabsImportadas
         );
 
         return Ok(dto);

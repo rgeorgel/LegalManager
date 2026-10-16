@@ -39,7 +39,25 @@
     .tenant-header-sub { font-size: 13px; color: var(--color-text-muted); display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
     .tenant-header-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
     .tab-nav { overflow-x: auto; margin-bottom: 20px; }
-    .tab-btn .tab-count { font-size: 11px; color: var(--color-text-muted); margin-left: 4px; }
+
+    /* Timeline à esquerda, usuários e OABs à direita */
+    .tl-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+    .tl-lateral { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .lateral-titulo { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); margin: 0 0 8px; }
+    .lateral-titulo .tab-count { font-weight: 400; margin-left: 4px; }
+    .lateral-sub { font-size: 11px; color: var(--color-text-muted); margin: 10px 0 6px; }
+    .lateral-lista { border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; background: var(--color-surface); font-size: 12px; }
+    .lateral-item { padding: 8px 10px; border-bottom: 1px solid var(--color-border); }
+    .lateral-item:last-child { border-bottom: none; }
+    .lateral-item.has-error { background: #fef2f2; }
+    .lateral-topo { display: flex; align-items: center; gap: 6px; }
+    .lateral-nome { flex: 1; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lateral-info { color: var(--color-text-muted); font-size: 11px; margin-top: 2px; overflow-wrap: anywhere; }
+    .lateral-acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    @media (max-width: 1100px) {
+      .tl-layout { grid-template-columns: 1fr; }
+      .tl-lateral { order: -1; }
+    }
 
     /* Timeline */
     .tl-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -123,19 +141,29 @@
         <div class="tab-nav" role="tablist">
           <button type="button" class="tab-btn" data-tab="timeline" role="tab">Timeline</button>
           <button type="button" class="tab-btn" data-tab="resumo" role="tab">Resumo</button>
-          <button type="button" class="tab-btn" data-tab="usuarios" role="tab">Usuários<span class="tab-count" id="countUsuarios"></span></button>
-          <button type="button" class="tab-btn" data-tab="oabs" role="tab">OABs<span class="tab-count" id="countOabs"></span></button>
         </div>
 
         <section class="tab-content" id="tab-timeline">
-          <div class="tl-filtros" id="tlFiltros"></div>
-          <label class="tl-opcoes"><input type="checkbox" id="tlAcessosSuperAdmin"> Mostrar acessos do superadmin ("entrar como")</label>
-          <div id="tlEventos"></div>
-          <div class="tl-rodape" id="tlRodape"></div>
+          <div class="tl-layout">
+            <div style="min-width:0">
+              <div class="tl-filtros" id="tlFiltros"></div>
+              <label class="tl-opcoes"><input type="checkbox" id="tlAcessosSuperAdmin"> Mostrar acessos do superadmin ("entrar como")</label>
+              <div id="tlEventos"></div>
+              <div class="tl-rodape" id="tlRodape"></div>
+            </div>
+            <aside class="tl-lateral">
+              <div>
+                <h2 class="lateral-titulo">Usuários<span class="tab-count" id="countUsuarios"></span></h2>
+                <div id="lateralUsuarios"></div>
+              </div>
+              <div>
+                <h2 class="lateral-titulo">OABs<span class="tab-count" id="countOabs"></span></h2>
+                <div id="lateralOabs"></div>
+              </div>
+            </aside>
+          </div>
         </section>
         <section class="tab-content" id="tab-resumo"></section>
-        <section class="tab-content" id="tab-usuarios"></section>
-        <section class="tab-content" id="tab-oabs"></section>
       </div>
     </main>
   </div>
@@ -164,7 +192,7 @@
     const aspas = s => esc(s).replace(/'/g, "\\'");
 
     // ── Abas (lembradas no hash: #timeline, #resumo…) ──
-    const ABAS = ['timeline', 'resumo', 'usuarios', 'oabs'];
+    const ABAS = ['timeline', 'resumo'];
     function abrirAba(aba) {
       if (!ABAS.includes(aba)) aba = 'timeline';
       document.querySelectorAll('.tab-btn').forEach(b => {
@@ -189,10 +217,10 @@
         document.title = `Causify — ${t.nome}`;
         renderCabecalho(t);
         document.getElementById('tab-resumo').innerHTML = resumoHtml(t, trialInfo);
-        document.getElementById('tab-usuarios').innerHTML = usuariosHtml(t);
-        document.getElementById('tab-oabs').innerHTML = oabsHtml(t);
+        document.getElementById('lateralUsuarios').innerHTML = usuariosHtml(t);
+        document.getElementById('lateralOabs').innerHTML = oabsHtml(t);
         document.getElementById('countUsuarios').textContent = t.usuarios.length;
-        document.getElementById('countOabs').textContent = (t.oabs ?? []).length;
+        document.getElementById('countOabs').textContent = (t.oabs ?? []).length + (t.oabsImportadas ?? []).length;
         document.getElementById('carregando').style.display = 'none';
         document.getElementById('conteudo').style.display = '';
       } catch (e) {
@@ -313,30 +341,48 @@
 
     function usuariosHtml(t) {
       if (!t.usuarios.length) return '<div class="tl-vazio">Sem usuários.</div>';
-      return `<div class="users-list">${t.usuarios.map(u => `
-        <div class="users-list-row" style="flex-wrap:wrap">
-          ${u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin' ? mascoteMini(u.assistenteMascote) : ''}
-          <span style="flex:1;min-width:140px;font-weight:500">${esc(u.nome)}</span>
-          <span style="color:var(--color-text-muted);font-size:11px">${esc(u.email ?? '')}</span>
-          <span style="color:var(--color-text-muted);font-size:11px" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">${fmtDateTime(u.ultimoAcessoEm)} (${daysAgo(u.ultimoAcessoEm)})</span>
-          <span class="badge badge-${u.ativo ? 'green' : 'gray'}">${u.perfil}</span>
+      return `<div class="lateral-lista">${t.usuarios.map(u => `
+        <div class="lateral-item">
+          <div class="lateral-topo">
+            ${u.perfil !== 'Cliente' && u.perfil !== 'SuperAdmin' ? mascoteMini(u.assistenteMascote) : ''}
+            <span class="lateral-nome" title="${esc(u.nome)}">${esc(u.nome)}</span>
+            <span class="badge badge-${u.ativo ? 'green' : 'gray'}">${u.perfil}</span>
+          </div>
+          ${u.email ? `<div class="lateral-info">${esc(u.email)}</div>` : ''}
+          <div class="lateral-info" title="${u.ultimoAcessoEm ?? 'nunca acessou'}">Último acesso: ${fmtDateTime(u.ultimoAcessoEm)} (${daysAgo(u.ultimoAcessoEm)})</div>
           ${u.ativo && u.perfil !== 'SuperAdmin'
-            ? `<button class="action-btn" onclick="impersonarUsuario('${u.id}','${aspas(u.nome)}')">Entrar como</button>`
+            ? `<div class="lateral-acoes"><button class="action-btn" onclick="impersonarUsuario('${u.id}','${aspas(u.nome)}')">Entrar como</button></div>`
             : ''}
         </div>`).join('')}</div>`;
     }
 
+    // Duas origens: OABs monitoradas (TenantOabs, Escavador) e a OAB que cada usuário usou na
+    // importação de processos do onboarding (gravada no próprio usuário).
     function oabsHtml(t) {
       const oabs = t.oabs ?? [];
-      if (!oabs.length) return '<div class="tl-vazio">Nenhuma OAB cadastrada.</div>';
-      return `<div class="oabs-list">${oabs.map(o => `
-        <div class="oabs-list-row ${o.syncError ? 'has-error' : ''}" style="flex-wrap:wrap">
-          <span style="font-weight:600;min-width:60px">${esc(o.uf)}/${esc(o.numero)}</span>
-          <span style="flex:1;min-width:120px">${esc(o.nome)}</span>
-          <span class="badge badge-${o.ativo ? 'blue' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span>
-          <span class="badge badge-${o.sincronizada ? 'green' : 'amber'}" title="${o.sincronizada ? 'Sincronizada com Escavador' : 'Sem ID no Escavador'}">${o.sincronizada ? '✓ sync' : 'pendente'}</span>
-          ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
-        </div>`).join('')}</div>`;
+      const importadas = t.oabsImportadas ?? [];
+      if (!oabs.length && !importadas.length) return '<div class="tl-vazio">Nenhuma OAB cadastrada.</div>';
+      const monitoradasHtml = oabs.length ? `<div class="lateral-lista">${oabs.map(o => `
+        <div class="lateral-item ${o.syncError ? 'has-error' : ''}">
+          <div class="lateral-topo">
+            <span class="lateral-nome">${esc(o.uf)}/${esc(o.numero)}</span>
+            <span class="badge badge-${o.ativo ? 'blue' : 'gray'}">${o.ativo ? 'Ativa' : 'Inativa'}</span>
+            <span class="badge badge-${o.sincronizada ? 'green' : 'amber'}" title="${o.sincronizada ? 'Sincronizada com Escavador' : 'Sem ID no Escavador'}">${o.sincronizada ? '✓ sync' : 'pendente'}</span>
+            ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
+          </div>
+          <div class="lateral-info">${esc(o.nome)}</div>
+        </div>`).join('')}</div>` : '';
+      const importadasHtml = importadas.length ? `<div class="lateral-lista">${importadas.map(o => `
+        <div class="lateral-item">
+          <div class="lateral-topo">
+            <span class="lateral-nome">${esc(o.uf)}/${esc(o.numero)}</span>
+            <span class="badge badge-gray">${o.totalProcessos} processo(s)</span>
+          </div>
+          <div class="lateral-info">${esc(o.nomeUsuario)}</div>
+        </div>`).join('')}</div>` : '';
+      return `
+        ${oabs.length ? `<div class="lateral-sub" style="margin-top:0">Monitoradas</div>${monitoradasHtml}` : ''}
+        ${importadas.length ? `<div class="lateral-sub"${oabs.length ? '' : ' style="margin-top:0"'}>Usadas na importação</div>${importadasHtml}` : ''}`;
     }
 
     // ── Timeline ──
