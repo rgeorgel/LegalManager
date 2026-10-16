@@ -25,7 +25,15 @@ public interface IStripeService
     /// avulsa de créditos de IA.
     /// </summary>
     Task<StripeCheckoutResult> CriarCheckoutAvulsoAsync(CriarCheckoutAvulsoInput input, CancellationToken ct = default);
+
+    /// <summary>
+    /// Prévia da próxima fatura da assinatura (valor já com descontos/cupons e prorações).
+    /// Null quando não há próxima cobrança (ex.: cancelamento agendado para o fim do ciclo).
+    /// </summary>
+    Task<StripeProximaCobranca?> ObterProximaCobrancaAsync(string subscriptionId, CancellationToken ct = default);
 }
+
+public record StripeProximaCobranca(decimal Valor, DateTime? Data);
 
 public record CriarCheckoutAssinaturaInput(
     string TenantId,

@@ -210,6 +210,8 @@ builder.Services.AddScoped<ITenantExportService, TenantExportService>();
 builder.Services.AddScoped<ITenantImportService, TenantImportService>();
 builder.Services.AddScoped<ITenantDeletionService, TenantDeletionService>();
 builder.Services.AddScoped<TenantTimelineService>();
+builder.Services.AddScoped<SuperAdminDashboardService>();
+builder.Services.AddMemoryCache();
 
 if (builder.Configuration.GetValue<bool>("Escavador:UseMock"))
 {

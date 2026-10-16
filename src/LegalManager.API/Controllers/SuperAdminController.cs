@@ -25,15 +25,6 @@ public class SuperAdminController(
 {
     private static readonly Guid SystemTenantId = TenantConstants.SystemTenantId;
 
-    private static readonly Dictionary<string, decimal> PlanoPrices = new()
-    {
-        ["Free"] = 0m,
-        ["Plus"] = 79m,
-        ["Pro"] = 149m,
-        ["Max"] = 299m,
-        ["Enterprise"] = 499m
-    };
-
     // Valores do preset "Padrão" (id: default) em wwwroot/js/presets.js — é o que o botão
     // "Restaurar padrão" de tema.html grava no tenant. Comparar contra null/whitespace não
     // funciona porque o reset PREENCHE essas colunas com esses valores em vez de limpá-las.
@@ -57,51 +48,14 @@ public class SuperAdminController(
     private Guid? SuperAdminId() =>
         Guid.TryParse(User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
 
-    [HttpGet("metrics")]
-    public async Task<IActionResult> GetMetrics(CancellationToken ct)
-    {
-        var tenants = await db.Tenants
-            .Where(t => t.Id != SystemTenantId)
-            .Select(t => new { t.Id, t.Plano, t.Status, t.CriadoEm })
-            .ToListAsync(ct);
-
-        var userCounts = await db.Users
-            .Where(u => u.TenantId != SystemTenantId)
-            .GroupBy(u => u.Ativo)
-            .Select(g => new { Ativo = g.Key, Count = g.Count() })
-            .ToListAsync(ct);
-
-        var waitlistPending = await db.WaitlistEntries
-            .CountAsync(w => w.Status == null || w.Status == "Pendente", ct);
-
-        var recentSignups = await db.Tenants
-            .Where(t => t.Id != SystemTenantId)
-            .OrderByDescending(t => t.CriadoEm)
-            .Take(10)
-            .Select(t => new RecentTenantDto(t.Id, t.Nome, t.Plano.ToString(), t.Status.ToString(), t.CriadoEm))
-            .ToListAsync(ct);
-
-        var byPlan = tenants
-            .GroupBy(t => t.Plano.ToString())
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        var activeTenants = tenants.Count(t => t.Status == StatusTenant.Ativo);
-        var trialTenants = tenants.Count(t => t.Status == StatusTenant.Trial);
-        var suspendedTenants = tenants.Count(t => t.Status == StatusTenant.Suspenso);
-        var canceledTenants = tenants.Count(t => t.Status == StatusTenant.Cancelado);
-
-        var totalUsers = userCounts.Sum(u => u.Count);
-        var activeUsers = userCounts.FirstOrDefault(u => u.Ativo)?.Count ?? 0;
-
-        var mrrEstimate = tenants
-            .Where(t => t.Status is StatusTenant.Ativo or StatusTenant.Trial)
-            .Sum(t => PlanoPrices.TryGetValue(t.Plano.ToString(), out var price) ? price : 0m);
-
-        return Ok(new SystemMetricsDto(
-            tenants.Count, activeTenants, trialTenants, suspendedTenants, canceledTenants,
-            byPlan, totalUsers, activeUsers, waitlistPending, mrrEstimate, recentSignups
-        ));
-    }
+    /// <summary>
+    /// Indicadores do dashboard. A receita (prévia das faturas no Stripe) fica em cache por
+    /// alguns minutos; <paramref name="atualizarReceita"/> força consultar o Stripe de novo.
+    /// </summary>
+    [HttpGet("dashboard")]
+    public async Task<ActionResult<SuperAdminDashboardDto>> GetDashboard(
+        [FromServices] SuperAdminDashboardService dashboard, [FromQuery] bool atualizarReceita, CancellationToken ct)
+        => Ok(await dashboard.ObterAsync(atualizarReceita, ct));
 
     [HttpGet("tenants")]
     public async Task<IActionResult> GetTenants(

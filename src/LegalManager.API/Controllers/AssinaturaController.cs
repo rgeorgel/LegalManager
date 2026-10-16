@@ -37,12 +37,7 @@ public class AssinaturaController(
 {
     private static List<PacoteCreditosDto> _pacotes => PacotesCreditos.Todos;
 
-    private static readonly Dictionary<PlanoTipo, decimal> _precosPorPlano = new()
-    {
-        { PlanoTipo.Plus,  20m },
-        { PlanoTipo.Pro,   50m },
-        { PlanoTipo.Max,  125m }
-    };
+    private static IReadOnlyDictionary<PlanoTipo, decimal> _precosPorPlano => PlanoPrecos.Mensal;
 
     [HttpGet]
     public async Task<IActionResult> GetStatus(CancellationToken ct)

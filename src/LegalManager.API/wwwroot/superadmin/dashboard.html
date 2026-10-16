@@ -30,35 +30,95 @@
   <title>Causify — Admin Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .stat-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
-    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
-    .stat-value { font-size: 32px; font-weight: 700; margin-top: 8px; color: var(--color-primary); }
-    .stat-value.green { color: #15803d; }
-    .stat-value.amber { color: #ca8a04; }
-    .stat-value.red { color: #dc2626; }
-    .section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
-    .section-title { font-weight: 700; font-size: 15px; margin-bottom: 16px; }
-    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-    .plan-pill { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px 14px; text-align: center; }
-    .plan-pill-label { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; }
-    .plan-pill-value { font-size: 24px; font-weight: 700; margin-top: 4px; color: var(--color-text); }
-    .recent-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .recent-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
-    .recent-table td { padding: 9px 10px; border-bottom: 1px solid var(--color-border); }
-    .recent-table tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; }
-    .badge-green { background: #dcfce7; color: #15803d; }
-    .badge-amber { background: #fef3c7; color: #92400e; }
-    .badge-blue { background: #dbeafe; color: #1e40af; }
-    .badge-red { background: #fee2e2; color: #b91c1c; }
-    .badge-gray { background: #f3f4f6; color: #4b5563; }
-    .mrr-card { background: linear-gradient(135deg, #1a56db 0%, #1e3a8a 100%); color: #fff; border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
-    .mrr-label { font-size: 12px; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: .06em; }
-    .mrr-value { font-size: 36px; font-weight: 700; margin-top: 6px; }
-    .mrr-sub { font-size: 12px; opacity: .7; margin-top: 4px; }
-    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; height: 20px; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .sa { --sa-radius: 14px; --sa-soft: color-mix(in srgb, var(--color-text) 5%, var(--color-surface)); }
+    .sa-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .sa-top h1 { font-size: 24px; font-weight: 800; margin: 0; }
+    .sa-top p { margin: 4px 0 0; font-size: 13px; color: var(--color-text-muted); }
+    .sa-top-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* KPIs */
+    .d2-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .sa-kpi {
+      background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--sa-radius);
+      padding: 14px 16px; color: inherit; display: block; text-decoration: none; min-width: 0;
+      transition: border-color .15s, transform .12s;
+    }
+    a.sa-kpi:hover { border-color: var(--color-primary); transform: translateY(-2px); text-decoration: none; }
+    .sa-kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+    .sa-kpi-valor { font-size: 26px; font-weight: 800; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--color-text); }
+    .sa-kpi-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 6px; line-height: 1.4; }
+    .sa-kpi-destaque { background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 60%, #000) 100%); border-color: transparent; }
+    .sa-kpi-destaque :is(.sa-kpi-label, .sa-kpi-valor, .sa-kpi-sub) { color: #fff; }
+    .sa-kpi-destaque .sa-kpi-label, .sa-kpi-destaque .sa-kpi-sub { opacity: .85; }
+    .sa-delta { font-weight: 700; white-space: nowrap; }
+    .sa-delta.sobe { color: var(--color-success); }
+    .sa-delta.desce { color: var(--color-danger); }
+    .sa-delta.igual { color: var(--color-text-muted); }
+    .sa-kpi-destaque .sa-delta { color: #fff; }
+
+    /* Grid de blocos — mesmas classes de /js/dashboard-layout.js (d2-w2, d2-hm…) */
+    .d2-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+    @media (min-width: 701px) {
+      .d2-grid { grid-auto-rows: minmax(150px, auto); grid-auto-flow: row dense; }
+      .d2-grid > * { grid-row: span 2; }
+      .d2-grid > .d2-hm { grid-row: span 1; }
+      .d2-grid > .d2-h2 { grid-row: span 4; }
+      .d2-grid > :is(.d2-hm, .d2-h2):not(.d2-oculto) { contain: size; overflow-y: auto; }
+    }
+    @media (max-width: 1100px) { .d2-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .d2-w3 { grid-column: 1 / -1; } }
+    @media (max-width: 700px) { .d2-grid { grid-template-columns: 1fr; } .d2-grid > * { grid-column: auto !important; } }
+    .d2-w2 { grid-column: span 2; }
+    .d2-w3 { grid-column: 1 / -1; }
+    .d2-oculto { display: none; }
+
+    .sa-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--sa-radius); padding: 18px 20px; min-width: 0; }
+    .sa-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 14px; }
+    .sa-card-title { font-weight: 700; font-size: 15px; }
+    .sa-card-link { font-size: 12px; font-weight: 600; color: var(--color-primary); white-space: nowrap; text-decoration: none; }
+    .sa-card-nota { font-size: 12px; color: var(--color-text-muted); margin-top: 10px; line-height: 1.5; }
+    .sa-vazio { color: var(--color-text-muted); font-size: 13px; padding: 16px 0; text-align: center; }
+    .sa-aviso { font-size: 12px; background: #fef3c7; color: #78350f; border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+
+    /* Barras verticais (série única) */
+    .sa-barras { display: flex; align-items: flex-end; gap: 2px; height: 150px; border-bottom: 1px solid var(--color-border); padding-top: 18px; }
+    .sa-barra { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; cursor: default; outline: none; }
+    .sa-barra-fill { width: 100%; max-width: 36px; background: color-mix(in srgb, var(--color-primary) 55%, var(--color-surface)); border-radius: 4px 4px 0 0; min-height: 2px; }
+    .sa-barra.atual .sa-barra-fill { background: var(--color-primary); }
+    .sa-barra:hover .sa-barra-fill, .sa-barra:focus-visible .sa-barra-fill { background: color-mix(in srgb, var(--color-primary) 80%, #000); }
+    .sa-barra-rotulo { position: absolute; top: -18px; font-size: 11px; font-weight: 700; color: var(--color-text); font-variant-numeric: tabular-nums; }
+    .sa-eixo { display: flex; gap: 2px; margin-top: 6px; }
+    .sa-eixo span { flex: 1; min-width: 0; text-align: center; font-size: 10px; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; }
+    .sa-dica {
+      position: fixed; z-index: 50; pointer-events: none; background: var(--color-text); color: var(--color-surface);
+      font-size: 12px; padding: 6px 9px; border-radius: 6px; box-shadow: var(--shadow-md); display: none; max-width: 240px; line-height: 1.4;
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* Listas e linhas */
+    .sa-lista { display: flex; flex-direction: column; }
+    .sa-linha { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--color-border); font-size: 13px; min-width: 0; }
+    .sa-linha:first-child { border-top: none; padding-top: 0; }
+    .sa-linha-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text); font-weight: 500; text-decoration: none; }
+    a.sa-linha-nome:hover { color: var(--color-primary); }
+    .sa-linha-meta { font-size: 12px; color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .sa-linha-valor { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    /* Barras horizontais (receita por plano, perguntas) */
+    .sa-hbar { height: 6px; border-radius: 3px; background: var(--sa-soft); overflow: hidden; margin-top: 5px; }
+    .sa-hbar > div { height: 100%; background: var(--color-primary); border-radius: 3px; }
+    .sa-hitem { padding: 8px 0; border-top: 1px solid var(--color-border); font-size: 13px; }
+    .sa-hitem:first-child { border-top: none; padding-top: 0; }
+    .sa-hitem-topo { display: flex; justify-content: space-between; gap: 10px; }
+    .sa-hitem-topo > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .sa-minis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .sa-mini { background: var(--sa-soft); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+    .sa-mini-label { font-size: 11px; color: var(--color-text-muted); font-weight: 600; }
+    .sa-mini-valor { font-size: 18px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .sa-mini-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+
+    .sa-skel { height: 14px; border-radius: 6px; margin: 8px 0; background: linear-gradient(90deg, var(--sa-soft) 25%, var(--color-border) 50%, var(--sa-soft) 75%); background-size: 200% 100%; animation: sa-shimmer 1.4s infinite; }
+    @keyframes sa-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
   </style>
 </head>
 <body>
@@ -77,111 +137,419 @@
     <aside class="sidebar">
       <ul class="sidebar-nav"></ul>
     </aside>
-    <main class="main-content">
-      <div class="page-header">
-        <h1 class="page-title">Dashboard</h1>
-      </div>
-
-      <div id="mrrCard" class="mrr-card" style="display:none">
-        <div class="mrr-label">MRR Estimado</div>
-        <div class="mrr-value" id="mrrValue">—</div>
-        <div class="mrr-sub">baseado nos planos ativos e em trial</div>
-      </div>
-
-      <div class="stat-grid" id="statGrid">
-        <div class="stat-card"><div class="stat-label">Total Tenants</div><div class="stat-value skeleton">&nbsp;</div></div>
-        <div class="stat-card"><div class="stat-label">Ativos</div><div class="stat-value skeleton">&nbsp;</div></div>
-        <div class="stat-card"><div class="stat-label">Em Trial</div><div class="stat-value skeleton">&nbsp;</div></div>
-        <div class="stat-card"><div class="stat-label">Suspensos</div><div class="stat-value skeleton">&nbsp;</div></div>
-        <div class="stat-card"><div class="stat-label">Total Usuários</div><div class="stat-value skeleton">&nbsp;</div></div>
-        <div class="stat-card"><div class="stat-label">Waitlist Pendente</div><div class="stat-value skeleton">&nbsp;</div></div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Tenants por Plano</div>
-        <div class="plan-grid" id="planGrid">
-          <div class="plan-pill"><div class="plan-pill-label">Carregando</div><div class="plan-pill-value skeleton">&nbsp;</div></div>
+    <main class="main-content sa">
+      <div class="sa-top">
+        <div>
+          <h1>Dashboard</h1>
+          <p id="saAtualizado">Carregando indicadores…</p>
+        </div>
+        <div class="sa-top-acoes">
+          <button type="button" class="btn btn-secondary btn-sm" id="saAtualizar" title="Recarrega tudo e consulta o Stripe de novo">↻ Atualizar</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="saPersonalizar" aria-pressed="false">⚙️ Personalizar</button>
         </div>
       </div>
+      <div id="saErro" style="display:none;color:var(--color-danger);margin-bottom:16px"></div>
 
-      <div class="section">
-        <div class="section-title">Últimos Cadastros</div>
-        <div id="recentTable">
-          <table class="recent-table">
-            <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th>Cadastro</th></tr></thead>
-            <tbody id="recentBody">
-              <tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:20px">Carregando...</td></tr>
-            </tbody>
-          </table>
+      <!-- KPIs personalizáveis (ordem e visibilidade — ver /js/dashboard-layout.js).
+           Os com d2-oculto começam escondidos e podem ser ligados em "Personalizar". -->
+      <section class="d2-kpis" id="saKpis">
+        <div class="sa-kpi sa-kpi-destaque" data-kpi="mrr" data-titulo="MRR real">
+          <div class="sa-kpi-label">💰 MRR real</div>
+          <div class="sa-kpi-valor" id="kMrr">—</div>
+          <div class="sa-kpi-sub" id="kMrrSub"></div>
         </div>
-      </div>
+        <a class="sa-kpi" href="/superadmin/tenants.html" data-kpi="cadastros" data-titulo="Cadastros na semana">
+          <div class="sa-kpi-label">🆕 Cadastros · 7 dias</div>
+          <div class="sa-kpi-valor" id="kCadastros">—</div>
+          <div class="sa-kpi-sub" id="kCadastrosSub"></div>
+        </a>
+        <a class="sa-kpi" href="/superadmin/users.html" data-kpi="logins" data-titulo="Logins na semana">
+          <div class="sa-kpi-label">🔑 Logins · 7 dias</div>
+          <div class="sa-kpi-valor" id="kLogins">—</div>
+          <div class="sa-kpi-sub" id="kLoginsSub"></div>
+        </a>
+        <a class="sa-kpi" href="/superadmin/users.html" data-kpi="ativos" data-titulo="Usuários que fizeram login">
+          <div class="sa-kpi-label">👥 Usuários com login · 7 dias</div>
+          <div class="sa-kpi-valor" id="kAtivos">—</div>
+          <div class="sa-kpi-sub" id="kAtivosSub"></div>
+        </a>
+        <a class="sa-kpi" href="/superadmin/tenants.html" data-kpi="trial" data-titulo="Em trial">
+          <div class="sa-kpi-label">⏳ Em trial</div>
+          <div class="sa-kpi-valor" id="kTrial">—</div>
+          <div class="sa-kpi-sub" id="kTrialSub"></div>
+        </a>
+        <a class="sa-kpi" href="/superadmin/codigos-promocionais.html" data-kpi="cupons" data-titulo="Usaram cupom">
+          <div class="sa-kpi-label">🎟️ Usaram cupom</div>
+          <div class="sa-kpi-valor" id="kCupons">—</div>
+          <div class="sa-kpi-sub" id="kCuponsSub"></div>
+        </a>
+        <a class="sa-kpi" href="/superadmin/perguntas.html" data-kpi="perguntas" data-titulo="Perguntas pendentes">
+          <div class="sa-kpi-label">💬 Com perguntas pendentes</div>
+          <div class="sa-kpi-valor" id="kPerguntas">—</div>
+          <div class="sa-kpi-sub" id="kPerguntasSub"></div>
+        </a>
+        <div class="sa-kpi" data-kpi="recebido" data-titulo="Recebido em 30 dias">
+          <div class="sa-kpi-label">🧾 Recebido · 30 dias</div>
+          <div class="sa-kpi-valor" id="kRecebido">—</div>
+          <div class="sa-kpi-sub" id="kRecebidoSub"></div>
+        </div>
+        <a class="sa-kpi d2-oculto" href="/superadmin/tenants.html" data-kpi="tenants" data-titulo="Tenants">
+          <div class="sa-kpi-label">🏢 Tenants</div>
+          <div class="sa-kpi-valor" id="kTenants">—</div>
+          <div class="sa-kpi-sub" id="kTenantsSub"></div>
+        </a>
+        <div class="sa-kpi d2-oculto" data-kpi="cancelamentos" data-titulo="Cancelamentos">
+          <div class="sa-kpi-label">📉 Cancelamentos · 30 dias</div>
+          <div class="sa-kpi-valor" id="kCancel">—</div>
+          <div class="sa-kpi-sub" id="kCancelSub"></div>
+        </div>
+        <a class="sa-kpi d2-oculto" href="/superadmin/waitlist.html" data-kpi="waitlist" data-titulo="Waitlist">
+          <div class="sa-kpi-label">📋 Waitlist pendente</div>
+          <div class="sa-kpi-valor" id="kWaitlist">—</div>
+          <div class="sa-kpi-sub">aguardando contato</div>
+        </a>
+        <a class="sa-kpi d2-oculto" href="/superadmin/assistente.html" data-kpi="ia" data-titulo="Assistente IA">
+          <div class="sa-kpi-label">✨ Assistente IA · 7 dias</div>
+          <div class="sa-kpi-valor" id="kIa">—</div>
+          <div class="sa-kpi-sub" id="kIaSub"></div>
+        </a>
+      </section>
+
+      <!-- Blocos personalizáveis (ordem, largura, altura e visibilidade). A ordem aqui é o padrão. -->
+      <section class="d2-grid" id="saGrid">
+        <div class="sa-card d2-w2" data-widget="cadastros-semana" data-titulo="Cadastros por semana">
+          <div class="sa-card-head">
+            <div class="sa-card-title">🆕 Cadastros por semana</div>
+            <span class="sa-linha-meta">últimas 12 semanas</span>
+          </div>
+          <div id="wCadastros"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="receita-plano" data-titulo="Receita por plano">
+          <div class="sa-card-head">
+            <div class="sa-card-title">💰 Receita por plano</div>
+            <span class="sa-linha-meta">MRR</span>
+          </div>
+          <div id="wReceitaPlano"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card d2-w2" data-widget="logins-dia" data-titulo="Logins por dia">
+          <div class="sa-card-head">
+            <div class="sa-card-title">🔑 Logins por dia</div>
+            <span class="sa-linha-meta">últimos 14 dias</span>
+          </div>
+          <div id="wLogins"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="proximas-cobrancas" data-titulo="Próximas cobranças">
+          <div class="sa-card-head">
+            <div class="sa-card-title">📆 Próximas cobranças</div>
+          </div>
+          <div id="wCobrancas"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="trial-expirando" data-titulo="Trials expirando">
+          <div class="sa-card-head">
+            <div class="sa-card-title">⏳ Trials expirando · 7 dias</div>
+          </div>
+          <div id="wTrial"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="recentes" data-titulo="Últimos cadastros">
+          <div class="sa-card-head">
+            <div class="sa-card-title">🏢 Últimos cadastros</div>
+            <a class="sa-card-link" href="/superadmin/tenants.html">Ver todos →</a>
+          </div>
+          <div id="wRecentes"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="perguntas" data-titulo="Perguntas ativas">
+          <div class="sa-card-head">
+            <div class="sa-card-title">💬 Perguntas ativas</div>
+            <a class="sa-card-link" href="/superadmin/perguntas.html">Gerenciar →</a>
+          </div>
+          <div id="wPerguntas"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="cupons" data-titulo="Códigos promocionais">
+          <div class="sa-card-head">
+            <div class="sa-card-title">🎟️ Códigos mais usados</div>
+            <a class="sa-card-link" href="/superadmin/codigos-promocionais.html">Ver códigos →</a>
+          </div>
+          <div id="wCupons"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="base" data-titulo="Base de tenants">
+          <div class="sa-card-head">
+            <div class="sa-card-title">📊 Base de tenants</div>
+          </div>
+          <div id="wBase"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card" data-widget="uso" data-titulo="Uso do produto">
+          <div class="sa-card-head">
+            <div class="sa-card-title">⚙️ Uso do produto · 7 dias</div>
+          </div>
+          <div id="wUso"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+      </section>
     </main>
   </div>
+  <div class="sa-dica" id="saDica" role="tooltip"></div>
 
   <script type="module">
-import { esc } from '/js/utils.js';
+    import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
-    import { saFetch } from '/superadmin/js/superAdminApi.js';
+    import { saFetch, getAdminUser } from '/superadmin/js/superAdminApi.js';
+    import { initDashboardLayout } from '/js/dashboard-layout.js';
 
     initAdminLayout();
 
+    // dashboard-layout.js manda o corpo como objeto (o apiFetch dos usuários serializa); saFetch não.
+    const saApi = (path, opts = {}) => saFetch(path, opts.body && typeof opts.body === 'object'
+      ? { ...opts, body: JSON.stringify(opts.body) } : opts);
+
+    initDashboardLayout({
+      secoes: [
+        { chave: 'kpis', grid: document.getElementById('saKpis'), attr: 'kpi', compacto: true },
+        { chave: 'widgets', grid: document.getElementById('saGrid'), attr: 'widget', larguras: true, alturas: true },
+      ],
+      botao: document.getElementById('saPersonalizar'),
+      userId: getAdminUser()?.id,
+      api: saApi,
+      cachePrefixo: 'sa_dashboard_layout',
+    });
+
     const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
     const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
+    const TZ = 'America/Sao_Paulo';
 
-    function fmtDate(iso) {
-      return iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
+    const num = n => (n ?? 0).toLocaleString('pt-BR');
+    const brl = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const brlCurto = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+    const data = iso => iso ? new Date(iso).toLocaleDateString('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit' }) : '—';
+    const dataCompleta = iso => iso ? new Date(iso).toLocaleDateString('pt-BR', { timeZone: TZ }) : '—';
+    // Dias de série (DateOnly "aaaa-mm-dd") não têm fuso: formata sem converter.
+    const diaCurto = d => d.split('-').reverse().slice(0, 2).join('/');
+    const tenantLink = (id, nome) => `<a class="sa-linha-nome" href="/superadmin/tenant-detalhe.html?id=${id}" title="${esc(nome)}">${esc(nome)}</a>`;
+    const vazio = msg => `<div class="sa-vazio">${msg}</div>`;
+    const set = (id, html) => { document.getElementById(id).innerHTML = html; };
+
+    /** Variação contra o período anterior, com seta (não depende só da cor). */
+    function delta(atual, anterior, fmt = num) {
+      const diff = atual - anterior;
+      if (diff === 0) return `<span class="sa-delta igual">= ${fmt(0)}</span>`;
+      const pct = anterior > 0 ? ` (${diff > 0 ? '+' : ''}${Math.round(diff / anterior * 100)}%)` : '';
+      return diff > 0
+        ? `<span class="sa-delta sobe">▲ +${fmt(diff)}${pct}</span>`
+        : `<span class="sa-delta desce">▼ −${fmt(-diff)}${pct}</span>`;
     }
 
-    function fmtBRL(v) {
-      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 });
+    /** Barras verticais de uma série; `itens`: [{ rotulo, valor, dica }]. A última é destacada. */
+    function barras(itens, titulo) {
+      const max = Math.max(1, ...itens.map(i => i.valor));
+      const passo = Math.ceil(itens.length / 7); // no máximo ~7 rótulos no eixo
+      return `
+        <div class="sa-barras" role="img" aria-label="${esc(titulo)}">
+          ${itens.map((i, n) => `
+            <div class="sa-barra${n === itens.length - 1 ? ' atual' : ''}" tabindex="0" data-dica="${esc(i.dica)}">
+              ${n === itens.length - 1 || i.valor === max ? `<span class="sa-barra-rotulo">${num(i.valor)}</span>` : ''}
+              <div class="sa-barra-fill" style="height:${(i.valor / max * 100).toFixed(1)}%"></div>
+            </div>`).join('')}
+        </div>
+        <div class="sa-eixo" aria-hidden="true">
+          ${itens.map((i, n) => `<span>${(itens.length - 1 - n) % passo === 0 ? esc(i.rotulo) : ''}</span>`).join('')}
+        </div>
+        <table class="sr-only"><caption>${esc(titulo)}</caption>
+          ${itens.map(i => `<tr><th>${esc(i.rotulo)}</th><td>${i.valor}</td></tr>`).join('')}
+        </table>`;
     }
 
-    async function loadMetrics() {
+    // Tooltip das barras (mouse e teclado).
+    const dica = document.getElementById('saDica');
+    function mostrarDica(el, x, y) {
+      dica.textContent = el.dataset.dica;
+      dica.style.display = 'block';
+      const r = dica.getBoundingClientRect();
+      dica.style.left = `${Math.min(window.innerWidth - r.width - 8, Math.max(8, x - r.width / 2))}px`;
+      dica.style.top = `${Math.max(8, y - r.height - 10)}px`;
+    }
+    document.addEventListener('mousemove', e => {
+      const el = e.target.closest?.('[data-dica]');
+      if (el) mostrarDica(el, e.clientX, e.clientY); else dica.style.display = 'none';
+    });
+    document.addEventListener('focusin', e => {
+      const el = e.target.closest?.('[data-dica]');
+      if (!el) { dica.style.display = 'none'; return; }
+      const r = el.getBoundingClientRect();
+      mostrarDica(el, r.left + r.width / 2, r.top);
+    });
+    document.addEventListener('focusout', () => { dica.style.display = 'none'; });
+
+    function render(d) {
+      const { receita: r, cadastros: c, acessos: a, tenants: t, trial, cupons, perguntas: p, uso } = d;
+
+      // ── KPIs ──
+      set('kMrr', brl(r.mrrReal));
+      set('kMrrSub', `${num(r.pagantes)} pagante(s) · ${brlCurto(r.receberProximos30Dias)} a receber em 30 dias`
+        + (r.cancelamentoAgendado ? ` · ${r.cancelamentoAgendado} cancelando` : ''));
+      set('kCadastros', num(c.ultimos7Dias));
+      set('kCadastrosSub', `${delta(c.ultimos7Dias, c.anteriores7Dias)} vs ${num(c.anteriores7Dias)} na semana anterior`);
+      set('kLogins', num(a.logins7Dias));
+      set('kLoginsSub', `${delta(a.logins7Dias, a.loginsAnteriores7Dias)} vs ${num(a.loginsAnteriores7Dias)} na semana anterior`);
+      set('kAtivos', num(a.acessaram7Dias));
+      set('kAtivosSub', `de ${num(a.totalUsuarios)} usuários · ${num(a.acessaram24h)} nas últimas 24h · ${num(a.acessaram30Dias)} em 30 dias`);
+      set('kTrial', `${num(trial.tenants)} <span style="font-size:13px;font-weight:600;color:var(--color-text-muted)">tenants</span>`);
+      set('kTrialSub', `${num(trial.usuarios)} usuário(s) · ${num(trial.expirando.length)} expiram em 7 dias`);
+      set('kCupons', `${num(cupons.tenantsComCodigo)} <span style="font-size:13px;font-weight:600;color:var(--color-text-muted)">tenants</span>`);
+      set('kCuponsSub', `${num(cupons.usuariosComCodigo)} usuário(s) · ${num(cupons.descontoUsadoNoCheckout)} com desconto na assinatura`);
+      set('kPerguntas', num(p.usuariosComPendentes));
+      set('kPerguntasSub', p.ativas
+        ? `de ${num(p.usuariosNoPublico)} no público de ${num(p.ativas)} pergunta(s) ativa(s) · ${num(p.respostas7Dias)} respostas em 7 dias`
+        : 'nenhuma pergunta ativa');
+      set('kRecebido', brl(r.recebidoUltimos30Dias));
+      set('kRecebidoSub', `${delta(r.recebidoUltimos30Dias, r.recebidoAnteriores30Dias, brlCurto)} vs ${brlCurto(r.recebidoAnteriores30Dias)} nos 30 dias anteriores`);
+      set('kTenants', num(t.total));
+      set('kTenantsSub', `${num(t.ativos)} ativos · ${num(t.trial)} trial · ${num(t.suspensos)} suspensos · ${num(t.cancelados)} cancelados`);
+      set('kCancel', num(t.cancelamentos30Dias));
+      set('kCancelSub', 'assinaturas encerradas no Stripe');
+      set('kWaitlist', num(t.waitlistPendente));
+      set('kIa', num(uso.interacoesIa7Dias));
+      set('kIaSub', `${num(uso.usuariosIa7Dias)} usuário(s) usaram`);
+
+      // ── Cadastros por semana ──
+      set('wCadastros', barras(c.porSemana.map(s => {
+        const fim = new Date(`${s.inicio}T12:00:00Z`);
+        fim.setUTCDate(fim.getUTCDate() + 6);
+        const fimTxt = fim.toISOString().slice(0, 10);
+        return { rotulo: diaCurto(s.inicio), valor: s.total, dica: `${diaCurto(s.inicio)} a ${diaCurto(fimTxt)}: ${num(s.total)} cadastro(s)` };
+      }), 'Cadastros de tenants por semana') + `<div class="sa-card-nota">Últimos 30 dias: <strong>${num(c.ultimosTrintaDias)}</strong> cadastro(s). Semanas móveis terminando hoje.</div>`);
+
+      // ── Logins por dia ──
+      set('wLogins', barras(a.loginsPorDia.map(x => ({
+        rotulo: diaCurto(x.dia), valor: x.total, dica: `${diaCurto(x.dia)}: ${num(x.total)} login(s)`
+      })), 'Logins por dia') + `<div class="sa-card-nota">${num(a.nuncaAcessaram)} usuário(s) ativo(s) nunca fizeram login.</div>`);
+
+      // ── Receita por plano ──
+      const maxPlano = Math.max(1, ...r.porPlano.map(x => x.mrr));
+      set('wReceitaPlano', (r.porPlano.length
+        ? r.porPlano.map(x => `
+            <div class="sa-hitem">
+              <div class="sa-hitem-topo">
+                <span><span class="badge badge-${PLAN_COLORS[x.plano] ?? 'gray'}">${x.plano}</span> <span class="sa-linha-meta">${num(x.tenants)} pagante(s)</span></span>
+                <span class="sa-linha-valor">${brl(x.mrr)}</span>
+              </div>
+              <div class="sa-hbar"><div style="width:${(x.mrr / maxPlano * 100).toFixed(1)}%"></div></div>
+            </div>`).join('')
+        : vazio('Nenhum tenant pagante.'))
+        + `<div class="sa-card-nota">Valor da próxima fatura de cada assinatura no Stripe (já com cupons), anual dividido por 12.
+            Preço de tabela sem descontos: <strong>${brl(r.mrrTabela)}</strong>.</div>`
+        + (r.estimados ? `<div class="sa-aviso">⚠ ${r.estimados} assinatura(s) não responderam no Stripe; o valor delas é estimado pelo preço de tabela.</div>` : ''));
+
+      // ── Próximas cobranças ──
+      set('wCobrancas', r.proximasCobrancas.length
+        ? `<div class="sa-lista">${r.proximasCobrancas.map(x => `
+            <div class="sa-linha">
+              <span class="sa-linha-meta">${data(x.data)}</span>
+              ${tenantLink(x.tenantId, x.nome)}
+              <span class="badge badge-${PLAN_COLORS[x.plano] ?? 'gray'}">${x.plano}</span>
+              <span class="sa-linha-valor" ${x.estimado ? 'title="Estimado (Stripe indisponível)"' : ''}>${brl(x.valor)}${x.estimado ? '*' : ''}</span>
+            </div>`).join('')}</div>`
+        : vazio('Nenhuma cobrança prevista.'));
+
+      // ── Trials expirando ──
+      set('wTrial', (trial.expirando.length
+        ? `<div class="sa-lista">${trial.expirando.map(x => `
+            <div class="sa-linha">
+              ${tenantLink(x.tenantId, x.nome)}
+              <span class="sa-linha-meta">${num(x.usuarios)} usuário(s)</span>
+              <span class="badge badge-amber">${dataCompleta(x.expiraEm)}</span>
+            </div>`).join('')}</div>`
+        : vazio('Nenhum trial expira nos próximos 7 dias.'))
+        + `<div class="sa-card-nota">${num(trial.tenants)} tenant(s) em trial, ${num(trial.concedidosPeloSuperadmin)} concedido(s) pelo superadmin.</div>`);
+
+      // ── Últimos cadastros ──
+      set('wRecentes', c.recentes.length
+        ? `<div class="sa-lista">${c.recentes.map(x => `
+            <div class="sa-linha">
+              ${tenantLink(x.id, x.nome)}
+              <span class="badge badge-${PLAN_COLORS[x.plano] ?? 'gray'}">${x.plano}</span>
+              <span class="badge badge-${STATUS_COLORS[x.status] ?? 'gray'}">${x.status}</span>
+              <span class="sa-linha-meta">${data(x.criadoEm)}</span>
+            </div>`).join('')}</div>`
+        : vazio('Nenhum cadastro.'));
+
+      // ── Perguntas ──
+      set('wPerguntas', p.porPergunta.length
+        ? p.porPergunta.map(x => {
+            const pct = x.alcance > 0 ? Math.min(100, x.respostas / x.alcance * 100) : 0;
+            return `
+              <div class="sa-hitem">
+                <div class="sa-hitem-topo">
+                  <span title="${esc(x.texto)}">${esc(x.texto)}</span>
+                  <span class="sa-linha-meta">${num(x.respostas)}/${num(x.alcance)}</span>
+                </div>
+                <div class="sa-hbar" title="${Math.round(pct)}% responderam"><div style="width:${pct.toFixed(1)}%"></div></div>
+              </div>`;
+          }).join('') + `<div class="sa-card-nota">Respostas / pessoas no público de cada pergunta${p.porPergunta.some(x => x.publico === 'Clientes') ? ' (clientes do portal contam pelos acessos ativos)' : ''}.</div>`
+        : vazio('Nenhuma pergunta ativa.'));
+
+      // ── Cupons ──
+      set('wCupons', (cupons.codigos.length
+        ? `<div class="sa-lista">${cupons.codigos.map(x => `
+            <div class="sa-linha">
+              <span class="sa-linha-nome" style="font-family:monospace">${esc(x.codigo)}</span>
+              <span class="sa-linha-meta">${num(x.tenants)} tenant(s)</span>
+              <span class="badge badge-${x.pagantes ? 'green' : 'gray'}">${num(x.pagantes)} pagante(s)</span>
+            </div>`).join('')}</div>`
+        : vazio('Nenhum código usado.'))
+        + `<div class="sa-card-nota">${num(cupons.pagantesComCodigo)} tenant(s) com código são pagantes hoje.</div>`);
+
+      // ── Base de tenants ──
+      const planos = ['Free', 'Plus', 'Pro', 'Max', 'Enterprise'].filter(x => x !== 'Enterprise' || t.porPlano.Enterprise);
+      set('wBase', `
+        <div class="sa-minis">
+          <div class="sa-mini"><div class="sa-mini-label">Total</div><div class="sa-mini-valor">${num(t.total)}</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Ativos</div><div class="sa-mini-valor">${num(t.ativos)}</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Trial</div><div class="sa-mini-valor">${num(t.trial)}</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Suspensos · cancelados</div><div class="sa-mini-valor">${num(t.suspensos)} · ${num(t.cancelados)}</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+          ${planos.map(x => `<span class="badge badge-${PLAN_COLORS[x] ?? 'gray'}">${x} ${num(t.porPlano[x] ?? 0)}</span>`).join('')}
+        </div>`);
+
+      // ── Uso ──
+      set('wUso', `
+        <div class="sa-minis">
+          <div class="sa-mini"><div class="sa-mini-label">Processos</div><div class="sa-mini-valor">${num(uso.processos)}</div><div class="sa-mini-sub">+${num(uso.processosNovos7Dias)} em 7 dias</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Monitorados</div><div class="sa-mini-valor">${num(uso.monitorados)}</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Assistente IA</div><div class="sa-mini-valor">${num(uso.interacoesIa7Dias)}</div><div class="sa-mini-sub">${num(uso.usuariosIa7Dias)} usuário(s)</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Consultas externas</div><div class="sa-mini-valor">${num(uso.consultasExternas7Dias)}</div><div class="sa-mini-sub">${num(uso.consultasExternasFalhas7Dias)} com falha</div></div>
+        </div>`);
+
+      const receitaHora = new Date(r.calculadoEm).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+      const geradoHora = new Date(d.geradoEm).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+      set('saAtualizado', `Atualizado às ${geradoHora} · receita do Stripe de ${receitaHora}`);
+    }
+
+    async function carregar(atualizarReceita = false) {
+      const botao = document.getElementById('saAtualizar');
+      botao.disabled = true;
       try {
-        const m = await saFetch('/superadmin/metrics');
-
-        const mrrCard = document.getElementById('mrrCard');
-        document.getElementById('mrrValue').textContent = fmtBRL(m.mrrEstimate);
-        mrrCard.style.display = '';
-
-        const statData = [
-          { label: 'Total Tenants', value: m.totalTenants, cls: '' },
-          { label: 'Ativos', value: m.activeTenants, cls: 'green' },
-          { label: 'Em Trial', value: m.trialTenants, cls: 'amber' },
-          { label: 'Suspensos', value: m.suspendedTenants, cls: 'red' },
-          { label: 'Total Usuários', value: m.totalUsers, cls: '' },
-          { label: 'Waitlist Pendente', value: m.waitlistPending, cls: m.waitlistPending > 0 ? 'amber' : '' },
-        ];
-
-        document.getElementById('statGrid').innerHTML = statData.map(s => `
-          <div class="stat-card">
-            <div class="stat-label">${s.label}</div>
-            <div class="stat-value ${s.cls}">${s.value}</div>
-          </div>`).join('');
-
-        const planOrder = ['Free', 'Plus', 'Pro', 'Max', 'Enterprise'];
-        document.getElementById('planGrid').innerHTML = planOrder.map(p => `
-          <div class="plan-pill">
-            <div class="plan-pill-label">${p}</div>
-            <div class="plan-pill-value">${m.tenantsByPlan[p] ?? 0}</div>
-          </div>`).join('');
-
-        document.getElementById('recentBody').innerHTML = m.recentSignups.length === 0
-          ? '<tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:16px">Nenhum cadastro</td></tr>'
-          : m.recentSignups.map(t => `
-            <tr>
-              <td><a href="/superadmin/tenant-detalhe.html?id=${t.id}" style="color:var(--color-primary);text-decoration:none;font-weight:500">${esc(t.nome)}</a></td>
-              <td><span class="badge badge-${PLAN_COLORS[t.plano] ?? 'gray'}">${t.plano}</span></td>
-              <td><span class="badge badge-${STATUS_COLORS[t.status] ?? 'gray'}">${t.status}</span></td>
-              <td style="color:var(--color-text-muted)">${fmtDate(t.criadoEm)}</td>
-            </tr>`).join('');
+        const d = await saFetch(`/superadmin/dashboard${atualizarReceita ? '?atualizarReceita=true' : ''}`);
+        document.getElementById('saErro').style.display = 'none';
+        render(d);
       } catch (e) {
-        document.getElementById('statGrid').innerHTML = `<p style="color:var(--color-danger);grid-column:1/-1">Erro ao carregar métricas: ${e.message}</p>`;
+        const erro = document.getElementById('saErro');
+        erro.textContent = `Erro ao carregar indicadores: ${e.message}`;
+        erro.style.display = '';
+      } finally {
+        botao.disabled = false;
       }
     }
 
-
-    loadMetrics();
+    document.getElementById('saAtualizar').addEventListener('click', () => carregar(true));
+    carregar();
   </script>
 </body>
 </html>

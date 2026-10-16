@@ -147,20 +147,6 @@ public record WaitlistListItemDto(
 
 public record UpdateWaitlistStatusDto(string Status);
 
-public record SystemMetricsDto(
-    int TotalTenants,
-    int ActiveTenants,
-    int TrialTenants,
-    int SuspendedTenants,
-    int CanceledTenants,
-    Dictionary<string, int> TenantsByPlan,
-    int TotalUsers,
-    int ActiveUsers,
-    int WaitlistPending,
-    decimal MrrEstimate,
-    List<RecentTenantDto> RecentSignups
-);
-
 public record RecentTenantDto(
     Guid Id,
     string Nome,

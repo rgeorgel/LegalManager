@@ -21,9 +21,11 @@ const ROTULO_ALTURA = { 0.5: '½', 1: '1', 2: '2' };
 
 /**
  * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, alturas?: boolean, compacto?: boolean }} Secao
- * @param {{ secoes: Secao[], botao: HTMLElement, userId?: string }} opts
+ * `api` troca o cliente HTTP (o superadmin usa saFetch, com o token dele) e `cachePrefixo`
+ * separa o cache local de dashboards diferentes do mesmo usuário.
+ * @param {{ secoes: Secao[], botao: HTMLElement, userId?: string, api?: Function, cachePrefixo?: string }} opts
  */
-export function initDashboardLayout({ secoes, botao, userId }) {
+export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cachePrefixo = 'dashboard_layout' }) {
   secoes = secoes.filter(s => s.grid);
   if (!secoes.length) return;
   injectStyles();
@@ -37,7 +39,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
     if (s.compacto) s.grid.classList.add('d2-secao-compacta');
   }
 
-  const cacheKey = `dashboard_layout:${userId ?? 'anon'}`;
+  const cacheKey = `${cachePrefixo}:${userId ?? 'anon'}`;
   let editando = false;
   let snapshot = null;
   let arrastando = null; // { secao, el }
@@ -47,7 +49,7 @@ export function initDashboardLayout({ secoes, botao, userId }) {
   const cache = lerCache();
   if (cache) aplicarTudo(cache);
 
-  apiFetch('/dashboard/layout')
+  api('/dashboard/layout')
     .then(res => {
       if (editando) return; // não atropela uma edição em curso
       aplicarTudo(res ?? {});
@@ -178,10 +180,10 @@ export function initDashboardLayout({ secoes, botao, userId }) {
     btn.textContent = 'Salvando…';
     try {
       if (!secoes.some(s => layout[s.chave])) {
-        await apiFetch('/dashboard/layout', { method: 'DELETE' });
+        await api('/dashboard/layout', { method: 'DELETE' });
         salvarCache(null);
       } else {
-        await apiFetch('/dashboard/layout', { method: 'PUT', body: layout });
+        await api('/dashboard/layout', { method: 'PUT', body: layout });
         salvarCache(layout);
       }
       const tudo = lerTudo();

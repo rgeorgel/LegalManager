@@ -285,6 +285,26 @@ public class StripeService : IStripeService
         return preco.Id;
     }
 
+    public async Task<StripeProximaCobranca?> ObterProximaCobrancaAsync(string subscriptionId, CancellationToken ct = default)
+    {
+        using var activity = Telemetry.Stripe.StartActivity(nameof(ObterProximaCobrancaAsync));
+        activity?.SetTag("stripe.operation", "invoice.preview");
+        var invoiceService = new InvoiceService(_stripeClient);
+        try
+        {
+            var fatura = await invoiceService.CreatePreviewAsync(
+                new InvoiceCreatePreviewOptions { Subscription = subscriptionId }, cancellationToken: ct);
+            // A prévia ainda não tem tentativa de cobrança agendada: a data é o início do próximo período.
+            var data = fatura.NextPaymentAttempt
+                ?? fatura.Lines?.Data?.Select(l => (DateTime?)l.Period?.Start).Max();
+            return new StripeProximaCobranca(fatura.AmountDue / 100m, data);
+        }
+        catch (StripeException ex) when (ex.StripeError?.Code == "invoice_upcoming_none")
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// Valida a assinatura HMAC do webhook e retorna o evento Stripe já desserializado.
     /// Lança StripeException se a assinatura for inválida.
