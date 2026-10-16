@@ -288,6 +288,48 @@ public class EmailServiceTests
     }
 
 [Fact]
+    public async Task EnviarResumoDiarioAsync_JuntaTarefasEEventos()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarResumoDiarioAsync(
+            "user@test.com", "Vanessa",
+            [new ResumoTarefaItem("Recurso Inominado", new DateTime(2026, 10, 16, 9, 0, 0), 1)],
+            [new ResumoEventoItem("Audiencia Raz x Luciano", new DateTime(2026, 10, 16, 10, 35, 0), "Fórum", 1)],
+            CancellationToken.None);
+
+        Assert.NotNull(capture.Message);
+        Assert.Equal("Resumo do dia: 1 tarefa e 1 evento — Causify", capture.Message!.Subject);
+        var html = capture.Message.HtmlBody;
+        Assert.Contains("Recurso Inominado", html);
+        Assert.Contains("Agenda de amanhã", html);
+        Assert.Contains("Audiencia Raz x Luciano", html);
+        Assert.Contains("10:35", html);
+        Assert.Contains("/pages/tarefas.html", html);
+        Assert.Contains("/pages/agenda.html", html);
+    }
+
+    [Fact]
+    public async Task EnviarResumoDiarioAsync_SoEventos_OmiteTarefas()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarResumoDiarioAsync(
+            "user@test.com", "Vanessa", [],
+            [new ResumoEventoItem("Reunião", new DateTime(2026, 10, 15, 15, 0, 0), null, 0),
+             new ResumoEventoItem("Audiência", new DateTime(2026, 10, 16, 10, 0, 0), null, 1)],
+            CancellationToken.None);
+
+        Assert.Equal("Resumo do dia: 2 eventos — Causify", capture.Message!.Subject);
+        Assert.Contains("Agenda de hoje", capture.Message.HtmlBody);
+        Assert.DoesNotContain("/pages/tarefas.html", capture.Message.HtmlBody);
+    }
+
+[Fact]
     public async Task EnviarCobrancaAsync_SemQRCode_NaoIncluiImagem()
     {
         var capture = new EmailCapture();
