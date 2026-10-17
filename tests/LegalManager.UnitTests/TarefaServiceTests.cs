@@ -156,6 +156,27 @@ public class TarefaServiceTests
     }
 
     [Fact]
+    public async Task GetAllAsync_ConcluidasUltimosDias_EscondeConcluidasAntigas()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await svc.CreateAsync(new CreateTarefaDto("Aberta", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        var recente = await svc.CreateAsync(new CreateTarefaDto("Recente", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.ConcluirAsync(recente.Id);
+        var antiga = await svc.CreateAsync(new CreateTarefaDto("Antiga", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.ConcluirAsync(antiga.Id);
+        (await ctx.Tarefas.FindAsync(antiga.Id))!.ConcluidaEm = DateTime.UtcNow.AddDays(-4);
+        await ctx.SaveChangesAsync();
+
+        var filtradas = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null, ConcluidasUltimosDias: 3));
+        var todas = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null));
+
+        Assert.Equal(["Aberta", "Recente"], filtradas.Items.Select(t => t.Titulo).Order());
+        Assert.Equal(3, todas.Total);
+    }
+
+    [Fact]
     public async Task GetAllAsync_ComVariosValores_TrazTarefasComQualquerUmDeles()
     {
         var (ctx, tenant, usuario) = await SeedAsync();

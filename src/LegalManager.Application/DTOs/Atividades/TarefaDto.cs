@@ -96,7 +96,9 @@ public record TarefaFiltroDto(
     bool? Atrasada,
     int Page = 1,
     int PageSize = 20,
-    IReadOnlyCollection<TipoTarefa>? Tipo = null
+    IReadOnlyCollection<TipoTarefa>? Tipo = null,
+    // Esconde concluídas há mais de N dias (por ConcluidaEm); demais status não são afetados.
+    int? ConcluidasUltimosDias = null
 );
 
 // ── Dashboard: prazos e tarefas (cálculo no backend, payload enxuto) ──────

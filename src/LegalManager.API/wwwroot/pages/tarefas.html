@@ -106,6 +106,11 @@
        escuros. */
     .kanban-col-icon { vertical-align: -2px; margin-right: 2px; }
     .kanban-col-count { background:var(--color-border); color:var(--color-text-muted); font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+    .kanban-col-footer { margin-top:12px; padding-top:10px; border-top:1px dashed var(--color-border); font-size:12px; color:var(--color-text-muted); display:flex; flex-direction:column; gap:4px; }
+    .kanban-periodo { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .kanban-periodo select { width:auto; padding:2px 6px; font-size:12px; height:auto; }
+    .kanban-ver-todas { background:none; border:0; padding:0; color:var(--color-primary); font:inherit; font-weight:600; cursor:pointer; text-align:left; }
+    .kanban-ver-todas:hover { text-decoration:underline; }
     .kanban-items { display:flex; flex-direction:column; gap:8px; min-height:100px; }
     .kanban-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; cursor:grab; user-select:none; transition:box-shadow .15s; }
     .kanban-card:hover { box-shadow:0 4px 12px rgba(0,0,0,.1); }
@@ -208,6 +213,18 @@
             <span class="kanban-col-count" id="count-Concluida">0</span>
           </div>
           <div class="kanban-items" id="col-Concluida"></div>
+          <div class="kanban-col-footer">
+            <label class="kanban-periodo">Mostrar concluídas
+              <select id="kanbanDiasConcluidas" class="form-control">
+                <option value="3">nos últimos 3 dias</option>
+                <option value="7">nos últimos 7 dias</option>
+                <option value="15">nos últimos 15 dias</option>
+                <option value="30">nos últimos 30 dias</option>
+                <option value="">de todo o período</option>
+              </select>
+            </label>
+            <button type="button" class="kanban-ver-todas" id="btnVerConcluidas" style="display:none">Ver todas as concluídas</button>
+          </div>
         </div>
       </div>
     </div>
@@ -710,17 +727,41 @@ document.getElementById('filtAtrasadaKanban').addEventListener('change', () => r
 
 // ── Kanban ─────────────────────────────────────────────────────
 const KANBAN_STATUSES = ['Pendente', 'EmAndamento', 'Concluida'];
+// Concluídas saem do quadro depois do período escolhido pelo usuário (padrão 3 dias, lembrado
+// no navegador); continuam na aba Tarefas (filtro Concluída). Vazio = todo o período.
+// Function (hoisted) e não const: o switchTab do topo do módulo pode chamar loadBoard antes daqui.
+function diasConcluidas() {
+  const sel = document.getElementById('kanbanDiasConcluidas');
+  if (!sel.dataset.restaurado) {
+    sel.dataset.restaurado = '1';
+    try {
+      const salvo = localStorage.getItem('tarefas.kanbanDiasConcluidas');
+      if (salvo !== null && [...sel.options].some(o => o.value === salvo)) sel.value = salvo;
+    } catch {}
+  }
+  return sel.value;
+}
+document.getElementById('kanbanDiasConcluidas').addEventListener('change', e => {
+  try { localStorage.setItem('tarefas.kanbanDiasConcluidas', e.target.value); } catch {}
+  loadBoard();
+});
 let allKanbanTasks = [];
 let draggedId = null;
 let draggedStatus = null;
 
 async function loadBoard() {
   try {
-    const [p, ea, c] = await Promise.all([
+    const dias = diasConcluidas();
+    const [p, ea, c, todasConcluidas] = await Promise.all([
       apiFetch('/tarefas?status=Pendente&pageSize=100'),
       apiFetch('/tarefas?status=EmAndamento&pageSize=100'),
-      apiFetch('/tarefas?status=Concluida&pageSize=100')
+      apiFetch(`/tarefas?status=Concluida${dias ? `&concluidasUltimosDias=${dias}` : ''}&pageSize=100`),
+      apiFetch('/tarefas?status=Concluida&pageSize=1')
     ]);
+    const antigas = (todasConcluidas.total ?? 0) - (c.items?.length ?? 0);
+    document.getElementById('btnVerConcluidas').style.display = antigas > 0 ? '' : 'none';
+    document.getElementById('btnVerConcluidas').textContent =
+      `Ver todas as concluídas (+${antigas} ${antigas === 1 ? 'anterior' : 'anteriores'})`;
     allKanbanTasks = [
       ...(p.items ?? []).map(t => ({...t, status: 'Pendente'})),
       ...(ea.items ?? []).map(t => ({...t, status: 'EmAndamento'})),
@@ -815,6 +856,12 @@ async function onDrop(e) {
     alert('Erro ao mover: ' + err.message);
   }
 }
+
+document.getElementById('btnVerConcluidas').addEventListener('click', () => {
+  filtStatus.setValues(['Concluida']);
+  switchTab('tarefas');
+  loadTarefas(1);
+});
 
 document.addEventListener('click', async e => {
   const titleEl = e.target.closest('[data-detail-id]');

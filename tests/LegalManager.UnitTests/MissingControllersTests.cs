@@ -228,7 +228,7 @@ public class TarefasControllerTests
     [Fact]
     public async Task GetAll_ReturnsOk()
     {
-        var result = await CreateController().GetAll(null, null, null, null, null, null, false, 1, 20, null, CancellationToken.None);
+        var result = await CreateController().GetAll(null, null, null, null, null, null, false, 1, 20, null, ct: CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
 
@@ -237,7 +237,7 @@ public class TarefasControllerTests
     {
         var service = CreateServiceMock();
         await CreateController(service).GetAll(null, ["Pendente", "emandamento", "Pendente", "Xyz"], ["Urgente", "Alta"],
-            null, null, null, null, 1, 20, ["Prazo"], CancellationToken.None);
+            null, null, null, null, 1, 20, ["Prazo"], ct: CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(It.Is<TarefaFiltroDto>(f =>
                 f.Status!.SequenceEqual(new[] { StatusTarefa.Pendente, StatusTarefa.EmAndamento }) &&
@@ -250,7 +250,7 @@ public class TarefasControllerTests
     public async Task GetAll_SemValoresValidos_NaoFiltra()
     {
         var service = CreateServiceMock();
-        await CreateController(service).GetAll(null, ["Xyz"], null, null, null, null, null, 1, 20, null, CancellationToken.None);
+        await CreateController(service).GetAll(null, ["Xyz"], null, null, null, null, null, 1, 20, null, ct: CancellationToken.None);
 
         service.Verify(s => s.GetAllAsync(It.Is<TarefaFiltroDto>(f => f.Status == null && f.Prioridade == null && f.Tipo == null),
             It.IsAny<CancellationToken>()), Times.Once);

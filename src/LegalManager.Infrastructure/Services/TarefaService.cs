@@ -134,6 +134,13 @@ public class TarefaService : ITarefaService
         if (filtro.Tipo is { Count: > 0 } tipos)
             query = query.Where(t => tipos.Contains(t.Tipo));
 
+        if (filtro.ConcluidasUltimosDias is int dias)
+        {
+            // ConcluidaEm é carimbo do servidor (UTC real), então o corte é em UTC.
+            var corte = DateTime.UtcNow.AddDays(-dias);
+            query = query.Where(t => t.Status != StatusTarefa.Concluida || t.ConcluidaEm >= corte);
+        }
+
         var total = await query.CountAsync(ct);
 
         var items = await query
