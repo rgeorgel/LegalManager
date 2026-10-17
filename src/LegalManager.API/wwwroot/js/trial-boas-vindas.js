@@ -6,7 +6,7 @@ const FEATURES_PLUS = [
   '📅 Calculadora de Prazos processuais',
   '🌐 Portal do Cliente',
   '💼 Honorários e Contratos',
-  '⚖️ 20 processos monitorados (vs. 10 no Free)',
+  '⚖️ 20 processos monitorados (vs. 5 no Free)',
   '💾 2 GB de armazenamento (vs. 1 GB no Free)',
 ];
 

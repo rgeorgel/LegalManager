@@ -11,7 +11,7 @@
 
 ## Planos e preços
 
-- Plano Free — R$ 0/mês permanente: 1 usuário, processos ilimitados cadastrados, 10 processos monitorados, 1 GB de armazenamento, tarefas, timesheet, cadastro de clientes. Sem cartão de crédito.
+- Plano Free — R$ 0/mês permanente: 1 usuário, processos ilimitados cadastrados, 5 processos monitorados, 1 GB de armazenamento, tarefas, timesheet, cadastro de clientes. Sem cartão de crédito.
 - Plano Plus — R$ 20/mês: tudo do Free + 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais, indicadores.
 - Plano Pro — R$ 50/mês: tudo do Plus + 2 usuários, 40 processos monitorados, 1 captura automática de publicações por OAB, templates de documentos, 5 GB.
 - Plano Max — R$ 125/mês: tudo do Pro + 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB.

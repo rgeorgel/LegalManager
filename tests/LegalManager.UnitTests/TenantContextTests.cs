@@ -158,7 +158,7 @@ public class PlanoRestricoesTests
     }
 
     [Theory]
-    [InlineData(PlanoTipo.Free, 10)]
+    [InlineData(PlanoTipo.Free, 5)]
     [InlineData(PlanoTipo.Plus, 20)]
     [InlineData(PlanoTipo.Pro, 40)]
     [InlineData(PlanoTipo.Max, 80)]
