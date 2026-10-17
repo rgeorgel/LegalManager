@@ -1,3 +1,4 @@
+using System.Globalization;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
@@ -29,6 +30,7 @@ public record PacoteCreditosDto(
 [Authorize]
 public class AssinaturaController(
     IStripeService stripe,
+    IPrecosPlanosService precosPlanos,
     AppDbContext context,
     ITenantContext tenantContext,
     UserManager<Usuario> userManager,
@@ -36,8 +38,6 @@ public class AssinaturaController(
     ILogger<AssinaturaController> logger) : ControllerBase
 {
     private static List<PacoteCreditosDto> _pacotes => PacotesCreditos.Todos;
-
-    private static IReadOnlyDictionary<PlanoTipo, decimal> _precosPorPlano => PlanoPrecos.Mensal;
 
     [HttpGet]
     public async Task<IActionResult> GetStatus(CancellationToken ct)
@@ -54,6 +54,7 @@ public class AssinaturaController(
             trialExpiraEm = tenant.TrialExpiraEm,
             criadoEm = tenant.CriadoEm,
             temBilling = tenant.StripeSubscriptionId != null,
+            valorMensalAssinatura = tenant.ValorMensalAssinatura,
             // Código usado no cadastro (período grátis) ou aplicado depois (desconto).
             codigoPromocional = tenant.VoucherUtilizado ?? tenant.CodigoDesconto,
             // Plano grátis de código promocional: Ativo com data de fim e sem assinatura paga.
@@ -204,25 +205,40 @@ public class AssinaturaController(
         // Tenant com assinatura Stripe já vigente: upgrade/downgrade é feito por proration
         // in-place (sem novo checkout) — só entra no cálculo de PREVIEW aqui; a cobrança de
         // fato só acontece quando o admin confirmar em /assinatura/confirmar-upgrade.
+        var precos = await precosPlanos.ObterAsync(ct);
         var podeAtualizarInPlace = !string.IsNullOrEmpty(tenant.StripeSubscriptionId)
                                 && tenant.Plano != planoAlvo
-                                && _precosPorPlano.ContainsKey(tenant.Plano)
-                                && _precosPorPlano.ContainsKey(planoAlvo);
+                                && precos.ContainsKey(tenant.Plano)
+                                && precos.ContainsKey(planoAlvo);
 
         if (podeAtualizarInPlace)
         {
-            var diasRestantes = tenant.BillingCycleStart.HasValue
-                ? Math.Max(0, (tenant.BillingCycleStart.Value.AddDays(30) - DateTime.UtcNow).TotalDays)
-                : 0;
-            var credito = Math.Round((decimal)(diasRestantes / 30.0) * _precosPorPlano[tenant.Plano], 2);
-            var valorProrado = Math.Max(1m, _precosPorPlano[planoAlvo] - credito);
+            // Mesma conta da Stripe (proration): crédito do tempo não usado no valor que o tenant
+            // paga de fato (pode ser um preço anterior a um aumento) + o plano novo pelo resto do
+            // ciclo, com o cupom que ainda vale. A diferença é cobrada na hora (always_invoice).
+            var agora = DateTime.UtcNow;
+            var fracao = 0m;
+            if (tenant.BillingCycleStart is { } inicio)
+            {
+                var fim = inicio.AddMonths(1);
+                fracao = Math.Clamp((decimal)((fim - agora) / (fim - inicio)), 0m, 1m);
+            }
+            var promoAtual = tenant.CodigoDesconto is null ? null
+                : await context.CodigosPromocionais.FirstOrDefaultAsync(c => c.Codigo == tenant.CodigoDesconto, ct);
+            var fator = (100 - CodigosPromocionais.DescontoVigente(promoAtual, tenant.DescontoPromocionalUsadoEm, agora)) / 100m;
+
+            var credito = Math.Round(fracao * (tenant.ValorMensalAssinatura ?? precos[tenant.Plano]) * fator, 2);
+            var valorPlanoNovo = Math.Round(fracao * precos[planoAlvo] * fator, 2);
 
             return Ok(new
             {
                 requerConfirmacao = true,
                 prorado = true,
                 credito,
-                valorProrado,
+                valorPlanoNovo,
+                valorProrado = Math.Max(0m, valorPlanoNovo - credito),
+                // Downgrade: o que sobra fica de crédito na Stripe e abate as próximas faturas.
+                creditoRestante = Math.Max(0m, credito - valorPlanoNovo),
                 planoAlvo = planoAlvo.ToString(),
                 periodo = dto.Periodo
             });
@@ -244,6 +260,7 @@ public class AssinaturaController(
                 Cnpj: tenant.Cnpj,
                 Plano: planoAlvo.ToString(),
                 Periodo: dto.Periodo,
+                ValorMensal: precos[planoAlvo],
                 ReturnUrl: returnUrl,
                 CompletionUrl: completionUrl,
                 Desconto: desconto
@@ -260,7 +277,7 @@ public class AssinaturaController(
         tenant.PeriodoBilling = dto.Periodo;
         await context.SaveChangesAsync(ct);
 
-        var precoCheio = _precosPorPlano.GetValueOrDefault(planoAlvo, 0m);
+        var precoCheio = precos[planoAlvo];
         return Ok(new
         {
             requerConfirmacao = false,
@@ -297,30 +314,39 @@ public class AssinaturaController(
         if (tenant.Plano == planoAlvo)
             return BadRequest(new { message = $"Você já possui uma assinatura {planoAlvo} ativa." });
 
+        var precos = await precosPlanos.ObterAsync(ct);
         StripeAtualizarAssinaturaResult atualizado;
         try
         {
             atualizado = await stripe.AtualizarAssinaturaAsync(new AtualizarAssinaturaInput(
-                tenant.StripeSubscriptionId, planoAlvo.ToString(), dto.Periodo), ct);
+                tenant.StripeSubscriptionId, planoAlvo.ToString(), dto.Periodo, precos[planoAlvo]), ct);
         }
         catch (StripeException ex)
         {
             logger.LogError(ex, "Erro ao atualizar assinatura Stripe {Id} para tenant {TenantId}",
                 tenant.StripeSubscriptionId, tenant.Id);
-            return BadRequest(new { message = "Não foi possível processar o upgrade. Tente novamente em instantes." });
+            // error_if_incomplete: cartão recusado chega aqui e a assinatura fica como estava.
+            return BadRequest(new { message = ex.StripeError?.Type == "card_error"
+                ? "O cartão cadastrado recusou a cobrança da diferença. Atualize o cartão e tente de novo."
+                : "Não foi possível processar a troca de plano. Tente novamente em instantes." });
         }
 
         context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
             tenant.Id, tenantContext.UserId, TimelineAcoes.AssinaturaAlterada, TimelineAcoes.EntidadeAssinatura,
             atualizado.SubscriptionId,
-            new { Plano = tenant.Plano.ToString(), tenant.PeriodoBilling },
-            new { Plano = planoAlvo.ToString(), PeriodoBilling = dto.Periodo, ValorCobrado = atualizado.ValorCobradoImediato }));
+            new { Plano = tenant.Plano.ToString(), tenant.PeriodoBilling, tenant.ValorMensalAssinatura },
+            new
+            {
+                Plano = planoAlvo.ToString(), PeriodoBilling = dto.Periodo,
+                ValorMensalAssinatura = precos[planoAlvo], ValorCobrado = atualizado.ValorCobradoImediato
+            }));
 
         tenant.Plano = planoAlvo;
         tenant.Status = StatusTenant.Ativo;
         tenant.PlanoExpiraEm = null;
         tenant.PeriodoBilling = dto.Periodo;
         tenant.StripeSubscriptionId = atualizado.SubscriptionId;
+        tenant.ValorMensalAssinatura = precos[planoAlvo];
 
         if (atualizado.ValorCobradoImediato > 0)
         {
@@ -334,7 +360,7 @@ public class AssinaturaController(
                 Status = StatusFaturamento.Pago,
                 DataPagamento = DateTime.UtcNow,
                 DataCriacao = DateTime.UtcNow,
-                Descricao = $"Upgrade → {planoAlvo} {dto.Periodo} (prorated)"
+                Descricao = $"Troca de plano → {planoAlvo} {dto.Periodo} (proporcional)"
             });
         }
 
@@ -447,6 +473,7 @@ public class AssinaturaController(
 [Route("api/webhooks")]
 public class WebhookController(
     AppDbContext context,
+    IPrecosPlanosService precosPlanos,
     IConfiguration config,
     ICreditoService creditoService,
     ILogger<WebhookController> logger) : ControllerBase
@@ -535,6 +562,11 @@ public class WebhookController(
         tenant.BillingCycleStart = DateTime.UtcNow;
         tenant.StripeCustomerId = session.CustomerId;
         tenant.StripeSubscriptionId = session.SubscriptionId;
+        // Preço enviado ao Stripe no checkout; sessões criadas antes deste campo caem na tabela.
+        tenant.ValorMensalAssinatura = decimal.TryParse(session.Metadata.GetValueOrDefault("valorMensal"),
+            NumberStyles.Number, CultureInfo.InvariantCulture, out var valorMensal)
+            ? valorMensal
+            : (await precosPlanos.ObterAsync(ct)).GetValueOrDefault(tenant.Plano);
         tenant.TrialConcedidoPorId = null;
         tenant.TrialConcedidoEm = null;
         tenant.TrialConcedidoDias = null;
@@ -562,6 +594,7 @@ public class WebhookController(
                 Plano = tenant.Plano.ToString(),
                 Periodo = periodo,
                 Valor = (session.AmountTotal ?? 0) / 100m,
+                tenant.ValorMensalAssinatura,
                 CodigoPromocional = session.Metadata.GetValueOrDefault("codigoPromocional")
             }));
 
@@ -649,6 +682,7 @@ public class WebhookController(
 
         tenant.Status = StatusTenant.Cancelado;
         tenant.PlanoExpiraEm ??= DateTime.UtcNow;
+        tenant.ValorMensalAssinatura = null;
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Assinatura Stripe {SubscriptionId} encerrada para tenant {TenantId}", subscription.Id, tenant.Id);

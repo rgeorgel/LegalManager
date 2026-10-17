@@ -2,6 +2,9 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
+using LegalManager.Domain.Enums;
 using Microsoft.Extensions.FileProviders;
 
 namespace LegalManager.API.Middleware;
@@ -20,6 +23,10 @@ namespace LegalManager.API.Middleware;
 ///
 /// Desligado em Development (arquivos mudam sem reiniciar o processo); lá tudo vai com no-cache.
 /// Pode ser forçado com a configuração <c>StaticAssets:Versionar</c>.
+///
+/// Preços dos planos: <c>{{preco:Plus}}</c> (pt-BR, "29,90") e <c>{{preco-num:Plus}}</c> (JSON-LD,
+/// "29.90") no HTML e no llms.txt são trocados a cada requisição pelo preço vigente
+/// (IPrecosPlanosService), inclusive com o versionamento desligado.
 /// </summary>
 public sealed class AssetVersioning
 {
@@ -27,7 +34,8 @@ public sealed class AssetVersioning
     private const string ItemVersionado = "AssetVersioning.Versionado";
 
     private readonly IFileProvider _arquivos;
-    private readonly ConcurrentDictionary<string, (byte[] Conteudo, string ETag)?> _htmlCache = new();
+    // Texto != null: o arquivo tem marcadores de preço e é montado a cada requisição.
+    private readonly ConcurrentDictionary<string, (byte[] Conteudo, string ETag, string? Texto)?> _htmlCache = new();
     private readonly string _importMap;
 
     public bool Ativo { get; }
@@ -38,6 +46,11 @@ public sealed class AssetVersioning
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex AberturaHead = new(@"<head\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex MarcadorPreco = new(
+        @"\{\{preco(?<num>-num)?:(?<plano>Plus|Pro|Max)\}\}", RegexOptions.Compiled);
+
+    private const string LlmsTxt = "/llms.txt";
 
     public AssetVersioning(IWebHostEnvironment env, IConfiguration config)
     {
@@ -81,15 +94,15 @@ public sealed class AssetVersioning
         return next();
     }
 
-    /// <summary>Entre UseDefaultFiles e UseStaticFiles: serve .html reescrito.</summary>
+    /// <summary>Entre UseDefaultFiles e UseStaticFiles: serve .html reescrito (e o llms.txt com os preços).</summary>
     public async Task ServirHtml(HttpContext ctx, Func<Task> next)
     {
         var path = ctx.Request.Path.Value;
-        if (Ativo
-            && (HttpMethods.IsGet(ctx.Request.Method) || HttpMethods.IsHead(ctx.Request.Method))
+        if ((HttpMethods.IsGet(ctx.Request.Method) || HttpMethods.IsHead(ctx.Request.Method))
             && path is not null
-            && path.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
-            && await TentarServirHtml(ctx, path))
+            && (path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || path == LlmsTxt)
+            // Desligado, só os arquivos com preço passam por aqui; o resto segue para o UseStaticFiles.
+            && await TentarServirHtml(ctx, path, somenteComPrecos: !Ativo))
             return;
         await next();
     }
@@ -122,12 +135,17 @@ public sealed class AssetVersioning
         };
     }
 
-    private async Task<bool> TentarServirHtml(HttpContext ctx, string path)
+    private async Task<bool> TentarServirHtml(HttpContext ctx, string path, bool somenteComPrecos = false)
     {
         var entrada = Ativo
             ? _htmlCache.GetOrAdd(path, p => Reescrever(p))
             : LerSemReescrever(path);
-        if (entrada is not { } html) return false;
+        if (entrada is not { } arquivo) return false;
+        if (somenteComPrecos && arquivo.Texto is null) return false;
+
+        var html = arquivo.Texto is { } texto
+            ? Empacotar(SubstituirPrecos(texto, await ObterPrecosAsync(ctx)))
+            : arquivo;
 
         var headers = ctx.Response.Headers;
         headers.CacheControl = "no-cache";
@@ -139,14 +157,39 @@ public sealed class AssetVersioning
             return true;
         }
 
-        ctx.Response.ContentType = "text/html; charset=utf-8";
+        ctx.Response.ContentType = path == LlmsTxt ? "text/plain; charset=utf-8" : "text/html; charset=utf-8";
         ctx.Response.ContentLength = html.Conteudo.Length;
         if (!HttpMethods.IsHead(ctx.Request.Method))
             await ctx.Response.Body.WriteAsync(html.Conteudo, ctx.RequestAborted);
         return true;
     }
 
-    private (byte[] Conteudo, string ETag)? Reescrever(string path)
+    /// <summary>Troca os marcadores <c>{{preco:Plano}}</c> e <c>{{preco-num:Plano}}</c> pelos preços.</summary>
+    public static string SubstituirPrecos(string texto, IReadOnlyDictionary<PlanoTipo, decimal> precos) =>
+        MarcadorPreco.Replace(texto, m =>
+        {
+            var valor = precos[Enum.Parse<PlanoTipo>(m.Groups["plano"].Value)];
+            return m.Groups["num"].Success ? PlanoPrecos.FormatarInvariante(valor) : PlanoPrecos.Formatar(valor);
+        });
+
+    // A landing page não pode cair junto com o banco: sem preço vigente, mostra o padrão.
+    private static async Task<IReadOnlyDictionary<PlanoTipo, decimal>> ObterPrecosAsync(HttpContext ctx)
+    {
+        var servico = ctx.RequestServices?.GetService<IPrecosPlanosService>();
+        if (servico is null) return PlanoPrecos.Padrao;
+        try
+        {
+            return await servico.ObterAsync(ctx.RequestAborted);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            ctx.RequestServices.GetService<ILogger<AssetVersioning>>()
+                ?.LogError(ex, "Falha ao ler os preços dos planos; usando os preços padrão");
+            return PlanoPrecos.Padrao;
+        }
+    }
+
+    private (byte[] Conteudo, string ETag, string? Texto)? Reescrever(string path)
     {
         var texto = LerTexto(path);
         if (texto is null) return null;
@@ -161,7 +204,7 @@ public sealed class AssetVersioning
         return Empacotar(texto);
     }
 
-    private (byte[] Conteudo, string ETag)? LerSemReescrever(string path)
+    private (byte[] Conteudo, string ETag, string? Texto)? LerSemReescrever(string path)
         => LerTexto(path) is { } texto ? Empacotar(texto) : null;
 
     private string? LerTexto(string path)
@@ -172,11 +215,11 @@ public sealed class AssetVersioning
         return leitor.ReadToEnd();
     }
 
-    private static (byte[], string) Empacotar(string texto)
+    private static (byte[] Conteudo, string ETag, string? Texto) Empacotar(string texto)
     {
         var bytes = Encoding.UTF8.GetBytes(texto);
         var etag = $"\"{Convert.ToHexString(SHA256.HashData(bytes))[..16].ToLowerInvariant()}\"";
-        return (bytes, etag);
+        return (bytes, etag, MarcadorPreco.IsMatch(texto) ? texto : null);
     }
 
     private static string CalcularVersao(IFileProvider arquivos, IEnumerable<string> caminhos)

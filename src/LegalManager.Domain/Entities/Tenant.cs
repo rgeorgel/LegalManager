@@ -26,6 +26,10 @@ public class Tenant
     public string? StripeCustomerId { get; set; }
     public string? StripeSubscriptionId { get; set; }
     public string? PeriodoBilling { get; set; }  // "Mensal" | "Anual"
+    // Preço mensal de tabela que a assinatura Stripe cobra (sem cupom), gravado no checkout e na
+    // troca de plano. Pode ser diferente do preço vigente (PrecoPlano): quem assinou antes de um
+    // aumento continua pagando o valor antigo. Null sem assinatura paga.
+    public decimal? ValorMensalAssinatura { get; set; }
     public DateTime? PlanoExpiraEm { get; set; }
     public DateTime? BillingCycleStart { get; set; }
     public string? VoucherUtilizado { get; set; }

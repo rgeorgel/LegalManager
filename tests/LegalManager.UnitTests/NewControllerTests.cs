@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -109,6 +110,7 @@ public class AssinaturaControllerTests
         var userManager = CreateUserManager(admin);
         var controller = new AssinaturaController(
             stripe ?? Mock.Of<IStripeService>(),
+            new PrecosPlanosService(ctx, new MemoryCache(new MemoryCacheOptions())),
             ctx,
             tenantMock.Object,
             userManager,
@@ -711,7 +713,7 @@ public class WebhookControllerTests
 
     private static WebhookController CreateController(AppDbContext ctx, IConfiguration config, ICreditoService? creditoService = null)
     {
-        return new WebhookController(ctx, config, creditoService ?? CreateCreditoServiceMock().Object, CreateLoggerMock().Object);
+        return new WebhookController(ctx, new PrecosPlanosService(ctx, new MemoryCache(new MemoryCacheOptions())), config, creditoService ?? CreateCreditoServiceMock().Object, CreateLoggerMock().Object);
     }
 
     [Fact]

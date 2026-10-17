@@ -21,7 +21,8 @@ public class SuperAdminDashboardServiceTests
         new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
     private SuperAdminDashboardService CreateService(AppDbContext ctx) =>
-        new(ctx, _stripe.Object, new MemoryCache(new MemoryCacheOptions()), NullLogger<SuperAdminDashboardService>.Instance);
+        new(ctx, _stripe.Object, new PrecosPlanosService(ctx, new MemoryCache(new MemoryCacheOptions())),
+            new MemoryCache(new MemoryCacheOptions()), NullLogger<SuperAdminDashboardService>.Instance);
 
     private static Tenant NovoTenant(string nome, PlanoTipo plano = PlanoTipo.Free, StatusTenant status = StatusTenant.Ativo,
         DateTime? criadoEm = null, string? subscription = null) => new()
@@ -98,8 +99,26 @@ public class SuperAdminDashboardServiceTests
         var r = (await CreateService(ctx).ObterAsync()).Receita;
 
         Assert.Equal(1, r.Estimados);
-        Assert.Equal(PlanoPrecos.Mensal[PlanoTipo.Pro] / 2, r.MrrReal);
-        Assert.Equal(PlanoPrecos.Mensal[PlanoTipo.Pro], r.MrrTabela);
+        Assert.Equal(PlanoPrecos.Padrao[PlanoTipo.Pro] / 2, r.MrrReal);
+        Assert.Equal(PlanoPrecos.Padrao[PlanoTipo.Pro], r.MrrTabela);
+    }
+
+    [Fact]
+    public async Task Receita_FalhaNoStripe_UsaOValorDaAssinaturaENaoATabelaAtual()
+    {
+        using var ctx = CreateContext();
+        var t = NovoTenant("Assinou antes do aumento", PlanoTipo.Pro, subscription: "sub_x");
+        t.ValorMensalAssinatura = 50m;
+        ctx.Tenants.Add(t);
+        ctx.PrecosPlanos.Add(new PrecoPlano { Plano = PlanoTipo.Pro, ValorMensal = 70m });
+        await ctx.SaveChangesAsync();
+        _stripe.Setup(s => s.ObterProximaCobrancaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new StripeException("fora do ar"));
+
+        var r = (await CreateService(ctx).ObterAsync()).Receita;
+
+        Assert.Equal(50m, r.MrrReal);
+        Assert.Equal(70m, r.MrrTabela);
     }
 
     [Fact]

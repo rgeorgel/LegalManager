@@ -443,8 +443,8 @@
             </div>`).join('')
         : vazio('Nenhum tenant pagante.'))
         + `<div class="sa-card-nota">Valor da próxima fatura de cada assinatura no Stripe (já com cupons), anual dividido por 12.
-            Preço de tabela sem descontos: <strong>${brl(r.mrrTabela)}</strong>.</div>`
-        + (r.estimados ? `<div class="sa-aviso">⚠ ${r.estimados} assinatura(s) não responderam no Stripe; o valor delas é estimado pelo preço de tabela.</div>` : ''));
+            Se todos pagassem o preço de tabela atual, sem descontos: <strong>${brl(r.mrrTabela)}</strong>.</div>`
+        + (r.estimados ? `<div class="sa-aviso">⚠ ${r.estimados} assinatura(s) não responderam no Stripe; o valor delas é estimado pelo preço da assinatura (já com cupom).</div>` : ''));
 
       // ── Próximas cobranças ──
       set('wCobrancas', r.proximasCobrancas.length

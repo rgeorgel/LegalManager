@@ -60,6 +60,7 @@ public class TrialRevertJob
             tenant.AbacatePayBillingId = null;
             tenant.StripeSubscriptionId = null;
             tenant.PeriodoBilling = null;
+            tenant.ValorMensalAssinatura = null;
         }
 
         if (trialsExpirados.Count == 0 && planosExpirados.Count == 0) return;

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
@@ -283,7 +284,8 @@ public class CodigoPromocionalTests
         var userManager = new Mock<UserManager<Usuario>>(new Mock<IUserStore<Usuario>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         userManager.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(admin);
 
-        var controller = new AssinaturaController(stripe.Object, ctx, tenantContext.Object, userManager.Object,
+        var controller = new AssinaturaController(stripe.Object,
+            new PrecosPlanosService(ctx, new MemoryCache(new MemoryCacheOptions())), ctx, tenantContext.Object, userManager.Object,
             new Mock<IConfiguration>().Object, Microsoft.Extensions.Logging.Abstractions.NullLogger<AssinaturaController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
@@ -358,7 +360,7 @@ public class CodigoPromocionalTests
         """;
         var http = new DefaultHttpContext();
         http.Request.Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(body));
-        var webhook = new WebhookController(ctx, new Mock<IConfiguration>().Object, new Mock<ICreditoService>().Object,
+        var webhook = new WebhookController(ctx, new PrecosPlanosService(ctx, new MemoryCache(new MemoryCacheOptions())), new Mock<IConfiguration>().Object, new Mock<ICreditoService>().Object,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<WebhookController>.Instance)
         {
             ControllerContext = new ControllerContext { HttpContext = http }

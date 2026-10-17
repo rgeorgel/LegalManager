@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Logging;
@@ -11,13 +12,6 @@ public class StripeService : IStripeService
 {
     private readonly StripeClient _stripeClient;
     private readonly ILogger<StripeService> _logger;
-
-    private static readonly Dictionary<string, int> _valorCentavosPorPlano = new()
-    {
-        ["Plus"] = 2_000,
-        ["Pro"] = 5_000,
-        ["Max"] = 12_500
-    };
 
     public StripeService(StripeClient stripeClient, ILogger<StripeService> logger)
     {
@@ -33,13 +27,14 @@ public class StripeService : IStripeService
         var customerId = await ObterOuCriarClienteAsync(
             input.StripeCustomerId, input.NomeAdmin, input.Email, input.Cnpj, input.TenantId, ct);
 
-        var priceId = await ObterOuCriarPrecoAsync(input.Plano, input.Periodo, ct);
+        var priceId = await ObterOuCriarPrecoAsync(input.Plano, input.Periodo, input.ValorMensal, ct);
 
         var metadata = new Dictionary<string, string>
         {
             ["tenantId"] = input.TenantId,
             ["plano"] = input.Plano,
-            ["periodo"] = input.Periodo
+            ["periodo"] = input.Periodo,
+            ["valorMensal"] = input.ValorMensal.ToString(CultureInfo.InvariantCulture)
         };
 
         List<SessionDiscountOptions>? discounts = null;
@@ -84,7 +79,7 @@ public class StripeService : IStripeService
         var subscription = await subscriptionService.GetAsync(input.SubscriptionId, cancellationToken: ct);
         var itemId = subscription.Items.Data[0].Id;
 
-        var novoPriceId = await ObterOuCriarPrecoAsync(input.PlanoAlvo, input.Periodo, ct);
+        var novoPriceId = await ObterOuCriarPrecoAsync(input.PlanoAlvo, input.Periodo, input.ValorMensal, ct);
 
         var atualizada = await subscriptionService.UpdateAsync(input.SubscriptionId, new SubscriptionUpdateOptions
         {
@@ -92,11 +87,16 @@ public class StripeService : IStripeService
             {
                 new() { Id = itemId, Price = novoPriceId }
             },
-            ProrationBehavior = "create_prorations",
+            // Cobra a diferença na hora, numa fatura própria (create_prorations a deixaria para a
+            // renovação); cartão recusado lança StripeException e a assinatura não muda. Num
+            // downgrade a diferença vira crédito no saldo do cliente, abatido nas próximas faturas.
+            ProrationBehavior = "always_invoice",
+            PaymentBehavior = "error_if_incomplete",
             Metadata = new Dictionary<string, string>
             {
                 ["plano"] = input.PlanoAlvo,
-                ["periodo"] = input.Periodo
+                ["periodo"] = input.Periodo,
+                ["valorMensal"] = input.ValorMensal.ToString(CultureInfo.InvariantCulture)
             }
         }, cancellationToken: ct);
 
@@ -105,7 +105,9 @@ public class StripeService : IStripeService
         {
             var invoiceService = new InvoiceService(_stripeClient);
             var invoice = await invoiceService.GetAsync(atualizada.LatestInvoiceId, cancellationToken: ct);
-            valorCobrado = invoice.AmountPaid / 100m;
+            // Sem diferença a cobrar a Stripe não gera fatura nova, e a última ainda é a do ciclo.
+            if (invoice.BillingReason == "subscription_update")
+                valorCobrado = invoice.AmountPaid / 100m;
         }
 
         _logger.LogInformation("Assinatura Stripe {SubscriptionId} atualizada para plano {Plano}, status {Status}, cobrado R$ {Valor}",
@@ -248,9 +250,16 @@ public class StripeService : IStripeService
         return cupom.Id;
     }
 
-    private async Task<string> ObterOuCriarPrecoAsync(string plano, string periodo, CancellationToken ct)
+    /// <summary>
+    /// O Price ativo com a lookup key do plano/período é o preço de tabela vigente. Quando o super
+    /// admin muda o valor, cria um Price novo no mesmo produto e transfere a lookup key para ele;
+    /// o antigo continua existindo, e as assinaturas já criadas com ele seguem cobrando o valor antigo.
+    /// </summary>
+    private async Task<string> ObterOuCriarPrecoAsync(string plano, string periodo, decimal valorMensal, CancellationToken ct)
     {
         var lookupKey = $"causify-{plano.ToLowerInvariant()}-{periodo.ToLowerInvariant()}";
+        var anual = periodo == "Anual";
+        var valorCentavos = (long)Math.Round((anual ? valorMensal * 12 : valorMensal) * 100m);
 
         var priceService = new PriceService(_stripeClient);
         var existentes = await priceService.ListAsync(new PriceListOptions
@@ -259,29 +268,34 @@ public class StripeService : IStripeService
             Active = true
         }, cancellationToken: ct);
 
-        if (existentes.Data.Count > 0)
-            return existentes.Data[0].Id;
+        var atual = existentes.Data.FirstOrDefault();
+        if (atual?.UnitAmount == valorCentavos)
+            return atual.Id;
 
-        var valorCentavos = _valorCentavosPorPlano.GetValueOrDefault(plano, _valorCentavosPorPlano["Pro"]);
-        var interval = periodo == "Anual" ? "year" : "month";
-
-        var productService = new ProductService(_stripeClient);
-        var produto = await productService.CreateAsync(new ProductCreateOptions
+        var produtoId = atual?.ProductId;
+        if (string.IsNullOrEmpty(produtoId))
         {
-            Name = $"Causify {plano}",
-            Description = $"Assinatura {periodo.ToLowerInvariant()} do plano {plano}"
-        }, cancellationToken: ct);
+            var productService = new ProductService(_stripeClient);
+            var produto = await productService.CreateAsync(new ProductCreateOptions
+            {
+                Name = $"Causify {plano}",
+                Description = $"Assinatura {periodo.ToLowerInvariant()} do plano {plano}"
+            }, cancellationToken: ct);
+            produtoId = produto.Id;
+        }
 
         var preco = await priceService.CreateAsync(new PriceCreateOptions
         {
-            Product = produto.Id,
+            Product = produtoId,
             Currency = "brl",
             UnitAmount = valorCentavos,
             LookupKey = lookupKey,
-            Recurring = new PriceRecurringOptions { Interval = interval }
+            TransferLookupKey = atual is not null,
+            Recurring = new PriceRecurringOptions { Interval = anual ? "year" : "month" }
         }, cancellationToken: ct);
 
-        _logger.LogInformation("Preço Stripe criado: {PriceId} ({LookupKey})", preco.Id, lookupKey);
+        _logger.LogInformation("Preço Stripe criado: {PriceId} ({LookupKey}, {Centavos} centavos, anterior {Anterior})",
+            preco.Id, lookupKey, valorCentavos, atual?.Id);
         return preco.Id;
     }
 

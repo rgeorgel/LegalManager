@@ -329,9 +329,9 @@
     "inLanguage": "pt-BR",
     "offers": [
       { "@type": "Offer", "name": "Free",  "price": "0",    "priceCurrency": "BRL", "category": "free",     "description": "Plano gratuito permanente para advogados autônomos: 1 usuário, processos ilimitados, 5 processos monitorados, 1 GB." },
-      { "@type": "Offer", "name": "Plus",  "price": "20",   "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Plus: 1 usuário, 20 processos monitorados, portal do cliente, controle financeiro, Kanban." },
-      { "@type": "Offer", "name": "Pro",   "price": "50",   "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Pro: 2 usuários, 40 processos monitorados, 1 captura de publicações por OAB, templates." },
-      { "@type": "Offer", "name": "Max",   "price": "125",  "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Max: 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB." }
+      { "@type": "Offer", "name": "Plus",  "price": "{{preco-num:Plus}}",   "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Plus: 1 usuário, 20 processos monitorados, portal do cliente, controle financeiro, Kanban." },
+      { "@type": "Offer", "name": "Pro",   "price": "{{preco-num:Pro}}",   "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Pro: 2 usuários, 40 processos monitorados, 1 captura de publicações por OAB, templates." },
+      { "@type": "Offer", "name": "Max",   "price": "{{preco-num:Max}}",  "priceCurrency": "BRL", "category": "subscription", "billingIncrement": 1, "unitCode": "MON", "description": "Plano Max: 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB." }
     ],
     "featureList": [
       "Gestão de processos jurídicos",
@@ -369,7 +369,7 @@
         "name": "Quanto custa o Causify?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "O Causify tem quatro planos: Free (R$ 0/mês, permanente), Plus (R$ 20/mês), Pro (R$ 50/mês) e Max (R$ 125/mês). Todos os planos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito."
+          "text": "O Causify tem quatro planos: Free (R$ 0/mês, permanente), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês) e Max (R$ {{preco:Max}}/mês). Todos os planos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito."
         }
       },
       {
@@ -493,7 +493,7 @@
     "sku": "CAUSIFY-PLUS",
     "offers": {
       "@type": "Offer",
-      "price": "20",
+      "price": "{{preco-num:Plus}}",
       "priceCurrency": "BRL",
       "availability": "https://schema.org/InStock",
       "priceValidUntil": "2027-12-31",
@@ -1490,7 +1490,7 @@
       <div class="plan-name">Plus</div>
       <div class="plan-price">
         <span class="price-currency">R$</span>
-        <span class="price-value">20</span>
+        <span class="price-value">{{preco:Plus}}</span>
         <span class="price-period">/mês</span>
       </div>
       <div class="price-annual-note">&nbsp;</div>
@@ -1530,7 +1530,7 @@
       <div class="plan-name">Pro</div>
       <div class="plan-price">
         <span class="price-currency">R$</span>
-        <span class="price-value">50</span>
+        <span class="price-value">{{preco:Pro}}</span>
         <span class="price-period">/mês</span>
       </div>
       <div class="price-annual-note">&nbsp;</div>
@@ -1569,7 +1569,7 @@
       <div class="plan-name">Max</div>
       <div class="plan-price">
         <span class="price-currency">R$</span>
-        <span class="price-value">125</span>
+        <span class="price-value">{{preco:Max}}</span>
         <span class="price-period">/mês</span>
       </div>
       <div class="price-annual-note">&nbsp;</div>
@@ -1660,7 +1660,7 @@
 
     <details class="faq-item">
       <summary>Quanto custa o Causify?</summary>
-      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ 20/mês), <strong>Pro</strong> (R$ 50/mês) e <strong>Max</strong> (R$ 125/mês). Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
+      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ {{preco:Plus}}/mês), <strong>Pro</strong> (R$ {{preco:Pro}}/mês) e <strong>Max</strong> (R$ {{preco:Max}}/mês). Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
     </details>
 
     <details class="faq-item">

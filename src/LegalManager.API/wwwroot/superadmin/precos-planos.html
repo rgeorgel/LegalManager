@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Preços dos planos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .precos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 760px; }
+    .preco-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 16px; }
+    .preco-card label { font-weight: 600; font-size: 15px; display: block; margin-bottom: 8px; }
+    .preco-input { display: flex; align-items: center; gap: 6px; }
+    .preco-input span { color: var(--color-text-muted); font-size: 14px; }
+    .sub { font-size: 12px; color: var(--color-text-muted); margin-top: 8px; }
+    .alterado { color: var(--color-warning, #b45309); font-weight: 600; }
+    .hint { font-size: 13px; color: var(--color-text-muted); margin-bottom: 16px; max-width: 760px; line-height: 1.5; }
+    .acoes { margin-top: 20px; display: flex; gap: 12px; align-items: center; }
+    .msg-ok { color: var(--color-success, #15803d); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Preços dos planos</h1>
+      </div>
+      <p class="hint">
+        Preço mensal de tabela de cada plano. O novo valor vale para <strong>novas assinaturas</strong>,
+        <strong>trocas de plano</strong> e para os preços mostrados nas landing pages, no cadastro e na
+        tela de assinatura (em até 5 minutos). Quem já assina <strong>continua pagando o valor antigo</strong>
+        nas renovações, mas se trocar de plano passa a pagar o preço novo do plano escolhido.
+      </p>
+
+      <div class="precos" id="precos">
+        <div class="sub">Carregando...</div>
+      </div>
+      <div class="form-error" id="formError" hidden style="margin-top:16px;max-width:760px"></div>
+      <div class="acoes">
+        <button type="button" class="btn btn-primary" id="salvarBtn" disabled>Salvar preços</button>
+        <span class="msg-ok" id="msgOk" hidden>Preços salvos.</span>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="confirmOverlay">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <span class="modal-title">Confirmar novos preços</span>
+        <button type="button" class="modal-close" id="confirmClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <ul id="confirmLista" style="margin:0 0 12px;padding-left:18px"></ul>
+        <p class="sub" style="margin:0">Assinaturas já ativas não mudam de valor nas renovações.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="confirmCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const $ = id => document.getElementById(id);
+    const fmt = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    let precos = [];
+
+    async function load() {
+      try {
+        precos = await saFetch('/superadmin/precos-planos');
+        render();
+      } catch (e) {
+        $('precos').innerHTML = `<div class="sub" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
+      }
+    }
+
+    function render() {
+      $('precos').innerHTML = precos.map(p => `
+        <div class="preco-card">
+          <label for="valor${p.plano}">${esc(p.plano)}</label>
+          <div class="preco-input">
+            <span>R$</span>
+            <input class="form-control" id="valor${p.plano}" data-plano="${p.plano}" type="number"
+                   min="1" max="100000" step="0.01" value="${p.valorMensal}" inputmode="decimal">
+            <span>/mês</span>
+          </div>
+          <div class="sub" data-sub="${p.plano}">${subtexto(p)}</div>
+        </div>`).join('');
+      atualizar();
+    }
+
+    function subtexto(p) {
+      return p.atualizadoEm
+        ? `Alterado em ${new Date(p.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
+        : 'Preço original';
+    }
+
+    function valorDigitado(plano) {
+      const v = parseFloat($(`valor${plano}`).value.replace(',', '.'));
+      return Number.isFinite(v) ? Math.round(v * 100) / 100 : NaN;
+    }
+
+    function alterados() {
+      return precos.filter(p => valorDigitado(p.plano) !== p.valorMensal);
+    }
+
+    function atualizar() {
+      $('msgOk').hidden = true;
+      for (const p of precos) {
+        const el = document.querySelector(`[data-sub="${p.plano}"]`);
+        const v = valorDigitado(p.plano);
+        el.innerHTML = v !== p.valorMensal && Number.isFinite(v)
+          ? `<span class="alterado">Era ${fmt(p.valorMensal)}</span>`
+          : subtexto(p);
+      }
+      $('salvarBtn').disabled = alterados().length === 0;
+    }
+
+    $('precos').addEventListener('input', atualizar);
+
+    const fecharConfirm = () => $('confirmOverlay').classList.remove('open');
+    $('confirmClose').addEventListener('click', fecharConfirm);
+    $('confirmCancelBtn').addEventListener('click', fecharConfirm);
+
+    $('salvarBtn').addEventListener('click', () => {
+      $('formError').hidden = true;
+      const mudancas = alterados();
+      const invalido = mudancas.find(p => !(valorDigitado(p.plano) >= 1 && valorDigitado(p.plano) <= 100000));
+      if (invalido) {
+        $('formError').textContent = `Informe um preço entre R$ 1 e R$ 100.000 para o plano ${invalido.plano}.`;
+        $('formError').hidden = false;
+        return;
+      }
+      $('confirmLista').innerHTML = mudancas.map(p =>
+        `<li><strong>${esc(p.plano)}</strong>: ${fmt(p.valorMensal)} → ${fmt(valorDigitado(p.plano))}/mês</li>`).join('');
+      $('confirmOverlay').classList.add('open');
+    });
+
+    $('confirmBtn').addEventListener('click', async () => {
+      const btn = $('confirmBtn');
+      btn.disabled = true;
+      try {
+        precos = await saFetch('/superadmin/precos-planos', {
+          method: 'PUT',
+          body: JSON.stringify(alterados().map(p => ({ plano: p.plano, valorMensal: valorDigitado(p.plano) }))),
+        });
+        fecharConfirm();
+        render();
+        $('msgOk').hidden = false;
+      } catch (e) {
+        fecharConfirm();
+        $('formError').textContent = e.message || 'Erro ao salvar.';
+        $('formError').hidden = false;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

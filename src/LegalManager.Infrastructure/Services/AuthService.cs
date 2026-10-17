@@ -393,6 +393,7 @@ public class AuthService : IAuthService
             tenant.AbacatePayBillingId = null;
             tenant.StripeSubscriptionId = null;
             tenant.PeriodoBilling = null;
+            tenant.ValorMensalAssinatura = null;
             await _context.SaveChangesAsync(ct);
         }
     }

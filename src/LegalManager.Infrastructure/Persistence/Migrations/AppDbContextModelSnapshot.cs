@@ -2064,6 +2064,43 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Perguntas");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.PrecoPlano", b =>
+                {
+                    b.Property<int>("Plano")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AtualizadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ValorMensal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Plano");
+
+                    b.ToTable("PrecosPlanos");
+
+                    b.HasData(
+                        new
+                        {
+                            Plano = 3,
+                            ValorMensal = 20m
+                        },
+                        new
+                        {
+                            Plano = 1,
+                            ValorMensal = 50m
+                        },
+                        new
+                        {
+                            Plano = 4,
+                            ValorMensal = 125m
+                        });
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.PreferenciasNotificacao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2867,6 +2904,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("TrialGratisBoasVindasVisualizado")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("ValorMensalAssinatura")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<string>("VoucherUtilizado")
                         .HasColumnType("text");

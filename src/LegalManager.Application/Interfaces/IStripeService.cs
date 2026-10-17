@@ -44,6 +44,7 @@ public record CriarCheckoutAssinaturaInput(
     string? Cnpj,
     string Plano,
     string Periodo,
+    decimal ValorMensal,
     string ReturnUrl,
     string CompletionUrl,
     DescontoAssinaturaInput? Desconto = null
@@ -55,7 +56,8 @@ public record DescontoAssinaturaInput(string CodigoPromocional, int Percentual, 
 public record AtualizarAssinaturaInput(
     string SubscriptionId,
     string PlanoAlvo,
-    string Periodo
+    string Periodo,
+    decimal ValorMensal
 );
 
 public record StripeAtualizarAssinaturaResult(

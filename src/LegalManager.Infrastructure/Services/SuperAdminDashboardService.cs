@@ -18,6 +18,7 @@ namespace LegalManager.Infrastructure.Services;
 public class SuperAdminDashboardService(
     AppDbContext db,
     IStripeService stripe,
+    IPrecosPlanosService precosPlanos,
     IMemoryCache cache,
     ILogger<SuperAdminDashboardService> logger)
 {
@@ -31,7 +32,7 @@ public class SuperAdminDashboardService(
         Guid Id, string Nome, PlanoTipo Plano, StatusTenant Status, DateTime CriadoEm,
         DateTime? TrialExpiraEm, string? StripeSubscriptionId, string? PeriodoBilling,
         string? VoucherUtilizado, string? CodigoDesconto, DateTime? DescontoPromocionalUsadoEm,
-        DateTime? TrialConcedidoEm)
+        DateTime? TrialConcedidoEm, decimal? ValorMensalAssinatura)
     {
         public bool Pagante => Status == StatusTenant.Ativo && Plano != PlanoTipo.Free && StripeSubscriptionId != null;
         public string? Codigo => CodigoDesconto ?? VoucherUtilizado;
@@ -47,7 +48,8 @@ public class SuperAdminDashboardService(
             .Where(t => t.Id != SystemTenantId)
             .Select(t => new TenantLinha(
                 t.Id, t.Nome, t.Plano, t.Status, t.CriadoEm, t.TrialExpiraEm, t.StripeSubscriptionId,
-                t.PeriodoBilling, t.VoucherUtilizado, t.CodigoDesconto, t.DescontoPromocionalUsadoEm, t.TrialConcedidoEm))
+                t.PeriodoBilling, t.VoucherUtilizado, t.CodigoDesconto, t.DescontoPromocionalUsadoEm, t.TrialConcedidoEm,
+                t.ValorMensalAssinatura))
             .ToListAsync(ct);
 
         var usuarios = await db.Users.AsNoTracking()
@@ -82,6 +84,7 @@ public class SuperAdminDashboardService(
         var codigos = await db.CodigosPromocionais.AsNoTracking()
             .Where(c => c.DescontoPercentual > 0)
             .ToDictionaryAsync(c => c.Codigo, ct);
+        var precos = await precosPlanos.ObterAsync(ct);
 
         // Poucas chamadas em paralelo para não estourar o rate limit do Stripe.
         using var limite = new SemaphoreSlim(4);
@@ -96,7 +99,7 @@ public class SuperAdminDashboardService(
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogWarning(ex, "Prévia de fatura Stripe falhou para o tenant {TenantId}; usando preço de tabela", t.Id);
-                return (Tenant: t, Valor: ValorEstimado(t, codigos, agora), Data: (DateTime?)null, Cancelando: false, Estimado: true);
+                return (Tenant: t, Valor: ValorEstimado(t, precos, codigos, agora), Data: (DateTime?)null, Cancelando: false, Estimado: true);
             }
             finally
             {
@@ -128,7 +131,7 @@ public class SuperAdminDashboardService(
             Estimados: cobrancas.Count(c => c.Estimado),
             RecebidoUltimos30Dias: recebidos.Where(f => f.DataPagamento >= desde30).Sum(f => f.Valor),
             RecebidoAnteriores30Dias: recebidos.Where(f => f.DataPagamento < desde30).Sum(f => f.Valor),
-            MrrTabela: pagantes.Sum(t => PlanoPrecos.Mensal.GetValueOrDefault(t.Plano)),
+            MrrTabela: pagantes.Sum(t => precos.GetValueOrDefault(t.Plano)),
             PorPlano: porPlano,
             ProximasCobrancas: cobrancas
                 .Where(c => !c.Cancelando)
@@ -140,17 +143,18 @@ public class SuperAdminDashboardService(
             CalculadoEm: agora);
     }
 
-    /// <summary>Preço de tabela do ciclo, com o desconto do código promocional enquanto ele vale.</summary>
-    private static decimal ValorEstimado(TenantLinha t, Dictionary<string, CodigoPromocional> codigos, DateTime agora)
+    /// <summary>
+    /// Valor do ciclo pelo preço que a assinatura cobra (o preço vigente só para assinaturas sem
+    /// esse registro), com o desconto do código promocional enquanto ele vale.
+    /// </summary>
+    private static decimal ValorEstimado(TenantLinha t, IReadOnlyDictionary<PlanoTipo, decimal> precos,
+        Dictionary<string, CodigoPromocional> codigos, DateTime agora)
     {
-        var mensal = PlanoPrecos.Mensal.GetValueOrDefault(t.Plano);
+        var mensal = t.ValorMensalAssinatura ?? precos.GetValueOrDefault(t.Plano);
         var valor = t.PeriodoBilling == "Anual" ? mensal * 12 : mensal;
-        if (t.DescontoPromocionalUsadoEm is { } usadoEm
-            && t.CodigoDesconto is { } codigo
-            && codigos.TryGetValue(CodigoPromocional.Normalizar(codigo), out var c)
-            && (c.DescontoMeses is null || usadoEm.AddMonths(c.DescontoMeses.Value) > agora))
-            valor = Math.Round(valor * (100 - c.DescontoPercentual!.Value) / 100m, 2);
-        return valor;
+        var promo = t.CodigoDesconto is { } codigo ? codigos.GetValueOrDefault(CodigoPromocional.Normalizar(codigo)) : null;
+        var desconto = CodigosPromocionais.DescontoVigente(promo, t.DescontoPromocionalUsadoEm, agora);
+        return desconto > 0 ? Math.Round(valor * (100 - desconto) / 100m, 2) : valor;
     }
 
     // ── Cadastros ────────────────────────────────────────────────────────

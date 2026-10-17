@@ -16,6 +16,16 @@ public static class CodigosPromocionais
         t => t.VoucherUtilizado == codigo || t.CodigoDesconto == codigo;
 
     /// <summary>
+    /// % do cupom que ainda vale na assinatura do tenant (0 se nenhum): o desconto do código foi
+    /// aproveitado no checkout em <paramref name="usadoEm"/> e dura DescontoMeses (null = para sempre).
+    /// </summary>
+    public static int DescontoVigente(CodigoPromocional? promo, DateTime? usadoEm, DateTime agora) =>
+        promo is { TemDesconto: true } && usadoEm is { } inicio
+            && (promo.DescontoMeses is null || inicio.AddMonths(promo.DescontoMeses.Value) > agora)
+            ? promo.DescontoPercentual!.Value
+            : 0;
+
+    /// <summary>
     /// Retorna o código se ele puder ser usado agora; senão lança InvalidOperationException
     /// com a mensagem para o usuário. Código inativo é tratado como inexistente, para não
     /// revelar códigos desligados. <paramref name="tenantId"/>: tenant que está aplicando o

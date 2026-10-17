@@ -433,7 +433,7 @@
           <div class="plan-name">Plus</div>
           <div class="plan-price">
             <span class="plan-currency">R$</span>
-            <span class="plan-value">20</span>
+            <span class="plan-value">{{preco:Plus}}</span>
             <span class="plan-period">/mês</span>
           </div>
           <div class="plan-note" id="plusNote">&nbsp;</div>
@@ -466,7 +466,7 @@
           <div class="plan-name">Pro</div>
           <div class="plan-price">
             <span class="plan-currency">R$</span>
-            <span class="plan-value">50</span>
+            <span class="plan-value">{{preco:Pro}}</span>
             <span class="plan-period">/mês</span>
           </div>
           <div class="plan-note">&nbsp;</div>
@@ -498,7 +498,7 @@
           <div class="plan-name">Max</div>
           <div class="plan-price">
             <span class="plan-currency">R$</span>
-            <span class="plan-value">125</span>
+            <span class="plan-value">{{preco:Max}}</span>
             <span class="plan-period">/mês</span>
           </div>
           <div class="plan-note">&nbsp;</div>
@@ -612,6 +612,8 @@
   </div>
 </div>
 
+<!-- Preenchido pelo servidor com os preços vigentes (ver AssetVersioning). -->
+<script type="application/json" id="precosPlanos">{"Plus": {{preco-num:Plus}}, "Pro": {{preco-num:Pro}}, "Max": {{preco-num:Max}}}</script>
 <script type="module">
 import { esc } from '/js/utils.js';
   import { initLayout } from '/js/layout.js';
@@ -624,6 +626,7 @@ import { esc } from '/js/utils.js';
   const isAdmin = user?.perfil === 'Admin';
   let currentPlano = user?.plano ?? 'Free';
   let currentStatus = '';
+  const _precosMensais = JSON.parse(document.getElementById('precosPlanos').textContent);
 
   // Handle return from Stripe checkout
   const params = new URLSearchParams(location.search);
@@ -635,16 +638,15 @@ import { esc } from '/js/utils.js';
     const gaPlan = sessionStorage.getItem('_gaCheckoutPlan');
     if (gaPlan) {
       sessionStorage.removeItem('_gaCheckoutPlan');
-      const prices = { Plus: 20, Pro: 50, Max: 125 };
       if (typeof gtag === 'function') {
         gtag('event', 'purchase', {
-          value: prices[gaPlan] ?? 0,
+          value: _precosMensais[gaPlan] ?? 0,
           currency: 'BRL',
           items: [{ item_name: gaPlan }]
         });
       }
       if (typeof fbq === 'function') {
-        fbq('track', 'Purchase', { value: prices[gaPlan] ?? 0, currency: 'BRL' });
+        fbq('track', 'Purchase', { value: _precosMensais[gaPlan] ?? 0, currency: 'BRL' });
       }
     }
     showToast('Pagamento em processamento! Seu plano será ativado em breve.', true);
@@ -690,6 +692,12 @@ import { esc } from '/js/utils.js';
         statusEl.innerHTML = `<span style="color:var(--color-primary)">Período promocional — ${dias} dia(s) restante(s)</span>`;
       } else if (data.periodo && (currentPlano === 'Pro' || currentPlano === 'Plus' || currentPlano === 'Max')) {
         statusEl.textContent = `${data.periodo} · Ativo`;
+        // Assinou antes de uma mudança de preço: o card mostra a tabela atual, mas ele paga o valor dele.
+        const pago = data.valorMensalAssinatura;
+        const nota = document.querySelector(`#card${currentPlano} .plan-note`);
+        if (nota && pago != null && pago !== _precosMensais[currentPlano]) {
+          nota.textContent = `Sua assinatura: R$ ${pago.toFixed(2).replace('.', ',')}/mês`;
+        }
       } else {
         statusEl.textContent = data.status === 'Ativo' ? 'Ativo' : data.status;
       }
@@ -972,8 +980,6 @@ import { esc } from '/js/utils.js';
     }
   });
 
-  const _precosMensais = { Plus: 20, Pro: 50, Max: 125 };
-
   // Campo "código promocional": só para o admin de quem ainda não assinou nem usou um
   // desconto (ver AssinaturaController.MotivoNaoPodeAplicarCodigo). Aplicar um novo
   // código troca o desconto pendente.
@@ -1054,21 +1060,26 @@ import { esc } from '/js/utils.js';
     if (result.requerConfirmacao) {
       // Upgrade com assinatura Stripe já ativa: a cobrança prorada acontece no cartão
       // já salvo, sem redirect — só confirma e já ativa o novo plano.
-      modalTitle.textContent = `Upgrade para ${planoAlvo}`;
+      const ordem = { Free: 0, Plus: 1, Pro: 2, Max: 3 };
+      const acao = (ordem[planoAlvo] ?? 0) > (ordem[currentPlano] ?? 0) ? 'Upgrade' : 'Mudança';
+      modalTitle.textContent = `${acao} para ${planoAlvo}`;
+      const rodape = result.creditoRestante > 0
+        ? `Nada é cobrado hoje: sobram R$ ${fmt(result.creditoRestante)} de crédito, abatidos nas próximas faturas.`
+        : 'Cobrado agora no cartão já cadastrado.';
       modalBody.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
           <div style="display:flex;justify-content:space-between;color:var(--color-text-muted)">
-            <span>Plano ${planoAlvo}</span><span>R$ ${fmt(precoFull)}/mês</span>
+            <span>Plano ${planoAlvo} até o fim do ciclo atual</span><span>R$ ${fmt(result.valorPlanoNovo)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;color:#16a34a">
-            <span>Crédito (dias não utilizados)</span><span>− R$ ${fmt(result.credito)}</span>
+            <span>Crédito do plano ${esc(currentPlano)} (dias não utilizados)</span><span>− R$ ${fmt(result.credito)}</span>
           </div>
           <div style="border-top:1px solid var(--color-border);padding-top:8px;display:flex;justify-content:space-between;font-weight:600">
             <span>Valor hoje</span><span>R$ ${fmt(result.valorProrado)}</span>
           </div>
-          <div style="color:var(--color-text-muted);font-size:12px;margin-top:4px">Cobrado no cartão já cadastrado. A partir do próximo ciclo: R$ ${fmt(precoFull)}/mês</div>
+          <div style="color:var(--color-text-muted);font-size:12px;margin-top:4px">${rodape} A partir do próximo ciclo: R$ ${fmt(precoFull)}/mês</div>
         </div>`;
-      confirmBtn.textContent = 'Confirmar upgrade';
+      confirmBtn.textContent = `Confirmar ${acao.toLowerCase()}`;
       confirmBtn.className = 'btn btn-primary';
       modal.style.display = 'flex';
 
@@ -1084,11 +1095,11 @@ import { esc } from '/js/utils.js';
             body: JSON.stringify({ plano: planoAlvo, periodo: 'Mensal' })
           });
           closeModal();
-          showToast(`Upgrade para ${planoAlvo} confirmado!`, true);
+          showToast(`${acao} para ${planoAlvo} confirmado!`, true);
           setTimeout(() => window.location.reload(), 1200);
         } catch (e) {
           confirmBtn.disabled = false;
-          confirmBtn.textContent = 'Confirmar upgrade';
+          confirmBtn.textContent = `Confirmar ${acao.toLowerCase()}`;
           showToast(e.message ?? 'Erro ao confirmar upgrade.', false);
         }
       };
