@@ -275,9 +275,7 @@
         <div class="form-group">
           <label class="form-label">Processo vinculado</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <select id="fProcesso" class="form-control" style="flex:1">
-              <option value="">Nenhum processo vinculado</option>
-            </select>
+            <div id="fProcessoPicker" style="flex:1;min-width:0"></div>
             <button type="button" id="fProcessoLink"
                class="btn btn-secondary btn-sm"
                style="display:none;white-space:nowrap">⚖️ Abrir processo</button>
@@ -317,6 +315,7 @@ import { esc, dataParede, abrirNovoPelaUrl } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch, getUser } from '/js/api.js';
 import { createMultiSelect } from '/js/multiselect.js';
+import { createProcessoPicker } from '/js/processo-picker.js';
 
 initLayout();
 
@@ -357,7 +356,6 @@ function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
 let currentPage = 1;
 let editingId = null;
 let allListItems = [];
-let processosCached = null;
 
 // ── Toggle de visualização (lista/blocos) ────────────────────────
 const VIEW_KEY = 'tarefas.viewMode';
@@ -584,28 +582,18 @@ async function deleteTarefa(id) {
 }
 
 // ── Processos helpers ──────────────────────────────────────────
-async function loadProcessosSelect(selectedId = null) {
-  const sel = document.getElementById('fProcesso');
-  sel.innerHTML = '<option value="">Nenhum processo vinculado</option>';
-  try {
-    if (!processosCached) {
-      const data = await apiFetch('/processos?pageSize=200');
-      processosCached = data.items ?? [];
-    }
-    processosCached.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.numeroCNJ + (p.comarca ? ` — ${p.comarca}` : '');
-      sel.appendChild(opt);
-    });
-  } catch {}
-  sel.value = selectedId ?? '';
+const processoPicker = createProcessoPicker(document.getElementById('fProcessoPicker'), {
+  onChange: updateProcessoLink,
+});
+
+function setProcesso(id, numeroCNJ) {
+  processoPicker.setValue(id ? { id, label: numeroCNJ || 'Processo vinculado' } : null);
   updateProcessoLink();
 }
 
 function updateProcessoLink() {
   const btn = document.getElementById('fProcessoLink');
-  btn.style.display = document.getElementById('fProcesso').value ? '' : 'none';
+  btn.style.display = processoPicker.getValue() ? '' : 'none';
 }
 
 // ── Modal create/edit ──────────────────────────────────────────
@@ -615,7 +603,7 @@ function openCreateModal() {
   document.getElementById('formTarefa').reset();
   document.getElementById('fStatusGroup').style.display = 'none';
   document.getElementById('fmsgErro').style.display = 'none';
-  loadProcessosSelect(null);
+  setProcesso(null);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
 
@@ -631,7 +619,7 @@ async function openEditModal(id) {
   document.getElementById('fStatus').value = t.status;
   document.getElementById('fPrazo').value = t.prazo ? t.prazo.substring(0, 16) : '';
   document.getElementById('fTags').value = (t.tags ?? []).join(', ');
-  await loadProcessosSelect(t.processoId ?? null);
+  setProcesso(t.processoId, t.numeroCNJProcesso);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
 
@@ -639,9 +627,8 @@ function closeModal() {
   document.getElementById('modalTarefa').style.display = 'none';
 }
 
-document.getElementById('fProcesso').addEventListener('change', updateProcessoLink);
 document.getElementById('fProcessoLink').addEventListener('click', () => {
-  const id = document.getElementById('fProcesso').value;
+  const id = processoPicker.getValue();
   if (id) window.location.href = `/pages/processo-detalhe.html?id=${id}`;
 });
 document.getElementById('btnNova').addEventListener('click', openCreateModal);
@@ -660,7 +647,7 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
   const tagsRaw = document.getElementById('fTags').value.trim();
   const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const prazoVal = document.getElementById('fPrazo').value;
-  const processoVal = document.getElementById('fProcesso').value || null;
+  const processoVal = processoPicker.getValue() || null;
 
   try {
     if (editingId) {

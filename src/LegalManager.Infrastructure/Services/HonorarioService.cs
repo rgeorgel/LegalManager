@@ -129,6 +129,8 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         )).ToList();
     }
 
+    private static string SoDigitos(string s) => new(s.Where(char.IsDigit).ToArray());
+
     public async Task<ContratosPagedDto> ListarAsync(Guid tenantId, FiltroContratoHonorario filtro, CancellationToken ct = default)
     {
         var q = db.ContratosHonorarios
@@ -150,10 +152,14 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         if (!string.IsNullOrEmpty(filtro.Busca))
         {
             var b = filtro.Busca.ToLower();
+            // Nº do processo casa com ou sem pontuação ("0001234-56.2024" ou "000123456").
+            var digitos = SoDigitos(b);
             dados = dados.Where(c =>
                 (c.Contato != null && c.Contato.Nome.ToLower().Contains(b)) ||
                 (c.NumeroContrato != null && c.NumeroContrato.ToLower().Contains(b)) ||
-                (c.Objeto != null && c.Objeto.ToLower().Contains(b))
+                (c.Objeto != null && c.Objeto.ToLower().Contains(b)) ||
+                (c.Processo != null && (c.Processo.NumeroCNJ.Contains(b) ||
+                    (digitos.Length >= 3 && SoDigitos(c.Processo.NumeroCNJ).Contains(digitos))))
             ).ToList();
         }
 

@@ -1,6 +1,8 @@
 using LegalManager.Application.DTOs.Documentos;
 using LegalManager.Application.Interfaces;
+using System.IO.Compression;
 using LegalManager.Domain.Entities;
+using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +63,7 @@ public class DocumentoService : IDocumentoService
         return documentos.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, bool raiz = false, CancellationToken ct = default)
     {
         var query = _context.Documentos
             .Include(d => d.Processo)
@@ -71,6 +73,8 @@ public class DocumentoService : IDocumentoService
 
         if (pastaId.HasValue)
             query = query.Where(d => d.PastaId == pastaId.Value);
+        else if (raiz)
+            query = query.Where(d => d.PastaId == null);
 
         var documentos = await query
             .OrderByDescending(d => d.CriadoEm)
@@ -166,8 +170,81 @@ public class DocumentoService : IDocumentoService
             .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct)
             ?? throw new KeyNotFoundException("Documento não encontrado.");
 
+        await ValidarPastaAsync(pastaId, ct);
         documento.PastaId = pastaId;
         await _context.SaveChangesAsync(ct);
+    }
+
+    // A pasta precisa ser de documentos e do mesmo escritório.
+    private async Task ValidarPastaAsync(Guid? pastaId, CancellationToken ct)
+    {
+        if (pastaId is not { } id) return;
+        var existe = await _context.Pastas.AnyAsync(p =>
+            p.Id == id && p.TenantId == _tenantContext.TenantId && p.EntidadeTipo == EntidadeTipo.Documento, ct);
+        if (!existe) throw new KeyNotFoundException("Pasta não encontrada.");
+    }
+
+    private Task<List<Documento>> DoTenantAsync(IReadOnlyList<Guid> ids, CancellationToken ct) =>
+        _context.Documentos
+            .Where(d => ids.Contains(d.Id) && d.TenantId == _tenantContext.TenantId)
+            .ToListAsync(ct);
+
+    public async Task<int> ExcluirEmMassaAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
+    {
+        var documentos = await DoTenantAsync(ids, ct);
+        foreach (var d in documentos)
+            await _storageService.DeleteAsync(d.ObjectKey, ct);
+        _context.Documentos.RemoveRange(documentos);
+        await _context.SaveChangesAsync(ct);
+        return documentos.Count;
+    }
+
+    public async Task<int> MoverEmMassaAsync(IReadOnlyList<Guid> ids, Guid? pastaId, CancellationToken ct = default)
+    {
+        await ValidarPastaAsync(pastaId, ct);
+        var documentos = await DoTenantAsync(ids, ct);
+        foreach (var d in documentos) d.PastaId = pastaId;
+        await _context.SaveChangesAsync(ct);
+        return documentos.Count;
+    }
+
+    public async Task<int> AlterarTipoEmMassaAsync(IReadOnlyList<Guid> ids, TipoDocumento tipo, CancellationToken ct = default)
+    {
+        var documentos = await DoTenantAsync(ids, ct);
+        foreach (var d in documentos) d.Tipo = tipo;
+        await _context.SaveChangesAsync(ct);
+        return documentos.Count;
+    }
+
+    public async Task<int> GerarZipAsync(IReadOnlyList<Guid> ids, Stream destino, CancellationToken ct = default)
+    {
+        var documentos = (await DoTenantAsync(ids, ct)).OrderBy(d => d.Nome).ToList();
+        if (documentos.Sum(d => d.TamanhoBytes) > DocumentosEmMassaDto.MaxBytesZip)
+            throw new InvalidOperationException(
+                $"Os documentos selecionados passam de {DocumentoHelpers.FormatFileSize(DocumentosEmMassaDto.MaxBytesZip)}. Baixe em partes menores.");
+
+        var usados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using var zip = new ZipArchive(destino, ZipArchiveMode.Create, leaveOpen: true);
+        foreach (var d in documentos)
+        {
+            var entrada = zip.CreateEntry(NomeUnico(d.Nome, usados), CompressionLevel.Fastest);
+            await using var origem = await _storageService.DownloadAsync(d.ObjectKey, ct);
+            await using var saida = entrada.Open();
+            await origem.CopyToAsync(saida, ct);
+        }
+        return documentos.Count;
+    }
+
+    private static string NomeUnico(string nome, HashSet<string> usados)
+    {
+        var limpo = string.Join("_", nome.Split(Path.GetInvalidFileNameChars().Append('/').Append('\\').ToArray()));
+        if (string.IsNullOrWhiteSpace(limpo)) limpo = "documento";
+        var candidato = limpo;
+        var ext = Path.GetExtension(limpo);
+        var baseNome = Path.GetFileNameWithoutExtension(limpo);
+        for (var i = 2; !usados.Add(candidato); i++)
+            candidato = $"{baseNome} ({i}){ext}";
+        return candidato;
     }
 
     public async Task<string> GetDownloadUrlAsync(Guid id, CancellationToken ct = default)

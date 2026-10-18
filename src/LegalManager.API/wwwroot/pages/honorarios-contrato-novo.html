@@ -68,9 +68,7 @@
             </div>
             <div class="form-group" style="grid-column:1/-1">
               <label class="form-label">Processo (opcional)</label>
-              <select id="processoId" class="form-control">
-                <option value="">Sem processo vinculado</option>
-              </select>
+              <div id="processoPicker"></div>
             </div>
           </div>
         </div>
@@ -204,16 +202,16 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import {
-      brl, fmtDateInput, notify, escapeHtml, getQueryParam,
-      getProcessos,
+      brl, fmtDateInput, notify, getQueryParam,
       getContrato, criarContrato, atualizarContrato
     } from '/js/honorarios.js';
     import { createContatoPicker } from '/js/contato-picker.js';
+    import { createProcessoPicker } from '/js/processo-picker.js';
     initLayout();
 
     const id = getQueryParam('id');
-    let processoSelecionado = null;
-    // Busca no servidor (só contatos ativos), em vez de um <select> com os primeiros 200 contatos.
+    // Busca no servidor (só contatos ativos / processos não encerrados), em vez de <select>s com os primeiros 200.
+    const processoPicker = createProcessoPicker(document.getElementById('processoPicker'));
     const contatoPicker = createContatoPicker(document.getElementById('contatoPicker'), {
       placeholder: 'Digite nome, CPF/CNPJ ou e-mail do cliente...',
     });
@@ -232,18 +230,6 @@
       const d = new Date(iso);
       d.setMonth(d.getMonth() + months);
       return d.toISOString().slice(0, 10);
-    }
-
-    async function carregarProcessos() {
-      const sel = document.getElementById('processoId');
-      try {
-        const r = await getProcessos();
-        const items = r?.items ?? r?.Items ?? r ?? [];
-        sel.innerHTML = '<option value="">Sem processo vinculado</option>' + items.map(p => `<option value="${p.id ?? p.Id}">${escapeHtml(p.numeroCNJ ?? p.NumeroCNJ)}</option>`).join('');
-        if (processoSelecionado) sel.value = processoSelecionado;
-      } catch (e) {
-        sel.innerHTML = '<option value="">Sem processos disponíveis</option>';
-      }
     }
 
     function toggleForma() {
@@ -306,7 +292,7 @@
 
       const common = {
         contatoId: contatoPicker.getValue(),
-        processoId: document.getElementById('processoId').value || null,
+        processoId: processoPicker.getValue() || null,
         objeto: document.getElementById('objeto').value.trim(),
         valorTotal: parseFloat(document.getElementById('valorTotal').value),
         formaPagamento: isAvista ? 1 : isParcelado ? 2 : 3,
@@ -367,14 +353,13 @@
     });
 
     (async () => {
-      await carregarProcessos();
       if (id) {
         document.getElementById('pageTitle').textContent = '✏️ Editar Contrato';
         const c = await getContrato(id);
         if (c) {
           contatoPicker.setValue({ id: c.contatoId ?? c.ContatoId, label: c.nomeContato ?? c.NomeContato });
-          processoSelecionado = c.processoId ?? c.ProcessoId ?? '';
-          document.getElementById('processoId').value = processoSelecionado;
+          const procId = c.processoId ?? c.ProcessoId;
+          if (procId) processoPicker.setValue({ id: procId, label: c.numeroProcesso ?? c.NumeroProcesso ?? 'Processo vinculado' });
           document.getElementById('objeto').value = c.objeto ?? c.Objeto ?? '';
           document.getElementById('valorTotal').value = c.valorTotal ?? c.ValorTotal;
           document.getElementById('formaPagamento').value = mapFormaInv(c.formaPagamento ?? c.FormaPagamento);

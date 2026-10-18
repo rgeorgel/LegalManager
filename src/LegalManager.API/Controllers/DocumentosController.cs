@@ -22,9 +22,9 @@ public class DocumentosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll([FromQuery] Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll([FromQuery] Guid? pastaId = null, [FromQuery] bool raiz = false, CancellationToken ct = default)
     {
-        var result = await _service.GetAllAsync(pastaId, ct);
+        var result = await _service.GetAllAsync(pastaId, raiz, ct);
         return Ok(result);
     }
 
@@ -115,6 +115,55 @@ public class DocumentosController : ControllerBase
     {
         var (stream, contentType, fileName) = await _service.GetFileStreamAsync(id, ct);
         return File(stream, contentType, fileName);
+    }
+
+    [HttpPost("em-massa/excluir")]
+    public async Task<IActionResult> ExcluirEmMassa([FromBody] DocumentosEmMassaDto dto, CancellationToken ct = default)
+        => Ok(new { alterados = await _service.ExcluirEmMassaAsync(dto.Ids, ct) });
+
+    [HttpPost("em-massa/pasta")]
+    public async Task<IActionResult> MoverEmMassa([FromBody] MoverDocumentosEmMassaDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            return Ok(new { alterados = await _service.MoverEmMassaAsync(dto.Ids, dto.PastaId, ct) });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("em-massa/tipo")]
+    public async Task<IActionResult> AlterarTipoEmMassa([FromBody] AlterarTipoDocumentosEmMassaDto dto, CancellationToken ct = default)
+        => Ok(new { alterados = await _service.AlterarTipoEmMassaAsync(dto.Ids, dto.Tipo, ct) });
+
+    [HttpPost("em-massa/zip")]
+    public async Task<IActionResult> BaixarZip([FromBody] DocumentosEmMassaDto dto, CancellationToken ct = default)
+    {
+        if (dto.Ids.Count > DocumentosEmMassaDto.MaxDocumentosZip)
+            return BadRequest(new { message = $"Selecione no máximo {DocumentosEmMassaDto.MaxDocumentosZip} documentos para baixar de uma vez." });
+
+        // Arquivo temporário (apagado ao fechar): não segura o .zip inteiro na memória.
+        var temp = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None,
+            81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+        try
+        {
+            var total = await _service.GerarZipAsync(dto.Ids, temp, ct);
+            if (total == 0) { await temp.DisposeAsync(); return NotFound(new { message = "Nenhum documento encontrado." }); }
+            temp.Position = 0;
+            return File(temp, "application/zip", $"documentos-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip");
+        }
+        catch (InvalidOperationException ex)
+        {
+            await temp.DisposeAsync();
+            return BadRequest(new { message = ex.Message });
+        }
+        catch
+        {
+            await temp.DisposeAsync();
+            throw;
+        }
     }
 
     [HttpGet("cota")]

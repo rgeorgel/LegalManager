@@ -177,6 +177,49 @@ public class DocumentoServiceTests
     }
 
     [Fact]
+    public async Task GetAllAsync_Raiz_ReturnsOnlyDocumentsWithoutPasta()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var tenantContext = CreateTenantContext(tenant.Id, usuario.Id);
+        var service = new DocumentoService(ctx, tenantContext, CreateMockStorageService());
+
+        var pasta = new Pasta
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = "Contratos",
+            EntidadeTipo = EntidadeTipo.Documento,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Pastas.Add(pasta);
+        Documento NovoDoc(string nome, Guid? pastaId) => new()
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = nome,
+            ObjectKey = $"{tenant.Id}/{nome}",
+            ContentType = "application/pdf",
+            TamanhoBytes = 100,
+            Tipo = TipoDocumento.Prova,
+            CriadoEm = DateTime.UtcNow,
+            UploadedPorId = usuario.Id,
+            PastaId = pastaId
+        };
+        ctx.Documentos.AddRange(NovoDoc("raiz.pdf", null), NovoDoc("na-pasta.pdf", pasta.Id));
+        await ctx.SaveChangesAsync();
+
+        var raiz = (await service.GetAllAsync(raiz: true)).ToList();
+        Assert.Single(raiz);
+        Assert.Equal("raiz.pdf", raiz[0].Nome);
+
+        var naPasta = (await service.GetAllAsync(pasta.Id, raiz: true)).ToList();
+        Assert.Single(naPasta);
+        Assert.Equal("na-pasta.pdf", naPasta[0].Nome);
+
+        Assert.Equal(2, (await service.GetAllAsync()).Count());
+    }
+
+    [Fact]
     public async Task GetByProcessoAsync_ReturnsFilteredDocuments()
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
@@ -530,5 +573,105 @@ public class DocumentoServiceTests
 
         Assert.Equal(0, result.UsadoBytes);
         Assert.Equal(20L * 1024 * 1024 * 1024, result.CotaBytes);
+    }
+
+    // ── Ações em massa ──────────────────────────────────────────────────
+
+    private static Documento NovoDoc(Guid tenantId, string nome, Guid? pastaId = null, long tamanho = 10) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, Nome = nome, ObjectKey = $"{tenantId}/{Guid.NewGuid()}",
+        ContentType = "application/pdf", TamanhoBytes = tamanho, Tipo = TipoDocumento.Outro,
+        CriadoEm = DateTime.UtcNow, PastaId = pastaId
+    };
+
+    [Fact]
+    public async Task ExcluirEmMassa_RemoveSoDoTenant_EApagaDoStorage()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+        var meu1 = NovoDoc(tenant.Id, "a.pdf");
+        var meu2 = NovoDoc(tenant.Id, "b.pdf");
+        var outro = NovoDoc(Guid.NewGuid(), "c.pdf");
+        ctx.Documentos.AddRange(meu1, meu2, outro);
+        await ctx.SaveChangesAsync();
+
+        var n = await service.ExcluirEmMassaAsync([meu1.Id, meu2.Id, outro.Id]);
+
+        Assert.Equal(2, n);
+        Assert.Equal([outro.Id], await ctx.Documentos.Select(d => d.Id).ToListAsync());
+        storage.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        storage.Verify(s => s.DeleteAsync(outro.ObjectKey, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task MoverEmMassa_PastaDeOutroTenant_Falha()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var pastaAlheia = new Pasta { Id = Guid.NewGuid(), TenantId = Guid.NewGuid(), Nome = "X", EntidadeTipo = EntidadeTipo.Documento };
+        var doc = NovoDoc(tenant.Id, "a.pdf");
+        ctx.Pastas.Add(pastaAlheia);
+        ctx.Documentos.Add(doc);
+        await ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.MoverEmMassaAsync([doc.Id], pastaAlheia.Id));
+        Assert.Null((await ctx.Documentos.FindAsync(doc.Id))!.PastaId);
+    }
+
+    [Fact]
+    public async Task MoverEmMassa_EAlterarTipo_AtualizamOsSelecionados()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var pasta = new Pasta { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Contratos", EntidadeTipo = EntidadeTipo.Documento };
+        var d1 = NovoDoc(tenant.Id, "a.pdf");
+        var d2 = NovoDoc(tenant.Id, "b.pdf");
+        var fora = NovoDoc(tenant.Id, "c.pdf");
+        ctx.Pastas.Add(pasta);
+        ctx.Documentos.AddRange(d1, d2, fora);
+        await ctx.SaveChangesAsync();
+
+        Assert.Equal(2, await service.MoverEmMassaAsync([d1.Id, d2.Id], pasta.Id));
+        Assert.Equal(2, await service.AlterarTipoEmMassaAsync([d1.Id, d2.Id], TipoDocumento.Contrato));
+
+        var docs = await ctx.Documentos.ToDictionaryAsync(d => d.Id);
+        Assert.All([docs[d1.Id], docs[d2.Id]], d => { Assert.Equal(pasta.Id, d.PastaId); Assert.Equal(TipoDocumento.Contrato, d.Tipo); });
+        Assert.Null(docs[fora.Id].PastaId);
+        Assert.Equal(TipoDocumento.Outro, docs[fora.Id].Tipo);
+    }
+
+    [Fact]
+    public async Task GerarZip_IncluiOsArquivos_ComNomesUnicos()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        storage.Setup(s => s.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => new MemoryStream("conteudo"u8.ToArray()));
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+        var d1 = NovoDoc(tenant.Id, "peticao.pdf");
+        var d2 = NovoDoc(tenant.Id, "peticao.pdf");
+        ctx.Documentos.AddRange(d1, d2);
+        await ctx.SaveChangesAsync();
+
+        using var ms = new MemoryStream();
+        var n = await service.GerarZipAsync([d1.Id, d2.Id], ms);
+
+        Assert.Equal(2, n);
+        ms.Position = 0;
+        using var zip = new System.IO.Compression.ZipArchive(ms);
+        Assert.Equal(["peticao (2).pdf", "peticao.pdf"], zip.Entries.Select(e => e.FullName).OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task GerarZip_AcimaDoLimiteDeTamanho_Falha()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var grande = NovoDoc(tenant.Id, "grande.pdf", tamanho: DocumentosEmMassaDto.MaxBytesZip + 1);
+        ctx.Documentos.Add(grande);
+        await ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GerarZipAsync([grande.Id], new MemoryStream()));
     }
 }

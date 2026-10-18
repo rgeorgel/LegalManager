@@ -146,10 +146,6 @@ export async function salvarConfiguracao(body) {
   return apiFetch('/honorarios/contratos/configuracao', { method: 'PUT', body: JSON.stringify(body) });
 }
 
-export async function getProcessos() {
-  return apiFetch('/processos?page=1&pageSize=200');
-}
-
 export async function abrirExtratoPdf(id) {
   const token = sessionStorage.getItem('access_token');
   const resp = await fetch(`/api/honorarios/contratos/${id}/extrato/pdf`, {

@@ -214,7 +214,8 @@ public class ProcessoService : IProcessoService
                 p.NumeroCNJ.Contains(busca) ||
                 (p.Tribunal != null && p.Tribunal.ToLower().Contains(busca)) ||
                 (p.Comarca != null && p.Comarca.ToLower().Contains(busca)) ||
-                (p.TipoAcao != null && p.TipoAcao.ToLower().Contains(busca)));
+                (p.TipoAcao != null && p.TipoAcao.ToLower().Contains(busca)) ||
+                p.Partes.Any(pt => pt.Contato.Nome.ToLower().Contains(busca)));
         }
 
         if (filtro.Status is { Count: > 0 } status)

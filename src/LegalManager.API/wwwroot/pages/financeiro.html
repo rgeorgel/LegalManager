@@ -72,6 +72,8 @@
     .lancamento-actions { display:flex; gap:8px; flex-shrink:0; }
     .filter-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
     .filter-bar select { padding:7px 10px; border:1px solid var(--color-border); border-radius:var(--radius); font-size:13px; background:var(--color-surface); }
+    .filter-bar .contato-picker { flex:0 1 300px; min-width:220px; }
+    .filter-bar .contato-picker-input { padding:7px 10px; font-size:13px; }
 
     /* Month navigator */
     .mes-nav { display:flex; align-items:center; gap:12px; }
@@ -152,7 +154,7 @@
         <div class="filter-bar">
           <select id="filtroTipo"><option value="">Todos</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select>
           <select id="filtroStatus"><option value="">Todos os status</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option><option value="Vencido">Vencido</option><option value="Cancelado">Cancelado</option></select>
-          <select id="filtroProcesso"><option value="">Todos os processos</option></select>
+          <div id="filtroProcessoPicker"></div>
           <button class="btn btn-secondary btn-sm" id="btnFiltrar">Filtrar</button>
         </div>
         <div id="lista"><span style="color:var(--color-text-muted);font-size:14px">Carregando...</span></div>
@@ -197,9 +199,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Processo (opcional)</label>
-          <select id="fProcesso" class="form-control">
-            <option value="">Nenhum</option>
-          </select>
+          <div id="fProcessoPicker"></div>
         </div>
         <div style="display:flex;gap:12px;margin-top:20px;justify-content:flex-end">
           <button type="button" class="btn btn-secondary" id="btnCancelarModal">Cancelar</button>
@@ -213,6 +213,7 @@
 import { esc, abrirNovoPelaUrl } from '/js/utils.js';
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
+    import { createProcessoPicker } from '/js/processo-picker.js';
     import { contatoPerfilUrl } from '/js/contato-nav.js';
 
     initLayout();
@@ -279,39 +280,36 @@ import { esc, abrirNovoPelaUrl } from '/js/utils.js';
     document.getElementById('btnCancelarModal').onclick = closeModal;
     document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 
+    // Filtro da listagem: inclui encerrados (lançamentos antigos continuam consultáveis).
+    const filtroProcessoPicker = createProcessoPicker(document.getElementById('filtroProcessoPicker'), {
+      incluirEncerrados: true,
+      placeholder: 'Todos os processos — digite para buscar...',
+      onChange: () => { currentPage = 1; loadLancamentos(); },
+    });
+    aplicarProcessoDaUrl();
+
+    // ?processo=<id>: o id vale já; o número chega depois. Lido antes do syncUrl(), que reescreve a URL.
+    async function aplicarProcessoDaUrl() {
+      const id = new URLSearchParams(location.search).get('processo');
+      if (!id) return;
+      filtroProcessoPicker.setValue({ id, label: 'Processo selecionado' });
+      try {
+        const p = await apiFetch(`/processos/${encodeURIComponent(id)}`);
+        if (filtroProcessoPicker.getValue() === id) filtroProcessoPicker.setValue({ id, label: p.numeroCNJ });
+      } catch (e) { console.error(e); }
+    }
+
     syncUrl();
     updateNav();
     loadAll();
     loadCustomCats();
-    loadProcessos();
 
     function loadAll() {
       loadResumo();
       loadLancamentos();
     }
 
-    async function loadProcessos() {
-      try {
-        const data = await apiFetch('/processos?pageSize=100');
-        const selFilter = document.getElementById('filtroProcesso');
-        const selModal = document.getElementById('fProcesso');
-        if (data?.items?.length) {
-          data.items.forEach(p => {
-            const o1 = document.createElement('option');
-            o1.value = p.id;
-            o1.textContent = p.numeroCNJ;
-            selFilter.appendChild(o1);
-
-            const o2 = document.createElement('option');
-            o2.value = p.id;
-            o2.textContent = p.numeroCNJ;
-            selModal.appendChild(o2);
-          });
-        }
-        const procParam = new URLSearchParams(location.search).get('processo');
-        if (procParam) selFilter.value = procParam;
-      } catch (e) { console.error(e); }
-    }
+    const processoPicker = createProcessoPicker(document.getElementById('fProcessoPicker'));
 
     async function loadResumo() {
       try {
@@ -337,7 +335,7 @@ import { esc, abrirNovoPelaUrl } from '/js/utils.js';
       currentPage = page;
       const tipo = document.getElementById('filtroTipo').value;
       const status = document.getElementById('filtroStatus').value;
-      const processoId = document.getElementById('filtroProcesso').value;
+      const processoId = filtroProcessoPicker.getValue();
       const qs = new URLSearchParams({ page, pageSize, mes: currentMes, ano: currentAno });
       if (tipo) qs.append('tipo', tipo);
       if (status) qs.append('status', status);
@@ -428,6 +426,7 @@ import { esc, abrirNovoPelaUrl } from '/js/utils.js';
       document.getElementById('fVencimento').value = item?.dataVencimento
         ?? `${currentAno}-${String(currentMes).padStart(2,'0')}-01`;
       document.getElementById('fDescricao').value = item?.descricao ?? '';
+      processoPicker.setValue(item?.processoId ? { id: item.processoId, label: item.numeroProcesso || 'Processo vinculado' } : null);
       document.getElementById('modal').classList.add('open');
     }
 
@@ -459,7 +458,7 @@ import { esc, abrirNovoPelaUrl } from '/js/utils.js';
     async function salvar(e) {
       e.preventDefault();
       const id = document.getElementById('editId').value;
-      const processoId = document.getElementById('fProcesso').value || null;
+      const processoId = processoPicker.getValue() || null;
       const body = {
         tipo: document.getElementById('fTipo').value,
         categoria: document.getElementById('fCategoria').value,

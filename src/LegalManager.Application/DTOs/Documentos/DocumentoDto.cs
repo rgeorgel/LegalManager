@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.Documentos;
@@ -57,3 +58,20 @@ public static class DocumentoHelpers
         return $"{size:0.##} {sizes[order]}";
     }
 }
+// Ações em massa da listagem de documentos (excluir, baixar em .zip, mover de pasta, alterar tipo).
+public record DocumentosEmMassaDto(
+    [Required, MinLength(1), MaxLength(DocumentosEmMassaDto.MaxDocumentos)] IReadOnlyList<Guid> Ids)
+{
+    public const int MaxDocumentos = 500;
+    // O .zip é montado em memória no servidor: limita quantidade e tamanho somado.
+    public const int MaxDocumentosZip = 100;
+    public const long MaxBytesZip = 500L * 1024 * 1024;
+}
+
+public record MoverDocumentosEmMassaDto(
+    [Required, MinLength(1), MaxLength(DocumentosEmMassaDto.MaxDocumentos)] IReadOnlyList<Guid> Ids,
+    Guid? PastaId);
+
+public record AlterarTipoDocumentosEmMassaDto(
+    [Required, MinLength(1), MaxLength(DocumentosEmMassaDto.MaxDocumentos)] IReadOnlyList<Guid> Ids,
+    [Required] TipoDocumento Tipo);

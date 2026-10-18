@@ -366,9 +366,7 @@
 
       <div class="form-group">
         <label class="form-label">Processo <span style="font-weight:400;color:var(--color-text-muted)">— opcional</span></label>
-        <select id="mProcesso" class="form-control">
-          <option value="">Nenhum processo vinculado</option>
-        </select>
+        <div id="mProcessoPicker"></div>
       </div>
 
       <div class="form-group">
@@ -387,6 +385,7 @@
 import { esc } from '/js/utils.js';
   import { initLayout, isPlanoFree } from '/js/layout.js';
   import { apiFetch } from '/js/api.js';
+  import { createProcessoPicker } from '/js/processo-picker.js';
 
   initLayout();
 
@@ -401,7 +400,7 @@ import { esc } from '/js/utils.js';
   let feriadosDB = [];
   let tipoAtivo = 'DiasUteis';
   let lastCalculo = null;   // { dataInicio, quantidadeDias, tipoCalculo, dataFinal }
-  let processosCached = null;
+  const processoPicker = createProcessoPicker(document.getElementById('mProcessoPicker'));
 
   async function init() {
     document.getElementById('cpInicio').value = new Date().toISOString().substring(0, 10);
@@ -465,29 +464,10 @@ import { esc } from '/js/utils.js';
     document.getElementById('mResumoFinal').textContent = dataFinalLabel;
     document.getElementById('mDataFinalDisplay').value = dataFinalLabel;
 
-    // Carrega processos (uma só vez)
-    await loadProcessosSelect();
+    processoPicker.setValue(null);
 
     modal.classList.add('open');
     document.getElementById('mDescricao').focus();
-  }
-
-  async function loadProcessosSelect() {
-    const sel = document.getElementById('mProcesso');
-    sel.innerHTML = '<option value="">Nenhum processo vinculado</option>';
-
-    try {
-      if (!processosCached) {
-        const data = await apiFetch('/processos?pageSize=200');
-        processosCached = data.items ?? [];
-      }
-      processosCached.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.numeroCNJ + (p.comarca ? ` — ${p.comarca}` : '');
-        sel.appendChild(opt);
-      });
-    } catch { /* sem processos — tudo bem */ }
   }
 
   async function salvarPrazo() {
@@ -523,7 +503,7 @@ import { esc } from '/js/utils.js';
           quantidadeDias:  lastCalculo.quantidadeDias,
           tipoCalculo:     lastCalculo.tipoCalculo,
           feriadosAdicionais: getFeriadosAdicionais(),
-          processoId:      document.getElementById('mProcesso').value || null,
+          processoId:      processoPicker.getValue() || null,
         }),
       });
       document.getElementById('modalCriarPrazo').classList.remove('open');

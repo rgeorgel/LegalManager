@@ -99,6 +99,37 @@ public class HonorarioServiceTests
         Assert.Equal(5000m, parcelas.Parcelas.First().ValorOriginal);
     }
 
+    [Theory]
+    [InlineData("0001234-56.2024.8.26.0100")]
+    [InlineData("0001234-56")]
+    [InlineData("00012345620248260100")]
+    public async Task Listar_BuscaPeloNumeroDoProcesso(string busca)
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var processoId = Guid.NewGuid();
+        db.Processos.Add(new Processo { Id = processoId, TenantId = tenantId, NumeroCNJ = "0001234-56.2024.8.26.0100", CriadoEm = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        CriarContratoHonorarioDto Dto(Guid? procId, string objeto) => new(
+            ContatoId: contatoId, ProcessoId: procId, NumeroContrato: null,
+            Objeto: objeto, ValorTotal: 1000m,
+            FormaPagamento: FormaPagamentoContrato.AVista,
+            Periodicidade: null, NumeroParcelas: null,
+            DataPrimeiraParcela: DateTime.UtcNow.Date.AddDays(10),
+            ValorEntrada: null, VencimentoEntrada: null,
+            PercentualMulta: null, PercentualJurosMensal: null,
+            TipoCobranca: "Boleto/PIX", Observacoes: null,
+            DataInicio: DateTime.UtcNow.Date, DataFim: null);
+        await service.CriarAsync(tenantId, usuarioId, Dto(processoId, "Com processo"));
+        await service.CriarAsync(tenantId, usuarioId, Dto(null, "Sem processo"));
+
+        var res = await service.ListarAsync(tenantId, new FiltroContratoHonorario(null, null, null, busca, 1, 20));
+
+        Assert.Equal(1, res.Total);
+        Assert.Equal("Com processo", res.Items.Single().Objeto);
+    }
+
     [Fact]
     public async Task CriarContrato_Parcelado_12Meses_SomaIgualValorTotal()
     {
