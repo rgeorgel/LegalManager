@@ -72,11 +72,39 @@
     .ci-grid .ci-actions { margin-top:auto; padding-top:12px; }
     @media (max-width:480px) { .ci-grid { grid-template-columns:1fr; } }
 
-    .ct-table td, .ct-table th { white-space:nowrap; }
-    .ct-table td.ct-cliente { white-space:normal; min-width:180px; }
-    .ct-table .num { text-align:right; }
-    .ct-table .ct-obj { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
-    .ct-table .danger { color:#dc2626; font-weight:700; }
+    /* Visão em lista no padrão de Processos: uma linha-card por contrato (cliente, nº, status
+       e ações em cima; abaixo, grade de "rótulo sobre valor"). Sem tabela, sem scroll lateral. */
+    .ct-lista { display:flex; flex-direction:column; gap:10px; }
+    .ct-row { border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 18px; background:var(--color-surface, #fff); }
+    .ct-row.ng { border-left:4px solid #dc2626; }
+    .ct-row-top { display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+    .ct-row-id { flex:1 1 260px; min-width:0; }
+    .ct-row-nome { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-weight:700; font-size:15px; }
+    .ct-row-nome a { color:inherit; overflow-wrap:anywhere; }
+    .ct-row-obj { font-size:13px; color:var(--color-text-muted); margin-top:3px; overflow-wrap:anywhere; }
+    .ct-row-acoes { display:flex; gap:6px; flex-wrap:wrap; }
+    .ct-row-info { display:grid; grid-template-columns:minmax(0,1.6fr) repeat(5, minmax(0,1fr)); gap:12px 24px;
+      margin-top:12px; padding-top:12px; border-top:1px solid var(--color-border); }
+    .ct-row-info .lb { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:#9ca3af; margin-bottom:3px; }
+    .ct-row-info .vl { font-size:14px; font-weight:500; overflow-wrap:anywhere; }
+    .ct-row-info .vl.danger { color:#dc2626; font-weight:700; }
+    .ct-row-info .vl.vazio { color:var(--color-text-muted); }
+    @media (max-width:1100px) { .ct-row-info { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+    @media (max-width:520px) {
+      .ct-row { padding:12px 14px; }
+      .ct-row-info { grid-template-columns:repeat(2, minmax(0,1fr)); }
+      .ct-row-info > .ct-proc { grid-column:1 / -1; }
+      .ct-row-acoes { flex:1 1 100%; }
+    }
+
+    /* Ordenação: mesmos campos nas duas visões; 1º clique ▲, 2º ▼, 3º volta ao padrão. */
+    .sort-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; }
+    .sort-bar .sort-lbl { color:var(--color-text-muted); font-weight:600; margin-right:2px; }
+    .sort-chip { border:1px solid var(--color-border); background:var(--color-bg); color:var(--color-text); border-radius:999px;
+      padding:4px 10px; font-size:12px; cursor:pointer; }
+    .sort-chip:hover { border-color:var(--color-primary); color:var(--color-primary); }
+    .sort-chip.active { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
+    .ci .danger { color:#dc2626; font-weight:700; }
 
     .empty { text-align:center; padding:38px 16px; color:var(--color-text-muted); }
     .empty p { margin-bottom:14px; }
@@ -145,6 +173,7 @@
           </select>
           <input type="text" id="filtroBusca" placeholder="Buscar por cliente, nº, objeto ou processo..." style="flex:1;min-width:200px">
         </div>
+        <div class="sort-bar" id="sortBar" role="group" aria-label="Ordenar contratos"></div>
         <div id="lista"></div>
         <div id="paginacao" style="display:flex;justify-content:center;gap:6px;margin-top:14px"></div>
       </div>
@@ -163,7 +192,14 @@
     initLayout();
 
     const PAGE_SIZE = 50;
-    let pageState = { page: 1, status: '', busca: '' };
+    // Ordenação pelas colunas da lista (vale também para os blocos). Sem coluna escolhida, o
+    // servidor mostra os mais recentes primeiro, com os quitados no fim.
+    const SORT_KEY = 'honorariosContratos.sort';
+    let pageState = { page: 1, status: '', busca: '', ordem: '', desc: false };
+    try {
+      const s = JSON.parse(localStorage.getItem(SORT_KEY) || 'null');
+      if (s && typeof s.ordem === 'string') { pageState.ordem = s.ordem; pageState.desc = !!s.desc; }
+    } catch {}
 
     // Visualização (lista/blocos) persistida em localStorage, como em Contatos.
     const VIEW_KEY = 'honorariosContratos.view';
@@ -314,30 +350,40 @@
       const el = document.getElementById('lista');
       if (!ultimosItens.length) return;
       if (currentView === 'list') {
-        el.innerHTML = `
-          <div class="table-wrapper">
-            <table class="ct-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Nº</th>
-                  <th>Processo</th>
-                  <th>Status</th>
-                  <th class="num">Total</th>
-                  <th class="num">A Receber</th>
-                  <th class="num">Pago</th>
-                  <th>Parcelas</th>
-                  <th>Forma</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>${ultimosItens.map(c => renderLinha(c)).join('')}</tbody>
-            </table>
-          </div>
-        `;
+        el.innerHTML = `<div class="ct-lista">${ultimosItens.map(c => renderLinha(c)).join('')}</div>`;
       } else {
         el.innerHTML = `<div class="ci-grid">${ultimosItens.map(c => renderCard(c)).join('')}</div>`;
       }
+    }
+
+    const CAMPOS_ORDEM = [
+      ['cliente', 'Cliente'], ['numero', 'Nº'], ['processo', 'Processo'], ['status', 'Status'],
+      ['total', 'Total'], ['aReceber', 'A Receber'], ['pago', 'Pago'], ['parcelas', 'Parcelas'], ['forma', 'Forma'],
+    ];
+    function renderSortBar() {
+      const el = document.getElementById('sortBar');
+      el.innerHTML = '<span class="sort-lbl">Ordenar por:</span>' + CAMPOS_ORDEM.map(([chave, rotulo]) => {
+        const ativa = pageState.ordem === chave;
+        const seta = ativa ? (pageState.desc ? ' ▼' : ' ▲') : '';
+        return `<button type="button" class="sort-chip${ativa ? ' active' : ''}" data-sort="${chave}"
+          aria-pressed="${ativa}" title="${ativa && pageState.desc ? 'Voltar à ordem padrão' : `Ordenar por ${rotulo}`}">${rotulo}${seta}</button>`;
+      }).join('');
+    }
+    document.getElementById('sortBar').addEventListener('click', e => {
+      const b = e.target.closest('[data-sort]');
+      if (b) ordenarPor(b.dataset.sort);
+    });
+    renderSortBar();
+
+    // 1º clique: crescente; 2º: decrescente; 3º: volta à ordem padrão (quitados no fim).
+    function ordenarPor(chave) {
+      if (pageState.ordem !== chave) { pageState.ordem = chave; pageState.desc = false; }
+      else if (!pageState.desc) pageState.desc = true;
+      else { pageState.ordem = ''; pageState.desc = false; }
+      try { localStorage.setItem(SORT_KEY, JSON.stringify({ ordem: pageState.ordem, desc: pageState.desc })); } catch {}
+      pageState.page = 1;
+      renderSortBar();
+      carregarLista();
     }
 
     function renderLinha(c) {
@@ -348,28 +394,35 @@
       const pagas = c.parcelasPagas ?? c.ParcelasPagas ?? 0;
       const id = c.id ?? c.Id;
       const objeto = c.objeto ?? c.Objeto;
+      const proc = c.numeroProcesso ?? c.NumeroProcesso;
+      const campo = (rotulo, valor, cls = '', wrap = '') =>
+        `<div class="${wrap}"><div class="lb">${rotulo}</div><div class="vl ${cls}">${valor}</div></div>`;
       return `
-        <tr>
-          <td class="ct-cliente">
-            <a href="${contatoPerfilUrl(pick(c, 'contatoId'))}" style="color:inherit;font-weight:600">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
-            ${objeto ? `<div class="ct-obj">${escapeHtml(objeto.slice(0, 80))}</div>` : ''}
-          </td>
-          <td><span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span></td>
-          <td>${c.numeroProcesso || c.NumeroProcesso ? `<span class="badge-sm badge-proc" title="Processo">⚖ ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</span>` : '—'}</td>
-          <td><span class="badge-sm ${info.cls}">${info.label}</span></td>
-          <td class="num">${brl(c.valorTotal ?? c.ValorTotal)}</td>
-          <td class="num ${st === 'Inadimplente' ? 'danger' : ''}">${brl(aReceber)}</td>
-          <td class="num">${brl(c.valorPago ?? c.ValorPago)}</td>
-          <td>${pagas}/${totalParc}</td>
-          <td>${mapForma(c.formaPagamento ?? c.FormaPagamento)}</td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${id}" title="Ver">📄</a>
-              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${id}" title="Editar">✏️</a>
-              <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${id}')" title="Extrato">📑</button>
+        <div class="ct-row ${st === 'Inadimplente' ? 'ng' : ''}">
+          <div class="ct-row-top">
+            <div class="ct-row-id">
+              <div class="ct-row-nome">
+                <a href="${contatoPerfilUrl(pick(c, 'contatoId'))}">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
+                <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
+                <span class="badge-sm ${info.cls}">${info.label}</span>
+              </div>
+              ${objeto ? `<div class="ct-row-obj">${escapeHtml(objeto.slice(0, 140))}</div>` : ''}
             </div>
-          </td>
-        </tr>
+            <div class="ct-row-acoes">
+              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${id}">Ver</a>
+              <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${id}">Editar</a>
+              <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${id}')">Extrato</button>
+            </div>
+          </div>
+          <div class="ct-row-info">
+            ${campo('Processo', proc ? `⚖ ${escapeHtml(proc)}` : '—', proc ? '' : 'vazio', 'ct-proc')}
+            ${campo('Total', brl(c.valorTotal ?? c.ValorTotal))}
+            ${campo('A Receber', brl(aReceber), st === 'Inadimplente' ? 'danger' : '')}
+            ${campo('Pago', brl(c.valorPago ?? c.ValorPago))}
+            ${campo('Parcelas', `${pagas}/${totalParc}`)}
+            ${campo('Forma', mapForma(c.formaPagamento ?? c.FormaPagamento))}
+          </div>
+        </div>
       `;
     }
 

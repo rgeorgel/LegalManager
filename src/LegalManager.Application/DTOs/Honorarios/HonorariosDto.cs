@@ -85,7 +85,11 @@ public record FiltroContratoHonorario(
     Guid? ProcessoId,
     string? Busca,
     int Page,
-    int PageSize
+    int PageSize,
+    // cliente | numero | processo | status | total | aReceber | pago | parcelas | forma.
+    // Sem ordem: mais recentes primeiro, com os quitados no fim.
+    string? Ordem = null,
+    bool Desc = false
 );
 
 public record ParcelaHonorarioDto(

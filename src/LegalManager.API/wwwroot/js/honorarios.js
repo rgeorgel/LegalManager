@@ -85,6 +85,10 @@ export async function listarContratos(params = {}) {
   if (params.contatoId) qs.set('contatoId', params.contatoId);
   if (params.processoId) qs.set('processoId', params.processoId);
   if (params.busca) qs.set('busca', params.busca);
+  if (params.ordem) {
+    qs.set('ordem', params.ordem);
+    qs.set('direcao', params.desc ? 'desc' : 'asc');
+  }
   qs.set('page', params.page ?? 1);
   qs.set('pageSize', params.pageSize ?? 50);
   return apiFetch(`/honorarios/contratos?${qs.toString()}`);

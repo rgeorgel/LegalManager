@@ -163,14 +163,50 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             ).ToList();
         }
 
-        var total = dados.Count;
-        var items = dados
+        var items = OrdenarContratos(dados.Select(c => MapearContrato(c, incluirFinanceiro: true)), filtro.Ordem, filtro.Desc)
             .Skip((filtro.Page - 1) * filtro.PageSize)
             .Take(filtro.PageSize)
-            .Select(c => MapearContrato(c, incluirFinanceiro: true))
             .ToList();
 
-        return new ContratosPagedDto(items, total);
+        return new ContratosPagedDto(items, dados.Count);
+    }
+
+    // Mesma regra de statusContrato() em js/honorarios.js: parcela vencida em contrato aberto = em atraso.
+    private static bool EmAtraso(ContratoHonorarioDto c) =>
+        c.ParcelasVencidas > 0 && c.Status is not (StatusContratoHonorario.Quitado
+            or StatusContratoHonorario.Distratado or StatusContratoHonorario.Encerrado);
+
+    // Ordem da coluna Status: o que pede ação primeiro, os fechados por último.
+    private static int PesoStatus(ContratoHonorarioDto c) => EmAtraso(c) ? 0 : c.Status switch
+    {
+        StatusContratoHonorario.Ativo => 1,
+        StatusContratoHonorario.Suspenso => 2,
+        StatusContratoHonorario.Quitado => 3,
+        StatusContratoHonorario.Encerrado => 4,
+        _ => 5
+    };
+
+    private static IEnumerable<ContratoHonorarioDto> OrdenarContratos(
+        IEnumerable<ContratoHonorarioDto> contratos, string? ordem, bool desc)
+    {
+        var texto = StringComparer.Create(BrasiliaTime.PtBr, ignoreCase: true);
+        IOrderedEnumerable<ContratoHonorarioDto> Por<T>(Func<ContratoHonorarioDto, T> chave, IComparer<T>? cmp = null) =>
+            desc ? contratos.OrderByDescending(chave, cmp) : contratos.OrderBy(chave, cmp);
+
+        var ordenado = ordem?.ToLowerInvariant() switch
+        {
+            "cliente" => Por(c => c.NomeContato, texto),
+            "numero" => Por(c => c.NumeroContrato, texto),
+            "processo" => Por(c => c.NumeroProcesso ?? "", texto),
+            "status" => Por(PesoStatus),
+            "total" => Por(c => c.ValorTotal),
+            "areceber" => Por(c => c.ValorPendente + c.ValorEmAtraso),
+            "pago" => Por(c => c.ValorPago),
+            "parcelas" => Por(c => c.TotalParcelas == 0 ? 0m : (decimal)c.ParcelasPagas / c.TotalParcelas),
+            "forma" => Por(c => c.FormaPagamento.ToString(), texto),
+            _ => contratos.OrderBy(c => c.Status == StatusContratoHonorario.Quitado)
+        };
+        return ordenado.ThenByDescending(c => c.CriadoEm);
     }
 
     public async Task<ContratoHonorarioDto?> ObterAsync(Guid id, Guid tenantId, CancellationToken ct = default)

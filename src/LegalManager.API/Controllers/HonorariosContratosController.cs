@@ -34,11 +34,14 @@ public class HonorariosContratosController(IHonorarioService service, ITenantCon
         [FromQuery] string? busca,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string? ordem = null,
+        [FromQuery] string? direcao = null,
         CancellationToken ct = default)
     {
         if (CheckPlano() is { } err) return err;
         var result = await service.ListarAsync(tenantContext.TenantId,
-            new FiltroContratoHonorario(status, contatoId, processoId, busca, page, pageSize), ct);
+            new FiltroContratoHonorario(status, contatoId, processoId, busca, page, pageSize,
+                ordem, string.Equals(direcao, "desc", StringComparison.OrdinalIgnoreCase)), ct);
         return Ok(result);
     }
 

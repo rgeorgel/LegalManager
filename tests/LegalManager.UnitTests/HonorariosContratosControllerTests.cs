@@ -97,7 +97,7 @@ public class HonorariosContratosControllerTests
         var ctrl = new HonorariosContratosController(svc.Object, tenant.Object, CreateAuditMock().Object);
         ctrl.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
-        var result = await ctrl.GetAll(null, null, null, null, 1, 20, CancellationToken.None);
+        var result = await ctrl.GetAll(null, null, null, null, 1, 20, ct: CancellationToken.None);
         var status = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(402, status.StatusCode);
     }

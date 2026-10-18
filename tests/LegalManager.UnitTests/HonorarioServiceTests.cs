@@ -130,6 +130,74 @@ public class HonorarioServiceTests
         Assert.Equal("Com processo", res.Items.Single().Objeto);
     }
 
+    private static void AdicionarContrato(AppDbContext db, Guid tenantId, Guid contatoId, string numero,
+        StatusContratoHonorario status, decimal valor, DateTime criadoEm) =>
+        db.ContratosHonorarios.Add(new ContratoHonorario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, ContatoId = contatoId, NumeroContrato = numero,
+            ValorTotal = valor, Status = status, FormaPagamento = FormaPagamentoContrato.AVista,
+            TipoCobranca = "Boleto/PIX", DataInicio = criadoEm, CriadoEm = criadoEm
+        });
+
+    private static void AdicionarQuatroContratos(AppDbContext db, Guid tenantId, Guid contatoId)
+    {
+        var t0 = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        AdicionarContrato(db, tenantId, contatoId, "Q-recente", StatusContratoHonorario.Quitado, 100m, t0.AddDays(3));
+        AdicionarContrato(db, tenantId, contatoId, "A-antigo", StatusContratoHonorario.Ativo, 300m, t0);
+        AdicionarContrato(db, tenantId, contatoId, "A-novo", StatusContratoHonorario.Ativo, 200m, t0.AddDays(2));
+        AdicionarContrato(db, tenantId, contatoId, "Q-antigo", StatusContratoHonorario.Quitado, 400m, t0.AddDays(1));
+    }
+
+    [Fact]
+    public async Task Listar_SemOrdem_QuitadosNoFimEMaisRecentesPrimeiro()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        AdicionarQuatroContratos(db, tenantId, contatoId);
+        await db.SaveChangesAsync();
+
+        var res = await service.ListarAsync(tenantId, new FiltroContratoHonorario(null, null, null, null, 1, 20));
+
+        Assert.Equal(["A-novo", "A-antigo", "Q-recente", "Q-antigo"], res.Items.Select(c => c.NumeroContrato));
+    }
+
+    [Theory]
+    [InlineData(false, new[] { "Q-recente", "A-novo", "A-antigo", "Q-antigo" })]
+    [InlineData(true, new[] { "Q-antigo", "A-antigo", "A-novo", "Q-recente" })]
+    public async Task Listar_OrdenaPelaColunaEscolhida_SemSepararQuitados(bool desc, string[] esperado)
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        AdicionarQuatroContratos(db, tenantId, contatoId);
+        await db.SaveChangesAsync();
+
+        var res = await service.ListarAsync(tenantId,
+            new FiltroContratoHonorario(null, null, null, null, 1, 20, Ordem: "total", Desc: desc));
+
+        Assert.Equal(esperado, res.Items.Select(c => c.NumeroContrato));
+    }
+
+    [Fact]
+    public async Task Listar_OrdenaPeloStatus_EmAtrasoPrimeiro()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var t0 = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        AdicionarContrato(db, tenantId, contatoId, "Quitado", StatusContratoHonorario.Quitado, 100m, t0);
+        AdicionarContrato(db, tenantId, contatoId, "Ativo", StatusContratoHonorario.Ativo, 100m, t0);
+        AdicionarContrato(db, tenantId, contatoId, "Atrasado", StatusContratoHonorario.Ativo, 100m, t0);
+        await db.SaveChangesAsync();
+        var atrasado = db.ContratosHonorarios.Single(c => c.NumeroContrato == "Atrasado");
+        db.ParcelasHonorarios.Add(new ParcelaHonorario
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, ContratoId = atrasado.Id, Numero = 1,
+            ValorOriginal = 100m, Vencimento = DateTime.UtcNow.Date.AddDays(-10), Status = StatusParcelaHonorario.Pendente
+        });
+        await db.SaveChangesAsync();
+
+        var res = await service.ListarAsync(tenantId,
+            new FiltroContratoHonorario(null, null, null, null, 1, 20, Ordem: "status"));
+
+        Assert.Equal(["Atrasado", "Ativo", "Quitado"], res.Items.Select(c => c.NumeroContrato));
+    }
+
     [Fact]
     public async Task CriarContrato_Parcelado_12Meses_SomaIgualValorTotal()
     {
