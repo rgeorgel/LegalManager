@@ -87,6 +87,7 @@
     .tab-btn { padding:10px 20px; border:none; background:none; font-size:14px; font-weight:500; color:var(--color-text-muted); cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
     .tab-btn:hover { color:var(--color-primary); }
     .tab-btn.active { color:var(--color-primary); border-bottom-color:var(--color-primary); }
+    .info-layout { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:20px; align-items:start; }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
     .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
@@ -107,7 +108,7 @@
     .status-pendente { background:#fef3c7; color:#92400e; font-size:11px; padding:2px 8px; border-radius:4px; }
     .status-vencido  { background:#fee2e2; color:#b91c1c; font-size:11px; padding:2px 8px; border-radius:4px; }
     .status-cancelado{ background:#f3f4f6; color:#6b7280; font-size:11px; padding:2px 8px; border-radius:4px; }
-    @media(max-width:768px){ .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} .field-tip-popup{left:auto;right:0;transform:none;} .field-tip-popup::after{left:auto;right:10px;transform:none;} }
+    @media(max-width:768px){ .info-layout{grid-template-columns:minmax(0,1fr);} .tabs{overflow-x:auto;scrollbar-width:none;border-bottom:none;box-shadow:inset 0 -2px 0 var(--color-border);} .tabs::-webkit-scrollbar{display:none;} .tab-btn{margin-bottom:0;padding:10px 14px;} .info-grid{grid-template-columns:1fr 1fr;} .andamento-item{grid-template-columns:1fr; gap:6px;} .field-tip-popup{left:auto;right:0;transform:none;} .field-tip-popup::after{left:auto;right:10px;transform:none;} }
     .field-tip { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:#e5e7eb; color:#6b7280; font-size:10px; font-weight:700; cursor:help; position:relative; flex-shrink:0; user-select:none; vertical-align:middle; margin-left:4px; }
     .field-tip:hover .field-tip-popup, .field-tip:focus .field-tip-popup { display:block; }
     .field-tip-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1f2937; color:#f3f4f6; border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:400; width:280px; line-height:1.55; z-index:300; white-space:normal; box-shadow:0 4px 16px rgba(0,0,0,.2); pointer-events:none; }
@@ -243,7 +244,7 @@
 
     <!-- Tab: Informações -->
     <div class="tab-content active" id="tab-info" role="tabpanel">
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start">
+      <div class="info-layout">
         <div>
           <!-- Informações gerais -->
           <div class="card" style="margin-bottom:20px">
