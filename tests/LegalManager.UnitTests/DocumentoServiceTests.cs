@@ -177,6 +177,49 @@ public class DocumentoServiceTests
     }
 
     [Fact]
+    public async Task GetAllAsync_Raiz_ReturnsOnlyDocumentsWithoutPasta()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var tenantContext = CreateTenantContext(tenant.Id, usuario.Id);
+        var service = new DocumentoService(ctx, tenantContext, CreateMockStorageService());
+
+        var pasta = new Pasta
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = "Contratos",
+            EntidadeTipo = EntidadeTipo.Documento,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Pastas.Add(pasta);
+        Documento NovoDoc(string nome, Guid? pastaId) => new()
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = nome,
+            ObjectKey = $"{tenant.Id}/{nome}",
+            ContentType = "application/pdf",
+            TamanhoBytes = 100,
+            Tipo = TipoDocumento.Prova,
+            CriadoEm = DateTime.UtcNow,
+            UploadedPorId = usuario.Id,
+            PastaId = pastaId
+        };
+        ctx.Documentos.AddRange(NovoDoc("raiz.pdf", null), NovoDoc("na-pasta.pdf", pasta.Id));
+        await ctx.SaveChangesAsync();
+
+        var raiz = (await service.GetAllAsync(raiz: true)).ToList();
+        Assert.Single(raiz);
+        Assert.Equal("raiz.pdf", raiz[0].Nome);
+
+        var naPasta = (await service.GetAllAsync(pasta.Id, raiz: true)).ToList();
+        Assert.Single(naPasta);
+        Assert.Equal("na-pasta.pdf", naPasta[0].Nome);
+
+        Assert.Equal(2, (await service.GetAllAsync()).Count());
+    }
+
+    [Fact]
     public async Task GetByProcessoAsync_ReturnsFilteredDocuments()
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();

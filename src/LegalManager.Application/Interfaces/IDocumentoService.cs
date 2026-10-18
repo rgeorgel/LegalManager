@@ -7,7 +7,8 @@ public interface IDocumentoService
     Task<DocumentoDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IEnumerable<DocumentoDto>> GetByProcessoAsync(Guid processoId, CancellationToken ct = default);
     Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, CancellationToken ct = default);
-    Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, CancellationToken ct = default);
+    // raiz = true: só documentos sem pasta (ignorado quando pastaId é informado).
+    Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, bool raiz = false, CancellationToken ct = default);
     Task<IEnumerable<DocumentoDto>> GetByPastaAsync(Guid pastaId, CancellationToken ct = default);
     Task<DocumentoDto> UploadAsync(Stream fileStream, string fileName, string contentType, DocumentoUploadDto uploadInfo, Guid? uploadedPorId = null, CancellationToken ct = default);
     Task UpdatePastaAsync(Guid id, Guid? pastaId, CancellationToken ct = default);

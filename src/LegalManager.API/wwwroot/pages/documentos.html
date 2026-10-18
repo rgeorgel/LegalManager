@@ -1151,8 +1151,8 @@ async function loadDocumentos() {
   const tbody = document.getElementById('docTableBody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px">Carregando...</td></tr>';
   try {
-    let url = '/documentos';
-    if (currentPastaId) url += `?pastaId=${currentPastaId}`;
+    // Raiz mostra só os documentos sem pasta; os demais ficam dentro das suas pastas.
+    const url = currentPastaId ? `/documentos?pastaId=${currentPastaId}` : '/documentos?raiz=true';
     documentos = await apiFetch(url);
     renderDocsTable(documentos);
   } catch (err) {

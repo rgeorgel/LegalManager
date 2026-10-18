@@ -22,9 +22,9 @@ public class DocumentosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll([FromQuery] Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetAll([FromQuery] Guid? pastaId = null, [FromQuery] bool raiz = false, CancellationToken ct = default)
     {
-        var result = await _service.GetAllAsync(pastaId, ct);
+        var result = await _service.GetAllAsync(pastaId, raiz, ct);
         return Ok(result);
     }
 

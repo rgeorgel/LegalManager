@@ -61,7 +61,7 @@ public class DocumentoService : IDocumentoService
         return documentos.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, bool raiz = false, CancellationToken ct = default)
     {
         var query = _context.Documentos
             .Include(d => d.Processo)
@@ -71,6 +71,8 @@ public class DocumentoService : IDocumentoService
 
         if (pastaId.HasValue)
             query = query.Where(d => d.PastaId == pastaId.Value);
+        else if (raiz)
+            query = query.Where(d => d.PastaId == null);
 
         var documentos = await query
             .OrderByDescending(d => d.CriadoEm)
