@@ -546,8 +546,12 @@ tbody tr:last-child td { border-bottom: none; }
 @media (max-width: 768px) {
   .hamburger { display: flex; }
 
-  .header-user-name { display: none; }
-  .header-logo img { height: 55px; }
+  /* Sem nome do usuário/escritório (e o "|" entre eles): os ícones + Sair já ocupam a largura do celular. */
+  .header-user-name, .header-user-name + span, .header-tenant { display: none; }
+  .header { padding: 0 12px; gap: 8px; }
+  .header-user { gap: 4px; flex-shrink: 0; }
+  .header-logo { min-width: 0; }
+  .header-logo img { height: 55px; max-width: 100%; object-fit: contain; }
 
   .app-layout {
     grid-template-columns: 1fr;
@@ -623,7 +627,8 @@ tbody tr:last-child td { border-bottom: none; }
 
   .filter-bar { flex-direction: column; }
   .filter-bar .form-control { width: 100%; }
-  .filter-bar .multiselect { width: 100%; }
+  /* As páginas dão um flex-basis inline (ex.: flex:0 1 200px) para o desktop; em coluna ele viraria altura. */
+  .filter-bar .multiselect { width: 100%; flex: 0 0 auto !important; }
   .multiselect-panel { max-width: none; width: 100%; }
 
   /* Cells with multiple action buttons — stack vertically and fill width */
