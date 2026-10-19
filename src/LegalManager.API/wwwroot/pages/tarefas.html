@@ -170,6 +170,13 @@
         <div id="filtStatus" style="flex:0 1 200px"></div>
         <div id="filtPrioridade" style="flex:0 1 200px"></div>
         <div id="filtTipo" style="flex:0 1 170px"></div>
+        <select id="filtDiasEncerradas" class="form-control" style="flex:0 1 auto;width:auto" title="Concluídas e canceladas exibidas; pendentes e em andamento aparecem sempre">
+          <option value="3">Concluídas/canceladas: últimos 3 dias</option>
+          <option value="7">Concluídas/canceladas: últimos 7 dias</option>
+          <option value="15">Concluídas/canceladas: últimos 15 dias</option>
+          <option value="30">Concluídas/canceladas: últimos 30 dias</option>
+          <option value="">Concluídas/canceladas: todas</option>
+        </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
           <input type="checkbox" id="filtAtrasada"> Apenas atrasadas
         </label>
@@ -405,8 +412,28 @@ function getFilters() {
     prioridade: filtPrioridade.getValues(),
     tipo: filtTipo.getValues(),
     atrasada: document.getElementById('filtAtrasada').checked ? 'true' : '',
+    dias: diasEncerradas(),
   };
 }
+
+// Concluídas e canceladas só aparecem se encerradas no período escolhido (padrão 3 dias, lembrado
+// no navegador), pra lista não crescer sem fim; pendentes e em andamento aparecem sempre.
+// Vazio = todo o período. Function (hoisted): o init pode chamar loadTarefas antes daqui.
+function diasEncerradas() {
+  const sel = document.getElementById('filtDiasEncerradas');
+  if (!sel.dataset.restaurado) {
+    sel.dataset.restaurado = '1';
+    try {
+      const salvo = localStorage.getItem('tarefas.listaDiasEncerradas');
+      if (salvo !== null && [...sel.options].some(o => o.value === salvo)) sel.value = salvo;
+    } catch {}
+  }
+  return sel.value;
+}
+document.getElementById('filtDiasEncerradas').addEventListener('change', e => {
+  try { localStorage.setItem('tarefas.listaDiasEncerradas', e.target.value); } catch {}
+  loadTarefas(1);
+});
 
 async function loadTarefas(page = 1) {
   currentPage = page;
@@ -417,6 +444,7 @@ async function loadTarefas(page = 1) {
   f.prioridade.forEach(v => params.append('prioridade', v));
   f.tipo.forEach(v => params.append('tipo', v));
   if (f.atrasada) params.set('atrasada', 'true');
+  if (f.dias) params.set('concluidasUltimosDias', f.dias);
 
   try {
     const data = await apiFetch(`/tarefas?${params}`);
@@ -846,6 +874,9 @@ async function onDrop(e) {
 
 document.getElementById('btnVerConcluidas').addEventListener('click', () => {
   filtStatus.setValues(['Concluida']);
+  // Só nesta visita (não grava no localStorage): o botão promete "todas".
+  diasEncerradas();
+  document.getElementById('filtDiasEncerradas').value = '';
   switchTab('tarefas');
   loadTarefas(1);
 });

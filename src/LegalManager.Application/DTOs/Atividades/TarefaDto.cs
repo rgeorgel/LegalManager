@@ -97,7 +97,8 @@ public record TarefaFiltroDto(
     int Page = 1,
     int PageSize = 20,
     IReadOnlyCollection<TipoTarefa>? Tipo = null,
-    // Esconde concluídas há mais de N dias (por ConcluidaEm); demais status não são afetados.
+    // Esconde concluídas (por ConcluidaEm) e canceladas (por AtualizadoEm) há mais de N dias;
+    // demais status não são afetados.
     int? ConcluidasUltimosDias = null
 );
 

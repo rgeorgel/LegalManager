@@ -136,9 +136,13 @@ public class TarefaService : ITarefaService
 
         if (filtro.ConcluidasUltimosDias is int dias)
         {
-            // ConcluidaEm é carimbo do servidor (UTC real), então o corte é em UTC.
+            // Carimbos do servidor (UTC real), então o corte é em UTC. Cancelada não tem data
+            // própria: usa a última alteração (o cancelamento) ou, na falta, a criação.
             var corte = DateTime.UtcNow.AddDays(-dias);
-            query = query.Where(t => t.Status != StatusTarefa.Concluida || t.ConcluidaEm >= corte);
+            query = query.Where(t =>
+                (t.Status != StatusTarefa.Concluida && t.Status != StatusTarefa.Cancelada)
+                || (t.Status == StatusTarefa.Concluida && t.ConcluidaEm >= corte)
+                || (t.Status == StatusTarefa.Cancelada && (t.AtualizadoEm ?? t.CriadoEm) >= corte));
         }
 
         var total = await query.CountAsync(ct);
@@ -346,6 +350,7 @@ public class TarefaService : ITarefaService
             ?? throw new KeyNotFoundException("Tarefa não encontrada.");
 
         tarefa.Status = novoStatus;
+        tarefa.AtualizadoEm = DateTime.UtcNow;
         if (novoStatus == StatusTarefa.Concluida)
             tarefa.ConcluidaEm = DateTime.UtcNow;
 

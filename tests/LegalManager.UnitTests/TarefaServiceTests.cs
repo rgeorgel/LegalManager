@@ -177,6 +177,29 @@ public class TarefaServiceTests
     }
 
     [Fact]
+    public async Task GetAllAsync_ConcluidasUltimosDias_EscondeCanceladasAntigas()
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await svc.CreateAsync(new CreateTarefaDto("Aberta", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        var recente = await svc.CreateAsync(new CreateTarefaDto("Recente", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.MoverKanbanAsync(recente.Id, tenant.Id, StatusTarefa.Cancelada);
+        var antiga = await svc.CreateAsync(new CreateTarefaDto("Antiga", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.MoverKanbanAsync(antiga.Id, tenant.Id, StatusTarefa.Cancelada);
+        var entidade = (await ctx.Tarefas.FindAsync(antiga.Id))!;
+        entidade.AtualizadoEm = DateTime.UtcNow.AddDays(-8);
+        entidade.CriadoEm = DateTime.UtcNow.AddDays(-10);
+        await ctx.SaveChangesAsync();
+
+        var tres = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null, ConcluidasUltimosDias: 3));
+        var quinze = await svc.GetAllAsync(new TarefaFiltroDto(null, null, null, null, null, null, null, ConcluidasUltimosDias: 15));
+
+        Assert.Equal(["Aberta", "Recente"], tres.Items.Select(t => t.Titulo).Order());
+        Assert.Equal(3, quinze.Total);
+    }
+
+    [Fact]
     public async Task GetAllAsync_ComVariosValores_TrazTarefasComQualquerUmDeles()
     {
         var (ctx, tenant, usuario) = await SeedAsync();
