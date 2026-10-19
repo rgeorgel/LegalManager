@@ -27,9 +27,13 @@ public class ProcessoMonitorado
 
 | Plano | Limite de Processos Monitorados |
 |-------|----------------------------------|
-| Free | 40 |
-| Pro | 500 |
+| Free | 5 |
+| Plus | 20 |
+| Pro | 40 |
+| Max | 80 |
 | Enterprise | 500 |
+
+> Fonte da verdade: `PlanoRestricoes.MaxProcessosMonitorados` (`src/LegalManager.Domain/PlanoRestricoes.cs`).
 
 > Anteriormente o plano Free não permitia captura (`MaxNomesCaptura = 0`). Agora Free permite monitoramento de processos via DataJud.
 

@@ -173,57 +173,7 @@ public class EmailService : IEmailService
                 </p>
                 <p>Se quiser manter os recursos avançados, veja abaixo o que muda entre o plano Free e o <strong>plano Plus</strong>:</p>
 
-                <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:20px 0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
-                  <thead>
-                    <tr style="background:#f9fafb">
-                      <th style="text-align:left;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb">Recurso</th>
-                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;width:80px">Free</th>
-                      <th style="text-align:center;padding:12px 16px;font-size:13px;color:#1a56db;font-weight:700;border-bottom:1px solid #e5e7eb;width:80px;background:#eff6ff">Plus</th>
-                    </tr>
-                  </thead>
-                  <tbody style="font-size:14px;color:#1f2937">
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Usuários</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">1</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Processos monitorados</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">10</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">20</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Armazenamento</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6">1 GB</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff">2 GB</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Módulo Financeiro</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Honorários e Contratos</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Indicadores e relatórios</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px;border-bottom:1px solid #f3f4f6">Calculadora de prazos</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;color:#b91c1c">✕</td>
-                      <td style="text-align:center;padding:10px 16px;border-bottom:1px solid #f3f4f6;background:#eff6ff;color:#047857;font-weight:600">✓</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 16px">Portal do Cliente</td>
-                      <td style="text-align:center;padding:10px 16px;color:#b91c1c">✕</td>
-                      <td style="text-align:center;padding:10px 16px;background:#eff6ff;color:#047857;font-weight:600">✓</td>
-                    </tr>
-                  </tbody>
-                </table>
+            {TabelaComparativaPlanos(PlanoTipo.Plus)}
 
                 <p style="text-align:center;margin:28px 0 8px">
                   <a href="{linkAssinatura}"

@@ -1,3 +1,4 @@
+using LegalManager.Domain;
 using LegalManager.Domain.Enums;
 ﻿using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Services;
@@ -106,6 +107,21 @@ public class EmailServiceTests
 
         Assert.NotNull(capture.Message);
         Assert.Contains("5 dia(s)", capture.Message!.HtmlBody);
+    }
+
+    [Fact]
+    public async Task EnviarTrialExpirandoAsync_TabelaUsaLimitesReaisDosPlanos()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarTrialExpirandoAsync("admin@test.com", "Escritório Teste", 3, CancellationToken.None);
+
+        var html = capture.Message!.HtmlBody;
+        var free = PlanoRestricoes.MaxProcessosMonitorados(PlanoTipo.Free);
+        var plus = PlanoRestricoes.MaxProcessosMonitorados(PlanoTipo.Plus);
+        Assert.Matches($@"Processos monitorados</td>\s*<td[^>]*>{free}</td>\s*<td[^>]*>{plus}</td>", html);
     }
 
     [Fact]
