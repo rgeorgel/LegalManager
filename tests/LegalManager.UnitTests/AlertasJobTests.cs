@@ -1,4 +1,4 @@
-using LegalManager.Application.Interfaces;
+﻿using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure;
@@ -269,6 +269,8 @@ public class AlertasJobTests
         var notif = await ctx.Notificacoes.FirstOrDefaultAsync();
         Assert.NotNull(notif);
         Assert.Equal(TipoNotificacao.TrialExpirando, notif.Tipo);
+        var alerta = await ctx.Notificacoes.SingleAsync(n => n.Titulo == "Trial expira em 3 dia(s)");
+        Assert.Equal("/pages/assinatura.html", alerta.Url);
     }
 
     private static async Task<(AppDbContext ctx, Guid tenantId, Guid adminId)> SeedPromoAsync(

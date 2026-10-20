@@ -326,7 +326,7 @@ public class AlertasJob
                                 TipoNotificacao.TrialExpirando,
                                 $"Trial expira em {dias} dia(s)",
                                 $"Seu período de trial expira em {dias} dia(s). Assine para continuar.",
-                                "/pages/configuracoes.html", chave);
+                                "/pages/assinatura.html", chave);
                     }
                     catch (Exception ex)
                     {
