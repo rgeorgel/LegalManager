@@ -120,7 +120,7 @@ public class EscavadorMovimentacoesPollingJob
                         TenantId = processoCompleto.TenantId,
                         Data = mov.Data ?? agora,
                         Tipo = MapearTipo(mov.Tipo, mov.ConteudoHtml),
-                        Descricao = !string.IsNullOrWhiteSpace(mov.Snippet) ? mov.Snippet : ResumirHtml(mov.ConteudoHtml),
+                        Descricao = !string.IsNullOrWhiteSpace(mov.Snippet) ? mov.Snippet : TextoDoHtml(mov.ConteudoHtml),
                         Fonte = FonteAndamento.Automatico,
                         CriadoEm = agora
                     };
@@ -181,11 +181,12 @@ public class EscavadorMovimentacoesPollingJob
         };
     }
 
-    private static string ResumirHtml(string? html)
+    // Texto integral (sem tags) — o andamento guarda a movimentação inteira, sem corte.
+    private static string TextoDoHtml(string? html)
     {
         if (string.IsNullOrWhiteSpace(html)) return "Atualização via Escavador";
         var noTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
         var compact = System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
-        return compact.Length > 500 ? compact[..500] + "…" : compact;
+        return compact;
     }
 }

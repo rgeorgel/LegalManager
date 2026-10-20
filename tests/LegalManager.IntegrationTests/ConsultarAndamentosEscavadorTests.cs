@@ -102,6 +102,19 @@ public class ConsultarAndamentosEscavadorTests
     }
 
     [Fact]
+    public async Task MovimentacaoLonga_GuardaTextoIntegralSemCorte()
+    {
+        var (ctx, tenantId, processoId) = await SeedAsync();
+        var sentenca = "SENTENÇA " + string.Join(" ", Enumerable.Repeat("Julgo improcedente o pedido.", 300));
+        var escavador = EscavadorRetornando(Mov(new DateTime(2026, 9, 20), sentenca));
+
+        await CreateController(ctx, tenantId, PlanoTipo.Pro, escavador).ExecutarMonitoramento(processoId, CancellationToken.None);
+
+        var andamento = await ctx.Andamentos.SingleAsync(a => a.ProcessoId == processoId && a.Data == new DateTime(2026, 9, 20));
+        Assert.Equal(sentenca, andamento.Descricao);
+    }
+
+    [Fact]
     public async Task ConsultarDuasVezes_NaoDuplicaAndamentosDoEscavador()
     {
         var (ctx, tenantId, processoId) = await SeedAsync();

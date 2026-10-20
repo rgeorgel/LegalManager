@@ -451,7 +451,7 @@ public class ProcessosController : ControllerBase
         var agora = DateTime.UtcNow;
         var novos = resultado.Data
             .Where(m => m.Data.HasValue && (ultimaData == null || m.Data.Value > ultimaData.Value))
-            .Select(m => new { Data = m.Data!.Value, Descricao = ResumirConteudoEscavador(m.Snippet ?? m.ConteudoHtml), m.Tipo })
+            .Select(m => new { Data = m.Data!.Value, Descricao = TextoDoConteudoEscavador(m.Snippet ?? m.ConteudoHtml), m.Tipo })
             .DistinctBy(m => (m.Data, m.Descricao))
             .Select(m => new Andamento
             {
@@ -474,12 +474,13 @@ public class ProcessosController : ControllerBase
         return novos.Count;
     }
 
-    private static string ResumirConteudoEscavador(string? html)
+    // Texto integral (sem tags): a coluna Descricao não tem limite e a lista recolhe os longos com "ver mais".
+    private static string TextoDoConteudoEscavador(string? html)
     {
         if (string.IsNullOrWhiteSpace(html)) return "Movimentação via Escavador";
         var semTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
         var compacto = System.Text.RegularExpressions.Regex.Replace(semTags, @"\s+", " ").Trim();
-        return compacto.Length > 2000 ? compacto[..2000] + "…" : compacto;
+        return compacto;
     }
 
     private static TipoAndamento MapearTipoEscavador(string? tipo, string? conteudo)

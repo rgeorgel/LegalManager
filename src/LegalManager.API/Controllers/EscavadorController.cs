@@ -135,7 +135,7 @@ public class EscavadorController : ControllerBase
                 TenantId = processo.TenantId,
                 Data = dataAndamento,
                 Tipo = MapearTipo(conteudo.Tipo, conteudo.ConteudoHtml),
-                Descricao = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : ResumirHtml(conteudo.ConteudoHtml),
+                Descricao = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : TextoDoHtml(conteudo.ConteudoHtml),
                 Fonte = FonteAndamento.Automatico,
                 CriadoEm = agora
             };
@@ -347,12 +347,18 @@ public class EscavadorController : ControllerBase
         };
     }
 
-    private static string ResumirHtml(string? html)
+    // Andamento guarda o texto integral; a notificação só um resumo.
+    private static string TextoDoHtml(string? html)
     {
         if (string.IsNullOrWhiteSpace(html)) return "Atualização via Escavador";
         var noTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
-        var compact = System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
-        return compact.Length > 500 ? compact[..500] + "…" : compact;
+        return System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
+    }
+
+    private static string ResumirHtml(string? html)
+    {
+        var texto = TextoDoHtml(html);
+        return texto.Length > 500 ? texto[..500] + "…" : texto;
     }
 }
 
