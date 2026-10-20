@@ -11,6 +11,7 @@ public record TenantListItemDto(
     DateTime? TrialExpiraEm,
     DateTime? PlanoExpiraEm,
     int ProcessoCount,
+    int ProcessoAtivoCount,
     int MonitoradoCount,
     int MonitoradoDiarioCount,
     int MonitoradoSemanalCount,
@@ -55,6 +56,7 @@ public record TenantDetailDto(
     string? AbacatePayBillingId,
     string? StripeSubscriptionId,
     int ProcessoCount,
+    int ProcessoAtivoCount,
     int MonitoradoCount,
     int MonitoradoDiarioCount,
     int MonitoradoSemanalCount,
@@ -85,7 +87,7 @@ public record TenantDetailDto(
 );
 
 /// <summary>OAB usada na importação de processos do onboarding (gravada no usuário, não em TenantOabs).</summary>
-public record OabImportadaResumoDto(string Uf, string Numero, string NomeUsuario, int TotalProcessos);
+public record OabImportadaResumoDto(string Uf, string Numero, string NomeUsuario, int TotalProcessos, int ProcessosAtivos);
 
 public record TenantOabResumoDto(
     Guid Id,

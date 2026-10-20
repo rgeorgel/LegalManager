@@ -282,7 +282,8 @@
       return `<div class="ativ-grid">
           <div class="ativ-linha">
             <span class="ativ-label">Processos</span><strong>${t.processoCount}</strong>
-            <span class="ativ-badges" title="Monitoramento diário ${t.monitoradoDiarioCount} · semanal ${t.monitoradoSemanalCount} (Escavador)">
+            <span class="ativ-badges" title="${t.processoAtivoCount} ativo(s) de ${t.processoCount} cadastrado(s) · monitoramento diário ${t.monitoradoDiarioCount} · semanal ${t.monitoradoSemanalCount} (Escavador)">
+              <span class="badge badge-green">Ativos ${t.processoAtivoCount}</span>
               <span class="badge badge-red">D ${t.monitoradoDiarioCount}</span>
               <span class="badge badge-blue">S ${t.monitoradoSemanalCount}</span>
             </span>

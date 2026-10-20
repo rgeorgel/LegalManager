@@ -153,6 +153,7 @@ public class SuperAdminController(
             {
                 TenantId = g.Key,
                 Count = g.Count(),
+                Ativos = g.Count(p => p.Status == StatusProcesso.Ativo),
                 Monitorados = g.Count(p => p.Monitorado),
                 MonitoradosDiario = g.Count(p => p.Monitorado && !p.MonitoramentoSemanal),
                 MonitoradosSemanal = g.Count(p => p.Monitorado && p.MonitoramentoSemanal)
@@ -258,6 +259,7 @@ public class SuperAdminController(
                 userCounts.GetValueOrDefault(t.Id),
                 t.TrialExpiraEm, t.PlanoExpiraEm,
                 pc?.Count ?? 0,
+                pc?.Ativos ?? 0,
                 pc?.Monitorados ?? 0,
                 pc?.MonitoradosDiario ?? 0,
                 pc?.MonitoradosSemanal ?? 0,
@@ -302,6 +304,7 @@ public class SuperAdminController(
             .Select(g => new
             {
                 Count = g.Count(),
+                Ativos = g.Count(p => p.Status == StatusProcesso.Ativo),
                 Monitorados = g.Count(p => p.Monitorado),
                 MonitoradosDiario = g.Count(p => p.Monitorado && !p.MonitoramentoSemanal),
                 MonitoradosSemanal = g.Count(p => p.Monitorado && p.MonitoramentoSemanal)
@@ -345,7 +348,8 @@ public class SuperAdminController(
                 u.OabImportadaUf ?? "",
                 u.OabImportadaNumero!,
                 u.Nome,
-                db.Processos.Count(p => p.TenantId == id && p.AdvogadoResponsavelId == u.Id)))
+                db.Processos.Count(p => p.TenantId == id && p.AdvogadoResponsavelId == u.Id),
+                db.Processos.Count(p => p.TenantId == id && p.AdvogadoResponsavelId == u.Id && p.Status == StatusProcesso.Ativo)))
             .ToListAsync(ct);
 
         var oabTotal = oabs.Count;
@@ -366,6 +370,7 @@ public class SuperAdminController(
             tenant.AbacatePayBillingId,
             tenant.StripeSubscriptionId,
             processoStats?.Count ?? 0,
+            processoStats?.Ativos ?? 0,
             processoStats?.Monitorados ?? 0,
             processoStats?.MonitoradosDiario ?? 0,
             processoStats?.MonitoradosSemanal ?? 0,

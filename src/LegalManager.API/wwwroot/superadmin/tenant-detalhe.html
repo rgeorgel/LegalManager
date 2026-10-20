@@ -295,7 +295,7 @@
           <div class="detail-stat-card">
             <div style="${statTitulo}">Processos</div>
             <div style="font-size:22px;font-weight:700;margin-top:4px">${t.processoCount}</div>
-            <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.monitoradoCount} monitorados</div>
+            <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">${t.processoAtivoCount} ativos · ${t.monitoradoCount} monitorados</div>
             <div class="badges-row" style="justify-content:center;margin-top:4px">
               <span class="badge badge-red" title="Diário">D ${t.monitoradoDiarioCount}</span>
               <span class="badge badge-blue" title="Semanal">S ${t.monitoradoSemanalCount}</span>
@@ -376,7 +376,7 @@
         <div class="lateral-item">
           <div class="lateral-topo">
             <span class="lateral-nome">${esc(o.uf)}/${esc(o.numero)}</span>
-            <span class="badge badge-gray">${o.totalProcessos} processo(s)</span>
+            <span class="badge badge-gray">${o.totalProcessos} processo(s) · ${o.processosAtivos} ativo(s)</span>
           </div>
           <div class="lateral-info">${esc(o.nomeUsuario)}</div>
         </div>`).join('')}</div>` : '';
