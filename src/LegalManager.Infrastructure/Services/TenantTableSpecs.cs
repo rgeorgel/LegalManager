@@ -56,6 +56,7 @@ internal static class TenantTableSpecs
         new("TraducoesAndamentos",      typeof(TraducaoAndamento),            TenantFilterKind.TenantId),
 
         new("Eventos",                  typeof(Evento),                       TenantFilterKind.TenantId),
+        new("RecorrenciasTarefa",       typeof(RecorrenciaTarefa),            TenantFilterKind.TenantId),
         new("Tarefas",                  typeof(Tarefa),                       TenantFilterKind.TenantId),
         new("TarefaTags",               typeof(TarefaTag),                    TenantFilterKind.TarefaIdInTenant),
 

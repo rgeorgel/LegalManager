@@ -149,7 +149,10 @@ public class EventoService : IEventoService
                 e.Responsavel != null ? e.Responsavel.Nome : null,
                 e.Processo != null ? e.Processo.NumeroCNJ : null,
                 e.DataHora < now ? "Passado" : "Futuro",
-                EventoCor(e.Tipo.ToString())
+                EventoCor(e.Tipo.ToString()),
+                null,
+                false,
+                null
             ))
             .ToListAsync(ct);
 
@@ -178,11 +181,68 @@ public class EventoService : IEventoService
                 t.Responsavel != null ? t.Responsavel.Nome : null,
                 t.Processo != null ? t.Processo.NumeroCNJ : null,
                 t.Prazo.Value < now ? "Atrasada" : "Pendente",
-                "#6b7280"
+                "#6b7280",
+                t.RecorrenciaId,
+                false,
+                null
             ))
             .ToListAsync(ct);
 
-        return eventos.Concat(tarefas).OrderBy(i => i.DataHora);
+        var previstas = filtro.IncluirPrevistas
+            ? await PrevistasRecorrenciaAsync(filtro, tenantId, ct)
+            : new List<AgendaItemDto>();
+
+        return eventos.Concat(tarefas).Concat(previstas).OrderBy(i => i.DataHora);
+    }
+
+    // Ocorrências futuras de tarefas recorrentes que ainda não viraram tarefa (só a próxima é
+    // criada de cada vez) — aparecem na agenda para o usuário ver a série inteira.
+    private async Task<List<AgendaItemDto>> PrevistasRecorrenciaAsync(AgendaFiltroDto filtro, Guid tenantId, CancellationToken ct)
+    {
+        var seriesQuery = _context.RecorrenciasTarefa
+            .Where(r => r.TenantId == tenantId && r.Ativa
+                && (r.TerminaEm == null || r.TerminaEm >= filtro.De.Date)
+                && (r.UltimaGerada == null || r.UltimaGerada < filtro.Ate));
+        if (filtro.ResponsavelId.HasValue)
+            seriesQuery = seriesQuery.Where(r => r.ResponsavelId == filtro.ResponsavelId.Value);
+        if (filtro.ProcessoId.HasValue)
+            seriesQuery = seriesQuery.Where(r => r.ProcessoId == filtro.ProcessoId.Value);
+
+        var series = await seriesQuery
+            .Select(r => new
+            {
+                Serie = r,
+                NomeResponsavel = r.Responsavel != null ? r.Responsavel.Nome : null,
+                NumeroCNJ = r.Processo != null ? r.Processo.NumeroCNJ : null,
+            })
+            .ToListAsync(ct);
+        if (series.Count == 0) return new();
+
+        var ids = series.Select(s => s.Serie.Id).ToList();
+        var ultimas = (await _context.Tarefas
+                .Where(t => t.TenantId == tenantId && t.RecorrenciaId != null && ids.Contains(t.RecorrenciaId.Value))
+                .Select(t => new { SerieId = t.RecorrenciaId!.Value, t.Id, t.Prazo })
+                .ToListAsync(ct))
+            .GroupBy(t => t.SerieId)
+            .ToDictionary(g => g.Key, g => g.MaxBy(t => t.Prazo)!.Id);
+
+        return series
+            .SelectMany(s => RecorrenciaTarefas.Previstas(s.Serie, filtro.De, filtro.Ate)
+                .Select(data => new AgendaItemDto(
+                    RecorrenciaTarefas.IdPrevista(s.Serie.Id, data),
+                    s.Serie.Titulo,
+                    "Tarefa",
+                    data,
+                    null,
+                    null,
+                    s.NomeResponsavel,
+                    s.NumeroCNJ,
+                    "Prevista",
+                    "#9ca3af",
+                    s.Serie.Id,
+                    true,
+                    ultimas.TryGetValue(s.Serie.Id, out var tarefaId) ? tarefaId : null)))
+            .ToList();
     }
 
     private async Task<EventoResponseDto?> LoadResponseAsync(Guid id, CancellationToken ct)

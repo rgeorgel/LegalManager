@@ -75,7 +75,9 @@ public class TarefasController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TarefaResponseDto>> Create([FromBody] CreateTarefaDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto, ct);
+        TarefaResponseDto result;
+        try { result = await _service.CreateAsync(dto, ct); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Tarefa, result.Id, null, dto), ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
@@ -94,6 +96,21 @@ public class TarefasController : ControllerBase
         {
             return NotFound();
         }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>Para de criar ocorrências da série da tarefa; as já criadas continuam.</summary>
+    [HttpPost("{id:guid}/encerrar-recorrencia")]
+    public async Task<IActionResult> EncerrarRecorrencia(Guid id, CancellationToken ct)
+    {
+        var existing = await _service.GetByIdAsync(id, ct);
+        if (existing is null) return NotFound();
+        await _service.EncerrarRecorrenciaAsync(id, ct);
+        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Tarefa, id, existing, new { Recorrencia = "Encerrada" }, HttpContext.GetClientIpAddress()), ct);
+        return NoContent();
     }
 
     [HttpPost("{id:guid}/concluir")]
@@ -113,11 +130,12 @@ public class TarefasController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct, [FromQuery] bool encerrarRecorrencia = false)
     {
         try
         {
             var existing = await _service.GetByIdAsync(id, ct);
+            if (encerrarRecorrencia) await _service.EncerrarRecorrenciaAsync(id, ct);
             await _service.DeleteAsync(id, ct);
             await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Delete, AuditEntities.Tarefa, id, existing, null, HttpContext.GetClientIpAddress()), ct);
             return NoContent();

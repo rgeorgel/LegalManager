@@ -130,6 +130,19 @@
     .detail-value { flex:1; }
     .detail-description { margin-top:12px; padding:12px; background:#f9fafb; border-radius:var(--radius); font-size:13px; line-height:1.5; white-space:pre-wrap; }
     .detail-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    /* Repetição */
+    .badge-recorrente { background:var(--color-primary-light); color:var(--color-primary); }
+    .rep-linha { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; font-size:14px; }
+    .rep-linha .form-control { width:auto; }
+    .rep-dias { display:flex; gap:4px; flex-wrap:wrap; }
+    .rep-dias label { display:inline-flex; align-items:center; justify-content:center; min-width:40px; padding:4px 8px; border:1px solid var(--color-border); border-radius:999px; font-size:12px; cursor:pointer; user-select:none; }
+    .rep-dias input { position:absolute; opacity:0; pointer-events:none; }
+    .rep-dias label:has(input:checked) { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
+    .rep-dias label:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }
+    .rep-hint { font-size:12px; color:var(--color-text-muted); margin-top:6px; }
+    .rep-hint:empty { display:none; }
+    .rep-aplicar { display:flex; gap:6px; align-items:flex-start; margin-top:8px; font-size:13px; cursor:pointer; }
+    #fRepDetalhes:disabled { opacity:.55; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -279,6 +292,52 @@
           <label class="form-label">Prazo</label>
           <input type="datetime-local" id="fPrazo" class="form-control">
         </div>
+        <div class="form-group" id="fRepGroup">
+          <label class="form-label" for="fRepetir">Repetir</label>
+          <select id="fRepetir" class="form-control">
+            <option value="">Não repete</option>
+            <option value="Diaria">Diariamente</option>
+            <option value="Semanal">Semanalmente</option>
+            <option value="Mensal">Mensalmente</option>
+          </select>
+          <fieldset id="fRepDetalhes" style="border:0;padding:0;margin:0;display:none">
+            <div class="rep-linha">
+              <span>A cada</span>
+              <input type="number" id="fRepIntervalo" class="form-control" min="1" max="99" value="1" style="width:72px">
+              <span id="fRepUnidade">semana(s)</span>
+            </div>
+            <div class="rep-linha" id="fRepSemanal">
+              <span>Em</span>
+              <div class="rep-dias" id="fRepDias">
+                <label title="Domingo"><input type="checkbox" value="Sunday">Dom</label>
+                <label title="Segunda-feira"><input type="checkbox" value="Monday">Seg</label>
+                <label title="Terça-feira"><input type="checkbox" value="Tuesday">Ter</label>
+                <label title="Quarta-feira"><input type="checkbox" value="Wednesday">Qua</label>
+                <label title="Quinta-feira"><input type="checkbox" value="Thursday">Qui</label>
+                <label title="Sexta-feira"><input type="checkbox" value="Friday">Sex</label>
+                <label title="Sábado"><input type="checkbox" value="Saturday">Sáb</label>
+              </div>
+            </div>
+            <div class="rep-linha" id="fRepMensal">
+              <span>No dia</span>
+              <input type="number" id="fRepDiaMes" class="form-control" min="1" max="31" style="width:72px">
+              <span>de cada mês</span>
+            </div>
+            <div class="rep-linha">
+              <span>Termina</span>
+              <select id="fRepTermina" class="form-control">
+                <option value="">Nunca</option>
+                <option value="data">Em uma data</option>
+              </select>
+              <input type="date" id="fRepTerminaEm" class="form-control" style="display:none">
+            </div>
+          </fieldset>
+          <div class="rep-hint" id="fRepHint"></div>
+          <label class="rep-aplicar" id="fRepAplicarWrap" style="display:none">
+            <input type="checkbox" id="fRepAplicar" checked style="margin-top:3px">
+            <span>Aplicar também às próximas ocorrências (título, descrição, prioridade, processo, tags e repetição)</span>
+          </label>
+        </div>
         <div class="form-group">
           <label class="form-label">Processo vinculado</label>
           <div style="display:flex;gap:8px;align-items:center">
@@ -358,6 +417,11 @@ const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgent
 const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
 
 function showErr(el, msg) { el.textContent = msg; el.style.display = ''; }
+
+// Tarefa recorrente: cada ocorrência é uma tarefa própria (status/kanban independentes).
+const badgeRecorrente = t => t.recorrenciaId
+  ? '<span class="badge badge-recorrente" title="Tarefa recorrente — cada ocorrência é uma tarefa separada">🔁 Recorrente</span>'
+  : '';
 
 // ── Lista: state ───────────────────────────────────────────────
 let currentPage = 1;
@@ -528,6 +592,7 @@ function tarefaCard(t) {
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${t.tipo === 'Prazo' ? '<span class="badge" style="background:#ede9fe;color:#6d28d9">⏰ Prazo</span>' : ''}
+        ${badgeRecorrente(t)}
         <span class="badge ${prioClass}">${PRIORIDADE_LABEL[t.prioridade]}</span>
         <span class="badge ${statusClass}">${STATUS_LABEL[t.status]}</span>
       </div>
@@ -604,8 +669,12 @@ async function concluir(id) {
 }
 
 async function deleteTarefa(id) {
-  if (!confirm('Excluir esta tarefa?')) return;
-  await apiFetch(`/tarefas/${id}`, { method: 'DELETE' });
+  const t = allListItems.find(x => x.id === id);
+  if (!confirm(t?.recorrenciaId ? 'Excluir esta ocorrência da tarefa recorrente?' : 'Excluir esta tarefa?')) return;
+  // Sem encerrar, a série continua criando as próximas ocorrências normalmente.
+  const encerrar = t?.recorrenciaId
+    && confirm('Parar também a repetição?\n\nOK: não criar mais ocorrências.\nCancelar: excluir só esta e manter as próximas.');
+  await apiFetch(`/tarefas/${id}${encerrar ? '?encerrarRecorrencia=true' : ''}`, { method: 'DELETE' });
   await loadTarefas(currentPage);
 }
 
@@ -627,11 +696,13 @@ function updateProcessoLink() {
 // ── Modal create/edit ──────────────────────────────────────────
 function openCreateModal() {
   editingId = null;
+  editingRecorrente = false;
   document.getElementById('modalTarefaTitulo').textContent = 'Nova Tarefa';
   document.getElementById('formTarefa').reset();
   document.getElementById('fStatusGroup').style.display = 'none';
   document.getElementById('fmsgErro').style.display = 'none';
   setProcesso(null);
+  preencherRepeticao(null);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
 
@@ -648,8 +719,89 @@ async function openEditModal(id) {
   document.getElementById('fPrazo').value = t.prazo ? t.prazo.substring(0, 16) : '';
   document.getElementById('fTags').value = (t.tags ?? []).join(', ');
   setProcesso(t.processoId, t.numeroCNJProcesso);
+  // Série já encerrada: a tarefa se comporta como avulsa (escolher uma repetição reativa a série).
+  editingRecorrente = !!t.recorrencia?.ativa;
+  preencherRepeticao(editingRecorrente ? t.recorrencia : null);
   document.getElementById('modalTarefa').style.display = 'flex';
 }
+
+// ── Repetição ──────────────────────────────────────────────────
+// Na edição de uma ocorrência, "Aplicar às próximas" desmarcado = muda só esta tarefa
+// (a regra fica como está). Tarefa avulsa: escolher uma repetição cria a série a partir dela.
+let editingRecorrente = false;
+const DIAS_SEMANA = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const UNIDADE_REP = { Diaria: 'dia(s)', Semanal: 'semana(s)', Mensal: 'mês(es)' };
+
+function prazoSelecionado() {
+  const v = document.getElementById('fPrazo').value;
+  return v ? new Date(v) : null;
+}
+
+function preencherRepeticao(r) {
+  document.getElementById('fRepetir').value = r?.frequencia ?? '';
+  document.getElementById('fRepIntervalo').value = r?.intervalo ?? 1;
+  const dias = r?.diasSemana ?? [];
+  document.querySelectorAll('#fRepDias input').forEach(cb => { cb.checked = dias.includes(cb.value); });
+  document.getElementById('fRepDiaMes').value = r?.diaDoMes ?? '';
+  document.getElementById('fRepTermina').value = r?.terminaEm ? 'data' : '';
+  document.getElementById('fRepTerminaEm').value = r?.terminaEm ? r.terminaEm.substring(0, 10) : '';
+  document.getElementById('fRepAplicar').checked = true;
+  document.getElementById('fRepAplicarWrap').style.display = editingId && editingRecorrente ? '' : 'none';
+  atualizarRepeticaoUI();
+}
+
+// Sem dia escolhido, usa o do prazo (semanal: dia da semana; mensal: dia do mês).
+function completarComPrazo() {
+  const prazo = prazoSelecionado();
+  if (!prazo) return;
+  const freq = document.getElementById('fRepetir').value;
+  const dias = [...document.querySelectorAll('#fRepDias input')];
+  if (freq === 'Semanal' && !dias.some(cb => cb.checked)) dias[prazo.getDay()].checked = true;
+  const diaMes = document.getElementById('fRepDiaMes');
+  if (freq === 'Mensal' && !diaMes.value) diaMes.value = prazo.getDate();
+}
+
+function atualizarRepeticaoUI() {
+  const freq = document.getElementById('fRepetir').value;
+  const detalhes = document.getElementById('fRepDetalhes');
+  detalhes.style.display = freq ? '' : 'none';
+  document.getElementById('fRepSemanal').style.display = freq === 'Semanal' ? '' : 'none';
+  document.getElementById('fRepMensal').style.display = freq === 'Mensal' ? '' : 'none';
+  document.getElementById('fRepUnidade').textContent = UNIDADE_REP[freq] ?? '';
+  document.getElementById('fRepTerminaEm').style.display =
+    document.getElementById('fRepTermina').value === 'data' ? '' : 'none';
+  const aplicar = !editingRecorrente || !editingId || document.getElementById('fRepAplicar').checked;
+  document.getElementById('fRepetir').disabled = !aplicar;
+  detalhes.disabled = !aplicar;
+  completarComPrazo();
+
+  const hint = document.getElementById('fRepHint');
+  if (editingId && editingRecorrente && !aplicar) hint.textContent = 'As alterações valem só para esta ocorrência.';
+  else if (editingId && editingRecorrente && !freq) hint.textContent = 'Ao salvar, a repetição é encerrada: esta e as ocorrências já criadas continuam, mas não serão criadas novas.';
+  else if (freq) hint.textContent = 'Cada ocorrência é uma tarefa separada no kanban — concluir uma não afeta as outras. A próxima é criada quando o prazo da atual vence, e as futuras aparecem na agenda.';
+  else hint.textContent = '';
+}
+
+function lerRepeticao() {
+  const freq = document.getElementById('fRepetir').value;
+  if (!freq) return null;
+  const intervalo = parseInt(document.getElementById('fRepIntervalo').value, 10);
+  const r = { frequencia: freq, intervalo: intervalo >= 1 ? intervalo : 1 };
+  if (freq === 'Semanal') r.diasSemana = [...document.querySelectorAll('#fRepDias input:checked')].map(cb => cb.value);
+  if (freq === 'Mensal') {
+    const dia = parseInt(document.getElementById('fRepDiaMes').value, 10);
+    if (dia >= 1 && dia <= 31) r.diaDoMes = dia;
+  }
+  if (document.getElementById('fRepTermina').value === 'data' && document.getElementById('fRepTerminaEm').value)
+    r.terminaEm = document.getElementById('fRepTerminaEm').value;
+  return r;
+}
+
+['fRepetir', 'fRepTermina', 'fRepAplicar'].forEach(id =>
+  document.getElementById(id).addEventListener('change', atualizarRepeticaoUI));
+document.getElementById('fPrazo').addEventListener('change', () => {
+  if (document.getElementById('fRepetir').value) completarComPrazo();
+});
 
 function closeModal() {
   document.getElementById('modalTarefa').style.display = 'none';
@@ -676,6 +828,12 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
   const tags = tagsRaw ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const prazoVal = document.getElementById('fPrazo').value;
   const processoVal = processoPicker.getValue() || null;
+  const recorrencia = lerRepeticao();
+  const aplicarRepeticao = !editingRecorrente || document.getElementById('fRepAplicar').checked;
+  if (recorrencia && aplicarRepeticao) {
+    if (!prazoVal) { showErr(errEl, 'Informe o prazo para repetir a tarefa.'); return; }
+    if (recorrencia.frequencia === 'Semanal' && !recorrencia.diasSemana.length) { showErr(errEl, 'Escolha ao menos um dia da semana.'); return; }
+  }
 
   try {
     if (editingId) {
@@ -687,7 +845,11 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prazo: prazoVal || null,
         processoId: processoVal,
         responsavelId: getUser()?.id || null,
-        tags
+        tags,
+        recorrencia,
+        // Ocorrência de série: só mexe na série com "Aplicar às próximas". Tarefa avulsa: só
+        // quando o usuário escolheu uma repetição (senão nada muda).
+        atualizarRecorrencia: editingRecorrente ? aplicarRepeticao : !!recorrencia
       })});
     } else {
       await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify({
@@ -697,7 +859,8 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         prazo: prazoVal || null,
         processoId: processoVal,
         responsavelId: getUser()?.id || null,
-        tags
+        tags,
+        recorrencia
       })});
     }
     closeModal();
@@ -823,6 +986,7 @@ function renderKanbanCard(t) {
     <div class="kanban-card-meta">
       <span style="background:#e5e7eb;padding:1px 6px;border-radius:3px">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span>
       ${prazo ? `<span>📅 ${prazo}</span>` : ''}
+      ${t.recorrenciaId ? '<span title="Tarefa recorrente">🔁</span>' : ''}
       ${t.nomeResponsavel ? `<span>👤 ${esc(t.nomeResponsavel)}</span>` : ''}
       ${atrasada}
     </div>
@@ -909,6 +1073,7 @@ function showDetailModal(t) {
     <div class="detail-row"><span class="detail-label">Prioridade</span><span class="detail-value">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span></div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${STATUS_LABEL[t.status] ?? t.status}</span></div>
     <div class="detail-row"><span class="detail-label">Prazo</span><span class="detail-value">${prazo}</span></div>
+    ${t.recorrencia ? `<div class="detail-row"><span class="detail-label">Repetição</span><span class="detail-value">🔁 ${esc(t.recorrencia.descricao)}${t.recorrencia.ativa ? '' : ' (encerrada)'}</span></div>` : ''}
     <div class="detail-row"><span class="detail-label">Responsável</span><span class="detail-value">${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
     <div class="detail-row"><span class="detail-label">Tags</span><span class="detail-value">${tags || '–'}</span></div>
     <div style="margin-top:12px"><span class="detail-label">Descrição</span>${descricao}</div>

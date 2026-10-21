@@ -176,6 +176,7 @@ builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCl
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<TrialRevertJob>();
+builder.Services.AddScoped<TarefasRecorrentesJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<EscavadorMovimentacoesPollingJob>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
@@ -544,6 +545,11 @@ RecurringJob.AddOrUpdate<TrialRevertJob>(
     "trial-revert",
     job => job.ExecutarAsync(),
     "0 * * * *"); // hourly catch-up for expired trials and promo/cancelled plans whose users haven't logged in
+
+RecurringJob.AddOrUpdate<TarefasRecorrentesJob>(
+    "tarefas-recorrentes",
+    job => job.ExecutarAsync(),
+    "5 * * * *"); // hourly: cria a próxima ocorrência das tarefas recorrentes cuja última já venceu
 
 RecurringJob.AddOrUpdate<MonitoramentoJob>(
     "monitoramento-processos",

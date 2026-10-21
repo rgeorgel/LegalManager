@@ -61,12 +61,20 @@ public record AgendaItemDto(
     string? NomeResponsavel,
     string? NumeroCNJProcesso,
     string Status,
-    string Cor
+    string Cor,
+    // Tarefas recorrentes: RecorrenciaId da série. Prevista = ocorrência futura ainda não criada
+    // (só aparece na agenda); TarefaId aponta a ocorrência mais recente, onde se edita a série.
+    Guid? RecorrenciaId = null,
+    bool Prevista = false,
+    Guid? TarefaId = null
 );
 
 public record AgendaFiltroDto(
     DateTime De,
     DateTime Ate,
     Guid? ResponsavelId,
-    Guid? ProcessoId
+    Guid? ProcessoId,
+    // Inclui as ocorrências futuras (ainda não criadas) de tarefas recorrentes — só o calendário
+    // pede; listas e contadores do dashboard ficam só com o que existe.
+    bool IncluirPrevistas = false
 );

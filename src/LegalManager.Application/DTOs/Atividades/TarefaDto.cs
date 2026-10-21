@@ -17,7 +17,9 @@ public record CreateTarefaDto(
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
     TipoCalculo? TipoCalculo = null,
-    DateOnly[]? FeriadosAdicionais = null
+    DateOnly[]? FeriadosAdicionais = null,
+    // Repetição: a tarefa criada é a primeira ocorrência; exige Prazo.
+    RecorrenciaDto? Recorrencia = null
 );
 
 public record UpdateTarefaDto(
@@ -33,7 +35,35 @@ public record UpdateTarefaDto(
     TipoTarefa Tipo = TipoTarefa.Tarefa,
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
-    TipoCalculo? TipoCalculo = null
+    TipoCalculo? TipoCalculo = null,
+    // AtualizarRecorrencia=false: só esta ocorrência muda e a série fica como está.
+    // true: Recorrencia vira a regra das próximas ocorrências (e os dados desta tarefa, o modelo
+    // delas); Recorrencia null encerra a série. Numa tarefa avulsa, true + Recorrencia cria a série.
+    RecorrenciaDto? Recorrencia = null,
+    bool AtualizarRecorrencia = false
+);
+
+/// <summary>
+/// Regra de repetição. Semanal sem DiasSemana usa o dia da semana do prazo; Mensal sem DiaDoMes
+/// usa o dia do prazo. TerminaEm: última data incluída (null = sem fim).
+/// </summary>
+public record RecorrenciaDto(
+    FrequenciaRecorrencia Frequencia,
+    int Intervalo = 1,
+    DayOfWeek[]? DiasSemana = null,
+    int? DiaDoMes = null,
+    DateTime? TerminaEm = null
+);
+
+public record RecorrenciaResponseDto(
+    Guid Id,
+    FrequenciaRecorrencia Frequencia,
+    int Intervalo,
+    DayOfWeek[] DiasSemana,
+    int? DiaDoMes,
+    DateTime? TerminaEm,
+    bool Ativa,
+    string Descricao          // ex.: "Toda sexta-feira", "Todo dia 10"
 );
 
 public record TarefaResponseDto(
@@ -59,7 +89,8 @@ public record TarefaResponseDto(
     Guid? AndamentoId = null,
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
-    TipoCalculo? TipoCalculo = null
+    TipoCalculo? TipoCalculo = null,
+    RecorrenciaResponseDto? Recorrencia = null
 );
 
 public record TarefaListItemDto(
@@ -82,7 +113,8 @@ public record TarefaListItemDto(
     Guid? AndamentoId = null,
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
-    TipoCalculo? TipoCalculo = null
+    TipoCalculo? TipoCalculo = null,
+    Guid? RecorrenciaId = null
 );
 
 public record TarefaFiltroDto(

@@ -91,9 +91,13 @@ async function load() {
   try {
     const params = new URLSearchParams({
       de: toLocalISO(start),
-      ate: toLocalISO(end)
+      ate: toLocalISO(end),
+      previstas: 'true'
     });
-    agendaItems = await apiFetch(`/agenda?${params}`);
+    // Tarefas recorrentes ganham 🔁 no título; as "previstas" são ocorrências futuras que ainda
+    // não viraram tarefa (só a próxima é criada de cada vez).
+    agendaItems = (await apiFetch(`/agenda?${params}`)).map(it =>
+      it.recorrenciaId ? { ...it, titulo: `🔁 ${it.titulo}` } : it);
     render(start, end);
   } catch (e) {
     console.error(e);
@@ -297,7 +301,7 @@ function renderMesView(start) {
   }
 
   return `
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+  <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
     ${headers}
     ${cells.join('')}
   </div>`;
@@ -335,7 +339,7 @@ function showTooltip(item, tipo, x, y) {
   document.getElementById('ttTitulo').textContent = item.titulo;
   const dt = dataParede(item.dataHora);
   const meta = [
-    TIPO_LABEL[tipo] ?? tipo,
+    item.prevista ? 'Tarefa recorrente (prevista — será criada quando a anterior vencer)' : (TIPO_LABEL[tipo] ?? tipo),
     dt.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }),
     dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     item.local ? `📍 ${item.local}` : null,
@@ -349,7 +353,11 @@ function showTooltip(item, tipo, x, y) {
   document.getElementById('ttDelete').style.display = isEvento ? '' : 'none';
   const ttAbrirTarefa = document.getElementById('ttAbrirTarefa');
   ttAbrirTarefa.style.display = isEvento ? 'none' : '';
-  ttAbrirTarefa.href = `/pages/tarefas.html?abrirId=${item.id}`;
+  // Prevista não existe como tarefa: abre a ocorrência mais recente da série (onde se edita a repetição).
+  const tarefaId = item.prevista ? item.tarefaId : item.id;
+  if (!tarefaId) ttAbrirTarefa.style.display = 'none';
+  ttAbrirTarefa.href = `/pages/tarefas.html?abrirId=${tarefaId}`;
+  ttAbrirTarefa.textContent = item.prevista ? 'Abrir série →' : 'Abrir Tarefa →';
 
   document.getElementById('ttEdit').onclick = () => { hideTooltip(); openEditModal(item.id); };
   document.getElementById('ttDelete').onclick = async () => { hideTooltip(); await deleteEvento(item.id); };

@@ -2533,6 +2533,93 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Publicacoes");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.RecorrenciaTarefa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Ancora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ContatoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int?>("DiaDoMes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DiasSemana")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Frequencia")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Intervalo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Prioridade")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ProcessoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ResponsavelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("TerminaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("UltimaGerada")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContatoId");
+
+                    b.HasIndex("CriadoPorId");
+
+                    b.HasIndex("ProcessoId");
+
+                    b.HasIndex("ResponsavelId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("Ativa", "UltimaGerada");
+
+                    b.ToTable("RecorrenciasTarefa");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2741,6 +2828,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<int?>("QuantidadeDias")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("RecorrenciaId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ResponsavelId")
                         .HasColumnType("uuid");
 
@@ -2768,6 +2858,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CriadoPorId");
 
                     b.HasIndex("ProcessoId");
+
+                    b.HasIndex("RecorrenciaId");
 
                     b.HasIndex("ResponsavelId");
 
@@ -3929,6 +4021,46 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.RecorrenciaTarefa", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
+                        .WithMany()
+                        .HasForeignKey("ContatoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "CriadoPor")
+                        .WithMany()
+                        .HasForeignKey("CriadoPorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LegalManager.Domain.Entities.Processo", "Processo")
+                        .WithMany()
+                        .HasForeignKey("ProcessoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "Responsavel")
+                        .WithMany()
+                        .HasForeignKey("ResponsavelId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contato");
+
+                    b.Navigation("CriadoPor");
+
+                    b.Navigation("Processo");
+
+                    b.Navigation("Responsavel");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Usuario", "ImpersonadoPor")
@@ -4017,6 +4149,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ProcessoId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("LegalManager.Domain.Entities.RecorrenciaTarefa", "Recorrencia")
+                        .WithMany()
+                        .HasForeignKey("RecorrenciaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("LegalManager.Domain.Entities.Usuario", "Responsavel")
                         .WithMany()
                         .HasForeignKey("ResponsavelId")
@@ -4033,6 +4170,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("CriadoPor");
 
                     b.Navigation("Processo");
+
+                    b.Navigation("Recorrencia");
 
                     b.Navigation("Responsavel");
 

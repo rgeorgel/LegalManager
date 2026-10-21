@@ -52,9 +52,84 @@ public class TarefaService : ITarefaService
                 .ToList();
 
         _context.Tarefas.Add(tarefa);
+        if (dto.Recorrencia is not null)
+            await CriarRecorrenciaAsync(tarefa, dto.Recorrencia, dto.Tags, ct);
         await _context.SaveChangesAsync(ct);
 
         return await LoadResponseAsync(tarefa.Id, ct) ?? throw new InvalidOperationException();
+    }
+
+    // A tarefa vira a primeira ocorrência da série; se o prazo já passou, cria também a próxima.
+    private async Task CriarRecorrenciaAsync(Tarefa tarefa, RecorrenciaDto regra, IEnumerable<string>? tags, CancellationToken ct)
+    {
+        if (!tarefa.Prazo.HasValue)
+            throw new ArgumentException("Informe o prazo para repetir a tarefa.");
+
+        var serie = new RecorrenciaTarefa
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tarefa.TenantId,
+            CriadoPorId = _tenantContext.UserId,
+            CriadoEm = DateTime.UtcNow,
+            UltimaGerada = tarefa.Prazo,
+        };
+        RecorrenciaTarefas.AplicarRegra(serie, regra, tarefa.Prazo.Value);
+        RecorrenciaTarefas.CopiarModelo(serie, tarefa, tags);
+        _context.RecorrenciasTarefa.Add(serie);
+        tarefa.RecorrenciaId = serie.Id;
+
+        var agora = FusoHorario.AgoraParede(await _context.DoTenantAsync(tarefa.TenantId, ct));
+        RecorrenciaTarefas.GerarOcorrencias(_context, serie, agora);
+    }
+
+    private async Task AtualizarRecorrenciaAsync(Tarefa tarefa, RecorrenciaDto? regra, IEnumerable<string>? tags, CancellationToken ct)
+    {
+        var serie = tarefa.RecorrenciaId is { } serieId
+            ? await _context.RecorrenciasTarefa.FirstOrDefaultAsync(r => r.Id == serieId && r.TenantId == tarefa.TenantId, ct)
+            : null;
+
+        if (serie is null)
+        {
+            if (regra is not null) await CriarRecorrenciaAsync(tarefa, regra, tags, ct);
+            return;
+        }
+
+        serie.AtualizadoEm = DateTime.UtcNow;
+        if (regra is null)
+        {
+            serie.Ativa = false;
+            return;
+        }
+        if (!tarefa.Prazo.HasValue)
+            throw new ArgumentException("Informe o prazo para repetir a tarefa.");
+
+        // A regra passa a contar desta ocorrência; as próximas vêm depois da última já criada
+        // (ou desta, se ela foi remarcada para depois), sem duplicar datas.
+        RecorrenciaTarefas.AplicarRegra(serie, regra, tarefa.Prazo.Value);
+        RecorrenciaTarefas.CopiarModelo(serie, tarefa, tags);
+        serie.Ativa = true;
+        if (serie.UltimaGerada is null || serie.UltimaGerada < tarefa.Prazo)
+            serie.UltimaGerada = tarefa.Prazo;
+
+        var agora = FusoHorario.AgoraParede(await _context.DoTenantAsync(tarefa.TenantId, ct));
+        RecorrenciaTarefas.GerarOcorrencias(_context, serie, agora);
+    }
+
+    public async Task EncerrarRecorrenciaAsync(Guid tarefaId, CancellationToken ct = default)
+    {
+        var serieId = await _context.Tarefas
+            .Where(t => t.TenantId == _tenantContext.TenantId && t.Id == tarefaId)
+            .Select(t => t.RecorrenciaId)
+            .FirstOrDefaultAsync(ct);
+        if (serieId is null) return;
+
+        var serie = await _context.RecorrenciasTarefa
+            .FirstOrDefaultAsync(r => r.Id == serieId && r.TenantId == _tenantContext.TenantId, ct);
+        if (serie is null || !serie.Ativa) return;
+
+        serie.Ativa = false;
+        serie.AtualizadoEm = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task<TarefaResponseDto> UpdateAsync(Guid id, UpdateTarefaDto dto, CancellationToken ct = default)
@@ -83,6 +158,8 @@ public class TarefaService : ITarefaService
             tarefa.ConcluidaEm = null;
 
         tarefa.Status = dto.Status;
+        if (dto.AtualizarRecorrencia)
+            await AtualizarRecorrenciaAsync(tarefa, dto.Recorrencia, dto.Tags, ct);
         await _context.SaveChangesAsync(ct);
 
         // Replace tags separately to avoid EF tracking conflicts
@@ -174,7 +251,8 @@ public class TarefaService : ITarefaService
                 t.AndamentoId,
                 t.DataInicio,
                 t.QuantidadeDias,
-                t.TipoCalculo
+                t.TipoCalculo,
+                t.RecorrenciaId
             ))
             .ToListAsync(ct);
 
@@ -312,7 +390,7 @@ public class TarefaService : ITarefaService
     private async Task<TarefaResponseDto?> LoadResponseAsync(Guid id, CancellationToken ct)
     {
         var agora = FusoHorario.AgoraParede(await _context.DoTenantAsync(_tenantContext.TenantId, ct));
-        return await _context.Tarefas
+        var dto = await _context.Tarefas
             .Include(t => t.Tags)
             .Where(t => t.TenantId == _tenantContext.TenantId && t.Id == id)
             .Select(t => new TarefaResponseDto(
@@ -338,9 +416,17 @@ public class TarefaService : ITarefaService
                 t.AndamentoId,
                 t.DataInicio,
                 t.QuantidadeDias,
-                t.TipoCalculo
+                t.TipoCalculo,
+                null // Recorrencia: preenchida abaixo (expression tree não aceita argumento opcional omitido)
             ))
             .FirstOrDefaultAsync(ct);
+        if (dto is null) return null;
+
+        var serie = await _context.Tarefas
+            .Where(t => t.TenantId == _tenantContext.TenantId && t.Id == id && t.Recorrencia != null)
+            .Select(t => t.Recorrencia)
+            .FirstOrDefaultAsync(ct);
+        return serie is null ? dto : dto with { Recorrencia = RecorrenciaTarefas.ParaDto(serie) };
     }
 
     public async Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default)

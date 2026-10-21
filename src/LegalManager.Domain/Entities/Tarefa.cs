@@ -20,6 +20,8 @@ public class Tarefa
     public StatusTarefa Status { get; set; }
     public TipoTarefa Tipo { get; set; }
     public Guid? AndamentoId { get; set; }
+    /// <summary>Série recorrente que gerou a tarefa (cada ocorrência é uma tarefa independente).</summary>
+    public Guid? RecorrenciaId { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime? AtualizadoEm { get; set; }
     public DateTime? ConcluidaEm { get; set; }
@@ -29,5 +31,6 @@ public class Tarefa
     public Contato? Contato { get; set; }
     public Usuario? Responsavel { get; set; }
     public Usuario CriadoPor { get; set; } = null!;
+    public RecorrenciaTarefa? Recorrencia { get; set; }
     public ICollection<TarefaTag> Tags { get; set; } = new List<TarefaTag>();
 }

@@ -12,6 +12,8 @@ public interface ITarefaService
     Task<PagedResultDto<TarefaListItemDto>> GetAllAsync(TarefaFiltroDto filtro, CancellationToken ct = default);
     Task ConcluirAsync(Guid id, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Para de criar ocorrências da série da tarefa; as já criadas continuam.</summary>
+    Task EncerrarRecorrenciaAsync(Guid tarefaId, CancellationToken ct = default);
     Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default);
     Task<TarefasDashboardDto> GetDashboardAsync(int dias, int limite, CancellationToken ct = default);
 }

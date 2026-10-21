@@ -43,6 +43,8 @@ public enum PrioridadeTarefa { Baixa, Media, Alta, Urgente }
 
 public enum TipoTarefa { Tarefa, Prazo }
 
+public enum FrequenciaRecorrencia { Diaria, Semanal, Mensal }
+
 public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }
 
 public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada }

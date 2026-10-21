@@ -110,9 +110,10 @@ public class AgendaController : ControllerBase
         [FromQuery] DateTime ate,
         [FromQuery] Guid? responsavelId,
         [FromQuery] Guid? processoId,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        [FromQuery] bool previstas = false)
     {
-        var filtro = new AgendaFiltroDto(de, ate, responsavelId, processoId);
+        var filtro = new AgendaFiltroDto(de, ate, responsavelId, processoId, previstas);
         return Ok(await _service.GetAgendaAsync(filtro, ct));
     }
 }
