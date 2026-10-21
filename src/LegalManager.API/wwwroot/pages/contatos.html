@@ -737,11 +737,21 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
     const modalAtend = document.getElementById('modalAtendimento');
     const alertMsg = document.getElementById('alertMsg');
 
-    function showAlert(msg, type = 'error') {
+    let alertTimer = null;
+    function showAlert(msg, type = 'error', { link = null, duracao = 4000 } = {}) {
       alertMsg.className = `alert alert-${type}`;
       alertMsg.textContent = msg;
+      if (link) {
+        const a = document.createElement('a');
+        a.href = link.href;
+        a.textContent = link.texto;
+        a.style.marginLeft = '8px';
+        a.style.fontWeight = '600';
+        alertMsg.append(a);
+      }
       alertMsg.style.display = 'block';
-      setTimeout(() => alertMsg.style.display = 'none', 4000);
+      clearTimeout(alertTimer);
+      alertTimer = setTimeout(() => alertMsg.style.display = 'none', duracao);
     }
 
     // Contato atualizado pelo chat do assistente de IA: recarrega a lista.
@@ -1176,10 +1186,22 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       btn.innerHTML = '<span class="spinner"></span>';
       modalAlert.style.display = 'none';
       try {
-        if (editingId) await updateContato(editingId, data);
-        else await createContato(data);
+        if (editingId) {
+          await updateContato(editingId, data);
+          showAlert('Contato atualizado.', 'success');
+        } else {
+          const novo = await createContato(data);
+          // Cliente novo costuma vir com um processo: oferece o cadastro já vinculado.
+          if (novo?.id && data.tipoContato === 'Cliente') {
+            showAlert('Contato criado.', 'success', {
+              link: { href: `/pages/processos.html?novo=1&contatoId=${encodeURIComponent(novo.id)}`, texto: 'Cadastrar processo para este cliente →' },
+              duracao: 10000,
+            });
+          } else {
+            showAlert('Contato criado.', 'success');
+          }
+        }
         modal.classList.remove('open');
-        showAlert(editingId ? 'Contato atualizado.' : 'Contato criado.', 'success');
         loadContatos();
         loadTags();
       } catch (err) {

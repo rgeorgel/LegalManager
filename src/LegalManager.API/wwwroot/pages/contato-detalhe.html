@@ -117,6 +117,7 @@
         <div style="margin-top:4px;display:flex;gap:6px;align-items:center" id="pageBadges"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn btn-secondary" id="btnNovoProcesso" href="/pages/processos.html?novo=1">⚖️ Novo processo</a>
         <button class="btn btn-secondary" id="btnAgendarRetorno">📅 Agendar retorno</button>
         <button class="btn btn-primary" id="btnEditar">✏️ Editar</button>
       </div>
@@ -269,6 +270,9 @@
   if (!contatoId) {
     document.getElementById('perfilLoading').textContent = 'Contato não informado.';
   } else {
+    // Abre o cadastro de processo já com este contato como parte (ver processos.html, ?contatoId=).
+    document.getElementById('btnNovoProcesso').href =
+      `/pages/processos.html?novo=1&contatoId=${encodeURIComponent(contatoId)}`;
     carregar();
     // Contato atualizado ou atendimento registrado pelo chat do assistente de IA.
     window.addEventListener('assistente:alteracao', (e) => {

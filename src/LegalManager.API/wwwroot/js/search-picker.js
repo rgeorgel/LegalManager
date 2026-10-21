@@ -12,13 +12,16 @@ import { esc } from './utils.js';
  *     erro: 'Erro ao buscar...',
  *     valueClass, value: { id, label }, placeholder, onChange,
  *     permitirLimpar: false,                       // true: apagar o texto e sair desfaz a seleção
+ *     criar: { rotulo: (termo) => 'HTML', acao: async (termo) => item | null },
+ *                                                  // (opcional) botão no fim da lista para cadastrar
+ *                                                  // um item novo; o item devolvido fica selecionado
  *   });
  *
  * Digitar não apaga a seleção: ao sair do campo sem escolher outro, o texto selecionado volta.
  */
 export function createSearchPicker(root, {
   buscar: buscarItens, opcao, vazio, dica, tamanhoPagina = 20, erro = 'Erro ao buscar. Tente novamente.',
-  valueClass = '', value = null, placeholder = '', permitirLimpar = false, onChange,
+  valueClass = '', value = null, placeholder = '', permitirLimpar = false, criar = null, onChange,
 } = {}) {
   root.classList.add('contato-picker');
   root.innerHTML = `
@@ -98,8 +101,11 @@ export function createSearchPicker(root, {
       return;
     }
     const termo = input.value.trim();
+    const botaoCriar = criar
+      ? `<button type="button" class="contato-picker-criar">${criar.rotulo(termo)}</button>`
+      : '';
     if (!resultados.length) {
-      panel.innerHTML = `<div class="contato-picker-msg">${vazio ? vazio(termo) : 'Nenhum resultado.'}</div>`;
+      panel.innerHTML = `<div class="contato-picker-msg">${vazio ? vazio(termo) : 'Nenhum resultado.'}</div>${botaoCriar}`;
       return;
     }
     panel.innerHTML = resultados.map((item, i) => {
@@ -111,7 +117,8 @@ export function createSearchPicker(root, {
         ${o.detalhe ? `<div class="contato-picker-detalhe">${o.detalhe}</div>` : ''}
       </div>`;
     }).join('')
-      + (dica && !termo && resultados.length >= tamanhoPagina ? `<div class="contato-picker-msg">${dica}</div>` : '');
+      + (dica && !termo && resultados.length >= tamanhoPagina ? `<div class="contato-picker-msg">${dica}</div>` : '')
+      + botaoCriar;
   }
 
   async function buscar() {
@@ -162,7 +169,19 @@ export function createSearchPicker(root, {
     else if (e.key === 'Tab') { fechar(); restaurarTexto(); }
   });
   // mousedown (e não click) para escolher antes do blur do input.
-  panel.addEventListener('mousedown', (e) => {
+  panel.addEventListener('mousedown', async (e) => {
+    if (criar && e.target.closest('.contato-picker-criar')) {
+      e.preventDefault();
+      const termo = input.value.trim();
+      fechar();
+      restaurarTexto();
+      const item = await criar.acao(termo);
+      if (item) {
+        const o = opcao(item);
+        setValue({ ...item, id: o.id, label: o.label }, { notify: true });
+      }
+      return;
+    }
     const opt = e.target.closest('.contato-picker-option');
     if (!opt) return;
     e.preventDefault();

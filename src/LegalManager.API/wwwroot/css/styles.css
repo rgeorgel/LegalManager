@@ -406,6 +406,12 @@ tbody tr:last-child td { border-bottom: none; }
 .contato-picker-detalhe { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
 .contato-picker-msg { padding: 8px 10px; font-size: 13px; color: var(--color-text-muted); }
 .contato-picker-msg a { color: var(--color-primary); }
+.contato-picker-criar {
+  display: block; width: 100%; text-align: left; margin-top: 4px; padding: 8px 10px;
+  border: none; border-top: 1px solid var(--color-border); border-radius: 0 0 6px 6px;
+  background: none; color: var(--color-primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.contato-picker-criar:hover { background: var(--color-bg); }
 
 /* ── Pagination ──────────────────────────────────────── */
 .pagination {
