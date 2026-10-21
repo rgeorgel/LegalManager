@@ -609,6 +609,10 @@ RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
 // Para ativar a Estratégia 4 (cancelar) em vez da 5, substituir por: job => job.SuspenderMonitoramentosAsync()
 
 app.MapControllers();
+// Links de redefinição enviados antes da correção apontavam para /reset-password (sem .html),
+// que caía no fallback e abria a home.
+app.MapGet("/reset-password", (HttpContext ctx) =>
+    Results.Redirect("/reset-password.html" + ctx.Request.QueryString, permanent: true));
 app.MapFallback("{*path:nonfile}", assetVersioning.ServirFallback);
 
 app.Run();

@@ -236,7 +236,7 @@ public class AuthService : IAuthService
         if (usuario == null) return; // silently ignore unknown emails
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
-        var link = $"{_config["App:FrontendUrl"]}/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(dto.Email)}";
+        var link = $"{_config["App:FrontendUrl"]}/reset-password.html?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(dto.Email)}";
 
         await _emailService.EnviarResetSenhaAsync(dto.Email, link, ct);
     }
