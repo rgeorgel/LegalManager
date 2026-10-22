@@ -145,11 +145,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+// O token do portal do parceiro não vale nos endpoints dos escritórios (ver PolicyPadrao).
+builder.Services.AddAuthorization(options =>
+    options.DefaultPolicy = LegalManager.API.Controllers.ParceiroPortalController.PolicyPadrao());
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ParceiroService>();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
@@ -174,6 +177,8 @@ builder.Services.AddScoped<IPastaService, PastaService>();
 builder.Services.AddScoped<IModeloDocumentoService, ModeloDocumentoService>();
 builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.AcessoCliente>,
     PasswordHasher<LegalManager.Domain.Entities.AcessoCliente>>();
+builder.Services.AddScoped<IPasswordHasher<LegalManager.Domain.Entities.Parceiro>,
+    PasswordHasher<LegalManager.Domain.Entities.Parceiro>>();
 builder.Services.AddScoped<AlertasJob>();
 builder.Services.AddScoped<TrialRevertJob>();
 builder.Services.AddScoped<TarefasRecorrentesJob>();

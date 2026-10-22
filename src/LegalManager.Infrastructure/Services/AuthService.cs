@@ -46,6 +46,7 @@ public class AuthService : IAuthService
         var promo = string.IsNullOrWhiteSpace(dto.Voucher)
             ? null
             : await ValidarCodigoPromocionalAsync(dto.Voucher, ct);
+        var parceiro = await BuscarParceiroAsync(dto.CodigoParceiro, ct);
 
         // Só o período grátis muda o plano/status do cadastro; um código só de desconto
         // segue o fluxo normal e fica guardado para o checkout da assinatura.
@@ -76,7 +77,9 @@ public class AuthService : IAuthService
             TrialConcedidoDias = ganhaTrialBoasVindas ? TrialGratisConstants.DiasTrialBoasVindasFree : null,
             TrialConcedidoMotivo = ganhaTrialBoasVindas ? TrialGratisConstants.MotivoTrialBoasVindasFree : null,
             VoucherUtilizado = promo?.Codigo,
-            CodigoDesconto = promo is { TemDesconto: true } ? promo.Codigo : null
+            CodigoDesconto = promo is { TemDesconto: true } ? promo.Codigo : null,
+            ParceiroId = parceiro?.Id,
+            ParceiroVinculadoEm = parceiro is null ? null : agora
         };
 
         _context.Tenants.Add(tenant);
@@ -169,7 +172,8 @@ public class AuthService : IAuthService
                 Fbclid = NullIfBlank(dto.Fbclid),
                 Gclid = NullIfBlank(dto.Gclid)
             };
-            return await CriarTenantComTrialBoasVindasAsync($"Escritório de {nome}", novoUsuario, ct);
+            var parceiro = await BuscarParceiroAsync(dto.CodigoParceiro, ct);
+            return await CriarTenantComTrialBoasVindasAsync($"Escritório de {nome}", novoUsuario, parceiro, ct);
         }
 
         if (!usuario.Ativo)
@@ -404,7 +408,7 @@ public class AuthService : IAuthService
     /// A senha do usuário é gerada aleatoriamente pois o login segue sendo feito via Google.
     /// </summary>
     private async Task<AuthResponseDto> CriarTenantComTrialBoasVindasAsync(
-        string nomeEscritorio, Usuario usuario, CancellationToken ct)
+        string nomeEscritorio, Usuario usuario, Parceiro? parceiro, CancellationToken ct)
     {
         var agora = DateTime.UtcNow;
 
@@ -418,7 +422,9 @@ public class AuthService : IAuthService
             TrialExpiraEm = agora.AddDays(TrialGratisConstants.DiasTrialBoasVindasFree),
             TrialConcedidoEm = agora,
             TrialConcedidoDias = TrialGratisConstants.DiasTrialBoasVindasFree,
-            TrialConcedidoMotivo = TrialGratisConstants.MotivoTrialBoasVindasFree
+            TrialConcedidoMotivo = TrialGratisConstants.MotivoTrialBoasVindasFree,
+            ParceiroId = parceiro?.Id,
+            ParceiroVinculadoEm = parceiro is null ? null : agora
         };
 
         _context.Tenants.Add(tenant);
@@ -504,6 +510,12 @@ public class AuthService : IAuthService
 
     public Task<CodigoPromocional> ValidarCodigoPromocionalAsync(string codigo, CancellationToken ct = default) =>
         CodigosPromocionais.ValidarAsync(_context, codigo, ct: ct);
+
+    // Código de parceiro inválido ou de parceiro inativo não barra o cadastro (o link pode estar
+    // circulando depois do fim da parceria) — o escritório só não fica vinculado. A validação ao
+    // vivo do formulário avisa o visitante antes.
+    public async Task<Parceiro?> BuscarParceiroAsync(string? codigo, CancellationToken ct = default) =>
+        string.IsNullOrWhiteSpace(codigo) ? null : await ParceiroService.BuscarPorCodigoAsync(_context, codigo, ct);
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

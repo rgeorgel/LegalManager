@@ -16,7 +16,9 @@ public record GoogleLoginDto(
     string? Referrer = null,
     string? LandingPage = null,
     string? Fbclid = null,
-    string? Gclid = null
+    string? Gclid = null,
+    // Só vale quando o login cria a conta (e-mail ainda sem cadastro).
+    string? CodigoParceiro = null
 );
 
 public record AuthResponseDto(

@@ -21,5 +21,10 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .WithMany()
             .HasForeignKey(t => t.TrialConcedidoPorId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(t => t.Parceiro)
+            .WithMany()
+            .HasForeignKey(t => t.ParceiroId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Painel — Portal do Parceiro — Causify</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body { background: var(--color-bg); }
+    .p-header { background: #fff; border-bottom: 1px solid var(--color-border); padding: 12px 24px; display: flex; align-items: center; gap: 12px; }
+    .p-header img { height: 28px; }
+    .p-header .tag { font-size: 12px; color: var(--color-text-muted); border-left: 1px solid var(--color-border); padding-left: 12px; }
+    .p-header .user { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .p-main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+    .p-card { background: #fff; border: 1px solid var(--color-border); border-radius: 10px; padding: 18px 20px; }
+    .p-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+    @media (max-width: 760px) { .p-grid { grid-template-columns: repeat(2, 1fr); } .p-header .tag { display: none; } }
+    .p-stat .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); font-weight: 600; }
+    .p-stat .valor { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .p-stat .sub { margin-top: 2px; }
+    .p-stat.destaque { border-color: var(--color-primary); }
+    .p-stat.destaque .valor { color: var(--color-primary); }
+    .indicacao { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+    .indicacao .bloco { min-width: 0; }
+    .indicacao .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); font-weight: 600; }
+    .codigo { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; font-size: 18px; letter-spacing: .05em; text-transform: uppercase; }
+    .link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all; }
+    .indicacao .acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    .sub { font-size: 12px; color: var(--color-text-muted); }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table td.num, .data-table th.num { text-align: right; white-space: nowrap; }
+    .empty { text-align: center; color: var(--color-text-muted); padding: 24px; font-size: 13px; }
+    .regras { font-size: 13px; color: var(--color-text-muted); margin-top: 8px; }
+    .aviso { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <header class="p-header">
+    <img src="/images/causify-logo-navbar-clara.png" alt="Causify">
+    <span class="tag">Portal do Parceiro</span>
+    <div class="user">
+      <span id="nomeParceiro"></span>
+      <button class="btn btn-secondary btn-sm" id="sairBtn">Sair</button>
+    </div>
+  </header>
+
+  <main class="p-main">
+    <div class="p-card indicacao">
+      <div class="bloco">
+        <div class="rotulo">Seu código</div>
+        <div class="codigo" id="codigo">—</div>
+      </div>
+      <div class="bloco" style="flex:1">
+        <div class="rotulo">Link de indicação</div>
+        <div class="link" id="link">—</div>
+      </div>
+      <div class="acoes">
+        <button class="btn btn-secondary btn-sm" id="copiarLinkBtn">Copiar link</button>
+        <button class="btn btn-secondary btn-sm" id="copiarCodigoBtn">Copiar código</button>
+      </div>
+      <div class="regras" id="regras" style="flex-basis:100%"></div>
+    </div>
+
+    <div class="p-grid">
+      <div class="p-card p-stat">
+        <div class="rotulo">Escritórios indicados</div>
+        <div class="valor" id="statEscritorios">—</div>
+        <div class="sub" id="statAssinantes"></div>
+      </div>
+      <div class="p-card p-stat destaque">
+        <div class="rotulo">Disponível para saque</div>
+        <div class="valor" id="statDisponivel">—</div>
+        <div class="sub"><button class="btn btn-primary btn-sm" id="solicitarBtn" style="margin-top:6px" disabled>Solicitar pagamento</button></div>
+      </div>
+      <div class="p-card p-stat">
+        <div class="rotulo">Em análise</div>
+        <div class="valor" id="statSolicitado">—</div>
+        <div class="sub">solicitado, aguardando pagamento</div>
+      </div>
+      <div class="p-card p-stat">
+        <div class="rotulo">Já recebido</div>
+        <div class="valor" id="statPago">—</div>
+        <div class="sub" id="statTotal"></div>
+      </div>
+    </div>
+
+    <div class="p-card" style="padding:0 0 4px">
+      <div class="tab-nav" style="padding:0 12px">
+        <button type="button" class="tab-btn active" data-tab="tabEscritorios">Escritórios</button>
+        <button type="button" class="tab-btn" data-tab="tabComissoes">Pagamentos e comissões</button>
+        <button type="button" class="tab-btn" data-tab="tabSolicitacoes">Minhas solicitações</button>
+      </div>
+      <div class="tab-content active" id="tabEscritorios" style="overflow-x:auto">
+        <table class="data-table"><thead><tr>
+          <th>Escritório</th><th>Situação</th><th class="num">Mensalidade</th><th>Pagamentos</th><th class="num">Total pago</th><th class="num">Sua comissão</th>
+        </tr></thead><tbody id="escritoriosBody"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody></table>
+      </div>
+      <div class="tab-content" id="tabComissoes" style="overflow-x:auto">
+        <table class="data-table"><thead><tr>
+          <th>Data do pagamento</th><th>Escritório</th><th class="num">Valor pago</th><th class="num">%</th><th class="num">Comissão</th><th>Situação</th>
+        </tr></thead><tbody id="comissoesBody"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody></table>
+      </div>
+      <div class="tab-content" id="tabSolicitacoes" style="overflow-x:auto">
+        <table class="data-table"><thead><tr>
+          <th>Solicitada em</th><th class="num">Valor</th><th>Chave Pix</th><th>Status</th><th>Retorno do Causify</th>
+        </tr></thead><tbody id="solicitacoesBody"><tr><td colspan="5" class="empty">Carregando...</td></tr></tbody></table>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="solicitarOverlay">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <span class="modal-title">Solicitar pagamento</span>
+        <button type="button" class="modal-close" data-fechar>✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-top:0">Você vai solicitar <strong id="solicitarValor"></strong> — todas as comissões disponíveis hoje.
+          O pagamento é feito por Pix após a análise da equipe Causify.</p>
+        <div class="form-group">
+          <label for="chavePix">Chave Pix</label>
+          <input class="form-control" id="chavePix" maxlength="200" placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória">
+        </div>
+        <div class="form-group">
+          <label for="observacao">Observação <span class="sub">(opcional)</span></label>
+          <textarea class="form-control" id="observacao" rows="3" maxlength="1000" placeholder="Ex.: dados para a nota fiscal"></textarea>
+        </div>
+        <div class="form-error" id="solicitarErro" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-fechar>Cancelar</button>
+        <button type="button" class="btn btn-primary" id="solicitarConfirmarBtn">Solicitar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc, brl } from '/js/utils.js';
+    import { isLoggedIn, getParceiro, logout, parceiroApi } from '/parceiro/js/parceiroApi.js';
+
+    if (!isLoggedIn()) window.location.href = '/parceiro/index.html';
+
+    const $ = id => document.getElementById(id);
+    const data = v => v ? new Date(v).toLocaleDateString('pt-BR') : '—';
+    const pct = v => `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+    let resumo = null;
+
+    $('nomeParceiro').textContent = getParceiro()?.nome ?? '';
+    $('sairBtn').addEventListener('click', logout);
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.toggle('active', x.id === b.dataset.tab));
+    }));
+
+    const SITUACAO = {
+      'Assinante': ['badge-green', 'Assinante'],
+      'Em teste': ['badge-blue', 'Em teste'],
+      'Período grátis': ['badge-blue', 'Período grátis'],
+      'Gratuito': ['badge-gray', 'Plano gratuito'],
+      'Cancelado': ['badge-red', 'Cancelou'],
+      'Encerrado': ['badge-red', 'Conta encerrada'],
+      'Desvinculado': ['badge-gray', 'Desvinculado'],
+      'Disponivel': ['badge-blue', 'Disponível'],
+      'Solicitada': ['badge-gray', 'Em análise'],
+      'Paga': ['badge-green', 'Paga'],
+      'Pendente': ['badge-gray', 'Em análise'],
+      'Recusada': ['badge-red', 'Recusada'],
+    };
+    const badge = s => { const [cls, txt] = SITUACAO[s] ?? ['badge-gray', s]; return `<span class="badge ${cls}">${esc(txt)}</span>`; };
+    const vazio = (cols, msg) => `<tr><td colspan="${cols}" class="empty">${msg}</td></tr>`;
+
+    function linkIndicacao(codigo) {
+      return `${location.origin}/register.html?parceiro=${encodeURIComponent(codigo.toUpperCase())}`;
+    }
+
+    async function copiar(texto, btn, rotulo) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        btn.textContent = 'Copiado!';
+        setTimeout(() => { btn.textContent = rotulo; }, 1500);
+      } catch {
+        prompt('Copie:', texto);
+      }
+    }
+
+    function renderResumo() {
+      const r = resumo;
+      $('codigo').textContent = r.codigo;
+      $('link').textContent = linkIndicacao(r.codigo);
+      $('regras').innerHTML =
+        `Você recebe <strong>${pct(r.percentualComissao)}</strong> de cada pagamento de assinatura dos escritórios que se cadastrarem
+         com seu link ou código${r.mesesComissao ? `, durante os primeiros <strong>${r.mesesComissao} ${r.mesesComissao === 1 ? 'mês' : 'meses'}</strong> de cada escritório` : ', enquanto eles forem assinantes'}.
+         As comissões ficam disponíveis assim que o pagamento é confirmado; para receber, clique em <strong>Solicitar pagamento</strong>.`;
+      $('statEscritorios').textContent = r.escritorios;
+      $('statAssinantes').textContent = `${r.assinantes} ${r.assinantes === 1 ? 'assinante' : 'assinantes'}`;
+      $('statDisponivel').textContent = brl(r.disponivel);
+      $('statSolicitado').textContent = brl(r.solicitado);
+      $('statPago').textContent = brl(r.pago);
+      $('statTotal').textContent = `${brl(r.totalComissoes)} em comissões no total`;
+
+      const btn = $('solicitarBtn');
+      btn.disabled = r.solicitacaoPendente || !(r.disponivel > 0);
+      btn.title = r.solicitacaoPendente ? 'Você já tem uma solicitação em análise.'
+        : !(r.disponivel > 0) ? 'Ainda não há comissões disponíveis.' : '';
+    }
+
+    async function carregar() {
+      try {
+        const [r, escritorios, comissoes, solicitacoes] = await Promise.all([
+          parceiroApi.me(), parceiroApi.escritorios(), parceiroApi.comissoes(), parceiroApi.solicitacoes(),
+        ]);
+        resumo = r;
+        renderResumo();
+
+        $('escritoriosBody').innerHTML = escritorios.length === 0
+          ? vazio(6, 'Nenhum escritório se cadastrou com seu código ainda. Compartilhe seu link de indicação!')
+          : escritorios.map(e => `
+            <tr>
+              <td><strong>${esc(e.nome)}</strong><div class="sub">cadastro em ${data(e.vinculadoEm ?? e.cadastradoEm)}</div></td>
+              <td>${badge(e.situacao)}${e.situacao === 'Assinante' ? `<div class="sub">${esc(e.plano)}${e.periodo ? ` ${esc(e.periodo.toLowerCase())}` : ''}</div>` : ''}</td>
+              <td class="num">${e.valorMensal != null ? brl(e.valorMensal) : '—'}</td>
+              <td class="sub">${e.primeiroPagamento ? `1º em ${data(e.primeiroPagamento)}<br>último em ${data(e.ultimoPagamento)}` : 'Nenhum ainda'}
+                ${e.comissaoAte ? `<br>comissão até ${data(e.comissaoAte)}` : ''}</td>
+              <td class="num">${brl(e.totalPago)}</td>
+              <td class="num"><strong>${brl(e.totalComissao)}</strong></td>
+            </tr>`).join('');
+
+        $('comissoesBody').innerHTML = comissoes.length === 0
+          ? vazio(6, 'Nenhum pagamento dos seus escritórios ainda.')
+          : comissoes.map(c => `
+            <tr>
+              <td>${data(c.pagoEm)}<div class="sub">${esc(c.descricao ?? '')}</div></td>
+              <td>${esc(c.nomeEscritorio)}</td>
+              <td class="num">${brl(c.valorPagamento)}</td>
+              <td class="num">${pct(c.percentual)}</td>
+              <td class="num"><strong>${brl(c.valor)}</strong></td>
+              <td>${badge(c.situacao)}</td>
+            </tr>`).join('');
+
+        $('solicitacoesBody').innerHTML = solicitacoes.length === 0
+          ? vazio(5, 'Você ainda não solicitou nenhum pagamento.')
+          : solicitacoes.map(s => `
+            <tr>
+              <td>${data(s.solicitadaEm)}</td>
+              <td class="num"><strong>${brl(s.valor)}</strong></td>
+              <td>${esc(s.chavePix)}</td>
+              <td>${badge(s.status)}${s.resolvidaEm ? `<div class="sub">em ${data(s.resolvidaEm)}</div>` : ''}</td>
+              <td class="sub">${esc(s.resposta ?? '—')}</td>
+            </tr>`).join('');
+      } catch (e) {
+        $('escritoriosBody').innerHTML = vazio(6, `Erro ao carregar: ${esc(e.message)}`);
+      }
+    }
+
+    $('copiarLinkBtn').addEventListener('click', e => resumo && copiar(linkIndicacao(resumo.codigo), e.target, 'Copiar link'));
+    $('copiarCodigoBtn').addEventListener('click', e => resumo && copiar(resumo.codigo.toUpperCase(), e.target, 'Copiar código'));
+
+    // ── Solicitar pagamento ─────────────────────────────────────────────────
+
+    const fecharModal = () => $('solicitarOverlay').classList.remove('open');
+    document.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', fecharModal));
+
+    $('solicitarBtn').addEventListener('click', () => {
+      if (!resumo) return;
+      $('solicitarValor').textContent = brl(resumo.disponivel);
+      $('chavePix').value = resumo.chavePix ?? '';
+      $('observacao').value = '';
+      $('solicitarErro').hidden = true;
+      $('solicitarOverlay').classList.add('open');
+      $('chavePix').focus();
+    });
+
+    $('solicitarConfirmarBtn').addEventListener('click', async () => {
+      const chave = $('chavePix').value.trim();
+      const erro = msg => { $('solicitarErro').textContent = msg; $('solicitarErro').hidden = false; };
+      if (!chave) return erro('Informe a chave Pix para receber.');
+
+      const btn = $('solicitarConfirmarBtn');
+      btn.disabled = true;
+      try {
+        await parceiroApi.solicitarPagamento(chave, $('observacao').value.trim() || null);
+        fecharModal();
+        await carregar();
+        document.querySelector('.tab-btn[data-tab="tabSolicitacoes"]').click();
+      } catch (e) {
+        erro(e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    carregar();
+  </script>
+</body>
+</html>

@@ -11,6 +11,8 @@ public record RegisterTenantDto(
     [Required, MinLength(8)] string Senha,
     PlanoTipo Plano = PlanoTipo.Free,
     string? Voucher = null,
+    // Código de parceiro (Parceiro.Codigo) — link /register.html?parceiro=CODIGO.
+    string? CodigoParceiro = null,
     string? UtmSource = null,
     string? UtmMedium = null,
     string? UtmCampaign = null,

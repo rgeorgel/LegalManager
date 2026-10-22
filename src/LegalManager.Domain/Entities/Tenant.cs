@@ -42,6 +42,12 @@ public class Tenant
     // disponível. O desconto só vale na primeira assinatura.
     public DateTime? DescontoPromocionalUsadoEm { get; set; }
 
+    // Parceiro que indicou o escritório (código no cadastro ou vínculo manual do super admin).
+    // Os pagamentos de assinatura feitos depois do vínculo geram comissão (ver ComissoesParceiros).
+    public Guid? ParceiroId { get; set; }
+    public DateTime? ParceiroVinculadoEm { get; set; }
+    public Parceiro? Parceiro { get; set; }
+
     public string? PrimaryColor { get; set; }
     public string? SidebarColor { get; set; }
     public string? AccentColor { get; set; }

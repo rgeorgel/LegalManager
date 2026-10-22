@@ -464,6 +464,63 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ComissaoParceiro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("FaturamentoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NomeEscritorio")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("PagoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ParceiroId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Percentual")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<Guid?>("SolicitacaoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("ValorPagamento")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FaturamentoId")
+                        .IsUnique();
+
+                    b.HasIndex("SolicitacaoId");
+
+                    b.HasIndex("ParceiroId", "TenantId");
+
+                    b.ToTable("ComissoesParceiros");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ConfiguracaoCalculadora", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1863,6 +1920,88 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Novidades");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.Parceiro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChavePix")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Documento")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int?>("MesesComissao")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<decimal>("PercentualComissao")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("SenhaHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Telefone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("TokenSenha")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("TokenSenhaExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UltimoAcessoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("TokenSenha");
+
+                    b.ToTable("Parceiros");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ParcelaHonorario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2785,6 +2924,53 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("ResumosProcesso");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChavePix")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ObservacaoParceiro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("ParceiroId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ResolvidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvidaPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Resposta")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("SolicitadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParceiroId", "Status");
+
+                    b.ToTable("SolicitacoesPagamentoParceiros");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Tarefa", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2947,6 +3133,12 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("ParceiroId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ParceiroVinculadoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("PeriodoBilling")
                         .HasColumnType("text");
 
@@ -3009,6 +3201,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Cnpj")
                         .IsUnique()
                         .HasFilter("\"Cnpj\" IS NOT NULL");
+
+                    b.HasIndex("ParceiroId");
 
                     b.HasIndex("TrialConcedidoPorId");
 
@@ -3519,6 +3713,24 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.ComissaoParceiro", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Parceiro", "Parceiro")
+                        .WithMany("Comissoes")
+                        .HasForeignKey("ParceiroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", "Solicitacao")
+                        .WithMany("Comissoes")
+                        .HasForeignKey("SolicitacaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Parceiro");
+
+                    b.Navigation("Solicitacao");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.ConfiguracaoCalculadora", b =>
@@ -4131,6 +4343,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Processo");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Parceiro", "Parceiro")
+                        .WithMany("Solicitacoes")
+                        .HasForeignKey("ParceiroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Parceiro");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Tarefa", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
@@ -4191,10 +4414,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Tenant", b =>
                 {
+                    b.HasOne("LegalManager.Domain.Entities.Parceiro", "Parceiro")
+                        .WithMany()
+                        .HasForeignKey("ParceiroId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("LegalManager.Domain.Entities.Usuario", "TrialConcedidoPor")
                         .WithMany()
                         .HasForeignKey("TrialConcedidoPorId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Parceiro");
 
                     b.Navigation("TrialConcedidoPor");
                 });
@@ -4328,6 +4558,13 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Documentos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.Parceiro", b =>
+                {
+                    b.Navigation("Comissoes");
+
+                    b.Navigation("Solicitacoes");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Pasta", b =>
                 {
                     b.Navigation("SubPastas");
@@ -4340,6 +4577,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Favoritos");
 
                     b.Navigation("Partes");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
+                {
+                    b.Navigation("Comissoes");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Tarefa", b =>

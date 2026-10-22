@@ -281,6 +281,14 @@
           <input type="text" id="voucher" class="form-control" placeholder="Ex: primeiros20" autocomplete="off" style="text-transform:uppercase;letter-spacing:0.05em">
           <div id="voucherBanner" style="display:none;margin-top:0.5rem;padding:0.6rem 0.875rem;border-radius:8px;font-size:0.8rem;font-weight:600"></div>
         </div>
+        <div style="margin:-0.25rem 0 1rem">
+          <button type="button" id="mostrarParceiro" style="background:none;border:none;padding:0;color:var(--color-primary);font-size:0.8rem;cursor:pointer">Foi indicado por um parceiro?</button>
+        </div>
+        <div class="form-group" id="parceiroGroup" hidden>
+          <label for="codigoParceiro">Código do parceiro <span style="color:var(--color-text-muted)">(opcional)</span></label>
+          <input type="text" id="codigoParceiro" class="form-control" placeholder="Código de quem indicou o Causify" autocomplete="off" maxlength="50" style="text-transform:uppercase;letter-spacing:0.05em">
+          <div id="parceiroBanner" style="display:none;margin-top:0.5rem;padding:0.6rem 0.875rem;border-radius:8px;font-size:0.8rem;font-weight:600"></div>
+        </div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:0.25rem">
           <input type="checkbox" id="aceitoTermos" required style="margin-top:0.2rem;width:auto;flex-shrink:0">
           <label for="aceitoTermos" style="font-size:0.875rem;color:var(--color-text-muted);margin-bottom:0;font-weight:400">
@@ -306,7 +314,7 @@
   <script type="module">
     import { register, loginWithGoogle } from '/js/auth.js';
     import { mascaraCpfCnpj } from '/js/mascaras.js';
-    import { getAttributionPayload } from '/js/utm.js';
+    import { getAttributionPayload, getCodigoParceiro } from '/js/utm.js';
 
     document.getElementById('cnpj').addEventListener('input', (e) => mascaraCpfCnpj(e.target));
 
@@ -464,6 +472,61 @@
       voucherInput.value = voucherInput.value.trim().toUpperCase();
     });
 
+    // Código de parceiro: só registra quem indicou (não dá benefício). Código inválido não barra o
+    // cadastro — o escritório só não fica vinculado — então aqui é só um aviso.
+    const parceiroInput = document.getElementById('codigoParceiro');
+    const parceiroBanner = document.getElementById('parceiroBanner');
+    const parceiroGroup = document.getElementById('parceiroGroup');
+    const mostrarParceiroBtn = document.getElementById('mostrarParceiro');
+    let parceiroTimer = null;
+    let parceiroSeq = 0;
+
+    function setParceiroBanner(texto, ok) {
+      parceiroBanner.textContent = texto;
+      parceiroBanner.style.color = ok ? '#16a34a' : '#b45309';
+      parceiroBanner.style.background = ok ? 'rgba(22,163,74,0.08)' : 'rgba(180,83,9,0.08)';
+      parceiroBanner.style.display = 'block';
+    }
+
+    async function validarParceiro(code) {
+      const seq = ++parceiroSeq;
+      try {
+        const res = await fetch(`/api/auth/codigo-parceiro/${encodeURIComponent(code)}`);
+        if (seq !== parceiroSeq) return;
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) setParceiroBanner(`Indicação de ${body.nome}`, true);
+        else if (res.status === 429) setParceiroBanner('Muitas tentativas. Aguarde um minuto e tente novamente.', false);
+        else setParceiroBanner('Código de parceiro não encontrado. Você pode criar a conta mesmo assim.', false);
+      } catch {
+        if (seq === parceiroSeq) parceiroBanner.style.display = 'none';
+      }
+    }
+
+    function applyParceiroUI(code) {
+      clearTimeout(parceiroTimer);
+      parceiroSeq++;
+      if (!code) { parceiroBanner.style.display = 'none'; return; }
+      parceiroTimer = setTimeout(() => validarParceiro(code), 400);
+    }
+
+    function mostrarCampoParceiro() {
+      parceiroGroup.hidden = false;
+      mostrarParceiroBtn.parentElement.hidden = true;
+    }
+
+    const parceiroInicial = getCodigoParceiro();
+    if (parceiroInicial) {
+      parceiroInput.value = parceiroInicial.toUpperCase();
+      mostrarCampoParceiro();
+      applyParceiroUI(parceiroInicial.trim());
+    }
+    mostrarParceiroBtn.addEventListener('click', () => { mostrarCampoParceiro(); parceiroInput.focus(); });
+    parceiroInput.addEventListener('input', () => applyParceiroUI(parceiroInput.value.trim()));
+    parceiroInput.addEventListener('blur', () => {
+      parceiroInput.value = parceiroInput.value.trim().toUpperCase();
+    });
+    const codigoParceiro = () => parceiroInput.value.trim().toLowerCase() || null;
+
     const form = document.getElementById('registerForm');
     const alertEl = document.getElementById('alert');
     const btn = document.getElementById('submitBtn');
@@ -486,7 +549,8 @@
           senha: document.getElementById('senha').value,
           plano: planoSelecionado,
           voucher,
-          ...getAttributionPayload()
+          ...getAttributionPayload(),
+          codigoParceiro: codigoParceiro()
         });
         const planNames = { 0: 'Free', 3: 'Plus', 1: 'Pro', 4: 'Max' };
         // send_instantly: a página navega logo em seguida e o evento não pode ficar na fila.
@@ -515,7 +579,7 @@
     window.handleGoogleCredential = async (response) => {
       alertEl.style.display = 'none';
       try {
-        await loginWithGoogle(response.credential, getAttributionPayload());
+        await loginWithGoogle(response.credential, { ...getAttributionPayload(), codigoParceiro: codigoParceiro() });
         // send_instantly: a página navega logo em seguida e o evento não pode ficar na fila.
         if (window.posthog && typeof window.posthog.capture === 'function') {
           window.posthog.capture('sign_up', { method: 'Google' }, { send_instantly: true });

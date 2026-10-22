@@ -12,6 +12,7 @@ const SUPERADMIN_PAGES = [
   '/superadmin/assistente.html',
   '/superadmin/codigos-promocionais.html',
   '/superadmin/precos-planos.html',
+  '/superadmin/parceiros.html',
 ];
 
 for (const pagePath of SUPERADMIN_PAGES) {

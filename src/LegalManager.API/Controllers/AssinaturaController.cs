@@ -350,7 +350,7 @@ public class AssinaturaController(
 
         if (atualizado.ValorCobradoImediato > 0)
         {
-            context.Faturamentos.Add(new Faturamento
+            var faturamento = new Faturamento
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenant.Id,
@@ -361,7 +361,9 @@ public class AssinaturaController(
                 DataPagamento = DateTime.UtcNow,
                 DataCriacao = DateTime.UtcNow,
                 Descricao = $"Troca de plano → {planoAlvo} {dto.Periodo} (proporcional)"
-            });
+            };
+            context.Faturamentos.Add(faturamento);
+            await ComissoesParceiros.RegistrarAsync(context, tenant, faturamento, ct);
         }
 
         await context.SaveChangesAsync(ct);
@@ -574,7 +576,7 @@ public class WebhookController(
         if (session.Metadata.ContainsKey("codigoPromocional"))
             tenant.DescontoPromocionalUsadoEm ??= DateTime.UtcNow;
 
-        context.Faturamentos.Add(new Faturamento
+        var faturamento = new Faturamento
         {
             Id = Guid.NewGuid(),
             TenantId = tenant.Id,
@@ -585,7 +587,9 @@ public class WebhookController(
             DataPagamento = DateTime.UtcNow,
             DataCriacao = DateTime.UtcNow,
             Descricao = $"Assinatura {tenant.Plano} {periodo}"
-        });
+        };
+        context.Faturamentos.Add(faturamento);
+        await ComissoesParceiros.RegistrarAsync(context, tenant, faturamento, ct);
         context.AuditLogs.Add(AuditExtensions.NovoAuditLog(
             tenant.Id, null, TimelineAcoes.AssinaturaIniciada, TimelineAcoes.EntidadeAssinatura,
             session.SubscriptionId, anterior,
@@ -650,7 +654,7 @@ public class WebhookController(
         tenant.PlanoExpiraEm = null;
         tenant.BillingCycleStart = DateTime.UtcNow;
 
-        context.Faturamentos.Add(new Faturamento
+        var faturamento = new Faturamento
         {
             Id = Guid.NewGuid(),
             TenantId = tenant.Id,
@@ -661,7 +665,9 @@ public class WebhookController(
             DataPagamento = DateTime.UtcNow,
             DataCriacao = DateTime.UtcNow,
             Descricao = $"Renovação {tenant.Plano} {tenant.PeriodoBilling}"
-        });
+        };
+        context.Faturamentos.Add(faturamento);
+        await ComissoesParceiros.RegistrarAsync(context, tenant, faturamento, ct);
 
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Renovação registrada via webhook Stripe para tenant {TenantId}", tenant.Id);

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Parceiros</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f9fafb; }
+    .data-table td.num, .data-table th.num { text-align: right; white-space: nowrap; }
+    .codigo { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+    .sub { font-size: 12px; color: var(--color-text-muted); }
+    .action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); }
+    .action-btn:hover { background: var(--color-bg); }
+    .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .action-btn.primary { border-color: var(--color-primary); color: var(--color-primary); }
+    .actions { white-space: nowrap; display: flex; gap: 4px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; }
+    .checkbox-row input { width: auto; min-height: auto; }
+    .form-section { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); margin: 8px 0 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+    .field-hint { font-size: 11px; color: var(--color-text-muted); margin-top: 4px; }
+    .section-title { font-size: 15px; font-weight: 600; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .empty { text-align: center; color: var(--color-text-muted); padding: 20px; font-size: 13px; }
+    .totais { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .totais { grid-template-columns: repeat(2, 1fr); } }
+    .total { border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 12px; }
+    .total .rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .total .valor { font-size: 17px; font-weight: 700; margin-top: 2px; }
+    .vincular { display: flex; gap: 8px; margin-bottom: 12px; }
+    .vincular input { flex: 1; }
+    .link-box { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 6px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Parceiros</h1>
+        <button class="btn btn-primary" id="novoBtn">+ Novo parceiro</button>
+      </div>
+      <p class="hint">
+        Parceiros indicam escritórios pelo link <code>/register.html?parceiro=CODIGO</code> (ou digitando o código no cadastro)
+        e ganham o % de comissão sobre cada pagamento de assinatura desses escritórios — por X meses a partir do primeiro
+        pagamento, ou enquanto pagarem. O parceiro acompanha tudo no <a href="/parceiro/" target="_blank">portal do parceiro</a>
+        e pede o pagamento por lá; o Pix é feito por fora e registrado aqui. Desativar um parceiro bloqueia o portal, invalida o
+        código e para de gerar comissões novas.
+      </p>
+
+      <div class="section-title">Solicitações de pagamento pendentes <span class="badge badge-gray" id="pendentesCount">0</span></div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr><th>Parceiro</th><th class="num">Valor</th><th>Chave Pix</th><th>Solicitada em</th><th>Observação</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="pendentesBody"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="section-title">Parceiros</div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Parceiro</th>
+              <th>Código</th>
+              <th>Comissão</th>
+              <th class="num">Escritórios</th>
+              <th class="num">Disponível</th>
+              <th class="num">Pago</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"><tr><td colspan="8" class="empty">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Criar/editar -->
+  <div class="modal-overlay" id="formOverlay">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <span class="modal-title" id="formTitle">Novo parceiro</span>
+        <button type="button" class="modal-close" data-fechar="formOverlay">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="fNome">Nome</label>
+          <input class="form-control" id="fNome" maxlength="200" placeholder="Nome do parceiro ou da empresa">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fEmail">E-mail (login do portal)</label>
+            <input class="form-control" id="fEmail" type="email" maxlength="256">
+          </div>
+          <div class="form-group">
+            <label for="fTelefone">Telefone</label>
+            <input class="form-control" id="fTelefone" maxlength="30">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fCodigo">Código de indicação</label>
+            <input class="form-control" id="fCodigo" maxlength="50" placeholder="Ex: CRISLANE" autocomplete="off" style="text-transform:uppercase">
+            <div class="field-hint">Letras, números, hífen e sublinhado. Trocar o código invalida o link antigo.</div>
+          </div>
+          <div class="form-group">
+            <label for="fDocumento">CPF/CNPJ</label>
+            <input class="form-control" id="fDocumento" maxlength="20">
+          </div>
+        </div>
+        <div class="form-section">Comissão</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fPercentual">Comissão (%)</label>
+            <input class="form-control" id="fPercentual" type="number" min="0.01" max="100" step="0.01" placeholder="Ex: 20">
+          </div>
+          <div class="form-group">
+            <label for="fMeses">Por quantos meses</label>
+            <input class="form-control" id="fMeses" type="number" min="1" max="120" placeholder="Enquanto pagar">
+            <div class="field-hint">Contados do 1º pagamento de cada escritório.</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="fChavePix">Chave Pix</label>
+          <input class="form-control" id="fChavePix" maxlength="200" placeholder="O parceiro também pode informar ao pedir o pagamento">
+        </div>
+        <div class="form-group">
+          <label for="fObservacoes">Observações internas</label>
+          <textarea class="form-control" id="fObservacoes" rows="3" maxlength="2000" placeholder="Condições combinadas, contrato... (não aparece para o parceiro)"></textarea>
+        </div>
+        <div class="form-group checkbox-row">
+          <input type="checkbox" id="fAtivo" checked>
+          <label for="fAtivo" style="margin:0">Ativo</label>
+        </div>
+        <div class="field-hint" id="formConviteHint">Ao criar, o parceiro recebe por e-mail o link para definir a senha do portal.</div>
+        <div class="form-error" id="formError" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-fechar="formOverlay">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="formSaveBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link de acesso -->
+  <div class="modal-overlay" id="linkOverlay">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <span class="modal-title">Acesso ao portal enviado</span>
+        <button type="button" class="modal-close" data-fechar="linkOverlay">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-top:0">Enviamos para <strong id="linkEmail"></strong> o link para definir a senha. Se o e-mail não chegar,
+          envie este link por outro canal (válido até <span id="linkValidade"></span>, uso único):</p>
+        <div class="link-box" id="linkUrl"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-fechar="linkOverlay">Fechar</button>
+        <button type="button" class="btn btn-primary" id="linkCopiarBtn">Copiar link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalhes -->
+  <div class="modal-overlay" id="detalheOverlay">
+    <div class="modal" style="max-width:860px">
+      <div class="modal-header">
+        <span class="modal-title" id="detalheTitulo"></span>
+        <button type="button" class="modal-close" data-fechar="detalheOverlay">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="totais" id="detalheTotais"></div>
+        <div class="tab-nav">
+          <button type="button" class="tab-btn active" data-tab="tabEscritorios">Escritórios</button>
+          <button type="button" class="tab-btn" data-tab="tabComissoes">Comissões</button>
+          <button type="button" class="tab-btn" data-tab="tabSolicitacoes">Solicitações</button>
+        </div>
+        <div class="tab-content active" id="tabEscritorios">
+          <div class="vincular">
+            <input class="form-control" id="vincularBusca" placeholder="Vincular escritório existente: e-mail de um usuário ou ID do tenant">
+            <button type="button" class="btn btn-secondary btn-sm" id="vincularBtn">Vincular</button>
+          </div>
+          <div class="form-error" id="vincularErro" hidden></div>
+          <div style="overflow-x:auto"><table class="data-table"><thead><tr>
+            <th>Escritório</th><th>Situação</th><th class="num">Mensalidade</th><th class="num">Total pago</th><th class="num">Comissão</th><th></th>
+          </tr></thead><tbody id="escritoriosBody"></tbody></table></div>
+        </div>
+        <div class="tab-content" id="tabComissoes">
+          <div style="overflow-x:auto"><table class="data-table"><thead><tr>
+            <th>Pagamento</th><th>Escritório</th><th class="num">Valor pago</th><th class="num">%</th><th class="num">Comissão</th><th>Situação</th>
+          </tr></thead><tbody id="comissoesBody"></tbody></table></div>
+        </div>
+        <div class="tab-content" id="tabSolicitacoes">
+          <div style="overflow-x:auto"><table class="data-table"><thead><tr>
+            <th>Solicitada em</th><th class="num">Valor</th><th>Chave Pix</th><th>Status</th><th>Resposta</th>
+          </tr></thead><tbody id="solicitacoesBody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-fechar="detalheOverlay">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolver solicitação -->
+  <div class="modal-overlay" id="resolverOverlay">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <span class="modal-title" id="resolverTitulo"></span>
+        <button type="button" class="modal-close" data-fechar="resolverOverlay">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-top:0" id="resolverResumo"></p>
+        <div class="form-group">
+          <label for="resolverResposta" id="resolverLabel"></label>
+          <textarea class="form-control" id="resolverResposta" rows="3" maxlength="1000"></textarea>
+          <div class="field-hint">O parceiro vê esta mensagem no portal.</div>
+        </div>
+        <div class="form-error" id="resolverErro" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-fechar="resolverOverlay">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="resolverConfirmarBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc, brl } from '/js/utils.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const $ = id => document.getElementById(id);
+    const data = v => v ? new Date(v).toLocaleDateString('pt-BR') : '—';
+    const pct = v => `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+    let parceiros = [];
+    let pendentes = [];
+    let editingId = null;
+    let detalheId = null;
+    let resolvendo = null; // { solicitacao, acao: 'pagar' | 'recusar' }
+
+    const abrir = id => $(id).classList.add('open');
+    const fechar = id => $(id).classList.remove('open');
+    document.querySelectorAll('[data-fechar]').forEach(b => b.addEventListener('click', () => fechar(b.dataset.fechar)));
+
+    function linkIndicacao(codigo) {
+      return `${location.origin}/register.html?parceiro=${encodeURIComponent(codigo.toUpperCase())}`;
+    }
+
+    async function copiar(texto, btn, rotulo) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        btn.textContent = 'Copiado!';
+        setTimeout(() => { btn.textContent = rotulo; }, 1500);
+      } catch {
+        prompt('Copie:', texto);
+      }
+    }
+
+    function comissaoTexto(p) {
+      return `${pct(p.percentualComissao)} ${p.mesesComissao ? `por ${p.mesesComissao} ${p.mesesComissao === 1 ? 'mês' : 'meses'}` : 'enquanto pagar'}`;
+    }
+
+    // ── Listagens ────────────────────────────────────────────────────────────
+
+    async function load() {
+      try {
+        [parceiros, pendentes] = await Promise.all([
+          saFetch('/superadmin/parceiros'),
+          saFetch('/superadmin/parceiros/solicitacoes?status=Pendente'),
+        ]);
+        renderPendentes();
+        renderParceiros();
+      } catch (e) {
+        $('tableBody').innerHTML = `<tr><td colspan="8" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    function renderPendentes() {
+      $('pendentesCount').textContent = pendentes.length;
+      $('pendentesCount').className = `badge ${pendentes.length ? 'badge-red' : 'badge-gray'}`;
+      $('pendentesBody').innerHTML = pendentes.length === 0
+        ? '<tr><td colspan="6" class="empty">Nenhuma solicitação pendente.</td></tr>'
+        : pendentes.map(s => `
+          <tr>
+            <td><strong>${esc(s.nomeParceiro)}</strong><div class="sub">${s.quantidadeComissoes} ${s.quantidadeComissoes === 1 ? 'comissão' : 'comissões'}</div></td>
+            <td class="num"><strong>${brl(s.valor)}</strong></td>
+            <td>${esc(s.chavePix)}</td>
+            <td>${data(s.solicitadaEm)}</td>
+            <td class="sub">${esc(s.observacaoParceiro ?? '—')}</td>
+            <td class="actions">
+              <button class="action-btn primary" data-pagar="${s.id}">Marcar como paga</button>
+              <button class="action-btn danger" data-recusar="${s.id}">Recusar</button>
+            </td>
+          </tr>`).join('');
+    }
+
+    function renderParceiros() {
+      if (parceiros.length === 0) {
+        $('tableBody').innerHTML = '<tr><td colspan="8" class="empty">Nenhum parceiro cadastrado ainda.</td></tr>';
+        return;
+      }
+      $('tableBody').innerHTML = parceiros.map(p => `
+        <tr>
+          <td><strong>${esc(p.nome)}</strong><div class="sub">${esc(p.email)}</div></td>
+          <td class="codigo">${esc(p.codigo)}</td>
+          <td>${comissaoTexto(p)}</td>
+          <td class="num">${p.escritorios}<div class="sub">${p.assinantes} ${p.assinantes === 1 ? 'assinante' : 'assinantes'}</div></td>
+          <td class="num">${brl(p.disponivel)}${p.solicitado > 0 ? `<div class="sub">${brl(p.solicitado)} solicitado</div>` : ''}</td>
+          <td class="num">${brl(p.pago)}</td>
+          <td>
+            ${p.ativo ? '<span class="badge badge-green">Ativo</span>' : '<span class="badge badge-gray">Inativo</span>'}
+            <div class="sub">${p.senhaDefinida ? `Último acesso: ${data(p.ultimoAcessoEm)}` : 'Senha não definida'}</div>
+          </td>
+          <td class="actions">
+            <button class="action-btn" data-acao="link" data-id="${p.id}">Copiar link</button>
+            <button class="action-btn" data-acao="detalhes" data-id="${p.id}">Detalhes</button>
+            <button class="action-btn" data-acao="editar" data-id="${p.id}">Editar</button>
+            ${p.ativo ? `<button class="action-btn" data-acao="acesso" data-id="${p.id}">${p.senhaDefinida ? 'Nova senha' : 'Reenviar convite'}</button>` : ''}
+            ${p.escritorios === 0 && p.totalComissoes === 0 ? `<button class="action-btn danger" data-acao="excluir" data-id="${p.id}">Excluir</button>` : ''}
+          </td>
+        </tr>`).join('');
+    }
+
+    $('tableBody').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-acao]');
+      if (!btn) return;
+      const p = parceiros.find(x => x.id === btn.dataset.id);
+      if (!p) return;
+
+      switch (btn.dataset.acao) {
+        case 'link': await copiar(linkIndicacao(p.codigo), btn, 'Copiar link'); break;
+        case 'detalhes': abrirDetalhes(p); break;
+        case 'editar': abrirFormulario(p); break;
+        case 'acesso': {
+          if (!confirm(`Enviar para ${p.email} um novo link para definir a senha? O link anterior deixa de valer.`)) return;
+          btn.disabled = true;
+          try {
+            mostrarLink(p.email, await saFetch(`/superadmin/parceiros/${p.id}/convite`, { method: 'POST' }));
+          } catch (err) {
+            alert('Erro: ' + err.message);
+          } finally {
+            btn.disabled = false;
+          }
+          break;
+        }
+        case 'excluir': {
+          if (!confirm(`Excluir o parceiro ${p.nome}? Esta ação não pode ser desfeita.`)) return;
+          try {
+            await saFetch(`/superadmin/parceiros/${p.id}`, { method: 'DELETE' });
+            await load();
+          } catch (err) {
+            alert('Erro: ' + err.message);
+          }
+          break;
+        }
+      }
+    });
+
+    function mostrarLink(email, link) {
+      $('linkEmail').textContent = email;
+      $('linkValidade').textContent = new Date(link.expiraEm).toLocaleString('pt-BR');
+      $('linkUrl').textContent = link.link;
+      abrir('linkOverlay');
+    }
+    $('linkCopiarBtn').addEventListener('click', e => copiar($('linkUrl').textContent, e.target, 'Copiar link'));
+
+    // ── Criar/editar ────────────────────────────────────────────────────────
+
+    function abrirFormulario(p) {
+      editingId = p?.id ?? null;
+      $('formTitle').textContent = editingId ? 'Editar parceiro' : 'Novo parceiro';
+      $('formConviteHint').hidden = !!editingId;
+      $('formError').hidden = true;
+      $('fNome').value = p?.nome ?? '';
+      $('fEmail').value = p?.email ?? '';
+      $('fTelefone').value = p?.telefone ?? '';
+      $('fCodigo').value = p?.codigo.toUpperCase() ?? '';
+      $('fDocumento').value = p?.documento ?? '';
+      $('fPercentual').value = p?.percentualComissao ?? '';
+      $('fMeses').value = p?.mesesComissao ?? '';
+      $('fChavePix').value = p?.chavePix ?? '';
+      $('fObservacoes').value = p?.observacoes ?? '';
+      $('fAtivo').checked = p?.ativo ?? true;
+      abrir('formOverlay');
+      $('fNome').focus();
+    }
+    $('novoBtn').addEventListener('click', () => abrirFormulario(null));
+
+    $('formSaveBtn').addEventListener('click', async () => {
+      const erro = msg => { $('formError').textContent = msg; $('formError').hidden = false; };
+      $('formError').hidden = true;
+
+      const nome = $('fNome').value.trim();
+      const email = $('fEmail').value.trim();
+      const codigo = $('fCodigo').value.trim();
+      const percentual = parseFloat($('fPercentual').value);
+      const mesesTxt = $('fMeses').value.trim();
+      const meses = mesesTxt ? parseInt(mesesTxt, 10) : null;
+
+      if (!nome) return erro('Informe o nome.');
+      if (!/^\S+@\S+\.\S+$/.test(email)) return erro('Informe um e-mail válido.');
+      if (!/^[A-Za-z0-9_-]+$/.test(codigo)) return erro('Informe um código com letras, números, hífen ou sublinhado.');
+      if (!(percentual > 0 && percentual <= 100)) return erro('A comissão deve ser maior que 0% e no máximo 100%.');
+      if (meses !== null && !(meses >= 1 && meses <= 120)) return erro('Meses de comissão deve ser entre 1 e 120 (ou vazio para enquanto pagar).');
+
+      const payload = {
+        nome, email, codigo,
+        telefone: $('fTelefone').value.trim() || null,
+        documento: $('fDocumento').value.trim() || null,
+        percentualComissao: percentual,
+        mesesComissao: meses,
+        chavePix: $('fChavePix').value.trim() || null,
+        observacoes: $('fObservacoes').value.trim() || null,
+        ativo: $('fAtivo').checked,
+      };
+
+      const btn = $('formSaveBtn');
+      btn.disabled = true;
+      try {
+        if (editingId) {
+          await saFetch(`/superadmin/parceiros/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
+          fechar('formOverlay');
+        } else {
+          const criado = await saFetch('/superadmin/parceiros', { method: 'POST', body: JSON.stringify(payload) });
+          fechar('formOverlay');
+          mostrarLink(criado.parceiro.email, criado.link);
+        }
+        await load();
+      } catch (e) {
+        erro(e.message || 'Erro ao salvar.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ── Detalhes ────────────────────────────────────────────────────────────
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.toggle('active', x.id === b.dataset.tab));
+    }));
+
+    const SITUACAO_BADGE = {
+      'Assinante': 'badge-green', 'Em teste': 'badge-blue', 'Período grátis': 'badge-blue',
+      'Cancelado': 'badge-red', 'Encerrado': 'badge-red', 'Desvinculado': 'badge-gray', 'Gratuito': 'badge-gray',
+      'Disponivel': 'badge-blue', 'Solicitada': 'badge-gray', 'Paga': 'badge-green',
+      'Pendente': 'badge-gray', 'Recusada': 'badge-red',
+    };
+    const ROTULO = { Disponivel: 'Disponível' };
+    const badge = s => `<span class="badge ${SITUACAO_BADGE[s] ?? 'badge-gray'}">${esc(ROTULO[s] ?? s)}</span>`;
+
+    async function abrirDetalhes(p) {
+      detalheId = p.id;
+      $('detalheTitulo').textContent = `${p.nome} — ${p.codigo.toUpperCase()}`;
+      $('vincularBusca').value = '';
+      $('vincularErro').hidden = true;
+      abrir('detalheOverlay');
+      await carregarDetalhes();
+    }
+
+    async function carregarDetalhes() {
+      const id = detalheId;
+      const vazio = (cols, msg) => `<tr><td colspan="${cols}" class="empty">${msg}</td></tr>`;
+      $('escritoriosBody').innerHTML = vazio(6, 'Carregando...');
+      $('comissoesBody').innerHTML = vazio(6, 'Carregando...');
+      $('solicitacoesBody').innerHTML = vazio(5, 'Carregando...');
+      try {
+        const [p, escritorios, comissoes, solicitacoes] = await Promise.all([
+          saFetch(`/superadmin/parceiros/${id}`),
+          saFetch(`/superadmin/parceiros/${id}/escritorios`),
+          saFetch(`/superadmin/parceiros/${id}/comissoes`),
+          saFetch(`/superadmin/parceiros/${id}/solicitacoes`),
+        ]);
+        if (id !== detalheId) return;
+
+        $('detalheTotais').innerHTML = [
+          ['Comissões geradas', p.totalComissoes], ['Disponível', p.disponivel],
+          ['Solicitado', p.solicitado], ['Pago', p.pago],
+        ].map(([r, v]) => `<div class="total"><div class="rotulo">${r}</div><div class="valor">${brl(v)}</div></div>`).join('');
+
+        $('escritoriosBody').innerHTML = escritorios.length === 0 ? vazio(6, 'Nenhum escritório indicado ainda.')
+          : escritorios.map(e => `
+            <tr>
+              <td><strong>${esc(e.nome)}</strong><div class="sub">${e.plano !== '—' ? `${esc(e.plano)}${e.periodo ? ` ${esc(e.periodo)}` : ''} · ` : ''}desde ${data(e.vinculadoEm ?? e.cadastradoEm)}</div></td>
+              <td>${badge(e.situacao)}${e.comissaoAte ? `<div class="sub">comissão até ${data(e.comissaoAte)}</div>` : ''}</td>
+              <td class="num">${e.valorMensal != null ? brl(e.valorMensal) : '—'}</td>
+              <td class="num">${brl(e.totalPago)}${e.ultimoPagamento ? `<div class="sub">último ${data(e.ultimoPagamento)}</div>` : ''}</td>
+              <td class="num">${brl(e.totalComissao)}</td>
+              <td>${e.vinculadoEm ? `<button class="action-btn danger" data-desvincular="${e.tenantId}" data-nome="${esc(e.nome)}">Desvincular</button>` : ''}</td>
+            </tr>`).join('');
+
+        $('comissoesBody').innerHTML = comissoes.length === 0 ? vazio(6, 'Nenhuma comissão gerada ainda.')
+          : comissoes.map(c => `
+            <tr>
+              <td>${data(c.pagoEm)}<div class="sub">${esc(c.descricao ?? '')}</div></td>
+              <td>${esc(c.nomeEscritorio)}</td>
+              <td class="num">${brl(c.valorPagamento)}</td>
+              <td class="num">${pct(c.percentual)}</td>
+              <td class="num"><strong>${brl(c.valor)}</strong></td>
+              <td>${badge(c.situacao)}</td>
+            </tr>`).join('');
+
+        $('solicitacoesBody').innerHTML = solicitacoes.length === 0 ? vazio(5, 'Nenhuma solicitação ainda.')
+          : solicitacoes.map(s => `
+            <tr>
+              <td>${data(s.solicitadaEm)}</td>
+              <td class="num"><strong>${brl(s.valor)}</strong></td>
+              <td>${esc(s.chavePix)}</td>
+              <td>${badge(s.status)}${s.resolvidaEm ? `<div class="sub">${data(s.resolvidaEm)}</div>` : ''}</td>
+              <td class="sub">${esc(s.resposta ?? '—')}</td>
+            </tr>`).join('');
+      } catch (e) {
+        $('escritoriosBody').innerHTML = vazio(6, `Erro: ${esc(e.message)}`);
+      }
+    }
+
+    $('vincularBtn').addEventListener('click', async () => {
+      const busca = $('vincularBusca').value.trim();
+      $('vincularErro').hidden = true;
+      if (!busca) return;
+      $('vincularBtn').disabled = true;
+      try {
+        await saFetch(`/superadmin/parceiros/${detalheId}/escritorios`, { method: 'POST', body: JSON.stringify({ busca }) });
+        $('vincularBusca').value = '';
+        await Promise.all([carregarDetalhes(), load()]);
+      } catch (e) {
+        $('vincularErro').textContent = e.message;
+        $('vincularErro').hidden = false;
+      } finally {
+        $('vincularBtn').disabled = false;
+      }
+    });
+
+    $('escritoriosBody').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-desvincular]');
+      if (!btn) return;
+      if (!confirm(`Desvincular ${btn.dataset.nome}? As comissões já geradas continuam do parceiro; os próximos pagamentos deixam de gerar comissão.`)) return;
+      try {
+        await saFetch(`/superadmin/parceiros/${detalheId}/escritorios/${btn.dataset.desvincular}`, { method: 'DELETE' });
+        await Promise.all([carregarDetalhes(), load()]);
+      } catch (err) {
+        alert('Erro: ' + err.message);
+      }
+    });
+
+    // ── Solicitações ────────────────────────────────────────────────────────
+
+    $('pendentesBody').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-pagar], button[data-recusar]');
+      if (!btn) return;
+      const acao = btn.dataset.pagar ? 'pagar' : 'recusar';
+      const solicitacao = pendentes.find(s => s.id === (btn.dataset.pagar ?? btn.dataset.recusar));
+      if (!solicitacao) return;
+      resolvendo = { solicitacao, acao };
+      $('resolverTitulo').textContent = acao === 'pagar' ? 'Marcar como paga' : 'Recusar solicitação';
+      $('resolverResumo').innerHTML = acao === 'pagar'
+        ? `Confirme que você já fez o Pix de <strong>${brl(solicitacao.valor)}</strong> para <strong>${esc(solicitacao.nomeParceiro)}</strong> (chave <strong>${esc(solicitacao.chavePix)}</strong>).`
+        : `As comissões de <strong>${brl(solicitacao.valor)}</strong> voltam a ficar disponíveis para <strong>${esc(solicitacao.nomeParceiro)}</strong> pedir de novo.`;
+      $('resolverLabel').textContent = acao === 'pagar' ? 'Comprovante / ID da transação (opcional)' : 'Motivo da recusa';
+      $('resolverResposta').value = '';
+      $('resolverErro').hidden = true;
+      $('resolverConfirmarBtn').className = `btn ${acao === 'pagar' ? 'btn-primary' : 'btn-danger'}`;
+      abrir('resolverOverlay');
+      $('resolverResposta').focus();
+    });
+
+    $('resolverConfirmarBtn').addEventListener('click', async () => {
+      if (!resolvendo) return;
+      const resposta = $('resolverResposta').value.trim();
+      if (resolvendo.acao === 'recusar' && !resposta) {
+        $('resolverErro').textContent = 'Informe o motivo da recusa.';
+        $('resolverErro').hidden = false;
+        return;
+      }
+      const btn = $('resolverConfirmarBtn');
+      btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/parceiros/solicitacoes/${resolvendo.solicitacao.id}/${resolvendo.acao}`, {
+          method: 'POST', body: JSON.stringify({ resposta: resposta || null }),
+        });
+        fechar('resolverOverlay');
+        resolvendo = null;
+        await load();
+      } catch (e) {
+        $('resolverErro').textContent = e.message;
+        $('resolverErro').hidden = false;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

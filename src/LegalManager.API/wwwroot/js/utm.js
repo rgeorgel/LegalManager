@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'signup_attribution';
+const PARCEIRO_KEY = 'parceiro_ref';
+const PARCEIRO_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function readUrlParams() {
   try { return new URLSearchParams(location.search); }
@@ -40,7 +42,8 @@ export function captureAttribution() {
     fbclid:      clean(params.get('fbclid'))       ?? base.fbclid      ?? null,
     gclid:       clean(params.get('gclid'))        ?? base.gclid       ?? null,
     referrer:    clean(document.referrer)         ?? base.referrer    ?? null,
-    landingPage: location.pathname || null
+    landingPage: location.pathname || null,
+    codigoParceiro: getCodigoParceiro()
   };
 
   if (hasAnyUtm) writeStored(payload);
@@ -49,6 +52,21 @@ export function captureAttribution() {
 
 export function getAttributionPayload() {
   return captureAttribution();
+}
+
+// Código de parceiro do link de indicação (?parceiro=CODIGO). Fica 30 dias no localStorage para
+// valer mesmo que o visitante só se cadastre numa visita seguinte; um link novo substitui o anterior.
+export function getCodigoParceiro() {
+  const daUrl = clean(readUrlParams().get('parceiro'));
+  try {
+    if (daUrl) {
+      localStorage.setItem(PARCEIRO_KEY, JSON.stringify({ codigo: daUrl, em: Date.now() }));
+      return daUrl;
+    }
+    const salvo = JSON.parse(localStorage.getItem(PARCEIRO_KEY) || 'null');
+    if (salvo?.codigo && Date.now() - salvo.em < PARCEIRO_TTL_MS) return salvo.codigo;
+  } catch { /* localStorage indisponível — vale só o da URL */ }
+  return daUrl;
 }
 
 export function clearAttribution() {

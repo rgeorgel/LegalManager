@@ -155,6 +155,40 @@ public class EmailService : IEmailService
         await EnviarAsync(CriarMensagem(email, "Redefinição de senha — Causify", html));
     }
 
+    public async Task EnviarConviteParceiroAsync(string email, string nomeParceiro, string codigo,
+        string linkDefinirSenha, CancellationToken ct = default)
+    {
+        var html = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
+                <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
+                <p style="color:#94a3b8;margin:4px 0 0">Programa de parceiros</p>
+              </div>
+              <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <h2 style="color:#1a56db;margin-top:0">Bem-vindo(a) ao programa de parceiros!</h2>
+                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeParceiro)}</strong>!</p>
+                <p>Sua conta de parceiro no Causify está pronta. No portal do parceiro você acompanha os escritórios
+                   que indicou, os pagamentos e as suas comissões, e solicita os seus pagamentos.</p>
+                <div style="background:#f3f4f6;border-radius:8px;padding:16px 20px;margin:24px 0">
+                  <p style="margin:0 0 4px;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280">Seu código de indicação</p>
+                  <p style="margin:0;font-size:20px;font-weight:700;letter-spacing:.05em">{System.Net.WebUtility.HtmlEncode(codigo.ToUpperInvariant())}</p>
+                </div>
+                <p>Clique no botão abaixo para criar sua senha de acesso:</p>
+                <p style="text-align:center;margin:28px 0">
+                  <a href="{linkDefinirSenha}"
+                     style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
+                    Criar minha senha
+                  </a>
+                </p>
+                <p style="color:#6b7280;font-size:12px;margin-top:24px;border-top:1px solid #f3f4f6;padding-top:16px">
+                  Link válido por <strong>7 dias</strong>. Se expirar, peça um novo link à equipe do Causify.
+                </p>
+              </div>
+            </div>
+            """;
+        await EnviarAsync(CriarMensagem(email, "Sua conta de parceiro Causify", html));
+    }
+
     public async Task EnviarTrialExpirandoAsync(string email, string nomeEscritorio, int diasRestantes, CancellationToken ct = default)
     {
         var frontendUrl = _config["App:FrontendUrl"];

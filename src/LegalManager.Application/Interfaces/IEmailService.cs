@@ -20,6 +20,7 @@ public interface IEmailService
     Task EnviarBoasVindasAsync(string email, string nomeAdmin, string nomeEscritorio, string plano, DateTime? expiraEm, CancellationToken ct = default);
     Task EnviarConviteUsuarioAsync(string email, string nomeEscritorio, string linkConvite, CancellationToken ct = default);
     Task EnviarResetSenhaAsync(string email, string linkReset, CancellationToken ct = default);
+    Task EnviarConviteParceiroAsync(string email, string nomeParceiro, string codigo, string linkDefinirSenha, CancellationToken ct = default);
     Task EnviarTrialExpirandoAsync(string email, string nomeEscritorio, int diasRestantes, CancellationToken ct = default);
     Task EnviarPlanoPromocionalExpirandoAsync(string email, string nomeEscritorio, PlanoTipo plano, DateTime expiraEm, int diasRestantes, CancellationToken ct = default);
     Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa, DateTime prazo, int diasRestantes, CancellationToken ct = default);

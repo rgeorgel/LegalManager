@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Auth;
 using LegalManager.Application.DTOs.CodigosPromocionais;
+using LegalManager.Application.DTOs.Parceiros;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Services;
@@ -52,6 +53,14 @@ public class AuthController : ControllerBase
         }
         catch (InvalidOperationException ex) { return NotFound(new { message = ex.Message }); }
     }
+
+    // Validação ao vivo do código de parceiro do cadastro (link /register.html?parceiro=CODIGO).
+    [HttpGet("codigo-parceiro/{codigo}")]
+    [EnableRateLimiting("codigo-promocional")]
+    public async Task<ActionResult<ParceiroPublicoDto>> ValidarCodigoParceiro(string codigo, CancellationToken ct) =>
+        await _authService.BuscarParceiroAsync(codigo, ct) is { } parceiro
+            ? Ok(new ParceiroPublicoDto(parceiro.Codigo, parceiro.Nome))
+            : NotFound(new { message = "Código de parceiro não encontrado." });
 
     [HttpPost("login")]
     [EnableRateLimiting("auth")]
