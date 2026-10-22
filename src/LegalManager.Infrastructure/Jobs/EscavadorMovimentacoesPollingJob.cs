@@ -13,8 +13,10 @@ namespace LegalManager.Infrastructure.Jobs;
 
 /// <summary>
 /// Polls the Escavador V2 per-process movimentacoes endpoint for each monitored Processo
-/// and creates Publicacao rows (idempotent via UuidExterno) for any new events.
-/// Plan-gated per tenant: Free/Plus tenants are skipped silently.
+/// and creates Publicacao + Andamento rows for any new events. Backstop do webhook — e, como
+/// lista o histórico inteiro, recupera também o que o webhook perdeu.
+/// Sem trava de plano: só processos monitorados entram, e o limite de monitorados por plano
+/// já controla o custo.
 /// </summary>
 public class EscavadorMovimentacoesPollingJob
 {
@@ -56,14 +58,6 @@ public class EscavadorMovimentacoesPollingJob
             return;
         }
 
-        // Carrega planos dos tenants em uma query
-        var tenantIds = processos.Select(p => p.TenantId).Distinct().ToList();
-        var planos = await _context.Tenants
-            .AsNoTracking()
-            .Where(t => tenantIds.Contains(t.Id))
-            .Select(t => new { t.Id, t.Plano })
-            .ToDictionaryAsync(x => x.Id, x => x.Plano);
-
         var totalNovas = 0;
         var totalErros = 0;
 
@@ -71,19 +65,12 @@ public class EscavadorMovimentacoesPollingJob
         {
             try
             {
-                if (!planos.TryGetValue(proc.TenantId, out var plano) ||
-                    !PlanoRestricoes.PermiteCapturacaoPublicacoes(plano))
-                {
-                    continue;
-                }
-
-                var desde = await _context.Publicacoes
-                    .Where(pu => pu.TenantId == proc.TenantId && pu.NumeroCNJ == proc.NumeroCNJ)
-                    .Select(pu => (DateTime?)pu.DataPublicacao)
-                    .DefaultIfEmpty()
-                    .MaxAsync() ?? DateTime.UtcNow.AddDays(-7);
-
-                if (desde > DateTime.UtcNow.AddMinutes(-1)) continue; // já capturamos há pouco
+                // Corte por data, como no "Consultar": andamentos do DataJud/e-SAJ não compartilham
+                // chave nem texto com o Escavador, então sem o corte o histórico inteiro duplicaria.
+                var desde = await _context.Andamentos
+                    .Where(a => a.ProcessoId == proc.Id)
+                    .Select(a => (DateTime?)a.Data)
+                    .MaxAsync();
 
                 var resultado = await _consultaLog.RegistrarAsync(
                     "Escavador", "BuscaMovimentacoesPorCnj", "Job automático — Polling de movimentações",
@@ -101,10 +88,20 @@ public class EscavadorMovimentacoesPollingJob
 
                 var agora = DateTime.UtcNow;
                 var criadasNesteProcesso = 0;
+                // Mesmo dia do último andamento entra (data do Escavador vem sem hora); o texto
+                // idêntico barra a repetição — inclusive do que já veio pelo webhook.
+                var descricoesExistentes = (await _context.Andamentos
+                    .Where(a => a.ProcessoId == proc.Id && (desde == null || a.Data >= desde.Value.Date))
+                    .Select(a => a.Descricao)
+                    .ToListAsync()).ToHashSet();
 
-                foreach (var mov in resultado.Data)
+                foreach (var mov in resultado.Data.OrderBy(m => m.Data))
                 {
-                    if (string.IsNullOrWhiteSpace(mov.Uuid)) continue;
+                    if (string.IsNullOrWhiteSpace(mov.Uuid) || !mov.Data.HasValue) continue;
+                    if (desde.HasValue && mov.Data.Value < desde.Value.Date) continue;
+
+                    var descricao = !string.IsNullOrWhiteSpace(mov.Snippet) ? mov.Snippet : TextoDoHtml(mov.ConteudoHtml);
+                    if (!descricoesExistentes.Add(descricao)) continue;
 
                     var existe = await _context.Publicacoes
                         .AnyAsync(p => p.TenantId == proc.TenantId && p.UuidExterno == mov.Uuid);
@@ -118,15 +115,19 @@ public class EscavadorMovimentacoesPollingJob
                         Id = Guid.NewGuid(),
                         ProcessoId = processoCompleto.Id,
                         TenantId = processoCompleto.TenantId,
-                        Data = mov.Data ?? agora,
+                        Data = mov.Data.Value,
                         Tipo = MapearTipo(mov.Tipo, mov.ConteudoHtml),
-                        Descricao = !string.IsNullOrWhiteSpace(mov.Snippet) ? mov.Snippet : TextoDoHtml(mov.ConteudoHtml),
+                        Descricao = descricao,
                         Fonte = FonteAndamento.Automatico,
                         CriadoEm = agora
                     };
                     _context.Andamentos.Add(andamento);
 
-                    if (processoCompleto.AdvogadoResponsavelId.HasValue)
+                    if (andamento.Data > (processoCompleto.UltimoAndamentoEm ?? DateTime.MinValue))
+                        processoCompleto.UltimoAndamentoEm = andamento.Data;
+
+                    // Recuperação de histórico não vira enxurrada de notificações: só o recente avisa.
+                    if (processoCompleto.AdvogadoResponsavelId.HasValue && andamento.Data >= agora.AddDays(-7))
                     {
                         _context.Notificacoes.Add(new Notificacao
                         {

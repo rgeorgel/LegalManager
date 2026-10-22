@@ -356,7 +356,8 @@ public class EscavadorHttpClient : IEscavadorService
                 {
                     all.Add(new EscavadorMovimentacaoDto(
                         Id: item.Id,
-                        Uuid: string.Empty,
+                        // O V2 não traz uuid; o id da movimentação é estável e serve de chave de dedup.
+                        Uuid: item.Id > 0 ? $"v2-mov-{item.Id}" : string.Empty,
                         Data: item.Data,
                         ConteudoHtml: item.Conteudo,
                         Snippet: item.Conteudo,

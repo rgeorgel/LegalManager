@@ -1053,6 +1053,15 @@ const tipoAndLabels = { Decisao:'Decisão', Sentenca:'Sentença', Acordao:'Acór
 
 function label(map, val) { return map[val] || val; }
 function fmtDate(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : '—'; }
+// Andamento sem hora (ex.: Escavador manda só "2026-08-26") é gravado à meia-noite UTC — no fuso
+// de Brasília isso viraria 21h do dia anterior. Meia-noite UTC exata = data pura: mostra o dia UTC.
+function fmtDataAndamento(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d)) return '—';
+  if (d.getUTCHours() || d.getUTCMinutes() || d.getUTCSeconds() || d.getUTCMilliseconds()) return d.toLocaleDateString('pt-BR');
+  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
 function fmtDateTime(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleString('pt-BR') : '—'; }
 function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'; }
 
@@ -1204,7 +1213,7 @@ async function loadAndamentosPreview() {
     const preview = items.slice(0, 5);
     lista.innerHTML = preview.map(a => `
       <div class="andamento-item ${a.visivelCliente ? '' : 'andamento-oculto'}">
-        <div class="andamento-date">${fmtDate(a.data)}</div>
+        <div class="andamento-date">${fmtDataAndamento(a.data)}</div>
         <div>
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
           ${renderDescricaoAndamento(a.descricao)}
@@ -1348,7 +1357,7 @@ async function loadAndamentos() {
     }
     lista.innerHTML = items.map(a => `
       <div class="andamento-item ${a.visivelCliente ? '' : 'andamento-oculto'}">
-        <div class="andamento-date">${fmtDate(a.data)}</div>
+        <div class="andamento-date">${fmtDataAndamento(a.data)}</div>
         <div>
           <span class="andamento-tipo">${label(tipoAndLabels, a.tipo)}</span>
           ${renderDescricaoAndamento(a.descricao)}

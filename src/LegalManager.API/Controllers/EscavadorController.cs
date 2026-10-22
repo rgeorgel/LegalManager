@@ -75,10 +75,12 @@ public class EscavadorController : ControllerBase
         // Se nem processo nem OAB, ignora (ack silencioso)
         if (processo == null && oab == null) return Ok();
 
-        // 3. Plan-gate: usar o tenant do que encontramos
+        // 3. Plan-gate: movimentação de processo monitorado entra em qualquer plano (o limite de
+        // monitorados por plano já controla o custo); o resto (fluxo OAB) é recurso Pro.
         var tenantId = processo?.TenantId ?? oab!.TenantId;
         var plano = await GetTenantPlanoAsync(tenantId);
-        if (!PlanoRestricoes.PermiteCapturacaoPublicacoes(plano))
+        var planoCaptura = PlanoRestricoes.PermiteCapturacaoPublicacoes(plano);
+        if (processo is not { Monitorado: true } && !planoCaptura)
         {
             await _escavador.MarcarCallbackRecebidoAsync(uuid);
             return Ok();
@@ -91,7 +93,8 @@ public class EscavadorController : ControllerBase
             {
                 await CancelarMonitoramentoAsync(processo);
             }
-            else if (processo.MonitoramentoSemanal)
+            // Upgrade/reativação geram custo novo no Escavador: só nos planos com captura.
+            else if (planoCaptura && processo.MonitoramentoSemanal)
             {
                 await UpgradeParaDiarioAsync(processo);
             }
@@ -108,6 +111,18 @@ public class EscavadorController : ControllerBase
         {
             await _escavador.MarcarCallbackRecebidoAsync(uuid);
             return Ok();
+        }
+
+        // A mesma movimentação pode já ter entrado pelo polling, que não tem o uuid do callback.
+        if (processo != null && conteudo.Data.HasValue)
+        {
+            var descricao = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : TextoDoHtml(conteudo.ConteudoHtml);
+            if (await _context.Andamentos.AnyAsync(a =>
+                    a.ProcessoId == processo.Id && a.Data == conteudo.Data.Value && a.Descricao == descricao))
+            {
+                await _escavador.MarcarCallbackRecebidoAsync(uuid);
+                return Ok();
+            }
         }
 
         // 6. Criar Publicacao
