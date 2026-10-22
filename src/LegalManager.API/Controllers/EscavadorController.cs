@@ -202,7 +202,7 @@ public class EscavadorController : ControllerBase
             TenantId = oab.TenantId,
             ProcessoId = null,
             NumeroCNJ = numeroCNJ,
-            Diario = conteudo.Diario ?? conteudo.DiarioSigla ?? "Diário Oficial",
+            Diario = PublicacaoMapper.Cortar(conteudo.Diario ?? conteudo.DiarioSigla, 100) ?? "Diário Oficial",
             DataPublicacao = conteudo.Data ?? agora,
             Conteudo = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet : "",
             Tipo = InferirTipoPublicacao(conteudo.Tipo, conteudo.ConteudoHtml),
@@ -210,13 +210,13 @@ public class EscavadorController : ControllerBase
             Urgente = false,
             FonteCaptura = FonteCaptura.Escavador,
             UuidExterno = conteudo.Uuid,
-            LinkEscavador = conteudo.Link ?? conteudo.LinkApi,
-            LinkPdf = conteudo.LinkPdf ?? conteudo.LinkPdfApi,
+            LinkEscavador = PublicacaoMapper.Cortar(conteudo.Link ?? conteudo.LinkApi, 500),
+            LinkPdf = PublicacaoMapper.Cortar(conteudo.LinkPdf ?? conteudo.LinkPdfApi, 500),
             DiarioId = conteudo.DiarioId,
-            DiarioSigla = conteudo.DiarioSigla,
-            OrigemEstado = conteudo.OrigemEstado,
-            Snippet = conteudo.Snippet,
-            Tribunal = conteudo.DiarioSigla,
+            DiarioSigla = PublicacaoMapper.Cortar(conteudo.DiarioSigla, 50),
+            OrigemEstado = PublicacaoMapper.Cortar(conteudo.OrigemEstado, 2),
+            Snippet = PublicacaoMapper.Cortar(conteudo.Snippet, 1000),
+            Tribunal = PublicacaoMapper.Cortar(conteudo.DiarioSigla, 50),
             CapturaEm = agora
         };
     }

@@ -149,6 +149,9 @@ public class EscavadorMovimentacoesPollingJob
             }
             catch (Exception ex)
             {
+                // Sem isto, as entidades que falharam ficam no contexto e todo SaveChanges seguinte
+                // (dos outros processos e do log de Consultas Externas, que usa o mesmo contexto) falha junto.
+                _context.ChangeTracker.Clear();
                 totalErros++;
                 _logger.LogError(ex, "[EscavadorPolling] Erro ao pollar {CNJ}", proc.NumeroCNJ);
             }

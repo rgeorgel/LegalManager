@@ -21,7 +21,7 @@ public class PublicacaoMapper
             TenantId = processo.TenantId,
             ProcessoId = processo.Id,
             NumeroCNJ = processo.NumeroCNJ,
-            Diario = mov.Diario ?? mov.DiarioSigla ?? "Diário Oficial",
+            Diario = Cortar(mov.Diario ?? mov.DiarioSigla, 100) ?? "Diário Oficial",
             DataPublicacao = mov.Data ?? agora,
             Conteudo = StripHtml(mov.ConteudoHtml) ?? mov.Snippet ?? string.Empty,
             Tipo = InferirTipo(mov.Tipo, mov.ConteudoHtml),
@@ -29,17 +29,22 @@ public class PublicacaoMapper
             Urgente = false,
             FonteCaptura = FonteCaptura.Escavador,
             UuidExterno = mov.Uuid,
-            LinkEscavador = mov.Link ?? mov.LinkApi,
-            LinkPdf = mov.LinkPdf ?? mov.LinkPdfApi,
+            LinkEscavador = Cortar(mov.Link ?? mov.LinkApi, 500),
+            LinkPdf = Cortar(mov.LinkPdf ?? mov.LinkPdfApi, 500),
             DiarioId = mov.DiarioId,
-            DiarioSigla = mov.DiarioSigla,
-            OrigemEstado = mov.OrigemEstado,
+            DiarioSigla = Cortar(mov.DiarioSigla, 50),
+            OrigemEstado = Cortar(mov.OrigemEstado, 2),
             OrigemId = null,
-            Snippet = mov.Snippet,
-            Tribunal = ExtrairTribunal(processo.NumeroCNJ, mov.DiarioSigla),
+            // No V2 o "snippet" é a publicação inteira; o texto completo fica em Conteudo.
+            Snippet = Cortar(mov.Snippet, 1000),
+            Tribunal = Cortar(ExtrairTribunal(processo.NumeroCNJ, mov.DiarioSigla), 50),
             CapturaEm = agora
         };
     }
+
+    // Limites das colunas (PublicacaoConfiguration): um valor maior derruba o SaveChanges no Postgres.
+    public static string? Cortar(string? valor, int max) =>
+        valor != null && valor.Length > max ? valor[..max] : valor;
 
     private static string? StripHtml(string? html)
     {

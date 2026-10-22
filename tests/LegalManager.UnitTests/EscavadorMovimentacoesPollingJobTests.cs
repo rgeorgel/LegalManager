@@ -97,6 +97,23 @@ public class EscavadorMovimentacoesPollingJobTests
     }
 
     [Fact]
+    public async Task PublicacaoLonga_SnippetCabeNaColunaETextoInteiroFicaNoAndamento()
+    {
+        // O V2 manda a publicação inteira como snippet; acima de 1000 caracteres o Postgres rejeitava
+        // o insert e o resto do job falhava junto (o InMemory não aplica o limite — por isso o assert direto).
+        var hoje = DateTime.UtcNow.Date;
+        var (ctx, processo) = await SeedAsync(PlanoTipo.Free, hoje.AddDays(-10), "Último");
+        var longo = new string('x', 2500);
+
+        await Job(ctx, Mov(1, hoje, longo)).ExecutarAsync();
+
+        var publicacao = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(1000, publicacao.Snippet!.Length);
+        Assert.Equal(longo, publicacao.Conteudo);
+        Assert.Contains(await ctx.Andamentos.Where(a => a.ProcessoId == processo.Id).ToListAsync(), a => a.Descricao == longo);
+    }
+
+    [Fact]
     public async Task MovimentacaoJaRecebidaPeloWebhook_ComOutroUuid_NaoDuplica()
     {
         var hoje = DateTime.UtcNow.Date;
