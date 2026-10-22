@@ -110,8 +110,32 @@
     .paginacao-info { font-size: 13px; color: var(--color-text-muted); }
     .paginacao-tamanho { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-muted); margin: 0; }
     .paginacao-tamanho select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); }
+    /* Filtros avançados: "tem / não tem" por recurso e tema */
+    .filtros-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); cursor: pointer; }
+    .filtros-btn:hover { background: var(--color-bg); }
+    .filtros-btn[aria-expanded="true"] { border-color: var(--color-primary); color: var(--color-primary); }
+    .filtros-btn .filtros-count { background: var(--color-primary); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 600; padding: 0 7px; line-height: 18px; }
+    .filtros-painel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 14px 16px; margin: -4px 0 16px; display: flex; flex-direction: column; gap: 12px; }
+    .filtros-painel[hidden], .filtros-count[hidden], .filtros-limpar[hidden] { display: none; }
+    .filtros-topo { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+    .filtros-topo label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-muted); }
+    .filtros-topo select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); }
+    .filtros-dica { font-size: 12px; color: var(--color-text-muted); }
+    .filtros-limpar { background: none; border: none; color: var(--color-primary); font-size: 13px; cursor: pointer; padding: 4px 0; }
+    .filtros-limpar:hover { text-decoration: underline; }
+    .filtros-grupos { display: flex; flex-direction: column; gap: 10px; }
+    .filtros-grupo-titulo { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin-bottom: 6px; }
+    .filtros-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filtro-chip { border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); border-radius: 999px; padding: 4px 11px; font-size: 12px; cursor: pointer; user-select: none; }
+    .filtro-chip:hover { border-color: var(--color-text-muted); }
+    .filtro-chip[data-estado="tem"] { background: #dcfce7; border-color: #22c55e; color: #166534; }
+    .filtro-chip[data-estado="nao"] { background: #fee2e2; border-color: #ef4444; color: #991b1b; text-decoration: line-through; }
+    .filtro-chip[data-estado="tem"]::before { content: '✓ '; }
+    .filtro-chip[data-estado="nao"]::before { content: '✕ '; }
     @media (max-width: 768px) {
       .filters { flex-direction: column; align-items: stretch; }
+      .filtros-btn { justify-content: center; }
+      .filtros-topo select { font-size: 16px; }
       .filters input, .filters select { width: 100%; min-width: 0; font-size: 16px; }
       /* No celular a lista não cabe: fica sempre em blocos. */
       .view-toggle { display: none; }
@@ -164,10 +188,29 @@
           <option value="ultimoAcesso:desc">Último acesso: mais recente</option>
           <option value="ultimoAcesso:asc">Último acesso: mais antigo</option>
         </select>
+        <button type="button" class="filtros-btn" id="filtrosBtn" aria-expanded="false" aria-controls="filtrosPainel">
+          Filtros <span class="filtros-count" id="filtrosCount" hidden></span>
+        </button>
         <div class="view-toggle">
           <button type="button" class="view-btn" id="viewGrid" title="Visualização em blocos">⊞</button>
           <button type="button" class="view-btn" id="viewList" title="Visualização em lista">☰</button>
         </div>
+      </div>
+
+      <div class="filtros-painel" id="filtrosPainel" hidden>
+        <div class="filtros-topo">
+          <label>Tema
+            <select id="temaFilter">
+              <option value="">Qualquer tema</option>
+              <option value="padrao">Padrão (sem personalização)</option>
+              <option value="personalizado">Qualquer personalização</option>
+              <optgroup label="Preset" id="temaPresets"></optgroup>
+            </select>
+          </label>
+          <span class="filtros-dica">Clique num recurso: 1× <strong>tem</strong> · 2× <strong>não tem</strong> · 3× ignora</span>
+          <button type="button" class="filtros-limpar" id="filtrosLimpar" hidden>Limpar filtros</button>
+        </div>
+        <div class="filtros-grupos" id="filtrosGrupos"></div>
       </div>
 
       <div id="tenantsStatus" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</div>
@@ -205,6 +248,7 @@
 
   <script type="module">
     import { esc } from '/js/utils.js';
+    import { PRESETS } from '/js/presets.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
     import { saFetch } from '/superadmin/js/superAdminApi.js';
     import { initTenantAcoes, showToast } from '/superadmin/js/tenantAcoes.js';
@@ -257,6 +301,90 @@
     const savedSort = loadSavedSort();
     let sortBy = savedSort?.sortBy ?? 'cadastro';
     let sortDir = savedSort?.sortDir ?? 'desc';
+
+    // ── Filtros avançados ("tem / não tem" por recurso e tema) ──
+    // As chaves batem com SuperAdminController.FiltroRecurso; ficam na URL (?tem=&naoTem=&tema=)
+    // para sobreviver ao recarregar e poder mandar o link filtrado.
+    const FILTROS_RECURSO = [
+      { grupo: 'Processos', itens: [
+        ['processos', 'Processos'], ['monitorados', 'Processos monitorados'], ['publicacoes', 'Publicações'],
+        ['oabs', 'OAB cadastrada'], ['oabErro', 'OAB com erro de sync'],
+      ] },
+      { grupo: 'Rotina', itens: [
+        ['tarefas', 'Tarefas'], ['eventos', 'Agenda'], ['contatos', 'Contatos'], ['atendimentos', 'Atendimentos'],
+        ['timesheet', 'Timesheet'],
+      ] },
+      { grupo: 'Documentos', itens: [
+        ['documentos', 'Documentos'], ['modelos', 'Modelos de documento'], ['pecasIA', 'Peças com IA'],
+      ] },
+      { grupo: 'Ferramentas', itens: [
+        ['calculoPrazo', 'Calculou prazos'], ['calculoHonorarios', 'Calculadora de honorários'],
+        ['contratosHonorarios', 'Contratos de honorário'], ['financeiro', 'Financeiro'],
+        ['assistente', 'Usou o assistente IA'], ['portalCliente', 'Portal do cliente'],
+      ] },
+      { grupo: 'Conta', itens: [
+        ['assinatura', 'Assinatura paga'], ['trialPlus', 'Trial Plus concedido'], ['logo', 'Logo enviada'],
+        ['variosUsuarios', 'Mais de 1 usuário'],
+      ] },
+    ];
+    const CHAVES_RECURSO = new Set(FILTROS_RECURSO.flatMap(g => g.itens.map(([k]) => k)));
+    const PRESETS_FILTRO = PRESETS.filter(p => p.id !== 'default'); // "Padrão" já é uma opção própria
+    const estadoRecurso = new Map(); // chave → 'tem' | 'nao'
+    let temaFiltro = '';
+    {
+      const qs = new URLSearchParams(location.search);
+      const ler = (param, estado) => (qs.get(param) || '').split(',')
+        .filter(k => CHAVES_RECURSO.has(k)).forEach(k => estadoRecurso.set(k, estado));
+      ler('tem', 'tem');
+      ler('naoTem', 'nao');
+      const tema = qs.get('tema') || '';
+      if (['padrao', 'personalizado'].includes(tema) || PRESETS_FILTRO.some(p => `preset:${p.id}` === tema)) temaFiltro = tema;
+    }
+
+    const chavesCom = estado => [...estadoRecurso].filter(([, e]) => e === estado).map(([k]) => k);
+    // O backend não conhece os presets: manda as cores e o layout (mesma regra de findPresetByTheme).
+    function temaParaApi(valor) {
+      if (!valor.startsWith('preset:')) return valor;
+      const p = PRESETS_FILTRO.find(x => `preset:${x.id}` === valor);
+      return p ? [p.primaryColor, p.sidebarColor, p.accentColor, p.layoutMode || 'default'].join(',') : '';
+    }
+    function aplicarFiltros(params, tema) {
+      const tem = chavesCom('tem'), naoTem = chavesCom('nao');
+      ['tem', 'naoTem', 'tema'].forEach(k => params.delete(k));
+      if (tem.length) params.set('tem', tem.join(','));
+      if (naoTem.length) params.set('naoTem', naoTem.join(','));
+      if (tema) params.set('tema', tema);
+    }
+    function sincronizarUrl() {
+      const qs = new URLSearchParams(location.search);
+      aplicarFiltros(qs, temaFiltro);
+      const busca = qs.toString();
+      history.replaceState(null, '', location.pathname + (busca ? `?${busca}` : ''));
+    }
+    function atualizarContadorFiltros() {
+      const n = estadoRecurso.size + (temaFiltro ? 1 : 0);
+      const el = document.getElementById('filtrosCount');
+      el.textContent = n;
+      el.hidden = n === 0;
+      document.getElementById('filtrosLimpar').hidden = n === 0;
+    }
+    function renderFiltros() {
+      document.getElementById('temaPresets').innerHTML = PRESETS_FILTRO
+        .map(p => `<option value="preset:${esc(p.id)}">${esc(p.name)}</option>`).join('');
+      document.getElementById('temaFilter').value = temaFiltro;
+      document.getElementById('filtrosGrupos').innerHTML = FILTROS_RECURSO.map(g => `<div>
+          <div class="filtros-grupo-titulo">${g.grupo}</div>
+          <div class="filtros-chips">${g.itens.map(([k, label]) =>
+            `<button type="button" class="filtro-chip" data-chave="${k}" data-estado="${estadoRecurso.get(k) ?? ''}">${label}</button>`).join('')}</div>
+        </div>`).join('');
+      atualizarContadorFiltros();
+    }
+    function filtrosMudaram() {
+      atualizarContadorFiltros();
+      sincronizarUrl();
+      page = 1;
+      load();
+    }
 
     // ── Fragmentos da lista e dos blocos ──
     function usoLinha(label, valor, pct, titulo) {
@@ -435,7 +563,9 @@
       el.innerHTML = html;
     }
 
+    let loadSeq = 0;
     async function load() {
+      const seq = ++loadSeq;
       const search = document.getElementById('searchInput').value;
       const status = document.getElementById('statusFilter').value;
       const plano = document.getElementById('planoFilter').value;
@@ -444,6 +574,7 @@
       if (search) params.set('search', search);
       if (status) params.set('status', status);
       if (plano) params.set('plano', plano);
+      aplicarFiltros(params, temaParaApi(temaFiltro));
 
       const statusEl = document.getElementById('tenantsStatus');
       statusEl.style.color = 'var(--color-text-muted)';
@@ -454,6 +585,8 @@
 
       try {
         const data = await saFetch(`/superadmin/tenants?${params}`);
+        // Cliques rápidos nos filtros disparam vários loads: só a resposta mais recente vale.
+        if (seq !== loadSeq) return;
         total = data.total;
         // Filtro/exclusão pode ter encolhido o total: volta para a última página que existe.
         const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -462,6 +595,7 @@
         renderItens();
         renderPagination();
       } catch (e) {
+        if (seq !== loadSeq) return;
         ultimosItens = [];
         statusEl.style.color = 'var(--color-danger)';
         statusEl.textContent = `Erro: ${e.message}`;
@@ -532,6 +666,32 @@
     });
     document.getElementById('statusFilter').addEventListener('change', () => { page = 1; load(); });
     document.getElementById('planoFilter').addEventListener('change', () => { page = 1; load(); });
+
+    renderFiltros();
+    const filtrosBtn = document.getElementById('filtrosBtn');
+    const filtrosPainel = document.getElementById('filtrosPainel');
+    function abrirFiltros(aberto) {
+      filtrosPainel.hidden = !aberto;
+      filtrosBtn.setAttribute('aria-expanded', String(aberto));
+    }
+    // Chegou com filtros na URL: mostra o painel para deixar claro por que a lista está menor.
+    abrirFiltros(estadoRecurso.size > 0 || !!temaFiltro);
+    filtrosBtn.addEventListener('click', () => abrirFiltros(filtrosPainel.hidden));
+    document.getElementById('filtrosGrupos').addEventListener('click', e => {
+      const chip = e.target.closest('.filtro-chip');
+      if (!chip) return;
+      const proximo = { '': 'tem', tem: 'nao', nao: '' }[chip.dataset.estado || ''];
+      chip.dataset.estado = proximo;
+      if (proximo) estadoRecurso.set(chip.dataset.chave, proximo); else estadoRecurso.delete(chip.dataset.chave);
+      filtrosMudaram();
+    });
+    document.getElementById('temaFilter').addEventListener('change', e => { temaFiltro = e.target.value; filtrosMudaram(); });
+    document.getElementById('filtrosLimpar').addEventListener('click', () => {
+      estadoRecurso.clear();
+      temaFiltro = '';
+      renderFiltros();
+      filtrosMudaram();
+    });
 
     const sortSelect = document.getElementById('sortSelect');
     function updateSortIndicators() {

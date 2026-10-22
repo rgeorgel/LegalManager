@@ -73,7 +73,7 @@ public class TenantsUsageFlagsTests
 
     private static async Task<List<TenantListItemDto>> CallAsync(SuperAdminController controller)
     {
-        var result = await controller.GetTenants(null, null, null, null, null, 1, 20, CancellationToken.None);
+        var result = await controller.GetTenants(null, null, null, null, null, null, null, null, 1, 20, CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(result);
         return (List<TenantListItemDto>)ok.Value!.GetType().GetProperty("items")!.GetValue(ok.Value)!;
     }

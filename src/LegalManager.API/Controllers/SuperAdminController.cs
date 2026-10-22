@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using LegalManager.Application.DTOs.SuperAdmin;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
@@ -33,16 +35,85 @@ public class SuperAdminController(
     private const string TemaPadraoAccentColor = "#057a55";
     private const string TemaPadraoLayoutMode = "default";
 
-    private static bool IsTemaCustomizado(Tenant t)
-    {
-        bool DifereDoPadrao(string? valor, string padrao) =>
-            !string.IsNullOrWhiteSpace(valor) && !string.Equals(valor.Trim(), padrao, StringComparison.OrdinalIgnoreCase);
+    // Valor efetivo de uma coluna de tema: vazio conta como o padrão (tenant que nunca abriu a tela
+    // de Tema). Escrito como expressão para virar SQL nos filtros da lista de tenants.
+    private static Expression<Func<Tenant, bool>> TemaCustomizadoExpr => t =>
+        (t.PrimaryColor != null && t.PrimaryColor.Trim() != "" && t.PrimaryColor.Trim().ToLower() != TemaPadraoPrimaryColor)
+        || (t.SidebarColor != null && t.SidebarColor.Trim() != "" && t.SidebarColor.Trim().ToLower() != TemaPadraoSidebarColor)
+        || (t.AccentColor != null && t.AccentColor.Trim() != "" && t.AccentColor.Trim().ToLower() != TemaPadraoAccentColor)
+        || (t.LayoutMode != null && t.LayoutMode.Trim() != "" && t.LayoutMode.Trim().ToLower() != TemaPadraoLayoutMode)
+        || (t.CustomCss != null && t.CustomCss.Trim() != "");
 
-        return DifereDoPadrao(t.PrimaryColor, TemaPadraoPrimaryColor)
-            || DifereDoPadrao(t.SidebarColor, TemaPadraoSidebarColor)
-            || DifereDoPadrao(t.AccentColor, TemaPadraoAccentColor)
-            || DifereDoPadrao(t.LayoutMode, TemaPadraoLayoutMode)
-            || !string.IsNullOrWhiteSpace(t.CustomCss);
+    private static readonly Func<Tenant, bool> IsTemaCustomizado = TemaCustomizadoExpr.Compile();
+
+    /// <summary>
+    /// Tenants cujo tema bate com um preset de wwwroot/js/presets.js — mesmas regras de
+    /// findPresetByTheme(): as três cores e o layoutMode (o CSS do preset não entra).
+    /// </summary>
+    private static Expression<Func<Tenant, bool>> TemaPresetExpr(string primary, string sidebar, string accent, string layout) => t =>
+        (t.PrimaryColor == null || t.PrimaryColor.Trim() == "" ? TemaPadraoPrimaryColor : t.PrimaryColor.Trim().ToLower()) == primary
+        && (t.SidebarColor == null || t.SidebarColor.Trim() == "" ? TemaPadraoSidebarColor : t.SidebarColor.Trim().ToLower()) == sidebar
+        && (t.AccentColor == null || t.AccentColor.Trim() == "" ? TemaPadraoAccentColor : t.AccentColor.Trim().ToLower()) == accent
+        && (t.LayoutMode == null || t.LayoutMode.Trim() == "" ? TemaPadraoLayoutMode : t.LayoutMode.Trim().ToLower()) == layout;
+
+    private static readonly Regex CorHex = new("^#[0-9a-f]{3,8}$", RegexOptions.Compiled);
+    private static readonly Regex LayoutId = new("^[a-z0-9-]{1,40}$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Filtros "tem / não tem" da lista de tenants (?tem=a,b&amp;naoTem=c). As chaves são as de
+    /// FILTROS_RECURSO em wwwroot/superadmin/tenants.html; cada uma vira um EXISTS no banco.
+    /// Chave desconhecida devolve null e é ignorada.
+    /// </summary>
+    private Expression<Func<Tenant, bool>>? FiltroRecurso(string chave) => chave.Trim().ToLowerInvariant() switch
+    {
+        "processos" => t => db.Processos.Any(p => p.TenantId == t.Id),
+        "monitorados" => t => db.Processos.Any(p => p.TenantId == t.Id && p.Monitorado),
+        "publicacoes" => t => db.Publicacoes.Any(p => p.TenantId == t.Id),
+        "oabs" => t => db.TenantOabs.Any(o => o.TenantId == t.Id),
+        "oaberro" => t => db.TenantOabs.Any(o => o.TenantId == t.Id && o.SyncError != null),
+        "tarefas" => t => db.Tarefas.Any(x => x.TenantId == t.Id),
+        "eventos" => t => db.Eventos.Any(x => x.TenantId == t.Id),
+        "contatos" => t => db.Contatos.Any(x => x.TenantId == t.Id),
+        "atendimentos" => t => db.Atendimentos.Any(x => x.TenantId == t.Id),
+        "timesheet" => t => db.RegistrosTempo.Any(x => x.TenantId == t.Id),
+        "documentos" => t => db.Documentos.Any(x => x.TenantId == t.Id),
+        "modelos" => t => db.ModelosDocumento.Any(x => x.TenantId == t.Id),
+        "pecasia" => t => db.PecasGeradas.Any(x => x.TenantId == t.Id),
+        "calculoprazo" => t => db.CalculosPrazo.Any(x => x.TenantId == t.Id),
+        "calculohonorarios" => t => db.HonorariosCalculos.Any(x => x.TenantId == t.Id),
+        "contratoshonorarios" => t => db.ContratosHonorarios.Any(x => x.TenantId == t.Id),
+        "financeiro" => t => db.LancamentosFinanceiros.Any(x => x.TenantId == t.Id),
+        "assistente" => t => db.InteracoesAssistente.Any(x => x.TenantId == t.Id),
+        "portalcliente" => t => db.AcessosCliente.Any(x => x.TenantId == t.Id),
+        "variosusuarios" => t => db.Users.Count(u => u.TenantId == t.Id && u.Perfil != PerfilUsuario.Cliente) > 1,
+        "assinatura" => t => t.StripeSubscriptionId != null || t.AbacatePayBillingId != null,
+        "trialplus" => t => t.TrialConcedidoEm != null,
+        "logo" => t => t.LogoUrl != null || t.LogoObjectKey != null,
+        _ => null
+    };
+
+    private static Expression<Func<Tenant, bool>> Negar(Expression<Func<Tenant, bool>> e) =>
+        Expression.Lambda<Func<Tenant, bool>>(Expression.Not(e.Body), e.Parameters);
+
+    private static IEnumerable<string> ChavesCsv(string? csv) =>
+        (csv ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// ?tema= da lista de tenants: "padrao" (sem personalização), "personalizado" (qualquer
+    /// personalização) ou um preset como "primary,sidebar,accent,layout" (o frontend manda as
+    /// cores do preset; o backend não conhece a lista de presets). Valor inválido é ignorado.
+    /// </summary>
+    private static IQueryable<Tenant> FiltrarTema(IQueryable<Tenant> query, string? tema)
+    {
+        var valor = tema?.Trim().ToLowerInvariant();
+        if (string.IsNullOrEmpty(valor)) return query;
+        if (valor == "padrao") return query.Where(Negar(TemaCustomizadoExpr));
+        if (valor == "personalizado") return query.Where(TemaCustomizadoExpr);
+
+        var partes = valor.Split(',', StringSplitOptions.TrimEntries);
+        if (partes.Length != 4 || !partes[..3].All(CorHex.IsMatch) || !LayoutId.IsMatch(partes[3]))
+            return query;
+        return query.Where(TemaPresetExpr(partes[0], partes[1], partes[2], partes[3]));
     }
 
     private Guid? SuperAdminId() =>
@@ -62,6 +133,9 @@ public class SuperAdminController(
         [FromQuery] string? search,
         [FromQuery] string? status,
         [FromQuery] string? plano,
+        [FromQuery] string? tem,
+        [FromQuery] string? naoTem,
+        [FromQuery] string? tema,
         [FromQuery] string? sortBy,
         [FromQuery] string? sortDir,
         [FromQuery] int page = 1,
@@ -83,6 +157,12 @@ public class SuperAdminController(
 
         if (!string.IsNullOrWhiteSpace(plano) && Enum.TryParse<PlanoTipo>(plano, true, out var planoEnum))
             query = query.Where(t => t.Plano == planoEnum);
+
+        foreach (var chave in ChavesCsv(tem))
+            if (FiltroRecurso(chave) is { } filtro) query = query.Where(filtro);
+        foreach (var chave in ChavesCsv(naoTem))
+            if (FiltroRecurso(chave) is { } filtro) query = query.Where(Negar(filtro));
+        query = FiltrarTema(query, tema);
 
         var normalizedSortBy = sortBy?.Trim().ToLowerInvariant();
         if (normalizedSortBy is not ("nome" or "cadastro" or "ultimoacesso"))
@@ -282,7 +362,8 @@ public class SuperAdminController(
                 calculadoraPrazosCounts.GetValueOrDefault(t.Id),
                 calculadoraHonorariosCounts.GetValueOrDefault(t.Id),
                 t.StripeSubscriptionId != null || t.AbacatePayBillingId != null,
-                mascotesPorTenant.GetValueOrDefault(t.Id, [])
+                mascotesPorTenant.GetValueOrDefault(t.Id, []),
+                new TemaCoresDto(t.PrimaryColor, t.SidebarColor, t.AccentColor, t.LayoutMode)
             );
         }).ToList();
 

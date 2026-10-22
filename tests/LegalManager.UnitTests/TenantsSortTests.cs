@@ -81,7 +81,7 @@ public class TenantsSortTests
 
     private static async Task<object> CallAsync(SuperAdminController controller, string? sortBy = null, string? sortDir = null, int page = 1, int pageSize = 20)
     {
-        var result = await controller.GetTenants(null, null, null, sortBy, sortDir, page, pageSize, CancellationToken.None);
+        var result = await controller.GetTenants(null, null, null, null, null, null, sortBy, sortDir, page, pageSize, CancellationToken.None);
         var ok = Assert.IsType<OkObjectResult>(result);
         return ok.Value!;
     }

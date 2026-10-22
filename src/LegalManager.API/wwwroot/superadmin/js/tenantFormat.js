@@ -2,6 +2,7 @@
 // (tenants.html) e a página de um tenant (tenant-detalhe.html).
 import { esc } from '/js/utils.js';
 import { getMascote, MASCOTE_PADRAO } from '/js/mascotes.js';
+import { findPresetByTheme } from '/js/presets.js';
 
 export const PLAN_COLORS = { Free: 'gray', Plus: 'blue', Pro: 'amber', Max: 'green', Enterprise: 'blue' };
 export const STATUS_COLORS = { Ativo: 'green', Trial: 'amber', Suspenso: 'red', Cancelado: 'gray' };
@@ -144,9 +145,13 @@ export function mascotesInline(t) {
 }
 /** @param {{ comMascotes?: boolean }} opcoes comMascotes=false quando o mascote já aparece ao lado do nome. */
 export function recursosCell(t, { comMascotes = true } = {}) {
-  const tema = t.temaCustomizado
-    ? '<span class="badge badge-blue" title="Tema personalizado (cores/layout/CSS) configurado por este tenant">🎨 tema custom</span>'
-    : '<span class="badge badge-gray" title="Usando o tema padrão do Causify">🎨 tema padrão</span>';
+  // A lista traz as cores salvas (t.tema): quando batem com um preset, mostra o nome dele.
+  const preset = t.temaCustomizado && t.tema ? findPresetByTheme(t.tema) : null;
+  const tema = !t.temaCustomizado
+    ? '<span class="badge badge-gray" title="Usando o tema padrão do Causify">🎨 tema padrão</span>'
+    : preset
+      ? `<span class="badge badge-blue" title="Preset ${esc(preset.name)} (cores e layout batem com o preset)">🎨 ${esc(preset.name)}</span>`
+      : '<span class="badge badge-blue" title="Tema personalizado (cores/layout/CSS) configurado por este tenant">🎨 tema custom</span>';
   const usoBadge = (count, icon, label) =>
     `<span class="badge badge-${count > 0 ? 'green' : 'gray'}" title="${label}: ${count}">${icon} ${count}</span>`;
   return `<div>${tema}</div>

@@ -35,8 +35,12 @@ public record TenantListItemDto(
     int CalculadoraHonorariosCount,
     bool TemBilling,
     // Mascotes do assistente escolhidos pelos usuários do escritório (sem os do portal do cliente).
-    IReadOnlyList<MascoteUsoDto>? Mascotes = null
+    IReadOnlyList<MascoteUsoDto>? Mascotes = null,
+    // Cores/layout salvos (null = nunca mexeu): o frontend descobre o preset com findPresetByTheme().
+    TemaCoresDto? Tema = null
 );
+
+public record TemaCoresDto(string? PrimaryColor, string? SidebarColor, string? AccentColor, string? LayoutMode);
 
 /// <summary>Quantos usuários usam cada mascote; Mascote null = nunca escolheu (padrão do frontend).</summary>
 public record MascoteUsoDto(string? Mascote, int Usuarios);
