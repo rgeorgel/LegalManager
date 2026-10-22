@@ -138,7 +138,9 @@ public record ProcessoListItemDto(
     // Importado sem andamentos: a busca só acontece ao abrir o processo (a lista não mostra "0").
     bool AndamentosPendentes = false,
     // Favorito do usuário logado — favoritos vêm primeiro na listagem.
-    bool Favorito = false
+    bool Favorito = false,
+    bool Monitorado = false,
+    string? Grau = null
 );
 
 public record ProcessoFiltroDto(
