@@ -118,6 +118,20 @@ public class TenantsFiltrosTests
         Assert.Equal(["Com tudo"], await NomesAsync(ctx, tem: "tarefas", naoTem: "documentos"));
     }
 
+    [Theory]
+    [InlineData("com tudo")]
+    [InlineData("COM TUDO")]
+    [InlineData(" Com ")]
+    public async Task Busca_IgnoraMaiusculas(string busca)
+    {
+        using var ctx = CreateContext();
+        await SeedAsync(ctx);
+
+        var result = await CreateController(ctx).GetTenants(busca, null, null, null, null, null, null, null, 1, 100, CancellationToken.None);
+        var items = (List<TenantListItemDto>)((OkObjectResult)result).Value!.GetType().GetProperty("items")!.GetValue(((OkObjectResult)result).Value)!;
+        Assert.Equal("Com tudo", Assert.Single(items).Nome);
+    }
+
     [Fact]
     public async Task ChaveDesconhecida_EIgnorada()
     {

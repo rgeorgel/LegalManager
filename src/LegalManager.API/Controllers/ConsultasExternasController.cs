@@ -38,8 +38,9 @@ public class ConsultasExternasController(AppDbContext db) : ControllerBase
         if (tenantId.HasValue) query = query.Where(c => c.TenantId == tenantId.Value);
         if (!string.IsNullOrWhiteSpace(tenantNome))
         {
+            var nome = tenantNome.Trim().ToLower();
             var idsPorNome = await db.Tenants
-                .Where(t => t.Nome.Contains(tenantNome))
+                .Where(t => t.Nome.ToLower().Contains(nome))
                 .Select(t => t.Id)
                 .ToListAsync(ct);
             query = query.Where(c => idsPorNome.Contains(c.TenantId));

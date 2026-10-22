@@ -150,7 +150,10 @@ public class SuperAdminController(
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(t => t.Nome.Contains(search) || (t.Cnpj != null && t.Cnpj.Contains(search)));
+        {
+            var busca = search.Trim().ToLower();
+            query = query.Where(t => t.Nome.ToLower().Contains(busca) || (t.Cnpj != null && t.Cnpj.Contains(busca)));
+        }
 
         if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<StatusTenant>(status, true, out var statusEnum))
             query = query.Where(t => t.Status == statusEnum);

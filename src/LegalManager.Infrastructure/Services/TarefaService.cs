@@ -188,7 +188,11 @@ public class TarefaService : ITarefaService
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filtro.Busca))
-            query = query.Where(t => t.Titulo.Contains(filtro.Busca));
+        {
+            // Contains puro vira LIKE case-sensitive no Postgres: "reunião" não achava "Reunião".
+            var busca = filtro.Busca.Trim().ToLower();
+            query = query.Where(t => t.Titulo.ToLower().Contains(busca));
+        }
 
         if (filtro.Status is { Count: > 0 } status)
             query = query.Where(t => status.Contains(t.Status));

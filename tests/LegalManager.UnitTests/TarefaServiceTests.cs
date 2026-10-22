@@ -155,6 +155,24 @@ public class TarefaServiceTests
         Assert.Equal("T2", result.Items.First().Titulo);
     }
 
+    [Theory]
+    [InlineData("reunião")]
+    [InlineData("REUNIÃO")]
+    [InlineData("  Reunião Com  ")]
+    public async Task GetAllAsync_BuscaIgnoraMaiusculas(string busca)
+    {
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        await svc.CreateAsync(new CreateTarefaDto("Reunião com cliente", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+        await svc.CreateAsync(new CreateTarefaDto("Protocolar petição", null, null, null, PrioridadeTarefa.Baixa, null, null, null));
+
+        var result = await svc.GetAllAsync(new TarefaFiltroDto(busca, null, null, null, null, null, null));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Reunião com cliente", result.Items.First().Titulo);
+    }
+
     [Fact]
     public async Task GetAllAsync_ConcluidasUltimosDias_EscondeConcluidasAntigas()
     {
