@@ -621,7 +621,7 @@
       <div class="form-group">
         <label>Contato *</label>
         <div id="pContatoPicker"></div>
-        <small style="color:var(--color-text-muted);font-size:12px">Não encontrou? <a href="/pages/contatos.html" target="_blank">Cadastre um novo contato</a></small>
+        <small style="color:var(--color-text-muted);font-size:12px">Não encontrou? <a href="#" id="pNovoContato">Cadastre um novo contato</a></small>
       </div>
     </div>
     <div class="modal-footer">
@@ -998,7 +998,7 @@ import { dataParede, esc } from '/js/utils.js';
 import { aplicarVariaveis, carregarTimbre, imprimirTexto, rotuloVariavel, timbreCarregado, valoresAutomaticos, valoresDoProcesso } from '/js/modelos.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
-import { createContatoPicker } from '/js/contato-picker.js';
+import { createContatoPicker, cadastrarContatoRapido } from '/js/contato-picker.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento, updateAndamento, deleteAndamento, setFavorito, encerrarProcesso } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
@@ -1950,7 +1950,18 @@ document.getElementById('gmSalvar').addEventListener('click', async () => {
 });
 
 // Partes do Processo
-const parteContatoPicker = createContatoPicker(document.getElementById('pContatoPicker'));
+// Réu sugere "Parte contrária" no cadastro rápido de contato; demais tipos, "Cliente".
+const tipoContatoDaParte = () => document.getElementById('pTipo').value === 'Reu' ? 'ParteContraria' : 'Cliente';
+const parteContatoPicker = createContatoPicker(document.getElementById('pContatoPicker'), {
+  tipoContatoPadrao: tipoContatoDaParte,
+});
+// Cadastro rápido no próprio modal — abrir Contatos em outra aba caía no login, porque a
+// sessão fica no sessionStorage, que não é compartilhado entre abas.
+document.getElementById('pNovoContato').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const c = await cadastrarContatoRapido({ tipoContato: tipoContatoDaParte() });
+  if (c) parteContatoPicker.setValue({ id: c.id, label: c.nome });
+});
 
 document.getElementById('btnAddParte').addEventListener('click', () => {
   document.getElementById('parteAlert').style.display = 'none';
