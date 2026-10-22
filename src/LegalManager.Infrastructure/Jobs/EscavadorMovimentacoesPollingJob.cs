@@ -24,6 +24,7 @@ public class EscavadorMovimentacoesPollingJob
     private readonly IEscavadorService _escavador;
     private readonly PublicacaoMapper _mapper;
     private readonly IConsultaExternaLogService _consultaLog;
+    private readonly NotificadorAndamentos _notificador;
     private readonly ILogger<EscavadorMovimentacoesPollingJob> _logger;
 
     public EscavadorMovimentacoesPollingJob(
@@ -31,12 +32,14 @@ public class EscavadorMovimentacoesPollingJob
         IEscavadorService escavador,
         PublicacaoMapper mapper,
         IConsultaExternaLogService consultaLog,
+        NotificadorAndamentos notificador,
         ILogger<EscavadorMovimentacoesPollingJob> logger)
     {
         _context = context;
         _escavador = escavador;
         _mapper = mapper;
         _consultaLog = consultaLog;
+        _notificador = notificador;
         _logger = logger;
     }
 
@@ -88,6 +91,7 @@ public class EscavadorMovimentacoesPollingJob
 
                 var agora = DateTime.UtcNow;
                 var criadasNesteProcesso = 0;
+                var recentes = new List<Andamento>();
                 // Mesmo dia do último andamento entra (data do Escavador vem sem hora); o texto
                 // idêntico barra a repetição — inclusive do que já veio pelo webhook.
                 var descricoesExistentes = (await _context.Andamentos
@@ -127,27 +131,15 @@ public class EscavadorMovimentacoesPollingJob
                         processoCompleto.UltimoAndamentoEm = andamento.Data;
 
                     // Recuperação de histórico não vira enxurrada de notificações: só o recente avisa.
-                    if (processoCompleto.AdvogadoResponsavelId.HasValue && andamento.Data >= agora.AddDays(-7))
-                    {
-                        _context.Notificacoes.Add(new Notificacao
-                        {
-                            Id = Guid.NewGuid(),
-                            TenantId = processoCompleto.TenantId,
-                            UsuarioId = processoCompleto.AdvogadoResponsavelId.Value,
-                            Tipo = TipoNotificacao.NovoAndamento,
-                            Titulo = $"Nova publicação — {processoCompleto.NumeroCNJ}",
-                            Mensagem = andamento.Descricao,
-                            Url = "/pages/publicacoes.html",
-                            Lida = false,
-                            CriadaEm = agora
-                        });
-                    }
+                    if (andamento.Data >= agora.AddDays(-7))
+                        recentes.Add(andamento);
 
                     criadasNesteProcesso++;
                 }
 
                 if (criadasNesteProcesso > 0)
                 {
+                    await _notificador.NotificarAsync(processoCompleto, recentes, agora);
                     processoCompleto.UltimoMonitoramento = agora;
                     await _context.SaveChangesAsync();
                     totalNovas += criadasNesteProcesso;

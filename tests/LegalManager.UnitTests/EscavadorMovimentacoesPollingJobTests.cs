@@ -44,14 +44,19 @@ public class EscavadorMovimentacoesPollingJobTests
         return (ctx, processo);
     }
 
-    private static EscavadorMovimentacoesPollingJob Job(AppDbContext ctx, params EscavadorMovimentacaoDto[] movs)
+    private static EscavadorMovimentacoesPollingJob Job(AppDbContext ctx, params EscavadorMovimentacaoDto[] movs) =>
+        Job(ctx, Mock.Of<IEmailService>(), movs);
+
+    private static EscavadorMovimentacoesPollingJob Job(AppDbContext ctx, IEmailService email, params EscavadorMovimentacaoDto[] movs)
     {
         var escavador = new Mock<IEscavadorService>();
         escavador
             .Setup(e => e.ListarMovimentacoesPorProcessoAsync(Cnj, It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new EscavadorPagedResult<EscavadorMovimentacaoDto>(movs.ToList(), movs.Length, 1, 1, false));
         return new EscavadorMovimentacoesPollingJob(ctx, escavador.Object, new PublicacaoMapper(),
-            FakeConsultaExternaLogService.Instance, NullLogger<EscavadorMovimentacoesPollingJob>.Instance);
+            FakeConsultaExternaLogService.Instance,
+            new NotificadorAndamentos(ctx, email, NullLogger<NotificadorAndamentos>.Instance),
+            NullLogger<EscavadorMovimentacoesPollingJob>.Instance);
     }
 
     [Fact]

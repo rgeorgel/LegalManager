@@ -523,8 +523,12 @@ public class EmailService : IEmailService
     }
 
     public async Task EnviarNovoAndamentoAsync(string email, string nomeUsuario,
-        string numeroCNJ, string descricaoAndamento, CancellationToken ct = default)
+        string numeroCNJ, string descricaoAndamento, Guid processoId, int quantidade, CancellationToken ct = default)
     {
+        var cnj = System.Net.WebUtility.HtmlEncode(numeroCNJ);
+        var chamada = quantidade > 1
+            ? $"O processo <strong>{cnj}</strong> recebeu {quantidade} novos andamentos. O mais recente:"
+            : $"O processo <strong>{cnj}</strong> recebeu um novo andamento:";
         var html = $"""
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
@@ -534,12 +538,12 @@ public class EmailService : IEmailService
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
                 <h2 style="color:#1a56db;margin-top:0">⚖️ Novo andamento capturado</h2>
                 <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
-                <p>O processo <strong>{System.Net.WebUtility.HtmlEncode(numeroCNJ)}</strong> recebeu um novo andamento:</p>
+                <p>{chamada}</p>
                 <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:20px 0;color:#374151;font-size:14px;line-height:1.5;border-left:4px solid #1a56db">
                   {System.Net.WebUtility.HtmlEncode(descricaoAndamento)}
                 </div>
                 <p style="text-align:center;margin:28px 0">
-                  <a href="{_config["App:FrontendUrl"]}/pages/processos.html"
+                  <a href="{_config["App:FrontendUrl"]}/pages/processo-detalhe.html?id={processoId}"
                      style="background:#1a56db;color:#fff;padding:14px 32px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block">
                     Ver processo
                   </a>
@@ -550,7 +554,8 @@ public class EmailService : IEmailService
               </div>
             </div>
             """;
-        await EnviarAsync(CriarMensagem(email, $"Novo andamento — {numeroCNJ}", html));
+        var assunto = quantidade > 1 ? $"{quantidade} novos andamentos — {numeroCNJ}" : $"Novo andamento — {numeroCNJ}";
+        await EnviarAsync(CriarMensagem(email, assunto, html));
     }
 
     public async Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario,

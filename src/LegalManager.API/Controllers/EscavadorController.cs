@@ -23,6 +23,7 @@ public class EscavadorController : ControllerBase
     private readonly PublicacaoMapper _mapper;
     private readonly IHostEnvironment _env;
     private readonly IConsultaExternaLogService _consultaLog;
+    private readonly NotificadorAndamentos _notificador;
 
     public EscavadorController(
         ITenantContext tenant,
@@ -31,8 +32,10 @@ public class EscavadorController : ControllerBase
         IConfiguration config,
         PublicacaoMapper mapper,
         IHostEnvironment env,
-        IConsultaExternaLogService consultaLog)
+        IConsultaExternaLogService consultaLog,
+        NotificadorAndamentos notificador)
     {
+        _notificador = notificador;
         _tenant = tenant;
         _context = context;
         _escavador = escavador;
@@ -141,9 +144,10 @@ public class EscavadorController : ControllerBase
 
         // 7. Criar Andamento (compat UI legado) — só se há Processo
         var dataAndamento = conteudo.Data ?? agora;
+        Andamento? andamento = null;
         if (processo != null)
         {
-            var andamento = new Andamento
+            andamento = new Andamento
             {
                 Id = Guid.NewGuid(),
                 ProcessoId = processo.Id,
@@ -161,16 +165,20 @@ public class EscavadorController : ControllerBase
                 processo.UltimoAndamentoEm = dataAndamento;
         }
 
-        // 8. Notificação: priorizar OAB.UserId; fallback para AdvogadoResponsavelId do Processo
-        var destinatarioId = oab?.UserId ?? processo?.AdvogadoResponsavelId;
-        if (destinatarioId.HasValue)
+        // 8. Notificação: andamento de processo vai ao responsável pelo mesmo aviso do DataJud (link
+        // para o processo, preferências, e-mail); sem responsável, ou no fluxo OAB, avisa o dono da OAB.
+        if (processo?.AdvogadoResponsavelId != null)
+        {
+            await _notificador.NotificarAsync(processo, [andamento!], agora);
+        }
+        else if (oab?.UserId is { } destinatarioId)
         {
             var titulo = $"Nova publicação — {publicacao.NumeroCNJ ?? $"{oab?.Uf}/{oab?.Numero}"}";
             _context.Notificacoes.Add(new Notificacao
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantId,
-                UsuarioId = destinatarioId.Value,
+                UsuarioId = destinatarioId,
                 Tipo = TipoNotificacao.NovoAndamento,
                 Titulo = titulo,
                 Mensagem = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : ResumirHtml(conteudo.ConteudoHtml),

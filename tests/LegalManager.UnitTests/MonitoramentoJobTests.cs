@@ -3,8 +3,10 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace LegalManager.UnitTests;
@@ -18,6 +20,9 @@ public class MonitoramentoJobTests
             .Options;
         return new AppDbContext(options);
     }
+
+    private static NotificadorAndamentos Notificador(AppDbContext ctx, IEmailService email) =>
+        new(ctx, email, NullLogger<NotificadorAndamentos>.Instance);
 
     private async Task<(AppDbContext ctx, Guid tenantId, Guid advogadoId, Guid processoId)> SeedAsync()
     {
@@ -67,13 +72,13 @@ public class MonitoramentoJobTests
     {
         var ctx = CreateContext();
         var mockEmail = new Mock<IEmailService>();
-        var job = new MonitoramentoJob(ctx, CreateFakeAdapter(), mockEmail.Object,
+        var job = new MonitoramentoJob(ctx, CreateFakeAdapter(), Notificador(ctx, mockEmail.Object),
             Mock.Of<ILogger<MonitoramentoJob>>());
 
         await job.ExecutarAsync();
 
         mockEmail.Verify(e => e.EnviarNovoAndamentoAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -84,7 +89,7 @@ public class MonitoramentoJobTests
         dataJudMock.Setup(d => d.ConsultarAsync(It.IsAny<string>(), default))
             .ReturnsAsync(new TribunalConsultaResult(false, null, null, null, [], null, null, null, null, null, null, null, null, null, null));
 
-        var job = new MonitoramentoJob(ctx, dataJudMock.Object, Mock.Of<IEmailService>(),
+        var job = new MonitoramentoJob(ctx, dataJudMock.Object, Notificador(ctx, Mock.Of<IEmailService>()),
             Mock.Of<ILogger<MonitoramentoJob>>());
         await job.ExecutarAsync();
 
@@ -103,7 +108,7 @@ public class MonitoramentoJobTests
         var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
-        var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),
+        var job = new MonitoramentoJob(ctx, dataJud, Notificador(ctx, Mock.Of<IEmailService>()),
             Mock.Of<ILogger<MonitoramentoJob>>());
         await job.ExecutarAsync();
 
@@ -134,7 +139,7 @@ public class MonitoramentoJobTests
         var consultaResult = new TribunalConsultaResult(true, "TJSP", "1ª Vara Cível", "São Paulo", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
-        var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),
+        var job = new MonitoramentoJob(ctx, dataJud, Notificador(ctx, Mock.Of<IEmailService>()),
             Mock.Of<ILogger<MonitoramentoJob>>());
         await job.ExecutarAsync();
 
@@ -155,12 +160,12 @@ public class MonitoramentoJobTests
         var dataJud = CreateFakeAdapter(consultaResult);
         var mockEmail = new Mock<IEmailService>();
 
-        var job = new MonitoramentoJob(ctx, dataJud, mockEmail.Object,
+        var job = new MonitoramentoJob(ctx, dataJud, Notificador(ctx, mockEmail.Object),
             Mock.Of<ILogger<MonitoramentoJob>>());
         await job.ExecutarAsync();
 
         mockEmail.Verify(e => e.EnviarNovoAndamentoAsync(
-            "adv@test.com", "Advogado", "0000001-00.2024.8.26.0001", "Sentença"), Times.Once);
+            "adv@test.com", "Advogado", "0000001-00.2024.8.26.0001", "Sentença", It.IsAny<Guid>(), 1, It.IsAny<CancellationToken>()), Times.Once);
 
         var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n => n.Titulo.Contains("Novo andamento"));
         Assert.NotNull(notif);
@@ -178,7 +183,7 @@ public class MonitoramentoJobTests
         var consultaResult = new TribunalConsultaResult(true, "TJSP", "3ª Vara Cível", "Campinas", movimentos, null, null, null, null);
         var dataJud = CreateFakeAdapter(consultaResult);
 
-        var job = new MonitoramentoJob(ctx, dataJud, Mock.Of<IEmailService>(),
+        var job = new MonitoramentoJob(ctx, dataJud, Notificador(ctx, Mock.Of<IEmailService>()),
             Mock.Of<ILogger<MonitoramentoJob>>());
         await job.ExecutarAsync();
 

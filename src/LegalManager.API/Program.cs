@@ -183,6 +183,7 @@ builder.Services.AddScoped<EscavadorOabSyncJob>();
 builder.Services.AddScoped<ImportacaoProcessosJob>();
 builder.Services.AddScoped<PublicacaoClassificacaoService>();
 builder.Services.AddScoped<PublicacaoMapper>();
+builder.Services.AddScoped<NotificadorAndamentos>();
 builder.Services.AddScoped<ITenantOabService, TenantOabService>();
 builder.Services.AddScoped<EscavadorTierManagementJob>();
 

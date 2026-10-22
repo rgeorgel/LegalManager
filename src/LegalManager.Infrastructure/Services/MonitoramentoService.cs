@@ -16,20 +16,20 @@ public class MonitoramentoService : IMonitoramentoService
     private readonly AppDbContext _context;
     private readonly DataJudAdapter _dataJud;
     private readonly ITenantContext _tenant;
-    private readonly IEmailService _emailService;
+    private readonly NotificadorAndamentos _notificador;
     private readonly ILogger<MonitoramentoService> _logger;
 
     public MonitoramentoService(
         AppDbContext context,
         DataJudAdapter dataJud,
         ITenantContext tenant,
-        IEmailService emailService,
+        NotificadorAndamentos notificador,
         ILogger<MonitoramentoService> logger)
     {
         _context = context;
         _dataJud = dataJud;
         _tenant = tenant;
-        _emailService = emailService;
+        _notificador = notificador;
         _logger = logger;
     }
 
@@ -133,7 +133,7 @@ public class MonitoramentoService : IMonitoramentoService
         if (novosAndamentos.Count > 0)
         {
             _context.Andamentos.AddRange(novosAndamentos);
-            await NotificarNovosAndamentosAsync(processo, novosAndamentos, ct);
+            await _notificador.NotificarAsync(processo, novosAndamentos, DateTime.UtcNow, ct);
         }
 
         // Update tribunal/vara from DataJud if not set
@@ -190,45 +190,6 @@ public class MonitoramentoService : IMonitoramentoService
             novosAndamentos.Count, null, agora);
     }
 
-    private async Task NotificarNovosAndamentosAsync(
-        Processo processo, List<Andamento> novos, CancellationToken ct)
-    {
-        if (processo.AdvogadoResponsavelId == null) return;
-
-        var advogado = await _context.Users
-            .Where(u => u.Id == processo.AdvogadoResponsavelId)
-            .Select(u => new { u.Nome, u.Email })
-            .FirstOrDefaultAsync(ct);
-        if (advogado == null) return;
-
-        var notificacao = new Notificacao
-        {
-            Id = Guid.NewGuid(),
-            TenantId = processo.TenantId,
-            UsuarioId = processo.AdvogadoResponsavelId!.Value,
-            Tipo = TipoNotificacao.NovoAndamento,
-            Titulo = $"Novo andamento — {processo.NumeroCNJ}",
-            Mensagem = $"{novos.Count} novo(s) andamento(s) no processo {processo.NumeroCNJ}.",
-            Url = $"/pages/processo-detalhe.html?id={processo.Id}",
-            Lida = false,
-            CriadaEm = DateTime.UtcNow
-        };
-        _context.Notificacoes.Add(notificacao);
-
-        if (!string.IsNullOrEmpty(advogado.Email))
-        {
-            try
-            {
-                await _emailService.EnviarNovoAndamentoAsync(
-                    advogado.Email, advogado.Nome,
-                    processo.NumeroCNJ, novos[0].Descricao, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao enviar e-mail de novo andamento");
-            }
-        }
-    }
 
     private static TipoAndamento MapearTipo(string nomeMovimento) =>
         nomeMovimento?.ToLowerInvariant() switch

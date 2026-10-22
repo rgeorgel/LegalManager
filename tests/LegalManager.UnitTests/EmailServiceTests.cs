@@ -231,7 +231,7 @@ public class EmailServiceTests
 
         await svc.EnviarNovoAndamentoAsync(
             "adv@test.com", "Dr. Joao", "1234567-89.2024.8.26.0001",
-            "Audiencia redesignada para 15/05/2026 as 14h", CancellationToken.None);
+            "Audiencia redesignada para 15/05/2026 as 14h", Guid.NewGuid(), 1, CancellationToken.None);
 
         Assert.NotNull(capture.Message);
         Assert.Contains("1234567-89.2024.8.26.0001", capture.Message!.HtmlBody);

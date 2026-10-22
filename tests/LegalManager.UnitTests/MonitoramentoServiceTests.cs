@@ -22,6 +22,9 @@ public class MonitoramentoServiceTests
         return new AppDbContext(options);
     }
 
+    private static NotificadorAndamentos Notificador(AppDbContext ctx) =>
+        new(ctx, Mock.Of<IEmailService>(), Microsoft.Extensions.Logging.Abstractions.NullLogger<NotificadorAndamentos>.Instance);
+
     private ITenantContext CreateTenantContext(Guid tenantId)
     {
         var mock = new Mock<ITenantContext>();
@@ -64,7 +67,7 @@ public class MonitoramentoServiceTests
 
         var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         var result = await service.AlternarMonitoramentoAsync(processoId);
 
@@ -79,7 +82,7 @@ public class MonitoramentoServiceTests
         var (ctx, tenantId, _) = await SeedAsync();
         var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             service.MonitorarProcessoAsync(Guid.NewGuid()));
@@ -91,7 +94,7 @@ public class MonitoramentoServiceTests
         var (ctx, tenantId, _) = await SeedAsync();
         var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         var result = await service.MonitorarTodosAsync();
 
@@ -104,7 +107,7 @@ public class MonitoramentoServiceTests
         var (ctx, tenantId, _) = await SeedAsync();
         var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             service.AlternarMonitoramentoAsync(Guid.NewGuid()));
@@ -125,7 +128,7 @@ public class MonitoramentoServiceTests
 
         var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         var result = await service.AlternarMonitoramentoAsync(processoId);
 
@@ -150,7 +153,7 @@ public class MonitoramentoServiceTests
             new HttpClient { BaseAddress = new Uri("http://localhost") },
             Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         var result = await service.MonitorarProcessoAsync(processoId);
 
@@ -180,7 +183,7 @@ public class MonitoramentoServiceTests
             new HttpClient { BaseAddress = new Uri("http://localhost") },
             Mock.Of<ILogger<DataJudAdapter>>());
         var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
-            Mock.Of<IEmailService>(), Mock.Of<ILogger<MonitoramentoService>>());
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
 
         var result = await service.MonitorarTodosAsync();
 

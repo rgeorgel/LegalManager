@@ -26,7 +26,7 @@ public interface IEmailService
     Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa, DateTime prazo, int diasAtraso, CancellationToken ct = default);
     Task EnviarResumoDiarioAsync(string email, string nomeUsuario, IReadOnlyList<ResumoTarefaItem> tarefas, IReadOnlyList<ResumoEventoItem> eventos, CancellationToken ct = default);
     Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento, DateTime dataHora, string? local, CancellationToken ct = default);
-    Task EnviarNovoAndamentoAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoAndamento, CancellationToken ct = default);
+    Task EnviarNovoAndamentoAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoAndamento, Guid processoId, int quantidade, CancellationToken ct = default);
     Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoPrazo, DateTime dataFinal, int diasRestantes, CancellationToken ct = default);
     Task EnviarNovaPublicacaoAsync(string email, string nomeUsuario, string numeroCNJ, CancellationToken ct = default);
     Task EnviarAcessoPortalAsync(string email, string nomeCliente, string nomeEscritorio, string senha, string portalUrl, CancellationToken ct = default);

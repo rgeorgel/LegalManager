@@ -4,6 +4,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using LegalManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,18 +15,18 @@ public class MonitoramentoJob
 {
     private readonly AppDbContext _context;
     private readonly ITribunalAdapter _dataJud;
-    private readonly IEmailService _emailService;
+    private readonly NotificadorAndamentos _notificador;
     private readonly ILogger<MonitoramentoJob> _logger;
 
     public MonitoramentoJob(
         AppDbContext context,
         ITribunalAdapter dataJud,
-        IEmailService emailService,
+        NotificadorAndamentos notificador,
         ILogger<MonitoramentoJob> logger)
     {
         _context = context;
         _dataJud = dataJud;
-        _emailService = emailService;
+        _notificador = notificador;
         _logger = logger;
     }
 
@@ -118,7 +119,7 @@ public class MonitoramentoJob
         if (novosAndamentos.Count > 0)
         {
             _context.Andamentos.AddRange(novosAndamentos);
-            await NotificarAsync(processo, novosAndamentos, agora);
+            await _notificador.NotificarAsync(processo, novosAndamentos, agora);
         }
 
         if (string.IsNullOrWhiteSpace(processo.Tribunal) && !string.IsNullOrWhiteSpace(consulta.NomeTribunal))
@@ -174,42 +175,6 @@ public class MonitoramentoJob
         return novosAndamentos.Count;
     }
 
-    private async Task NotificarAsync(Processo processo, List<Andamento> novos, DateTime agora)
-    {
-        if (processo.AdvogadoResponsavelId == null) return;
-
-        _context.Notificacoes.Add(new Notificacao
-        {
-            Id = Guid.NewGuid(),
-            TenantId = processo.TenantId,
-            UsuarioId = processo.AdvogadoResponsavelId!.Value,
-            Tipo = TipoNotificacao.NovoAndamento,
-            Titulo = $"Novo andamento — {processo.NumeroCNJ}",
-            Mensagem = $"{novos.Count} novo(s) andamento(s) no processo {processo.NumeroCNJ}.",
-            Url = $"/pages/processo-detalhe.html?id={processo.Id}",
-            Lida = false,
-            CriadaEm = agora
-        });
-
-        var advogado = await _context.Users
-            .Where(u => u.Id == processo.AdvogadoResponsavelId)
-            .Select(u => new { u.Nome, u.Email })
-            .FirstOrDefaultAsync();
-
-        if (advogado?.Email != null)
-        {
-            try
-            {
-                await _emailService.EnviarNovoAndamentoAsync(
-                    advogado.Email, advogado.Nome,
-                    processo.NumeroCNJ, novos[0].Descricao);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao enviar e-mail de andamento");
-            }
-        }
-    }
 
     private static TipoAndamento MapearTipo(string nome) =>
         nome?.ToLowerInvariant() switch
