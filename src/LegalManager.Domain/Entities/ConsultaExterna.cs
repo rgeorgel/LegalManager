@@ -32,4 +32,8 @@ public class ConsultaExterna
     public string? ResultadoResumoJson { get; set; }
 
     public int? DuracaoMs { get; set; }
+
+    /// <summary>Custo da chamada em centavos, somando o header <c>Creditos-Utilizados</c> das
+    /// respostas (só o Escavador manda). Null = a API não informou.</summary>
+    public int? CreditosUtilizados { get; set; }
 }

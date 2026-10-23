@@ -39,6 +39,7 @@ public class ConsultaExternaLogService : IConsultaExternaLogService
         CancellationToken ct = default)
     {
         var sw = Stopwatch.StartNew();
+        using var creditos = CreditosConsultaExterna.Medir();
         try
         {
             var resultado = await execucao();
@@ -53,7 +54,7 @@ public class ConsultaExternaLogService : IConsultaExternaLogService
             }
 
             await SalvarAsync(api, tipoConsulta, origem, parametros, tenantId, usuarioId,
-                sucesso: true, mensagemErro: null, total, resumo, (int)sw.ElapsedMilliseconds, ct);
+                sucesso: true, mensagemErro: null, total, resumo, (int)sw.ElapsedMilliseconds, creditos.Total, ct);
 
             return resultado;
         }
@@ -61,7 +62,7 @@ public class ConsultaExternaLogService : IConsultaExternaLogService
         {
             sw.Stop();
             await SalvarAsync(api, tipoConsulta, origem, parametros, tenantId, usuarioId,
-                sucesso: false, mensagemErro: ex.Message, total: null, resumo: null, (int)sw.ElapsedMilliseconds, ct);
+                sucesso: false, mensagemErro: ex.Message, total: null, resumo: null, (int)sw.ElapsedMilliseconds, creditos.Total, ct);
             throw;
         }
     }
@@ -69,7 +70,7 @@ public class ConsultaExternaLogService : IConsultaExternaLogService
     private async Task SalvarAsync(
         string api, string tipoConsulta, string origem, object? parametros,
         Guid? tenantId, Guid? usuarioId,
-        bool sucesso, string? mensagemErro, int? total, object? resumo, int duracaoMs,
+        bool sucesso, string? mensagemErro, int? total, object? resumo, int duracaoMs, int? creditosUtilizados,
         CancellationToken ct)
     {
         try
@@ -88,7 +89,8 @@ public class ConsultaExternaLogService : IConsultaExternaLogService
                 MensagemErro = mensagemErro,
                 QuantidadeResultados = total,
                 ResultadoResumoJson = Truncar(resumo != null ? JsonSerializer.Serialize(resumo, JsonOptions) : null),
-                DuracaoMs = duracaoMs
+                DuracaoMs = duracaoMs,
+                CreditosUtilizados = creditosUtilizados
             };
 
             _context.ConsultasExternas.Add(log);

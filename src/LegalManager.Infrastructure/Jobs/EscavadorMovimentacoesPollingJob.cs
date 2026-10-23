@@ -12,11 +12,12 @@ using Microsoft.Extensions.Logging;
 namespace LegalManager.Infrastructure.Jobs;
 
 /// <summary>
-/// Polls the Escavador V2 per-process movimentacoes endpoint for each monitored Processo
-/// and creates Publicacao + Andamento rows for any new events. Backstop do webhook — e, como
-/// lista o histórico inteiro, recupera também o que o webhook perdeu.
-/// Sem trava de plano: só processos monitorados entram, e o limite de monitorados por plano
-/// já controla o custo.
+/// Consulta as movimentações de cada Processo monitorado no Escavador e cria Publicacao + Andamento
+/// para o que ainda não está no banco. Recupera o que o webhook perdeu além da janela do
+/// <see cref="EscavadorCallbacksPendentesJob"/> (ex.: callbacks descartados por bug).
+/// SÓ SOB DEMANDA: cada processo é uma consulta cobrada (R$ 0,05 por página), então o recurring
+/// job fica com Cron.Never — disparar manualmente pelo painel do Hangfire ("Trigger now").
+/// Sem trava de plano: só processos monitorados entram.
 /// </summary>
 public class EscavadorMovimentacoesPollingJob
 {

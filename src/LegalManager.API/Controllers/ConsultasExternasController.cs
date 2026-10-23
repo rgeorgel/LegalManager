@@ -83,7 +83,8 @@ public class ConsultasExternasController(AppDbContext db) : ControllerBase
             l.Origem,
             l.Sucesso,
             l.QuantidadeResultados,
-            l.DuracaoMs
+            l.DuracaoMs,
+            l.CreditosUtilizados
         )).ToList();
 
         return Ok(new ConsultaExternaPagedResultDto(items, total, page, pageSize));
@@ -103,7 +104,8 @@ public class ConsultasExternasController(AppDbContext db) : ControllerBase
         return Ok(new ConsultaExternaDetalheDto(
             log.Id, log.CriadoEm, log.TenantId, tenantNome, log.UsuarioId, usuarioNome,
             log.Api, log.TipoConsulta, log.Origem, log.ParametrosJson,
-            log.Sucesso, log.MensagemErro, log.QuantidadeResultados, log.ResultadoResumoJson, log.DuracaoMs
+            log.Sucesso, log.MensagemErro, log.QuantidadeResultados, log.ResultadoResumoJson, log.DuracaoMs,
+            log.CreditosUtilizados
         ));
     }
 

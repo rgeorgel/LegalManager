@@ -86,7 +86,14 @@ A captura de publicações em Diários Oficiais é o coração do produto para a
 | Dependência | URL HTTPS pública | Não precisa |
 | Confiabilidade | Pode cair se webhook off | Sempre roda |
 
-**Solução adotada**: Webhook primário + Polling como backstop. Configurável via `Escavador:ModoCaptura` (`Webhook` | `Polling` | `Hybrid` — default).
+**Solução adotada**: Webhook primário. Backstop diário e gratuito: `EscavadorCallbacksPendentesJob`
+lista os callbacks com entrega falha (`GET /api/v2/callbacks?status=erro`, últimos 7 dias), processa
+pelo mesmo `EscavadorCallbackProcessor` do webhook e marca como recebidos. O polling por processo
+(`EscavadorMovimentacoesPollingJob`, R$ 0,05 por consulta/página) fica registrado com `Cron.Never` —
+só disparo manual no Hangfire ("Trigger now"), para recuperar histórico após uma falha longa.
+O webhook aceita o shape V2 (`event`/`monitoramento`/`movimentacao`) com a mesma chave de dedup do
+polling (`v2-mov-{id}`). O custo de cada consulta (header `Creditos-Utilizados`) aparece em
+Super Admin → Consultas Externas.
 
 ---
 
@@ -349,9 +356,8 @@ GET /api/escavador/publicacoes/busca?oab=&uf=&de=&ate=
     "CallbackSecret": "",            // Secret do webhook (definido no painel Escavador)
     "BaseUrl": "https://api.escavador.com",
     "UseMock": false,               // true = EscavadorMockClient (dev offline)
-    "ModoCaptura": "Hybrid",        // Webhook | Polling | Hybrid
     "RateLimitPerSecond": 8,        // Token-bucket (8 req/s = 480/min, abaixo do limite de 500/min)
-    "PollingCron": "0 6 * * *",     // Polling backstop (CNJ, não OAB)
+    "CallbacksPendentesCron": "0 6 * * *", // Backstop: callbacks com entrega falha (gratuito)
     "OabSyncCron": "0 5 * * *",     // Retry diário de OABs sem sync
     "OabSyncEnabled": true,         // Liga/desliga o job de sync
     "WebhookUrl": "https://app.causify.com.br/api/escavador/callback"

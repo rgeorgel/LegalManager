@@ -18,14 +18,16 @@ public record EscavadorProcessoDto(
 
 public record EscavadorMonitoramentoDto(long Id, string? Status);
 
+/// <summary>
+/// Callback registrado no Escavador (GET /api/v2/callbacks). <c>ResultadoJson</c> é o corpo que
+/// foi (ou deveria ter sido) enviado ao webhook.
+/// </summary>
 public record EscavadorCallbackDto(
     long Id,
-    string Tipo,
-    long? MonitoramentoId,
-    string? NumeroCNJ,
-    string? Descricao,
-    DateTime? DataAndamento,
-    DateTime CriadoEm
+    string? Uuid,
+    string? Status,
+    DateTime? EntregueEm,
+    string? ResultadoJson
 );
 
 /// <summary>Uma página de uma listagem paginada por cursor (API v2). <c>ProximoCursor</c> null = última página.</summary>
@@ -102,15 +104,16 @@ public interface IEscavadorService
     Task<bool> RemoverMonitoramentoAsync(long id, CancellationToken ct = default);
     Task<bool> RemoverMonitoramentoTermoAsync(long id, CancellationToken ct = default);
 
-    Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
-        int pagina = 1, CancellationToken ct = default);
-
-    Task MarcarCallbacksRecebidosAsync(IEnumerable<long> ids, CancellationToken ct = default);
-
     /// <summary>
-    /// Ack a single callback by its UUID (newer Escavador API uses uuid, older uses long id).
+    /// Lista os callbacks criados desde <paramref name="dataMinima"/> (UTC), opcionalmente por status
+    /// (<c>sucesso</c>, <c>em_tentativa</c>, <c>erro</c>). <paramref name="cursor"/> é o link da
+    /// próxima página devolvido na chamada anterior. Não aparece na tabela de preços do Escavador.
     /// </summary>
-    Task MarcarCallbackRecebidoAsync(string uuid, CancellationToken ct = default);
+    Task<EscavadorPaginaCursor<EscavadorCallbackDto>> ListarCallbacksAsync(
+        DateTime dataMinima, string? status = null, string? cursor = null, CancellationToken ct = default);
+
+    /// <summary>Marca callbacks como recebidos (POST /api/v2/callbacks/marcar-recebidos, até 20 por vez).</summary>
+    Task MarcarCallbacksRecebidosAsync(IEnumerable<long> ids, CancellationToken ct = default);
 
     /// <summary>
     /// Fetch a single movimentacao by its UUID. Returns null if not found.

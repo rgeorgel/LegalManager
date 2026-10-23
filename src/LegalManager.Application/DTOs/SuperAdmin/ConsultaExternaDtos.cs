@@ -12,7 +12,8 @@ public record ConsultaExternaListItemDto(
     string Origem,
     bool Sucesso,
     int? QuantidadeResultados,
-    int? DuracaoMs
+    int? DuracaoMs,
+    int? CreditosUtilizados
 );
 
 public record ConsultaExternaDetalheDto(
@@ -30,7 +31,8 @@ public record ConsultaExternaDetalheDto(
     string? MensagemErro,
     int? QuantidadeResultados,
     string? ResultadoResumoJson,
-    int? DuracaoMs
+    int? DuracaoMs,
+    int? CreditosUtilizados
 );
 
 public record ConsultaExternaPagedResultDto(

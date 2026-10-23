@@ -109,21 +109,12 @@ public class EscavadorMockClient : IEscavadorService
         return Task.FromResult(true);
     }
 
-    public Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
-        int pagina = 1, CancellationToken ct = default)
-    {
-        var result = new EscavadorPagedResult<EscavadorCallbackDto>([], 0, 1, 1, false);
-        return Task.FromResult(result);
-    }
+    public Task<EscavadorPaginaCursor<EscavadorCallbackDto>> ListarCallbacksAsync(
+        DateTime dataMinima, string? status = null, string? cursor = null, CancellationToken ct = default)
+        => Task.FromResult(new EscavadorPaginaCursor<EscavadorCallbackDto>([], null));
 
     public Task MarcarCallbacksRecebidosAsync(IEnumerable<long> ids, CancellationToken ct = default)
         => Task.CompletedTask;
-
-    public Task MarcarCallbackRecebidoAsync(string uuid, CancellationToken ct = default)
-    {
-        _logger.LogWarning("[Escavador MOCK] MarcarCallbackRecebidoAsync uuid={Uuid}", uuid);
-        return Task.CompletedTask;
-    }
 
     public Task<EscavadorMovimentacaoDto?> BuscarMovimentacoesPorUuidAsync(
         string uuid, CancellationToken ct = default)

@@ -325,7 +325,13 @@ As estratégias abaixo reduzem o custo da API sem expor o advogado ao risco de p
 
 **Por que é seguro**: o polling é apenas um fallback para webhooks não entregues. Prazos processuais no Brasil são de 5, 10 ou 15 dias corridos — uma janela de até 24 horas para capturar um webhook perdido é completamente negligenciável.
 
-**Implementação**: cron `"0 6 * * *"` em `EscavadorCallbackPollingJob` — executa às 06:00 todos os dias (`Program.cs`).
+**Implementação**: cron `"0 6 * * *"` em `EscavadorCallbacksPendentesJob` — lista só os callbacks com
+entrega falha (`GET /api/v2/callbacks?status=erro`) às 06:00 UTC.
+
+> **Histórico (out/2026)**: entre 56ac1d8 e esta correção, o backstop foi um polling diário de
+> `GET /api/v2/processos/numero_cnj/{cnj}/movimentacoes` para cada processo monitorado — R$ 0,05 por
+> processo/dia (~R$ 1,50/mês), mais do que o próprio monitoramento semanal (R$ 0,32). Esse job
+> (`EscavadorMovimentacoesPollingJob`) agora é só manual (Cron.Never no Hangfire).
 
 **Risco**: praticamente nulo. O webhook em tempo real continua sendo o canal principal.
 

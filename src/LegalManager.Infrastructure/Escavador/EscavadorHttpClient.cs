@@ -151,12 +151,26 @@ public class EscavadorHttpClient : IEscavadorService
         }
     }
 
-    public async Task<EscavadorPagedResult<EscavadorCallbackDto>> ListarCallbacksPendentesAsync(
-        int pagina = 1, CancellationToken ct = default)
+    public async Task<EscavadorPaginaCursor<EscavadorCallbackDto>> ListarCallbacksAsync(
+        DateTime dataMinima, string? status = null, string? cursor = null, CancellationToken ct = default)
     {
-        using var activity = Telemetry.Escavador.StartActivity(nameof(ListarCallbacksPendentesAsync));
-        var url = $"/api/v2/callbacks?page={pagina}";
-        return await FetchCallbacksPaged(url, ct);
+        using var activity = Telemetry.Escavador.StartActivity(nameof(ListarCallbacksAsync));
+        var url = cursor ?? "/api/v2/callbacks?data_minima="
+            + Uri.EscapeDataString(dataMinima.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture))
+            + (string.IsNullOrWhiteSpace(status) ? "" : "&status=" + Uri.EscapeDataString(status));
+        var resp = await _http.GetAsync(url, ct);
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"Escavador {(int)resp.StatusCode} em GET {url}: {(json.Length > 300 ? json[..300] : json)}");
+
+        var wrapper = JsonSerializer.Deserialize<CallbacksV2Response>(json, JsonOpts);
+        var itens = (wrapper?.Items ?? []).Select(c => new EscavadorCallbackDto(
+            c.Id, c.Uuid, c.Status,
+            DateTime.TryParse(c.DeliveredAt, CultureInfo.InvariantCulture,
+                DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var entregue) ? entregue : null,
+            c.Resultado is { ValueKind: JsonValueKind.Object } r ? r.GetRawText() : null)).ToList();
+        return new EscavadorPaginaCursor<EscavadorCallbackDto>(itens, wrapper?.Links?.Next);
     }
 
     public async Task MarcarCallbacksRecebidosAsync(IEnumerable<long> ids, CancellationToken ct = default)
@@ -166,43 +180,24 @@ public class EscavadorHttpClient : IEscavadorService
         activity?.SetTag("escavador.callbacks_count", lista.Count);
         if (lista.Count == 0) return;
         _logger.LogInformation("[Escavador] Marcando {N} callbacks como recebidos", lista.Count);
-        try
+        // A API aceita no máximo 20 ids por chamada.
+        foreach (var lote in lista.Chunk(20))
         {
-            var body = JsonSerializer.Serialize(new { ids = lista });
-            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/callbacks/recebidos")
+            try
             {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
-            };
-            var resp = await _http.SendAsync(req, ct);
-            if (!resp.IsSuccessStatusCode)
-                _logger.LogWarning("[Escavador] Falha ao marcar callbacks: {S}", resp.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Escavador] Erro ao marcar callbacks como recebidos");
-        }
-    }
-
-    public async Task MarcarCallbackRecebidoAsync(string uuid, CancellationToken ct = default)
-    {
-        using var activity = Telemetry.Escavador.StartActivity(nameof(MarcarCallbackRecebidoAsync));
-        activity?.SetTag("escavador.callback_uuid", uuid);
-        if (string.IsNullOrWhiteSpace(uuid)) return;
-        _logger.LogInformation("[Escavador] Marcando callback uuid={Uuid} como recebido", uuid);
-        try
-        {
-            var body = JsonSerializer.Serialize(new { uuids = new[] { uuid } });
-            using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/callbacks/recebidos")
+                var body = JsonSerializer.Serialize(new { ids = lote });
+                using var req = new HttpRequestMessage(HttpMethod.Post, "/api/v2/callbacks/marcar-recebidos")
+                {
+                    Content = new StringContent(body, Encoding.UTF8, "application/json")
+                };
+                var resp = await _http.SendAsync(req, ct);
+                if (!resp.IsSuccessStatusCode)
+                    _logger.LogWarning("[Escavador] Falha ao marcar callbacks: {S}", resp.StatusCode);
+            }
+            catch (Exception ex)
             {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
-            };
-            var resp = await _http.SendAsync(req, ct);
-            if (!resp.IsSuccessStatusCode)
-                _logger.LogWarning("[Escavador] Falha ao marcar callback {Uuid}: {S}", uuid, resp.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Escavador] Erro ao marcar callback {Uuid}", uuid);
+                _logger.LogError(ex, "[Escavador] Erro ao marcar callbacks como recebidos");
+            }
         }
     }
 
@@ -237,8 +232,10 @@ public class EscavadorHttpClient : IEscavadorService
         using var activity = Telemetry.Escavador.StartActivity(nameof(ListarMovimentacoesPorProcessoAsync));
         activity?.SetTag("escavador.cnj", numeroCNJ);
         _logger.LogInformation("[Escavador] Listando movimentacoes CNJ={CNJ}", numeroCNJ);
-        var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?limit=500";
-        return await FetchMovimentacoesV2(url, numeroCNJ, ct);
+        // Sem filtro por data na API: em ordem decrescente, a paginação para quando alcança `desde`
+        // — cada página é uma requisição cobrada, e o resto do histórico já está no banco.
+        var url = $"/api/v2/processos/numero_cnj/{Uri.EscapeDataString(numeroCNJ)}/movimentacoes?limit=500&ordem=desc";
+        return await FetchMovimentacoesV2(url, numeroCNJ, desde, ct);
     }
 
     // ATENÇÃO — endpoint NÃO CONFIRMADO contra a API real do Escavador (ver doc completa em
@@ -330,7 +327,7 @@ public class EscavadorHttpClient : IEscavadorService
     }
 
     private async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> FetchMovimentacoesV2(
-        string firstUrl, string numeroCNJ, CancellationToken ct)
+        string firstUrl, string numeroCNJ, DateTime? desde, CancellationToken ct)
     {
         var all = new List<EscavadorMovimentacaoDto>();
         string? nextUrl = firstUrl;
@@ -353,27 +350,12 @@ public class EscavadorHttpClient : IEscavadorService
                 if (wrapper?.Items == null || wrapper.Items.Count == 0) break;
 
                 foreach (var item in wrapper.Items)
-                {
-                    all.Add(new EscavadorMovimentacaoDto(
-                        Id: item.Id,
-                        // O V2 não traz uuid; o id da movimentação é estável e serve de chave de dedup.
-                        Uuid: item.Id > 0 ? $"v2-mov-{item.Id}" : string.Empty,
-                        Data: item.Data,
-                        ConteudoHtml: item.Conteudo,
-                        Snippet: item.Conteudo,
-                        Tipo: item.Tipo,
-                        Diario: item.Fonte?.Nome,
-                        DiarioId: null,
-                        DiarioSigla: item.Fonte?.Sigla,
-                        OrigemEstado: null,
-                        Link: null, LinkApi: null, LinkPdf: null, LinkPdfApi: null,
-                        NumeroCnj: numeroCNJ,
-                        JsonBruto: "{}"
-                    ));
-                }
+                    all.Add(item.ParaDto(numeroCNJ));
 
                 nextUrl = wrapper.Links?.Next;
                 pageCount++;
+                if (desde.HasValue && wrapper.Items.Any(i => i.Data.HasValue && i.Data.Value < desde.Value.Date))
+                    break;
             }
             catch (Exception ex)
             {
@@ -610,34 +592,7 @@ public class EscavadorHttpClient : IEscavadorService
         return (items, nextUrl);
     }
 
-    private async Task<EscavadorPagedResult<EscavadorCallbackDto>> FetchCallbacksPaged(
-        string url, CancellationToken ct)
-    {
-        try
-        {
-            var resp = await _http.GetAsync(url, ct);
-            if (!resp.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
-                return EmptyCallbacks();
-            }
-            var json = await resp.Content.ReadAsStringAsync(ct);
-            var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<CallbackData>>(json, JsonOpts);
-            if (wrapper == null) return EmptyCallbacks();
-            var data = wrapper.Data?.Select(MapCallback).ToList() ?? [];
-            return BuildPaged(data, wrapper.Meta);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
-            return EmptyCallbacks();
-        }
-    }
-
     private static EscavadorPagedResult<EscavadorProcessoDto> EmptyProcessos() =>
-        new([], 0, 1, 1, false);
-
-    private static EscavadorPagedResult<EscavadorCallbackDto> EmptyCallbacks() =>
         new([], 0, 1, 1, false);
 
     private static EscavadorPagedResult<T> BuildPaged<T>(List<T> data, EscavadorMeta? meta) =>
@@ -674,16 +629,6 @@ public class EscavadorHttpClient : IEscavadorService
             ? d
             : null;
     }
-
-    private static EscavadorCallbackDto MapCallback(CallbackData r) => new(
-        r.Id,
-        r.Tipo ?? string.Empty,
-        r.MonitoramentoId,
-        r.Processo?.Numero ?? r.Processo?.NumeroProcesso,
-        r.Conteudo?.Descricao ?? r.Conteudo?.Texto,
-        r.Conteudo?.Data,
-        r.CriadoEm ?? DateTime.UtcNow
-    );
 
     // ─── Internal API response models ────────────────────────────────────────
 
@@ -762,27 +707,20 @@ public class EscavadorHttpClient : IEscavadorService
         [JsonPropertyName("status")] public string? Status { get; set; }
     }
 
-    private sealed class CallbackData
+    private sealed class CallbacksV2Response
+    {
+        [JsonPropertyName("items")] public List<CallbackV2Item>? Items { get; set; }
+        [JsonPropertyName("links")] public MovimentacoesV2Links? Links { get; set; }
+    }
+
+    private sealed class CallbackV2Item
     {
         [JsonPropertyName("id")] public long Id { get; set; }
-        [JsonPropertyName("tipo")] public string? Tipo { get; set; }
-        [JsonPropertyName("monitoramento_id")] public long? MonitoramentoId { get; set; }
-        [JsonPropertyName("processo")] public ProcessoRef? Processo { get; set; }
-        [JsonPropertyName("conteudo")] public CallbackConteudo? Conteudo { get; set; }
-        [JsonPropertyName("created_at")] public DateTime? CriadoEm { get; set; }
-    }
-
-    private sealed class ProcessoRef
-    {
-        [JsonPropertyName("numero")] public string? Numero { get; set; }
-        [JsonPropertyName("numero_processo")] public string? NumeroProcesso { get; set; }
-    }
-
-    private sealed class CallbackConteudo
-    {
-        [JsonPropertyName("descricao")] public string? Descricao { get; set; }
-        [JsonPropertyName("texto")] public string? Texto { get; set; }
-        [JsonPropertyName("data")] public DateTime? Data { get; set; }
+        [JsonPropertyName("uuid")] public string? Uuid { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+        // "2018-01-18 19:57:44" (UTC, com espaço) — o System.Text.Json não lê esse formato como DateTime.
+        [JsonPropertyName("delivered_at")] public string? DeliveredAt { get; set; }
+        [JsonPropertyName("resultado")] public JsonElement? Resultado { get; set; }
     }
 
     private sealed class MovimentacaoData
@@ -817,27 +755,12 @@ public class EscavadorHttpClient : IEscavadorService
 
     private sealed class MovimentacoesV2Response
     {
-        [JsonPropertyName("items")] public List<MovimentacaoV2Item>? Items { get; set; }
+        [JsonPropertyName("items")] public List<EscavadorMovimentacaoV2>? Items { get; set; }
         [JsonPropertyName("links")] public MovimentacoesV2Links? Links { get; set; }
     }
 
     private sealed class MovimentacoesV2Links
     {
         [JsonPropertyName("next")] public string? Next { get; set; }
-    }
-
-    private sealed class MovimentacaoV2Item
-    {
-        [JsonPropertyName("id")] public long Id { get; set; }
-        [JsonPropertyName("data")] public DateTime? Data { get; set; }
-        [JsonPropertyName("tipo")] public string? Tipo { get; set; }
-        [JsonPropertyName("conteudo")] public string? Conteudo { get; set; }
-        [JsonPropertyName("fonte")] public MovimentacaoV2Fonte? Fonte { get; set; }
-    }
-
-    private sealed class MovimentacaoV2Fonte
-    {
-        [JsonPropertyName("nome")] public string? Nome { get; set; }
-        [JsonPropertyName("sigla")] public string? Sigla { get; set; }
     }
 }

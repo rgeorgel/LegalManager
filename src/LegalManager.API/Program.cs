@@ -184,6 +184,8 @@ builder.Services.AddScoped<TrialRevertJob>();
 builder.Services.AddScoped<TarefasRecorrentesJob>();
 builder.Services.AddScoped<MonitoramentoJob>();
 builder.Services.AddScoped<EscavadorMovimentacoesPollingJob>();
+builder.Services.AddScoped<EscavadorCallbacksPendentesJob>();
+builder.Services.AddScoped<LegalManager.Infrastructure.Escavador.EscavadorCallbackProcessor>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
 builder.Services.AddScoped<ImportacaoProcessosJob>();
 builder.Services.AddScoped<PublicacaoClassificacaoService>();
@@ -237,6 +239,7 @@ else
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         client.Timeout = TimeSpan.FromSeconds(30);
     })
+    .AddHttpMessageHandler(() => new LegalManager.Infrastructure.Services.CreditosUtilizadosHandler())
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
     {
         CheckCertificateRevocationList = false
@@ -580,17 +583,17 @@ RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
 RecurringJob.RemoveIfExists("captura-publicacoes");
 RecurringJob.RemoveIfExists("escavador-callback-polling");
 
-// Escavador: modo configurável (Webhook | Polling | Hybrid).
-// Webhook é primário; polling é backstop para Hybrid/Polling.
-var escavadorModo = builder.Configuration["Escavador:ModoCaptura"] ?? "Hybrid";
-if (escavadorModo is "Polling" or "Hybrid")
-{
-    var cron = builder.Configuration["Escavador:PollingCron"] ?? "0 6 * * *";
-    RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
-        "escavador-movimentacoes-polling",
-        job => job.ExecutarAsync(),
-        cron);
-}
+// Escavador: o webhook é o canal primário. Backstop diário e gratuito: callbacks cuja entrega
+// falhou. O polling por processo é cobrado por consulta — fica registrado só para disparo manual
+// no painel do Hangfire (Cron.Never), ex.: recuperar histórico depois de uma falha longa.
+RecurringJob.AddOrUpdate<EscavadorCallbacksPendentesJob>(
+    "escavador-callbacks-pendentes",
+    job => job.ExecutarAsync(),
+    builder.Configuration["Escavador:CallbacksPendentesCron"] ?? "0 6 * * *");
+RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
+    "escavador-movimentacoes-polling",
+    job => job.ExecutarAsync(),
+    Cron.Never());
 
 // Classificação IA assíncrona: a cada 5 min enriquece Publicacoes Escavador recém-criadas
 RecurringJob.AddOrUpdate<PublicacaoClassificacaoService>(
