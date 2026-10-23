@@ -12,7 +12,49 @@ public record ResumoEventoItem(
     string Titulo,
     DateTime DataHora,
     string? Local,
-    int Dias  // 0 = hoje; 1 = amanhã
+    int Dias  // 0 = hoje; 1 = amanhã; ... até 7
+);
+
+/// <summary>Sugestão da triagem de publicações ainda não confirmada (planos com publicações).</summary>
+public record ResumoSugestaoItem(
+    string Titulo,
+    string? NumeroCNJ,
+    string Diario,
+    DateTime DataPublicacao,
+    DateTime? Vencimento,
+    int? PrazoDias,
+    bool DiasUteis,
+    DateTime? Audiencia
+);
+
+/// <summary>
+/// Processo que teve andamento novo. <see cref="TextoIA"/>: texto explicado pela IA (Plus+);
+/// senão <see cref="Texto"/> é o texto do tribunal.
+/// </summary>
+public record ResumoProcessoItem(
+    string Titulo,
+    string NumeroCNJ,
+    DateTime Data,
+    string Texto,
+    string? ProximoPasso,
+    bool TextoIA
+);
+
+public enum ConviteResumo { Nenhum, Plus, Pro }
+
+/// <summary>
+/// O que o "Seu dia" acrescenta ao resumo de tarefas e eventos. Datas, listas e contagens vêm do
+/// banco; só <see cref="VisaoGeral"/> e os textos de <see cref="Processos"/> marcados como IA são da IA.
+/// </summary>
+public record ResumoDiarioExtras(
+    DateTime Hoje,
+    string? VisaoGeral = null,
+    IReadOnlyList<ResumoSugestaoItem>? Sugestoes = null,
+    int PublicacoesSemProvidencia = 0,
+    IReadOnlyList<ResumoProcessoItem>? Processos = null,
+    // O plano tem captura de publicações (para dizer "nenhuma publicação nova" no dia vazio).
+    bool TemPublicacoes = false,
+    ConviteResumo Convite = ConviteResumo.Nenhum
 );
 
 public interface IEmailService
@@ -25,7 +67,7 @@ public interface IEmailService
     Task EnviarPlanoPromocionalExpirandoAsync(string email, string nomeEscritorio, PlanoTipo plano, DateTime expiraEm, int diasRestantes, CancellationToken ct = default);
     Task EnviarAlertaPrazoTarefaAsync(string email, string nomeUsuario, string tituloTarefa, DateTime prazo, int diasRestantes, CancellationToken ct = default);
     Task EnviarAlertaTarefaAtrasadaAsync(string email, string nomeUsuario, string tituloTarefa, DateTime prazo, int diasAtraso, CancellationToken ct = default);
-    Task EnviarResumoDiarioAsync(string email, string nomeUsuario, IReadOnlyList<ResumoTarefaItem> tarefas, IReadOnlyList<ResumoEventoItem> eventos, CancellationToken ct = default);
+    Task EnviarResumoDiarioAsync(string email, string nomeUsuario, IReadOnlyList<ResumoTarefaItem> tarefas, IReadOnlyList<ResumoEventoItem> eventos, ResumoDiarioExtras? extras = null, CancellationToken ct = default);
     Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento, DateTime dataHora, string? local, CancellationToken ct = default);
     Task EnviarNovoAndamentoAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoAndamento, Guid processoId, int quantidade, CancellationToken ct = default);
     Task EnviarAlertaPrazoProcessualAsync(string email, string nomeUsuario, string numeroCNJ, string descricaoPrazo, DateTime dataFinal, int diasRestantes, CancellationToken ct = default);

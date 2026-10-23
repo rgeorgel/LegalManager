@@ -304,7 +304,7 @@ public class EmailServiceTests
     }
 
 [Fact]
-    public async Task EnviarResumoDiarioAsync_JuntaTarefasEEventos()
+    public async Task EnviarResumoDiarioAsync_SoProximosDias_EhODiaSemNovidades()
     {
         var capture = new EmailCapture();
         var mock = CreateMockWithEmailCapture(capture);
@@ -314,17 +314,21 @@ public class EmailServiceTests
             "user@test.com", "Vanessa",
             [new ResumoTarefaItem("Recurso Inominado", new DateTime(2026, 10, 16, 9, 0, 0), 1)],
             [new ResumoEventoItem("Audiencia Raz x Luciano", new DateTime(2026, 10, 16, 10, 35, 0), "Fórum", 1)],
+            new ResumoDiarioExtras(new DateTime(2026, 10, 15), TemPublicacoes: true, Convite: ConviteResumo.Plus),
             CancellationToken.None);
 
         Assert.NotNull(capture.Message);
-        Assert.Equal("Resumo do dia: 1 tarefa e 1 evento — Causify", capture.Message!.Subject);
+        Assert.Equal("Seu dia: nada novo desde ontem", capture.Message!.Subject);
         var html = capture.Message.HtmlBody;
+        Assert.Contains("Nada novo desde o último resumo", html);
+        Assert.Contains("Nenhuma publicação nova", html);
+        Assert.Contains("Próximos 7 dias", html);
+        Assert.Contains("Sex, 16/10", html);
         Assert.Contains("Recurso Inominado", html);
-        Assert.Contains("Agenda de amanhã", html);
-        Assert.Contains("Audiencia Raz x Luciano", html);
         Assert.Contains("10:35", html);
         Assert.Contains("/pages/tarefas.html", html);
         Assert.Contains("/pages/agenda.html", html);
+        Assert.DoesNotContain("Conhecer o", html); // dia vazio não leva convite
     }
 
     [Fact]
@@ -338,11 +342,71 @@ public class EmailServiceTests
             "user@test.com", "Vanessa", [],
             [new ResumoEventoItem("Reunião", new DateTime(2026, 10, 15, 15, 0, 0), null, 0),
              new ResumoEventoItem("Audiência", new DateTime(2026, 10, 16, 10, 0, 0), null, 1)],
+            ct: CancellationToken.None);
+
+        Assert.Equal("Seu dia: 1 compromisso hoje", capture.Message!.Subject);
+        Assert.Contains("Atenção hoje", capture.Message.HtmlBody);
+        Assert.DoesNotContain("/pages/tarefas.html", capture.Message.HtmlBody);
+    }
+
+    [Fact]
+    public async Task EnviarResumoDiarioAsync_PlanoComPublicacoes_MostraSugestoesETextosDaIA()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarResumoDiarioAsync(
+            "user@test.com", "Ana",
+            [new ResumoTarefaItem("Juntar procuração", new DateTime(2026, 10, 21, 12, 0, 0), -2)],
+            [],
+            new ResumoDiarioExtras(
+                new DateTime(2026, 10, 23),
+                VisaoGeral: "Dia com um ponto de atenção.",
+                Sugestoes: [new ResumoSugestaoItem("Manifestar sobre o laudo", "1001885-87.2026.8.26.0077", "DJSP",
+                    new DateTime(2026, 10, 21), new DateTime(2026, 11, 16), 15, true, null)],
+                PublicacoesSemProvidencia: 3,
+                Processos: [new ResumoProcessoItem("Mercado x Distribuidora", "5004321-11.2024.8.21.0001",
+                    new DateTime(2026, 10, 22), "O juiz aceitou a penhora on-line.", "Acompanhar o bloqueio.", true)],
+                TemPublicacoes: true),
             CancellationToken.None);
 
-        Assert.Equal("Resumo do dia: 2 eventos — Causify", capture.Message!.Subject);
-        Assert.Contains("Agenda de hoje", capture.Message.HtmlBody);
-        Assert.DoesNotContain("/pages/tarefas.html", capture.Message.HtmlBody);
+        Assert.Equal("Seu dia: 1 tarefa atrasada, 1 sugestão para confirmar e 1 processo com novidades", capture.Message!.Subject);
+        // HtmlEncode troca acentos por entidades (&#231;): compara o texto como o leitor vê.
+        var html = System.Net.WebUtility.HtmlDecode(capture.Message.HtmlBody);
+        Assert.Contains("Dia com um ponto de atenção.", html);
+        Assert.Contains("Publicações a tratar", html);
+        Assert.Contains("15 dias úteis · vence <strong>16/11/2026</strong> (segunda-feira)", html);
+        Assert.Contains("E mais 3 publicações novas sem providência a tomar", html);
+        Assert.Contains("Próximo passo: Acompanhar o bloqueio.", html);
+        Assert.Contains("podem conter erros", html);
+        Assert.Contains("/pages/publicacoes.html", html);
+        Assert.DoesNotContain("Nada novo", html);
+    }
+
+    [Fact]
+    public async Task EnviarResumoDiarioAsync_PlanoFree_TextoDoTribunalEConvite()
+    {
+        var capture = new EmailCapture();
+        var mock = CreateMockWithEmailCapture(capture);
+        var svc = new EmailService(mock.Object, _config, NullLogger<EmailService>.Instance);
+
+        await svc.EnviarResumoDiarioAsync(
+            "user@test.com", "Ana", [], [],
+            new ResumoDiarioExtras(
+                new DateTime(2026, 10, 26),
+                Processos: [new ResumoProcessoItem("Cobrança", "5004321-11.2024.8.21.0001",
+                    new DateTime(2026, 10, 23), "Defiro o pedido de penhora <SISBAJUD>.", null, false)],
+                Convite: ConviteResumo.Plus),
+            CancellationToken.None);
+
+        Assert.Equal("Seu dia: 1 processo com novidades", capture.Message!.Subject);
+        var html = capture.Message.HtmlBody;
+        Assert.Contains("Defiro o pedido de penhora &lt;SISBAJUD&gt;.", html);
+        Assert.Contains("Conhecer o Plus", html);
+        Assert.Contains("/pages/processos.html", html);
+        Assert.DoesNotContain("podem conter erros", html);
+        Assert.DoesNotContain("Próximo passo", html);
     }
 
 [Fact]

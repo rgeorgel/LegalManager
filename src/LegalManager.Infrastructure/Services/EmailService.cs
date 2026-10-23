@@ -388,153 +388,216 @@ public class EmailService : IEmailService
         await EnviarAsync(CriarMensagem(email, $"🚨 Tarefa atrasada: {tituloTarefa}", html));
     }
 
+    /// <summary>
+    /// Resumo diário "Seu dia": tarefas e eventos (como antes) mais, conforme o plano, as sugestões
+    /// da triagem de publicações, os processos com andamento novo e a visão geral escrita pela IA.
+    /// Sem nada novo, sai a versão curta ("nada novo desde ontem") com os próximos 7 dias.
+    /// </summary>
     public async Task EnviarResumoDiarioAsync(string email, string nomeUsuario,
         IReadOnlyList<ResumoTarefaItem> itens, IReadOnlyList<ResumoEventoItem> eventos,
-        CancellationToken ct = default)
+        ResumoDiarioExtras? extras = null, CancellationToken ct = default)
     {
+        static string H(string? s) => System.Net.WebUtility.HtmlEncode(s ?? "");
+        var x = extras ?? new ResumoDiarioExtras(BrasiliaTime.Hoje);
+        var sugestoes = x.Sugestoes ?? [];
+        var processos = x.Processos ?? [];
+        var app = _config["App:FrontendUrl"];
+
         var atrasadas = itens.Where(i => i.Dias < 0).OrderBy(i => i.Dias).ToList();
-        var hoje = itens.Where(i => i.Dias == 0).ToList();
-        var futuras = itens.Where(i => i.Dias > 0).OrderBy(i => i.Dias).ToList();
+        var hoje = itens.Where(i => i.Dias == 0).OrderBy(i => i.Prazo).ToList();
+        var agendaHoje = eventos.Where(e => e.Dias == 0).OrderBy(e => e.DataHora).ToList();
+        var proximos = itens.Where(i => i.Dias > 0)
+            .Select(i => (Data: i.Prazo, i.Titulo, Detalhe: $"vence às {i.Prazo.ToString("HH:mm", PtBr)}"))
+            .Concat(eventos.Where(e => e.Dias > 0)
+                .Select(e => (Data: e.DataHora, e.Titulo,
+                    Detalhe: e.DataHora.ToString("HH:mm", PtBr) + (string.IsNullOrEmpty(e.Local) ? "" : $" · 📍 {e.Local}"))))
+            .OrderBy(p => p.Data)
+            .ToList();
+        var temAtencao = atrasadas.Count + hoje.Count + agendaHoje.Count > 0;
+        var diaVazio = !temAtencao && sugestoes.Count == 0 && x.PublicacoesSemProvidencia == 0 && processos.Count == 0;
+        var textosIA = x.VisaoGeral is not null || processos.Any(p => p.TextoIA);
+
+        var partes = new List<string>();
+        if (atrasadas.Count > 0) partes.Add(Plural(atrasadas.Count, "tarefa atrasada", "tarefas atrasadas"));
+        if (hoje.Count > 0) partes.Add(Plural(hoje.Count, "tarefa para hoje", "tarefas para hoje"));
+        if (agendaHoje.Count > 0) partes.Add(Plural(agendaHoje.Count, "compromisso hoje", "compromissos hoje"));
+        if (sugestoes.Count > 0) partes.Add(Plural(sugestoes.Count, "sugestão para confirmar", "sugestões para confirmar"));
+        if (processos.Count > 0) partes.Add(Plural(processos.Count, "processo com novidades", "processos com novidades"));
+
+        var h4 = "margin:26px 0 8px;padding-bottom:4px;font-size:16px;";
+        var td = "padding:8px 0;border-bottom:1px solid #f3f4f6;vertical-align:top";
+        var titulo = "color:#111827;font-weight:500";
+        var sub = "font-size:13px;margin-top:2px";
+        var tagIA = """<span style="display:inline-block;font-size:11px;font-weight:700;color:#6d28d9;background:#f5f3ff;border:1px solid #ede9fe;border-radius:4px;padding:0 5px;margin-left:6px">IA</span>""";
+        var cnj = "font-family:'Courier New',monospace;font-size:12px;color:#6b7280";
 
         var sb = new System.Text.StringBuilder();
-        sb.Append("""
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+        sb.Append($"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827">
               <div style="background:#1e2a3b;padding:24px;text-align:center;border-radius:8px 8px 0 0">
                 <h1 style="color:#fff;font-size:20px;margin:0">⚖️ Causify</h1>
-                <p style="color:#94a3b8;margin:4px 0 0">Resumo diário</p>
+                <p style="color:#94a3b8;margin:4px 0 0">Seu dia · {H(x.Hoje.ToString("dddd, dd/MM/yyyy", PtBr))}</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+                <p>Bom dia, <strong>{H(nomeUsuario)}</strong>!</p>
             """);
 
-        sb.Append($"""
-                <p>Olá, <strong>{System.Net.WebUtility.HtmlEncode(nomeUsuario)}</strong>!</p>
-                <p>{ResumoContagem(itens.Count, eventos.Count, "<strong>{0}</strong>")} para acompanhar.</p>
-            """);
-
-        if (atrasadas.Count > 0)
-        {
-            sb.Append("""
-                <h3 style="color:#b91c1c;margin:24px 0 8px;border-bottom:1px solid #fecaca;padding-bottom:4px">🚨 Atrasadas</h3>
-                <table style="width:100%;border-collapse:collapse">
-            """);
-            foreach (var t in atrasadas)
-            {
-                sb.Append($"""
-                    <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
-                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
-                        <div style="color:#b91c1c;font-size:13px;margin-top:2px">
-                          atrasada há {Math.Abs(t.Dias)} dia(s) · venceu em {t.Prazo.ToString("dd/MM/yyyy", PtBr)}
-                        </div>
-                      </td>
-                    </tr>
-                """);
-            }
-            sb.Append("</table>");
-        }
-
-        if (hoje.Count > 0)
-        {
-            sb.Append("""
-                <h3 style="color:#d97706;margin:24px 0 8px;border-bottom:1px solid #fde68a;padding-bottom:4px">⏰ Vencem hoje</h3>
-                <table style="width:100%;border-collapse:collapse">
-            """);
-            foreach (var t in hoje)
-            {
-                sb.Append($"""
-                    <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
-                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
-                        <div style="color:#d97706;font-size:13px;margin-top:2px">
-                          vence hoje · {t.Prazo.ToString("dd/MM/yyyy HH:mm", PtBr)}
-                        </div>
-                      </td>
-                    </tr>
-                """);
-            }
-            sb.Append("</table>");
-        }
-
-        if (futuras.Count > 0)
-        {
-            var grupos = futuras.GroupBy(i => i.Dias).OrderBy(g => g.Key).ToList();
-            foreach (var grupo in grupos)
-            {
-                var dias = grupo.Key;
-                var label = dias == 1 ? "Vence amanhã" : $"Vence em {dias} dia(s)";
-                sb.Append($"""
-                    <h3 style="color:#1e40af;margin:24px 0 8px;border-bottom:1px solid #dbeafe;padding-bottom:4px">📅 {label}</h3>
-                    <table style="width:100%;border-collapse:collapse">
-                """);
-                foreach (var t in grupo)
-                {
-                    sb.Append($"""
-                        <tr>
-                          <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
-                            <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(t.Titulo)}</div>
-                            <div style="color:#6b7280;font-size:13px;margin-top:2px">
-                              {t.Prazo.ToString("dd/MM/yyyy HH:mm", PtBr)}
-                            </div>
-                          </td>
-                        </tr>
-                    """);
-                }
-                sb.Append("</table>");
-            }
-        }
-
-        foreach (var (dias, label) in new[] { (0, "Agenda de hoje"), (1, "Agenda de amanhã") })
-        {
-            var doDia = eventos.Where(e => e.Dias == dias).OrderBy(e => e.DataHora).ToList();
-            if (doDia.Count == 0) continue;
+        if (x.VisaoGeral is not null)
             sb.Append($"""
-                <h3 style="color:#7c3aed;margin:24px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px">🗓️ {label}</h3>
-                <table style="width:100%;border-collapse:collapse">
-            """);
-            foreach (var ev in doDia)
-            {
-                var localLinha = string.IsNullOrEmpty(ev.Local) ? "" : $"<div style=\"color:#6b7280;font-size:13px;margin-top:2px\">📍 {System.Net.WebUtility.HtmlEncode(ev.Local)}</div>";
-                sb.Append($"""
-                    <tr>
-                      <td style="padding:8px 12px 8px 0;border-bottom:1px solid #f3f4f6;font-weight:600;color:#7c3aed;vertical-align:top;width:56px">{ev.DataHora.ToString("HH:mm", PtBr)}</td>
-                      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6">
-                        <div style="color:#111827;font-weight:500">{System.Net.WebUtility.HtmlEncode(ev.Titulo)}</div>
-                        {localLinha}
-                      </td>
-                    </tr>
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 14px;margin:4px 0 6px;color:#1f2937">
+                  {H(x.VisaoGeral)}
+                  <div style="color:#6b7280;{sub};margin-top:6px">Resumo escrito por IA a partir dos seus processos e da sua agenda.</div>
+                </div>
                 """);
+        else if (!diaVazio)
+            sb.Append($"<p>Hoje você tem {Juntar(partes.Select(p => $"<strong>{p}</strong>"))}.</p>");
+
+        if (temAtencao)
+        {
+            sb.Append($"""<h3 style="{h4}color:#b91c1c;border-bottom:1px solid #fecaca">🔴 Atenção hoje</h3><table style="width:100%;border-collapse:collapse">""");
+            foreach (var t in atrasadas)
+                sb.Append($"""
+                    <tr><td style="{td}">
+                      <div style="{titulo}">{H(t.Titulo)}</div>
+                      <div style="{sub};color:#b91c1c">atrasada há {Math.Abs(t.Dias)} dia(s) · venceu em {t.Prazo.ToString("dd/MM/yyyy", PtBr)}</div>
+                    </td></tr>
+                    """);
+            foreach (var t in hoje)
+                sb.Append($"""
+                    <tr><td style="{td}">
+                      <div style="{titulo}">{H(t.Titulo)}</div>
+                      <div style="{sub};color:#b45309">vence hoje · {t.Prazo.ToString("dd/MM/yyyy HH:mm", PtBr)}</div>
+                    </td></tr>
+                    """);
+            foreach (var e in agendaHoje)
+                sb.Append($"""
+                    <tr><td style="{td}">
+                      <div style="{titulo}"><span style="color:#7c3aed;font-weight:600">{e.DataHora.ToString("HH:mm", PtBr)}</span> · {H(e.Titulo)}</div>
+                      {(string.IsNullOrEmpty(e.Local) ? "" : $"""<div style="{sub};color:#6b7280">📍 {H(e.Local)}</div>""")}
+                    </td></tr>
+                    """);
+            sb.Append("</table>");
+        }
+
+        if (sugestoes.Count > 0 || x.PublicacoesSemProvidencia > 0)
+        {
+            sb.Append($"""<h3 style="{h4}color:#b45309;border-bottom:1px solid #fde68a">📬 Publicações a tratar</h3>""");
+            if (sugestoes.Count > 0)
+                sb.Append("""<p style="margin:0 0 4px;font-size:14px;color:#374151">A IA leu as publicações novas e sugeriu o que criar. Nada foi criado ainda: confirme na tela de Publicações.</p>""");
+            foreach (var s in sugestoes)
+            {
+                var quando = s.Vencimento is { } v
+                    ? $"⏰ {s.PrazoDias} dias {(s.DiasUteis ? "úteis" : "corridos")} · vence <strong>{v.ToString("dd/MM/yyyy", PtBr)}</strong> ({v.ToString("dddd", PtBr)})"
+                    : s.Audiencia is { } a
+                        ? $"📅 <strong>{a.ToString("dd/MM/yyyy 'às' HH:mm", PtBr)}</strong>"
+                        : "⏰ Prazo não identificado com segurança: informe o vencimento";
+                sb.Append($"""
+                    <div style="border:1px solid #e5e7eb;border-left:3px solid #1a56db;border-radius:6px;padding:10px 12px;margin:8px 0">
+                      <div style="{titulo}">{H(s.Titulo)}{tagIA}</div>
+                      <div style="font-size:14px;margin-top:4px">{quando}</div>
+                      <div style="{sub};color:#6b7280"><span style="{cnj}">{H(s.NumeroCNJ)}</span> · {H(s.Diario)} de {s.DataPublicacao.ToString("dd/MM", PtBr)}</div>
+                    </div>
+                    """);
+            }
+            if (x.PublicacoesSemProvidencia > 0)
+                sb.Append($"""<div style="{sub};color:#6b7280;margin-top:6px">{(sugestoes.Count > 0 ? "E mais " : "")}{Plural(x.PublicacoesSemProvidencia, "publicação nova sem providência a tomar", "publicações novas sem providência a tomar")}.</div>""");
+        }
+
+        if (processos.Count > 0)
+        {
+            sb.Append($"""<h3 style="{h4}color:#047857;border-bottom:1px solid #d1fae5">📈 O que mudou nos seus processos</h3>""");
+            foreach (var p in processos)
+            {
+                var corpo = p.TextoIA
+                    ? $"""<div style="margin-top:4px;color:#1f2937">{H(p.Texto)}</div>"""
+                      + (p.ProximoPasso is null ? "" : $"""<div style="margin-top:4px;font-size:13px;color:#047857">Próximo passo: {H(p.ProximoPasso)}</div>""")
+                    : $"""<div style="margin-top:4px;color:#374151;font-family:'Courier New',monospace;font-size:13px;background:#f9fafb;border-radius:4px;padding:6px 8px">{H(p.Texto)}</div>""";
+                sb.Append($"""
+                    <div style="padding:10px 0;border-bottom:1px solid #f3f4f6">
+                      <div style="{titulo}">{H(p.Titulo)}{(p.TextoIA ? tagIA : "")}</div>
+                      <div style="{cnj}">{H(p.NumeroCNJ)} · andamento de {p.Data.ToString("dd/MM", PtBr)}</div>
+                      {corpo}
+                    </div>
+                    """);
+            }
+        }
+
+        if (diaVazio)
+        {
+            sb.Append("""<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:14px 16px;color:#14532d;margin:4px 0"><strong>Nada novo desde o último resumo.</strong><ul style="margin:8px 0 0;padding-left:18px">""");
+            if (x.TemPublicacoes) sb.Append("<li>Nenhuma publicação nova</li>");
+            sb.Append("<li>Nenhuma movimentação nos processos monitorados</li><li>Nenhum prazo ou compromisso hoje</li></ul></div>");
+        }
+
+        if (proximos.Count > 0)
+        {
+            sb.Append($"""<h3 style="{h4}color:#1e40af;border-bottom:1px solid #dbeafe">📅 Próximos 7 dias</h3><table style="width:100%;border-collapse:collapse">""");
+            foreach (var dia in proximos.GroupBy(p => p.Data.Date))
+            {
+                sb.Append($"""<tr><td style="padding:10px 0 2px;color:#1e40af;font-weight:600;font-size:13px">{DiaCurto(dia.Key)}</td></tr>""");
+                foreach (var p in dia)
+                    sb.Append($"""
+                        <tr><td style="{td}">
+                          <div style="{titulo}">{H(p.Titulo)}</div>
+                          <div style="{sub};color:#6b7280">{H(p.Detalhe)}</div>
+                        </td></tr>
+                        """);
             }
             sb.Append("</table>");
         }
 
-        var botao = "background:#1a56db;color:#fff;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;margin:4px";
-        sb.Append("""<p style="text-align:center;margin:28px 0 8px">""");
+        if (!diaVazio && x.Convite != ConviteResumo.Nenhum)
+        {
+            var convite = x.Convite == ConviteResumo.Plus
+                ? "<strong>Com o Plus, este resumo explica cada andamento em linguagem simples</strong> e diz qual é o próximo passo, além de acompanhar até 20 processos."
+                : "Com o Pro, as publicações dos diários oficiais também entram aqui, com o prazo já calculado para você confirmar.";
+            sb.Append($"""
+                <div style="border:1px dashed #c4b5fd;background:#faf5ff;border-radius:6px;padding:12px 14px;margin:22px 0 4px;color:#4c1d95;font-size:14px">
+                  {convite} <a href="{app}/pages/assinatura.html" style="color:#6d28d9;font-weight:600">Conhecer o {(x.Convite == ConviteResumo.Plus ? "Plus" : "Pro")}</a>
+                </div>
+                """);
+        }
+
+        var botao = "background:#1a56db;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;margin:4px";
+        var botaoSec = "background:#fff;color:#1a56db;border:1px solid #1a56db;padding:11px 21px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;margin:4px";
+        sb.Append("""<p style="text-align:center;margin:26px 0 6px">""");
+        if (sugestoes.Count > 0)
+            sb.Append($"""<a href="{app}/pages/publicacoes.html" style="{botao}">Confirmar sugestões</a>""");
         if (itens.Count > 0)
-            sb.Append($"""<a href="{_config["App:FrontendUrl"]}/pages/tarefas.html" style="{botao}">Ver tarefas</a>""");
+            sb.Append($"""<a href="{app}/pages/tarefas.html" style="{(sugestoes.Count > 0 ? botaoSec : botao)}">Ver tarefas</a>""");
         if (eventos.Count > 0)
-            sb.Append($"""<a href="{_config["App:FrontendUrl"]}/pages/agenda.html" style="{botao}">Ver agenda</a>""");
+            sb.Append($"""<a href="{app}/pages/agenda.html" style="{botaoSec}">Ver agenda</a>""");
+        if (itens.Count == 0 && eventos.Count == 0 && sugestoes.Count == 0 && processos.Count > 0)
+            sb.Append($"""<a href="{app}/pages/processos.html" style="{botao}">Ver processos</a>""");
         sb.Append("</p>");
 
-        sb.Append("""
-                <p style="color:#6b7280;font-size:12px;margin-top:24px">
-                  Você recebe este resumo uma vez por dia. Para mudar suas preferências, acesse Configurações &gt; Alertas.
+        sb.Append($"""
+                <p style="color:#6b7280;font-size:12px;margin-top:22px">
+                  Você recebe este resumo uma vez por dia, de manhã, quando há algo para acompanhar. Para mudar o que entra nele, acesse Configurações &gt; Alertas.
+                  {(textosIA ? "Os textos marcados com IA são gerados automaticamente e podem conter erros: confira no processo antes de agir." : "")}
                 </p>
               </div>
             </div>
             """);
 
-        var html = sb.ToString();
-        var assunto = $"Resumo do dia: {ResumoContagem(itens.Count, eventos.Count, "{0}", prefixo: "")} — Causify";
-        await EnviarAsync(CriarMensagem(email, assunto, html));
+        var assunto = diaVazio ? "Seu dia: nada novo desde ontem" : $"Seu dia: {Juntar(partes)}";
+        await EnviarAsync(CriarMensagem(email, assunto, sb.ToString()));
     }
 
-    // "Você tem 3 tarefas e 1 evento" — omite a parte que estiver zerada.
-    private static string ResumoContagem(int tarefas, int eventos, string formatoNumero, string prefixo = "Você tem ")
+    private static string Plural(int n, string singular, string plural) => $"{n} {(n == 1 ? singular : plural)}";
+
+    // "a, b e c"
+    private static string Juntar(IEnumerable<string> partes)
     {
-        var partes = new List<string>();
-        if (tarefas > 0) partes.Add($"{string.Format(formatoNumero, tarefas)} {(tarefas == 1 ? "tarefa" : "tarefas")}");
-        if (eventos > 0) partes.Add($"{string.Format(formatoNumero, eventos)} {(eventos == 1 ? "evento" : "eventos")}");
-        return prefixo + string.Join(" e ", partes);
+        var l = partes.ToList();
+        return l.Count <= 1 ? string.Concat(l) : string.Join(", ", l.Take(l.Count - 1)) + " e " + l[^1];
+    }
+
+    // "Seg, 26/10"
+    private static string DiaCurto(DateTime d)
+    {
+        var dia = PtBr.DateTimeFormat.GetAbbreviatedDayName(d.DayOfWeek).TrimEnd('.');
+        return $"{char.ToUpper(dia[0], PtBr)}{dia[1..]}, {d.ToString("dd/MM", PtBr)}";
     }
 
     public async Task EnviarAlertaEventoAsync(string email, string nomeUsuario, string tituloEvento,

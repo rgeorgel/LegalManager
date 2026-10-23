@@ -12,6 +12,12 @@ public interface IIAService
     /// audiência), interpretado por TriagemPublicacaoParser.
     /// </summary>
     Task<string> TriarPublicacaoAsync(string conteudo, CancellationToken ct = default);
+    /// <summary>
+    /// Textos do resumo diário ("Seu dia"): visão geral do dia e, para cada processo com andamento
+    /// novo, o que aconteceu em linguagem simples e o próximo passo. Devolve o JSON da IA,
+    /// interpretado por ResumoDiaParser. <paramref name="contexto"/> traz só fatos do banco.
+    /// </summary>
+    Task<string> ResumirDiaAsync(string contexto, CancellationToken ct = default);
     Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default);
     Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default);
 }

@@ -185,6 +185,38 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         return await EnviarPromptAsync(prompt, ct);
     }
 
+    public async Task<string> ResumirDiaAsync(string contexto, CancellationToken ct = default)
+    {
+        using var activity = Telemetry.Ia.StartActivity(nameof(ResumirDiaAsync));
+        activity?.SetTag("gen_ai.operation", "summarization");
+        var prompt = $$$""""
+            Você escreve o resumo diário que um advogado brasileiro recebe por e-mail de manhã.
+
+            Com base SOMENTE nos fatos abaixo, responda SOMENTE com um JSON neste formato:
+            {
+              "visaoGeral": "2 ou 3 frases sobre o dia: o que exige atenção hoje e as novidades dos processos",
+              "processos": [
+                { "id": 1, "texto": "o que aconteceu, em uma ou duas frases simples", "proximoPasso": "o que tende a acontecer ou o que o advogado deve fazer" ou null }
+              ]
+            }
+
+            Regras:
+            - Um item em "processos" para cada processo listado nos fatos, com o mesmo "id".
+            - Explique os andamentos em linguagem simples, sem jargão sem explicação, como para um colega ocupado.
+            - Não invente fatos, valores, datas ou prazos que não estejam nos fatos. Não calcule prazos.
+            - Se o andamento não permitir dizer o próximo passo com segurança, use null.
+            - Não repita números de processo nos textos.
+            - Responda em português do Brasil, sem nenhum texto fora do JSON.
+
+            Fatos:
+            """
+            {{{contexto}}}
+            """
+            """";
+
+        return await EnviarPromptAsync(prompt, ct);
+    }
+
     public async Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default)
     {
         using var activity = Telemetry.Ia.StartActivity(nameof(GerarResumoProcessoAsync));

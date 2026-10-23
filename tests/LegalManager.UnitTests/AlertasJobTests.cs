@@ -70,7 +70,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Dias == 0 && l[0].Titulo == "Tarefa Urgente"), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Dias == 0 && l[0].Titulo == "Tarefa Urgente"), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
 
         var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n => n.Tipo == TipoNotificacao.PrazoTarefa);
@@ -100,7 +100,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -130,7 +130,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 0),
-            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Single().Titulo == "Audiência" && itens.Single().Dias == 1)),
+            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Single().Titulo == "Audiência" && itens.Single().Dias == 1), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
 
         // O alerta in-app do evento continua; o registro do e-mail já nasce lido.
@@ -174,9 +174,10 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Titulo == "Recurso"),
-            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 2 &&
+            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 3 &&
                 l.Any(i => i.Titulo == "Reunião hoje" && i.Dias == 0) &&
-                l.Any(i => i.Titulo == "Audiência amanhã" && i.Dias == 1))),
+                l.Any(i => i.Titulo == "Audiência amanhã" && i.Dias == 1) &&
+                l.Any(i => i.Titulo == "Audiência depois" && i.Dias == 2)), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
         mockEmail.VerifyNoOtherCalls();
 
@@ -207,7 +208,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             It.IsAny<string>(), It.IsAny<string>(),
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Titulo == "Recurso"),
-            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 0)),
+            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 0), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
         Assert.True(await ctx.Notificacoes.AnyAsync(n => n.Titulo == "Evento amanhã"));
     }
@@ -231,7 +232,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -386,7 +387,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
-                l.Count == 1 && l[0].Titulo == "Prazo para contestação" && l[0].Dias == 1), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                l.Count == 1 && l[0].Titulo == "Prazo para contestação" && l[0].Dias == 1), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -422,7 +423,7 @@ public class AlertasJobTests
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 2
                 && l.Any(i => i.Titulo == "Prazo para contestação")
-                && l.Any(i => i.Titulo == "Inscrição prova OAB")), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                && l.Any(i => i.Titulo == "Inscrição prova OAB")), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -449,7 +450,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
-                l.Count == 1 && l[0].Titulo == "Inscrição prova OAB" && l[0].Dias == 0), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                l.Count == 1 && l[0].Titulo == "Inscrição prova OAB" && l[0].Dias == 0), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -476,7 +477,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -490,7 +491,7 @@ public class AlertasJobTests
         await job.ExecutarAsync();
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -512,7 +513,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 3), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 3), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -537,7 +538,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            "resp@test.com", "Responsável", It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            "resp@test.com", "Responsável", It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -567,7 +568,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(),
-            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Any(i => i.Titulo == "Audiência"))), Times.Once);
+            It.Is<IReadOnlyList<ResumoEventoItem>>(itens => itens.Any(i => i.Titulo == "Audiência")), It.IsAny<ResumoDiarioExtras?>()), Times.Once);
     }
 
     [Fact]
@@ -626,7 +627,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()), Times.Once);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()), Times.Once);
     }
 
     [Fact]
@@ -649,7 +650,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Tarefa sem responsavel"), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Tarefa sem responsavel"), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -675,7 +676,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
-                l.Count == 1 && l[0].Dias == -3 && l[0].Titulo == "Tarefa Atrasada"), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                l.Count == 1 && l[0].Dias == -3 && l[0].Titulo == "Tarefa Atrasada"), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
 
         var notif = await ctx.Notificacoes.FirstOrDefaultAsync(n =>
@@ -705,7 +706,7 @@ public class AlertasJobTests
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l =>
                 l.Count == 1 &&
                 l[0].Titulo == "Limite (5d atrasada)" &&
-                l[0].Dias == -5), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                l[0].Dias == -5), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
 
         var notifs = await ctx.Notificacoes
@@ -735,7 +736,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -758,7 +759,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Never);
     }
 
@@ -783,7 +784,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -815,7 +816,7 @@ public class AlertasJobTests
                 l.Any(i => i.Titulo == "Vence Amanha" && i.Dias == 1) &&
                 l.Any(i => i.Titulo == "Vence em 3d" && i.Dias == 3) &&
                 l.Any(i => i.Titulo == "Vence em 5d" && i.Dias == 5) &&
-                !l.Any(i => i.Titulo == "Longe (fora)")), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+                !l.Any(i => i.Titulo == "Longe (fora)")), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -886,7 +887,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             "resp@test.com", "Responsável",
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Inscrição prova OAB"), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Inscrição prova OAB"), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
     }
 
@@ -906,7 +907,7 @@ public class AlertasJobTests
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             It.IsAny<string>(), It.IsAny<string>(),
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Tarefa amanhã"), It.IsAny<IReadOnlyList<ResumoEventoItem>>()),
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Count == 1 && l[0].Titulo == "Tarefa amanhã"), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()),
             Times.Once);
         var notif = await ctx.Notificacoes.SingleAsync();
         Assert.Contains("Tarefa atrasada", notif.Mensagem);
@@ -929,7 +930,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()), Times.Once);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()), Times.Once);
         Assert.True((await ctx.Notificacoes.SingleAsync()).Lida);
     }
 
@@ -947,7 +948,7 @@ public class AlertasJobTests
         await job.ExecutarAsync(hoje);
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()), Times.Never);
         Assert.Empty(ctx.Notificacoes);
     }
 
@@ -971,7 +972,7 @@ public class AlertasJobTests
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             It.IsAny<string>(), It.IsAny<string>(),
             It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Titulo == "Inscrição prova OAB"),
-            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 0)), Times.Once);
+            It.Is<IReadOnlyList<ResumoEventoItem>>(l => l.Count == 0), It.IsAny<ResumoDiarioExtras?>()), Times.Once);
     }
 
     [Fact]
@@ -981,17 +982,21 @@ public class AlertasJobTests
         // UTC+14: o "hoje" do escritório está sempre 1 ou 2 dias à frente do de Brasília.
         var tenant = await ctx.Tenants.FindAsync(tenantId);
         tenant!.FusoHorario = "Etc/GMT-14";
-        var hojeEscritorio = FusoHorario.HojeParede(FusoHorario.Resolver("Etc/GMT-14"));
-        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Vence hoje lá", hojeEscritorio.AddHours(18)));
+        // 00h UTC de 23/10: 14h de 23/10 no escritório (já passou das 7h), 21h de 22/10 em Brasília.
+        var agoraUtc = new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc);
+        ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Vence hoje lá", new DateTime(2026, 10, 23, 18, 0, 0)));
         await ctx.SaveChangesAsync();
 
         var mockEmail = new Mock<IEmailService>();
-        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>());
+        var job = new AlertasJob(ctx, mockEmail.Object, PrefAberto(tenantId, responsavelId).Object, Mock.Of<ILogger<AlertasJob>>())
+        {
+            RelogioUtc = () => agoraUtc
+        };
         await job.ExecutarAsync();
 
         mockEmail.Verify(e => e.EnviarResumoDiarioAsync(
             It.IsAny<string>(), It.IsAny<string>(),
-            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Dias == 0), It.IsAny<IReadOnlyList<ResumoEventoItem>>()), Times.Once);
+            It.Is<IReadOnlyList<ResumoTarefaItem>>(l => l.Single().Dias == 0), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()), Times.Once);
     }
 
     [Fact]
@@ -1038,7 +1043,7 @@ public class AlertasJobTests
 
         // Simula o INSERT inválido do resumo (ex.: Mensagem acima do limite no PostgreSQL).
         var mockEmail = new Mock<IEmailService>();
-        mockEmail.Setup(e => e.EnviarResumoDiarioAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>()))
+        mockEmail.Setup(e => e.EnviarResumoDiarioAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IReadOnlyList<ResumoTarefaItem>>(), It.IsAny<IReadOnlyList<ResumoEventoItem>>(), It.IsAny<ResumoDiarioExtras?>()))
             .Callback(() => ctx.Notificacoes.Add(new Notificacao
             {
                 Id = Guid.NewGuid(), TenantId = tenantId, UsuarioId = responsavelId,
