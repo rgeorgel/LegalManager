@@ -540,7 +540,7 @@ RecurringJob.AddOrUpdate<AlertasJob>(
     "alertas-diarios",
     job => job.ExecutarAsync(),
     "0 * * * *",
-    // De hora em hora: o resumo diário sai a partir das 7h no fuso de cada escritório (AlertasJob.HoraResumo);
+    // De hora em hora: o resumo diário sai só à meia-noite no fuso de cada escritório (AlertasJob.HoraResumo);
     // os demais alertas deduplicam por dia.
     new RecurringJobOptions { TimeZone = BrasiliaTime.Tz });
 

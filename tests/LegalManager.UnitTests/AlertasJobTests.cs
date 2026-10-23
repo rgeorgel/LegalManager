@@ -982,8 +982,8 @@ public class AlertasJobTests
         // UTC+14: o "hoje" do escritório está sempre 1 ou 2 dias à frente do de Brasília.
         var tenant = await ctx.Tenants.FindAsync(tenantId);
         tenant!.FusoHorario = "Etc/GMT-14";
-        // 00h UTC de 23/10: 14h de 23/10 no escritório (já passou das 7h), 21h de 22/10 em Brasília.
-        var agoraUtc = new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc);
+        // 10h UTC de 22/10: meia-noite de 23/10 no escritório (hora do resumo), 07h de 22/10 em Brasília.
+        var agoraUtc = new DateTime(2026, 10, 22, 10, 0, 0, DateTimeKind.Utc);
         ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Vence hoje lá", new DateTime(2026, 10, 23, 18, 0, 0)));
         await ctx.SaveChangesAsync();
 

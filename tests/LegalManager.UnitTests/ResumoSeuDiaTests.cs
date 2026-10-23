@@ -20,7 +20,11 @@ public class ResumoSeuDiaTests
 
     private sealed record Cenario(AppDbContext Db, Guid TenantId, Guid AdvId, Guid ProcessoId);
 
-    private static async Task<Cenario> SeedAsync(PlanoTipo plano, DateTime? andamentoCapturadoEm = null)
+    // Capturado no domingo 25/10 às 12h de Brasília: "ontem" para o resumo da meia-noite de segunda.
+    private static readonly DateTime CapturaDomingo = new(2026, 10, 25, 15, 0, 0, DateTimeKind.Utc);
+
+    private static async Task<Cenario> SeedAsync(PlanoTipo plano, DateTime? andamentoCapturadoEm = null,
+        DateTime? andamentoData = null)
     {
         var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = plano, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
@@ -37,9 +41,9 @@ public class ResumoSeuDiaTests
         };
         var andamento = new Andamento
         {
-            Id = Guid.NewGuid(), TenantId = tenant.Id, ProcessoId = processo.Id, Data = new DateTime(2026, 10, 23),
+            Id = Guid.NewGuid(), TenantId = tenant.Id, ProcessoId = processo.Id, Data = andamentoData ?? new DateTime(2026, 10, 23),
             Descricao = "Defiro o pedido de penhora on-line via SISBAJUD.", Fonte = FonteAndamento.Automatico,
-            CriadoEm = andamentoCapturadoEm ?? DateTime.UtcNow.AddHours(-1)
+            CriadoEm = andamentoCapturadoEm ?? CapturaDomingo
         };
         var pub = new Publicacao
         {
@@ -154,7 +158,7 @@ public class ResumoSeuDiaTests
         Assert.Empty(x.Sugestoes!);
         Assert.Equal(ConviteResumo.Pro, x.Convite);
 
-        var c2 = await SeedAsync(PlanoTipo.Plus);
+        var c2 = await SeedAsync(PlanoTipo.Plus, andamentoCapturadoEm: CapturaDomingo.AddDays(1));
         var naTerca = await ExecutarAsync(c2, Terca, IA().services);
         Assert.Equal(ConviteResumo.Nenhum, naTerca!.Convite);
     }
@@ -198,19 +202,52 @@ public class ResumoSeuDiaTests
     }
 
     [Fact]
-    public async Task AndamentoAntigo_NaoEntra()
+    public async Task CapturadoAntesDeOntem_NaoEntra()
     {
-        var c = await SeedAsync(PlanoTipo.Free, andamentoCapturadoEm: DateTime.UtcNow.AddDays(-2));
+        var c = await SeedAsync(PlanoTipo.Free, andamentoCapturadoEm: CapturaDomingo.AddDays(-2));
 
         var x = await ExecutarAsync(c, Segunda, null);
 
         Assert.Null(x); // Free: sem publicações, sem andamento novo e sem tarefas → nada a enviar
     }
 
+    [Fact]
+    public async Task CapturadoHoje_FicaParaOProximoResumo()
+    {
+        var c = await SeedAsync(PlanoTipo.Free, andamentoCapturadoEm: CapturaDomingo.AddDays(1));
+
+        Assert.Null(await ExecutarAsync(c, Segunda, null));
+    }
+
+    [Fact]
+    public async Task CargaInicial_HistoricoAntigoCapturadoOntem_NaoEhNovidade()
+    {
+        // Importação de processos: andamento de 2024 gravado ontem.
+        var c = await SeedAsync(PlanoTipo.Free, andamentoData: new DateTime(2024, 3, 10));
+
+        Assert.Null(await ExecutarAsync(c, Segunda, null));
+    }
+
+    [Fact]
+    public async Task OntemEhODiaDeCalendarioNoFusoDoEscritorio()
+    {
+        // 25/10 às 23:30 em Manaus (UTC-4) = 26/10 03:30 UTC: ainda é "ontem" para o escritório de Manaus.
+        var c = await SeedAsync(PlanoTipo.Free, andamentoCapturadoEm: new DateTime(2026, 10, 26, 3, 30, 0, DateTimeKind.Utc));
+        var tenant = await c.Db.Tenants.FindAsync(c.TenantId);
+        tenant!.FusoHorario = "America/Manaus";
+        await c.Db.SaveChangesAsync();
+
+        var x = await ExecutarAsync(c, Segunda, null);
+
+        Assert.Single(x!.Processos!);
+    }
+
     [Theory]
-    [InlineData(9, false)]   // 06:00 em Brasília
-    [InlineData(10, true)]   // 07:00 em Brasília
-    public async Task SemDataFixa_SoEnviaAPartirDas7hNoFusoDoEscritorio(int horaUtc, bool envia)
+    [InlineData(2, false)]   // 23:00 de 25/10 em Brasília
+    [InlineData(3, true)]    // 00:00 de 26/10 em Brasília
+    [InlineData(4, false)]   // 01:00: já passou a hora do resumo
+    [InlineData(10, false)]  // 07:00
+    public async Task SemDataFixa_SoEnviaAMeiaNoiteNoFusoDoEscritorio(int horaUtc, bool envia)
     {
         var agora = new DateTime(2026, 10, 26, horaUtc, 0, 0, DateTimeKind.Utc);
         var c = await SeedAsync(PlanoTipo.Free, andamentoCapturadoEm: agora.AddHours(-1));

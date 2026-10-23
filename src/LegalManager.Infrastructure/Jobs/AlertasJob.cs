@@ -91,16 +91,24 @@ public class AlertasJob
         return p;
     }
 
-    /// <summary>Hora local (fuso do escritório) a partir da qual o resumo diário é enviado.</summary>
-    public const int HoraResumo = 7;
+    /// <summary>
+    /// Hora local (fuso do escritório) em que o resumo diário é enviado: meia-noite, para o usuário
+    /// já ter o dia que começa preparado, a qualquer hora que comece a trabalhar.
+    /// </summary>
+    public const int HoraResumo = 0;
     /// <summary>O e-mail mostra os compromissos até esta quantidade de dias à frente ("Próximos 7 dias").</summary>
     private const int DiasProximos = 7;
+    /// <summary>
+    /// Andamento só é novidade se a data dele no tribunal for recente: a carga inicial de processos
+    /// importados grava o histórico antigo com data de captura de hoje.
+    /// </summary>
+    private const int DiasAndamentoRecente = 7;
     /// <summary>Limites do que vai para a IA, para o custo por resumo ficar previsível.</summary>
     private const int MaxProcessosResumo = 10, MaxAndamentosPorProcesso = 3, MaxSugestoesResumo = 10;
 
     private sealed record Destinatario(Guid TenantId, Guid Id, string Nome, string? Email);
     private sealed record AndamentoNovo(Guid TenantId, Guid ResponsavelId, Guid ProcessoId, string NumeroCNJ,
-        string? Classe, DateTime Data, string Descricao);
+        string? Classe, DateTime Data, string Descricao, DateTime CriadoEm);
 
     // Um único e-mail diário por pessoa ("Seu dia"), com tarefas, prazos e eventos da agenda juntos —
     // para não mandar várias mensagens no mesmo dia — e, conforme o plano do escritório, as sugestões
@@ -114,8 +122,11 @@ public class AlertasJob
     // Cada item respeita a preferência da sua categoria — "Prazos" para os dois tipos de prazo,
     // "PrazoTarefa"/"TarefaAtrasada" para as demais tarefas, "PrazoEvento" para os eventos,
     // "Publicacoes" para publicações e andamentos —, separadamente para e-mail e in-app.
-    // O resumo sai a partir das 7h no fuso do escritório (o job roda de hora em hora), uma vez por
+    // O resumo sai só à meia-noite no fuso do escritório: o job roda de hora em hora (a meia-noite
+    // de cada fuso cai numa hora UTC diferente) e só envia na execução das 00h locais, uma vez por
     // usuário e dia; o que for cadastrado depois disso entra no resumo do dia seguinte.
+    // Novidades (andamentos e publicações sem providência) são as capturadas no dia anterior inteiro,
+    // de 00:00 a 23:59 no fuso do escritório — e, nos andamentos, com data recente no tribunal.
     private async Task AlertarResumoDiarioAsync(DateTime? hojeFixo)
     {
         var janelasFuturasInApp = new HashSet<int> { 0, 1, 3, 5 };
@@ -124,7 +135,10 @@ public class AlertasJob
         var baseHoje = hojeFixo?.Date ?? TimeZoneInfo.ConvertTimeFromUtc(RelogioUtc(), BrasiliaTime.Tz).Date;
         var buscaDe = baseHoje.AddDays(-limiteDiasAtraso - FolgaFusoDias);
         var buscaAte = baseHoje.AddDays(DiasProximos + 1 + FolgaFusoDias);
-        var novidadesDesde = RelogioUtc().AddHours(-24);
+        // Pré-filtro folgado em UTC (fusos do Brasil: UTC-2 a UTC-5); o dia exato é recortado por escritório.
+        var capturaDe = DateTime.SpecifyKind(baseHoje.AddDays(-1 - FolgaFusoDias), DateTimeKind.Utc);
+        var capturaAte = DateTime.SpecifyKind(baseHoje.AddDays(FolgaFusoDias), DateTimeKind.Utc);
+        var andamentoDesde = baseHoje.AddDays(-DiasAndamentoRecente - FolgaFusoDias);
 
         var tarefas = await _context.Tarefas
             .Where(t => t.Prazo.HasValue &&
@@ -179,12 +193,12 @@ public class AlertasJob
             })
             .ToListAsync();
 
-        // Andamentos capturados nas últimas 24h (não os lançados à mão), para o advogado responsável.
+        // Andamentos capturados (não os lançados à mão), para o advogado responsável.
         var andamentos = await _context.Andamentos
-            .Where(a => a.CriadoEm >= novidadesDesde && a.Fonte != FonteAndamento.Manual &&
-                        a.Processo.AdvogadoResponsavelId != null)
+            .Where(a => a.CriadoEm >= capturaDe && a.CriadoEm < capturaAte && a.Data >= andamentoDesde &&
+                        a.Fonte != FonteAndamento.Manual && a.Processo.AdvogadoResponsavelId != null)
             .Select(a => new AndamentoNovo(a.TenantId, a.Processo.AdvogadoResponsavelId!.Value, a.ProcessoId,
-                a.Processo.NumeroCNJ, a.Processo.Classe ?? a.Processo.TipoAcao, a.Data, a.Descricao))
+                a.Processo.NumeroCNJ, a.Processo.Classe ?? a.Processo.TipoAcao, a.Data, a.Descricao, a.CriadoEm))
             .ToListAsync();
 
         // Sugestões da triagem ainda não confirmadas e publicações novas sem providência.
@@ -208,10 +222,15 @@ public class AlertasJob
             })
             .ToListAsync();
         var semProvidencia = await _context.TriagensPublicacao
-            .Where(t => t.Status == StatusTriagem.SemAcao && t.Publicacao.CapturaEm >= novidadesDesde &&
+            .Where(t => t.Status == StatusTriagem.SemAcao &&
+                        t.Publicacao.CapturaEm >= capturaDe && t.Publicacao.CapturaEm < capturaAte &&
                         t.Publicacao.Processo != null && t.Publicacao.Processo.AdvogadoResponsavelId != null)
-            .GroupBy(t => new { t.TenantId, ResponsavelId = t.Publicacao.Processo!.AdvogadoResponsavelId!.Value })
-            .Select(g => new { g.Key.TenantId, g.Key.ResponsavelId, Total = g.Count() })
+            .Select(t => new
+            {
+                t.TenantId,
+                ResponsavelId = t.Publicacao.Processo!.AdvogadoResponsavelId!.Value,
+                t.Publicacao.CapturaEm
+            })
             .ToListAsync();
 
         var itensTarefas = tarefas.Concat(prazosAgenda).ToList();
@@ -219,7 +238,7 @@ public class AlertasJob
         var eventosPorDestinatario = eventos.ToLookup(e => (e.TenantId, e.DestinatarioId));
         var andamentosPorDestinatario = andamentos.ToLookup(a => (a.TenantId, a.ResponsavelId));
         var sugestoesPorDestinatario = sugestoes.ToLookup(s => (s.TenantId, s.ResponsavelId));
-        var semProvidenciaPorDestinatario = semProvidencia.ToDictionary(s => (s.TenantId, s.ResponsavelId), s => s.Total);
+        var semProvidenciaPorDestinatario = semProvidencia.ToLookup(s => (s.TenantId, s.ResponsavelId));
 
         var destinatarios = itensTarefas
             .Select(t => new Destinatario(t.TenantId, t.DestinatarioId, t.DestinatarioNome, t.DestinatarioEmail))
@@ -249,8 +268,8 @@ public class AlertasJob
         {
             try
             {
-                // Sem data fixa (produção), só a partir das 7h no fuso do escritório.
-                if (hojeFixo is null && (await AgoraDoTenantAsync(dest.TenantId)).Hour < HoraResumo)
+                // Sem data fixa (produção), só na execução da meia-noite no fuso do escritório.
+                if (hojeFixo is null && (await AgoraDoTenantAsync(dest.TenantId)).Hour != HoraResumo)
                     continue;
 
                 var hoje = await HojeDoTenantAsync(dest.TenantId, hojeFixo);
@@ -296,6 +315,11 @@ public class AlertasJob
                 // Publicações e andamentos seguem a preferência "Publicações" (a mesma dos avisos avulsos).
                 var (novidadesEmail, _) = await PreferenciaAsync(prefs, dest.TenantId, dest.Id, "Publicacoes");
                 var temPublicacoes = Domain.PlanoRestricoes.PermiteCapturacaoPublicacoes(plano);
+                // "Ontem" no fuso do escritório: o dia de calendário que terminou à meia-noite.
+                var tz = await _context.DoTenantAsync(dest.TenantId);
+                var ontem = hoje.AddDays(-1);
+                bool CapturadoOntem(DateTime utc) =>
+                    TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), tz).Date == ontem;
                 var sugestoesEmail = novidadesEmail && temPublicacoes
                     ? sugestoesPorDestinatario[chave]
                         .OrderBy(s => s.Vencimento ?? s.AudienciaDataHora ?? DateTime.MaxValue)
@@ -307,10 +331,11 @@ public class AlertasJob
                         .ToList()
                     : [];
                 var semProvidenciaEmail = novidadesEmail && temPublicacoes
-                    ? semProvidenciaPorDestinatario.GetValueOrDefault(chave)
+                    ? semProvidenciaPorDestinatario[chave].Count(s => CapturadoOntem(s.CapturaEm))
                     : 0;
                 var andamentosEmail = novidadesEmail
                     ? andamentosPorDestinatario[chave]
+                        .Where(a => CapturadoOntem(a.CriadoEm) && a.Data.Date >= hoje.AddDays(-DiasAndamentoRecente))
                         .GroupBy(a => a.ProcessoId)
                         .OrderByDescending(g => g.Max(a => a.Data))
                         .Take(MaxProcessosResumo)

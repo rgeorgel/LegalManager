@@ -439,7 +439,7 @@ public class EmailService : IEmailService
                 <p style="color:#94a3b8;margin:4px 0 0">Seu dia · {H(x.Hoje.ToString("dddd, dd/MM/yyyy", PtBr))}</p>
               </div>
               <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-                <p>Bom dia, <strong>{H(nomeUsuario)}</strong>!</p>
+                <p>Olá, <strong>{H(nomeUsuario)}</strong>!</p>
             """);
 
         if (x.VisaoGeral is not null)
@@ -573,7 +573,7 @@ public class EmailService : IEmailService
 
         sb.Append($"""
                 <p style="color:#6b7280;font-size:12px;margin-top:22px">
-                  Você recebe este resumo uma vez por dia, de manhã, quando há algo para acompanhar. Para mudar o que entra nele, acesse Configurações &gt; Alertas.
+                  Você recebe este resumo à meia-noite, para começar o dia sabendo o que tem pela frente, quando há algo para acompanhar. Para mudar o que entra nele, acesse Configurações &gt; Alertas.
                   {(textosIA ? "Os textos marcados com IA são gerados automaticamente e podem conter erros: confira no processo antes de agir." : "")}
                 </p>
               </div>

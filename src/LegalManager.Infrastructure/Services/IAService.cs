@@ -190,7 +190,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         using var activity = Telemetry.Ia.StartActivity(nameof(ResumirDiaAsync));
         activity?.SetTag("gen_ai.operation", "summarization");
         var prompt = $$$""""
-            Você escreve o resumo diário que um advogado brasileiro recebe por e-mail de manhã.
+            Você escreve o resumo diário que um advogado brasileiro recebe por e-mail à meia-noite, para se preparar para o dia que começa.
 
             Com base SOMENTE nos fatos abaixo, responda SOMENTE com um JSON neste formato:
             {
