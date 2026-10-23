@@ -291,6 +291,10 @@
     .price-value { font-family: var(--font-head); font-size: 2.6rem; font-weight: 800; color: var(--heading); line-height: 1; }
     .price-period { color: var(--muted); font-size: .9rem; }
     .plan-desc { color: var(--muted); font-size: .88rem; min-height: 4.2em; margin-bottom: 1rem; }
+    .price-promo { font-size: .8rem; color: var(--muted); margin-bottom: .6rem; }
+    .price-promo s { margin-right: .2rem; }
+    .price-promo .tag { color: var(--accent-text); font-weight: 600; }
+    .reajuste-aviso { display: inline-block; margin-top: .9rem; padding: .5rem 1rem; border-radius: 100px; font-size: .85rem; font-weight: 600; color: var(--accent-text); background: color-mix(in srgb, var(--primary) 12%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent); }
     .plan-features { list-style: none; font-size: .86rem; margin-bottom: 1.5rem; flex: 1; }
     .plan-features li { display: flex; gap: .5rem; padding: .28rem 0; }
     .plan-features li.section-sep { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding-top: .9rem; }
@@ -595,6 +599,7 @@
       <span class="section-label">Planos</span>
       <h2 id="pricing-title" class="section-title">Simples e transparente</h2>
       <p class="section-subtitle">Comece grátis e evolua quando precisar. Sem surpresas na fatura.</p>
+      {{se-reajuste}}<p class="reajuste-aviso">Preços promocionais até {{reajuste-ate}}. Assine antes de {{reajuste-data}} e mantenha o valor atual enquanto sua assinatura estiver ativa.</p>{{/se-reajuste}}
     </div>
     <div class="plans-grid">
 
@@ -646,6 +651,7 @@
         <span class="price-value">{{preco:Plus}}</span>
         <span class="price-period">/mês</span>
       </div>
+      {{se-reajuste:Plus}}<div class="price-promo"><s>R$ {{preco-cheio:Plus}}</s> <span class="tag">promocional até {{reajuste-ate}}</span></div>{{/se-reajuste:Plus}}
             <div class="plan-desc">Para advogados que precisam de mais controle, com portal do cliente e financeiro incluídos.</div>
 
       <ul class="plan-features">
@@ -685,6 +691,7 @@
         <span class="price-value">{{preco:Pro}}</span>
         <span class="price-period">/mês</span>
       </div>
+      {{se-reajuste:Pro}}<div class="price-promo"><s>R$ {{preco-cheio:Pro}}</s> <span class="tag">promocional até {{reajuste-ate}}</span></div>{{/se-reajuste:Pro}}
             <div class="plan-desc">Para escritórios que precisam de controle completo, publicações e equipe.</div>
 
       <ul class="plan-features">
@@ -723,6 +730,7 @@
         <span class="price-value">{{preco:Max}}</span>
         <span class="price-period">/mês</span>
       </div>
+      {{se-reajuste:Max}}<div class="price-promo"><s>R$ {{preco-cheio:Max}}</s> <span class="tag">promocional até {{reajuste-ate}}</span></div>{{/se-reajuste:Max}}
             <div class="plan-desc">Para grandes escritórios com alto volume de processos e equipe completa.</div>
 
       <ul class="plan-features">
@@ -806,7 +814,7 @@
 
     <details class="faq-item">
       <summary>Quanto custa o Causify?</summary>
-      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ {{preco:Plus}}/mês), <strong>Pro</strong> (R$ {{preco:Pro}}/mês) e <strong>Max</strong> (R$ {{preco:Max}}/mês). Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
+      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ {{preco:Plus}}/mês), <strong>Pro</strong> (R$ {{preco:Pro}}/mês) e <strong>Max</strong> (R$ {{preco:Max}}/mês).{{se-reajuste}} <strong>Valores promocionais até {{reajuste-ate}}:</strong> a partir de {{reajuste-data}}, novas assinaturas custarão R$ {{preco-cheio:Plus}} (Plus), R$ {{preco-cheio:Pro}} (Pro) e R$ {{preco-cheio:Max}} (Max); quem assinar antes mantém o valor atual.{{/se-reajuste}} Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
     </details>
 
     <details class="faq-item">

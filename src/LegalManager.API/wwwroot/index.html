@@ -369,7 +369,7 @@
         "name": "Quanto custa o Causify?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "O Causify tem quatro planos: Free (R$ 0/mês, permanente), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês) e Max (R$ {{preco:Max}}/mês). Todos os planos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito."
+          "text": "O Causify tem quatro planos: Free (R$ 0/mês, permanente), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês) e Max (R$ {{preco:Max}}/mês).{{se-reajuste}} Valores promocionais até {{reajuste-ate}}: a partir de {{reajuste-data}}, novas assinaturas custarão R$ {{preco-cheio:Plus}} (Plus), R$ {{preco-cheio:Pro}} (Pro) e R$ {{preco-cheio:Max}} (Max); quem assinar antes mantém o valor atual.{{/se-reajuste}} Todos os planos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito."
         }
       },
       {
@@ -1024,6 +1024,8 @@
 
     .price-annual-note { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; min-height: 1.1rem; }
     .price-annual-note .save { color: var(--green); font-weight: 600; }
+    .price-annual-note s { margin-right: 0.25rem; }
+    .reajuste-aviso { display: inline-block; margin: -1rem auto 2rem; padding: 0.55rem 1.1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 600; color: var(--gold-light); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.35); }
 
     .plan-desc { font-size: 0.9rem; color: var(--text-muted); margin: 1.25rem 0; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); min-height: calc(1.2rem * 1.6 * 3); }
 
@@ -1440,6 +1442,7 @@
     <div class="section-label" style="justify-content:center">✦ Planos</div>
     <h2 id="pricing-title" class="section-title">Simples e transparente</h2>
     <p class="section-subtitle" style="margin: 0 auto 2rem;">Comece grátis e evolua quando precisar. Sem surpresas na fatura.</p>
+    {{se-reajuste}}<p class="reajuste-aviso">Preços promocionais até {{reajuste-ate}}. Assine antes de {{reajuste-data}} e mantenha o valor atual enquanto sua assinatura estiver ativa.</p>{{/se-reajuste}}
   </div>
 
   <div class="plans-grid">
@@ -1493,7 +1496,7 @@
         <span class="price-value">{{preco:Plus}}</span>
         <span class="price-period">/mês</span>
       </div>
-      <div class="price-annual-note">&nbsp;</div>
+      <div class="price-annual-note">{{se-reajuste:Plus}}<s>R$ {{preco-cheio:Plus}}</s> <span class="save">promocional até {{reajuste-ate}}</span>{{/se-reajuste:Plus}}&nbsp;</div>
       <div class="plan-desc">Para advogados que precisam de mais controle, com portal do cliente e financeiro incluídos.</div>
 
       <ul class="plan-features">
@@ -1533,7 +1536,7 @@
         <span class="price-value">{{preco:Pro}}</span>
         <span class="price-period">/mês</span>
       </div>
-      <div class="price-annual-note">&nbsp;</div>
+      <div class="price-annual-note">{{se-reajuste:Pro}}<s>R$ {{preco-cheio:Pro}}</s> <span class="save">promocional até {{reajuste-ate}}</span>{{/se-reajuste:Pro}}&nbsp;</div>
       <div class="plan-desc">Para escritórios que precisam de controle completo, publicações e equipe.</div>
 
       <ul class="plan-features">
@@ -1572,7 +1575,7 @@
         <span class="price-value">{{preco:Max}}</span>
         <span class="price-period">/mês</span>
       </div>
-      <div class="price-annual-note">&nbsp;</div>
+      <div class="price-annual-note">{{se-reajuste:Max}}<s>R$ {{preco-cheio:Max}}</s> <span class="save">promocional até {{reajuste-ate}}</span>{{/se-reajuste:Max}}&nbsp;</div>
       <div class="plan-desc">Para grandes escritórios com alto volume de processos e equipe completa.</div>
 
       <ul class="plan-features">
@@ -1660,7 +1663,7 @@
 
     <details class="faq-item">
       <summary>Quanto custa o Causify?</summary>
-      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ {{preco:Plus}}/mês), <strong>Pro</strong> (R$ {{preco:Pro}}/mês) e <strong>Max</strong> (R$ {{preco:Max}}/mês). Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
+      <div class="faq-answer">O Causify tem quatro planos: <strong>Free</strong> (R$ 0/mês, permanente), <strong>Plus</strong> (R$ {{preco:Plus}}/mês), <strong>Pro</strong> (R$ {{preco:Pro}}/mês) e <strong>Max</strong> (R$ {{preco:Max}}/mês).{{se-reajuste}} <strong>Valores promocionais até {{reajuste-ate}}:</strong> a partir de {{reajuste-data}}, novas assinaturas custarão R$ {{preco-cheio:Plus}} (Plus), R$ {{preco-cheio:Pro}} (Pro) e R$ {{preco-cheio:Max}} (Max); quem assinar antes mantém o valor atual.{{/se-reajuste}} Todos incluem processos ilimitados cadastrados e tarefas. O plano Free não exige cartão de crédito.</div>
     </details>
 
     <details class="faq-item">

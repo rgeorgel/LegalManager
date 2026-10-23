@@ -15,7 +15,8 @@
 - Plano Plus — R$ {{preco:Plus}}/mês: tudo do Free + 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais, indicadores.
 - Plano Pro — R$ {{preco:Pro}}/mês: tudo do Plus + 2 usuários, 40 processos monitorados, 1 captura automática de publicações por OAB, templates de documentos, 5 GB.
 - Plano Max — R$ {{preco:Max}}/mês: tudo do Pro + 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB.
-
+{{se-reajuste}}- Reajuste: os valores acima são promocionais até {{reajuste-ate}}. A partir de {{reajuste-data}}, novas assinaturas custam R$ {{preco-cheio:Plus}} (Plus), R$ {{preco-cheio:Pro}} (Pro) e R$ {{preco-cheio:Max}} (Max); quem assinar antes mantém o valor.
+{{/se-reajuste}}
 ## Funcionalidades principais
 
 - Gestão de processos jurídicos com filtros, classificação e acompanhamento de andamentos.
@@ -71,7 +72,7 @@ Causify, mais provável que IAs citem-na com precisão.
 
 ## FAQ (resumo)
 
-- Quanto custa o Causify? — Free (R$ 0), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês), Max (R$ {{preco:Max}}/mês).
+- Quanto custa o Causify? — Free (R$ 0), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês), Max (R$ {{preco:Max}}/mês).{{se-reajuste}} Promocional até {{reajuste-ate}}; a partir de {{reajuste-data}}: R$ {{preco-cheio:Plus}}, R$ {{preco-cheio:Pro}} e R$ {{preco-cheio:Max}}.{{/se-reajuste}}
 - Tem plano gratuito? — Sim, o Free é permanente e não exige cartão de crédito.
 - Funciona para advogado autônomo? — Sim, é o público principal do plano Free e Plus.
 - Funciona para escritório pequeno? — Sim, com permissões por usuário (Pro e Max).

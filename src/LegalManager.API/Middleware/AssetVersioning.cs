@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure;
 using Microsoft.Extensions.FileProviders;
 
 namespace LegalManager.API.Middleware;
@@ -48,7 +49,15 @@ public sealed class AssetVersioning
     private static readonly Regex AberturaHead = new(@"<head\b[^>]*>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private static readonly Regex MarcadorPreco = new(
-        @"\{\{preco(?<num>-num)?:(?<plano>Plus|Pro|Max)\}\}", RegexOptions.Compiled);
+        @"\{\{preco(?<tipo>-num|-cheio)?:(?<plano>Plus|Pro|Max)\}\}", RegexOptions.Compiled);
+
+    // Trecho que só aparece enquanto o reajuste anunciado não entrou em vigor (ver
+    // PlanoPrecos.ReajusteEm). Com plano, só se o preço dele ainda for subir. Não aninhe blocos.
+    private static readonly Regex BlocoReajuste = new(
+        @"\{\{se-reajuste(?::(?<plano>Plus|Pro|Max))?\}\}(?<conteudo>.*?)\{\{/se-reajuste(?::\k<plano>)?\}\}",
+        RegexOptions.Compiled | RegexOptions.Singleline);
+
+    private static readonly Regex MarcadorDataReajuste = new(@"\{\{reajuste-(?<qual>data|ate)\}\}", RegexOptions.Compiled);
 
     private const string LlmsTxt = "/llms.txt";
 
@@ -164,13 +173,44 @@ public sealed class AssetVersioning
         return true;
     }
 
-    /// <summary>Troca os marcadores <c>{{preco:Plano}}</c> e <c>{{preco-num:Plano}}</c> pelos preços.</summary>
     public static string SubstituirPrecos(string texto, IReadOnlyDictionary<PlanoTipo, decimal> precos) =>
-        MarcadorPreco.Replace(texto, m =>
+        SubstituirPrecos(texto, precos, DateOnly.FromDateTime(BrasiliaTime.Hoje));
+
+    /// <summary>
+    /// Troca os marcadores <c>{{preco:Plano}}</c>, <c>{{preco-num:Plano}}</c> e <c>{{preco-cheio:Plano}}</c>
+    /// (preço após o reajuste) pelos preços, <c>{{reajuste-data}}</c> ("1º/12") e <c>{{reajuste-ate}}</c>
+    /// ("30/11") pelas datas do reajuste, e mantém ou remove os blocos <c>{{se-reajuste}}</c>.
+    /// </summary>
+    public static string SubstituirPrecos(string texto, IReadOnlyDictionary<PlanoTipo, decimal> precos, DateOnly hoje)
+    {
+        var reajusteEm = PlanoPrecos.ReajusteEm;
+        bool VaiSubir(PlanoTipo plano) =>
+            reajusteEm is { } data && hoje < data && PlanoPrecos.PrecosReajuste[plano] > precos[plano];
+
+        texto = BlocoReajuste.Replace(texto, m =>
         {
-            var valor = precos[Enum.Parse<PlanoTipo>(m.Groups["plano"].Value)];
-            return m.Groups["num"].Success ? PlanoPrecos.FormatarInvariante(valor) : PlanoPrecos.Formatar(valor);
+            var ativo = m.Groups["plano"].Success
+                ? VaiSubir(Enum.Parse<PlanoTipo>(m.Groups["plano"].Value))
+                : PlanoPrecos.Pagos.Any(VaiSubir);
+            return ativo ? m.Groups["conteudo"].Value : "";
         });
+
+        if (reajusteEm is { } dia)
+            texto = MarcadorDataReajuste.Replace(texto, m => m.Groups["qual"].Value == "data"
+                ? (dia.Day == 1 ? "1º" : dia.Day.ToString("00", BrasiliaTime.PtBr)) + dia.ToString("/MM", BrasiliaTime.PtBr)
+                : dia.AddDays(-1).ToString("dd/MM", BrasiliaTime.PtBr));
+
+        return MarcadorPreco.Replace(texto, m =>
+        {
+            var plano = Enum.Parse<PlanoTipo>(m.Groups["plano"].Value);
+            return m.Groups["tipo"].Value switch
+            {
+                "-num" => PlanoPrecos.FormatarInvariante(precos[plano]),
+                "-cheio" => PlanoPrecos.Formatar(PlanoPrecos.PrecosReajuste[plano]),
+                _ => PlanoPrecos.Formatar(precos[plano]),
+            };
+        });
+    }
 
     // A landing page não pode cair junto com o banco: sem preço vigente, mostra o padrão.
     private static async Task<IReadOnlyDictionary<PlanoTipo, decimal>> ObterPrecosAsync(HttpContext ctx)
@@ -219,8 +259,11 @@ public sealed class AssetVersioning
     {
         var bytes = Encoding.UTF8.GetBytes(texto);
         var etag = $"\"{Convert.ToHexString(SHA256.HashData(bytes))[..16].ToLowerInvariant()}\"";
-        return (bytes, etag, MarcadorPreco.IsMatch(texto) ? texto : null);
+        return (bytes, etag, TemMarcadores(texto) ? texto : null);
     }
+
+    private static bool TemMarcadores(string texto) =>
+        MarcadorPreco.IsMatch(texto) || BlocoReajuste.IsMatch(texto) || MarcadorDataReajuste.IsMatch(texto);
 
     private static string CalcularVersao(IFileProvider arquivos, IEnumerable<string> caminhos)
     {

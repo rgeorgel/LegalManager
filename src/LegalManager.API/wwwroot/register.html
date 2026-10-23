@@ -148,6 +148,10 @@
       font-weight: 800;
       color: #f59e0b;
     }
+    .plan-promo {
+      font-size: 0.68rem;
+      color: var(--color-text-muted);
+    }
 .plan-selector .plan-desc {
         max-width: 145px;
     }
@@ -229,18 +233,21 @@
               <input type="radio" name="plano" value="3">
               <div class="plan-name">Plus</div>
               <div class="plan-price">R$ {{preco:Plus}}<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              {{se-reajuste:Plus}}<div class="plan-promo"><s>R$ {{preco-cheio:Plus}}</s> até {{reajuste-ate}}</div>{{/se-reajuste:Plus}}
               <div class="plan-desc">1 usuário · 20 processos · Portal cliente · Financeiro</div>
             </label>
             <label class="plan-option" id="planProLabel">
               <input type="radio" name="plano" value="1">
               <div class="plan-name">Pro</div>
               <div class="plan-price">R$ {{preco:Pro}}<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              {{se-reajuste:Pro}}<div class="plan-promo"><s>R$ {{preco-cheio:Pro}}</s> até {{reajuste-ate}}</div>{{/se-reajuste:Pro}}
               <div class="plan-desc">2 usuários · 40 processos · 1 captura · Templates</div>
             </label>
             <label class="plan-option" id="planMaxLabel">
               <input type="radio" name="plano" value="4">
               <div class="plan-name">Max</div>
               <div class="plan-price">R$ {{preco:Max}}<span style="font-size:0.7rem;font-weight:400;color:var(--color-text-muted)">/mês</span></div>
+              {{se-reajuste:Max}}<div class="plan-promo"><s>R$ {{preco-cheio:Max}}</s> até {{reajuste-ate}}</div>{{/se-reajuste:Max}}
               <div class="plan-desc">5 usuários · 80 processos · 3 capturas · 10 GB</div>
             </label>
           </div>

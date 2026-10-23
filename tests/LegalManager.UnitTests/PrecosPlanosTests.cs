@@ -422,4 +422,49 @@ public class PrecosPlanosTests
         }
         finally { Directory.Delete(raiz, recursive: true); }
     }
+
+    private const string HtmlReajuste =
+        "{{se-reajuste}}aviso {{reajuste-ate}}/{{reajuste-data}}{{/se-reajuste}}|" +
+        "{{se-reajuste:Plus}}<s>R$ {{preco-cheio:Plus}}</s>{{/se-reajuste:Plus}}|" +
+        "{{se-reajuste:Pro}}<s>R$ {{preco-cheio:Pro}}</s>{{/se-reajuste:Pro}}|R$ {{preco:Plus}}";
+
+    [Fact]
+    public void Reajuste_AntesDaData_MostraPrecoNovoRiscadoEAviso()
+    {
+        if (PlanoPrecos.ReajusteEm is not { } data) return;
+
+        var html = AssetVersioning.SubstituirPrecos(HtmlReajuste, PlanoPrecos.Padrao, data.AddDays(-1));
+
+        var dia = data.Day == 1 ? "1º" : data.ToString("dd");
+        Assert.Equal(
+            $"aviso {data.AddDays(-1):dd'/'MM}/{dia}/{data:MM}|" +
+            $"<s>R$ {PlanoPrecos.Formatar(PlanoPrecos.PrecosReajuste[PlanoTipo.Plus])}</s>|" +
+            $"<s>R$ {PlanoPrecos.Formatar(PlanoPrecos.PrecosReajuste[PlanoTipo.Pro])}</s>|" +
+            $"R$ {PlanoPrecos.Formatar(PlanoPrecos.Padrao[PlanoTipo.Plus])}",
+            html);
+    }
+
+    [Fact]
+    public void Reajuste_NaData_SomeComOsAvisos()
+    {
+        var hoje = PlanoPrecos.ReajusteEm ?? new DateOnly(2026, 1, 1);
+
+        var html = AssetVersioning.SubstituirPrecos(HtmlReajuste, PlanoPrecos.Padrao, hoje);
+
+        Assert.Equal($"|||R$ {PlanoPrecos.Formatar(PlanoPrecos.Padrao[PlanoTipo.Plus])}", html);
+    }
+
+    [Fact]
+    public void Reajuste_PlanoQueJaTemOPrecoNovo_NaoMostraPromocao()
+    {
+        if (PlanoPrecos.ReajusteEm is not { } data) return;
+        var precos = new Dictionary<PlanoTipo, decimal>(PlanoPrecos.Padrao)
+            { [PlanoTipo.Plus] = PlanoPrecos.PrecosReajuste[PlanoTipo.Plus] };
+
+        var html = AssetVersioning.SubstituirPrecos(HtmlReajuste, precos, data.AddDays(-1));
+
+        Assert.StartsWith("aviso ", html);
+        Assert.Contains("||<s>R$ ", html);
+        Assert.DoesNotContain("{{", html);
+    }
 }
