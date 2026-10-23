@@ -342,6 +342,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("FeriadosAdicionaisJson")
                         .HasColumnType("text");
 
+                    b.Property<bool?>("PrazoProcessual")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("QuantidadeDias")
                         .HasColumnType("integer");
 
@@ -3321,6 +3324,97 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("TraducoesAndamentos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.TriagemPublicacao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Ato")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("AudienciaDataHora")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AudienciaTrecho")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataPublicacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Erro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MemoriaCalculo")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("PrazoDias")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrazoTrecho")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ProcessadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PublicacaoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ResolvidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvidaPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Resumo")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("TarefaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Tentativas")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TipoCalculo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("Vencimento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublicacaoId")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "CriadoEm");
+
+                    b.HasIndex("TenantId", "Status");
+
+                    b.ToTable("TriagensPublicacao", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Usuario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4473,6 +4567,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Cliente");
 
                     b.Navigation("SolicitadoPor");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.TriagemPublicacao", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Publicacao", "Publicacao")
+                        .WithMany()
+                        .HasForeignKey("PublicacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Publicacao");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Usuario", b =>

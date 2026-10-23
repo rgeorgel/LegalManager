@@ -410,8 +410,8 @@ public class PublicacoesControllerTests
     public async Task GetAll_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object, CreateProTenant());
-        var result = await controller.GetAll(null, null, null, null, null, null, 1, 20, CancellationToken.None);
+        var controller = new PublicacoesController(service.Object, new Mock<ITriagemPublicacaoService>().Object, CreateProTenant());
+        var result = await controller.GetAll(null, null, null, null, null, null, 1, 20, false, CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
     }
 
@@ -419,7 +419,7 @@ public class PublicacoesControllerTests
     public async Task GetById_ReturnsNotFound_WhenNull()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object, CreateProTenant());
+        var controller = new PublicacoesController(service.Object, new Mock<ITriagemPublicacaoService>().Object, CreateProTenant());
         var result = await controller.GetById(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NotFoundResult>(result);
     }
@@ -430,7 +430,7 @@ public class PublicacoesControllerTests
         var service = CreateServiceMock();
         service.Setup(s => s.MarcarLidaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var controller = new PublicacoesController(service.Object, CreateProTenant());
+        var controller = new PublicacoesController(service.Object, new Mock<ITriagemPublicacaoService>().Object, CreateProTenant());
         var result = await controller.MarcarLida(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NoContentResult>(result);
     }
@@ -441,7 +441,7 @@ public class PublicacoesControllerTests
         var service = CreateServiceMock();
         service.Setup(s => s.ArquivarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        var controller = new PublicacoesController(service.Object, CreateProTenant());
+        var controller = new PublicacoesController(service.Object, new Mock<ITriagemPublicacaoService>().Object, CreateProTenant());
         var result = await controller.Arquivar(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<NoContentResult>(result);
     }
@@ -450,9 +450,52 @@ public class PublicacoesControllerTests
     public async Task GetNaoLidasCount_ReturnsOk()
     {
         var service = CreateServiceMock();
-        var controller = new PublicacoesController(service.Object, CreateProTenant());
+        var controller = new PublicacoesController(service.Object, new Mock<ITriagemPublicacaoService>().Object, CreateProTenant());
         var result = await controller.GetNaoLidasCount(CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task AceitarTriagem_JaResolvida_Retorna409()
+    {
+        var triagem = new Mock<ITriagemPublicacaoService>();
+        triagem.Setup(t => t.AceitarAsync(It.IsAny<Guid>(), It.IsAny<AceitarTriagemDto>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Esta sugestão já foi resolvida."));
+        var controller = new PublicacoesController(CreateServiceMock().Object, triagem.Object, CreateProTenant())
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+
+        var result = await controller.AceitarTriagem(Guid.NewGuid(), new AceitarTriagemDto(null, null, null), CancellationToken.None);
+
+        Assert.Equal(409, Assert.IsType<ConflictObjectResult>(result).StatusCode);
+    }
+
+    [Fact]
+    public async Task IgnorarTriagem_NaoEncontrada_Retorna404()
+    {
+        var triagem = new Mock<ITriagemPublicacaoService>();
+        triagem.Setup(t => t.IgnorarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeyNotFoundException("Sugestão não encontrada."));
+        var controller = new PublicacoesController(CreateServiceMock().Object, triagem.Object, CreateProTenant());
+
+        var result = await controller.IgnorarTriagem(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task RefazerTriagem_PlanoSemPublicacoes_Retorna402()
+    {
+        var tenant = new Mock<ITenantContext>();
+        tenant.Setup(t => t.Plano).Returns(PlanoTipo.Plus);
+        var triagem = new Mock<ITriagemPublicacaoService>();
+        var controller = new PublicacoesController(CreateServiceMock().Object, triagem.Object, tenant.Object);
+
+        var result = await controller.RefazerTriagem(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Equal(402, Assert.IsType<ObjectResult>(result).StatusCode);
+        triagem.Verify(t => t.RefazerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
 

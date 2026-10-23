@@ -145,36 +145,44 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         return await EnviarPromptAsync(promptCorrecao, ct);
     }
 
-    public async Task<(LegalManager.Domain.Enums.TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa)> ClassificarPublicacaoAsync(
-        string conteudo, string? numeroCNJ = null, CancellationToken ct = default)
+    /// <summary>Publicações maiores que isso vão com o começo e o fim (o prazo costuma estar no fim).</summary>
+    private const int MaxCaracteresTriagem = 12000;
+
+    public async Task<string> TriarPublicacaoAsync(string conteudo, CancellationToken ct = default)
     {
-        using var activity = Telemetry.Ia.StartActivity(nameof(ClassificarPublicacaoAsync));
+        using var activity = Telemetry.Ia.StartActivity(nameof(TriarPublicacaoAsync));
         activity?.SetTag("gen_ai.operation", "classification");
-        activity?.SetTag("gen_ai.cnj", numeroCNJ ?? string.Empty);
-        var prompt = $$$"""
-            Você é um assistente jurídico brasileiro. Classifique a seguinte publicação processual e indique se é urgente.
+        var texto = conteudo.Length <= MaxCaracteresTriagem
+            ? conteudo
+            : conteudo[..9000] + "\n[...]\n" + conteudo[^3000..];
+        var prompt = $$$""""
+            Você é um assistente jurídico brasileiro que faz a triagem das publicações de diários oficiais recebidas por um escritório de advocacia.
 
-            Classificações possíveis (responda apenas com o nome exato):
-            - Prazo: publicação que estabelece prazo para alguma parte praticar ato processual
-            - Audiencia: publicação de pauta de audiência ou redesignação
-            - Decisao: publicação de decisão interlocutória ou sentença
-            - Despacho: simples despachos de mérito ou ordenação
-            - Intimacao: intimação para cumprimento de obrigação
-            - Outro: não se encaixa nas categorias acima
-
-            Publicação: {{{conteudo}}}
-
-            Responda SOMENTE em JSON com o formato (EXCLUSIVAMENTE em Português do Brasil):
+            Leia a publicação e responda SOMENTE com um JSON neste formato:
             {
-                "tipo": "Prazo|Audiencia|Decisao|Despacho|Intimacao|Outro",
-                "classificacao": "breve descrição do conteúdo",
-                "urgente": true|false,
-                "sugestaoTarefa": "sugestão de ação a ser tomada pelo advogado, ou null se não aplicável"
+              "tipo": "Prazo|Audiencia|Decisao|Despacho|Intimacao|Outro",
+              "resumo": "o que aconteceu, em uma frase e em linguagem simples",
+              "exigeAcao": true ou false,
+              "ato": "providência pedida ao advogado, começando por verbo no infinitivo (ex.: Apresentar contrarrazões)" ou null,
+              "prazo": { "quantidade": 15, "unidade": "dias_uteis|dias_corridos|dias|horas|meses", "trecho": "trecho copiado da publicação" } ou null,
+              "audiencia": { "dataHora": "AAAA-MM-DDTHH:mm", "trecho": "trecho copiado da publicação" } ou null
             }
-            """;
 
-        var resposta = await EnviarPromptAsync(prompt, ct);
-        return ParsearClassificacaoPublicacao(resposta);
+            Regras:
+            - "exigeAcao": true só se a publicação pede alguma providência das partes ou advogados (manifestar, recorrer, pagar, comparecer...). Mero expediente é false.
+            - Preencha "prazo" só se a publicação disser expressamente a quantidade. Não deduza prazos da lei.
+            - Use "dias" quando o texto não disser se os dias são úteis ou corridos.
+            - Não calcule datas de vencimento.
+            - "trecho" é a cópia exata do pedaço da publicação onde está o prazo ou a data, sem mudar nenhuma palavra (até 200 caracteres).
+            - Responda em português do Brasil, sem nenhum texto fora do JSON.
+
+            Publicação:
+            """
+            {{{texto}}}
+            """
+            """";
+
+        return await EnviarPromptAsync(prompt, ct);
     }
 
     public async Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default)
@@ -318,30 +326,5 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         }
 
         throw new InvalidOperationException("Resposta da API OpenAI em formato inesperado.");
-    }
-
-    private static (LegalManager.Domain.Enums.TipoPublicacao tipo, string classificacao, bool urgente, string? sugestaoTarefa) ParsearClassificacaoPublicacao(string json)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            var tipoStr = root.GetProperty("tipo").GetString() ?? "Outro";
-            var tipo = Enum.TryParse<LegalManager.Domain.Enums.TipoPublicacao>(tipoStr, true, out var t) ? t : LegalManager.Domain.Enums.TipoPublicacao.Outro;
-            var classificacao = root.GetProperty("classificacao").GetString() ?? "";
-            var urgente = root.TryGetProperty("urgente", out var u) && u.GetBoolean();
-            string? sugestaoTarefa = null;
-            if (root.TryGetProperty("sugestaoTarefa", out var s) && s.ValueKind == JsonValueKind.String)
-            {
-                sugestaoTarefa = s.GetString();
-            }
-
-            return (tipo, classificacao, urgente, sugestaoTarefa);
-        }
-        catch
-        {
-            return (LegalManager.Domain.Enums.TipoPublicacao.Outro, json, false, null);
-        }
     }
 }

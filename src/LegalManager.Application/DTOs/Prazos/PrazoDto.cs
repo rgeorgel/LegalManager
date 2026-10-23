@@ -7,7 +7,9 @@ public record CalcularPrazoDto(
     [Required] DateTime DataInicio,
     [Required, Range(1, 3650)] int QuantidadeDias,
     [Required] TipoCalculo TipoCalculo,
-    DateOnly[]? FeriadosAdicionais = null
+    DateOnly[]? FeriadosAdicionais = null,
+    // Regras do CPC para prazo processual: recesso forense (art. 220) e prorrogação do vencimento.
+    bool PrazoProcessual = false
 );
 
 public record CalcularPrazoResultDto(

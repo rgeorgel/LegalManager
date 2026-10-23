@@ -237,7 +237,7 @@
     <div id="planGate" style="display:none" class="card cp-gate">
       <div class="cp-gate-icon">📅</div>
       <h2>Disponível a partir do plano Plus</h2>
-      <p>Calcule prazos processuais em dias úteis ou corridos, considerando feriados nacionais automaticamente.</p>
+      <p>Calcule prazos processuais em dias úteis ou corridos, considerando feriados e o recesso forense automaticamente.</p>
       <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
     </div>
 
@@ -278,6 +278,13 @@
             <select id="cpMunicipio">
               <option value="">Sem município</option>
             </select>
+          </div>
+
+          <div class="cp-field">
+            <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;cursor:pointer">
+              <input type="checkbox" id="cpProcessual" checked style="margin-top:3px">
+              <span>Prazo processual (CPC): não conta o recesso forense de 20/12 a 20/01 e, em dias corridos, prorroga o vencimento para o próximo dia útil</span>
+            </label>
           </div>
 
           <div style="margin-top:20px">
@@ -499,10 +506,14 @@ import { esc } from '/js/utils.js';
           tipo:            'Prazo',
           prioridade:      'Media',
           prazo:           prazoISO,
-          dataInicio:      lastCalculo.dataInicio,
-          quantidadeDias:  lastCalculo.quantidadeDias,
-          tipoCalculo:     lastCalculo.tipoCalculo,
-          feriadosAdicionais: getFeriadosAdicionais(),
+          // O servidor recalcula o prazo a partir de início + dias, mas sem as regras de prazo
+          // processual (recesso): nesse caso a tarefa leva só a data final já calculada.
+          ...(lastCalculo.prazoProcessual ? {} : {
+            dataInicio:      lastCalculo.dataInicio,
+            quantidadeDias:  lastCalculo.quantidadeDias,
+            tipoCalculo:     lastCalculo.tipoCalculo,
+            feriadosAdicionais: getFeriadosAdicionais(),
+          }),
           processoId:      processoPicker.getValue() || null,
         }),
       });
@@ -598,6 +609,7 @@ import { esc } from '/js/utils.js';
           quantidadeDias: dias,
           tipoCalculo: tipoAtivo,
           feriadosAdicionais: feriadosAdicionais.length > 0 ? feriadosAdicionais : null,
+          prazoProcessual: document.getElementById('cpProcessual').checked,
         })
       });
       renderResultado(res, inicio, dias);
@@ -611,7 +623,10 @@ import { esc } from '/js/utils.js';
   }
 
   function renderResultado(res, inicio, dias) {
-    lastCalculo = { dataInicio: inicio, quantidadeDias: dias, tipoCalculo: tipoAtivo, dataFinal: res.dataFinal };
+    lastCalculo = {
+      dataInicio: inicio, quantidadeDias: dias, tipoCalculo: tipoAtivo, dataFinal: res.dataFinal,
+      prazoProcessual: document.getElementById('cpProcessual').checked,
+    };
 
     const dataFinal = new Date(res.dataFinal.substring(0, 10) + 'T12:00:00');
     const dataInicio = new Date(inicio + 'T12:00:00');
@@ -643,7 +658,10 @@ import { esc } from '/js/utils.js';
     });
 
     const listEl = document.getElementById('cpFeriadosList');
-    if (feriadosNoPeriodo.length === 0) {
+    const recesso = (res.feriadosNoIntervalo || []).find(f => f.startsWith('recesso'));
+    if (feriadosNoPeriodo.length === 0 && recesso) {
+      listEl.innerHTML = '<p style="font-size:13px;color:var(--color-text-muted);padding:8px 0">Nenhum feriado no intervalo. O recesso forense (20/12 a 20/01) não foi contado.</p>';
+    } else if (feriadosNoPeriodo.length === 0) {
       listEl.innerHTML = '<p style="font-size:13px;color:var(--color-text-muted);padding:8px 0">Nenhum feriado no intervalo.</p>';
     } else {
       listEl.innerHTML = feriadosNoPeriodo.map(f => {
@@ -655,7 +673,9 @@ import { esc } from '/js/utils.js';
           <span style="flex:1">${esc(f.nome)} <span style="font-size:11px;color:var(--color-text-muted)">(${weekday})</span></span>
           <span class="cp-badge-feriado" style="color:${TIPO_COLOR[f.tipo] ?? '#374151'}">${f.tipo}</span>
         </div>`;
-      }).join('');
+      }).join('') + (recesso
+        ? '<p style="font-size:13px;color:var(--color-text-muted);padding:8px 0">O recesso forense (20/12 a 20/01) não foi contado.</p>'
+        : '');
     }
   }
 

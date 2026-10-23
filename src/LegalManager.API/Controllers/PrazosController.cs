@@ -24,7 +24,7 @@ public class PrazosController(AppDbContext db, ITenantContext tenantContext) : C
             return StatusCode(402, new { message = "Calculadora de prazos disponível a partir do plano Plus." });
 
         var (dataFinal, feriados) = FeriadosService.CalcularPrazo(
-            dto.DataInicio, dto.QuantidadeDias, dto.TipoCalculo, dto.FeriadosAdicionais);
+            dto.DataInicio, dto.QuantidadeDias, dto.TipoCalculo, dto.FeriadosAdicionais, dto.PrazoProcessual);
 
         // Registro de uso com os parâmetros — o superadmin pode recalcular depois (timeline do tenant).
         db.CalculosPrazo.Add(new CalculoPrazo
@@ -39,7 +39,8 @@ public class PrazosController(AppDbContext db, ITenantContext tenantContext) : C
             FeriadosAdicionaisJson = dto.FeriadosAdicionais is { Length: > 0 }
                 ? JsonSerializer.Serialize(dto.FeriadosAdicionais.Select(f => f.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)))
                 : null,
-            DataFinal = dataFinal
+            DataFinal = dataFinal,
+            PrazoProcessual = dto.PrazoProcessual
         });
         await db.SaveChangesAsync(ct);
 

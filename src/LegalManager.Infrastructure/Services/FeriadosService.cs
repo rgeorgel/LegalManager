@@ -48,44 +48,106 @@ public static class FeriadosService
     }
 
     public static DateTime AdicionarDiasUteis(DateTime inicio, int dias, IEnumerable<DateOnly>? feriadosAdicionais = null)
+        => CalcularDataFinal(inicio, dias, TipoCalculo.DiasUteis, feriadosAdicionais, prazoProcessual: false);
+
+    /// <summary>
+    /// Recesso forense (CPC art. 220; CLT art. 775-A): de 20/12 a 20/01, inclusive, o curso dos
+    /// prazos processuais fica suspenso.
+    /// </summary>
+    public static bool EmRecessoForense(DateTime data) =>
+        (data.Month == 12 && data.Day >= 20) || (data.Month == 1 && data.Day <= 20);
+
+    /// <summary>
+    /// Data em que se considera feita a publicação no diário eletrônico: o primeiro dia útil
+    /// seguinte ao da disponibilização (Lei 11.419/2006, art. 4º, § 3º). O prazo começa no dia
+    /// útil seguinte a ela (§ 4º) — é o "dia do começo" que <see cref="CalcularPrazo"/> exclui.
+    /// </summary>
+    public static DateTime DataPublicacaoDiario(DateTime disponibilizacao, IEnumerable<DateOnly>? feriadosAdicionais = null)
     {
-        var current = inicio.Date;
-        var cache = new Dictionary<int, HashSet<DateTime>>();
-        var extras = feriadosAdicionais?.Select(f => f.ToDateTime(TimeOnly.MinValue).Date).ToHashSet()
-                     ?? [];
-
-        HashSet<DateTime> GetFeriados(int year)
-        {
-            if (!cache.TryGetValue(year, out var f))
-            {
-                f = GetFeriadosNacionais(year);
-                foreach (var e in extras.Where(e => e.Year == year)) f.Add(e);
-                cache[year] = f;
-            }
-            return f;
-        }
-
-        int added = 0;
-        while (added < dias)
-        {
-            current = current.AddDays(1);
-            if (IsDiaUtil(current, GetFeriados(current.Year))) added++;
-        }
-        return current;
+        var feriados = new CalendarioFeriados(feriadosAdicionais);
+        var data = disponibilizacao.Date.AddDays(1);
+        while (!IsDiaUtil(data, feriados.Do(data.Year))) data = data.AddDays(1);
+        return data;
     }
 
     /// <summary>
     /// Cálculo da calculadora de prazos: usado pela tela (POST /api/prazos/calcular) e pelo
     /// "recalcular" da timeline do superadmin, para os dois darem sempre o mesmo resultado.
+    /// O dia do começo é excluído e a contagem começa no dia seguinte (CPC art. 224).
+    /// <paramref name="prazoProcessual"/> aplica as regras do CPC para prazos processuais: os dias
+    /// do recesso forense não contam (art. 220) e, em dias corridos, a contagem começa no primeiro
+    /// dia útil e o vencimento em dia sem expediente passa para o dia útil seguinte (art. 224, §§ 1º e 3º).
     /// </summary>
     public static (DateTime DataFinal, IReadOnlyList<string> Feriados) CalcularPrazo(
-        DateTime dataInicio, int quantidadeDias, TipoCalculo tipo, IEnumerable<DateOnly>? feriadosAdicionais = null)
+        DateTime dataInicio, int quantidadeDias, TipoCalculo tipo, IEnumerable<DateOnly>? feriadosAdicionais = null,
+        bool prazoProcessual = false)
     {
         var extras = feriadosAdicionais?.ToList();
-        var dataFinal = tipo == TipoCalculo.DiasUteis
-            ? AdicionarDiasUteis(dataInicio, quantidadeDias, extras)
-            : dataInicio.Date.AddDays(quantidadeDias);
-        return (dataFinal, ListarFeriadosNoIntervalo(dataInicio, dataFinal, extras));
+        var dataFinal = CalcularDataFinal(dataInicio, quantidadeDias, tipo, extras, prazoProcessual);
+        var feriados = ListarFeriadosNoIntervalo(dataInicio, dataFinal, extras).ToList();
+        if (prazoProcessual && TocaRecesso(dataInicio, dataFinal))
+            feriados.Add("recesso forense (20/12 a 20/01)");
+        return (dataFinal, feriados);
+    }
+
+    private static DateTime CalcularDataFinal(
+        DateTime inicio, int dias, TipoCalculo tipo, IEnumerable<DateOnly>? feriadosAdicionais, bool prazoProcessual)
+    {
+        var feriados = new CalendarioFeriados(feriadosAdicionais);
+        bool Util(DateTime d) => IsDiaUtil(d, feriados.Do(d.Year)) && !(prazoProcessual && EmRecessoForense(d));
+
+        var current = inicio.Date;
+        if (tipo == TipoCalculo.DiasUteis)
+        {
+            int added = 0;
+            while (added < dias)
+            {
+                current = current.AddDays(1);
+                if (Util(current)) added++;
+            }
+            return current;
+        }
+
+        if (!prazoProcessual) return current.AddDays(dias);
+
+        // Dias corridos de prazo processual: o primeiro dia contado é o primeiro dia útil depois
+        // do começo; os dias do recesso não contam; o vencimento cai sempre em dia útil.
+        if (dias <= 0) return current;
+        do current = current.AddDays(1); while (!Util(current));
+        int contados = 1;
+        while (contados < dias)
+        {
+            current = current.AddDays(1);
+            if (!EmRecessoForense(current)) contados++;
+        }
+        while (!Util(current)) current = current.AddDays(1);
+        return current;
+    }
+
+    private static bool TocaRecesso(DateTime inicio, DateTime fim)
+    {
+        for (var d = inicio.Date; d <= fim.Date; d = d.AddDays(1))
+            if (EmRecessoForense(d)) return true;
+        return false;
+    }
+
+    /// <summary>Feriados nacionais mais os adicionais (estaduais/municipais), por ano, com cache.</summary>
+    private sealed class CalendarioFeriados(IEnumerable<DateOnly>? adicionais)
+    {
+        private readonly HashSet<DateTime> _extras =
+            adicionais?.Select(f => f.ToDateTime(TimeOnly.MinValue).Date).ToHashSet() ?? [];
+        private readonly Dictionary<int, HashSet<DateTime>> _cache = new();
+
+        public HashSet<DateTime> Do(int ano)
+        {
+            if (!_cache.TryGetValue(ano, out var f))
+            {
+                f = GetFeriadosNacionais(ano);
+                foreach (var e in _extras.Where(e => e.Year == ano)) f.Add(e);
+                _cache[ano] = f;
+            }
+            return f;
+        }
     }
 
     public static IReadOnlyList<string> ListarFeriadosNoIntervalo(DateTime inicio, DateTime fim, IEnumerable<DateOnly>? feriadosAdicionais = null)

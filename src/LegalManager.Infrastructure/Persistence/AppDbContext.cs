@@ -78,6 +78,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<Novidade> Novidades => Set<Novidade>();
     public DbSet<InteracaoAssistente> InteracoesAssistente => Set<InteracaoAssistente>();
     public DbSet<AcaoAssistente> AcoesAssistente => Set<AcaoAssistente>();
+    public DbSet<TriagemPublicacao> TriagensPublicacao => Set<TriagemPublicacao>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

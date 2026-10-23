@@ -998,7 +998,10 @@ public partial class AssistenteFerramentas
             .Select(p => new
             {
                 p.DataPublicacao, p.Diario, p.NumeroCNJ, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA,
-                p.ProcessoId, p.Snippet, p.Conteudo
+                p.ProcessoId, p.Snippet, p.Conteudo,
+                Sugestao = _db.TriagensPublicacao.Where(t => t.PublicacaoId == p.Id)
+                    .Select(t => new { t.Status, t.Ato, t.Vencimento, t.AudienciaDataHora })
+                    .FirstOrDefault()
             })
             .ToListAsync(ct);
 
@@ -1016,6 +1019,14 @@ public partial class AssistenteFerramentas
                 status = p.Status.ToString(),
                 urgente = p.Urgente,
                 classificacao = Cortar(p.ClassificacaoIA, 300),
+                // Sugestão da triagem: só vira prazo/audiência quando o usuário confirma na tela de Publicações.
+                sugestaoIA = p.Sugestao is null ? null : new
+                {
+                    situacao = p.Sugestao.Status.ToString(),
+                    providencia = p.Sugestao.Ato,
+                    vencimentoCalculado = p.Sugestao.Vencimento is { } v ? Data(v) : null,
+                    audiencia = p.Sugestao.AudienciaDataHora is { } h ? Data(h) : null
+                },
                 trecho = Cortar(string.IsNullOrWhiteSpace(p.Snippet) ? p.Conteudo : p.Snippet, 500)
             }),
             link = "/pages/publicacoes.html"

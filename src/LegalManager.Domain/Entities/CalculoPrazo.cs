@@ -21,6 +21,8 @@ public class CalculoPrazo
     /// <summary>Feriados extras informados na tela, JSON de datas "yyyy-MM-dd".</summary>
     public string? FeriadosAdicionaisJson { get; set; }
     public DateTime? DataFinal { get; set; }
+    /// <summary>Calculado com as regras de prazo processual (recesso forense). Nulo/false: sem elas.</summary>
+    public bool? PrazoProcessual { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario Usuario { get; set; } = null!;

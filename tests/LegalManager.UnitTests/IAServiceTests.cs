@@ -342,73 +342,27 @@ public class IAServiceTests
         Assert.NotEmpty(result);
     }
 
-    // ── ClassificarPublicacaoAsync ───────────────────────────────────────────
+    // ── TriarPublicacaoAsync ─────────────────────────────────────────────────
 
     [Fact]
-    public async Task ClassificarPublicacaoAsync_DeveRetornarPrazo_QuandoRespostaComSugestao()
+    public async Task TriarPublicacaoAsync_DevolveOTextoDaIA()
     {
-        var inner = JsonSerializer.Serialize(new { tipo = "Prazo", classificacao = "Prazo para contestação", urgente = true, sugestaoTarefa = "Prepare a contestação" });
-        var (svc, _) = BuildAnthropicService(inner);
+        var inner = JsonSerializer.Serialize(new { tipo = "Intimacao", resumo = "Intimação", exigeAcao = true });
+        var (svc, _) = BuildOpenAIService(inner);
 
-        var result = await svc.ClassificarPublicacaoAsync("Autos recebidos em prazo");
+        var result = await svc.TriarPublicacaoAsync("Intime-se para manifestação em 5 dias.");
 
-        Assert.Equal(TipoPublicacao.Prazo, result.tipo);
-        Assert.Equal("Prazo para contestação", result.classificacao);
-        Assert.True(result.urgente);
-        Assert.Equal("Prepare a contestação", result.sugestaoTarefa);
-    }
-
-    [Theory]
-    [InlineData("Audiencia", TipoPublicacao.Audiencia)]
-    [InlineData("Decisao", TipoPublicacao.Decisao)]
-    [InlineData("Despacho", TipoPublicacao.Despacho)]
-    [InlineData("Intimacao", TipoPublicacao.Intimacao)]
-    [InlineData("Outro", TipoPublicacao.Outro)]
-    public async Task ClassificarPublicacaoAsync_DeveRetornarTipoCorreto_ParaCadaClassificacao(
-        string tipoStr, TipoPublicacao tipoEsperado)
-    {
-        var inner = JsonSerializer.Serialize(new { tipo = tipoStr, classificacao = "desc", urgente = false, sugestaoTarefa = (string?)null });
-        var (svc, _) = BuildAnthropicService(inner);
-
-        var result = await svc.ClassificarPublicacaoAsync("publicação");
-
-        Assert.Equal(tipoEsperado, result.tipo);
-        Assert.False(result.urgente);
-        Assert.Null(result.sugestaoTarefa);
+        Assert.Equal(inner, result);
     }
 
     [Fact]
-    public async Task ClassificarPublicacaoAsync_DeveRetornarOutro_QuandoTipoDesconhecido()
+    public async Task TriarPublicacaoAsync_PublicacaoLonga_NaoFalha()
     {
-        var inner = JsonSerializer.Serialize(new { tipo = "TipoInexistente", classificacao = "desc", urgente = false });
-        var (svc, _) = BuildAnthropicService(inner);
+        var (svc, _) = BuildAnthropicService("{}");
 
-        var result = await svc.ClassificarPublicacaoAsync("publicação");
+        var result = await svc.TriarPublicacaoAsync(new string('a', 20000) + " no prazo de 15 dias");
 
-        Assert.Equal(TipoPublicacao.Outro, result.tipo);
-    }
-
-    [Fact]
-    public async Task ClassificarPublicacaoAsync_DeveRetornarOutro_QuandoJsonInvalido()
-    {
-        var (svc, _) = BuildAnthropicService("isso não é json");
-
-        var result = await svc.ClassificarPublicacaoAsync("publicação");
-
-        Assert.Equal(TipoPublicacao.Outro, result.tipo);
-        Assert.False(result.urgente);
-        Assert.Null(result.sugestaoTarefa);
-    }
-
-    [Fact]
-    public async Task ClassificarPublicacaoAsync_DeveAceitarNumeroCNJ_SemErro()
-    {
-        var inner = JsonSerializer.Serialize(new { tipo = "Decisao", classificacao = "Sentença", urgente = false });
-        var (svc, _) = BuildAnthropicService(inner);
-
-        var result = await svc.ClassificarPublicacaoAsync("Sentença proferida", numeroCNJ: "0001234-56.2024.8.26.0001");
-
-        Assert.Equal(TipoPublicacao.Decisao, result.tipo);
+        Assert.Equal("{}", result);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

@@ -188,7 +188,8 @@ builder.Services.AddScoped<EscavadorCallbacksPendentesJob>();
 builder.Services.AddScoped<LegalManager.Infrastructure.Escavador.EscavadorCallbackProcessor>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
 builder.Services.AddScoped<ImportacaoProcessosJob>();
-builder.Services.AddScoped<PublicacaoClassificacaoService>();
+builder.Services.AddScoped<TriagemPublicacoesJob>();
+builder.Services.AddScoped<ITriagemPublicacaoService, TriagemPublicacaoService>();
 builder.Services.AddScoped<PublicacaoMapper>();
 builder.Services.AddScoped<NotificadorAndamentos>();
 builder.Services.AddScoped<ITenantOabService, TenantOabService>();
@@ -302,15 +303,6 @@ builder.Services.Configure<ResendClientOptions>(o =>
     o.ApiToken = builder.Configuration["Resend:ApiToken"] ?? "");
 builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<IEmailService, EmailService>();
-
-builder.Services.AddHttpClient("Anthropic", client =>
-{
-    client.BaseAddress = new Uri("https://api.anthropic.com");
-    var apiKey = builder.Configuration["Anthropic:ApiKey"] ?? "";
-    client.DefaultRequestHeaders.Add("x-api-key", apiKey);
-    client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
 
 builder.Services.AddHttpClient("Stripe", client =>
 {
@@ -595,9 +587,11 @@ RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
     job => job.ExecutarAsync(),
     Cron.Never());
 
-// Classificação IA assíncrona: a cada 5 min enriquece Publicacoes Escavador recém-criadas
-RecurringJob.AddOrUpdate<PublicacaoClassificacaoService>(
-    "publicacao-classificacao-ia",
+// Triagem IA das publicações (mesmo modelo do IA:Model): a cada 5 min extrai prazo/audiência das
+// publicações novas e grava a sugestão que o advogado confirma na tela de Publicações.
+RecurringJob.RemoveIfExists("publicacao-classificacao-ia");
+RecurringJob.AddOrUpdate<TriagemPublicacoesJob>(
+    "publicacao-triagem-ia",
     job => job.ExecutarAsync(),
     "*/5 * * * *");
 

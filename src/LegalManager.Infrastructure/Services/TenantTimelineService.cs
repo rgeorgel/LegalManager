@@ -140,7 +140,7 @@ public sealed class TenantTimelineService(AppDbContext db)
 
         var extras = LerFeriados(calc.FeriadosAdicionaisJson);
         var (dataFinal, feriados) = FeriadosService.CalcularPrazo(
-            calc.DataInicio.Value, calc.QuantidadeDias.Value, calc.TipoCalculo.Value, extras);
+            calc.DataInicio.Value, calc.QuantidadeDias.Value, calc.TipoCalculo.Value, extras, calc.PrazoProcessual == true);
 
         return new RecalculoPrazoDto(
             calc.Id, Utc(calc.CriadoEm), calc.DataInicio.Value, calc.QuantidadeDias.Value, calc.TipoCalculo.Value.ToString(),

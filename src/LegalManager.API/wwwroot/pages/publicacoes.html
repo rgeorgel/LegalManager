@@ -82,6 +82,15 @@
     .pub-card-urgente { border-color:#ef4444 !important; }
     .pub-badge-urgente { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; background:#fee2e2; color:#991b1b; }
     .pub-ia-resumo { font-size:13px; color:#6d28d9; background:#f5f3ff; border-radius:4px; padding:8px 12px; margin-bottom:8px; border-left:3px solid #7c3aed; }
+    .pub-sugestao { border:1px solid var(--color-border); border-left:3px solid var(--color-primary); border-radius:var(--radius); background:var(--color-bg); padding:12px 14px; margin-bottom:10px; font-size:13px; color:var(--color-text); }
+    .pub-sugestao-titulo { font-weight:600; margin-bottom:4px; }
+    .pub-sugestao-prazo { font-size:14px; margin:4px 0; }
+    .pub-sugestao-memoria { color:var(--color-text-muted); font-size:12px; line-height:1.5; margin:4px 0; }
+    .pub-sugestao-trecho { color:var(--color-text-muted); font-style:italic; font-size:12px; margin:4px 0; }
+    .pub-sugestao-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .pub-sugestao-form .form-control { width:auto; min-width:0; flex:1 1 180px; }
+    .pub-sugestao-form input[type="date"], .pub-sugestao-form input[type="datetime-local"] { flex:0 1 auto; }
+    .pub-sugestao-status { font-size:13px; color:var(--color-text-muted); margin-bottom:8px; }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -143,6 +152,10 @@
         <option value="Escavador">📡 Escavador</option>
         <option value="DJe">📰 DJe</option>
         <option value="Manual">✍️ Manual</option>
+      </select>
+      <select id="filtroSugestao" class="form-control" style="width:auto">
+        <option value="">Com e sem sugestão</option>
+        <option value="1">🤖 Sugestão da IA a confirmar</option>
       </select>
       <input type="date" id="filtroDe" class="form-control" style="width:auto" placeholder="De">
       <input type="date" id="filtroAte" class="form-control" style="width:auto" placeholder="Até">

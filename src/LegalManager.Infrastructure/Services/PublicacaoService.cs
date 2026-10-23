@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.Publicacoes;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
@@ -37,6 +38,8 @@ public class PublicacaoService : IPublicacaoService
             q = q.Where(p => p.DataPublicacao >= filtro.De);
         if (filtro.Ate.HasValue)
             q = q.Where(p => p.DataPublicacao <= filtro.Ate);
+        if (filtro.ComSugestao)
+            q = q.Where(p => _context.TriagensPublicacao.Any(t => t.PublicacaoId == p.Id && t.Status == StatusTriagem.Sugerida));
 
         return await q
             .OrderByDescending(p => p.DataPublicacao)
@@ -48,7 +51,13 @@ public class PublicacaoService : IPublicacaoService
                 p.Diario, p.DataPublicacao, p.Conteudo,
                 p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm,
                 p.FonteCaptura, p.LinkEscavador, p.LinkPdf, p.Snippet,
-                p.Tribunal, p.OrigemEstado, p.DiarioSigla))
+                p.Tribunal, p.OrigemEstado, p.DiarioSigla,
+                _context.TriagensPublicacao.Where(t => t.PublicacaoId == p.Id)
+                    .Select(t => new TriagemPublicacaoDto(
+                        t.Status, t.Resumo, t.Ato, t.PrazoDias, t.TipoCalculo, t.PrazoTrecho, t.DataPublicacao,
+                        t.Vencimento, t.MemoriaCalculo, t.AudienciaDataHora, t.AudienciaTrecho, t.TarefaId,
+                        t.EventoId, t.Erro))
+                    .FirstOrDefault()))
             .ToListAsync(ct);
     }
 
@@ -58,11 +67,13 @@ public class PublicacaoService : IPublicacaoService
             .Include(x => x.Processo)
             .FirstOrDefaultAsync(x => x.TenantId == _tenant.TenantId && x.Id == id, ct);
         if (p == null) return null;
+        var triagem = await _context.TriagensPublicacao.AsNoTracking().FirstOrDefaultAsync(t => t.PublicacaoId == p.Id, ct);
         return new PublicacaoResponseDto(p.Id, p.ProcessoId, p.NumeroCNJ,
             p.Processo?.NumeroCNJ ?? p.NumeroCNJ, p.Diario,
             p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm,
             p.FonteCaptura, p.LinkEscavador, p.LinkPdf, p.Snippet,
-            p.Tribunal, p.OrigemEstado, p.DiarioSigla);
+            p.Tribunal, p.OrigemEstado, p.DiarioSigla,
+            triagem is null ? null : TriagemPublicacaoService.ParaDto(triagem));
     }
 
     public async Task MarcarLidaAsync(Guid id, CancellationToken ct = default)
