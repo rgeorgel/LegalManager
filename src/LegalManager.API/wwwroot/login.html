@@ -60,63 +60,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Login</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preload" href="/fonts/dm-serif-display-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/login-feltro.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
-      <div class="auth-subtitle">Gestão jurídica para escritórios modernos</div>
+  <main class="lf">
+    <div class="lf-quadro">
+      <div class="lf-cartao lf-c1" aria-hidden="true"><span class="lf-fita"></span><b>Prazos</b><strong>Em dias úteis</strong>Fins de semana e feriados já descontados.</div>
+      <div class="lf-cartao lf-c2" aria-hidden="true"><span class="lf-fita"></span><b>Agenda</b><strong>Audiências</strong>Compromissos do escritório em um só calendário.</div>
+      <div class="lf-cartao lf-c3" aria-hidden="true"><span class="lf-fita"></span><b>Publicações</b><strong>Prazo sugerido</strong>A IA lê as publicações e propõe prazo e audiência.</div>
+      <div class="lf-cartao lf-c4" aria-hidden="true"><span class="lf-fita"></span><b>Financeiro</b><strong>Honorários</strong>Recebimentos e despesas por processo.</div>
 
-      <div id="alert" class="alert alert-error" style="display:none"></div>
+      <div class="lf-papel">
+        <span class="lf-fita"></span><span class="lf-fita lf-canto"></span>
+        <a class="lf-logo" href="/index.html"><img src="/images/causify-logo-navbar-clara.svg" alt="Causify"></a>
+        <h1>Seu escritório, organizado.</h1>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" class="form-control" placeholder="seu@email.com" required autocomplete="email">
+        <div id="alert" class="alert alert-error" style="display:none"></div>
+
+        <form id="loginForm">
+          <div class="lf-campo">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+          <div class="lf-campo">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="lf-botao" id="submitBtn">Entrar</button>
+        </form>
+
+        <div class="lf-ou">ou</div>
+
+        <div class="lf-google">
+          <div id="g_id_onload"
+               data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
+               data-callback="handleGoogleCredential"
+               data-auto_prompt="false">
+          </div>
+          <div class="g_id_signin"
+               data-type="standard"
+               data-shape="rectangular"
+               data-theme="outline"
+               data-text="continue_with"
+               data-size="large"
+               data-width="320"
+               data-locale="pt-BR">
+          </div>
         </div>
-        <div class="form-group">
-          <label for="senha">Senha</label>
-          <input type="password" id="senha" class="form-control" placeholder="••••••••" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">
-          Entrar
-        </button>
-      </form>
 
-      <div style="display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--color-text-muted); font-size:13px;">
-        <div style="flex:1; height:1px; background:var(--color-border, #e2e8f0);"></div>
-        ou
-        <div style="flex:1; height:1px; background:var(--color-border, #e2e8f0);"></div>
-      </div>
-
-      <div style="display:flex; justify-content:center;">
-        <div id="g_id_onload"
-             data-client_id="7660270266-42mucnv6jgb9k3ppe91t7cld1898jld1.apps.googleusercontent.com"
-             data-callback="handleGoogleCredential"
-             data-auto_prompt="false">
+        <div class="lf-links">
+          <a href="/forgot-password.html">Esqueceu a senha?</a>
+          <a href="/register.html">Criar escritório</a>
+          <a href="/blog/index.html">Blog</a>
         </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-shape="rectangular"
-             data-theme="outline"
-             data-text="continue_with"
-             data-size="large"
-             data-width="336"
-             data-locale="pt-BR">
-        </div>
-      </div>
-
-      <div class="auth-footer">
-        <a href="/blog/index.html">Blog</a>
-        &nbsp;·&nbsp;
-        <a href="/forgot-password.html">Esqueceu a senha?</a>
-        &nbsp;·&nbsp;
-        <a href="/register.html">Criar escritório</a>
       </div>
     </div>
-  </div>
+  </main>
 
   <script type="module">
     import { login, loginWithGoogle, isLoggedIn } from '/js/auth.js';

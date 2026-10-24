@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<!-- Propostas de identidade visual da tela de login dos usuários (wwwroot/login.html), out/2026.
+     A Autos · B Biblioteca · C Calendário de prazos · D Conversa com a IA · E Suíço ·
+     F Mármore · G Balança · H Mural (variações H2 Quadro branco, H3 Fio vermelho, H4 Feltro) ·
+     I Petição · J Brutalista.
+     Abra este arquivo direto no navegador. As fontes vêm do Google Fonts, que o CSP do sistema
+     (Program.cs) bloqueia hoje: ao implementar, liberar o domínio ou usar fontes locais/do sistema. -->
+<html lang="pt-BR">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Causify: 13 propostas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=Cinzel:wght@500;600;700&family=DM+Serif+Display:ital@0;1&family=Caveat:wght@500;600;700&family=Tinos:wght@400;700&family=Archivo+Black&display=swap">
+<style>
+/* Layout: página de comparação com 5 abas; cada aba é uma tela de login completa, com identidade própria e fixa. */
+:root {
+  --bg: #eef0f4; --fg: #141a26; --muted: #5d6576; --line: #d6dae3;
+  --chip: #ffffff; --chip-on: #141a26; --chip-on-fg: #ffffff; --gold: #D4952A;
+  --ui: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0d1119; --fg: #e8ebf2; --muted: #9aa3b5; --line: #262d3c; --chip: #171d2a; --chip-on: #e8ebf2; --chip-on-fg: #0d1119; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0d1119; --fg: #e8ebf2; --muted: #9aa3b5; --line: #262d3c; --chip: #171d2a; --chip-on: #e8ebf2; --chip-on-fg: #0d1119; color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px; }
+header.top h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-height: 1.5; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button { font: 600 14px/1 var(--ui); padding: 10px 14px; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: var(--chip); color: var(--fg); display: inline-flex; gap: 8px; align-items: center; }
+.tabs button .k { font-weight: 800; opacity: .55; }
+.tabs button[aria-selected="true"] { background: var(--chip-on); color: var(--chip-on-fg); border-color: var(--chip-on); }
+.tabs button[aria-selected="true"] .k { opacity: 1; color: var(--gold); }
+.tabs button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.note { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.note b { color: var(--fg); }
+.frame { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 50px -24px rgba(10,15,30,.45); }
+.bar { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: #1c1f26; color: #aeb4c0; font: 500 12.5px/1 var(--ui); }
+.bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3f4a; display: inline-block; }
+.bar .url { margin-left: 8px; background: #2a2e37; padding: 6px 10px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen { min-height: 700px; position: relative; display: none; }
+.screen.on { display: grid; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* comuns às telas */
+.mock form { display: flex; flex-direction: column; gap: 16px; }
+.mock input { font: inherit; width: 100%; min-width: 0; }
+.mock .msg { font-size: 13px; min-height: 1em; }
+.g-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 11px 14px; border-radius: 6px; border: 1px solid #dadce0; background: #fff; color: #3c4043; font: 500 14px "Figtree", system-ui, sans-serif; cursor: pointer; }
+.g-btn svg { width: 18px; height: 18px; flex: none; }
+.or { display: flex; align-items: center; gap: 12px; font-size: 12.5px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .2; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ============ A · Autos ============ */
+#optA { place-items: center; padding: 48px 20px; background: #3b4250 radial-gradient(100% 80% at 50% 0%, #4a5262, #2b313c); font-family: "Archivo", system-ui, sans-serif; color: #2a2418; overflow: hidden; }
+#optA .pasta { position: relative; width: 100%; max-width: 620px; }
+#optA .aba { position: absolute; top: -26px; right: 48px; background: #d9bf8c; padding: 7px 18px 10px; border-radius: 8px 8px 0 0; font: 700 11px/1 "Archivo", sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #5d4a26; }
+#optA .capa { position: relative; background: #e4cd9b; background-image: radial-gradient(rgba(120,90,40,.08) 1px, transparent 1.2px); background-size: 6px 6px; border-radius: 4px 4px 6px 6px; padding: 30px 36px 28px; box-shadow: 0 2px 0 #c9ae74, 0 4px 0 #f1ead9, 0 6px 0 #c9ae74, 0 40px 60px -30px rgba(0,0,0,.6); }
+#optA .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; border-bottom: 2px solid #2a2418; padding-bottom: 14px; }
+#optA .topo .logo { width: 150px; color: #2a2418; }
+#optA .orgao { text-align: right; font: 600 10.5px/1.6 "Archivo", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #5d4a26; }
+#optA .cnj { margin: 18px 0 4px; font: 700 12px/1 "Archivo", sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #6b5630; }
+#optA .num { font: 700 clamp(19px, 3.2vw, 27px)/1.2 "Courier Prime", monospace; letter-spacing: .02em; margin: 0 0 20px; overflow-wrap: anywhere; }
+#optA .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1.5px solid #2a2418; margin-bottom: 16px; }
+#optA .grade label { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 8px; border-right: 1.5px solid #2a2418; min-width: 0; }
+#optA .grade label:last-child { border-right: 0; }
+#optA .grade span { font: 700 10px/1 "Archivo", sans-serif; letter-spacing: .18em; text-transform: uppercase; color: #6b5630; }
+#optA .grade input { border: 0; background: transparent; padding: 4px 0; font: 400 17px "Courier Prime", monospace; color: #14233f; outline: none; }
+#optA .grade input::placeholder { color: rgba(42,36,24,.35); }
+#optA .grade label:focus-within { background: rgba(255,255,255,.35); }
+#optA .acoes { display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; }
+#optA .go { flex: 1 1 200px; background: #2a2418; color: #f1ead9; border: 0; padding: 14px 18px; font: 700 13px "Archivo", sans-serif; letter-spacing: .2em; text-transform: uppercase; cursor: pointer; }
+#optA .go:hover { background: #14233f; }
+#optA .g-btn { flex: 1 1 200px; border-radius: 0; border-color: #2a2418; background: #f1ead9; }
+#optA .carimbo { position: absolute; right: 36px; top: 118px; border: 3px solid #a2302a; color: #a2302a; padding: 6px 12px; font: 800 15px/1 "Archivo", sans-serif; letter-spacing: .18em; text-transform: uppercase; transform: rotate(-9deg); opacity: .78; mix-blend-mode: multiply; pointer-events: none; }
+#optA .carimbo small { display: block; font-size: 9px; letter-spacing: .12em; margin-top: 4px; font-weight: 600; }
+#optA .rodape { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 18px; font-size: 13px; }
+#optA .rodape a { color: #2a2418; font-weight: 600; }
+#optA .msg { color: #a2302a; font-family: "Courier Prime", monospace; }
+#optA :focus-visible { outline: 2px solid #14233f; outline-offset: 2px; }
+
+/* ============ B · Biblioteca ============ */
+#optB { grid-template-columns: 1fr minmax(320px, 440px) 1fr; background: #0f2a20; color: #efe6cf; font-family: "Figtree", system-ui, sans-serif; overflow: hidden; }
+#optB .estante { display: flex; align-items: flex-end; gap: 3px; padding: 0 0 0 0; min-width: 0; overflow: hidden; border-bottom: 14px solid #3a2414; box-shadow: inset 0 -1px 0 #5a3a20; }
+#optB .estante.dir { justify-content: flex-start; }
+#optB .estante.esq { justify-content: flex-end; }
+#optB .lombada { flex: none; width: var(--w); height: var(--h); background: var(--c); border-radius: 2px 2px 0 0; display: flex; align-items: center; justify-content: center; box-shadow: inset 3px 0 0 rgba(255,255,255,.07), inset -3px 0 0 rgba(0,0,0,.25); position: relative; }
+#optB .lombada::before, #optB .lombada::after { content: ""; position: absolute; left: 4px; right: 4px; height: 2px; background: #c9a24f; opacity: .7; }
+#optB .lombada::before { top: 16px; } #optB .lombada::after { bottom: 16px; }
+#optB .lombada span { writing-mode: vertical-rl; transform: rotate(180deg); font: 600 11px/1 "Cormorant Garamond", serif; letter-spacing: .14em; color: #e3c27a; text-transform: uppercase; white-space: nowrap; }
+#optB .centro { display: flex; align-items: center; justify-content: center; padding: 40px 20px; position: relative; }
+#optB .livro { width: 100%; background: #173a2c radial-gradient(120% 90% at 30% 0%, #1f4a39, #12301f); border-radius: 4px 10px 10px 4px; padding: 34px 32px 26px 40px; position: relative; box-shadow: -8px 0 0 #0c2118, 0 40px 70px -30px rgba(0,0,0,.8); display: flex; flex-direction: column; gap: 20px; }
+#optB .livro::before { content: ""; position: absolute; inset: 12px 12px 12px 22px; border: 1px solid rgba(201,162,79,.45); border-radius: 2px 6px 6px 2px; pointer-events: none; }
+#optB .logo { width: 210px; align-self: center; color: #f2ecd8; }
+#optB .boas { text-align: center; font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 19px; color: #d9c79c; margin: -6px 0 0; }
+#optB label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #c9a24f; font-weight: 600; }
+#optB input { background: rgba(0,0,0,.22); border: 1px solid rgba(201,162,79,.35); border-radius: 3px; padding: 12px 13px; color: #f2ecd8; font-size: 15.5px; letter-spacing: 0; text-transform: none; outline: none; }
+#optB input::placeholder { color: rgba(242,236,216,.35); }
+#optB input:focus { border-color: #e3c27a; background: rgba(0,0,0,.32); }
+#optB .go { background: linear-gradient(#e3c27a, #c9a24f); color: #0f2a20; border: 0; border-radius: 3px; padding: 14px; font: 700 15px "Figtree", sans-serif; letter-spacing: .04em; cursor: pointer; }
+#optB .go:hover { filter: brightness(1.06); }
+#optB .or { color: #c9a24f; }
+#optB .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optB .links a { color: #e3c27a; text-decoration: none; border-bottom: 1px solid rgba(227,194,122,.4); }
+#optB .msg { color: #e3c27a; }
+#optB :focus-visible { outline: 2px solid #e3c27a; outline-offset: 3px; }
+
+/* ============ C · Calendário de prazos ============ */
+#optC { grid-template-columns: 1.15fr 1fr; background: #111418; color: #e6e8ec; font-family: "Figtree", system-ui, sans-serif; }
+#optC .esq { padding: 40px 44px; display: flex; flex-direction: column; gap: 26px; border-right: 1px solid #23272f; min-width: 0; }
+#optC .logo { width: 160px; color: #f2ecd8; }
+#optC .relogio { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+#optC .hora { font: 700 clamp(44px, 6vw, 76px)/1 "JetBrains Mono", monospace; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+#optC .hora .s { color: #D4952A; }
+#optC .dia { color: #9aa1ad; font-size: 15px; line-height: 1.4; }
+#optC .dia b { color: #e6e8ec; display: block; font-size: 17px; }
+#optC .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-variant-numeric: tabular-nums; max-width: 460px; }
+#optC .cal .wd { font: 500 10.5px/1 "JetBrains Mono", monospace; letter-spacing: .1em; color: #6b7280; text-align: center; padding-bottom: 6px; }
+#optC .cal .d { aspect-ratio: 1.25; border-radius: 6px; display: grid; place-items: center; font: 500 13px "JetBrains Mono", monospace; background: #181c22; color: #c9ced8; position: relative; max-width: 100%; }
+#optC .cal .d span { text-align: center; line-height: 1; }
+#optC .cal .d small { display: block; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #D4952A; margin-top: 2px; }
+#optC .cal .d.fds { background: transparent; color: #4b5260; }
+#optC .cal .d.fer { background: transparent; color: #8a5d1d; text-decoration: line-through; }
+#optC .cal .d.vazio { background: transparent; }
+#optC .cal .d.conta { background: #1d2a44; color: #b9cbff; }
+#optC .cal .d.hoje { background: #e6e8ec; color: #111418; font-weight: 700; }
+#optC .cal .d.vence { background: #D4952A; color: #111418; font-weight: 700; }
+#optC .legenda { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12.5px; color: #9aa1ad; }
+#optC .legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+#optC .exemplo { font-size: 13.5px; color: #9aa1ad; line-height: 1.5; max-width: 52ch; margin: 0; }
+#optC .exemplo b { color: #e6e8ec; }
+#optC .dir { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: #15191e; min-width: 0; }
+#optC .box { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 22px; }
+#optC h3 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+#optC h3 + p { margin: 6px 0 0; color: #9aa1ad; font-size: 14px; }
+#optC label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #b8bec9; }
+#optC input { background: #1c2128; border: 1px solid #2c323c; border-radius: 8px; padding: 12px 13px; color: #fff; font-size: 15.5px; outline: none; }
+#optC input:focus { border-color: #D4952A; box-shadow: 0 0 0 3px rgba(212,149,42,.18); }
+#optC .go { background: #D4952A; color: #111418; border: 0; border-radius: 8px; padding: 14px; font: 800 15px "Figtree", sans-serif; cursor: pointer; }
+#optC .go:hover { background: #e7a83d; }
+#optC .or { color: #6b7280; }
+#optC .g-btn { background: #1c2128; color: #e6e8ec; border-color: #2c323c; }
+#optC .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optC .links a { color: #e7b45c; text-decoration: none; }
+#optC .msg { color: #e7b45c; }
+#optC :focus-visible { outline: 2px solid #D4952A; outline-offset: 2px; }
+
+/* ============ D · Conversa com a IA ============ */
+#optD { grid-template-columns: 1fr 1.05fr; background: #f3f2ef; color: #1b1f2a; font-family: "Figtree", system-ui, sans-serif; }
+#optD .esq { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: #fff; min-width: 0; }
+#optD .box { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 22px; }
+#optD .logo { width: 150px; color: #1b1f2a; margin-left: -8px; }
+#optD h3 { margin: 0; font: 400 40px/1.05 "Instrument Serif", Georgia, serif; letter-spacing: -.01em; }
+#optD h3 em { color: #1a56db; }
+#optD label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #4b5263; }
+#optD input { border: 1px solid #dcdfe6; border-radius: 10px; padding: 12px 13px; font-size: 15.5px; outline: none; background: #fff; color: #1b1f2a; }
+#optD input:focus { border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,.13); }
+#optD .go { background: #1b1f2a; color: #fff; border: 0; border-radius: 10px; padding: 14px; font: 700 15px "Figtree", sans-serif; cursor: pointer; }
+#optD .go:hover { background: #1a56db; }
+#optD .or { color: #9aa1ad; }
+#optD .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optD .links a { color: #1a56db; font-weight: 600; text-decoration: none; }
+#optD .msg { color: #b42318; }
+#optD .dir { padding: 40px 44px; display: flex; flex-direction: column; justify-content: center; gap: 18px; min-width: 0; background: #eceae4 radial-gradient(80% 60% at 100% 0%, #e2e8f7, transparent 70%); }
+#optD .dir .tit { font: 600 12px/1 "Figtree", sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6b7280; display: flex; align-items: center; gap: 8px; }
+#optD .dir .tit i { width: 8px; height: 8px; border-radius: 50%; background: #18a058; box-shadow: 0 0 0 4px rgba(24,160,88,.15); }
+#optD .chat { display: flex; flex-direction: column; gap: 12px; max-width: 520px; }
+#optD .b { padding: 12px 15px; border-radius: 16px; line-height: 1.5; font-size: 14.5px; max-width: 92%; }
+#optD .eu { align-self: flex-end; background: #1b1f2a; color: #fff; border-bottom-right-radius: 4px; }
+#optD .ia { align-self: flex-start; background: #fff; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+#optD .ia ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+#optD .ia b { color: #1a56db; }
+#optD .ia .tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #fdf1dc; color: #8a5d1d; margin-left: 4px; }
+#optD .dig { display: inline-flex; gap: 4px; }
+#optD .dig i { width: 6px; height: 6px; border-radius: 50%; background: #9aa1ad; animation: pisca 1.2s infinite; }
+#optD .dig i:nth-child(2) { animation-delay: .2s; } #optD .dig i:nth-child(3) { animation-delay: .4s; }
+@keyframes pisca { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+#optD .aviso { font-size: 12.5px; color: #6b7280; margin: 0; }
+#optD :focus-visible { outline: 2px solid #1a56db; outline-offset: 2px; }
+
+/* ============ E · Suíço ============ */
+#optE { grid-template-columns: 1.3fr 1fr; background: #fafaf8; color: #0e0e0e; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+#optE .esq { position: relative; padding: 36px 44px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-width: 0; overflow: hidden;
+  background-image: linear-gradient(#e7e5df 1px, transparent 1px), linear-gradient(90deg, #e7e5df 1px, transparent 1px); background-size: 100% 25%, 25% 100%; }
+#optE .meta { display: flex; justify-content: space-between; font: 500 11px/1 "IBM Plex Sans", sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #6f6c66; gap: 12px; flex-wrap: wrap; }
+#optE .marca { position: relative; display: flex; align-items: center; gap: .1em; }
+#optE .marca .col { font: 300 clamp(90px, 16vw, 210px)/0.8 "IBM Plex Sans", sans-serif; color: #D4952A; }
+#optE .marca .nome { font: italic 400 clamp(64px, 11vw, 150px)/1 "Instrument Serif", Georgia, serif; letter-spacing: -.02em; }
+#optE .frase { font-size: clamp(18px, 2vw, 22px); line-height: 1.35; max-width: 26ch; font-weight: 300; margin: 0; }
+#optE .frase b { font-weight: 600; }
+#optE .dir { display: flex; align-items: center; padding: 40px 48px; border-left: 1px solid #0e0e0e; min-width: 0; background: #fafaf8; }
+#optE .box { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 26px; }
+#optE h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+#optE label { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 12px; border-bottom: 1px solid #0e0e0e; padding-bottom: 8px; font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: #6f6c66; }
+#optE input { border: 0; background: transparent; padding: 6px 0; font-size: 17px; outline: none; color: #0e0e0e; letter-spacing: 0; text-transform: none; }
+#optE input::placeholder { color: #b4b1aa; }
+#optE label:focus-within { border-bottom-color: #D4952A; box-shadow: 0 1px 0 #D4952A; }
+#optE .go { display: flex; justify-content: space-between; align-items: center; background: #0e0e0e; color: #fafaf8; border: 0; padding: 16px 18px; font: 500 15px "IBM Plex Sans", sans-serif; cursor: pointer; }
+#optE .go span:last-child { transition: transform .2s; }
+#optE .go:hover span:last-child { transform: translateX(4px); color: #D4952A; }
+#optE .g-btn { border-radius: 0; border-color: #0e0e0e; background: transparent; color: #0e0e0e; }
+#optE .or { color: #6f6c66; }
+#optE .links { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+#optE .links a { color: #0e0e0e; text-decoration: none; display: flex; justify-content: space-between; border-bottom: 1px solid #e0ded8; padding-bottom: 6px; }
+#optE .links a::after { content: "↗"; color: #D4952A; }
+#optE .msg { color: #b42318; }
+#optE :focus-visible { outline: 2px solid #D4952A; outline-offset: 3px; }
+
+/* ============ F · Mármore ============ */
+#optF { place-items: center; padding: 40px 20px 0; color: #2d2a26; font-family: "Figtree", system-ui, sans-serif; overflow: hidden;
+  background:
+    linear-gradient(115deg, transparent 40%, rgba(150,140,128,.13) 41%, transparent 43%),
+    linear-gradient(65deg, transparent 62%, rgba(150,140,128,.1) 63%, transparent 64.5%),
+    linear-gradient(160deg, transparent 20%, rgba(150,140,128,.08) 21%, transparent 22%),
+    radial-gradient(120% 80% at 50% 0%, #fbfaf7, #e9e5dd); }
+#optF .templo { width: 100%; max-width: 720px; display: flex; flex-direction: column; align-items: center; }
+#optF .frontao { width: 100%; display: block; }
+#optF .frontao text { font-family: "Cinzel", Georgia, serif; }
+#optF .corpo { width: 92%; display: grid; grid-template-columns: 54px 1fr 54px; gap: 0 28px; background: linear-gradient(#f4f1eb, #ece8e0); padding: 28px 22px 0; border-left: 1px solid #d6d0c4; border-right: 1px solid #d6d0c4; }
+#optF .coluna { background: repeating-linear-gradient(90deg, #f7f5f0 0 7px, #dcd6ca 7px 9px, #f7f5f0 9px 16px); border-radius: 3px 3px 0 0; box-shadow: inset -6px 0 10px rgba(0,0,0,.06); position: relative; }
+#optF .coluna::before { content: ""; position: absolute; top: -10px; left: -8px; right: -8px; height: 12px; background: #e3ded4; border: 1px solid #d0c9bc; border-radius: 2px; }
+#optF .porta { display: flex; flex-direction: column; gap: 16px; padding: 6px 0 26px; max-width: 360px; width: 100%; justify-self: center; }
+#optF .insc { text-align: center; font: 600 11px/1 "Cinzel", Georgia, serif; letter-spacing: .32em; color: #8c7a5b; }
+#optF label { display: flex; flex-direction: column; gap: 6px; font: 600 11px/1 "Cinzel", serif; letter-spacing: .2em; color: #6b6151; }
+#optF input { border: 1px solid #cfc7b8; background: rgba(255,255,255,.75); border-radius: 2px; padding: 12px 13px; font: 400 15.5px "Figtree", sans-serif; letter-spacing: 0; color: #2d2a26; outline: none; }
+#optF input:focus { border-color: #b8862d; background: #fff; }
+#optF .go { background: #2d2a26; color: #f4efe4; border: 0; border-radius: 2px; padding: 14px; font: 600 13px "Cinzel", serif; letter-spacing: .3em; cursor: pointer; }
+#optF .go:hover { background: #4a3d26; }
+#optF .or { color: #8c7a5b; }
+#optF .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optF .links a { color: #6b4f1d; font-weight: 600; text-decoration: none; }
+#optF .degraus { width: 100%; display: flex; flex-direction: column; align-items: center; }
+#optF .degraus i { display: block; height: 12px; background: #e3ded4; border: 1px solid #d0c9bc; border-bottom: 0; }
+#optF .degraus i:nth-child(1) { width: 96%; } #optF .degraus i:nth-child(2) { width: 100%; } #optF .degraus i:nth-child(3) { width: 104%; height: 14px; }
+#optF .msg { color: #9e2b25; }
+#optF :focus-visible { outline: 2px solid #b8862d; outline-offset: 2px; }
+
+/* ============ G · Balança ============ */
+#optG { grid-template-columns: 1.1fr 1fr; background: #f5efe4; color: #23201b; font-family: "Figtree", system-ui, sans-serif; }
+#optG .esq { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; padding: 36px 30px; background: radial-gradient(70% 60% at 50% 45%, #fff9ee, #efe5d2); min-width: 0; }
+#optG svg.bal { width: 100%; max-width: 440px; height: auto; overflow: visible; }
+#optG #feixe, #optG .prato { transition: transform .7s cubic-bezier(.3,1.6,.5,1); }
+#optG .estado { font: italic 400 22px/1.2 "DM Serif Display", Georgia, serif; text-align: center; min-height: 1.2em; color: #5b4a2a; }
+#optG .estado.ok { color: #1a56db; }
+#optG .dir { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: #fffdf8; border-left: 1px solid #e6dcc8; min-width: 0; }
+#optG .box { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 22px; }
+#optG .logo { width: 150px; color: #23201b; margin-left: -8px; }
+#optG h3 { margin: 0; font: 400 36px/1.08 "DM Serif Display", Georgia, serif; }
+#optG label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #5b5346; }
+#optG label b { color: #b8862d; font-weight: 700; }
+#optG input { border: 1.5px solid #e2d8c4; border-radius: 10px; padding: 12px 13px; font-size: 15.5px; outline: none; background: #fff; color: #23201b; }
+#optG input:focus { border-color: #D4952A; box-shadow: 0 0 0 3px rgba(212,149,42,.16); }
+#optG .go { background: #23201b; color: #fff; border: 0; border-radius: 10px; padding: 14px; font: 700 15px "Figtree", sans-serif; cursor: pointer; }
+#optG .go:hover { background: #1a56db; }
+#optG .or { color: #9a8f7c; }
+#optG .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optG .links a { color: #8a5d1d; font-weight: 600; text-decoration: none; }
+#optG .msg { color: #b42318; }
+#optG :focus-visible { outline: 2px solid #D4952A; outline-offset: 2px; }
+
+/* ============ H · Mural ============ */
+#optH { place-items: center; padding: 40px 20px; font-family: "Figtree", system-ui, sans-serif; color: #1f2937; overflow: hidden;
+  background: #b98a55; background-image: radial-gradient(rgba(70,40,10,.22) 1px, transparent 1.6px), radial-gradient(rgba(255,230,190,.18) 1px, transparent 1.4px); background-size: 7px 7px, 11px 11px; background-position: 0 0, 3px 5px;
+  box-shadow: inset 0 0 0 14px #6b4426, inset 0 0 0 16px #4f301a, inset 0 0 60px rgba(0,0,0,.35); }
+#optH .quadro { position: relative; width: 100%; max-width: 980px; min-height: 600px; display: grid; place-items: center; }
+#optH .nota { position: absolute; width: 190px; padding: 22px 16px 16px; font: 500 22px/1.15 "Caveat", "Comic Sans MS", cursive; color: #2b2b2b; box-shadow: 0 10px 18px -8px rgba(0,0,0,.45); }
+#optH .nota small { display: block; font: 600 11px/1 "Figtree", sans-serif; letter-spacing: .12em; text-transform: uppercase; opacity: .6; margin-bottom: 8px; }
+#optH .pino { position: absolute; top: 6px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a7a, #c0261b 60%, #7a120c); box-shadow: 0 3px 4px rgba(0,0,0,.4); }
+#optH .n1 { top: 10px; left: 0; background: #fde68a; transform: rotate(-5deg); }
+#optH .n2 { bottom: 20px; left: 30px; background: #fbcfe8; transform: rotate(4deg); }
+#optH .n3 { top: 30px; right: 10px; background: #bfdbfe; transform: rotate(6deg); }
+#optH .n4 { bottom: 40px; right: 0; background: #bbf7d0; transform: rotate(-3deg); }
+#optH .ficha { position: relative; width: 100%; max-width: 380px; background: #fffef9; padding: 34px 28px 24px; transform: rotate(-1deg); box-shadow: 0 18px 30px -12px rgba(0,0,0,.55);
+  background-image: linear-gradient(transparent 104px, #ef4444 104px, #ef4444 106px, transparent 106px), repeating-linear-gradient(transparent 0 27px, #dbeafe 27px 28px); background-position: 0 0, 0 106px; display: flex; flex-direction: column; gap: 18px; }
+#optH .ficha .pino { top: 10px; }
+#optH .logo { width: 130px; color: #1f2937; margin: -6px 0 6px -6px; }
+#optH label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: #475569; }
+#optH input { border: 0; border-bottom: 2px solid #94a3b8; background: transparent; padding: 6px 2px; font: 600 24px/1.1 "Caveat", cursive; color: #1d4ed8; outline: none; }
+#optH input::placeholder { color: #b6c0cf; }
+#optH input:focus { border-bottom-color: #1d4ed8; }
+#optH .go { background: #1d4ed8; color: #fff; border: 0; border-radius: 6px; padding: 13px; font: 700 15px "Figtree", sans-serif; cursor: pointer; box-shadow: 0 4px 0 #1e3a8a; }
+#optH .go:active { transform: translateY(2px); box-shadow: 0 2px 0 #1e3a8a; }
+#optH .or { color: #94a3b8; }
+#optH .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optH .links a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+#optH .msg { color: #b42318; }
+#optH :focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
+
+/* ============ H2 · Quadro branco ============ */
+#optH2 { place-items: center; padding: 34px 20px; font-family: "Figtree", system-ui, sans-serif; color: #1f2937; overflow: hidden; background: #cfd4da linear-gradient(#d9dde2, #c3c9d0); }
+#optH2 .lousa { position: relative; width: 100%; max-width: 1040px; min-height: 610px; background: #fbfcfd linear-gradient(135deg, rgba(255,255,255,.9) 0%, rgba(235,240,245,.6) 40%, rgba(255,255,255,.85) 60%, #f2f5f8 100%); border: 14px solid #b8bec6; border-radius: 6px; box-shadow: inset 0 0 0 2px #9aa1aa, 0 30px 50px -30px rgba(0,0,0,.5); display: grid; grid-template-columns: 1fr 380px 1fr; gap: 20px; padding: 26px 26px 50px; }
+#optH2 .bandeja { position: absolute; left: 10%; right: 10%; bottom: -26px; height: 14px; background: #a7aeb7; border-radius: 0 0 6px 6px; }
+#optH2 .bandeja i { position: absolute; top: -9px; width: 70px; height: 12px; border-radius: 6px; }
+#optH2 .bandeja i:nth-child(1) { left: 12%; background: #1d4ed8; } #optH2 .bandeja i:nth-child(2) { left: 26%; background: #dc2626; } #optH2 .bandeja i:nth-child(3) { right: 18%; width: 90px; height: 16px; top: -12px; background: #374151; border-radius: 4px; }
+#optH2 .col { font: 600 25px/1.15 "Caveat", cursive; color: #1d4ed8; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+#optH2 .col h4 { margin: 0; font: 700 34px/1 "Caveat", cursive; color: #111827; border-bottom: 3px solid #111827; padding-bottom: 4px; border-radius: 0 0 40% 10% / 0 0 8px 4px; }
+#optH2 .col .item { position: relative; padding-left: 22px; }
+#optH2 .col .item::before { content: "□"; position: absolute; left: 0; color: #111827; }
+#optH2 .col.feito .item { color: #059669; }
+#optH2 .col.feito .item::before { content: "☑"; color: #059669; }
+#optH2 .col .red { color: #dc2626; }
+#optH2 .seta { font: 700 28px/1 "Caveat", cursive; color: #dc2626; transform: rotate(-6deg); align-self: flex-start; margin-top: 4px; }
+#optH2 .cartao { align-self: center; position: relative; background: #fff; border-radius: 10px; padding: 30px 26px 22px; box-shadow: 0 16px 30px -14px rgba(15,23,42,.45), 0 0 0 1px #e5e7eb; display: flex; flex-direction: column; gap: 16px; transform: rotate(.6deg); }
+#optH2 .ima { position: absolute; top: -14px; width: 30px; height: 30px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,.3), inset -3px -4px 0 rgba(0,0,0,.18); }
+#optH2 .ima.a { left: 22px; background: #f59e0b; } #optH2 .ima.b { right: 22px; background: #1d4ed8; }
+#optH2 .logo { width: 140px; color: #111827; margin: -4px 0 0 -6px; }
+#optH2 label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: #4b5563; }
+#optH2 input { border: 1.5px solid #d1d5db; border-radius: 8px; padding: 11px 12px; font-size: 15.5px; outline: none; background: #f9fafb; color: #111827; }
+#optH2 input:focus { border-color: #1d4ed8; background: #fff; box-shadow: 0 0 0 3px rgba(29,78,216,.13); }
+#optH2 .go { background: #1d4ed8; color: #fff; border: 0; border-radius: 8px; padding: 13px; font: 700 15px "Figtree", sans-serif; cursor: pointer; }
+#optH2 .go:hover { background: #1e40af; }
+#optH2 .or { color: #9ca3af; }
+#optH2 .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optH2 .links a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+#optH2 .msg { color: #b42318; }
+#optH2 :focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
+
+/* ============ H3 · Fio vermelho ============ */
+#optH3 { place-items: center; padding: 30px 20px; font-family: "Figtree", system-ui, sans-serif; color: #1f2937; overflow: hidden;
+  background: #6e4c2c; background-image: radial-gradient(rgba(0,0,0,.28) 1px, transparent 1.6px), radial-gradient(rgba(255,210,150,.12) 1px, transparent 1.4px), radial-gradient(90% 70% at 50% 45%, transparent 40%, rgba(0,0,0,.55)); background-size: 7px 7px, 11px 11px, 100% 100%; background-position: 0 0, 3px 5px, 0 0; }
+#optH3 .quadro { position: relative; width: 100%; max-width: 1060px; min-height: 620px; display: grid; place-items: center; }
+#optH3 svg.fios { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+#optH3 svg.fios line { stroke: #c81e1e; stroke-width: 2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 2px 1px rgba(0,0,0,.45)); }
+#optH3 .peca { position: absolute; transform: translate(-50%, -50%) rotate(var(--r)); background: #f4efe2; padding: 10px 12px 12px; box-shadow: 0 12px 20px -8px rgba(0,0,0,.6); font-size: 12px; color: #3b3326; width: 170px; }
+#optH3 .peca .pino { position: absolute; top: -6px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a7a, #c0261b 60%, #7a120c); box-shadow: 0 3px 4px rgba(0,0,0,.5); }
+#optH3 .peca b { display: block; font: 700 10px/1 "Courier Prime", monospace; letter-spacing: .14em; text-transform: uppercase; color: #8a1c1c; margin-bottom: 6px; }
+#optH3 .peca .txt { font: 600 21px/1.1 "Caveat", cursive; color: #1f1a12; }
+#optH3 .peca.foto { background: #fff; padding: 8px 8px 26px; width: 150px; }
+#optH3 .peca.foto .img { height: 100px; background: linear-gradient(160deg, #8d99a6, #4b5563); display: grid; place-items: center; color: rgba(255,255,255,.85); font: 600 32px "Caveat", cursive; }
+#optH3 .peca.foto .txt { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 18px; }
+#optH3 .peca.doc { background: #fff; font: 400 10px/1.5 "Courier Prime", monospace; width: 180px; }
+#optH3 .peca.doc i { display: block; height: 6px; background: #e3ded2; margin: 5px 0; } #optH3 .peca.doc i:nth-child(odd) { width: 80%; }
+#optH3 .peca.doc .carimbo { position: absolute; right: 8px; bottom: 10px; border: 2px solid #b91c1c; color: #b91c1c; font: 700 11px "Courier Prime", monospace; padding: 2px 6px; transform: rotate(-12deg); letter-spacing: .1em; }
+#optH3 .ficha { position: relative; z-index: 2; width: 100%; max-width: 370px; background: #fdfbf5; padding: 32px 26px 22px; transform: rotate(-.8deg); box-shadow: 0 24px 40px -14px rgba(0,0,0,.75); display: flex; flex-direction: column; gap: 16px; }
+#optH3 .ficha .pino { position: absolute; top: 10px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a7a, #c0261b 60%, #7a120c); box-shadow: 0 3px 4px rgba(0,0,0,.5); }
+#optH3 .ficha .caso { font: 700 11px/1.4 "Courier Prime", monospace; letter-spacing: .14em; text-transform: uppercase; color: #8a1c1c; border-bottom: 1px dashed #c9b9a0; padding-bottom: 10px; }
+#optH3 .logo { width: 140px; color: #1f1a12; margin: -6px 0 -4px -6px; }
+#optH3 label { display: flex; flex-direction: column; gap: 5px; font: 700 11px/1 "Courier Prime", monospace; letter-spacing: .14em; text-transform: uppercase; color: #5b5040; }
+#optH3 input { border: 1px solid #d6cbb7; border-radius: 3px; padding: 11px 12px; font: 400 15.5px "Figtree", sans-serif; letter-spacing: 0; text-transform: none; outline: none; background: #fff; color: #1f1a12; }
+#optH3 input:focus { border-color: #c81e1e; box-shadow: 0 0 0 3px rgba(200,30,30,.12); }
+#optH3 .go { background: #1f1a12; color: #fdfbf5; border: 0; border-radius: 3px; padding: 13px; font: 700 14px "Courier Prime", monospace; letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
+#optH3 .go:hover { background: #8a1c1c; }
+#optH3 .or { color: #a89a82; }
+#optH3 .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optH3 .links a { color: #8a1c1c; font-weight: 600; text-decoration: none; }
+#optH3 .msg { color: #b42318; }
+#optH3 :focus-visible { outline: 2px solid #c81e1e; outline-offset: 2px; }
+
+/* ============ H4 · Feltro ============ */
+#optH4 { place-items: center; padding: 36px 20px; font-family: "Figtree", system-ui, sans-serif; color: #24323a; overflow: hidden;
+  background: #8fa5a0; background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.3px), radial-gradient(rgba(0,0,0,.06) 1px, transparent 1.3px); background-size: 4px 4px, 5px 5px; background-position: 0 0, 2px 3px; }
+#optH4 .quadro { position: relative; width: 100%; max-width: 1000px; min-height: 600px; display: grid; place-items: center; }
+#optH4 .card { position: absolute; width: 200px; padding: 22px 18px 16px; border-radius: 4px; box-shadow: 0 8px 18px -10px rgba(20,40,40,.55); font-size: 14px; line-height: 1.45; transform: rotate(var(--r)); }
+#optH4 .card b { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .65; margin-bottom: 6px; }
+#optH4 .card strong { display: block; font: 400 22px/1.15 "DM Serif Display", Georgia, serif; margin-bottom: 4px; }
+#optH4 .fita { position: absolute; top: -11px; left: 50%; width: 86px; height: 24px; margin-left: -43px; transform: rotate(var(--fr, -3deg)); opacity: .85; mix-blend-mode: multiply; background: var(--fc, #f4c7a1) repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 6px, transparent 6px 12px); clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%); }
+#optH4 .c1 { top: 24px; left: 10px; --r: -3deg; background: #fdf6e3; }
+#optH4 .c2 { bottom: 30px; left: 40px; --r: 2.5deg; background: #fde2e4; --fc: #a8d5ba; }
+#optH4 .c3 { top: 40px; right: 20px; --r: 3deg; background: #e3eefc; --fc: #f6d186; --fr: 4deg; }
+#optH4 .c4 { bottom: 44px; right: 10px; --r: -2deg; background: #e6f4ea; --fc: #f4a6a6; }
+#optH4 .papel { position: relative; width: 100%; max-width: 380px; background: #fffdf9; border-radius: 6px; padding: 34px 28px 24px; box-shadow: 0 22px 40px -18px rgba(20,40,40,.6); display: flex; flex-direction: column; gap: 16px; }
+#optH4 .papel .fita { width: 110px; margin-left: -55px; top: -13px; height: 28px; --fc: #f6d186; }
+#optH4 .papel .fita.dir { left: auto; right: -26px; top: 26px; margin: 0; transform: rotate(52deg); --fc: #a8d5ba; width: 80px; height: 22px; }
+#optH4 .logo { width: 140px; color: #24323a; margin: -4px 0 0 -6px; }
+#optH4 h3 { margin: 0; font: 400 28px/1.1 "DM Serif Display", Georgia, serif; }
+#optH4 label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: #4f5f66; }
+#optH4 input { border: 1.5px solid #dfe5e3; border-radius: 10px; padding: 11px 12px; font-size: 15.5px; outline: none; background: #f7f9f8; color: #24323a; }
+#optH4 input:focus { border-color: #4f7f75; background: #fff; box-shadow: 0 0 0 3px rgba(79,127,117,.15); }
+#optH4 .go { background: #2f5d55; color: #fff; border: 0; border-radius: 10px; padding: 13px; font: 700 15px "Figtree", sans-serif; cursor: pointer; }
+#optH4 .go:hover { background: #24483f; }
+#optH4 .or { color: #9aa7a4; }
+#optH4 .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optH4 .links a { color: #2f5d55; font-weight: 600; text-decoration: none; }
+#optH4 .msg { color: #b42318; }
+#optH4 :focus-visible { outline: 2px solid #2f5d55; outline-offset: 2px; }
+
+/* ============ I · Petição ============ */
+#optI { grid-template-columns: 1.2fr 1fr; background: #e9e7e2; color: #1c1c1c; font-family: "Figtree", system-ui, sans-serif; }
+#optI .esq { padding: 40px 36px 0; display: flex; justify-content: center; align-items: flex-end; min-width: 0; overflow: hidden; background: linear-gradient(#dedbd4, #e9e7e2); }
+#optI .folha { width: 100%; max-width: 520px; height: 600px; background: #fff; padding: 46px 52px; box-shadow: 0 -2px 30px rgba(0,0,0,.12); font: 400 14.5px/1.85 "Tinos", "Times New Roman", serif; text-align: justify; overflow: hidden; position: relative; }
+#optI .folha::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(transparent, #fff); }
+#optI .folha .ender { font-weight: 700; text-transform: uppercase; text-align: left; margin: 0 0 40px; }
+#optI .folha p { margin: 0 0 14px; text-indent: 3em; }
+#optI .cursor { display: inline-block; width: 2px; height: 1.1em; background: #1a56db; vertical-align: -3px; margin-left: 1px; animation: pisca 1s steps(1) infinite; }
+#optI .dir { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: #fafaf8; min-width: 0; }
+#optI .box { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 22px; }
+#optI .logo { width: 150px; color: #1c1c1c; margin-left: -8px; }
+#optI h3 { margin: 0; font: 700 30px/1.1 "Tinos", serif; }
+#optI h3 + p { margin: 6px 0 0; color: #6b6b6b; font-size: 14px; }
+#optI label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #4b4b4b; }
+#optI input { border: 1px solid #d4d2cc; border-radius: 6px; padding: 12px 13px; font-size: 15.5px; outline: none; background: #fff; color: #1c1c1c; }
+#optI input:focus { border-color: #1a56db; box-shadow: 0 0 0 3px rgba(26,86,219,.13); }
+#optI .go { background: #1a56db; color: #fff; border: 0; border-radius: 6px; padding: 14px; font: 700 15px "Figtree", sans-serif; cursor: pointer; }
+#optI .go:hover { background: #1240ab; }
+#optI .or { color: #9a9a9a; }
+#optI .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+#optI .links a { color: #1a56db; font-weight: 600; text-decoration: none; }
+#optI .msg { color: #b42318; }
+#optI :focus-visible { outline: 2px solid #1a56db; outline-offset: 2px; }
+
+/* ============ J · Brutalista ============ */
+#optJ { grid-template-columns: 1.15fr 1fr; background: #f6c445; color: #0b0b0b; font-family: "Archivo", system-ui, sans-serif; }
+#optJ .esq { padding: 40px 44px; display: flex; flex-direction: column; justify-content: space-between; gap: 28px; min-width: 0; border-right: 4px solid #0b0b0b; overflow: hidden; }
+#optJ .logo { width: 170px; color: #0b0b0b; }
+#optJ h2 { margin: 0; font: 400 clamp(46px, 7vw, 96px)/.9 "Archivo Black", "Archivo", sans-serif; letter-spacing: -.03em; text-transform: uppercase; text-wrap: balance; }
+#optJ h2 span { background: #0b0b0b; color: #f6c445; padding: 0 .12em; }
+#optJ .selos { display: flex; flex-wrap: wrap; gap: 12px; }
+#optJ .selos span { border: 3px solid #0b0b0b; background: #fff; padding: 9px 14px; font-weight: 800; font-size: 14px; box-shadow: 4px 4px 0 #0b0b0b; }
+#optJ .selos span:nth-child(1) { transform: rotate(-3deg); background: #ff8fb1; }
+#optJ .selos span:nth-child(2) { transform: rotate(2deg); background: #8fd3ff; }
+#optJ .selos span:nth-child(3) { transform: rotate(-1deg); background: #b6f09c; }
+#optJ .dir { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: #fff7e0; min-width: 0; }
+#optJ .box { width: 100%; max-width: 370px; display: flex; flex-direction: column; gap: 18px; background: #fff; border: 4px solid #0b0b0b; box-shadow: 10px 10px 0 #0b0b0b; padding: 28px 26px 22px; }
+#optJ h3 { margin: 0; font: 400 28px/1 "Archivo Black", sans-serif; text-transform: uppercase; }
+#optJ label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+#optJ input { border: 3px solid #0b0b0b; border-radius: 0; padding: 12px; font: 600 16px "Archivo", sans-serif; letter-spacing: 0; text-transform: none; outline: none; background: #fff; color: #0b0b0b; }
+#optJ input:focus { background: #fff1c2; box-shadow: 4px 4px 0 #0b0b0b; }
+#optJ .go { background: #0b0b0b; color: #f6c445; border: 3px solid #0b0b0b; padding: 14px; font: 400 17px "Archivo Black", sans-serif; text-transform: uppercase; letter-spacing: .04em; cursor: pointer; box-shadow: 5px 5px 0 #D4952A; transition: transform .08s, box-shadow .08s; }
+#optJ .go:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #D4952A; }
+#optJ .go:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #D4952A; }
+#optJ .g-btn { border: 3px solid #0b0b0b; border-radius: 0; font-weight: 700; }
+#optJ .or { font-weight: 800; }
+#optJ .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; font-weight: 800; }
+#optJ .links a { color: #0b0b0b; }
+#optJ .msg { color: #b42318; font-weight: 700; }
+#optJ :focus-visible { outline: 3px solid #1a56db; outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  #optB, #optC, #optD, #optE, #optG, #optI, #optJ { grid-template-columns: 1fr; }
+  #optF { padding: 24px 8px 0; }
+  #optF .corpo { width: 100%; grid-template-columns: 18px 1fr 18px; gap: 0 14px; padding: 22px 10px 0; }
+  #optG .esq { padding: 24px 16px 10px; }
+  #optG .dir { border-left: 0; border-top: 1px solid #e6dcc8; padding: 28px 20px 36px; }
+  #optH { padding: 20px 12px; }
+  #optH .quadro { min-height: 0; display: flex; flex-direction: column; gap: 18px; padding: 10px 0; }
+  #optH .nota { position: relative; inset: auto; width: 100%; max-width: 300px; }
+  #optH .n2, #optH .n4 { display: none; }
+  #optH2 { padding: 16px 8px 30px; }
+  #optH2 .lousa { grid-template-columns: 1fr; min-height: 0; border-width: 8px; padding: 18px 14px 30px; }
+  #optH2 .col.fazer, #optH2 .col.feito { display: none; }
+  #optH2 .bandeja i { width: 36px !important; }
+  #optH3 { padding: 20px 12px; }
+  #optH3 .quadro { min-height: 0; padding: 10px 0; }
+  #optH3 .peca, #optH3 svg.fios { display: none; }
+  #optH4 { padding: 24px 12px; }
+  #optH4 .quadro { min-height: 0; display: flex; flex-direction: column; gap: 22px; padding-top: 10px; }
+  #optH4 .card { position: relative; inset: auto; width: 100%; max-width: 300px; }
+  #optH4 .c2, #optH4 .c3, #optH4 .c4 { display: none; }
+  #optI .esq { order: 2; padding: 24px 12px 0; }
+  #optI .folha { height: 280px; padding: 26px 22px; font-size: 13px; }
+  #optI .dir { padding: 28px 20px 36px; }
+  #optJ .esq { padding: 28px 20px; border-right: 0; border-bottom: 4px solid #0b0b0b; }
+  #optJ .dir { padding: 28px 18px 40px; }
+  #optA { padding: 40px 12px 24px; }
+  #optA .capa { padding: 24px 18px 22px; }
+  #optA .orgao { display: none; }
+  #optA .grade { grid-template-columns: 1fr; }
+  #optA .grade label { border-right: 0; border-bottom: 1.5px solid #2a2418; }
+  #optA .grade label:last-child { border-bottom: 0; }
+  #optA .carimbo { top: 96px; right: 14px; font-size: 12px; }
+  #optB .estante { display: none; }
+  #optB .centro { padding: 28px 14px; }
+  #optB .livro { padding: 28px 22px 22px 30px; }
+  #optC .esq { padding: 28px 20px; border-right: 0; border-bottom: 1px solid #23272f; }
+  #optC .dir, #optD .esq { padding: 28px 20px 36px; }
+  #optD .dir { padding: 28px 20px; }
+  #optE .esq { padding: 24px 20px; }
+  #optE .dir { border-left: 0; border-top: 1px solid #0e0e0e; padding: 28px 20px 36px; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="causify" viewBox="0 0 600 230">
+    <path d="M72 22 L58 22 L58 208 L72 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M528 22 L542 22 L542 208 L528 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="300" y="132" font-family="Georgia, serif" font-style="italic" font-size="72" letter-spacing="2" text-anchor="middle" fill="currentColor">Causify</text>
+    <line x1="145" y1="152" x2="455" y2="152" stroke="#D4952A" stroke-width="1.5"/>
+    <text x="300" y="178" font-family="Arial, sans-serif" font-size="12" letter-spacing="5" text-anchor="middle" fill="#C8933A">GESTÃO JURÍDICA INTELIGENTE</text>
+  </symbol>
+  <symbol id="google" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Login do sistema: 13 propostas</h1>
+      <p>Mesmo conteúdo da tela atual (e-mail, senha, Google, esqueci a senha, criar escritório e blog) em cinco identidades. Os campos funcionam para sentir foco e botão; nada é enviado.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Propostas de login">
+      <button role="tab" id="tA" aria-controls="optA" aria-selected="true" data-k="A"><span class="k">A</span> Autos</button>
+      <button role="tab" id="tB" aria-controls="optB" aria-selected="false" data-k="B"><span class="k">B</span> Biblioteca</button>
+      <button role="tab" id="tC" aria-controls="optC" aria-selected="false" data-k="C"><span class="k">C</span> Calendário de prazos</button>
+      <button role="tab" id="tD" aria-controls="optD" aria-selected="false" data-k="D"><span class="k">D</span> Conversa com a IA</button>
+      <button role="tab" id="tE" aria-controls="optE" aria-selected="false" data-k="E"><span class="k">E</span> Suíço</button>
+      <button role="tab" id="tF" aria-controls="optF" aria-selected="false" data-k="F"><span class="k">F</span> Mármore</button>
+      <button role="tab" id="tG" aria-controls="optG" aria-selected="false" data-k="G"><span class="k">G</span> Balança</button>
+      <button role="tab" id="tH" aria-controls="optH" aria-selected="false" data-k="H"><span class="k">H</span> Mural</button>
+      <button role="tab" id="tH2" aria-controls="optH2" aria-selected="false" data-k="H2"><span class="k">H2</span> Quadro branco</button>
+      <button role="tab" id="tH3" aria-controls="optH3" aria-selected="false" data-k="H3"><span class="k">H3</span> Fio vermelho</button>
+      <button role="tab" id="tH4" aria-controls="optH4" aria-selected="false" data-k="H4"><span class="k">H4</span> Feltro</button>
+      <button role="tab" id="tI"aria-controls="optI" aria-selected="false" data-k="I"><span class="k">I</span> Petição</button>
+      <button role="tab" id="tJ" aria-controls="optJ" aria-selected="false" data-k="J"><span class="k">J</span> Brutalista</button>
+    </div>
+  </header>
+
+  <div class="note" id="note"></div>
+
+  <div class="frame">
+    <div class="bar"><i></i><i></i><i></i><span class="url">causify.com.br/login</span></div>
+
+    <!-- A · Autos -->
+    <section class="screen mock on" id="optA" role="tabpanel" aria-labelledby="tA">
+      <div class="pasta">
+        <div class="aba">Acesso ao sistema</div>
+        <div class="capa">
+          <div class="topo">
+            <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+            <div class="orgao">Gestão de processos<br>Prazos · Agenda · Financeiro</div>
+          </div>
+          <div class="cnj">Autos nº</div>
+          <p class="num" id="numA">0001024-26.2026.8.26.0100</p>
+          <form data-msg="#msgA" novalidate>
+            <div class="grade">
+              <label for="emailA"><span>Advogado(a) · e-mail</span><input id="emailA" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+              <label for="senhaA"><span>Senha</span><input id="senhaA" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            </div>
+            <div class="acoes">
+              <button class="go" type="submit">Abrir os autos</button>
+              <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            </div>
+            <div class="msg" id="msgA" aria-live="polite"></div>
+          </form>
+          <div class="carimbo">Conclusos<small id="dataA">24/10/2026</small></div>
+          <div class="rodape"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B · Biblioteca -->
+    <section class="screen mock" id="optB" role="tabpanel" aria-labelledby="tB">
+      <div class="estante esq" id="estEsq" aria-hidden="true"></div>
+      <div class="centro">
+        <div class="livro">
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <p class="boas">Bem-vindo de volta ao seu escritório.</p>
+          <form data-msg="#msgB" novalidate>
+            <label for="emailB">E-mail<input id="emailB" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaB">Senha<input id="senhaB" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgB" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+      <div class="estante dir" id="estDir" aria-hidden="true"></div>
+    </section>
+
+    <!-- C · Calendário de prazos -->
+    <section class="screen mock" id="optC" role="tabpanel" aria-labelledby="tC">
+      <div class="esq">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <div class="relogio">
+          <div class="hora" id="horaC">--:--<span class="s">:--</span></div>
+          <div class="dia" id="diaC"><b>--</b>Horário de Brasília</div>
+        </div>
+        <div>
+          <div class="cal" id="calC" aria-label="Calendário do mês com dias úteis"></div>
+        </div>
+        <div class="legenda">
+          <span><i style="background:#e6e8ec"></i>Hoje</span>
+          <span><i style="background:#1d2a44"></i>Dias úteis contados</span>
+          <span><i style="background:#D4952A"></i>Vencimento</span>
+          <span><i style="background:transparent;border:1px solid #8a5d1d"></i>Feriado</span>
+        </div>
+        <p class="exemplo" id="exC">Exemplo: um prazo de <b>15 dias úteis</b> intimado hoje vence em <b>--</b>. O Causify faz essa conta para você.</p>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <div><h3>Entrar</h3><p>Seus prazos estão esperando.</p></div>
+          <form data-msg="#msgC" novalidate>
+            <label for="emailC">E-mail<input id="emailC" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaC">Senha<input id="senhaC" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgC" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- D · Conversa com a IA -->
+    <section class="screen mock" id="optD" role="tabpanel" aria-labelledby="tD">
+      <div class="esq">
+        <div class="box">
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <h3>Bom dia, doutor(a).<br><em>Vamos ao trabalho?</em></h3>
+          <form data-msg="#msgD" novalidate>
+            <label for="emailD">E-mail<input id="emailD" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaD">Senha<input id="senhaD" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgD" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+      <div class="dir">
+        <div class="tit"><i></i>Assistente Causify · exemplo</div>
+        <div class="chat" id="chatD">
+          <div class="b eu">O que chegou de novo hoje?</div>
+          <div class="b ia">Encontrei <b>3 publicações</b> nos seus processos:
+            <ul>
+              <li>Intimação para contestar, 15 dias úteis <span class="tag">prazo sugerido</span></li>
+              <li>Audiência de conciliação designada para 11/11, 14h</li>
+              <li>Sentença de procedência no processo da Dra. Prado</li>
+            </ul>
+          </div>
+          <div class="b eu">Agenda a audiência e cria a tarefa do prazo.</div>
+          <div class="b ia" id="digD"><span class="dig" aria-label="digitando"><i></i><i></i><i></i></span></div>
+        </div>
+        <p class="aviso">A IA só altera sua agenda depois que você confirma no chat.</p>
+      </div>
+    </section>
+
+    <!-- E · Suíço -->
+    <section class="screen mock" id="optE" role="tabpanel" aria-labelledby="tE">
+      <div class="esq">
+        <div class="meta"><span>Causify</span><span>Gestão jurídica inteligente</span><span id="anoE">2026</span></div>
+        <div class="marca" aria-label="Causify"><span class="col">[</span><span class="nome">Causify</span><span class="col">]</span></div>
+        <p class="frase">Processos, prazos e financeiro do escritório <b>em um só lugar.</b></p>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <h3>Acesso</h3>
+          <form data-msg="#msgE" novalidate>
+            <label for="emailE">E-mail<input id="emailE" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaE">Senha<input id="senhaE" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit"><span>Entrar</span><span aria-hidden="true">→</span></button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgE" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- F · Mármore -->
+    <section class="screen mock" id="optF" role="tabpanel" aria-labelledby="tF">
+      <div class="templo">
+        <svg class="frontao" viewBox="0 0 720 150" role="img" aria-label="Causify">
+          <polygon points="360,8 712,118 8,118" fill="#efebe3" stroke="#cfc7b8" stroke-width="2"/>
+          <polygon points="360,30 650,112 70,112" fill="none" stroke="#ddd6c9" stroke-width="1.5"/>
+          <text x="360" y="96" text-anchor="middle" font-size="40" font-weight="700" letter-spacing="14" fill="#5b4f3c">CAUSIFY</text>
+          <rect x="0" y="118" width="720" height="16" fill="#e3ded4" stroke="#d0c9bc"/>
+          <rect x="16" y="134" width="688" height="16" fill="#ece8e0" stroke="#d6d0c4"/>
+          <text x="360" y="146" text-anchor="middle" font-size="10" letter-spacing="7" fill="#8c7a5b">GESTÃO JURÍDICA INTELIGENTE</text>
+        </svg>
+        <div class="corpo">
+          <div class="coluna" aria-hidden="true"></div>
+          <div class="porta">
+            <div class="insc">Justiça · Ordem · Prazo</div>
+            <form data-msg="#msgF" novalidate>
+              <label for="emailF">E-mail<input id="emailF" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+              <label for="senhaF">Senha<input id="senhaF" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+              <button class="go" type="submit">Entrar</button>
+              <div class="or">ou</div>
+              <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+              <div class="msg" id="msgF" aria-live="polite"></div>
+            </form>
+            <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+          </div>
+          <div class="coluna" aria-hidden="true"></div>
+        </div>
+        <div class="degraus" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- G · Balança -->
+    <section class="screen mock" id="optG" role="tabpanel" aria-labelledby="tG">
+      <div class="esq">
+        <svg class="bal" viewBox="0 0 440 360" aria-hidden="true">
+          <rect x="150" y="330" width="140" height="14" rx="3" fill="#23201b"/>
+          <rect x="185" y="316" width="70" height="16" rx="3" fill="#3a342b"/>
+          <rect x="214" y="80" width="12" height="240" fill="#3a342b"/>
+          <circle cx="220" cy="64" r="16" fill="#D4952A"/>
+          <g id="feixe">
+            <rect x="60" y="74" width="320" height="10" rx="5" fill="#23201b"/>
+            <circle cx="220" cy="79" r="9" fill="#D4952A"/>
+          </g>
+          <g class="prato" id="pratoE">
+            <line x1="70" y1="79" x2="20" y2="210" stroke="#8a7a5c" stroke-width="2"/>
+            <line x1="70" y1="79" x2="120" y2="210" stroke="#8a7a5c" stroke-width="2"/>
+            <path d="M10 210 Q70 250 130 210 Z" fill="#D4952A"/>
+            <text x="70" y="236" text-anchor="middle" font-family="Figtree, sans-serif" font-size="13" font-weight="700" fill="#23201b">E-MAIL</text>
+            <rect id="pesoE" x="52" y="186" width="36" height="22" rx="4" fill="#1a56db" opacity="0"/>
+          </g>
+          <g class="prato" id="pratoD">
+            <line x1="370" y1="79" x2="320" y2="210" stroke="#8a7a5c" stroke-width="2"/>
+            <line x1="370" y1="79" x2="420" y2="210" stroke="#8a7a5c" stroke-width="2"/>
+            <path d="M310 210 Q370 250 430 210 Z" fill="#D4952A"/>
+            <text x="370" y="236" text-anchor="middle" font-family="Figtree, sans-serif" font-size="13" font-weight="700" fill="#23201b">SENHA</text>
+            <rect id="pesoD" x="352" y="186" width="36" height="22" rx="4" fill="#1a56db" opacity="0"/>
+          </g>
+        </svg>
+        <div class="estado" id="estadoG">Preencha os dois pratos.</div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <h3>O equilíbrio do seu escritório.</h3>
+          <form data-msg="#msgG" novalidate>
+            <label for="emailG"><span><b>◐</b> E-mail</span><input id="emailG" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaG"><span><b>◑</b> Senha</span><input id="senhaG" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgG" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- H · Mural -->
+    <section class="screen mock" id="optH" role="tabpanel" aria-labelledby="tH">
+      <div class="quadro">
+        <div class="nota n1"><span class="pino"></span><small>Prazo</small>Contestação · Almeida x Banco Sul<br>vence 16/11</div>
+        <div class="nota n2"><span class="pino"></span><small>Audiência</small>Conciliação 11/11 às 14h · 3ª Vara Cível</div>
+        <div class="nota n3"><span class="pino"></span><small>Financeiro</small>Honorários de outubro: 4 boletos a receber</div>
+        <div class="nota n4"><span class="pino"></span><small>Lembrete</small>Ligar para a Sra. Prado sobre a sentença ✓</div>
+        <div class="ficha">
+          <span class="pino"></span>
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <form data-msg="#msgH" novalidate>
+            <label for="emailH">E-mail<input id="emailH" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaH">Senha<input id="senhaH" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar no escritório</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgH" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- H2 · Quadro branco -->
+    <section class="screen mock" id="optH2" role="tabpanel" aria-labelledby="tH2">
+      <div class="lousa">
+        <div class="col fazer" aria-hidden="true">
+          <h4>A fazer</h4>
+          <div class="item">Contestação Almeida x Banco Sul <span class="red">16/11!</span></div>
+          <div class="item">Réplica · proc. 0004512</div>
+          <div class="item">Emitir boletos de outubro</div>
+          <div class="seta">← não esquecer!!</div>
+        </div>
+        <div class="cartao">
+          <span class="ima a"></span><span class="ima b"></span>
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <form data-msg="#msgH2" novalidate>
+            <label for="emailH2">E-mail<input id="emailH2" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaH2">Senha<input id="senhaH2" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgH2" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+        <div class="col feito" aria-hidden="true">
+          <h4>Feito</h4>
+          <div class="item">Audiência 11/11 agendada</div>
+          <div class="item">Publicações de hoje lidas</div>
+          <div class="item">Ligar p/ Sra. Prado</div>
+          <div class="item">Recibo de honorários</div>
+        </div>
+        <div class="bandeja" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- H3 · Fio vermelho -->
+    <section class="screen mock" id="optH3" role="tabpanel" aria-labelledby="tH3">
+      <div class="quadro">
+        <svg class="fios" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="13" y1="16" x2="50" y2="50"/><line x1="12" y1="78" x2="50" y2="50"/>
+          <line x1="87" y1="17" x2="50" y2="50"/><line x1="88" y1="80" x2="50" y2="50"/>
+          <line x1="13" y1="16" x2="12" y2="78"/><line x1="87" y1="17" x2="88" y2="80"/>
+        </svg>
+        <div class="peca foto" style="left:13%;top:18%;--r:-6deg"><span class="pino"></span><div class="img">M.H.A.</div><div class="txt">Cliente: Maria Helena</div></div>
+        <div class="peca doc" style="left:12%;top:78%;--r:4deg"><span class="pino"></span><b>Proc. 0001024-26</b><i></i><i></i><i></i><i></i><i></i><span class="carimbo">URGENTE</span></div>
+        <div class="peca" style="left:87%;top:19%;--r:5deg"><span class="pino"></span><b>Audiência</b><div class="txt">11/11 · 14h<br>3ª Vara Cível</div></div>
+        <div class="peca" style="left:88%;top:80%;--r:-4deg"><span class="pino"></span><b>Prazo</b><div class="txt">Contestar até 16/11 (15 dias úteis)</div></div>
+        <div class="ficha">
+          <span class="pino"></span>
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <div class="caso">Arquivo do escritório · acesso restrito</div>
+          <form data-msg="#msgH3" novalidate>
+            <label for="emailH3">E-mail<input id="emailH3" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaH3">Senha<input id="senhaH3" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Abrir o caso</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgH3" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- H4 · Feltro -->
+    <section class="screen mock" id="optH4" role="tabpanel" aria-labelledby="tH4">
+      <div class="quadro">
+        <div class="card c1"><span class="fita"></span><b>Prazo</b><strong>Contestação</strong>Almeida x Banco Sul · vence 16/11</div>
+        <div class="card c2"><span class="fita"></span><b>Audiência</b><strong>11/11 às 14h</strong>Conciliação · 3ª Vara Cível</div>
+        <div class="card c3"><span class="fita"></span><b>Financeiro</b><strong>4 boletos</strong>Honorários de outubro a receber</div>
+        <div class="card c4"><span class="fita"></span><b>Hoje</b><strong>3 publicações</strong>Já lidas e com prazo sugerido</div>
+        <div class="papel">
+          <span class="fita"></span><span class="fita dir"></span>
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <h3>Seu escritório, organizado.</h3>
+          <form data-msg="#msgH4" novalidate>
+            <label for="emailH4">E-mail<input id="emailH4" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaH4">Senha<input id="senhaH4" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgH4" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- I · Petição -->
+    <section class="screen mock" id="optI" role="tabpanel" aria-labelledby="tI">
+      <div class="esq">
+        <div class="folha" aria-label="Exemplo de petição sendo escrita"><div id="textoI"></div></div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <div><h3>Continue de onde parou.</h3><p>Seus processos, prazos e documentos esperam por você.</p></div>
+          <form data-msg="#msgI" novalidate>
+            <label for="emailI">E-mail<input id="emailI" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaI">Senha<input id="senhaI" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgI" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- J · Brutalista -->
+    <section class="screen mock" id="optJ" role="tabpanel" aria-labelledby="tJ">
+      <div class="esq">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <h2>Prazo perdido <span>não volta.</span></h2>
+        <div class="selos"><span>Publicações automáticas</span><span>Prazos em dias úteis</span><span>Financeiro do escritório</span></div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <h3>Entrar</h3>
+          <form data-msg="#msgJ" novalidate>
+            <label for="emailJ">E-mail<input id="emailJ" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaJ">Senha<input id="senhaJ" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Bora trabalhar →</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgJ" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <p class="hint">Teclas 1 a 9 e 0 trocam de proposta. Abaixo de ~860px as telas empilham como no celular.</p>
+</div>
+
+<script>
+const notes = {
+  A: '<span><b>Autos.</b> A tela é a capa de um processo em papel pardo, com número no padrão CNJ, campos datilografados e o carimbo "Conclusos". O mundo do advogado, sem cara de software.</span><span><b>Força:</b> memorável e muito do meio jurídico.</span>',
+  B: '<span><b>Biblioteca.</b> Couro verde e ouro, com estantes de códigos (CPC, CLT, CF/88) dos dois lados. O login é a capa do livro. Clássica e premium.</span><span><b>Força:</b> tradição e confiança; conversa com o logo dourado.</span>',
+  C: '<span><b>Calendário de prazos.</b> Relógio de Brasília e o mês corrente com dias úteis, fins de semana e feriados. Mostra uma contagem real de 15 dias úteis a partir de hoje.</span><span><b>Força:</b> mostra o valor do produto antes do login.</span>',
+  D: '<span><b>Conversa com a IA.</b> Ao lado do login, o assistente resume as publicações do dia e propõe prazo e audiência. Clara, editorial e atual.</span><span><b>Força:</b> põe a IA em destaque logo na entrada.</span>',
+  E: '<span><b>Suíço.</b> Grade aparente, o logo em tamanho de cartaz e formulário de linhas finas. Quase só preto e branco, com o ouro de detalhe.</span><span><b>Força:</b> a mais limpa e a mais fácil de manter.</span>',
+  F: '<span><b>Mármore.</b> A fachada de um tribunal: frontão com CAUSIFY entalhado, colunas caneladas e degraus. O login é a porta de entrada.</span><span><b>Força:</b> solene e institucional, ótima para escritórios tradicionais.</span>',
+  G: '<span><b>Balança.</b> A balança da justiça reage ao formulário: preencher o e-mail pesa um prato, a senha pesa o outro, e com os dois ela se equilibra. Experimente digitar.</span><span><b>Força:</b> um detalhe interativo e simpático com o símbolo mais reconhecível do Direito.</span>',
+  H: '<span><b>Mural.</b> Quadro de cortiça do escritório com post-its de prazo, audiência e financeiro. O login é uma ficha pautada presa com alfinete.</span><span><b>Força:</b> calorosa e humana; lembra a rotina que o sistema organiza.</span>',
+  H2: '<span><b>Mural · Quadro branco.</b> O quadro do escritório escrito a pincel, com colunas "A fazer" e "Feito", ímãs e bandeja de canetas. O login é um cartão preso por ímãs no meio.</span><span><b>Força:</b> clara e leve; fala de organização e rotina.</span>',
+  H3: '<span><b>Mural · Fio vermelho.</b> Cortiça escura de investigação: cliente, processo, audiência e prazo ligados por barbante vermelho até a ficha de login, "Abrir o caso".</span><span><b>Força:</b> a mais cinematográfica; transforma cada processo num caso a resolver.</span>',
+  H4: '<span><b>Mural · Feltro.</b> Painel de feltro verde-sálvia com cartões pastel presos por fita decorativa. Tipografia serifada suave e verde no botão.</span><span><b>Força:</b> a versão mais calma e moderna do mural; boa para uso diário.</span>',
+  I: '<span><b>Petição.</b> Uma petição inicial sendo escrita em tempo real ao lado do login, em Times sobre papel branco.</span><span><b>Força:</b> fala a língua do advogado e passa a ideia de "continue de onde parou".</span>',
+  J: '<span><b>Brutalista.</b> Amarelo forte, bordas pretas grossas, sombras sólidas e selos coloridos. "Prazo perdido não volta" em letras gigantes.</span><span><b>Força:</b> a mais ousada; foge de todo concorrente e chama atenção em anúncio.</span>'
+};
+const KEYS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+const TODAS = [...KEYS, 'H2', 'H3', 'H4'];
+const tabs = [...document.querySelectorAll('.tabs button')];
+function show(k) {
+  tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === k)));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 'opt' + k));
+  document.getElementById('note').innerHTML = notes[k];
+  try { localStorage.setItem('login-opt', k); } catch (e) {}
+  if (k === 'I' && typeof iniciarPeticao === 'function') iniciarPeticao();
+}
+tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.k)));
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input')) return;
+  if (!/^[0-9]$/.test(e.key)) return;
+  show(KEYS[(Number(e.key) + 9) % 10]);
+});
+document.querySelectorAll('.mock form').forEach(f => f.addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.querySelector(f.dataset.msg);
+  const email = f.querySelector('input[type=email]').value.trim();
+  msg.textContent = email ? 'Protótipo: aqui o usuário entraria no sistema.' : 'Informe o e-mail da sua conta.';
+}));
+
+// "Agora" em Brasília
+const TZ = 'America/Sao_Paulo';
+function agoraBrasilia() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return { y: +p.year, m: +p.month, d: +p.day, h: p.hour, mi: p.minute, s: p.second };
+}
+const pad = n => String(n).padStart(2, '0');
+const agora = agoraBrasilia();
+document.getElementById('dataA').textContent = `${pad(agora.d)}/${pad(agora.m)}/${agora.y}`;
+document.getElementById('numA').textContent = `0001024-26.${agora.y}.8.26.0100`;
+document.getElementById('anoE').textContent = agora.y;
+
+// B · estantes
+const codigos = ['CPC', 'CLT', 'CF/88', 'Código Civil', 'CDC', 'Código Penal', 'CPP', 'CTN', 'ECA', 'Lei 8.245', 'Vade Mecum', 'Súmulas STJ', 'LINDB', 'Lei 9.099'];
+const cores = ['#5b1f1f', '#14233f', '#1d3b2c', '#3d2a14', '#4a1d34', '#202a2f', '#5a3b12', '#2a1f3d'];
+function estante(id, seed) {
+  const el = document.getElementById(id);
+  let h = '';
+  for (let i = 0; i < 26; i++) {
+    const r = (Math.sin((i + 1) * seed) + 1) / 2;
+    const nome = codigos[(i * 5 + seed) % codigos.length];
+    h += `<div class="lombada" style="--w:${30 + Math.round(r * 18)}px;--h:${300 + Math.round(r * 160)}px;--c:${cores[(i * 3 + seed) % cores.length]}"><span>${nome}</span></div>`;
+  }
+  el.innerHTML = h;
+}
+estante('estEsq', 3); estante('estDir', 7);
+
+// C · relógio e calendário de dias úteis
+const FERIADOS_2026 = ['2026-01-01', '2026-02-16', '2026-02-17', '2026-04-03', '2026-04-21', '2026-05-01', '2026-06-04', '2026-09-07', '2026-10-12', '2026-11-02', '2026-11-15', '2026-11-20', '2026-12-25'];
+const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+const ehUtil = dt => { const w = dt.getUTCDay(); return w !== 0 && w !== 6 && !FERIADOS_2026.includes(dt.toISOString().slice(0, 10)); };
+function relogio() {
+  const a = agoraBrasilia();
+  document.getElementById('horaC').innerHTML = `${a.h}:${a.mi}<span class="s">:${a.s}</span>`;
+}
+function calendario() {
+  const a = agoraBrasilia();
+  const hoje = new Date(Date.UTC(a.y, a.m - 1, a.d));
+  // CPC art. 224: exclui o dia do começo, conta só dias úteis
+  const contados = []; let dt = new Date(hoje);
+  while (contados.length < 15) { dt = new Date(dt.getTime() + 864e5); if (ehUtil(dt)) contados.push(dt.toISOString().slice(0, 10)); }
+  const vence = contados[contados.length - 1];
+  const fmtLongo = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
+  document.getElementById('diaC').innerHTML = `<b>${fmtLongo.format(hoje)}</b>Horário de Brasília`;
+  const [vy, vm, vd] = vence.split('-').map(Number);
+  document.getElementById('exC').innerHTML = `Exemplo: um prazo de <b>15 dias úteis</b> intimado hoje vence em <b>${fmtLongo.format(new Date(Date.UTC(vy, vm - 1, vd)))}</b>, já descontando fins de semana e feriados. O Causify faz essa conta para você.`;
+  // Janela de semanas a partir do domingo desta semana, até cobrir o vencimento
+  const cal = document.getElementById('calC');
+  let h = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<div class="wd">${x}</div>`).join('');
+  const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const inicio = new Date(hoje.getTime() - hoje.getUTCDay() * 864e5);
+  const fim = new Date(Date.UTC(vy, vm - 1, vd));
+  for (let dia = new Date(inicio); dia <= fim || dia.getUTCDay() !== 0; dia = new Date(dia.getTime() + 864e5)) {
+    const k = dia.toISOString().slice(0, 10), w = dia.getUTCDay(), d = dia.getUTCDate();
+    let c = 'd';
+    if (k === hoje.toISOString().slice(0, 10)) c += ' hoje';
+    else if (k === vence) c += ' vence';
+    else if (FERIADOS_2026.includes(k)) c += ' fer';
+    else if (w === 0 || w === 6) c += ' fds';
+    else if (contados.includes(k)) c += ' conta';
+    h += `<div class="${c}">${d === 1 ? `<span>1<small>${meses[dia.getUTCMonth()]}</small></span>` : d}</div>`;
+  }
+  cal.innerHTML = h;
+}
+relogio(); calendario();
+setInterval(relogio, 1000);
+
+// D · resposta da IA aparece depois de "digitando"
+setTimeout(() => {
+  const el = document.getElementById('digD');
+  if (el) el.innerHTML = 'Pronto: audiência em <b>11/11 às 14h</b> e tarefa "Contestar" com prazo calculado. <b>Confirma?</b>';
+}, 2600);
+
+// G · balança: cada campo preenchido pesa um prato
+const feixe = document.getElementById('feixe');
+feixe.style.transformOrigin = '220px 79px';
+function balanca() {
+  const e = document.getElementById('emailG').value.trim().length > 0;
+  const s = document.getElementById('senhaG').value.length > 0;
+  const a = (Number(s) - Number(e)) * 10;
+  const dy = 150 * Math.sin(a * Math.PI / 180);
+  feixe.style.transform = `rotate(${a}deg)`;
+  document.getElementById('pratoE').style.transform = `translateY(${-dy}px)`;
+  document.getElementById('pratoD').style.transform = `translateY(${dy}px)`;
+  document.getElementById('pesoE').setAttribute('opacity', e ? 1 : 0);
+  document.getElementById('pesoD').setAttribute('opacity', s ? 1 : 0);
+  const est = document.getElementById('estadoG');
+  est.textContent = e && s ? 'Em equilíbrio. Pode entrar.' : e ? 'Falta a senha.' : s ? 'Falta o e-mail.' : 'Preencha os dois pratos.';
+  est.classList.toggle('ok', e && s);
+}
+['emailG', 'senhaG'].forEach(id => document.getElementById(id).addEventListener('input', balanca));
+
+// I · petição sendo datilografada
+const PETICAO = [
+  'Excelentíssimo(a) Senhor(a) Doutor(a) Juiz(a) de Direito da 3ª Vara Cível do Foro Central da Comarca de São Paulo/SP',
+  'MARIA HELENA DE ALMEIDA, brasileira, casada, professora, inscrita no CPF sob o nº 000.000.000-00, residente e domiciliada nesta Capital, vem, respeitosamente, à presença de Vossa Excelência, por seu advogado que esta subscreve, propor a presente',
+  'AÇÃO DE INDENIZAÇÃO POR DANOS MATERIAIS E MORAIS, pelo procedimento comum, em face de BANCO SUL S.A., pessoa jurídica de direito privado, pelos fatos e fundamentos a seguir expostos.',
+  'I. DOS FATOS. Em março de 2026, a Autora constatou descontos indevidos em sua conta corrente, sem qualquer contratação que os justificasse, conforme extratos anexos.'
+];
+const textoI = document.getElementById('textoI');
+const totalI = PETICAO.join('\n');
+let posI = 0;
+function digitar() {
+  const parte = totalI.slice(0, posI).split('\n');
+  textoI.innerHTML = parte.map((t, i) => i === 0 ? `<div class="ender">${t}</div>` : `<p>${t}</p>`).join('')
+    .replace(/(<\/(div|p)>)$/, '<span class="cursor"></span>$1');
+  if (posI < totalI.length) { posI += 2; setTimeout(digitar, 28); }
+}
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { posI = totalI.length; }
+let digitando = false;
+function iniciarPeticao() { if (!digitando) { digitando = true; digitar(); } }
+
+let start = 'A';
+try { start = localStorage.getItem('login-opt') || 'A'; } catch (e) {}
+show(TODAS.includes(start) ? start : 'A');
+</script>

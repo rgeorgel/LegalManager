@@ -1,0 +1,98 @@
+/* Tela de login do sistema: identidade "Mural · Feltro" (proposta H4 em docs/design/login-propostas.html).
+   Painel de feltro verde-sálvia, cartões pastel presos com fita e o formulário numa folha ao centro. */
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+}
+
+.lf {
+  --lf-feltro: #8fa5a0;
+  --lf-texto: #24323a;
+  --lf-texto-suave: #4f5f66;
+  --lf-verde: #2f5d55;
+  --lf-verde-escuro: #24483f;
+  --lf-papel: #fffdf9;
+  --lf-serif: "DM Serif Display", Georgia, "Times New Roman", serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 36px 20px;
+  color: var(--lf-texto);
+  overflow: hidden;
+  background: var(--lf-feltro);
+  background-image:
+    radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.3px),
+    radial-gradient(rgba(0,0,0,.06) 1px, transparent 1.3px);
+  background-size: 4px 4px, 5px 5px;
+  background-position: 0 0, 2px 3px;
+}
+.lf-quadro { position: relative; width: 100%; max-width: 1040px; min-height: 620px; display: grid; place-items: center; }
+
+/* Fita adesiva decorativa */
+.lf-fita {
+  position: absolute; top: -11px; left: 50%; width: 86px; height: 24px; margin-left: -43px;
+  transform: rotate(var(--fr, -3deg)); opacity: .85; mix-blend-mode: multiply; pointer-events: none;
+  background: var(--fc, #f4c7a1) repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 6px, transparent 6px 12px);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+}
+
+/* Cartões ao redor */
+.lf-cartao {
+  position: absolute; width: 210px; padding: 22px 18px 16px; border-radius: 4px;
+  box-shadow: 0 8px 18px -10px rgba(20,40,40,.55); font-size: 14px; line-height: 1.45; transform: rotate(var(--r));
+}
+.lf-cartao b { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .65; margin-bottom: 6px; }
+.lf-cartao strong { display: block; font: 400 22px/1.15 var(--lf-serif); margin-bottom: 4px; }
+.lf-c1 { top: 24px; left: 10px; --r: -3deg; background: #fdf6e3; }
+.lf-c2 { bottom: 30px; left: 40px; --r: 2.5deg; background: #fde2e4; --fc: #a8d5ba; }
+.lf-c3 { top: 40px; right: 20px; --r: 3deg; background: #e3eefc; --fc: #f6d186; --fr: 4deg; }
+.lf-c4 { bottom: 44px; right: 10px; --r: -2deg; background: #e6f4ea; --fc: #f4a6a6; }
+
+/* Folha com o formulário */
+.lf-papel {
+  position: relative; width: 100%; max-width: 400px; background: var(--lf-papel); border-radius: 6px;
+  padding: 34px 28px 24px; box-shadow: 0 22px 40px -18px rgba(20,40,40,.6);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.lf-papel > .lf-fita { width: 110px; margin-left: -55px; top: -13px; height: 28px; --fc: #f6d186; }
+.lf-papel > .lf-fita.lf-canto { left: auto; right: -26px; top: 26px; margin: 0; transform: rotate(52deg); --fc: #a8d5ba; width: 80px; height: 22px; }
+.lf-logo img { width: 150px; height: auto; display: block; margin: -4px 0 0 -8px; }
+.lf-papel h1 { margin: 0; font: 400 30px/1.1 var(--lf-serif); color: var(--lf-texto); }
+.lf-papel .alert { margin: 0; }
+.lf-papel form { display: flex; flex-direction: column; gap: 14px; }
+.lf-campo { display: flex; flex-direction: column; gap: 5px; }
+.lf-campo label { font-size: 13px; font-weight: 600; color: var(--lf-texto-suave); }
+.lf-campo input {
+  font: inherit; font-size: 15.5px; width: 100%; color: var(--lf-texto);
+  border: 1.5px solid #dfe5e3; border-radius: 10px; padding: 12px 13px; background: #f7f9f8; outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.lf-campo input:focus { border-color: #4f7f75; background: #fff; box-shadow: 0 0 0 3px rgba(79,127,117,.15); }
+.lf-botao {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+  background: var(--lf-verde); color: #fff; border: 0; border-radius: 10px; padding: 13px;
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s;
+}
+.lf-botao:hover { background: var(--lf-verde-escuro); }
+.lf-botao:disabled { opacity: .75; cursor: default; }
+.lf-ou { display: flex; align-items: center; gap: 12px; font-size: 12.5px; color: #9aa7a4; }
+.lf-ou::before, .lf-ou::after { content: ""; flex: 1; height: 1px; background: #e3e8e6; }
+.lf-google { display: flex; justify-content: center; min-height: 44px; }
+.lf-links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; margin-top: 4px; }
+.lf-links a { color: var(--lf-verde); font-weight: 600; text-decoration: none; }
+.lf-links a:hover { text-decoration: underline; }
+.lf-botao:focus-visible, .lf-links a:focus-visible, .lf-logo:focus-visible { outline: 2px solid var(--lf-verde); outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .lf { padding: 28px 14px; place-items: start center; }
+  .lf-quadro { min-height: 0; padding-top: 12px; }
+  .lf-cartao { display: none; }
+  .lf-papel { padding: 30px 20px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-campo input, .lf-botao { transition: none; }
+}
