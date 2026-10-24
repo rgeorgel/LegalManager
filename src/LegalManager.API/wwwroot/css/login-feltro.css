@@ -1,4 +1,4 @@
-/* Tela de login do sistema: identidade "Mural · Feltro" (proposta H4 em docs/design/login-propostas.html).
+/* Telas de login e recuperação de senha: identidade "Mural · Feltro" (proposta H4 em docs/design/login-propostas.html).
    Painel de feltro verde-sálvia, cartões pastel presos com fita e o formulário numa folha ao centro. */
 @font-face {
   font-family: "DM Serif Display";
@@ -62,6 +62,7 @@
 .lf-papel > .lf-fita.lf-canto { left: auto; right: -26px; top: 26px; margin: 0; transform: rotate(52deg); --fc: #a8d5ba; width: 80px; height: 22px; }
 .lf-logo img { width: 150px; height: auto; display: block; margin: -4px 0 0 -8px; }
 .lf-papel h1 { margin: 0; font: 400 30px/1.1 var(--lf-serif); color: var(--lf-texto); }
+.lf-sub { margin: -8px 0 0; color: var(--lf-texto-suave); font-size: 14px; line-height: 1.5; }
 .lf-papel .alert { margin: 0; }
 .lf-papel form { display: flex; flex-direction: column; gap: 14px; }
 .lf-campo { display: flex; flex-direction: column; gap: 5px; }
