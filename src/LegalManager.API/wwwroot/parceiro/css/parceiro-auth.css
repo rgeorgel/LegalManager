@@ -1,0 +1,102 @@
+/* Telas públicas do Portal do Parceiro (login, esqueci senha, definir senha):
+   identidade "Rede de indicações" — azul do produto, rede animada ao fundo e ouro do logo como destaque. */
+.pa {
+  --pa-azul-fundo: #0a1a52;
+  --pa-azul: #1a56db;
+  --pa-azul-escuro: #1240ab;
+  --pa-ouro: #D4952A;
+  --pa-ouro-claro: #f0b54d;
+  --pa-texto-suave: #b9c7f2;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  background: var(--pa-azul-fundo);
+  color: #fff;
+  overflow: hidden;
+}
+.pa-rede { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pa-brilho {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(70% 90% at 0% 100%, rgba(26,86,219,.65), transparent 60%),
+    radial-gradient(50% 60% at 100% 0%, rgba(212,149,42,.18), transparent 60%);
+}
+
+/* Lado da mensagem */
+.pa-intro {
+  position: relative; min-width: 0;
+  padding: 48px clamp(24px, 5vw, 72px);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 32px;
+}
+.pa-logo img { width: 230px; height: auto; display: block; }
+.pa-titulo {
+  margin: 0; font-weight: 800; letter-spacing: -.035em; line-height: .98;
+  font-size: clamp(36px, 4.6vw, 64px); text-wrap: balance; max-width: 14ch;
+}
+.pa-titulo .ouro { color: var(--pa-ouro-claro); }
+.pa-lede { color: var(--pa-texto-suave); max-width: 44ch; line-height: 1.55; margin: 16px 0 0; font-size: 16px; }
+.pa-passos { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.pa-passos li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); font-size: 13.5px; font-weight: 500;
+  backdrop-filter: blur(6px);
+}
+.pa-passos b {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--pa-ouro-claro); color: var(--pa-azul-fundo); font-weight: 800; font-size: 12px;
+}
+
+/* Lado do formulário */
+.pa-lado { position: relative; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 40px 32px; }
+.pa-card {
+  width: 100%; max-width: 400px; background: #fff; color: #111827; border-radius: 20px;
+  padding: 32px 30px 26px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.55);
+  display: flex; flex-direction: column; gap: 22px;
+}
+.pa-tag {
+  display: inline-flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 700; letter-spacing: .02em;
+  color: var(--pa-azul-escuro); background: #e8f0fe; padding: 6px 10px; border-radius: 999px;
+}
+.pa-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--pa-ouro); }
+.pa-card h1 { margin: 10px 0 0; font-weight: 800; font-size: 28px; letter-spacing: -.025em; line-height: 1.15; }
+.pa-card .pa-sub { margin: 6px 0 0; color: #6b7280; font-size: 14px; line-height: 1.5; }
+.pa-card form { display: flex; flex-direction: column; gap: 16px; }
+.pa-card .alert { margin: 0; }
+.pa-campo { display: flex; flex-direction: column; gap: 6px; }
+.pa-campo label { font-size: 13.5px; font-weight: 600; color: #374151; }
+.pa-campo label small { font-weight: 400; color: #6b7280; font-size: 13px; }
+.pa-campo input {
+  font: inherit; font-size: 15.5px; color: #111827; width: 100%;
+  border: 1.5px solid #e2e6ee; border-radius: 12px; padding: 13px 14px; background: #f8fafc; outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.pa-campo input:focus { border-color: var(--pa-azul); background: #fff; box-shadow: 0 0 0 4px rgba(26,86,219,.14); }
+.pa-botao {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px;
+  background: var(--pa-azul); color: #fff; border: 0; border-radius: 12px; padding: 14px;
+  font: inherit; font-size: 15.5px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 10px 24px -10px rgba(26,86,219,.8); transition: background .2s, transform .1s;
+}
+.pa-botao:hover { background: var(--pa-azul-escuro); }
+.pa-botao:active { transform: translateY(1px); }
+.pa-botao:disabled { opacity: .75; cursor: default; }
+.pa-botao:focus-visible, .pa-links a:focus-visible { outline: 2px solid var(--pa-ouro); outline-offset: 3px; }
+.pa-links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13.5px; }
+.pa-links a { color: var(--pa-azul); font-weight: 600; text-decoration: none; }
+.pa-links a:hover { text-decoration: underline; }
+
+@media (max-width: 860px) {
+  .pa { grid-template-columns: 1fr; align-content: start; }
+  .pa-intro { padding: 28px 20px 8px; gap: 18px; }
+  .pa-logo img { width: 160px; }
+  .pa-titulo { font-size: 32px; max-width: none; }
+  .pa-lede { font-size: 15px; margin-top: 10px; }
+  .pa-passos { display: none; }
+  .pa-lado { padding: 20px 16px 40px; align-items: flex-start; }
+  .pa-card { padding: 26px 22px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pa-campo input, .pa-botao { transition: none; }
+}

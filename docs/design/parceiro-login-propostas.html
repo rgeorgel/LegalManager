@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<!-- Propostas de identidade visual da tela de login do Portal do Parceiro (out/2026).
+     Escolhida: C · Rede de indicações, implementada em src/LegalManager.API/wwwroot/parceiro/
+     (css/parceiro-auth.css, js/rede.js). Abra este arquivo direto no navegador. -->
+<html lang="pt-BR">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login do Parceiro Causify</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Figtree:wght@400;500;600;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: página de comparação (abas A/B/C) emoldurando três telas de login completas, cada uma com identidade própria e fixa. */
+:root {
+  --bg: #eef0f4;
+  --fg: #141a26;
+  --muted: #5d6576;
+  --line: #d6dae3;
+  --chip: #ffffff;
+  --chip-on: #141a26;
+  --chip-on-fg: #ffffff;
+  --gold: #D4952A;
+  --ui: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1119; --fg: #e8ebf2; --muted: #9aa3b5; --line: #262d3c;
+    --chip: #171d2a; --chip-on: #e8ebf2; --chip-on-fg: #0d1119; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1119; --fg: #e8ebf2; --muted: #9aa3b5; --line: #262d3c;
+  --chip: #171d2a; --chip-on: #e8ebf2; --chip-on-fg: #0d1119; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px; }
+header.top h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-height: 1.5; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tabs button {
+  font: 600 14px/1 var(--ui); padding: 10px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--chip); color: var(--fg);
+  display: inline-flex; gap: 8px; align-items: center;
+}
+.tabs button .k { font-weight: 800; opacity: .55; }
+.tabs button[aria-selected="true"] { background: var(--chip-on); color: var(--chip-on-fg); border-color: var(--chip-on); }
+.tabs button[aria-selected="true"] .k { opacity: 1; color: var(--gold); }
+.tabs button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.note { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.note b { color: var(--fg); }
+.frame {
+  border-radius: 14px; overflow: hidden; border: 1px solid var(--line);
+  box-shadow: 0 20px 50px -24px rgba(10, 15, 30, .45);
+}
+.bar { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: #1c1f26; color: #aeb4c0; font: 500 12.5px/1 var(--ui); }
+.bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3f4a; display: inline-block; }
+.bar .url { margin-left: 8px; background: #2a2e37; padding: 6px 10px; border-radius: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen { min-height: 680px; position: relative; display: none; }
+.screen.on { display: grid; }
+.hint { font-size: 13px; color: var(--muted); }
+
+/* shared bits inside mocks */
+.mock form { display: flex; flex-direction: column; gap: 16px; }
+.mock input { font: inherit; width: 100%; }
+.mock .msg { font-size: 13px; min-height: 1em; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ============ A · Cofre noturno ============ */
+#optA { grid-template-columns: 1.15fr 1fr; background: #0b111d; color: #ece5d2; font-family: "Figtree", system-ui, sans-serif; }
+#optA .left {
+  position: relative; padding: 44px 48px; display: flex; flex-direction: column; gap: 30px; justify-content: space-between;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(212,149,42,.14), transparent 55%),
+    repeating-linear-gradient(90deg, rgba(212,149,42,.05) 0 1px, transparent 1px 64px),
+    #0b111d;
+  border-right: 1px solid rgba(212,149,42,.22); min-width: 0;
+}
+#optA .logo { width: 210px; color: #f2ecd8; }
+#optA h2 { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 500; font-size: clamp(34px, 4.2vw, 54px); line-height: 1.02; margin: 0; letter-spacing: -.01em; text-wrap: balance; color: #f2ecd8; }
+#optA h2 em { color: #e3ab4a; }
+#optA .lede { color: #a9a493; max-width: 40ch; line-height: 1.55; margin: 12px 0 0; }
+#optA .ledger { border: 1px solid rgba(212,149,42,.28); border-radius: 4px; background: rgba(13,20,34,.75); font-variant-numeric: tabular-nums; }
+#optA .ledger .h { display: flex; justify-content: space-between; padding: 12px 16px; font: 500 11px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: #c8933a; border-bottom: 1px solid rgba(212,149,42,.2); }
+#optA .row { display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; padding: 12px 16px; border-bottom: 1px dashed rgba(236,229,210,.1); }
+#optA .row b { font-weight: 600; font-size: 14px; }
+#optA .row span { font-size: 12.5px; color: #8e8a7d; }
+#optA .row .v { grid-row: span 2; align-self: center; font: 500 14px "IBM Plex Mono", monospace; color: #e3ab4a; }
+#optA .row.tot { border-bottom: 0; background: rgba(212,149,42,.08); }
+#optA .row.tot b { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 18px; }
+#optA .row.tot .v { font-size: 17px; color: #f2ecd8; }
+#optA .right { display: flex; align-items: center; justify-content: center; padding: 44px 40px; background: #101828; min-width: 0; }
+#optA .box { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 26px; }
+#optA .eyebrow { font: 500 11px/1 "IBM Plex Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: #c8933a; }
+#optA h3 { margin: 10px 0 0; font-family: "Cormorant Garamond", serif; font-weight: 600; font-size: 34px; color: #f2ecd8; }
+#optA label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #b9b3a2; font-weight: 500; }
+#optA input { background: transparent; border: 0; border-bottom: 1px solid rgba(236,229,210,.25); padding: 10px 0; color: #f2ecd8; font-size: 16px; outline: none; transition: border-color .2s; }
+#optA input::placeholder { color: #5d6170; }
+#optA input:focus { border-bottom-color: #e3ab4a; }
+#optA button.go { margin-top: 6px; background: #D4952A; color: #0b111d; border: 0; border-radius: 2px; padding: 15px 18px; font: 700 15px "Figtree", sans-serif; letter-spacing: .02em; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background .2s; }
+#optA button.go:hover { background: #e7a83d; }
+#optA button.go:focus-visible, #optA a:focus-visible { outline: 2px solid #f2ecd8; outline-offset: 3px; }
+#optA .links { display: flex; justify-content: space-between; font-size: 13.5px; }
+#optA .links a { color: #c9c2ae; text-decoration: none; border-bottom: 1px solid rgba(212,149,42,.4); padding-bottom: 2px; }
+#optA .msg { color: #e3ab4a; }
+
+/* ============ B · Termo de parceria ============ */
+#optB { place-items: center; padding: 48px 20px; background: #dcd8cf radial-gradient(90% 70% at 50% 30%, #e9e6df, #cfcac0); color: #1d2840; font-family: "Libre Caslon Text", Georgia, serif; overflow: hidden; }
+#optB .sheet {
+  position: relative; width: 100%; max-width: 560px; background: #fffdf7;
+  box-shadow: 0 1px 0 #e9e4d6, 0 30px 60px -30px rgba(40,30,10,.45), 0 2px 6px rgba(40,30,10,.08);
+  padding: 44px 48px 40px 78px; transform: rotate(-.6deg);
+  background-image: linear-gradient(90deg, transparent 58px, #e2a9a0 58px, #e2a9a0 59px, transparent 59px, transparent 62px, #e2a9a0 62px, #e2a9a0 63px, transparent 63px);
+}
+#optB .gutter { position: absolute; left: 0; top: 44px; bottom: 40px; width: 50px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; padding-right: 10px; font: 400 10px/1 "IBM Plex Mono", monospace; color: #b5ad99; font-variant-numeric: tabular-nums; }
+#optB .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 18px; border-bottom: 2px solid #1d2840; }
+#optB .logo { width: 150px; color: #1d2840; }
+#optB .ref { text-align: right; font: 400 10.5px/1.6 "IBM Plex Mono", monospace; letter-spacing: .06em; color: #6b6656; text-transform: uppercase; }
+#optB h2 { font-size: 13px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; text-align: center; margin: 26px 0 6px; }
+#optB .sub { text-align: center; font-style: italic; color: #5e5a4c; margin: 0 0 26px; font-size: 14.5px; line-height: 1.5; }
+#optB .cl { font-size: 14px; line-height: 1.7; margin: 0 0 4px; }
+#optB .cl b { font-variant: small-caps; letter-spacing: .04em; }
+#optB label { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 12px; font-size: 14px; }
+#optB label span { font-style: italic; white-space: nowrap; }
+#optB input { border: 0; border-bottom: 1px dotted #1d2840; background: transparent; padding: 6px 2px; font: 400 17px "IBM Plex Mono", monospace; color: #23409e; outline: none; min-width: 0; }
+#optB input::placeholder { color: #b8b2a2; }
+#optB input:focus { border-bottom: 1px solid #23409e; background: #f4f6ff; }
+#optB .foot { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; flex-wrap: wrap; }
+#optB .sign { font-size: 13px; color: #6b6656; line-height: 1.6; }
+#optB .sign a { color: #1d2840; }
+#optB .stamp {
+  width: 118px; height: 118px; border-radius: 50%; border: 3px double #2b45a8; color: #2b45a8; background: transparent;
+  display: grid; place-items: center; cursor: pointer; transform: rotate(-12deg); position: relative;
+  font: 700 12px/1.15 "Libre Caslon Text", serif; letter-spacing: .14em; text-transform: uppercase; transition: transform .15s, background .2s;
+  mix-blend-mode: multiply;
+}
+#optB .stamp::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; border: 1px solid currentColor; opacity: .7; }
+#optB .stamp big { display: block; font-size: 19px; letter-spacing: .1em; margin: 3px 0; }
+#optB .stamp:hover { background: rgba(43,69,168,.07); transform: rotate(-8deg) scale(1.03); }
+#optB .stamp:active { transform: rotate(-12deg) scale(.94); }
+#optB .stamp:focus-visible, #optB a:focus-visible { outline: 2px dashed #2b45a8; outline-offset: 4px; }
+#optB .msg { color: #9e2b25; font-style: italic; }
+
+/* ============ C · Rede de indicações ============ */
+#optC { grid-template-columns: 1.2fr 1fr; background: #0a1a52; color: #fff; font-family: "Figtree", system-ui, sans-serif; overflow: hidden; }
+#optC canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#optC .glow { position: absolute; inset: 0; background: radial-gradient(70% 90% at 0% 100%, rgba(26,86,219,.65), transparent 60%), radial-gradient(50% 60% at 100% 0%, rgba(212,149,42,.18), transparent 60%); pointer-events: none; }
+#optC .left { position: relative; padding: 44px 48px; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; min-width: 0; }
+#optC .logo { width: 170px; color: #fff; }
+#optC h2 { font-family: "Bricolage Grotesque", "Figtree", sans-serif; font-weight: 800; font-size: clamp(36px, 4.6vw, 62px); line-height: .98; letter-spacing: -.035em; margin: 0; text-wrap: balance; }
+#optC h2 .g { color: #f0b54d; }
+#optC .lede { color: #b9c7f2; max-width: 44ch; line-height: 1.55; margin: 16px 0 0; font-size: 16px; }
+#optC .steps { display: flex; flex-wrap: wrap; gap: 8px; }
+#optC .steps span { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px 8px 8px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); font-size: 13.5px; font-weight: 500; backdrop-filter: blur(6px); }
+#optC .steps em { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f0b54d; color: #0a1a52; font-weight: 800; font-size: 12px; }
+#optC .right { position: relative; display: flex; align-items: center; justify-content: center; padding: 40px 36px; min-width: 0; }
+#optC .card { width: 100%; max-width: 380px; background: #ffffff; color: #111827; border-radius: 20px; padding: 32px 30px 26px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.55); display: flex; flex-direction: column; gap: 22px; }
+#optC .card .tag { display: inline-flex; align-self: flex-start; gap: 6px; align-items: center; font-size: 12px; font-weight: 700; color: #1240ab; background: #e8f0fe; padding: 6px 10px; border-radius: 999px; letter-spacing: .02em; }
+#optC .card .tag i { width: 7px; height: 7px; border-radius: 50%; background: #D4952A; display: inline-block; }
+#optC h3 { margin: 10px 0 0; font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -.02em; }
+#optC label { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 600; color: #374151; }
+#optC input { border: 1.5px solid #e2e6ee; border-radius: 12px; padding: 13px 14px; font-size: 15.5px; background: #f8fafc; outline: none; transition: border-color .2s, box-shadow .2s, background .2s; color: #111827; }
+#optC input:focus { border-color: #1a56db; background: #fff; box-shadow: 0 0 0 4px rgba(26,86,219,.14); }
+#optC button.go { background: #1a56db; color: #fff; border: 0; border-radius: 12px; padding: 15px; font: 700 15.5px "Figtree", sans-serif; cursor: pointer; transition: background .2s, transform .1s; box-shadow: 0 10px 24px -10px rgba(26,86,219,.8); }
+#optC button.go:hover { background: #1240ab; }
+#optC button.go:active { transform: translateY(1px); }
+#optC button.go:focus-visible, #optC a:focus-visible { outline: 2px solid #D4952A; outline-offset: 3px; }
+#optC .links { display: flex; justify-content: space-between; font-size: 13.5px; }
+#optC .links a { color: #1a56db; font-weight: 600; text-decoration: none; }
+#optC .msg { color: #1240ab; }
+
+@media (max-width: 860px) {
+  #optA, #optC { grid-template-columns: 1fr; }
+  #optA .left, #optC .left { padding: 32px 24px; border-right: 0; }
+  #optA .left { border-bottom: 1px solid rgba(212,149,42,.22); }
+  #optA .right, #optC .right { padding: 32px 20px 40px; }
+  #optB { padding: 28px 10px; }
+  #optB .sheet { padding: 30px 22px 28px 46px; transform: none; background-image: linear-gradient(90deg, transparent 34px, #e2a9a0 34px, #e2a9a0 35px, transparent 35px); }
+  #optB .gutter { width: 30px; padding-right: 6px; top: 30px; bottom: 28px; }
+  #optB .ref { display: none; }
+  #optB label { grid-template-columns: 1fr; gap: 2px; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="causify" viewBox="0 0 600 230">
+    <path d="M72 22 L58 22 L58 208 L72 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M528 22 L542 22 L542 208 L528 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="300" y="132" font-family="Georgia, serif" font-style="italic" font-size="72" letter-spacing="2" text-anchor="middle" fill="currentColor">Causify</text>
+    <line x1="145" y1="152" x2="455" y2="152" stroke="#D4952A" stroke-width="1.5"/>
+    <text x="300" y="178" font-family="Arial, sans-serif" font-size="12" letter-spacing="5" text-anchor="middle" fill="#C8933A">GESTÃO JURÍDICA INTELIGENTE</text>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Login do Portal do Parceiro: 3 direções</h1>
+      <p>Mesmo formulário (e-mail, senha, esqueci minha senha), três identidades. Os campos funcionam para sentir o foco e o botão; nada é enviado.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Opções de identidade">
+      <button role="tab" id="tA" aria-controls="optA" aria-selected="true" data-k="A"><span class="k">A</span> Cofre noturno</button>
+      <button role="tab" id="tB" aria-controls="optB" aria-selected="false" data-k="B"><span class="k">B</span> Termo de parceria</button>
+      <button role="tab" id="tC" aria-controls="optC" aria-selected="false" data-k="C"><span class="k">C</span> Rede de indicações</button>
+    </div>
+  </header>
+
+  <div class="note" id="note"></div>
+
+  <div class="frame">
+    <div class="bar"><i></i><i></i><i></i><span class="url">causify.com.br/parceiro</span></div>
+
+    <!-- A -->
+    <section class="screen mock on" id="optA" role="tabpanel" aria-labelledby="tA">
+      <div class="left">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <div>
+          <h2>Cada escritório que você indica <em>rende todo mês.</em></h2>
+          <p class="lede">Acompanhe seus indicados, veja cada pagamento de assinatura virar comissão e solicite o repasse quando quiser.</p>
+        </div>
+        <div class="ledger" aria-label="Exemplo de extrato">
+          <div class="h"><span>Extrato · exemplo</span><span>Out/2026</span></div>
+          <div class="row"><b>Martins &amp; Rocha Advogados</b><span class="v">R$ 59,40</span><span>Plano Escritório · pagamento confirmado</span></div>
+          <div class="row"><b>Dra. Helena Prado</b><span class="v">R$ 29,70</span><span>Plano Solo · pagamento confirmado</span></div>
+          <div class="row"><b>Vasconcelos Sociedade de Advogados</b><span class="v">R$ 119,40</span><span>Plano Pro · aguardando pagamento</span></div>
+          <div class="row tot"><b>Disponível para solicitar</b><span class="v">R$ 89,10</span><span>2 de 3 escritórios pagaram</span></div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="box">
+          <div>
+            <div class="eyebrow">Portal do Parceiro</div>
+            <h3>Entrar</h3>
+          </div>
+          <form data-msg="#msgA" novalidate>
+            <label for="emailA">E-mail<input id="emailA" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaA">Senha<input id="senhaA" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit"><span>Acessar meu painel</span><span aria-hidden="true">→</span></button>
+            <div class="msg" id="msgA" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueci minha senha</a><a href="#">Conhecer a Causify</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B -->
+    <section class="screen mock" id="optB" role="tabpanel" aria-labelledby="tB">
+      <div class="sheet">
+        <div class="gutter" aria-hidden="true"><span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span></div>
+        <div class="head">
+          <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+          <div class="ref">Programa de Parceiros<br>Acesso restrito<br>fls. 01</div>
+        </div>
+        <h2>Termo de Acesso</h2>
+        <p class="sub">Portal do Parceiro: suas indicações, escritórios e comissões em um só lugar.</p>
+        <p class="cl"><b>Cláusula 1ª.</b> O parceiro identifica-se pelos dados abaixo:</p>
+        <form data-msg="#msgB" novalidate>
+          <label for="emailB"><span>E-mail do parceiro:</span><input id="emailB" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+          <label for="senhaB"><span>Senha de acesso:</span><input id="senhaB" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+          <div class="foot">
+            <div class="sign">Perdeu a senha? <a href="#">Requerer nova senha</a><br>Ainda não é parceiro? <a href="#">Conheça a Causify</a></div>
+            <button class="stamp" type="submit"><span>Portal<big>Entrar</big>Parceiro</span></button>
+          </div>
+          <div class="msg" id="msgB" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- C -->
+    <section class="screen mock" id="optC" role="tabpanel" aria-labelledby="tC">
+      <canvas id="net" aria-hidden="true"></canvas>
+      <div class="glow"></div>
+      <div class="left">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <div>
+          <h2>Sua indicação vira <span class="g">receita recorrente.</span></h2>
+          <p class="lede">Cada escritório que assina com seu link gera comissão sobre os pagamentos da assinatura. Acompanhe tudo em tempo real.</p>
+        </div>
+        <div class="steps">
+          <span><em>1</em>Compartilhe seu link</span>
+          <span><em>2</em>O escritório assina</span>
+          <span><em>3</em>Você solicita o pagamento</span>
+        </div>
+      </div>
+      <div class="right">
+        <div class="card">
+          <div>
+            <span class="tag"><i></i>Portal do Parceiro</span>
+            <h3>Bem-vindo de volta</h3>
+          </div>
+          <form data-msg="#msgC" novalidate>
+            <label for="emailC">E-mail<input id="emailC" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaC">Senha<input id="senhaC" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Entrar</button>
+            <div class="msg" id="msgC" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueci minha senha</a><a href="#">causify.com.br</a></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <p class="hint">Dica: teclas 1, 2 e 3 trocam de opção. Abaixo de ~860px as telas A e C empilham como no celular.</p>
+</div>
+
+<script>
+const notes = {
+  A: '<span><b>Cofre noturno.</b> Tinta escura e ouro do próprio logo, sóbrio e premium. O extrato de exemplo mostra ao parceiro o que ele vai encontrar lá dentro.</span><span><b>Fala com:</b> advogados e consultores que valorizam discrição.</span>',
+  B: '<span><b>Termo de parceria.</b> A tela é uma folha de papel jurídico com margem numerada, campos de preencher e um carimbo como botão. A mais autoral e a mais "do mundo do Direito".</span><span><b>Fala com:</b> parceiros do meio jurídico; é a mais memorável.</span>',
+  C: '<span><b>Rede de indicações.</b> O azul atual do produto com a rede de indicações animada ao fundo e o ouro como destaque. A mais próxima do app hoje e a mais "growth".</span><span><b>Fala com:</b> afiliados e influenciadores que querem ver a recompensa.</span>'
+};
+const tabs = [...document.querySelectorAll('.tabs button')];
+function show(k) {
+  tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === k)));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 'opt' + k));
+  document.getElementById('note').innerHTML = notes[k];
+  try { localStorage.setItem('parceiro-opt', k); } catch (e) {}
+  if (k === 'C') sizeNet();
+}
+tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.k)));
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input')) return;
+  const k = { '1': 'A', '2': 'B', '3': 'C' }[e.key];
+  if (k) show(k);
+});
+
+document.querySelectorAll('.mock form').forEach(f => f.addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.querySelector(f.dataset.msg);
+  const email = f.querySelector('input[type=email]').value.trim();
+  msg.textContent = email ? 'Protótipo: aqui o parceiro entraria no painel.' : 'Informe o e-mail cadastrado no programa de parceiros.';
+}));
+
+// Rede de indicações (opção C)
+const cv = document.getElementById('net'), ctx = cv.getContext('2d');
+let W = 0, H = 0, nodes = [];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function sizeNet() {
+  const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  if (!r.width) return;
+  W = r.width; H = r.height; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+  if (!nodes.length) {
+    const n = Math.round(Math.min(70, W * H / 14000));
+    for (let i = 0; i < n; i++) nodes.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25, g: Math.random() < .14 });
+  }
+  draw();
+}
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const L = 140;
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const a = nodes[i], b = nodes[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy);
+    if (d < L) {
+      const gold = a.g || b.g;
+      ctx.strokeStyle = gold ? `rgba(240,181,77,${(1 - d / L) * .5})` : `rgba(160,185,255,${(1 - d / L) * .22})`;
+      ctx.lineWidth = gold ? 1.1 : .8;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  for (const p of nodes) {
+    ctx.fillStyle = p.g ? '#f0b54d' : 'rgba(200,215,255,.7)';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.g ? 3.2 : 1.8, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function tick() {
+  if (document.getElementById('optC').classList.contains('on') && W) {
+    for (const p of nodes) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+    }
+    draw();
+  }
+  requestAnimationFrame(tick);
+}
+addEventListener('resize', () => { if (document.getElementById('optC').classList.contains('on')) sizeNet(); });
+if (!reduce) requestAnimationFrame(tick);
+
+let start = 'A';
+try { start = localStorage.getItem('parceiro-opt') || 'A'; } catch (e) {}
+show(['A', 'B', 'C'].includes(start) ? start : 'A');
+</script>

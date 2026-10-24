@@ -20,26 +20,50 @@
   <meta name="robots" content="noindex">
   <title>Esqueci minha senha — Portal do Parceiro — Causify</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/parceiro/css/parceiro-auth.css">
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-logo"><img src="/images/causify-logo-transparente.png" alt="Causify"></div>
-      <div class="auth-subtitle">Informe seu e-mail de parceiro para receber o link de nova senha</div>
+  <main class="pa">
+    <canvas class="pa-rede" aria-hidden="true"></canvas>
+    <div class="pa-brilho" aria-hidden="true"></div>
 
-      <div id="alert" class="alert" style="display:none"></div>
+    <section class="pa-intro">
+      <a class="pa-logo" href="/index.html"><img src="/images/causify-logo-transparente.svg" alt="Causify"></a>
+      <div>
+        <p class="pa-titulo">Sua indicação vira <span class="ouro">receita recorrente.</span></p>
+        <p class="pa-lede">Cada escritório que assina com seu link gera comissão sobre os pagamentos da assinatura. Acompanhe tudo pelo portal.</p>
+      </div>
+      <ol class="pa-passos">
+        <li><b>1</b>Compartilhe seu link</li>
+        <li><b>2</b>O escritório assina</li>
+        <li><b>3</b>Você solicita o pagamento</li>
+      </ol>
+    </section>
 
-      <form id="form">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" class="form-control" placeholder="seu@email.com" required autocomplete="email">
+    <section class="pa-lado">
+      <div class="pa-card">
+        <div>
+          <span class="pa-tag">Portal do Parceiro</span>
+          <h1>Esqueceu a senha?</h1>
+          <p class="pa-sub">Informe seu e-mail de parceiro para receber o link de nova senha.</p>
         </div>
-        <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">Enviar link</button>
-      </form>
 
-      <div class="auth-footer"><a href="/parceiro/index.html">← Voltar ao login</a></div>
-    </div>
-  </div>
+        <div id="alert" class="alert" style="display:none"></div>
+
+        <form id="form">
+          <div class="pa-campo">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+          <button type="submit" class="pa-botao" id="submitBtn">Enviar link</button>
+        </form>
+
+        <div class="pa-links"><a href="/parceiro/index.html">← Voltar ao login</a></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/parceiro/js/rede.js"></script>
 
   <script type="module">
     import { esqueciSenha } from '/parceiro/js/parceiroApi.js';
