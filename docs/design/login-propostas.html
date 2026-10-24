@@ -8,7 +8,7 @@
 <html lang="pt-BR">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login Causify: 13 propostas</title>
+<title>Login Causify: 16 propostas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=Cinzel:wght@500;600;700&family=DM+Serif+Display:ital@0;1&family=Caveat:wght@500;600;700&family=Tinos:wght@400;700&family=Archivo+Black&display=swap">
@@ -433,7 +433,107 @@ header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-heigh
 #optJ .msg { color: #b42318; font-weight: 700; }
 #optJ :focus-visible { outline: 3px solid #1a56db; outline-offset: 2px; }
 
+/* ============ J1–J3 · variações do Brutalista (base compartilhada .bru; cada tema troca as variáveis) ============
+.bru {
+  --ink: #0b0b0b; --paper: #fff; --field: #fff; --field-fg: #0b0b0b; --field-focus: #fff1c2;
+  --stage: #f6c445; --stage-fg: #0b0b0b; --side: #fff7e0;
+  --hl: #0b0b0b; --hl-fg: #f6c445; --card-sh: #0b0b0b;
+  --btn: #0b0b0b; --btn-fg: #f6c445; --btn-sh: #D4952A;
+  --s1: #ff8fb1; --s2: #8fd3ff; --s3: #b6f09c; --err: #b42318; --focus: #1a56db;
+  --display: "Archivo Black", "Archivo", "Arial Black", sans-serif; --body: "Archivo", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  grid-template-columns: 1.15fr 1fr;
+  background: var(--stage); color: var(--stage-fg); font-family: var(--body);
+}
+.bru .esq { position: relative; padding: 40px 44px; display: flex; flex-direction: column; justify-content: space-between; gap: 28px; min-width: 0; border-right: 4px solid var(--ink); overflow: hidden; }
+.bru .logo { width: 170px; color: var(--stage-fg); }
+.bru h2 { margin: 0; font: 400 clamp(46px, 7vw, 96px)/.9 var(--display); letter-spacing: -.03em; text-transform: uppercase; text-wrap: balance; }
+.bru h2 span { background: var(--hl); color: var(--hl-fg); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.bru .selos { display: flex; flex-wrap: wrap; gap: 12px; }
+.bru .selos span { border: 3px solid var(--ink); color: #0b0b0b; padding: 9px 14px; font-weight: 800; font-size: 14px; box-shadow: 4px 4px 0 var(--ink); }
+.bru .selos span:nth-child(1) { transform: rotate(-3deg); background: var(--s1); }
+.bru .selos span:nth-child(2) { transform: rotate(2deg); background: var(--s2); }
+.bru .selos span:nth-child(3) { transform: rotate(-1deg); background: var(--s3); }
+.bru .dir { display: flex; align-items: center; justify-content: center; padding: 40px 36px; background: var(--side); min-width: 0; }
+.bru .box { width: 100%; max-width: 370px; display: flex; flex-direction: column; gap: 18px; background: var(--paper); color: var(--field-fg); border: 4px solid var(--ink); box-shadow: 10px 10px 0 var(--card-sh); padding: 28px 26px 22px; }
+.bru h3 { margin: 0; font: 400 28px/1 var(--display); text-transform: uppercase; }
+.bru form { display: flex; flex-direction: column; gap: 16px; }
+.bru label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.bru input { font: 600 16px var(--body); width: 100%; min-width: 0; border: 3px solid var(--ink); border-radius: 0; padding: 12px; letter-spacing: 0; text-transform: none; outline: none; background: var(--field); color: var(--field-fg); }
+.bru input::placeholder { color: color-mix(in srgb, var(--field-fg) 45%, transparent); }
+.bru input:focus { background: var(--field-focus); box-shadow: 4px 4px 0 var(--ink); }
+.bru .go { background: var(--btn); color: var(--btn-fg); border: 3px solid var(--ink); padding: 14px; font: 400 17px var(--display); text-transform: uppercase; letter-spacing: .04em; cursor: pointer; box-shadow: 5px 5px 0 var(--btn-sh); transition: transform .08s, box-shadow .08s; }
+.bru .go:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--btn-sh); }
+.bru .go:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--btn-sh); }
+.bru .g-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 11px 14px; border: 3px solid var(--ink); border-radius: 0; background: #fff; color: #1f1f1f; font: 700 14px var(--body); cursor: pointer; }
+.bru .g-btn svg { width: 18px; height: 18px; flex: none; }
+.bru .or { display: flex; align-items: center; gap: 12px; font-size: 12.5px; font-weight: 800; }
+.bru .or::before, .bru .or::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .25; }
+.bru .msg { font-size: 13px; min-height: 1em; color: var(--err); font-weight: 700; }
+.bru .links { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; font-weight: 800; }
+.bru .links a { color: inherit; }
+.bru :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ===== 1 · Cobalto (Diário Oficial) ===== */
+#optJ1 {
+  --stage: #2b4bff; --stage-fg: #ffffff; --side: #e8ecff;
+  --hl: #ffe14d; --hl-fg: #0b0b0b; --card-sh: #0b0b0b;
+  --btn: #2b4bff; --btn-fg: #ffffff; --btn-sh: #0b0b0b; --field-focus: #e8ecff;
+  --s1: #ffe14d; --s2: #ff9ec4; --s3: #9cf0c4; --focus: #ff4d8d;
+}
+#optJ1 .esq { background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 64px); }
+#optJ1 .diario { position: absolute; top: 34px; right: 34px; width: 132px; height: 132px; border-radius: 50%; background: #ff4d8d; color: #0b0b0b; border: 4px solid #0b0b0b; box-shadow: 5px 5px 0 #0b0b0b; display: grid; place-items: center; text-align: center; transform: rotate(10deg); font: 800 12px/1.25 var(--body); letter-spacing: .06em; text-transform: uppercase; padding: 10px; }
+#optJ1 .diario b { display: block; font: 400 30px/1 var(--display); letter-spacing: -.02em; }
+#optJ1 .fita { margin: 0 -44px; border-block: 4px solid #0b0b0b; background: #0b0b0b; color: #ffe14d; font: 700 12.5px/1 var(--mono); letter-spacing: .08em; white-space: nowrap; overflow: hidden; }
+#optJ1 .fita div { display: inline-block; padding: 11px 0; animation: corre 26s linear infinite; }
+@keyframes corre { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ===== 2 · Concreto (obra e sinalização) ===== */
+#optJ2 {
+  --stage: #cfcbc2; --stage-fg: #0b0b0b; --side: #e9e6df;
+  --hl: #ff5a1f; --hl-fg: #0b0b0b; --card-sh: #ff5a1f;
+  --btn: #ff5a1f; --btn-fg: #0b0b0b; --btn-sh: #0b0b0b; --field-focus: #ffe7db;
+  --s1: #ffd23f; --s2: #ffffff; --s3: #ff5a1f; --focus: #0b0b0b;
+}
+#optJ2 .esq { padding-top: 64px; padding-bottom: 64px;
+  background-image: radial-gradient(rgba(0,0,0,.10) 1px, transparent 1.3px), radial-gradient(rgba(255,255,255,.35) 1px, transparent 1.4px);
+  background-size: 5px 5px, 9px 9px; background-position: 0 0, 2px 4px; }
+#optJ2 .esq::before, #optJ2 .esq::after { content: ""; position: absolute; left: 0; right: 0; height: 24px; background: repeating-linear-gradient(-45deg, #ffd23f 0 18px, #0b0b0b 18px 36px); border-block: 4px solid #0b0b0b; }
+#optJ2 .esq::before { top: 0; border-top: 0; } #optJ2 .esq::after { bottom: 0; border-bottom: 0; }
+#optJ2 h2 { font-size: clamp(44px, 6.6vw, 90px); }
+#optJ2 .placa { display: inline-flex; align-self: flex-start; gap: 14px; align-items: center; background: #0b0b0b; color: #ffd23f; padding: 10px 14px; font: 700 13px/1.3 var(--mono); letter-spacing: .04em; border: 3px solid #0b0b0b; box-shadow: 5px 5px 0 #ff5a1f; max-width: 100%; }
+#optJ2 .placa b { color: #fff; font-size: 11px; letter-spacing: .14em; display: block; }
+#optJ2 .placa span { overflow-wrap: anywhere; }
+#optJ2 .selos span { font-family: var(--mono); font-size: 13px; text-transform: uppercase; letter-spacing: .02em; }
+#optJ2 .box h3::before { content: "▲ "; color: #ff5a1f; -webkit-text-stroke: 2px #0b0b0b; }
+
+/* ===== 3 · Madrugada (vence às 23h59) ===== */
+#optJ3 {
+  --ink: #f3eefb; --stage: #141118; --stage-fg: #f3eefb; --side: #1d1924;
+  --paper: #1d1924; --field: #141118; --field-fg: #f3eefb; --field-focus: #2a2233;
+  --hl: #ff5fa2; --hl-fg: #141118; --card-sh: #ff5fa2;
+  --btn: #ff5fa2; --btn-fg: #141118; --btn-sh: #f3eefb;
+  --s1: #ff5fa2; --s2: #b49bff; --s3: #ffd23f; --err: #ff9b9b; --focus: #ffd23f;
+}
+#optJ3 .esq { border-right-color: #f3eefb; background: radial-gradient(60% 50% at 90% 10%, rgba(255,95,162,.16), transparent 70%); }
+#optJ3 .relogio { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+#optJ3 .relogio .h { font: 700 clamp(40px, 5vw, 64px)/1 var(--mono); letter-spacing: -.04em; color: #141118; background: #ffd23f; padding: 4px 10px; border: 3px solid #f3eefb; box-shadow: 5px 5px 0 #ff5fa2; font-variant-numeric: tabular-nums; }
+#optJ3 .relogio .h i { font-style: normal; animation: piscaJ3 1s steps(1) infinite; }
+@keyframes piscaJ3 { 50% { opacity: 0; } }
+#optJ3 .relogio small { font: 700 12px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: #b9b0c7; max-width: 26ch; }
+#optJ3 .lei { margin: -10px 0 0; font: 500 13px/1.5 var(--mono); color: #b9b0c7; max-width: 52ch; border-left: 4px solid #ff5fa2; padding-left: 12px; }
+#optJ3 .lei b { color: #f3eefb; }
+#optJ3 .selos span { box-shadow: 4px 4px 0 #f3eefb; border-color: #f3eefb; }
+#optJ3 .g-btn { border-color: #f3eefb; }
+
 @media (max-width: 860px) {
+  .bru { grid-template-columns: 1fr; }
+  .bru .esq { padding: 28px 20px; border-right: 0; border-bottom: 4px solid var(--ink); }
+  .bru .dir { padding: 28px 18px 40px; }
+  #optJ1 .diario { width: 96px; height: 96px; top: 18px; right: 14px; font-size: 9.5px; }
+  #optJ1 .diario b { font-size: 22px; }
+  #optJ1 .fita { margin: 0 -20px; }
+  #optJ2 .esq { padding-top: 48px; padding-bottom: 48px; }
+  #optJ3 .esq { border-bottom-color: #f3eefb; }
   #optB, #optC, #optD, #optE, #optG, #optI, #optJ { grid-template-columns: 1fr; }
   #optF { padding: 24px 8px 0; }
   #optF .corpo { width: 100%; grid-template-columns: 18px 1fr 18px; gap: 0 14px; padding: 22px 10px 0; }
@@ -496,8 +596,8 @@ header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-heigh
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Login do sistema: 13 propostas</h1>
-      <p>Mesmo conteúdo da tela atual (e-mail, senha, Google, esqueci a senha, criar escritório e blog) em cinco identidades. Os campos funcionam para sentir foco e botão; nada é enviado.</p>
+      <h1>Login do sistema: 16 propostas</h1>
+      <p>Mesmo conteúdo da tela atual (e-mail, senha, Google, esqueci a senha, criar escritório e blog) em várias identidades; J1 a J3 são variações de cor e assunto do Brutalista. Os campos funcionam para sentir foco e botão; nada é enviado.</p>
     </div>
     <div class="tabs" role="tablist" aria-label="Propostas de login">
       <button role="tab" id="tA" aria-controls="optA" aria-selected="true" data-k="A"><span class="k">A</span> Autos</button>
@@ -513,6 +613,9 @@ header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-heigh
       <button role="tab" id="tH4" aria-controls="optH4" aria-selected="false" data-k="H4"><span class="k">H4</span> Feltro</button>
       <button role="tab" id="tI"aria-controls="optI" aria-selected="false" data-k="I"><span class="k">I</span> Petição</button>
       <button role="tab" id="tJ" aria-controls="optJ" aria-selected="false" data-k="J"><span class="k">J</span> Brutalista</button>
+      <button role="tab" id="tJ1" aria-controls="optJ1" aria-selected="false" data-k="J1"><span class="k">J1</span> Cobalto</button>
+      <button role="tab" id="tJ2" aria-controls="optJ2" aria-selected="false" data-k="J2"><span class="k">J2</span> Concreto</button>
+      <button role="tab" id="tJ3" aria-controls="optJ3" aria-selected="false" data-k="J3"><span class="k">J3</span> Madrugada</button>
     </div>
   </header>
 
@@ -894,6 +997,80 @@ header.top p { margin: 4px 0 0; color: var(--muted); max-width: 62ch; line-heigh
         </div>
       </div>
     </section>
+
+    <!-- J1 · Cobalto -->
+    <section class="screen mock bru" id="optJ1" role="tabpanel" aria-labelledby="tJ1">
+      <div class="esq">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <div class="diario" aria-hidden="true"><div><b>DJEN</b>lido hoje às 06h</div></div>
+        <h2>Publicou? <span>A gente avisa.</span></h2>
+        <div class="selos"><span>Leitura diária do DJEN</span><span>Prazo já calculado</span><span>Aviso por e-mail</span></div>
+        <div class="fita" aria-hidden="true"><div>DJEN · TJSP · TJMG · TJRJ · TRT-2 · TRF-3 · STJ · TST · DJEN · TJSP · TJMG · TJRJ · TRT-2 · TRF-3 · STJ · TST · </div><div>DJEN · TJSP · TJMG · TJRJ · TRT-2 · TRF-3 · STJ · TST · DJEN · TJSP · TJMG · TJRJ · TRT-2 · TRF-3 · STJ · TST · </div></div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <h3>Entrar</h3>
+          <form data-msg="#msgJ1" novalidate>
+            <label for="emailCob">E-mail<input id="emailCob" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaCob">Senha<input id="senhaCob" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Ver publicações →</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgJ1" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- J2 · Concreto -->
+    <section class="screen mock bru" id="optJ2" role="tabpanel" aria-labelledby="tJ2">
+      <div class="esq">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <h2>Nenhum prazo <span>na gaveta.</span></h2>
+        <div class="placa"><span><b>PROCESSO EM ANDAMENTO</b><span id="cnjCon">0001024-26.2026.8.26.0100</span></span></div>
+        <div class="selos"><span>Kanban de tarefas</span><span>Agenda de audiências</span><span>Portal do cliente</span></div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <h3>Entrar</h3>
+          <form data-msg="#msgJ2" novalidate>
+            <label for="emailCon">E-mail<input id="emailCon" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaCon">Senha<input id="senhaCon" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Abrir a pauta →</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgJ2" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- J3 · Madrugada -->
+    <section class="screen mock bru" id="optJ3" role="tabpanel" aria-labelledby="tJ3">
+      <div class="esq">
+        <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+        <div class="relogio"><span class="h" id="horaMad">23<i>:</i>41</span><small>Horário de Brasília · faltam <span id="faltaMad">18 min</span> para virar o dia</small></div>
+        <h2>Vence às <span>23h59.</span></h2>
+        <p class="lei">Lei 11.419/2006, art. 3º, parágrafo único: <b>petição eletrônica é tempestiva até as 24 horas do último dia</b>. Melhor não descobrir isso às 23h41.</p>
+        <div class="selos"><span>Alerta de prazo fatal</span><span>Assistente IA</span><span>Resumo "Seu dia"</span></div>
+      </div>
+      <div class="dir">
+        <div class="box">
+          <h3>Entrar</h3>
+          <form data-msg="#msgJ3" novalidate>
+            <label for="emailMad">E-mail<input id="emailMad" type="email" placeholder="seu@email.com" autocomplete="email"></label>
+            <label for="senhaMad">Senha<input id="senhaMad" type="password" placeholder="••••••••" autocomplete="current-password"></label>
+            <button class="go" type="submit">Protocolar a tempo →</button>
+            <div class="or">ou</div>
+            <button class="g-btn" type="button"><svg aria-hidden="true"><use href="#google"/></svg>Continuar com o Google</button>
+            <div class="msg" id="msgJ3" aria-live="polite"></div>
+          </form>
+          <div class="links"><a href="#">Esqueceu a senha?</a><a href="#">Criar escritório</a><a href="#">Blog</a></div>
+        </div>
+      </div>
+    </section>
   </div>
   <p class="hint">Teclas 1 a 9 e 0 trocam de proposta. Abaixo de ~860px as telas empilham como no celular.</p>
 </div>
@@ -912,10 +1089,13 @@ const notes = {
   H3: '<span><b>Mural · Fio vermelho.</b> Cortiça escura de investigação: cliente, processo, audiência e prazo ligados por barbante vermelho até a ficha de login, "Abrir o caso".</span><span><b>Força:</b> a mais cinematográfica; transforma cada processo num caso a resolver.</span>',
   H4: '<span><b>Mural · Feltro.</b> Painel de feltro verde-sálvia com cartões pastel presos por fita decorativa. Tipografia serifada suave e verde no botão.</span><span><b>Força:</b> a versão mais calma e moderna do mural; boa para uso diário.</span>',
   I: '<span><b>Petição.</b> Uma petição inicial sendo escrita em tempo real ao lado do login, em Times sobre papel branco.</span><span><b>Força:</b> fala a língua do advogado e passa a ideia de "continue de onde parou".</span>',
-  J: '<span><b>Brutalista.</b> Amarelo forte, bordas pretas grossas, sombras sólidas e selos coloridos. "Prazo perdido não volta" em letras gigantes.</span><span><b>Força:</b> a mais ousada; foge de todo concorrente e chama atenção em anúncio.</span>'
+  J: '<span><b>Brutalista.</b> Amarelo forte, bordas pretas grossas, sombras sólidas e selos coloridos. "Prazo perdido não volta" em letras gigantes.</span><span><b>Força:</b> a mais ousada; foge de todo concorrente e chama atenção em anúncio.</span>',
+  J1: '<span><b>Brutalista · Cobalto.</b> Azul elétrico com destaque amarelo, selo rosa "DJEN lido hoje" e uma fita correndo com os tribunais. Botão azul com sombra preta.</span><span><b>Assunto:</b> publicações. A mais "marca de tecnologia" das três.</span>',
+  J2: '<span><b>Brutalista · Concreto.</b> Cinza de concreto com textura, faixas zebradas de obra e laranja de sinalização. Placa preta com número CNJ em fonte mono.</span><span><b>Assunto:</b> organização e rotina. A mais sóbria; o laranja só aparece em pontos de ação.</span>',
+  J3: '<span><b>Brutalista · Madrugada.</b> Versão escura: grafite com rosa choque e um relógio amarelo marcando 23:41. Cita a regra real das 24 horas do processo eletrônico.</span><span><b>Assunto:</b> prazo fatal. A mais dramática; serve bem como tema escuro do login.</span>'
 };
 const KEYS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-const TODAS = [...KEYS, 'H2', 'H3', 'H4'];
+const TODAS = [...KEYS, 'H2', 'H3', 'H4', 'J1', 'J2', 'J3'];
 const tabs = [...document.querySelectorAll('.tabs button')];
 function show(k) {
   tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === k)));
@@ -948,6 +1128,7 @@ const agora = agoraBrasilia();
 document.getElementById('dataA').textContent = `${pad(agora.d)}/${pad(agora.m)}/${agora.y}`;
 document.getElementById('numA').textContent = `0001024-26.${agora.y}.8.26.0100`;
 document.getElementById('anoE').textContent = agora.y;
+document.getElementById('cnjCon').textContent = `0001024-26.${agora.y}.8.26.0100`;
 
 // B · estantes
 const codigos = ['CPC', 'CLT', 'CF/88', 'Código Civil', 'CDC', 'Código Penal', 'CPP', 'CTN', 'ECA', 'Lei 8.245', 'Vade Mecum', 'Súmulas STJ', 'LINDB', 'Lei 9.099'];

@@ -9,6 +9,85 @@
  * "Temas claros" / "Temas escuros" — não é enviado ao backend nem usado por
  * findPresetByTheme (que casa por cores).
  */
+/**
+ * CSS compartilhado dos temas "Brutalista": cantos retos, contorno grosso,
+ * sombra sólida deslocada (sem blur), títulos em caixa alta pesada e botões
+ * que "afundam" no clique. Cada tema só troca as cores.
+ *
+ * Fontes só do sistema: o backend remove `url(` e `@import` do customCss.
+ *
+ * - ink: cor do contorno (preto nos claros, quase-branco no escuro)
+ * - shadow: cor da sombra sólida dos cards
+ * - bg / surface: fundo da página e dos cards (omitir no tema escuro, que já
+ *   define tudo no bloco dark)
+ * - btnFg / btnShadow: texto e sombra do botão primário
+ * - navBg / navFg: bloco do item ativo na sidebar
+ * - highlight / highlightFg: tarja atrás do título da página
+ */
+function brutalCss(o) {
+  const vars = o.bg ? `
+      :root { --color-bg: ${o.bg}; --color-surface: ${o.surface}; --color-text: ${o.ink}; }
+      body { background: ${o.bg} !important; }` : '';
+  return `${vars}
+      :root { --radius: 0px; --shadow: none; --shadow-md: none; }
+      .header { border-bottom: 3px solid ${o.ink} !important; box-shadow: none !important; }
+      .sidebar { border-right: 3px solid ${o.ink}; }
+      .sidebar-nav li a { font-weight: 600; }
+      .sidebar-nav li a.active {
+        background: ${o.navBg} !important;
+        color: ${o.navFg} !important;
+        border-left-color: ${o.navFg} !important;
+        font-weight: 800;
+      }
+      .page-title {
+        display: inline-block;
+        font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        background: ${o.highlight};
+        color: ${o.highlightFg} !important;
+        padding: 2px 10px;
+      }
+      .card, .stat-card, .config-section, .theme-card, .preset-card, .form-section,
+      .processo-card, .notif-card, .hp-card, .modal-content, .modal-card {
+        border: 3px solid ${o.ink} !important;
+        border-radius: 0 !important;
+        box-shadow: 6px 6px 0 ${o.shadow} !important;
+      }
+      .stat-card, .preset-card, .processo-card { transition: transform .08s, box-shadow .08s; }
+      .stat-card:hover, .preset-card:hover, .processo-card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 8px 8px 0 ${o.shadow} !important;
+      }
+      .btn {
+        border-radius: 0 !important;
+        border: 3px solid ${o.ink} !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        transition: transform .08s, box-shadow .08s;
+      }
+      .btn-primary {
+        background: var(--color-primary) !important;
+        color: ${o.btnFg} !important;
+        box-shadow: 4px 4px 0 ${o.btnShadow};
+      }
+      .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 ${o.btnShadow}; }
+      .btn-primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 ${o.btnShadow}; }
+      .btn-secondary { box-shadow: 3px 3px 0 ${o.ink}; }
+      .btn-secondary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 ${o.ink}; }
+      .form-control { border: 2px solid ${o.ink} !important; border-radius: 0 !important; }
+      .form-control:focus { border-color: ${o.ink} !important; box-shadow: 3px 3px 0 ${o.ink} !important; }
+      thead th { border-bottom: 3px solid ${o.ink} !important; font-weight: 800; }
+      .tab-btn.active { font-weight: 800; box-shadow: inset 0 -4px 0 var(--color-primary); }
+      .badge { border-radius: 0 !important; border: 2px solid currentColor; font-weight: 800; }
+      ::selection { background: var(--color-accent); color: #0b0b0b; }
+      @media (prefers-reduced-motion: reduce) {
+        .btn, .stat-card, .preset-card, .processo-card { transition: none !important; }
+      }`.trim();
+}
+
 export const PRESETS = [
   {
     id: 'default',
@@ -1108,6 +1187,179 @@ export const PRESETS = [
     `.trim(),
   },
   {
+    id: 'brutalista-madrugada',
+    name: 'Brutalista Madrugada',
+    description: 'Grafite com rosa choque, contornos claros e sombras sólidas',
+    dark: true,
+    primaryColor: '#ff5fa2',
+    sidebarColor: '#141118',
+    accentColor: '#ffd23f',
+    layoutMode: 'default',
+    // Dark theme completo (mesma base do Synthwave, recolorida em grafite
+    // #141118 / superfície #1d1924) + o CSS brutalista com contorno claro.
+    customCss: `
+      :root {
+        --color-bg: #141118;
+        --color-surface: #1d1924;
+        --color-text: #f3eefb;
+        --color-text-muted: #b9b0c7;
+        --color-border: #3a3344;
+        --color-primary-light: #4a1d35;
+        --hc-navy-text: var(--color-primary);
+        --kanban-pendente: #ff6ec7;
+        --kanban-andamento: #38bdf8;
+        --kanban-concluida: #4ade80;
+      }
+      body { background: #141118 !important; color: #f3eefb !important; }
+      .header { background: #1d1924 !important; border-bottom-color: #3a3344 !important; }
+      .header-user, .auth-subtitle { color: #b9b0c7 !important; }
+      .theme-card, .stat-card, .config-section, .form-section,
+      .form-control, textarea, .preset-card,
+      .table, table, table thead th, .card, .modal-content, .alert,
+      div[style*="background:var(--color-surface)"] {
+        background-color: #1d1924 !important;
+        color: #f3eefb !important;
+        border-color: #3a3344 !important;
+      }
+      .btn-secondary {
+        background-color: transparent !important;
+        color: #f3eefb !important;
+        border-color: #3a3344 !important;
+      }
+      .btn-secondary:hover { background-color: #3a3344 !important; }
+      table tbody tr:hover { background-color: #141118 !important; }
+      .stat-card-value, div[style*="color:#1a56db"], div[style*="color:var(--color-primary)"] { color: var(--color-primary) !important; }
+      hr, .badge-gray { border-color: #3a3344 !important; }
+      .badge-gray { background: #3a3344 !important; color: #b9b0c7 !important; }
+      .badge-yellow, .badge-blue, .badge-purple, .badge-green, .badge-red {
+        color: #f3eefb !important;
+      }
+      ::placeholder { color: #7d7489 !important; }
+      .logo-preview { background: #141118 !important; border-color: #3a3344 !important; }
+      .logo-preview .empty { color: #b9b0c7 !important; }
+
+      /* ── Honorários-Contratos ─────────────────────────────────── */
+      .hp-card, .ci { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+      .hp-card .lbl, .hp-card .sub, .hp-evo-lbl, .hp-evo-val, .ci-sub, .ci-nums .cl { color: #b9b0c7 !important; }
+      .hp-meta-bar { background-color: #3a3344 !important; }
+      .badge-ok { background-color: #0f3d2e !important; color: #4ade80 !important; }
+      .badge-err { background-color: #4a0e35 !important; color: #ff6ec7 !important; }
+      .badge-warn { background-color: #4a2a0a !important; color: #fb923c !important; }
+      .badge-muted { background-color: #3a3344 !important; color: #c4b5fd !important; }
+      .badge-proc { background-color: #2e1065 !important; color: #c4b5fd !important; }
+      .filter-bar select, .filter-bar input { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+
+      /* ── Processos ───────────────────────────────────────────── */
+      .processo-card { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+      .processo-card:hover { border-color: var(--color-primary) !important; box-shadow: 0 0 12px rgba(255,95,162,0.3) !important; }
+      .card-divider { background-color: #3a3344 !important; }
+      .status-ativo     { background: #0f3d2e !important; color: #4ade80 !important; }
+      .status-suspenso  { background: #4a2a0a !important; color: #fb923c !important; }
+      .status-arquivado { background: #3a3344 !important; color: #b9b0c7 !important; }
+      .status-encerrado { background: #4a0e35 !important; color: #ff6ec7 !important; }
+      .process-preview.encontrado { background: #0f3d2e !important; border-color: #15803d !important; color: #86efac !important; }
+      .process-preview.nao-encontrado { background: #4a2a0a !important; border-color: #b45309 !important; color: #fde68a !important; }
+      .process-preview.loading { background: #1d1924 !important; border-color: #3a3344 !important; color: #b9b0c7 !important; }
+      .search-btn, .view-btn { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+      .search-btn:hover, .view-btn:hover { background-color: #3a3344 !important; }
+      .searchable-select-list { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+      .searchable-select-list li:hover { background-color: #3a3344 !important; }
+      .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #fff !important; }
+
+      /* ── Agenda ──────────────────────────────────────────────── */
+      .semana-grid { background-color: #1d1924 !important; }
+      .semana-header { background-color: #141118 !important; color: #c4b5fd !important; border-color: #3a3344 !important; }
+      .semana-header.hoje { background-color: var(--color-primary) !important; color: #fff !important; }
+      .hora-label { color: #b9b0c7 !important; border-color: #3a3344 !important; }
+      .agenda-item { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
+      .agenda-item:active { background-color: #141118 !important; }
+
+      /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
+      button { color: inherit !important; }
+      .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
+      .filter-tab.active, .tab-btn.active { color: #fff !important; }
+      .filter-tab:hover, .tab-btn:hover { color: var(--color-primary) !important; }
+      .filter-tab .tab-count { background-color: rgba(255,255,255,0.18) !important; color: inherit !important; }
+      .filter-tab.active .tab-count { background-color: rgba(255,255,255,0.28) !important; }
+
+      /* ── Inputs/selects/textareas ────────────────────────────────── */
+      input, select, textarea, button { color-scheme: dark; }
+      input::placeholder, textarea::placeholder { color: #7d7489 !important; }
+      select option { background-color: #1d1924 !important; color: #f3eefb !important; }
+
+      /* ── Modais (catches inline background:#fff em financeiro, timesheet, contatos) ── */
+      .modal,
+      .modal-card,
+      .modal-content,
+      .pdf-modal-content,
+      .modal-overlay > div,
+      [id$="modal"] > div,
+      div[style*="background:#fff"],
+      div[style*="background: #fff"],
+      div[style*="background:white"],
+      div[style*="background: white"] {
+        background-color: #1d1924 !important;
+        color: #f3eefb !important;
+        border-color: #3a3344 !important;
+      }
+      .modal-header, .modal-title, .modal-close { color: #f3eefb !important; }
+      .modal-overlay { background-color: rgba(8,6,10,0.8) !important; }
+      .modal label, .modal .form-label { color: #b9b0c7 !important; }
+
+      /* ── Labels e textos secundários em formulários ──────────────── */
+      label, .form-label, .lbl { color: #b9b0c7 !important; }
+
+      /* ── Configurações > Usuários / Feriados / Assinaturas: badges de PERFIL/STATUS ── */
+      .badge-blue { background-color: #1e1b4b !important; color: #a5b4fc !important; }
+      .badge-green { background-color: #0f3d2e !important; color: #4ade80 !important; }
+      .badge-red   { background-color: #4a0e35 !important; color: #ff6ec7 !important; }
+      .badge-yellow { background-color: #4a2a0a !important; color: #fb923c !important; }
+      .badge-purple { background-color: #2e1065 !important; color: #c4b5fd !important; }
+
+      /* ── Processos: status badges (cards) ───────────────────────── */
+      .status-ativo     { background-color: #0f3d2e !important; color: #4ade80 !important; }
+      .status-suspenso  { background-color: #4a2a0a !important; color: #fb923c !important; }
+      .status-arquivado { background-color: rgba(185,176,199,0.18) !important; color: #b9b0c7 !important; }
+      .status-encerrado { background-color: #4a0e35 !important; color: #ff6ec7 !important; }
+
+      /* ── Contatos: chips de tipo de documento ───────────────────── */
+      .tipo-peticao { background-color: rgba(99,102,241,0.20) !important; color: #a5b4fc !important; }
+      .tipo-decisao { background-color: rgba(251,191,36,0.20) !important; color: #fbbf24 !important; }
+      .tipo-contrato { background-color: rgba(74,222,128,0.20) !important; color: #4ade80 !important; }
+      .tipo-prova { background-color: rgba(255,110,199,0.20) !important; color: #ff6ec7 !important; }
+      .tipo-modelo { background-color: rgba(196,181,253,0.20) !important; color: #c4b5fd !important; }
+      .tipo-outro { background-color: rgba(167,139,202,0.20) !important; color: #b9b0c7 !important; }
+
+      /* ── Contatos: context menus de linha e pasta (inline #fff) ───── */
+      .row-menu-dropdown, #folderCtxMenu {
+        background-color: #1d1924 !important;
+        color: #f3eefb !important;
+        border-color: #3a3344 !important;
+      }
+      .row-menu-dropdown div, .row-menu-dropdown button,
+      #folderCtxMenu div, #folderCtxMenu button {
+        background-color: transparent !important;
+        color: #f3eefb !important;
+      }
+      .row-menu-dropdown div:hover, #folderCtxMenu div:hover {
+        background-color: #3a3344 !important;
+      }
+
+      /* ── Alertas: notif cards ────────────────────────────────────── */
+      .notif-card { background-color: #1d1924 !important; border-color: #3a3344 !important; color: #f3eefb !important; }
+      .notif-card .notif-title { color: #f3eefb !important; }
+      .notif-card.unread .notif-title { color: #fff !important; }
+      .notif-card .notif-msg, .notif-time { color: #b9b0c7 !important; }
+
+      ${brutalCss({
+        ink: '#f3eefb', shadow: '#ff5fa2',
+        btnFg: '#141118', btnShadow: '#f3eefb',
+        navBg: '#ff5fa2', navFg: '#141118',
+        highlight: '#ffd23f', highlightFg: '#141118',
+      })}
+    `.trim(),
+  },
+  {
     id: 'ocean',
     name: 'Ocean',
     description: 'Azul profundo e turquesa',
@@ -1315,6 +1567,73 @@ export const PRESETS = [
       .sidebar-nav li a.active, .sidebar-nav li a:hover { border-left-color: var(--color-accent) !important; }
       @media (prefers-reduced-motion: reduce) {
         .btn-primary, .badge:hover { animation: none !important; }
+      }
+    `.trim(),
+  },
+  {
+    id: 'brutalista',
+    name: 'Brutalista',
+    description: 'Amarelo forte, contornos pretos grossos e sombras sólidas',
+    dark: false,
+    primaryColor: '#111111',
+    sidebarColor: '#f6c445',
+    accentColor: '#ff8fb1',
+    layoutMode: 'default',
+    // Sidebar amarela com texto preto: --color-sidebar-text precisa de
+    // !important para vencer o valor claro que theme.js grava inline (os
+    // botões dos widgets de tarefas/tour/perguntas também usam esse par).
+    customCss: `
+      :root { --color-sidebar-text: #111111 !important; }
+      .sidebar-nav li a:hover { background: rgba(0,0,0,0.08) !important; color: #111111 !important; }
+      .nav-group-header { color: rgba(0,0,0,0.55) !important; }
+      .nav-group-header:hover { color: #111111 !important; background: rgba(0,0,0,0.05) !important; }
+      ${brutalCss({
+        ink: '#111111', shadow: '#111111', bg: '#fff7e0', surface: '#ffffff',
+        btnFg: '#f6c445', btnShadow: '#d4952a',
+        navBg: '#111111', navFg: '#f6c445',
+        highlight: '#f6c445', highlightFg: '#111111',
+      })}
+    `.trim(),
+  },
+  {
+    id: 'brutalista-cobalto',
+    name: 'Brutalista Cobalto',
+    description: 'Azul elétrico com amarelo, contornos pretos e sombras sólidas',
+    dark: false,
+    primaryColor: '#2b4bff',
+    sidebarColor: '#111111',
+    accentColor: '#ffe14d',
+    layoutMode: 'default',
+    customCss: brutalCss({
+      ink: '#111111', shadow: '#2b4bff', bg: '#e8ecff', surface: '#ffffff',
+      btnFg: '#ffffff', btnShadow: '#111111',
+      navBg: '#ffe14d', navFg: '#111111',
+      highlight: '#ffe14d', highlightFg: '#111111',
+    }),
+  },
+  {
+    id: 'brutalista-concreto',
+    name: 'Brutalista Concreto',
+    description: 'Cinza concreto com laranja de sinalização e contornos pretos',
+    dark: false,
+    primaryColor: '#c2410c',
+    sidebarColor: '#1c1b19',
+    accentColor: '#ffd23f',
+    layoutMode: 'default',
+    // Faixa zebrada de obra no topo da sidebar.
+    customCss: `
+      ${brutalCss({
+        ink: '#111111', shadow: '#111111', bg: '#e9e6df', surface: '#ffffff',
+        btnFg: '#ffffff', btnShadow: '#111111',
+        navBg: '#ffd23f', navFg: '#111111',
+        highlight: '#111111', highlightFg: '#ffd23f',
+      })}
+      .sidebar::before {
+        content: '';
+        display: block;
+        height: 10px;
+        margin: -16px 0 12px;
+        background: repeating-linear-gradient(-45deg, #ffd23f 0 10px, #111111 10px 20px);
       }
     `.trim(),
   },
