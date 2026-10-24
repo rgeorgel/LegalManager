@@ -47,7 +47,8 @@ test('ficha do tenant abre em página própria com a timeline', async ({ superAd
   page.on('pageerror', (err) => jsErrors.push(err.message));
 
   await page.goto('/superadmin/tenants.html');
-  const detalhes = page.locator('a.action-btn', { hasText: 'Detalhes' }).first();
+  // Sem botões de ação na lista: o nome do tenant leva à ficha (blocos ou lista).
+  const detalhes = page.locator('a.tenant-card-nome:visible, a.t-nome:visible').first();
   await expect(detalhes).toBeVisible({ timeout: 15_000 });
   await detalhes.click();
 
