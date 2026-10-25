@@ -15,6 +15,7 @@ public class IAService : IIAService
     private readonly string _model;
     private readonly string _baseUrl;
     private readonly int _timeoutSeconds;
+    private readonly string? _reasoningEffort;
 
     public IAService(HttpClient httpClient, IConfiguration config)
     {
@@ -24,6 +25,7 @@ public class IAService : IIAService
         _model = config["IA:Model"] ?? "claude-3-5-sonnet-latest";
         _baseUrl = config["IA:BaseUrl"] ?? "";
         _timeoutSeconds = int.TryParse(config["IA:TimeoutSeconds"], out var t) ? t : 30;
+        _reasoningEffort = string.IsNullOrWhiteSpace(config["IA:ReasoningEffort"]) ? null : config["IA:ReasoningEffort"];
 
         _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
     }
@@ -325,12 +327,13 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             ? "https://api.openai.com/v1"
             : _baseUrl.TrimEnd('/');
 
-        var requestBody = new
+        var requestBody = new Dictionary<string, object>
         {
-            model = _model,
-            messages = new[] { new { role = "user", content = prompt } },
-            max_tokens = 4096
+            ["model"] = _model,
+            ["messages"] = new[] { new { role = "user", content = prompt } },
+            ["max_tokens"] = 4096
         };
+        if (_reasoningEffort is not null) requestBody["reasoning_effort"] = _reasoningEffort;
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/chat/completions")
         {

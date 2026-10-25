@@ -633,6 +633,28 @@ public class AssistenteTests
     }
 
     [Fact]
+    public async Task OpenAI_EnviaReasoningEffortSoQuandoConfigurado()
+    {
+        const string resposta = """{"choices":[{"message":{"content":"ok"}}]}""";
+        LlmMensagem[] pergunta = [new(LlmPapel.Usuario, [new LlmTexto("oi")])];
+
+        var semConfig = new HandlerCaptura(resposta);
+        await Cliente(semConfig, "OpenAI").EnviarAsync("sis", pergunta, []);
+        Assert.Null(JsonNode.Parse(semConfig.Corpo!)!["reasoning_effort"]);
+
+        var comConfig = new HandlerCaptura(resposta);
+        var client = new AssistenteLlmClient(new HttpClient(comConfig), new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["IA:Provider"] = "OpenAI",
+            ["IA:ApiKey"] = "k",
+            ["IA:Model"] = "m",
+            ["IA:ReasoningEffort"] = "medium"
+        }).Build(), NullLogger<AssistenteLlmClient>.Instance);
+        await client.EnviarAsync("sis", pergunta, []);
+        Assert.Equal("medium", JsonNode.Parse(comConfig.Corpo!)!["reasoning_effort"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task SemApiKey_LancaIndisponivel()
     {
         var client = new AssistenteLlmClient(new HttpClient(new HandlerCaptura("{}")),

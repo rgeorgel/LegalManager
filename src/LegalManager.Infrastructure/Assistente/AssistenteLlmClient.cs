@@ -39,7 +39,7 @@ public interface IAssistenteLlmClient
 /// Cliente de chat com ferramentas (tool use) para o assistente — Anthropic (Messages API) ou
 /// OpenAI/compatíveis (Chat Completions), como o <see cref="Services.IAService"/>.
 /// Se <c>Assistente:Provider</c> estiver configurado, usa a seção <c>Assistente:*</c>
-/// (Provider, ApiKey, Model, BaseUrl); senão reaproveita a configuração <c>IA:*</c>.
+/// (Provider, ApiKey, Model, BaseUrl, ReasoningEffort); senão reaproveita a configuração <c>IA:*</c>.
 /// </summary>
 public class AssistenteLlmClient : IAssistenteLlmClient
 {
@@ -51,6 +51,7 @@ public class AssistenteLlmClient : IAssistenteLlmClient
     private readonly string? _apiKey;
     private readonly string _model;
     private readonly string _baseUrl;
+    private readonly string? _reasoningEffort;
 
     public AssistenteLlmClient(HttpClient http, IConfiguration config, ILogger<AssistenteLlmClient> logger)
     {
@@ -64,6 +65,8 @@ public class AssistenteLlmClient : IAssistenteLlmClient
         _apiKey = Cfg($"{secao}:ApiKey") ?? (secao == "IA" ? Cfg("IA_API_KEY") : null);
         _baseUrl = Cfg($"{secao}:BaseUrl") ?? "";
         _model = Cfg($"{secao}:Model") ?? (EhAnthropic ? "claude-sonnet-5-5" : "gpt-4o-mini");
+        // Profundidade de raciocínio (low|medium|high|...) — só no formato OpenAI; ausente = padrão do modelo.
+        _reasoningEffort = Cfg($"{secao}:ReasoningEffort");
     }
 
     public string Provedor => _provider;
@@ -196,6 +199,7 @@ public class AssistenteLlmClient : IAssistenteLlmClient
         }
 
         var body = new JsonObject { ["model"] = _model, ["max_tokens"] = MaxTokens, ["messages"] = msgs };
+        if (_reasoningEffort is not null) body["reasoning_effort"] = _reasoningEffort;
         if (ferramentas.Count > 0)
             body["tools"] = new JsonArray(ferramentas.Select(f => (JsonNode)new JsonObject
             {
