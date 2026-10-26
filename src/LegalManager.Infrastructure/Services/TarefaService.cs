@@ -141,7 +141,9 @@ public class TarefaService : ITarefaService
         var prazoCalculado = CalcularPrazo(dto.DataInicio, dto.QuantidadeDias, dto.TipoCalculo, null);
         tarefa.Titulo = dto.Titulo;
         tarefa.Descricao = dto.Descricao;
-        tarefa.ResponsavelId = dto.ResponsavelId;
+        // Sem responsável no corpo (ex.: edição pelo detalhe do processo), mantém o atual em vez de
+        // apagar — tarefa sem dono some de "Minhas" no dashboard.
+        tarefa.ResponsavelId = dto.ResponsavelId ?? tarefa.ResponsavelId ?? _tenantContext.UserId;
         tarefa.Prazo = prazoCalculado ?? dto.Prazo;
         tarefa.DataInicio = dto.DataInicio;
         tarefa.QuantidadeDias = dto.QuantidadeDias;

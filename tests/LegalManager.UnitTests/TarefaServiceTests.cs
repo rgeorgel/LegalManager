@@ -1,4 +1,4 @@
-using LegalManager.Application.DTOs.Atividades;
+﻿using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -290,6 +290,22 @@ public class TarefaServiceTests
         var result = await svc.CreateAsync(dto);
 
         Assert.Equal(processo.Id, result.ProcessoId);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_SemResponsavel_MantemOAtual()
+    {
+        // Edição pelo detalhe do processo manda o PUT sem ResponsavelId: não pode apagar o dono
+        // (a tarefa sumiria de "Minhas" no dashboard).
+        var (ctx, tenant, usuario) = await SeedAsync();
+        var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+        var created = await svc.CreateAsync(new CreateTarefaDto("Réplica", null, null, null,
+            PrioridadeTarefa.Media, null, null, null));
+
+        var updated = await svc.UpdateAsync(created.Id, new UpdateTarefaDto("Réplica - José", null, null, null,
+            PrioridadeTarefa.Media, StatusTarefa.Pendente, null, null, null));
+
+        Assert.Equal(usuario.Id, updated.ResponsavelId);
     }
 
     [Fact]

@@ -426,6 +426,7 @@ const badgeRecorrente = t => t.recorrenciaId
 // ── Lista: state ───────────────────────────────────────────────
 let currentPage = 1;
 let editingId = null;
+let editingResponsavelId = null;
 let allListItems = [];
 
 // ── Toggle de visualização (lista/blocos) ────────────────────────
@@ -712,6 +713,7 @@ async function openEditModal(id) {
   document.getElementById('fmsgErro').style.display = 'none';
   document.getElementById('fStatusGroup').style.display = '';
   const t = await apiFetch(`/tarefas/${id}`);
+  editingResponsavelId = t.responsavelId ?? null;
   document.getElementById('fTitulo').value = t.titulo;
   document.getElementById('fDescricao').value = t.descricao ?? '';
   document.getElementById('fPrioridade').value = t.prioridade;
@@ -844,7 +846,8 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
         status: document.getElementById('fStatus').value,
         prazo: prazoVal || null,
         processoId: processoVal,
-        responsavelId: getUser()?.id || null,
+        // Editar não transfere a tarefa para quem editou.
+        responsavelId: editingResponsavelId || getUser()?.id || null,
         tags,
         recorrencia,
         // Ocorrência de série: só mexe na série com "Aplicar às próximas". Tarefa avulsa: só
