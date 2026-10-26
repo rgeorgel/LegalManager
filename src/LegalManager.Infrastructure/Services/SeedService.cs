@@ -301,7 +301,8 @@ public class SeedService
 
     private async Task GerarEventosAsync(Guid tenantId, List<Processo> processos, Guid usuarioId, CancellationToken ct)
     {
-        var tipos = Enum.GetValues<TipoEvento>();
+        // Prazo é Tarefa (Tipo=Prazo), não evento.
+        var tipos = Enum.GetValues<TipoEvento>().Where(t => t != TipoEvento.Prazo).ToArray();
 
         for (int i = 0; i < 10; i++)
         {
@@ -336,7 +337,6 @@ public class SeedService
             TipoEvento.Audiencia => $"Audiência de Instrução #{index + 1}",
             TipoEvento.Reuniao => $"Reunião com cliente #{index + 1}",
             TipoEvento.Pericia => $"Perícia médica #{index + 1}",
-            TipoEvento.Prazo => $"Prazo: alegações finais #{index + 1}",
             TipoEvento.Despacho => $"Despacho de mérito #{index + 1}",
             _ => $"Compromisso #{index + 1}"
         };

@@ -2,6 +2,7 @@ using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Contatos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
+using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public class EventoService : IEventoService
 
     public async Task<EventoResponseDto> CreateAsync(CreateEventoDto dto, CancellationToken ct = default)
     {
+        RejeitarPrazo(dto.Tipo);
         var evento = new Evento
         {
             Id = Guid.NewGuid(),
@@ -48,6 +50,7 @@ public class EventoService : IEventoService
         var evento = await _context.Eventos
             .FirstOrDefaultAsync(e => e.TenantId == _tenantContext.TenantId && e.Id == id, ct)
             ?? throw new KeyNotFoundException("Evento não encontrado.");
+        RejeitarPrazo(dto.Tipo);
 
         evento.Titulo = dto.Titulo;
         evento.Tipo = dto.Tipo;
@@ -111,6 +114,13 @@ public class EventoService : IEventoService
             .ToListAsync(ct);
 
         return new PagedResultDto<EventoResponseDto>(items, total, filtro.Page, filtro.PageSize, (int)Math.Ceiling(total / (double)filtro.PageSize));
+    }
+
+    // Prazo é Tarefa (Tipo=Prazo): tem status, Kanban e aparece na agenda do mesmo jeito.
+    private static void RejeitarPrazo(TipoEvento tipo)
+    {
+        if (tipo == TipoEvento.Prazo)
+            throw new ArgumentException("Prazos são cadastrados como tarefa (tipo Prazo), não como evento.");
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)

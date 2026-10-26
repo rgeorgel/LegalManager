@@ -184,22 +184,15 @@ function renderTarefas() {
   }
   el.innerHTML = list.map(t => {
     const meta = [
-      t.origem === 'Evento' ? '📅 Prazo (agenda)' : t.tipo === 'Prazo' ? '⏳ Prazo' : null,
+      t.tipo === 'Prazo' ? '⏳ Prazo' : null,
       t.numeroCNJProcesso ? esc(t.numeroCNJProcesso) : null,
       t.nomeContato ? esc(t.nomeContato) : null,
       t.nomeResponsavel ? '👤 ' + esc(t.nomeResponsavel) : null,
     ].filter(Boolean).join(' · ');
-    // Prazos também vêm de eventos da agenda (origem "Evento"): sem status, então
-    // não têm "concluir" e abrem na agenda em vez da tela de tarefas.
-    const evento = t.origem === 'Evento';
-    const href = evento
-      ? `/pages/agenda.html?view=dia&date=${isoDate(dataParede(t.prazo))}&abrirId=${t.id}`
-      : `/pages/tarefas.html?abrirId=${t.id}`;
+    const href = `/pages/tarefas.html?abrirId=${t.id}`;
     return `<div class="d2-item" data-id="${t.id}">
-      <div class="d2-prio" style="background:${evento ? '#d97706' : PRIO_COR[t.prioridade] ?? '#94a3b8'}" title="${evento ? 'Prazo na agenda' : 'Prioridade ' + esc(t.prioridade)}"></div>
-      ${evento
-        ? '<span class="d2-check d2-check-evento" title="Prazo cadastrado na agenda">📅</span>'
-        : `<button class="d2-check" data-concluir="${t.id}" title="Concluir" aria-label="Concluir ${esc(t.titulo)}"></button>`}
+      <div class="d2-prio" style="background:${PRIO_COR[t.prioridade] ?? '#94a3b8'}" title="Prioridade ${esc(t.prioridade)}"></div>
+      <button class="d2-check" data-concluir="${t.id}" title="Concluir" aria-label="Concluir ${esc(t.titulo)}"></button>
       <div class="d2-item-body">
         <a class="d2-item-title" href="${href}" title="${esc(t.titulo)}">${esc(t.titulo)}</a>
         <div class="d2-item-meta">${meta || '&nbsp;'}</div>

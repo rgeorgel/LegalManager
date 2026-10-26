@@ -21,15 +21,18 @@ internal sealed record DadosRegistrarHoras(DateTime InicioUtc, DateTime FimUtc, 
 public partial class AssistenteFerramentas
 {
     private const int MaxMinutosPorRegistro = 24 * 60;
+    // Prazo é Tarefa (Tipo=Prazo) — a agenda mostra as tarefas com prazo.
+    private static readonly string[] TiposDeEvento = Nomes<TipoEvento>().Where(n => n != nameof(TipoEvento.Prazo)).ToArray();
 
     private List<Definicao> DefinicoesDeAgenda() =>
     [
         new(new LlmFerramenta(CriarEvento,
                 "PROPÕE um compromisso na agenda (audiência, reunião, perícia...). Não grava: o usuário confirma num " +
-                "botão do chat. Precisa de data E horário de início; sem horário, pergunte ao usuário.",
+                "botão do chat. Precisa de data E horário de início; sem horário, pergunte ao usuário. " +
+                "Prazo não é evento: use criar_tarefa com tipo Prazo.",
                 Schema([
                     P("titulo", "string", "Título do compromisso."),
-                    P("tipo", "string", "Tipo de evento.", Nomes<TipoEvento>()),
+                    P("tipo", "string", "Tipo de evento.", TiposDeEvento),
                     P("inicio", "string", "Início AAAA-MM-DD HH:mm, na hora do escritório."),
                     P("fim", "string", "Fim AAAA-MM-DD HH:mm (opcional)."),
                     P("duracao_minutos", "integer", "Duração em minutos, se o fim não for informado (opcional)."),
@@ -81,7 +84,9 @@ public partial class AssistenteFerramentas
         LimiteDeAcoes();
         var titulo = Texto(a, "titulo") ?? throw new ArgumentException("Informe o titulo.");
         if (titulo.Length > 300) throw new ArgumentException("titulo: máximo de 300 caracteres.");
-        var tipo = Enum<TipoEvento>(a, "tipo") ?? throw new ArgumentException($"Informe o tipo: {string.Join(", ", Nomes<TipoEvento>())}.");
+        var tipo = Enum<TipoEvento>(a, "tipo") ?? throw new ArgumentException($"Informe o tipo: {string.Join(", ", TiposDeEvento)}.");
+        if (tipo == TipoEvento.Prazo)
+            return new { erro = "Prazo não é evento da agenda: use criar_tarefa com tipo Prazo." };
         var inicio = DataHoraArg(a, "inicio") ?? throw new ArgumentException("Informe o inicio.");
         if (Texto(a, "inicio")!.Length == "AAAA-MM-DD".Length)
             return new { erro = "Falta o horário do compromisso: pergunte ao usuário." };

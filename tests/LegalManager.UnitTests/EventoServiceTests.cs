@@ -120,13 +120,46 @@ public class EventoServiceTests
         var userId = Guid.NewGuid();
         var service = new EventoService(ctx, CreateTenantContext(tenantId, userId));
         var dto = new CreateEventoDto(
-            "Inscrição prova OAB", TipoEvento.Prazo,
+            "Reunião com cliente", TipoEvento.Reuniao,
             DateTime.UtcNow.AddDays(1), null, null, null, null, null);
 
         var result = await service.CreateAsync(dto);
 
         var evento = await ctx.Eventos.FindAsync(result.Id);
         Assert.Equal(userId, evento!.ResponsavelId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_TipoPrazo_DeveRejeitar()
+    {
+        // Prazo é Tarefa (Tipo=Prazo), não evento da agenda.
+        var (ctx, tenantId) = await SeedAsync();
+        var service = new EventoService(ctx, CreateTenantContext(tenantId, Guid.NewGuid()));
+        var dto = new CreateEventoDto(
+            "Inscrição prova OAB", TipoEvento.Prazo,
+            DateTime.UtcNow.AddDays(1), null, null, null, null, null);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(dto));
+        Assert.Empty(ctx.Eventos);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ParaTipoPrazo_DeveRejeitar()
+    {
+        var (ctx, tenantId) = await SeedAsync();
+        var eventoId = Guid.NewGuid();
+        ctx.Eventos.Add(new Evento
+        {
+            Id = eventoId, TenantId = tenantId, Titulo = "Reunião",
+            Tipo = TipoEvento.Reuniao, DataHora = DateTime.UtcNow.AddDays(1),
+            CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+        var service = new EventoService(ctx, CreateTenantContext(tenantId, Guid.NewGuid()));
+        var dto = new UpdateEventoDto("Reunião", TipoEvento.Prazo, DateTime.UtcNow.AddDays(1), null, null, null, null, null);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.UpdateAsync(eventoId, dto));
+        Assert.Equal(TipoEvento.Reuniao, (await ctx.Eventos.FindAsync(eventoId))!.Tipo);
     }
 
     [Fact]

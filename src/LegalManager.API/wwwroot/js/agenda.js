@@ -404,6 +404,8 @@ async function openCreateModal() {
   editingProcessoId = null;
   document.getElementById('modalEventoTitulo').textContent = 'Novo Evento';
   document.getElementById('formEvento').reset();
+  document.querySelector('#eTipo option[value="Prazo"]').hidden = false;
+  atualizarTipoPrazo();
   await carregarResponsaveis(null);
   document.getElementById('eMsgErro').style.display = 'none';
   document.getElementById('modalEvento').style.display = 'flex';
@@ -415,7 +417,10 @@ async function openEditModal(id) {
   document.getElementById('eMsgErro').style.display = 'none';
   const ev = await apiFetch(`/eventos/${id}`);
   document.getElementById('eTitulo').value = ev.titulo;
+  // Prazo é Tarefa: um evento existente não vira prazo pela edição.
+  document.querySelector('#eTipo option[value="Prazo"]').hidden = true;
   document.getElementById('eTipo').value = ev.tipo;
+  atualizarTipoPrazo();
   document.getElementById('eDataHora').value = ev.dataHora.substring(0, 16);
   document.getElementById('eDataHoraFim').value = ev.dataHoraFim ? ev.dataHoraFim.substring(0, 16) : '';
   document.getElementById('eLocal').value = ev.local ?? '';
@@ -424,6 +429,15 @@ async function openEditModal(id) {
   await carregarResponsaveis(ev.responsavelId, ev.nomeResponsavel);
   document.getElementById('modalEvento').style.display = 'flex';
 }
+
+// Prazo é salvo como Tarefa (Tipo=Prazo), que não tem fim nem local.
+function atualizarTipoPrazo() {
+  const prazo = document.getElementById('eTipo').value === 'Prazo';
+  document.getElementById('eTipoPrazoHint').style.display = prazo ? 'block' : 'none';
+  document.getElementById('eFimGroup').style.display = prazo ? 'none' : '';
+  document.getElementById('eLocalGroup').style.display = prazo ? 'none' : '';
+}
+document.getElementById('eTipo').addEventListener('change', atualizarTipoPrazo);
 
 function closeModal() { document.getElementById('modalEvento').style.display = 'none'; }
 
@@ -455,7 +469,16 @@ document.getElementById('formEvento').addEventListener('submit', async e => {
   };
 
   try {
-    if (editingId) {
+    if (!editingId && dto.tipo === 'Prazo') {
+      await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify({
+        titulo,
+        tipo: 'Prazo',
+        prioridade: 'Media',
+        prazo: dataHora,
+        descricao: dto.observacoes,
+        responsavelId: dto.responsavelId,
+      })});
+    } else if (editingId) {
       await apiFetch(`/eventos/${editingId}`, { method: 'PUT', body: JSON.stringify(dto) });
     } else {
       await apiFetch('/eventos', { method: 'POST', body: JSON.stringify(dto) });

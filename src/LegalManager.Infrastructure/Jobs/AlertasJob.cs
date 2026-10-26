@@ -114,12 +114,11 @@ public class AlertasJob
     // para não mandar várias mensagens no mesmo dia — e, conforme o plano do escritório, as sugestões
     // da triagem de publicações (Pro+) e os processos que tiveram andamento novo (explicados pela IA
     // no Plus+; com o texto do tribunal no Free).
-    // - Tarefas e prazos aparecem juntos na mesma tela (Tarefas/Prazos): um prazo pode ter sido
-    //   criado como Tarefa (Tipo=Prazo) ou direto como Evento na Agenda (Tipo=Prazo) — as duas
-    //   origens entram nas mesmas janelas: no e-mail, até 5 dias de atraso e os próximos 7 dias;
-    //   no in-app, hoje, D+1, D+3 e D+5 antes de vencer e até 5 dias de atraso.
+    // - Tarefas e prazos (Tarefa com Tipo=Prazo) entram nas mesmas janelas: no e-mail, até 5 dias
+    //   de atraso e os próximos 7 dias; no in-app, hoje, D+1, D+3 e D+5 antes de vencer e até 5 dias
+    //   de atraso.
     // - Os demais eventos da agenda entram no e-mail de hoje até daqui a 7 dias.
-    // Cada item respeita a preferência da sua categoria — "Prazos" para os dois tipos de prazo,
+    // Cada item respeita a preferência da sua categoria — "Prazos" para os prazos,
     // "PrazoTarefa"/"TarefaAtrasada" para as demais tarefas, "PrazoEvento" para os eventos,
     // "Publicacoes" para publicações e andamentos —, separadamente para e-mail e in-app.
     // O resumo sai só à meia-noite no fuso do escritório: o job roda de hora em hora (a meia-noite
@@ -156,23 +155,6 @@ public class AlertasJob
                 DestinatarioNome = t.ResponsavelId.HasValue ? t.Responsavel!.Nome : t.CriadoPor!.Nome,
                 DestinatarioEmail = t.ResponsavelId.HasValue ? t.Responsavel!.Email : t.CriadoPor!.Email,
                 EhPrazo = t.Tipo == TipoTarefa.Prazo
-            })
-            .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
-            .ToListAsync();
-
-        var prazosAgenda = await _context.Eventos
-            .Where(e => e.Tipo == TipoEvento.Prazo && e.ResponsavelId.HasValue &&
-                        e.DataHora >= buscaDe && e.DataHora < buscaAte)
-            .Select(e => new
-            {
-                e.Id,
-                e.TenantId,
-                e.Titulo,
-                Prazo = e.DataHora,
-                DestinatarioId = e.ResponsavelId!.Value,
-                DestinatarioNome = e.Responsavel!.Nome,
-                DestinatarioEmail = e.Responsavel!.Email,
-                EhPrazo = true
             })
             .Where(x => x.DestinatarioEmail != null && x.DestinatarioEmail != "")
             .ToListAsync();
@@ -233,7 +215,7 @@ public class AlertasJob
             })
             .ToListAsync();
 
-        var itensTarefas = tarefas.Concat(prazosAgenda).ToList();
+        var itensTarefas = tarefas;
         var tarefasPorDestinatario = itensTarefas.ToLookup(t => (t.TenantId, t.DestinatarioId));
         var eventosPorDestinatario = eventos.ToLookup(e => (e.TenantId, e.DestinatarioId));
         var andamentosPorDestinatario = andamentos.ToLookup(a => (a.TenantId, a.ResponsavelId));

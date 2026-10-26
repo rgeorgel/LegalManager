@@ -54,9 +54,13 @@ public class EventosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EventoResponseDto>> Create([FromBody] CreateEventoDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto, ct);
-        await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Evento, result.Id, null, dto), ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        try
+        {
+            var result = await _service.CreateAsync(dto, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Evento, result.Id, null, dto), ct);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpPut("{id:guid}")]
@@ -73,6 +77,7 @@ public class EventosController : ControllerBase
         {
             return NotFound();
         }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpDelete("{id:guid}")]

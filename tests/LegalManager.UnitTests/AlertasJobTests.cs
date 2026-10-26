@@ -392,10 +392,9 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_DeveUnificarPrazoDeTarefaEPrazoDeAgendaNoMesmoEmail()
+    public async Task ExecutarAsync_DeveJuntarOsPrazosNoMesmoEmail()
     {
-        // Um prazo criado na tela de Tarefas e outro criado direto na Agenda (Evento Tipo=Prazo)
-        // aparecem juntos na mesma tela — precisam chegar no MESMO e-mail, não em dois separados.
+        // Dois prazos do mesmo responsável chegam no MESMO e-mail, não em dois separados.
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
         var amanha = hoje.AddDays(1);
@@ -407,11 +406,12 @@ public class AlertasJobTests
             ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
             Prioridade = PrioridadeTarefa.Alta
         });
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = amanha,
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = amanha, Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 
@@ -428,18 +428,19 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_DeveIncluirPrazoDeAgendaQueVenceHoje()
+    public async Task ExecutarAsync_DeveIncluirPrazoQueVenceHoje()
     {
-        // O prazo criado na Agenda também precisa aparecer no dia em que vence, não só nos
+        // O prazo também precisa aparecer no dia em que vence, não só nos
         // avisos D-1/D-3/D-5 de antecedência.
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
 
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = hoje.AddHours(17),
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = hoje.AddHours(17), Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 
@@ -455,16 +456,17 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_NaoDeveIncluirPrazoDeAgenda_QuandoPreferenciaDesabilitada()
+    public async Task ExecutarAsync_NaoDeveIncluirPrazo_QuandoPreferenciaDesabilitada()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
 
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = hoje.AddDays(1), Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 
@@ -607,16 +609,17 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_NaoDeveEnviarEmailDuplicado_PrazoDeAgenda_QuandoJobRodaDuasVezes()
+    public async Task ExecutarAsync_NaoDeveEnviarEmailDuplicado_Prazo_QuandoJobRodaDuasVezes()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
 
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = hoje.AddDays(1), Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 
@@ -872,11 +875,12 @@ public class AlertasJobTests
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
         ctx.Tarefas.Add(NovaTarefa(tenantId, responsavelId, "Ligar cliente", hoje.AddDays(1)));
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1),
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = hoje.AddDays(1), Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 
@@ -953,15 +957,16 @@ public class AlertasJobTests
     }
 
     [Fact]
-    public async Task PrazoDeAgendaAmanha_NaoDeveIrNoEmailDeEventos_SoNoResumo()
+    public async Task PrazoAmanha_NaoDeveIrNoEmailDeEventos_SoNoResumo()
     {
         var (ctx, tenantId, responsavelId) = await SeedAsync();
         var hoje = BrasiliaTime.Hoje;
-        ctx.Eventos.Add(new Evento
+        ctx.Tarefas.Add(new Tarefa
         {
             Id = Guid.NewGuid(), TenantId = tenantId, Titulo = "Inscrição prova OAB",
-            Tipo = TipoEvento.Prazo, DataHora = hoje.AddDays(1).AddHours(21),
-            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow
+            Prazo = hoje.AddDays(1).AddHours(21), Status = StatusTarefa.Pendente, Tipo = TipoTarefa.Prazo,
+            ResponsavelId = responsavelId, CriadoEm = DateTime.UtcNow, CriadoPorId = responsavelId,
+            Prioridade = PrioridadeTarefa.Media
         });
         await ctx.SaveChangesAsync();
 

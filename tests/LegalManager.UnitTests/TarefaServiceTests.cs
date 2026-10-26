@@ -474,34 +474,28 @@ public class TarefaServiceTests
     }
 
     [Fact]
-    public async Task GetDashboardAsync_DeveIncluirEventosDoTipoPrazo()
+    public async Task GetDashboardAsync_PrazosVemSoDasTarefas()
     {
+        // Prazo é Tarefa (Tipo=Prazo); eventos da agenda não entram na lista de prazos.
         var (ctx, tenant, usuario) = await SeedAsync();
-        Evento NovoEvento(string titulo, DateTime dataHora, TipoEvento tipo = TipoEvento.Prazo) => new()
+        ctx.Eventos.Add(new Evento
         {
-            Id = Guid.NewGuid(), TenantId = tenant.Id, Titulo = titulo, Tipo = tipo,
-            DataHora = dataHora, ResponsavelId = usuario.Id, CriadoEm = DateTime.UtcNow
-        };
-        ctx.Eventos.AddRange(
-            NovoEvento("Evento prazo hoje", Brasilia(0, 23, 59)),
-            NovoEvento("Evento prazo em 2 dias", Brasilia(2, 17, 32)),
-            NovoEvento("Evento prazo em 20 dias", Brasilia(20, 10)),
-            NovoEvento("Evento prazo passado", Brasilia(-1, 10)),
-            NovoEvento("Perícia", Brasilia(1, 9), TipoEvento.Pericia));
-        ctx.Tarefas.Add(NovaTarefa(tenant.Id, usuario.Id, "Tarefa prazo em 1 dia", Brasilia(1, 12), TipoTarefa.Prazo));
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Titulo = "Perícia", Tipo = TipoEvento.Pericia,
+            DataHora = Brasilia(1, 9), ResponsavelId = usuario.Id, CriadoEm = DateTime.UtcNow
+        });
+        ctx.Tarefas.AddRange(
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo hoje", Brasilia(0, 23, 59), TipoTarefa.Prazo),
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo em 2 dias", Brasilia(2, 17, 32), TipoTarefa.Prazo),
+            NovaTarefa(tenant.Id, usuario.Id, "Prazo em 20 dias", Brasilia(20, 10), TipoTarefa.Prazo));
         await ctx.SaveChangesAsync();
         var svc = new TarefaService(ctx, CreateTenantContext(tenant.Id, usuario.Id));
 
         var result = await svc.GetDashboardAsync(dias: 7, limite: 15);
 
-        Assert.Equal(4, result.Totais.Prazos);
+        Assert.Equal(3, result.Totais.Prazos);
         Assert.Equal(1, result.Totais.PrazosHoje);
-        Assert.Equal(3, result.Totais.PrazosProximosDias);
-        Assert.Equal(0, result.Totais.Atrasadas);
-        Assert.Equal(
-            new[] { "Evento prazo hoje", "Tarefa prazo em 1 dia", "Evento prazo em 2 dias", "Evento prazo em 20 dias" },
-            result.Prazos.Select(p => p.Titulo));
-        Assert.Equal(new[] { "Evento", "Tarefa", "Evento", "Evento" }, result.Prazos.Select(p => p.Origem));
+        Assert.Equal(2, result.Totais.PrazosProximosDias);
+        Assert.Equal(new[] { "Prazo hoje", "Prazo em 2 dias", "Prazo em 20 dias" }, result.Prazos.Select(p => p.Titulo));
     }
 
     [Fact]
