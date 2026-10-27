@@ -28,41 +28,36 @@
   <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Super Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <style>
-    body { background: var(--color-sidebar); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .login-card { background: var(--color-surface); border-radius: 12px; padding: 40px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-    .login-logo { text-align: center; margin-bottom: 8px; }
-    .login-logo img { height: 36px; }
-    .login-badge { text-align: center; margin-bottom: 28px; }
-    .login-badge span { background: #dc2626; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 10px; border-radius: 100px; text-transform: uppercase; }
-    .login-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; text-align: center; }
-    .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
-  </style>
+  <link rel="preload" href="/fonts/archivo-black-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/login-brutalista.css">
 </head>
 <body>
-  <div class="login-card">
-    <div class="login-logo">
-      <img src="/images/causify-logo-3A-escuro.png" alt="Causify">
+  <main class="bru">
+    <div class="esq">
+      <svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify">
+        <path d="M72 22 L58 22 L58 208 L72 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M528 22 L542 22 L542 208 L528 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="300" y="132" font-family="Georgia, serif" font-style="italic" font-size="72" letter-spacing="2" text-anchor="middle" fill="currentColor">Causify</text>
+        <line x1="145" y1="152" x2="455" y2="152" stroke="#D4952A" stroke-width="1.5"/>
+        <text x="300" y="178" font-family="Arial, sans-serif" font-size="12" letter-spacing="5" text-anchor="middle" fill="#C8933A">GESTÃO JURÍDICA INTELIGENTE</text>
+      </svg>
+      <h1>Prazo perdido <span>não volta.</span></h1>
+      <div class="selos" aria-hidden="true"><span>Publicações automáticas</span><span>Prazos em dias úteis</span><span>Financeiro do escritório</span></div>
     </div>
-    <div class="login-badge"><span>Super Admin</span></div>
-
-    <div class="error-msg" id="errorMsg"></div>
-
-    <form id="loginForm">
-      <div class="form-group">
-        <label class="form-label">E-mail</label>
-        <input type="email" id="email" class="form-control" placeholder="superadmin@causify.internal" required>
+    <div class="dir">
+      <div class="box">
+        <span class="tag">Super Admin</span>
+        <h2>Entrar</h2>
+        <form id="loginForm">
+          <label for="email">E-mail<input type="email" id="email" placeholder="superadmin@causify.internal" autocomplete="email" required></label>
+          <label for="senha">Senha<input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" required></label>
+          <button type="submit" class="go" id="submitBtn">Bora trabalhar →</button>
+          <div class="msg" id="errorMsg" role="alert" aria-live="polite"></div>
+        </form>
       </div>
-      <div class="form-group">
-        <label class="form-label">Senha</label>
-        <input type="password" id="senha" class="form-control" placeholder="••••••••" required>
-      </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px" id="submitBtn">
-        Entrar
-      </button>
-    </form>
-  </div>
+    </div>
+  </main>
 
   <script type="module">
     import { setSession, isAuthenticated } from '/superadmin/js/superAdminApi.js';
@@ -74,7 +69,7 @@
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
       const errorMsg = document.getElementById('errorMsg');
-      errorMsg.style.display = 'none';
+      errorMsg.textContent = '';
       btn.disabled = true;
       btn.textContent = 'Entrando...';
 
@@ -93,14 +88,12 @@
         if (!res.ok) {
           trackEvent('superadmin_login_failed', { status: res.status });
           errorMsg.textContent = data.message || 'Credenciais inválidas.';
-          errorMsg.style.display = '';
           return;
         }
 
         if (data.usuario?.perfil !== 'SuperAdmin') {
           trackEvent('superadmin_login_failed', { reason: 'not_superadmin' });
           errorMsg.textContent = 'Acesso restrito ao painel super admin.';
-          errorMsg.style.display = '';
           return;
         }
 
@@ -109,10 +102,9 @@
         window.location.href = '/superadmin/dashboard.html';
       } catch {
         errorMsg.textContent = 'Erro ao conectar ao servidor.';
-        errorMsg.style.display = '';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Entrar';
+        btn.textContent = 'Bora trabalhar →';
       }
     });
   </script>
