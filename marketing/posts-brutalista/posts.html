@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Causify — Posts em vídeo · Brutalista</title>
+<!-- Posts em vídeo com a identidade dos logins brutalistas (docs/design/login-propostas.html, J a J3):
+     cada post é o painel esquerdo do login, animado. Sem query string mostra a galeria em loop;
+     ?p=a1&f=ig (ou f=sq) mostra um post só, no tamanho final, para o render.mjs capturar quadro a quadro.
+     As animações são CSS normais, mas ficam pausadas e o tempo é ditado por seek(t): assim cada
+     quadro do vídeo sai idêntico em toda renderização, sem depender da velocidade da máquina. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&display=block">
+<style>
+@font-face { font-family: "Archivo Black"; font-weight: 400; font-display: block;
+  src: url("../../src/LegalManager.API/wwwroot/fonts/archivo-black-latin.woff2") format("woff2"); }
+@font-face { font-family: "Archivo"; font-weight: 100 900; font-display: block;
+  src: url("../../src/LegalManager.API/wwwroot/fonts/archivo-latin.woff2") format("woff2"); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #ddd; font-family: system-ui, sans-serif; }
+body.galeria { display: flex; flex-wrap: wrap; gap: 28px; padding: 28px; }
+body.galeria .cel { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+body.galeria .cel .moldura { overflow: hidden; }
+body.galeria .cel .post { transform: scale(var(--k)); transform-origin: 0 0; }
+body.render { background: #000; overflow: hidden; }
+
+/* ===== Post: o painel esquerdo do login brutalista, em 1080×1350 (ig) ou 1080×1080 (sq) ===== */
+.post {
+  --ink: #0b0b0b; --display: "Archivo Black", "Archivo", "Arial Black", sans-serif;
+  --body: "Archivo", system-ui, sans-serif; --mono: "JetBrains Mono", Menlo, monospace;
+  --W: 1080px; --H: 1350px; --px: 84px; --pt: 96px; --pb: 96px; --gap: 40px;
+  position: relative; width: var(--W); height: var(--H); overflow: hidden;
+  background: var(--stage); color: var(--stage-fg); font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+.post.sq { --H: 1080px; --px: 72px; --pt: 64px; --pb: 64px; --gap: 30px; }
+
+.t-ama { --stage: #f6c445; --stage-fg: #0b0b0b; --hl: #0b0b0b; --hl-fg: #f6c445;
+  --s1: #ff8fb1; --s2: #8fd3ff; --s3: #b6f09c; --cta: #0b0b0b; --cta-fg: #f6c445; --cta-sh: #ff8fb1;
+  --placa: #0b0b0b; --placa-fg: #f6c445; --placa-sh: #fff; }
+.t-cob { --stage: #2b4bff; --stage-fg: #fff; --hl: #ffe14d; --hl-fg: #0b0b0b;
+  --s1: #ffe14d; --s2: #ff9ec4; --s3: #9cf0c4; --cta: #ffe14d; --cta-fg: #0b0b0b; --cta-sh: #0b0b0b;
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 2px, transparent 2px 96px); }
+.t-con { --stage: #cfcbc2; --stage-fg: #0b0b0b; --hl: #ff5a1f; --hl-fg: #0b0b0b;
+  --s1: #ffd23f; --s2: #fff; --s3: #ff5a1f; --cta: #ff5a1f; --cta-fg: #0b0b0b; --cta-sh: #0b0b0b;
+  --placa: #0b0b0b; --placa-fg: #ffd23f; --placa-sh: #ff5a1f;
+  --pt: 136px; --pb: 136px;
+  background-image: radial-gradient(rgba(0,0,0,.10) 1.5px, transparent 2px), radial-gradient(rgba(255,255,255,.35) 1.5px, transparent 2.1px);
+  background-size: 8px 8px, 14px 14px; background-position: 0 0, 3px 6px; }
+.t-con.sq { --pt: 104px; --pb: 104px; }
+.t-mad { --ink: #f3eefb; --stage: #141118; --stage-fg: #f3eefb; --hl: #ff5fa2; --hl-fg: #141118;
+  --s1: #ff5fa2; --s2: #b49bff; --s3: #ffd23f; --cta: #ff5fa2; --cta-fg: #141118; --cta-sh: #f3eefb;
+  background-image: radial-gradient(60% 45% at 92% 6%, rgba(255,95,162,.20), transparent 70%); }
+.t-cob .wrap { padding-bottom: calc(var(--pb) + 56px); }
+
+.wrap {
+  position: absolute; inset: 0; padding: var(--pt) var(--px) var(--pb);
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--gap);
+  animation: tremor .32s linear var(--tremor1, 1.5s) both, tremor2 .32s linear 4.62s both;
+}
+.topo { display: flex; justify-content: space-between; align-items: flex-start; }
+.logo { width: 250px; height: 96px; color: var(--stage-fg); animation: entra .5s ease-out .1s both; }
+.meio { display: flex; flex-direction: column; gap: var(--gap); align-items: flex-start; }
+.base { display: flex; flex-direction: column; gap: calc(var(--gap) + 4px); }
+
+/* Manchete: cada linha cai com peso; a linha marcada é revelada por uma faixa que varre da esquerda */
+h2 { font: 400 var(--fs, 140px)/.92 var(--display); letter-spacing: -.03em; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: flex-start; }
+h2 .ln { display: inline-block; white-space: nowrap; animation: cai .55s cubic-bezier(.2,.9,.3,1.15) both;
+  animation-delay: calc(.45s + var(--i) * .17s); }
+h2 .ln.m { animation: none; position: relative; color: var(--hl-fg); padding: .02em .1em 0; margin-left: -.1em; margin-top: .1em; }
+h2 .ln.m::before { content: ""; position: absolute; inset: 0; background: var(--hl); transform-origin: left;
+  animation: varre .38s cubic-bezier(.7,0,.2,1) both; animation-delay: calc(.5s + var(--i) * .17s); }
+h2 .ln.m i { font-style: normal; position: relative; animation: revela .34s cubic-bezier(.7,0,.2,1) both;
+  animation-delay: calc(.58s + var(--i) * .17s); }
+
+/* Selos coloridos e inclinados, como no login */
+.selos { display: flex; flex-wrap: wrap; gap: 18px 20px; }
+.selos span { border: 5px solid var(--ink); color: #0b0b0b; padding: 15px 22px; font: 800 27px/1 var(--body);
+  box-shadow: 7px 7px 0 var(--ink); animation: salta .45s cubic-bezier(.3,1.6,.5,1) both;
+  animation-delay: calc(var(--sd, 3.3s) + var(--j) * .14s); }
+.selos span:nth-child(1) { --r: -3deg; --j: 0; background: var(--s1); }
+.selos span:nth-child(2) { --r: 2deg; --j: 1; background: var(--s2); }
+.selos span:nth-child(3) { --r: -1deg; --j: 2; background: var(--s3); }
+.t-con .selos span { font: 700 25px/1 var(--mono); text-transform: uppercase; letter-spacing: .01em; }
+
+/* Chamada final: o "botão" do login vira o CTA do post */
+.cta { display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  background: var(--cta); color: var(--cta-fg); border: 5px solid var(--ink); box-shadow: 12px 12px 0 var(--cta-sh);
+  padding: 24px 30px; font: 400 42px/1 var(--display); text-transform: uppercase; letter-spacing: .02em;
+  animation: carimba .5s cubic-bezier(.2,1.4,.4,1) 4.5s both; }
+.cta span { font: 800 31px/1 var(--mono); text-transform: lowercase; letter-spacing: -.01em; display: inline-flex; gap: 12px; }
+.cta span b { animation: cutuca .7s ease-in-out 5s infinite; display: inline-block; }
+
+/* Placa preta com texto datilografado (número CNJ, artigo de lei) */
+.placa { display: inline-flex; flex-direction: column; gap: 8px; background: var(--placa); color: var(--placa-fg);
+  padding: 18px 22px; border: 5px solid var(--placa); box-shadow: 9px 9px 0 var(--placa-sh); max-width: 100%;
+  font: 700 27px/1.3 var(--mono); letter-spacing: .02em; animation: entra .4s ease-out var(--pd, 2s) both; }
+.placa b { color: #fff; font-size: 19px; letter-spacing: .16em; }
+.type { position: relative; display: block; white-space: pre-wrap; }
+.type .ghost { visibility: hidden; }
+.type .typed { position: absolute; inset: 0; }
+.type .typed::after { content: "▌"; opacity: var(--caret, 0); }
+
+/* ===== Cobalto: selo redondo "DJE lido" e fita de tribunais ===== */
+.diario { width: 210px; height: 210px; border-radius: 50%; background: #ff4d8d; color: #0b0b0b; border: 6px solid #0b0b0b;
+  box-shadow: 8px 8px 0 #0b0b0b; display: grid; place-items: center; text-align: center; padding: 14px;
+  font: 800 19px/1.25 var(--body); letter-spacing: .06em; text-transform: uppercase;
+  animation: gira .6s cubic-bezier(.3,1.4,.5,1) var(--dd, 2.1s) both; margin-top: -6px; }
+.diario b { display: block; font: 400 52px/1 var(--display); letter-spacing: -.02em; }
+.post.sq .diario { width: 176px; height: 176px; font-size: 16px; }
+.post.sq .diario b { font-size: 44px; }
+.fita { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #0b0b0b; color: #ffe14d;
+  border-top: 6px solid #0b0b0b; font: 700 24px/58px var(--mono); letter-spacing: .08em; white-space: nowrap; overflow: hidden; }
+.fita div { display: inline-block; animation: corre 9s linear infinite; }
+
+/* Cobalto 2: cartão de notificação de publicação */
+.aviso { position: relative; width: 100%; background: #fff; color: #0b0b0b; border: 6px solid #0b0b0b; box-shadow: 12px 12px 0 #ffe14d;
+  padding: 24px 28px; display: flex; flex-direction: column; gap: 10px; animation: sobe .6s cubic-bezier(.2,1.2,.4,1) 2.05s both; }
+.aviso .cab { display: flex; gap: 14px; align-items: center; font: 800 21px/1 var(--mono); letter-spacing: .08em; }
+.aviso .cab em { font-style: normal; background: #2b4bff; color: #fff; padding: 7px 10px; border: 3px solid #0b0b0b; }
+.aviso h4 { font: 400 40px/1 var(--display); text-transform: uppercase; }
+.aviso .cnj { font: 700 25px/1.2 var(--mono); }
+.aviso .pz { font: 800 26px/1.2 var(--body); display: flex; align-items: center; gap: 10px; animation: entra .3s ease-out 2.9s both; }
+.aviso .pz i { font-style: normal; background: #ffe14d; border: 3px solid #0b0b0b; padding: 4px 9px; }
+.aviso .mais { position: absolute; top: -30px; right: -14px; background: #ff9ec4; border: 5px solid #0b0b0b; box-shadow: 5px 5px 0 #0b0b0b;
+  padding: 10px 16px; font: 800 23px/1 var(--body); --r: 6deg; animation: salta .45s cubic-bezier(.3,1.6,.5,1) 3.15s both; }
+
+/* ===== Concreto: faixas zebradas de obra que correm ===== */
+.zebra { position: absolute; left: 0; right: 0; height: 44px; border-block: 6px solid #0b0b0b;
+  background: repeating-linear-gradient(-45deg, #ffd23f 0 26px, #0b0b0b 26px 52px); background-size: 73.54px 100%;
+  animation: obra 1.4s linear infinite; }
+.zebra.cima { top: 0; border-top: 0; }
+.zebra.baixo { bottom: 0; border-bottom: 0; animation-direction: reverse; }
+.t-con .meio h2 .ln.m::before { box-shadow: none; }
+
+/* Concreto 2: kanban com o card mudando de coluna */
+.kanban { container-type: inline-size; position: relative; width: 100%; height: 262px; display: grid;
+  grid-template-columns: repeat(3, 1fr); gap: 18px; animation: entra .4s ease-out 1.75s both; }
+.kanban .col { border: 5px solid #0b0b0b; background: rgba(255,255,255,.4); }
+.kanban .col h5 { font: 800 19px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 12px 14px;
+  border-bottom: 5px solid #0b0b0b; background: #0b0b0b; color: #ffd23f; }
+.kanban .col:nth-child(3) h5 { color: #ff5a1f; }
+.card { position: absolute; left: 0; top: 0; width: calc((100cqw - 36px) / 3 - 28px); --px0: 14px; --py0: 62px;
+  --dx: calc((100cqw + 18px) / 3); }
+.card .ci { background: #fff; border: 4px solid #0b0b0b; box-shadow: 6px 6px 0 #0b0b0b; padding: 12px 14px; height: 84px;
+  display: flex; flex-direction: column; justify-content: space-between; animation: salta .4s cubic-bezier(.3,1.6,.5,1) var(--cd) both; }
+.card .ci strong { font: 800 25px/1 var(--body); }
+.card .ci small { font: 700 17px/1 var(--mono); letter-spacing: .04em; }
+.card.a .ci { animation: salta .4s cubic-bezier(.3,1.6,.5,1) var(--cd) both, feito .25s ease-out 4.15s both; }
+.card.a .ci strong::after { content: " ✓"; animation: aparece .2s linear 4.15s both; }
+
+/* ===== Madrugada: relógio amarelo e citação da lei ===== */
+.relogio { display: flex; align-items: center; gap: 22px; animation: entra .4s ease-out var(--rd, 1.85s) both; }
+.relogio .h { font: 800 96px/1 var(--mono); letter-spacing: -.04em; color: #141118; background: #ffd23f; padding: 6px 16px;
+  border: 5px solid #f3eefb; box-shadow: 9px 9px 0 #ff5fa2; font-variant-numeric: tabular-nums;
+  animation: alarme .5s ease-in-out var(--ad, 99s) 4 both; }
+.relogio .h i { font-style: normal; animation: pisca 1s steps(1) infinite; }
+.relogio small { font: 700 21px/1.4 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: #b9b0c7; max-width: 21ch; }
+.relogio small b { color: #ffd23f; }
+.lei { font: 500 23px/1.5 var(--mono); color: #b9b0c7; border-left: 6px solid #ff5fa2; padding-left: 18px;
+  animation: entra .4s ease-out var(--ld, 3s) both; }
+.lei b { color: #f3eefb; }
+.seudia { width: 100%; border: 5px solid #f3eefb; background: #1d1924; box-shadow: 12px 12px 0 #ff5fa2; padding: 22px 26px;
+  display: flex; flex-direction: column; gap: 14px; animation: sobe .55s cubic-bezier(.2,1.2,.4,1) 2.55s both; }
+.seudia .cab { display: flex; justify-content: space-between; font: 800 21px/1 var(--mono); letter-spacing: .08em; color: #ffd23f; }
+.seudia ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.seudia li { font: 700 28px/1.15 var(--body); display: flex; gap: 14px; align-items: center; animation: entra .3s ease-out both;
+  animation-delay: calc(3.05s + var(--j) * .3s); }
+.seudia li::before { content: ""; width: 18px; height: 18px; flex: none; background: var(--c); border: 3px solid #f3eefb; }
+
+/* ===== Amarelo 2: semana com dias úteis contados e fim de semana/feriado riscados ===== */
+.semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; width: 100%; }
+.dia { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.dia .f { position: relative; background: #fff; border: 5px solid #0b0b0b; box-shadow: 6px 6px 0 #0b0b0b; text-align: center;
+  padding: 12px 0 10px; animation: vira .4s ease-out both; animation-delay: calc(1.75s + var(--j) * .09s); }
+.dia .f small { display: block; font: 800 20px/1 var(--body); letter-spacing: .08em; }
+.dia .f strong { display: block; font: 400 56px/1.05 var(--display); }
+.dia .f em { display: block; font: 700 13px/1 var(--mono); font-style: normal; letter-spacing: .04em; visibility: hidden; }
+.dia.fer .f em { visibility: visible; color: #b42318; }
+.dia.off .f { animation: vira .4s ease-out both, apaga .2s linear both; animation-delay: calc(1.75s + var(--j) * .09s), calc(2.6s + var(--j) * .17s); }
+.dia.off .f::after { content: ""; position: absolute; inset: -5px; animation: risca .22s cubic-bezier(.3,1.5,.5,1) both;
+  animation-delay: calc(2.6s + var(--j) * .17s);
+  background: linear-gradient(to top right, transparent calc(50% - 5px), #e5281f calc(50% - 5px) calc(50% + 5px), transparent calc(50% + 5px)),
+              linear-gradient(to top left, transparent calc(50% - 5px), #e5281f calc(50% - 5px) calc(50% + 5px), transparent calc(50% + 5px)); }
+.dia .n { text-align: center; font: 800 24px/1 var(--mono); padding: 9px 0; background: #0b0b0b; color: #f6c445; border: 4px solid #0b0b0b;
+  --r: 0deg; animation: salta .35s cubic-bezier(.3,1.6,.5,1) both; animation-delay: calc(2.6s + var(--j) * .17s); }
+.dia.off .n { background: #e5281f; color: #fff; }
+.nota { font: 600 23px/1.45 var(--mono); max-width: 46ch; animation: entra .4s ease-out 3.95s both; }
+.nota b { background: #0b0b0b; color: #f6c445; padding: 0 6px; }
+
+/* ===== Keyframes ===== */
+@keyframes entra { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cai { 0% { opacity: 0; transform: translateY(-120%) rotate(-3deg); } 55% { opacity: 1; transform: translateY(5%) rotate(.5deg); }
+  78% { transform: translateY(-2%); } 100% { opacity: 1; transform: none; } }
+@keyframes varre { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes revela { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes salta { 0% { opacity: 0; transform: rotate(var(--r, 0deg)) scale(.2); } 70% { opacity: 1; transform: rotate(var(--r, 0deg)) scale(1.1); }
+  100% { opacity: 1; transform: rotate(var(--r, 0deg)) scale(1); } }
+@keyframes carimba { 0% { opacity: 0; transform: scale(1.35) rotate(-2deg); } 60% { opacity: 1; transform: scale(.97); } 100% { opacity: 1; transform: none; } }
+@keyframes cutuca { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
+@keyframes tremor { 0%, 100% { transform: none; } 20% { transform: translate(-8px, 5px); } 40% { transform: translate(7px, -4px); }
+  60% { transform: translate(-4px, 3px); } 80% { transform: translate(3px, -1px); } }
+@keyframes tremor2 { 0%, 100% { transform: none; } 20% { transform: translate(-6px, 4px); } 40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+@keyframes gira { 0% { opacity: 0; transform: rotate(-160deg) scale(.1); } 70% { opacity: 1; transform: rotate(16deg) scale(1.1); }
+  100% { opacity: 1; transform: rotate(10deg) scale(1); } }
+@keyframes corre { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes obra { from { background-position: 0 0; } to { background-position: 73.54px 0; } }
+@keyframes sobe { 0% { opacity: 0; transform: translateY(90px) rotate(4deg); } 70% { opacity: 1; transform: translateY(-6px) rotate(-1.5deg); }
+  100% { opacity: 1; transform: rotate(-1deg); } }
+@keyframes pisca { 50% { opacity: 0; } }
+@keyframes alarme { 0%, 100% { box-shadow: 9px 9px 0 #ff5fa2; } 50% { box-shadow: 9px 9px 0 #ff5fa2, 0 0 0 16px rgba(255,95,162,.4); } }
+@keyframes vira { from { opacity: 0; transform: perspective(500px) rotateX(-90deg); } to { opacity: 1; transform: none; } }
+@keyframes apaga { to { background: #d9d4c6; color: #6b665c; } }
+@keyframes risca { from { opacity: 0; transform: scale(2); } to { opacity: 1; transform: none; } }
+@keyframes feito { to { background: #ff5a1f; } }
+/* Kanban: o card "Contestação" vai de Pendente para Em andamento e depois para Concluída; "Réplica" sobe na fila */
+@keyframes cardA {
+  0%, 35.7% { transform: translate(var(--px0), var(--py0)); }
+  39.3% { transform: translate(calc(var(--px0) + var(--dx) * .5), calc(var(--py0) + 20px)) rotate(4deg); }
+  42.9%, 51.4% { transform: translate(calc(var(--px0) + var(--dx)), calc(var(--py0) + 98px)); }
+  55% { transform: translate(calc(var(--px0) + var(--dx) * 1.5), calc(var(--py0) + 30px)) rotate(4deg); }
+  58.6%, 100% { transform: translate(calc(var(--px0) + var(--dx) * 2), var(--py0)); } }
+@keyframes cardB { 0%, 45.7% { transform: translate(var(--px0), calc(var(--py0) + 98px)); }
+  50%, 100% { transform: translate(var(--px0), var(--py0)); } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="causify" viewBox="0 0 600 230">
+    <path d="M72 22 L58 22 L58 208 L72 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M528 22 L542 22 L542 208 L528 208" fill="none" stroke="#D4952A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="300" y="132" font-family="Georgia, serif" font-style="italic" font-size="72" letter-spacing="2" text-anchor="middle" fill="currentColor">Causify</text>
+    <line x1="145" y1="152" x2="455" y2="152" stroke="#D4952A" stroke-width="1.5"/>
+    <text x="300" y="178" font-family="Arial, sans-serif" font-size="12" letter-spacing="5" text-anchor="middle" fill="#C8933A">GESTÃO JURÍDICA INTELIGENTE</text>
+  </symbol>
+</svg>
+
+<!-- ============ Amarelo 1 · Prazo perdido não volta ============ -->
+<template id="a1"><section class="post t-ama"><div class="wrap" style="--tremor1:1.12s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Prazo</span><span class="ln" style="--i:1">perdido</span><span class="ln m" style="--i:2"><i>não volta.</i></span></h2>
+    <div class="placa" style="--pd:1.9s"><b>CPC · ART. 223</b><span class="type" data-start="2.15" data-cps="34">Decorrido o prazo, extingue-se o direito de praticar o ato.</span></div>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:3.6s"><span>Publicações automáticas</span><span>Prazos em dias úteis</span><span>Alerta antes do vencimento</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<!-- ============ Amarelo 2 · Só conta dia útil ============ -->
+<template id="a2"><section class="post t-ama"><div class="wrap" style="--tremor1:.95s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Só conta</span><span class="ln m" style="--i:1"><i>dia útil.</i></span></h2>
+    <div class="semana">
+      <div class="dia" style="--j:0"><div class="f"><small>QUA</small><strong>18</strong><em>&nbsp;</em></div><div class="n">1º</div></div>
+      <div class="dia" style="--j:1"><div class="f"><small>QUI</small><strong>19</strong><em>&nbsp;</em></div><div class="n">2º</div></div>
+      <div class="dia off fer" style="--j:2"><div class="f"><small>SEX</small><strong>20</strong><em>FERIADO</em></div><div class="n">✕</div></div>
+      <div class="dia off" style="--j:3"><div class="f"><small>SÁB</small><strong>21</strong><em>&nbsp;</em></div><div class="n">✕</div></div>
+      <div class="dia off" style="--j:4"><div class="f"><small>DOM</small><strong>22</strong><em>&nbsp;</em></div><div class="n">✕</div></div>
+      <div class="dia" style="--j:5"><div class="f"><small>SEG</small><strong>23</strong><em>&nbsp;</em></div><div class="n">3º</div></div>
+      <div class="dia" style="--j:6"><div class="f"><small>TER</small><strong>24</strong><em>&nbsp;</em></div><div class="n">4º</div></div>
+    </div>
+    <p class="nota"><b>CPC, art. 219</b> Prazo em dias conta só os dias úteis. Feriado e fim de semana ficam de fora.</p>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:3.85s"><span>Prazos em dias úteis</span><span>Feriados no cálculo</span><span>Alerta antes do vencimento</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<!-- ============ Cobalto 1 · Publicou? A gente avisa. ============ -->
+<template id="b1"><section class="post t-cob"><div class="wrap" style="--tremor1:1.3s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg>
+    <div class="diario" style="--dd:1.95s"><div><b>DJE</b>lido hoje<br>às 06h</div></div></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Publicou?</span><span class="ln m" style="--i:1"><i>A gente</i></span><span class="ln m" style="--i:2"><i>avisa.</i></span></h2>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:2.85s"><span>Leitura diária do diário</span><span>Prazo já calculado</span><span>Aviso por e-mail</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div><div class="fita"><div>DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES · DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES ·&nbsp;</div><div>DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES · DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES ·&nbsp;</div></div></section></template>
+
+<!-- ============ Cobalto 2 · Intimação lida antes do seu café ============ -->
+<template id="b2"><section class="post t-cob"><div class="wrap" style="--tremor1:1.3s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Intimação lida</span><span class="ln" style="--i:1">antes do</span><span class="ln m" style="--i:2"><i>seu café.</i></span></h2>
+    <div class="aviso">
+      <div class="cab"><em>DJE</em><span>HOJE · 06:00</span></div>
+      <h4>Nova intimação</h4>
+      <div class="cnj">Proc. 0001024-26.2026.8.26.0100</div>
+      <div class="pz">Prazo calculado: <i>15 dias úteis</i></div>
+      <div class="mais">+3 hoje</div>
+    </div>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:3.55s"><span>Leitura diária às 6h</span><span>Prazo já calculado</span><span>Aviso por e-mail</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div><div class="fita"><div>DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES · DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES ·&nbsp;</div><div>DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES · DIÁRIO DE JUSTIÇA · TJSP · TJMG · TJRJ · PUBLICAÇÕES · INTIMAÇÕES ·&nbsp;</div></div></section></template>
+
+<!-- ============ Concreto 1 · Nenhum prazo na gaveta ============ -->
+<template id="c1"><section class="post t-con"><div class="zebra cima"></div><div class="zebra baixo"></div><div class="wrap" style="--tremor1:1.3s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Nenhum</span><span class="ln" style="--i:1">prazo</span><span class="ln m" style="--i:2"><i>na gaveta.</i></span></h2>
+    <div class="placa" style="--pd:1.9s"><b>PROCESSO EM ANDAMENTO</b><span class="type" style="white-space:nowrap" data-start="2.15" data-cps="22">0001024-26.2026.8.26.0100</span></div>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:3.5s"><span>Kanban de tarefas</span><span>Agenda de audiências</span><span>Portal do cliente</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<!-- ============ Concreto 2 · Cada tarefa tem dono ============ -->
+<template id="c2"><section class="post t-con"><div class="zebra cima"></div><div class="zebra baixo"></div><div class="wrap" style="--tremor1:1.12s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Cada tarefa</span><span class="ln m" style="--i:1"><i>tem dono.</i></span></h2>
+    <div class="kanban">
+      <div class="col"><h5>Pendente</h5></div><div class="col"><h5>Em andamento</h5></div><div class="col"><h5>Concluída</h5></div>
+      <div class="card a" style="--cd:2.0s;animation:cardA 7s linear both"><div class="ci"><strong>Contestação</strong><small>RESP. ANA</small></div></div>
+      <div class="card b" style="--cd:2.12s;animation:cardB 7s linear both"><div class="ci"><strong>Réplica</strong><small>RESP. LEO</small></div></div>
+      <div class="card" style="--cd:2.24s;transform:translate(calc(var(--px0) + var(--dx)), var(--py0))"><div class="ci"><strong>Audiência</strong><small>RESP. BIA · 14H</small></div></div>
+    </div>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:4.3s"><span>Responsável em cada card</span><span>Prazo vira tarefa</span><span>Equipe no mesmo quadro</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<!-- ============ Madrugada 1 · Vence às 23h59 ============ -->
+<template id="d1"><section class="post t-mad"><div class="wrap" style="--tremor1:.95s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <div class="relogio" style="--rd:1.2s;--ad:3.75s"><span class="h" data-relogio data-de="1421" data-ate="1438" data-t0="1.6" data-t1="3.75"><span class="hh">23</span><i>:</i><span class="mm">41</span></span>
+      <small>Horário de Brasília · <span data-falta>faltam <b>18 min</b></span> para as 23h59</small></div>
+    <h2><span class="ln" style="--i:0">Vence às</span><span class="ln m" style="--i:1"><i>23h59.</i></span></h2>
+    <p class="lei" style="--ld:3.3s">Lei 11.419/2006, art. 3º: <b>petição eletrônica é tempestiva até as 24h do último dia.</b> Melhor não descobrir isso às 23h41.</p>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:3.85s"><span>Alerta de prazo fatal</span><span>Assistente IA</span><span>Resumo "Seu dia"</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<!-- ============ Madrugada 2 · Sem susto às 23h41 ============ -->
+<template id="d2"><section class="post t-mad"><div class="wrap" style="--tremor1:.95s">
+  <div class="topo"><svg class="logo" viewBox="0 0 600 230" role="img" aria-label="Causify"><use href="#causify"/></svg></div>
+  <div class="meio">
+    <h2><span class="ln" style="--i:0">Sem susto</span><span class="ln m" style="--i:1"><i>às 23h41.</i></span></h2>
+    <div class="relogio" style="--rd:1.55s;--ad:2.35s"><span class="h" data-relogio data-de="1437" data-ate="1440" data-t0="1.75" data-t1="2.35"><span class="hh">23</span><i>:</i><span class="mm">57</span></span>
+      <small>À meia-noite chega <b>o resumo do seu dia.</b></small></div>
+    <div class="seudia">
+      <div class="cab"><span>✉ SEU DIA</span><span>TER · 24/11</span></div>
+      <ul><li style="--j:0;--c:#ff5fa2">2 prazos vencem hoje</li><li style="--j:1;--c:#ffd23f">Audiência às 14h</li><li style="--j:2;--c:#b49bff">4 tarefas da equipe</li></ul>
+    </div>
+  </div>
+  <div class="base">
+    <div class="selos" style="--sd:4.0s"><span>Resumo "Seu dia"</span><span>Alerta de prazo fatal</span><span>Assistente IA</span></div>
+    <div class="cta">Teste grátis<span>causify.com.br <b>→</b></span></div>
+  </div>
+</div></section></template>
+
+<script>
+const DURACAO = 7; // segundos de cada vídeo
+const POSTS = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2', 'd1', 'd2'];
+
+function monta(id, formato) {
+  const post = document.getElementById(id).content.firstElementChild.cloneNode(true);
+  post.classList.add(formato);
+  post.dataset.id = id;
+  return post;
+}
+
+// Ajusta a manchete ao maior tamanho que cabe na largura e deixa o post inteiro sem estourar a altura.
+function ajusta(post) {
+  const wrap = post.querySelector('.wrap'), h2 = post.querySelector('h2');
+  const linhas = [...h2.querySelectorAll('.ln')];
+  const larg = wrap.clientWidth - parseFloat(getComputedStyle(wrap).paddingLeft) * 2;
+  for (let fs = post.classList.contains('sq') ? 150 : 172; fs >= 70; fs -= 2) {
+    h2.style.setProperty('--fs', fs + 'px');
+    const cabe = Math.max(...linhas.map(l => l.offsetWidth)) <= larg && wrap.scrollHeight <= wrap.clientHeight;
+    if (cabe) return;
+  }
+}
+
+// Partes que não são CSS puro: texto datilografado e o relógio. Rodam a cada seek(t).
+function ticks(post) {
+  const fs = [];
+  post.querySelectorAll('.type').forEach(el => {
+    const txt = el.textContent, t0 = +el.dataset.start, cps = +el.dataset.cps;
+    el.textContent = '';
+    const ghost = document.createElement('span'); ghost.className = 'ghost'; ghost.textContent = txt;
+    const typed = document.createElement('span'); typed.className = 'typed';
+    el.append(ghost, typed);
+    fs.push(t => {
+      const n = Math.max(0, Math.min(txt.length, Math.floor((t - t0) * cps)));
+      typed.textContent = txt.slice(0, n);
+      typed.style.setProperty('--caret', t >= t0 && (n < txt.length || Math.floor(t * 2) % 2 === 0) ? 1 : 0);
+    });
+  });
+  post.querySelectorAll('[data-relogio]').forEach(el => {
+    const de = +el.dataset.de, ate = +el.dataset.ate, t0 = +el.dataset.t0, t1 = +el.dataset.t1;
+    const hh = el.querySelector('.hh'), mm = el.querySelector('.mm');
+    const falta = post.querySelector('[data-falta]');
+    const pad = n => String(n).padStart(2, '0');
+    fs.push(t => {
+      const p = Math.max(0, Math.min(1, (t - t0) / (t1 - t0)));
+      const min = (de + Math.round((ate - de) * p * p)) % 1440; // ease-in: o relógio acelera
+      hh.textContent = pad(Math.floor(min / 60)); mm.textContent = pad(min % 60);
+      if (falta) { const f = 1439 - min; falta.innerHTML = f === 1 ? 'falta <b>1 min</b>' : `faltam <b>${f} min</b>`; }
+    });
+  });
+  return fs;
+}
+
+function prepara(post) {
+  ajusta(post);
+  post._ticks = ticks(post);
+  post._anims = post.getAnimations({ subtree: true });
+  post._anims.forEach(a => a.pause());
+  posiciona(post, 0);
+}
+
+function posiciona(post, t) {
+  post._anims.forEach(a => { a.currentTime = t * 1000; });
+  post._ticks.forEach(f => f(t));
+}
+
+async function fontes() {
+  await Promise.all([
+    document.fonts.load('400 100px "Archivo Black"'), document.fonts.load('800 30px "Archivo"'),
+    document.fonts.load('700 30px "JetBrains Mono"'), document.fonts.load('800 30px "JetBrains Mono"'),
+    document.fonts.load('500 30px "JetBrains Mono"'),
+  ]);
+  await document.fonts.ready;
+}
+
+(async () => {
+  const q = new URLSearchParams(location.search);
+  await fontes();
+  if (q.get('p')) {
+    // Modo render: um post só, no tamanho final; o render.mjs chama window.seek(t) a cada quadro.
+    document.body.className = 'render';
+    const post = monta(q.get('p'), q.get('f') === 'sq' ? 'sq' : 'ig');
+    document.body.append(post);
+    prepara(post);
+    window.seek = t => posiciona(post, t);
+    window.pronto = true;
+    return;
+  }
+  document.body.className = 'galeria';
+  const todos = [];
+  for (const id of POSTS) for (const f of ['ig', 'sq']) {
+    const cel = document.createElement('div'); cel.className = 'cel';
+    const k = .36, h = f === 'ig' ? 1350 : 1080;
+    cel.innerHTML = `<div>${id} · ${f === 'ig' ? 'Instagram 1080×1350' : 'LinkedIn/Facebook 1080×1080'}</div><div class="moldura" style="--k:${k};width:${1080 * k}px;height:${h * k}px"></div>`;
+    const post = monta(id, f);
+    cel.querySelector('.moldura').append(post);
+    document.body.append(cel);
+    todos.push(post);
+  }
+  todos.forEach(prepara);
+  const t0 = performance.now();
+  (function loop(now) {
+    const t = ((now - t0) / 1000) % (DURACAO + 1); // 1 s parado no último quadro antes de recomeçar
+    todos.forEach(p => posiciona(p, Math.min(t, DURACAO)));
+    requestAnimationFrame(loop);
+  })(t0);
+})();
+</script>
+</body>
+</html>
