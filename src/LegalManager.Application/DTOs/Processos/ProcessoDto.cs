@@ -203,7 +203,8 @@ public record ProcessoUltimoAndamentoDto(
     string? NomeCliente,
     DateTime DataAndamento,
     TipoAndamento TipoAndamento,
-    string DescricaoAndamento
+    string DescricaoAndamento,
+    DateTime CapturadoEm  // UTC — quando o sistema registrou o andamento
 );
 
 // Relatório de processos (CSV/PDF) — mesmos filtros da listagem, sem paginação.

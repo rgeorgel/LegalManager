@@ -656,11 +656,12 @@ public class ProcessoServiceTests
         Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
     };
 
-    private static Andamento NovoAndamento(Processo p, int diasAtras, string descricao) => new()
+    private static Andamento NovoAndamento(Processo p, int diasAtras, string descricao, int? capturadoDiasAtras = null) => new()
     {
         Id = Guid.NewGuid(), ProcessoId = p.Id, TenantId = p.TenantId,
         Data = DateTime.UtcNow.AddDays(-diasAtras), Tipo = TipoAndamento.Despacho,
-        Descricao = descricao, Fonte = FonteAndamento.Manual, CriadoEm = DateTime.UtcNow
+        Descricao = descricao, Fonte = FonteAndamento.Manual,
+        CriadoEm = DateTime.UtcNow.AddDays(-(capturadoDiasAtras ?? diasAtras))
     };
 
     [Fact]
@@ -687,6 +688,28 @@ public class ProcessoServiceTests
         Assert.Equal("Recente de A", result[0].DescricaoAndamento);
         Assert.Equal("Cliente Teste", result[0].NomeCliente);
         Assert.Null(result[1].NomeCliente);
+    }
+
+    [Fact]
+    public async Task GetUltimosAndamentosAsync_DeveOrdenarPelaCapturaENaoPelaDataDoTribunal()
+    {
+        // DataJud entrega com atraso: andamento de 20 dias atrás capturado agora vem primeiro.
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var atrasado = NovoProcesso(tenant.Id, "0000700-00.2024.8.26.0001");
+        var emDia = NovoProcesso(tenant.Id, "0000800-00.2024.8.26.0001");
+        ctx.Processos.AddRange(atrasado, emDia);
+        ctx.Andamentos.AddRange(
+            NovoAndamento(atrasado, 30, "Já conhecido"),
+            NovoAndamento(atrasado, 20, "Chegou agora", capturadoDiasAtras: 0),
+            NovoAndamento(emDia, 1, "Recente pela data"));
+        await ctx.SaveChangesAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        var result = (await service.GetUltimosAndamentosAsync(10)).ToList();
+
+        Assert.Equal(new[] { atrasado.Id, emDia.Id }, result.Select(r => r.ProcessoId));
+        Assert.Equal("Chegou agora", result[0].DescricaoAndamento);
+        Assert.True(result[0].CapturadoEm > result[0].DataAndamento.AddDays(10));
     }
 
     [Fact]

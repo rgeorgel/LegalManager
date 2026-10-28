@@ -208,6 +208,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId");
 
+                    b.HasIndex("ProcessoId", "CriadoEm");
+
                     b.HasIndex("ProcessoId", "Data");
 
                     b.ToTable("Andamentos");

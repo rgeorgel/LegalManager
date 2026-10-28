@@ -353,18 +353,22 @@ public class ProcessoService : IProcessoService
     {
         // Consulta a tabela de andamentos (e não Processo.UltimoAndamentoEm), porque
         // nem todo fluxo de captura atualiza essa coluna.
+        // Ordena pela captura (CriadoEm), não pela data do andamento: o DataJud entrega
+        // movimentações com semanas de atraso, e o andamento que acabou de chegar (e gerou
+        // aviso/e-mail) ficaria abaixo dos mais novos pela data do tribunal.
         // Em duas etapas: projetar o andamento inteiro numa query só faz o EF gerar um
         // ROW_NUMBER() sobre a tabela Andamentos toda (todos os tenants).
-        // 1) Top N processos pela data do último andamento — MAX por processo usa o índice (ProcessoId, Data).
+        // 1) Top N processos pela última captura — MAX por processo usa o índice (ProcessoId, CriadoEm).
         var topo = await _context.Processos
             .Where(p => p.TenantId == _tenantContext.TenantId && p.Andamentos.Any())
-            .Select(p => new { p.Id, Data = p.Andamentos.Max(a => a.Data) })
-            .OrderByDescending(x => x.Data)
+            .Select(p => new { p.Id, CapturadoEm = p.Andamentos.Max(a => a.CriadoEm) })
+            .OrderByDescending(x => x.CapturadoEm)
             .Take(limite)
             .ToListAsync(ct);
         if (topo.Count == 0) return [];
 
         // 2) Detalhes apenas desses N processos (subqueries correlacionadas com LIMIT 1).
+        // Do lote capturado por último, mostra o andamento mais recente pela data.
         var ids = topo.Select(x => x.Id).ToList();
         var detalhes = await _context.Processos
             .Where(p => ids.Contains(p.Id))
@@ -375,12 +379,16 @@ public class ProcessoService : IProcessoService
                     .Where(pt => pt.TipoParte == TipoParteProcesso.Autor)
                     .Select(pt => pt.Contato.Nome)
                     .FirstOrDefault(),
+                Data = p.Andamentos
+                    .OrderByDescending(a => a.CriadoEm).ThenByDescending(a => a.Data)
+                    .Select(a => a.Data)
+                    .FirstOrDefault(),
                 Tipo = p.Andamentos
-                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .OrderByDescending(a => a.CriadoEm).ThenByDescending(a => a.Data)
                     .Select(a => a.Tipo)
                     .FirstOrDefault(),
                 Descricao = p.Andamentos
-                    .OrderByDescending(a => a.Data).ThenByDescending(a => a.CriadoEm)
+                    .OrderByDescending(a => a.CriadoEm).ThenByDescending(a => a.Data)
                     .Select(a => a.Descricao)
                     .FirstOrDefault()
             })
@@ -393,8 +401,9 @@ public class ProcessoService : IProcessoService
             var descricao = d.Descricao ?? string.Empty;
             return new ProcessoUltimoAndamentoDto(
                 d.Id, d.NumeroCNJ, d.Tribunal, d.AreaDireito, d.Status, d.NomeCliente,
-                t.Data, d.Tipo,
-                descricao.Length > maxDescricao ? descricao[..maxDescricao].TrimEnd() + "…" : descricao);
+                d.Data, d.Tipo,
+                descricao.Length > maxDescricao ? descricao[..maxDescricao].TrimEnd() + "…" : descricao,
+                DateTime.SpecifyKind(t.CapturadoEm, DateTimeKind.Utc));
         }).ToList();
     }
 

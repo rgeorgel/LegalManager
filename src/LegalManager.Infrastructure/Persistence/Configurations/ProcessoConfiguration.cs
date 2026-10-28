@@ -107,6 +107,7 @@ public class AndamentoConfiguration : IEntityTypeConfiguration<Andamento>
             .IsRequired(false);
 
         builder.HasIndex(a => new { a.ProcessoId, a.Data });
+        builder.HasIndex(a => new { a.ProcessoId, a.CriadoEm });
         builder.HasIndex(a => a.TenantId);
         builder.Property(a => a.DadosExtras).HasColumnType("text");
     }

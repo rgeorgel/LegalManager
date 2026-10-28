@@ -415,13 +415,19 @@ async function loadProcessos() {
     return;
   }
   el.innerHTML = items.map(p => {
-    const recente = daysUntil(p.dataAndamento) >= -7;
-    const meta = [p.nomeCliente, AREA_LABEL[p.areaDireito] ?? p.areaDireito, p.tribunal].filter(Boolean).map(esc).join(' · ');
+    // A lista vem pela captura (capturadoEm, UTC); o chip mostra a data do andamento no tribunal.
+    // O DataJud chega com atraso: quando a data é bem anterior à captura, diz quando chegou.
+    const capturado = new Date(p.capturadoEm);
+    const recente = Date.now() - capturado < 7 * 86400000;
+    const atrasado = capturado - dataParede(p.dataAndamento) > 2 * 86400000;
+    const meta = [p.nomeCliente, AREA_LABEL[p.areaDireito] ?? p.areaDireito, p.tribunal].filter(Boolean).map(esc)
+      .concat(atrasado ? [`capturado ${tempoRelativo(capturado)}`] : []).join(' · ');
+    const titulo = `Andamento em ${dataParede(p.dataAndamento).toLocaleString('pt-BR')} · capturado em ${capturado.toLocaleString('pt-BR')}`;
     return `<a class="d2-item" href="/pages/processo-detalhe.html?id=${p.processoId}" style="color:inherit">
       <div class="d2-item-body">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
           <span class="d2-item-title" style="font-variant-numeric:tabular-nums">${esc(p.numeroCNJ)}</span>
-          <span class="d2-chip ${recente ? 'green' : 'gray'}" title="${dataParede(p.dataAndamento).toLocaleString('pt-BR')}">${tempoRelativo(dataParede(p.dataAndamento))}</span>
+          <span class="d2-chip ${recente ? 'green' : 'gray'}" title="${esc(titulo)}">${tempoRelativo(dataParede(p.dataAndamento))}</span>
         </div>
         <div class="d2-notif-msg" style="margin-top:2px;color:var(--color-text)">${TIPO_ANDAMENTO_ICON[p.tipoAndamento] ?? '•'} ${esc(p.descricaoAndamento)}</div>
         ${meta ? `<div class="d2-item-meta">${meta}</div>` : ''}
