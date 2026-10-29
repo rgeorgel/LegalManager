@@ -110,6 +110,9 @@ public class DocumentoService : IDocumentoService
         if (usadoBytes + fileStream.Length > COTA_BYTES)
             throw new InvalidOperationException("Cota de armazenamento excedida.");
 
+        // Ignora o Content-Type enviado pelo navegador: o tipo gravado vem da validação.
+        contentType = ArquivoPermitido.Validar(fileStream, fileName);
+
         var safeFileName = System.Text.RegularExpressions.Regex.Replace(fileName, @"[^A-Za-z0-9._\-]", "_");
 
         string objectKey;

@@ -139,7 +139,8 @@ public record UserListItemDto(
     string Perfil,
     bool Ativo,
     DateTime? UltimoAcessoEm,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    bool MfaAtivo = false
 );
 
 public record WaitlistListItemDto(

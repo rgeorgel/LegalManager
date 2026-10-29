@@ -108,6 +108,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("BloqueadoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("ContatoId")
                         .HasColumnType("uuid");
 
@@ -125,6 +128,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("TentativasLoginFalhas")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TokenConvite")
                         .HasColumnType("text");
@@ -1940,6 +1946,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("BloqueadoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("ChavePix")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -1986,6 +1995,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("Telefone")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<int>("TentativasLoginFalhas")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TokenSenha")
                         .HasMaxLength(100)

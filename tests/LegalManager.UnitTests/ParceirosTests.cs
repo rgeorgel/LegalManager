@@ -242,6 +242,28 @@ public class ParceirosTests
             service.LoginAsync(new LoginParceiroDto(parceiro.Email, "SenhaNova@1")));
     }
 
+    [Fact]
+    public async Task Login_CincoSenhasErradas_Bloqueia_ENovaSenhaPeloLinkDesbloqueia()
+    {
+        var ctx = CreateContext();
+        var parceiro = AddParceiro(ctx);
+        var service = CreateService(ctx);
+        var token = Uri.UnescapeDataString((await service.EnviarConviteAsync(parceiro)).Link.Split("token=")[1]);
+        await service.DefinirSenhaAsync(new DefinirSenhaParceiroDto(token, "SenhaNova@1"));
+
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                service.LoginAsync(new LoginParceiroDto(parceiro.Email, "errada")));
+
+        var bloqueado = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.LoginAsync(new LoginParceiroDto(parceiro.Email, "SenhaNova@1")));
+        Assert.Equal(BloqueioLogin.Mensagem, bloqueado.Message);
+
+        var novoToken = Uri.UnescapeDataString((await service.EnviarConviteAsync(parceiro)).Link.Split("token=")[1]);
+        await service.DefinirSenhaAsync(new DefinirSenhaParceiroDto(novoToken, "SenhaNova@2"));
+        Assert.NotNull(await service.LoginAsync(new LoginParceiroDto(parceiro.Email, "SenhaNova@2")));
+    }
+
     // ── Solicitação de pagamento ────────────────────────────────────────────
 
     private static async Task<(Parceiro Parceiro, Tenant Tenant)> ComComissoesAsync(AppDbContext ctx, params decimal[] pagamentos)

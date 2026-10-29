@@ -5,6 +5,8 @@ namespace LegalManager.Application.Interfaces;
 public interface IPortalClienteService
 {
     Task<PortalAuthResponseDto> LoginAsync(LoginPortalDto dto, CancellationToken ct = default);
+    Task SolicitarRedefinicaoAsync(string email, CancellationToken ct = default);
+    Task RedefinirSenhaAsync(RedefinirSenhaPortalDto dto, CancellationToken ct = default);
     Task<ClientePerfilDto> GetPerfilAsync(Guid acessoId, CancellationToken ct = default);
     Task<IEnumerable<MeuProcessoDto>> GetMeusProcessosAsync(Guid contatoId, Guid tenantId, CancellationToken ct = default);
     Task<MeuProcessoDto?> GetProcessoAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);

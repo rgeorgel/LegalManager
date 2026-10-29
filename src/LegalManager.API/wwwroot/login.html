@@ -92,6 +92,16 @@
           <button type="submit" class="lf-botao" id="submitBtn">Entrar</button>
         </form>
 
+        <form id="mfaForm" style="display:none">
+          <p style="margin:0 0 12px">Digite o código de 6 dígitos do seu app autenticador. Sem acesso ao app? Use um dos códigos de recuperação.</p>
+          <div class="lf-campo">
+            <label for="mfaCodigo">Código de verificação</label>
+            <input type="text" id="mfaCodigo" required autocomplete="one-time-code" inputmode="numeric" maxlength="11" placeholder="123456">
+          </div>
+          <button type="submit" class="lf-botao" id="mfaBtn">Verificar</button>
+          <div class="lf-links"><a href="/login.html" id="mfaVoltar">Voltar</a></div>
+        </form>
+
         <div class="lf-ou">ou</div>
 
         <div class="lf-google">
@@ -121,7 +131,7 @@
   </main>
 
   <script type="module">
-    import { login, loginWithGoogle, isLoggedIn } from '/js/auth.js';
+    import { login, verificarMfa, loginWithGoogle, isLoggedIn } from '/js/auth.js';
 
     function getSafeRedirect() {
       const r = new URLSearchParams(window.location.search).get('redirect');
@@ -151,10 +161,14 @@
       btn.innerHTML = '<span class="spinner"></span> Entrando...';
 
       try {
-        await login(
+        const data = await login(
           document.getElementById('email').value,
           document.getElementById('senha').value
         );
+        if (data.mfaNecessario) {
+          mostrarEtapaMfa(data.mfaToken);
+          return;
+        }
         window.location.href = getSafeRedirect();
       } catch (err) {
         alert.textContent = err.message;
@@ -162,6 +176,38 @@
       } finally {
         btn.disabled = false;
         btn.textContent = 'Entrar';
+      }
+    });
+
+    // Verificação em duas etapas: a senha já foi aceita, falta o código.
+    const mfaForm = document.getElementById('mfaForm');
+    const mfaBtn = document.getElementById('mfaBtn');
+    let mfaToken = null;
+
+    function mostrarEtapaMfa(token) {
+      mfaToken = token;
+      form.style.display = 'none';
+      document.querySelector('.lf-ou').style.display = 'none';
+      document.querySelector('.lf-google').style.display = 'none';
+      mfaForm.style.display = 'block';
+      document.getElementById('mfaCodigo').focus();
+    }
+
+    mfaForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alert.style.display = 'none';
+      mfaBtn.disabled = true;
+      mfaBtn.innerHTML = '<span class="spinner"></span> Verificando...';
+      try {
+        await verificarMfa(mfaToken, document.getElementById('mfaCodigo').value.trim());
+        window.location.href = getSafeRedirect();
+      } catch (err) {
+        alert.textContent = err.message;
+        alert.style.display = 'block';
+        document.getElementById('mfaCodigo').select();
+      } finally {
+        mfaBtn.disabled = false;
+        mfaBtn.textContent = 'Verificar';
       }
     });
 

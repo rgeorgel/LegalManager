@@ -125,12 +125,74 @@ public class AuthService : IAuthService
         var usuario = await _userManager.FindByEmailAsync(dto.Email)
             ?? throw new UnauthorizedAccessException("Credenciais inválidas.");
 
+        await ConferirSenhaComBloqueioAsync(usuario, dto.Senha);
+
+        // Status só depois da senha: antes, "Usuário desativado" revelava que o e-mail existe.
         if (!usuario.Ativo)
             throw new UnauthorizedAccessException("Usuário desativado.");
 
-        if (!await _userManager.CheckPasswordAsync(usuario, dto.Senha))
-            throw new UnauthorizedAccessException("Credenciais inválidas.");
+        // Senha certa + MFA ativo: o JWT só sai depois do código (VerificarMfaAsync).
+        if (usuario.TwoFactorEnabled)
+            throw new MfaNecessarioException(GerarMfaToken(usuario));
 
+        return await ConcluirLoginAsync(usuario, ct);
+    }
+
+    /// <summary>Segunda etapa do login: código do app autenticador ou código de recuperação.</summary>
+    public async Task<AuthResponseDto> VerificarMfaAsync(VerificarMfaDto dto, CancellationToken ct = default)
+    {
+        var usuarioId = LerMfaToken(dto.MfaToken)
+            ?? throw new UnauthorizedAccessException("Sessão de verificação expirada. Entre novamente.");
+
+        var usuario = await _userManager.FindByIdAsync(usuarioId.ToString());
+        if (usuario is not { Ativo: true, TwoFactorEnabled: true })
+            throw new UnauthorizedAccessException("Sessão de verificação expirada. Entre novamente.");
+
+        if (await _userManager.IsLockedOutAsync(usuario))
+            throw new UnauthorizedAccessException(MensagemBloqueio);
+
+        var codigo = (dto.Codigo ?? string.Empty).Replace(" ", string.Empty).Replace("-", string.Empty);
+        var valido = codigo.Length == 6 && codigo.All(char.IsAsciiDigit)
+            ? await _userManager.VerifyTwoFactorTokenAsync(usuario, _userManager.Options.Tokens.AuthenticatorTokenProvider, codigo)
+            : (await _userManager.RedeemTwoFactorRecoveryCodeAsync(usuario, dto.Codigo!.Trim().ToUpperInvariant())).Succeeded;
+
+        if (!valido)
+        {
+            // Código errado conta para o mesmo bloqueio da senha (5 tentativas → 15 min).
+            await _userManager.AccessFailedAsync(usuario);
+            throw new UnauthorizedAccessException(
+                await _userManager.IsLockedOutAsync(usuario) ? MensagemBloqueio : "Código inválido.");
+        }
+
+        await _userManager.ResetAccessFailedCountAsync(usuario);
+        return await ConcluirLoginAsync(usuario, ct);
+    }
+
+    private const string MensagemBloqueio =
+        "Conta bloqueada temporariamente por excesso de tentativas. Tente novamente em 15 minutos ou redefina sua senha.";
+
+    /// <summary>
+    /// Confere a senha contando falhas no Identity Lockout (5 erros → 15 min bloqueado).
+    /// CheckPasswordAsync sozinho não conta nada — o bloqueio configurado nunca disparava.
+    /// </summary>
+    private async Task ConferirSenhaComBloqueioAsync(Usuario usuario, string senha)
+    {
+        if (await _userManager.IsLockedOutAsync(usuario))
+            throw new UnauthorizedAccessException(MensagemBloqueio);
+
+        if (!await _userManager.CheckPasswordAsync(usuario, senha))
+        {
+            await _userManager.AccessFailedAsync(usuario);
+            throw new UnauthorizedAccessException(
+                await _userManager.IsLockedOutAsync(usuario) ? MensagemBloqueio : "Credenciais inválidas.");
+        }
+
+        if (usuario.AccessFailedCount > 0)
+            await _userManager.ResetAccessFailedCountAsync(usuario);
+    }
+
+    private async Task<AuthResponseDto> ConcluirLoginAsync(Usuario usuario, CancellationToken ct)
+    {
         var tenant = await _context.Tenants.FindAsync([usuario.TenantId], ct)
             ?? throw new InvalidOperationException("Tenant não encontrado.");
 
@@ -253,6 +315,10 @@ public class AuthService : IAuthService
         var result = await _userManager.ResetPasswordAsync(usuario, dto.Token, dto.NovaSenha);
         if (!result.Succeeded)
             throw new InvalidOperationException(string.Join("; ", result.Errors.Select(e => e.Description)));
+
+        // Quem provou ter acesso ao e-mail sai do bloqueio por senhas erradas.
+        await _userManager.SetLockoutEndDateAsync(usuario, null);
+        await _userManager.ResetAccessFailedCountAsync(usuario);
     }
 
     public async Task ConvidarUsuarioAsync(ConvidarUsuarioDto dto, Guid tenantId, CancellationToken ct = default)
@@ -501,6 +567,50 @@ public class AuthService : IAuthService
         return token;
     }
 
+    // Token curto da 1ª etapa do login com MFA. Audience própria: o pipeline JWT do app
+    // (ValidAudience = Jwt:Audience) recusa este token como acesso às APIs.
+    private const string MfaAudienceSufixo = ":mfa";
+    private static readonly TimeSpan MfaTokenValidade = TimeSpan.FromMinutes(5);
+
+    private string GerarMfaToken(Usuario usuario)
+    {
+        var jwtSettings = _config.GetSection("Jwt");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+        var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"] + MfaAudienceSufixo,
+            claims: [new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString())],
+            expires: DateTime.UtcNow.Add(MfaTokenValidade),
+            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private Guid? LerMfaToken(string? mfaToken)
+    {
+        if (string.IsNullOrWhiteSpace(mfaToken)) return null;
+        var jwtSettings = _config.GetSection("Jwt");
+        try
+        {
+            var principal = new JwtSecurityTokenHandler { MapInboundClaims = false }.ValidateToken(mfaToken,
+                new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = jwtSettings["Audience"] + MfaAudienceSufixo,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromSeconds(30),
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+                }, out _);
+            return Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var id) ? id : null;
+        }
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
     private static string GenerateSecureToken()
     {
         var bytes = new byte[64];
@@ -550,4 +660,10 @@ public class AuthService : IAuthService
     }
 
     private record VoucherBeneficio(PlanoTipo Plano, DateTime PlanoExpiraEm);
+}
+
+/// <summary>Senha certa, mas a conta tem MFA: o login continua em POST /api/auth/mfa.</summary>
+public sealed class MfaNecessarioException(string mfaToken) : Exception("Verificação em duas etapas necessária.")
+{
+    public string MfaToken { get; } = mfaToken;
 }

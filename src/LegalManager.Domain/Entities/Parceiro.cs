@@ -8,7 +8,7 @@ namespace LegalManager.Domain.Entities;
 //
 // O parceiro tem login próprio no portal do parceiro (/parceiro/), com JWT de role "Parceiro". Não
 // é um Usuario do Identity porque não pertence a nenhum tenant (mesmo modelo de AcessoCliente).
-public class Parceiro
+public class Parceiro : IBloqueioLogin
 {
     public Guid Id { get; set; }
     public string Nome { get; set; } = string.Empty;
@@ -46,6 +46,8 @@ public class Parceiro
     public Guid? CriadoPorId { get; set; }
     public DateTime? AtualizadoEm { get; set; }
     public DateTime? UltimoAcessoEm { get; set; }
+    public int TentativasLoginFalhas { get; set; }
+    public DateTime? BloqueadoAte { get; set; }
 
     public ICollection<ComissaoParceiro> Comissoes { get; set; } = new List<ComissaoParceiro>();
     public ICollection<SolicitacaoPagamentoParceiro> Solicitacoes { get; set; } = new List<SolicitacaoPagamentoParceiro>();

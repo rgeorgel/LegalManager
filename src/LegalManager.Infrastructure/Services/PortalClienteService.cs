@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.DTOs.Tenants;
@@ -10,6 +11,7 @@ using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace LegalManager.Infrastructure.Services;
@@ -20,32 +22,47 @@ public class PortalClienteService : IPortalClienteService
     private readonly IConfiguration _config;
     private readonly IPasswordHasher<AcessoCliente> _hasher;
     private readonly IEmailService _email;
+    private readonly ILogger<PortalClienteService> _logger;
+
+    public static readonly TimeSpan ValidadeRedefinicao = TimeSpan.FromHours(1);
 
     public PortalClienteService(
         AppDbContext context,
         IConfiguration config,
         IPasswordHasher<AcessoCliente> hasher,
-        IEmailService email)
+        IEmailService email,
+        ILogger<PortalClienteService> logger)
     {
         _context = context;
         _config = config;
         _hasher = hasher;
         _email = email;
+        _logger = logger;
     }
 
     public async Task<PortalAuthResponseDto> LoginAsync(LoginPortalDto dto, CancellationToken ct = default)
     {
+        var email = dto.Email.Trim().ToLowerInvariant();
         var acesso = await _context.AcessosCliente
             .Include(a => a.Contato)
             .Include(a => a.Tenant)
-            .FirstOrDefaultAsync(a => a.Email == dto.Email && a.Ativo, ct)
+            .FirstOrDefaultAsync(a => a.Email == email && a.Ativo, ct)
             ?? throw new UnauthorizedAccessException("E-mail ou senha inválidos.");
+
+        var agora = DateTime.UtcNow;
+        if (acesso.EstaBloqueado(agora))
+            throw new UnauthorizedAccessException(BloqueioLogin.Mensagem);
 
         var result = _hasher.VerifyHashedPassword(acesso, acesso.SenhaHash, dto.Senha);
         if (result == PasswordVerificationResult.Failed)
-            throw new UnauthorizedAccessException("E-mail ou senha inválidos.");
+        {
+            var bloqueou = acesso.RegistrarFalha(agora);
+            await _context.SaveChangesAsync(ct);
+            throw new UnauthorizedAccessException(bloqueou ? BloqueioLogin.Mensagem : "E-mail ou senha inválidos.");
+        }
 
-        acesso.UltimoAcessoEm = DateTime.UtcNow;
+        acesso.RegistrarSucesso();
+        acesso.UltimoAcessoEm = agora;
         await _context.SaveChangesAsync(ct);
 
         var (token, expires) = GerarJwt(acesso);
@@ -69,6 +86,54 @@ public class PortalClienteService : IPortalClienteService
                 )
             )
         );
+    }
+
+    /// <summary>
+    /// "Esqueci minha senha" do portal. E-mail desconhecido é ignorado em silêncio. O login é só
+    /// por e-mail, então o mesmo link vale para todos os acessos ativos com ele (cliente de mais
+    /// de um escritório) e a senha nova passa a valer em todos.
+    /// </summary>
+    public async Task SolicitarRedefinicaoAsync(string emailInformado, CancellationToken ct = default)
+    {
+        var email = emailInformado.Trim().ToLowerInvariant();
+        var acessos = await _context.AcessosCliente
+            .Where(a => a.Email == email && a.Ativo)
+            .ToListAsync(ct);
+        if (acessos.Count == 0) return;
+
+        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        var expiraEm = DateTime.UtcNow.Add(ValidadeRedefinicao);
+        foreach (var acesso in acessos)
+        {
+            acesso.TokenRedefinicao = HashToken(token);
+            acesso.TokenRedefinicaoExpiraEm = expiraEm;
+        }
+        await _context.SaveChangesAsync(ct);
+
+        var link = $"{_config["App:FrontendUrl"]}/cliente/definir-senha.html?token={Uri.EscapeDataString(token)}";
+        try { await _email.EnviarResetSenhaAsync(email, link, ct); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Falha ao enviar redefinição de senha do portal ao acesso {AcessoId}", acessos[0].Id); }
+    }
+
+    public async Task RedefinirSenhaAsync(RedefinirSenhaPortalDto dto, CancellationToken ct = default)
+    {
+        var hash = HashToken(dto.Token);
+        var agora = DateTime.UtcNow;
+        var acessos = await _context.AcessosCliente
+            .Where(a => a.TokenRedefinicao == hash && a.Ativo && a.TokenRedefinicaoExpiraEm > agora)
+            .ToListAsync(ct);
+        if (acessos.Count == 0)
+            throw new InvalidOperationException("Link inválido ou expirado. Peça um novo link em \"Esqueci minha senha\".");
+
+        foreach (var acesso in acessos)
+        {
+            acesso.SenhaHash = _hasher.HashPassword(acesso, dto.NovaSenha);
+            acesso.TokenRedefinicao = null;
+            acesso.TokenRedefinicaoExpiraEm = null;
+            acesso.RegistrarSucesso(); // quem provou ter acesso ao e-mail sai do bloqueio
+        }
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task<ClientePerfilDto> GetPerfilAsync(Guid acessoId, CancellationToken ct = default)
@@ -185,6 +250,7 @@ public class PortalClienteService : IPortalClienteService
         {
             existente.Email = emailNormalizado;
             existente.SenhaHash = _hasher.HashPassword(existente, dto.Senha);
+            existente.RegistrarSucesso(); // senha nova do escritório desbloqueia o acesso
             existente.Ativo = true;
             await _context.SaveChangesAsync(ct);
             await _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
@@ -257,6 +323,10 @@ public class PortalClienteService : IPortalClienteService
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
+
+    // Só o hash fica no banco: um vazamento da tabela não entrega links de senha válidos.
+    private static string HashToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 
     private static AcessoPortalInfoDto MapInfo(AcessoCliente a) =>
         new(a.Id, a.ContatoId, a.Email, a.Ativo, a.CriadoEm, a.UltimoAcessoEm,

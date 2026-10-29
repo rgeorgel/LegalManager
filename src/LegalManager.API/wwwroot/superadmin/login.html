@@ -45,6 +45,11 @@
           <button type="submit" class="go" id="submitBtn">Bora trabalhar →</button>
           <div class="msg" id="errorMsg" role="alert" aria-live="polite"></div>
         </form>
+        <form id="mfaForm" style="display:none">
+          <label for="mfaCodigo">Código do app autenticador (ou de recuperação)<input type="text" id="mfaCodigo" placeholder="123456" autocomplete="one-time-code" inputmode="numeric" maxlength="11" required></label>
+          <button type="submit" class="go" id="mfaBtn">Verificar →</button>
+          <div class="msg" id="mfaErrorMsg" role="alert" aria-live="polite"></div>
+        </form>
       </div>
     </div>
   </main>
@@ -81,20 +86,66 @@
           return;
         }
 
-        if (data.usuario?.perfil !== 'SuperAdmin') {
-          trackEvent('superadmin_login_failed', { reason: 'not_superadmin' });
-          errorMsg.textContent = 'Acesso restrito ao painel super admin.';
+        // MFA ativo: a senha foi aceita, falta o código (POST /api/auth/mfa).
+        if (data.mfaNecessario) {
+          mfaToken = data.mfaToken;
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('mfaForm').style.display = '';
+          document.getElementById('mfaCodigo').focus();
           return;
         }
 
-        setSession(data);
-        trackEvent('superadmin_login_succeeded');
-        window.location.href = '/superadmin/dashboard.html';
+        concluirLogin(data, errorMsg);
       } catch {
         errorMsg.textContent = 'Erro ao conectar ao servidor.';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Bora trabalhar →';
+      }
+    });
+
+    let mfaToken = null;
+
+    function concluirLogin(data, errorMsg) {
+      if (data.usuario?.perfil !== 'SuperAdmin') {
+        trackEvent('superadmin_login_failed', { reason: 'not_superadmin' });
+        errorMsg.textContent = 'Acesso restrito ao painel super admin.';
+        return;
+      }
+
+      setSession(data);
+      trackEvent('superadmin_login_succeeded');
+      window.location.href = '/superadmin/dashboard.html';
+    }
+
+    document.getElementById('mfaForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('mfaBtn');
+      const errorMsg = document.getElementById('mfaErrorMsg');
+      errorMsg.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      try {
+        const res = await fetch('/api/auth/mfa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mfaToken, codigo: document.getElementById('mfaCodigo').value.trim() })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          trackEvent('superadmin_login_failed', { method: 'mfa', status: res.status });
+          errorMsg.textContent = data.message || 'Código inválido.';
+          return;
+        }
+
+        concluirLogin(data, errorMsg);
+      } catch {
+        errorMsg.textContent = 'Erro ao conectar ao servidor.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verificar →';
       }
     });
   </script>

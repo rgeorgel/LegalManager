@@ -183,6 +183,12 @@
         </form>
       </div>
 
+      <!-- Verificação em duas etapas (MFA) — opcional, por usuário -->
+      <div class="config-section">
+        <div class="config-section-title">Verificação em duas etapas</div>
+        <div id="mfaSecao"></div>
+      </div>
+
       <!-- Preferências de alertas -->
       <div class="config-section">
         <div class="config-section-title">Preferências de Alertas</div>
@@ -485,8 +491,10 @@ import { esc } from '/js/utils.js';
   import { apiFetch, clearSession } from '/js/api.js';
   import { getUser } from '/js/auth.js';
   import { mascaraCpfCnpj } from '/js/mascaras.js';
+  import { montarMfa } from '/js/mfa-config.js';
 
   initLayout();
+  montarMfa(document.getElementById('mfaSecao'), apiFetch);
 
   // ============================================================
   // TAB SWITCHING

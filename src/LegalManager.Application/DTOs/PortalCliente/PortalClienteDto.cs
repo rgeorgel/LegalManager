@@ -9,6 +9,10 @@ public record LoginPortalDto(
     [Required] string Senha
 );
 
+public record SolicitarRedefinicaoPortalDto([Required, EmailAddress] string Email);
+
+public record RedefinirSenhaPortalDto([Required] string Token, [Required, MinLength(8)] string NovaSenha);
+
 public record PortalAuthResponseDto(
     string AccessToken,
     DateTime ExpiresAt,

@@ -447,7 +447,7 @@
       <form id="uploadForm">
         <div class="form-group">
           <label>Arquivo *</label>
-          <input type="file" id="fileInput" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" required>
+          <input type="file" id="fileInput" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.rtf,.txt,.csv,.png,.jpg,.jpeg,.webp" required>
         </div>
         <div class="form-group">
           <label>Tipo de Documento *</label>
@@ -1546,6 +1546,8 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
 const pdfModal = document.getElementById('pdfModal');
 let currentPdfUrl = '';
 
+const PREVIEW_TIPOS = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+
 function openPdfModal(fileUrl, nome, token = '') {
   const container = document.getElementById('pdfContainer');
   container.innerHTML = `
@@ -1562,7 +1564,10 @@ function openPdfModal(fileUrl, nome, token = '') {
     .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
     .then(blob => {
       if (blob.size === 0) throw new Error('Documento vazio');
-      const blobUrl = URL.createObjectURL(blob);
+      // O blob: herda a origem do app — só PDF e imagem podem ser exibidos aqui. Qualquer
+      // outro tipo (ex.: HTML enviado como .pdf) rodaria como página dentro do Causify.
+      if (!PREVIEW_TIPOS.includes(blob.type)) throw new Error('pré-visualização disponível só para PDF e imagens. Use o Download.');
+      const blobUrl = URL.createObjectURL(new Blob([blob], { type: blob.type }));
       container.innerHTML = '';
       const iframe = document.createElement('iframe');
       iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;background:#fff;';

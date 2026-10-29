@@ -7,6 +7,7 @@ using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace LegalManager.UnitTests;
@@ -33,7 +34,7 @@ public class PortalClienteServiceTests
             .Build();
 
     private PortalClienteService CreateService(AppDbContext ctx) =>
-        new(ctx, CreateConfig(), _hasher, _emailMock.Object);
+        new(ctx, CreateConfig(), _hasher, _emailMock.Object, NullLogger<PortalClienteService>.Instance);
 
     private async Task<(AppDbContext ctx, Tenant tenant, Contato contato, AcessoCliente acesso)> SeedAsync(
         string senha = "Senha@123", bool ativo = true)
@@ -116,6 +117,33 @@ public class PortalClienteServiceTests
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.LoginAsync(new LoginPortalDto("cliente@teste.com", "SenhaErrada")));
+    }
+
+    [Fact]
+    public async Task LoginAsync_CincoSenhasErradas_BloqueiamOAcesso()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        var service = CreateService(ctx);
+
+        for (var i = 0; i < 4; i++)
+        {
+            var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                service.LoginAsync(new LoginPortalDto("cliente@teste.com", "SenhaErrada")));
+            Assert.Equal("E-mail ou senha inválidos.", ex.Message);
+        }
+        var quinta = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.LoginAsync(new LoginPortalDto("cliente@teste.com", "SenhaErrada")));
+        Assert.Equal(BloqueioLogin.Mensagem, quinta.Message);
+
+        // Bloqueado: nem a senha certa entra.
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123")));
+
+        // Passado o bloqueio, a senha certa volta a funcionar e zera a contagem.
+        acesso.BloqueadoAte = DateTime.UtcNow.AddSeconds(-1);
+        await ctx.SaveChangesAsync();
+        await service.LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123"));
+        Assert.Equal(0, (await ctx.AcessosCliente.FindAsync(acesso.Id))!.TentativasLoginFalhas);
     }
 
     [Fact]
@@ -322,5 +350,116 @@ public class PortalClienteServiceTests
         var result = await service.GetMeusProcessosAsync(contato.Id, tenant.Id);
 
         Assert.Empty(result);
+    }
+
+    // ── Esqueci minha senha ───────────────────────────────
+
+    private static string TokenDoLink(string link) =>
+        Uri.UnescapeDataString(link[(link.IndexOf("token=", StringComparison.Ordinal) + 6)..]);
+
+    private async Task<string> SolicitarEObterTokenAsync(PortalClienteService service, string email)
+    {
+        string? link = null;
+        _emailMock.Setup(e => e.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, CancellationToken>((_, l, _) => link = l)
+            .Returns(Task.CompletedTask);
+        await service.SolicitarRedefinicaoAsync(email);
+        Assert.NotNull(link);
+        Assert.StartsWith("http://localhost:6600/cliente/definir-senha.html?token=", link);
+        return TokenDoLink(link!);
+    }
+
+    [Fact]
+    public async Task Redefinicao_LinkDoEmailTrocaASenhaEDesbloqueia()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        acesso.TentativasLoginFalhas = 5;
+        acesso.BloqueadoAte = DateTime.UtcNow.AddMinutes(10);
+        await ctx.SaveChangesAsync();
+        var service = CreateService(ctx);
+
+        var token = await SolicitarEObterTokenAsync(service, "  Cliente@Teste.com ");
+        // Só o hash fica no banco.
+        Assert.NotEqual(token, acesso.TokenRedefinicao);
+
+        await service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto(token, "NovaSenha@456"));
+
+        Assert.Null(acesso.TokenRedefinicao);
+        Assert.Null(acesso.BloqueadoAte);
+        var result = await service.LoginAsync(new LoginPortalDto("cliente@teste.com", "NovaSenha@456"));
+        Assert.NotNull(result.AccessToken);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123")));
+    }
+
+    [Fact]
+    public async Task Redefinicao_LinkSoValeUmaVez()
+    {
+        var (ctx, _, _, _) = await SeedAsync();
+        var service = CreateService(ctx);
+        var token = await SolicitarEObterTokenAsync(service, "cliente@teste.com");
+
+        await service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto(token, "NovaSenha@456"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto(token, "OutraSenha@789")));
+    }
+
+    [Fact]
+    public async Task Redefinicao_LinkExpiradoOuInvalido_EhRecusado()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        var service = CreateService(ctx);
+        var token = await SolicitarEObterTokenAsync(service, "cliente@teste.com");
+        acesso.TokenRedefinicaoExpiraEm = DateTime.UtcNow.AddSeconds(-1);
+        await ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto(token, "NovaSenha@456")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto("token-inventado", "NovaSenha@456")));
+    }
+
+    [Fact]
+    public async Task Redefinicao_EmailDesconhecidoOuInativo_NaoEnviaNada()
+    {
+        var (ctx, _, _, _) = await SeedAsync(ativo: false);
+        var service = CreateService(ctx);
+
+        await service.SolicitarRedefinicaoAsync("cliente@teste.com");
+        await service.SolicitarRedefinicaoAsync("nao@existe.com");
+
+        _emailMock.Verify(e => e.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Redefinicao_FalhaNoEnvioDoEmail_NaoRevelaQueOEmailExiste()
+    {
+        var (ctx, _, _, _) = await SeedAsync();
+        _emailMock.Setup(e => e.EnviarResetSenhaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP fora do ar"));
+        var service = CreateService(ctx);
+
+        await service.SolicitarRedefinicaoAsync("cliente@teste.com"); // não lança
+    }
+
+    [Fact]
+    public async Task Redefinicao_ClienteDeDoisEscritorios_SenhaNovaValeNosDois()
+    {
+        var (ctx, _, _, acesso1) = await SeedAsync();
+        var tenant2 = new Tenant { Id = Guid.NewGuid(), Nome = "Outro Escritório", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var contato2 = new Contato { Id = Guid.NewGuid(), TenantId = tenant2.Id, Nome = "Cliente Teste", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow };
+        var acesso2 = new AcessoCliente { Id = Guid.NewGuid(), TenantId = tenant2.Id, ContatoId = contato2.Id, Email = "cliente@teste.com", Ativo = true, CriadoEm = DateTime.UtcNow };
+        acesso2.SenhaHash = _hasher.HashPassword(acesso2, "SenhaDiferente@1");
+        ctx.AddRange(tenant2, contato2, acesso2);
+        await ctx.SaveChangesAsync();
+        var service = CreateService(ctx);
+
+        var token = await SolicitarEObterTokenAsync(service, "cliente@teste.com");
+        await service.RedefinirSenhaAsync(new RedefinirSenhaPortalDto(token, "NovaSenha@456"));
+
+        Assert.NotEqual(PasswordVerificationResult.Failed, _hasher.VerifyHashedPassword(acesso1, acesso1.SenhaHash, "NovaSenha@456"));
+        Assert.NotEqual(PasswordVerificationResult.Failed, _hasher.VerifyHashedPassword(acesso2, acesso2.SenhaHash, "NovaSenha@456"));
+        _emailMock.Verify(e => e.EnviarResetSenhaAsync("cliente@teste.com", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

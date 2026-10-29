@@ -73,6 +73,10 @@
         </button>
       </form>
 
+      <div style="margin-top:12px;text-align:center">
+        <a href="/cliente/esqueci-senha.html" style="font-size:13px">Esqueci minha senha</a>
+      </div>
+
       <div class="auth-footer">
         Área exclusiva para clientes do escritório.<br>
         Problemas? Entre em contato com seu advogado.
@@ -89,9 +93,16 @@
     const alertEl = document.getElementById('alert');
     const btn = document.getElementById('submitBtn');
 
+    if (new URLSearchParams(location.search).get('msg') === 'senha-definida') {
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = 'Senha redefinida. Entre com a nova senha.';
+      alertEl.style.display = 'block';
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertEl.style.display = 'none';
+      alertEl.className = 'alert alert-error';
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Entrando...';
 

@@ -30,7 +30,8 @@ const NAV_GROUPS = [
     items: [
       { href: '/superadmin/tema.html', label: '🎨 Tema' },
       { href: '/superadmin/consultas.html', label: '🔍 Consultas Externas' },
-      { href: '/superadmin/assistente.html', label: '🤖 Assistente IA' }
+      { href: '/superadmin/assistente.html', label: '🤖 Assistente IA' },
+      { href: '/superadmin/seguranca.html', label: '🔒 Segurança' }
     ]
   }
 ];

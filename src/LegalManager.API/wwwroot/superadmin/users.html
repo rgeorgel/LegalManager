@@ -169,11 +169,14 @@ import { esc } from '/js/utils.js';
               <td><span class="badge badge-${PERFIL_COLORS[u.perfil] ?? 'gray'}">${u.perfil}</span></td>
               <td>
                 <span class="badge badge-${u.ativo ? 'green' : 'red'}">${u.ativo ? 'Sim' : 'Não'}</span>
+                ${u.mfaAtivo ? '<span class="badge badge-blue" title="Verificação em duas etapas ativa">MFA</span>' : ''}
               </td>
               <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(u.ultimoAcessoEm)}</td>
               <td style="color:var(--color-text-muted);font-size:12px">${fmtDate(u.criadoEm)}</td>
               <td>${u.ativo && u.perfil !== 'SuperAdmin'
                 ? `<button class="action-btn" onclick="impersonarUsuario('${u.id}','${esc(u.nome).replace(/'/g, "\\'")}')">Entrar como</button>`
+                : ''}${u.mfaAtivo
+                ? ` <button class="action-btn" data-desativar-mfa="${u.id}" data-nome="${esc(u.nome)}">Desativar MFA</button>`
                 : ''}</td>
             </tr>`).join('');
         }
@@ -187,6 +190,21 @@ import { esc } from '/js/utils.js';
           `<tr><td colspan="9" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
       }
     }
+
+    // Recuperação de acesso: usuário perdeu o celular e os códigos de recuperação.
+    document.getElementById('tableBody').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-desativar-mfa]');
+      if (!btn) return;
+      if (!confirm(`Desativar a verificação em duas etapas de ${btn.dataset.nome}?\n\nFaça isso só depois de confirmar a identidade da pessoa. Ela voltará a entrar apenas com a senha.`)) return;
+      btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/users/${btn.dataset.desativarMfa}/mfa/desativar`, { method: 'POST' });
+        await load();
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+      }
+    });
 
     document.getElementById('prevBtn').addEventListener('click', () => { page--; load(); });
     document.getElementById('nextBtn').addEventListener('click', () => { page++; load(); });

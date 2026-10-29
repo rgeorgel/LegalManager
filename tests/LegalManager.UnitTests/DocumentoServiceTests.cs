@@ -354,7 +354,7 @@ public class DocumentoServiceTests
         ctx.Processos.Add(processo);
         await ctx.SaveChangesAsync();
 
-        var stream = new MemoryStream(new byte[512]);
+        var stream = PdfStream(512);
         var uploadInfo = new DocumentoUploadDto
         {
             ProcessoId = processo.Id,
@@ -377,6 +377,47 @@ public class DocumentoServiceTests
     }
 
     [Fact]
+    public async Task UploadAsync_HtmlDisfarcadoDePdf_RecusaENaoGrava()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+
+        var stream = new MemoryStream("<html><script>alert(1)</script></html>"u8.ToArray());
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.UploadAsync(stream, "contrato.pdf", "text/html", new DocumentoUploadDto(), usuario.Id));
+
+        storage.Verify(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.False(await ctx.Documentos.AnyAsync());
+    }
+
+    [Fact]
+    public async Task UploadAsync_GravaContentTypeDoServidorENaoODoNavegador()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        string? enviado = null;
+        storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<Stream, string, string, CancellationToken>((_, _, ct, _) => enviado = ct)
+            .ReturnsAsync("ok");
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+
+        var result = await service.UploadAsync(PdfStream(100), "peticao.pdf", "text/html", new DocumentoUploadDto(), usuario.Id);
+
+        Assert.Equal("application/pdf", enviado);
+        var salvo = await ctx.Documentos.SingleAsync(d => d.Id == result.Id);
+        Assert.Equal("application/pdf", salvo.ContentType);
+    }
+
+    private static MemoryStream PdfStream(int tamanho)
+    {
+        var bytes = new byte[tamanho];
+        "%PDF-1.7\n"u8.CopyTo(bytes);
+        return new MemoryStream(bytes);
+    }
+
+    [Fact]
     public async Task UploadAsync_UsesCustomNomeWhenProvided()
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();
@@ -384,7 +425,7 @@ public class DocumentoServiceTests
         var storageService = CreateMockStorageService();
         var service = new DocumentoService(ctx, tenantContext, storageService);
 
-        var stream = new MemoryStream(new byte[100]);
+        var stream = PdfStream(100);
         var uploadInfo = new DocumentoUploadDto
         {
             Tipo = TipoDocumento.Outro,
@@ -404,7 +445,7 @@ public class DocumentoServiceTests
         var storageService = CreateMockStorageService();
         var service = new DocumentoService(ctx, tenantContext, storageService);
 
-        var stream = new MemoryStream(new byte[100]);
+        var stream = PdfStream(100);
         var uploadInfo = new DocumentoUploadDto
         {
             Tipo = TipoDocumento.Outro

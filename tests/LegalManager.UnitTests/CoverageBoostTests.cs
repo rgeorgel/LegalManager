@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using LegalManager.Application.DTOs.Atividades;
 using LegalManager.Application.DTOs.Documentos;
 using LegalManager.Application.DTOs.IA;
@@ -61,7 +62,7 @@ public class PortalClienteServiceMissingTests
         var email = new Mock<IEmailService>();
         email.Setup(e => e.EnviarAcessoPortalAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
              .Returns(Task.CompletedTask);
-        return (new PortalClienteService(ctx, CreateConfig(), new PasswordHasher<AcessoCliente>(), email.Object), ctx, tenantId);
+        return (new PortalClienteService(ctx, CreateConfig(), new PasswordHasher<AcessoCliente>(), email.Object, NullLogger<PortalClienteService>.Instance), ctx, tenantId);
     }
 
     private static Contato AddContato(AppDbContext ctx, Guid tenantId, string nome = "Cliente")
@@ -476,12 +477,23 @@ public class AuditExtensionsAdditionalTests
     }
 
     [Fact]
-    public void GetClientIpAddress_WithXForwardedFor_ReturnsSplitFirstIp()
+    public void GetClientIpAddress_WithXForwardedFor_ReturnsLastIp_AddedByOurProxy()
     {
         var ctx = new DefaultHttpContext();
-        ctx.Request.Headers["X-Forwarded-For"] = "203.0.113.1, 10.0.0.1";
+        // O primeiro item vem do cliente (forjável); o último é o que o nosso proxy anexou.
+        ctx.Request.Headers["X-Forwarded-For"] = "1.2.3.4, 203.0.113.1";
         var result = LegalManager.Infrastructure.Services.AuditExtensions.GetClientIpAddress(ctx);
         Assert.Equal("203.0.113.1", result);
+    }
+
+    [Fact]
+    public void GetClientIpAddress_CloudflareHeader_TakesPrecedence()
+    {
+        var ctx = new DefaultHttpContext();
+        ctx.Request.Headers["CF-Connecting-IP"] = "198.51.100.7";
+        ctx.Request.Headers["X-Forwarded-For"] = "1.2.3.4, 198.51.100.7, 172.64.80.1";
+        var result = LegalManager.Infrastructure.Services.AuditExtensions.GetClientIpAddress(ctx);
+        Assert.Equal("198.51.100.7", result);
     }
 }
 

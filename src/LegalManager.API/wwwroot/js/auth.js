@@ -15,8 +15,32 @@ export async function login(email, senha) {
     throw new Error(body.message || body.title || 'E-mail ou senha inválidos.');
   }
   const data = await res.json();
+  // Conta com verificação em duas etapas: a sessão só é criada depois do código
+  // (verificarMfa). O chamador mostra o campo do código com data.mfaToken.
+  if (data.mfaNecessario) {
+    trackEvent('login_mfa_required');
+    return data;
+  }
   setSession(data);
   trackEvent('login_succeeded', { method: 'password' });
+  return data;
+}
+
+// 2ª etapa do login com MFA: código do app autenticador ou código de recuperação.
+export async function verificarMfa(mfaToken, codigo) {
+  const res = await fetch('/api/auth/mfa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mfaToken, codigo }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    trackEvent('login_failed', { method: 'mfa', status: res.status });
+    throw new Error(body.message || body.title || 'Código inválido.');
+  }
+  const data = await res.json();
+  setSession(data);
+  trackEvent('login_succeeded', { method: 'password_mfa' });
   return data;
 }
 

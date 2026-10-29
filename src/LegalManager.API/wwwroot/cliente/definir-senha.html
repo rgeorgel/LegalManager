@@ -28,7 +28,7 @@
   <main class="portal-page">
     <div class="auth-card" style="max-width:420px;margin:40px auto">
       <h1 style="font-size:20px;font-weight:700;margin-bottom:8px">Definir sua senha</h1>
-      <p style="color:#6b7280;font-size:14px;margin-bottom:24px">Crie uma senha para acessar o portal do cliente.</p>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:24px">Crie uma nova senha para acessar o portal do cliente (mínimo de 8 caracteres).</p>
       <div id="alert" class="alert alert-error" style="display:none"></div>
       <form id="form">
         <div class="form-group">
@@ -51,7 +51,7 @@
 
     if (!token) {
       alertEl.className = 'alert alert-error';
-      alertEl.textContent = 'Token de redefinição inválido.';
+      alertEl.innerHTML = 'Link de redefinição inválido. <a href="/cliente/esqueci-senha.html">Peça um novo link</a>.';
       alertEl.style.display = 'block';
       document.getElementById('form').style.display = 'none';
     }

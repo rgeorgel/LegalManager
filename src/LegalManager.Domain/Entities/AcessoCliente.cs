@@ -1,6 +1,6 @@
 namespace LegalManager.Domain.Entities;
 
-public class AcessoCliente
+public class AcessoCliente : IBloqueioLogin
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
@@ -14,6 +14,8 @@ public class AcessoCliente
     public DateTime? TokenConviteExpiraEm { get; set; }
     public string? TokenRedefinicao { get; set; }
     public DateTime? TokenRedefinicaoExpiraEm { get; set; }
+    public int TentativasLoginFalhas { get; set; }
+    public DateTime? BloqueadoAte { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Contato Contato { get; set; } = null!;

@@ -6,6 +6,7 @@ using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LegalManager.API.Controllers;
 
@@ -28,6 +29,7 @@ public class PortalClienteController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<PortalAuthResponseDto>> Login([FromBody] LoginPortalDto dto, CancellationToken ct)
     {
         try
@@ -38,6 +40,29 @@ public class PortalClienteController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("solicitar-redefinicao")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> SolicitarRedefinicao([FromBody] SolicitarRedefinicaoPortalDto dto, CancellationToken ct)
+    {
+        await _service.SolicitarRedefinicaoAsync(dto.Email, ct);
+        return Ok(new { message = "Se o e-mail tiver acesso ao portal, você receberá o link para criar uma nova senha." });
+    }
+
+    [HttpPost("redefinir-senha")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaPortalDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _service.RedefinirSenhaAsync(dto, ct);
+            return Ok(new { message = "Senha redefinida." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -127,8 +152,12 @@ public class PortalClienteController : ControllerBase
             Nome = nome
         };
 
-        var result = await _documentoService.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
-        return Created($"/api/portal/meus-processos/{processoId}/documentos/{result.Id}", result);
+        try
+        {
+            var result = await _documentoService.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
+            return Created($"/api/portal/meus-processos/{processoId}/documentos/{result.Id}", result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     private Guid GetAcessoId() =>

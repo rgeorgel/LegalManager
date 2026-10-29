@@ -2,6 +2,7 @@ using LegalManager.Application.DTOs.Documentos;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -92,8 +93,12 @@ public class DocumentosController : ControllerBase
             PastaId = pastaId
         };
 
-        var result = await _service.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        try
+        {
+            var result = await _service.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
     [HttpDelete("{id:guid}")]
@@ -114,6 +119,10 @@ public class DocumentosController : ControllerBase
     public async Task<IActionResult> GetFile(Guid id, CancellationToken ct = default)
     {
         var (stream, contentType, fileName) = await _service.GetFileStreamAsync(id, ct);
+        // Documentos antigos guardam o Content-Type que o navegador mandou (pode ser text/html).
+        // Fora de PDF/imagem, entrega como binário: o front abre num blob: da mesma origem.
+        if (!ArquivoPermitido.PodePreVisualizar(contentType))
+            contentType = "application/octet-stream";
         return File(stream, contentType, fileName);
     }
 

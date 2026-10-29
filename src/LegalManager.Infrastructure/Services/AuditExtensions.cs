@@ -49,9 +49,17 @@ public static class AuditExtensions
     {
         if (context == null) return null;
 
+        // Produção fica atrás da Cloudflare, que sobrescreve este cabeçalho com o IP real
+        // (o visitante não consegue forjá-lo passando pela Cloudflare).
+        var cloudflare = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(cloudflare))
+            return cloudflare.Trim();
+
+        // Sem Cloudflare: o ÚLTIMO item do X-Forwarded-For é o que o nosso proxy anexou; os
+        // anteriores vêm do cliente e podem ser forjados (furando o limite por IP e a auditoria).
         var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
         if (!string.IsNullOrEmpty(forwardedFor))
-            return forwardedFor.Split(',')[0].Trim();
+            return forwardedFor.Split(',')[^1].Trim();
 
         return context.Connection.RemoteIpAddress?.ToString();
     }

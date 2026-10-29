@@ -74,9 +74,106 @@ public class AuthController : ControllerBase
                 null, new { Email = dto.Email }, null, HttpContext.GetClientIpAddress()), ct);
             return Ok(result);
         }
+        // Senha certa, conta com MFA: o front pede o código e chama POST /api/auth/mfa.
+        catch (MfaNecessarioException ex) { return Ok(new { mfaNecessario = true, mfaToken = ex.MfaToken }); }
         catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
     }
+
+    [HttpPost("mfa")]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<AuthResponseDto>> VerificarMfa(VerificarMfaDto dto, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _authService.VerificarMfaAsync(dto, ct);
+            await _audit.LogAsync(new AuditLogEntry(
+                result.Usuario.TenantId, null, AuditActions.Login, "Auth",
+                null, new { result.Usuario.Email, Mfa = true }, null, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex) { return Unauthorized(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    // ── Configuração do MFA (opcional para todos os perfis, inclusive SuperAdmin) ──
+
+    [HttpGet("mfa/status")]
+    [Authorize]
+    public async Task<ActionResult<MfaStatusDto>> MfaStatus(
+        [FromServices] MfaService mfa, [FromServices] ITenantContext tenantContext) =>
+        Ok(await mfa.StatusAsync(tenantContext.UserId));
+
+    [HttpPost("mfa/configurar")]
+    [Authorize]
+    public async Task<ActionResult<MfaConfiguracaoDto>> MfaConfigurar(
+        [FromServices] MfaService mfa, [FromServices] ITenantContext tenantContext)
+    {
+        if (tenantContext.ImpersonadoPorId.HasValue) return BloqueadoNaImpersonacao();
+        try { return Ok(await mfa.ConfigurarAsync(tenantContext.UserId)); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("mfa/ativar")]
+    [Authorize]
+    public async Task<ActionResult<CodigosRecuperacaoDto>> MfaAtivar(
+        AtivarMfaDto dto, [FromServices] MfaService mfa, [FromServices] ITenantContext tenantContext, CancellationToken ct)
+    {
+        if (tenantContext.ImpersonadoPorId.HasValue) return BloqueadoNaImpersonacao();
+        try
+        {
+            var codigos = await mfa.AtivarAsync(tenantContext.UserId, dto.Codigo);
+            await AuditarMfaAsync(tenantContext, "Ativado", ct);
+            return Ok(codigos);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("mfa/desativar")]
+    [Authorize]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> MfaDesativar(
+        SenhaMfaDto dto, [FromServices] MfaService mfa, [FromServices] ITenantContext tenantContext, CancellationToken ct)
+    {
+        if (tenantContext.ImpersonadoPorId.HasValue) return BloqueadoNaImpersonacao();
+        try
+        {
+            await mfa.DesativarAsync(tenantContext.UserId, dto.Senha);
+            await AuditarMfaAsync(tenantContext, "Desativado", ct);
+            return NoContent();
+        }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpPost("mfa/codigos-recuperacao")]
+    [Authorize]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<CodigosRecuperacaoDto>> MfaNovosCodigos(
+        SenhaMfaDto dto, [FromServices] MfaService mfa, [FromServices] ITenantContext tenantContext, CancellationToken ct)
+    {
+        if (tenantContext.ImpersonadoPorId.HasValue) return BloqueadoNaImpersonacao();
+        try
+        {
+            var codigos = await mfa.NovosCodigosRecuperacaoAsync(tenantContext.UserId, dto.Senha);
+            await AuditarMfaAsync(tenantContext, "CodigosRecuperacaoRegerados", ct);
+            return Ok(codigos);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    private BadRequestObjectResult BloqueadoNaImpersonacao() =>
+        BadRequest(new { message = "Não é possível alterar a verificação em duas etapas durante uma impersonação." });
+
+    private Task AuditarMfaAsync(ITenantContext tenantContext, string evento, CancellationToken ct) =>
+        _audit.LogAsync(new AuditLogEntry(
+            tenantContext.TenantId, tenantContext.UserId, AuditActions.Update, "Mfa",
+            tenantContext.UserId.ToString(), null, new { Evento = evento }, HttpContext.GetClientIpAddress()), ct);
 
     [HttpPost("google")]
     [EnableRateLimiting("auth")]

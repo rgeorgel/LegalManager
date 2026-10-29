@@ -152,6 +152,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<MfaService>();
 builder.Services.AddScoped<ParceiroService>();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
@@ -349,12 +350,18 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("auth", opt =>
-    {
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.PermitLimit = 10;
-        opt.QueueLimit = 0;
-    });
+    // Por IP: uma janela única para o site inteiro deixava qualquer um travar o login de
+    // todos os escritórios com 10 requisições por minuto. A força bruta contra uma conta
+    // específica é contida pelo bloqueio por conta (Identity Lockout / BloqueioLogin).
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetClientIpAddress() ?? "desconhecido",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 10,
+                QueueLimit = 0
+            }));
     // Por IP: o campo do cadastro consulta a cada digitação (com debounce), e não pode
     // dividir a cota global de "auth" nem servir para varrer códigos.
     options.AddPolicy("codigo-promocional", httpContext =>

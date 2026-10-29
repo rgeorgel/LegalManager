@@ -104,7 +104,13 @@ export async function solicitarRedefinicao(email) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   });
-  return res;
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(res.status === 429
+      ? 'Muitas tentativas. Aguarde um minuto e tente de novo.'
+      : body.message || body.title || 'Não foi possível enviar o link. Tente novamente.');
+  }
+  return res.json();
 }
 
 export async function redefinirSenha(token, novaSenha) {
@@ -115,7 +121,9 @@ export async function redefinirSenha(token, novaSenha) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || body.title || 'Erro ao redefinir senha.');
+    throw new Error(res.status === 429
+      ? 'Muitas tentativas. Aguarde um minuto e tente de novo.'
+      : body.message || body.title || 'Erro ao redefinir senha.');
   }
   return res.json();
 }

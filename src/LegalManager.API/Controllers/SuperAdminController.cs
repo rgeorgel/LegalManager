@@ -700,10 +700,32 @@ public class SuperAdminController(
             .Select(u => new UserListItemDto(
                 u.Id, u.Nome, u.Email, u.TenantId,
                 u.Tenant.Nome, u.Tenant.Plano.ToString(),
-                u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm, u.CriadoEm))
+                u.Perfil.ToString(), u.Ativo, u.UltimoAcessoEm, u.CriadoEm, u.TwoFactorEnabled))
             .ToListAsync(ct);
 
         return Ok(new { total, page, pageSize, items = users });
+    }
+
+    // Recuperação de acesso: o usuário perdeu o celular e os códigos de recuperação.
+    // Ele volta a entrar só com a senha e pode reativar o MFA em Configurações.
+    [HttpPost("users/{userId:guid}/mfa/desativar")]
+    public async Task<IActionResult> DesativarMfaUsuario(Guid userId, [FromServices] MfaService mfa, CancellationToken ct)
+    {
+        var usuario = await db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.TenantId, u.Email })
+            .FirstOrDefaultAsync(ct);
+        if (usuario is null) return NotFound(new { message = "Usuário não encontrado." });
+
+        if (!await mfa.DesativarPeloSuperAdminAsync(userId))
+            return BadRequest(new { message = "A verificação em duas etapas já está desativada para este usuário." });
+
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var adminGuid);
+        await audit.LogAsync(new AuditLogEntry(
+            usuario.TenantId, adminGuid, AuditActions.Update, "Mfa",
+            userId.ToString(), null, new { Evento = "DesativadoPeloSuperAdmin", usuario.Email }, HttpContext.GetClientIpAddress()), ct);
+
+        return NoContent();
     }
 
     [HttpPost("users/{userId:guid}/impersonate")]

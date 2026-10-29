@@ -37,11 +37,22 @@ public class ParceiroService(
     {
         var emailNorm = dto.Email.Trim().ToLowerInvariant();
         var parceiro = await db.Parceiros.FirstOrDefaultAsync(p => p.Email == emailNorm, ct);
-        if (parceiro is not { Ativo: true } || parceiro.SenhaHash is null
-            || hasher.VerifyHashedPassword(parceiro, parceiro.SenhaHash, dto.Senha) == PasswordVerificationResult.Failed)
+        if (parceiro is not { Ativo: true } || parceiro.SenhaHash is null)
             throw new UnauthorizedAccessException("E-mail ou senha inválidos.");
 
-        parceiro.UltimoAcessoEm = DateTime.UtcNow;
+        var agora = DateTime.UtcNow;
+        if (parceiro.EstaBloqueado(agora))
+            throw new UnauthorizedAccessException(BloqueioLogin.Mensagem);
+
+        if (hasher.VerifyHashedPassword(parceiro, parceiro.SenhaHash, dto.Senha) == PasswordVerificationResult.Failed)
+        {
+            var bloqueou = parceiro.RegistrarFalha(agora);
+            await db.SaveChangesAsync(ct);
+            throw new UnauthorizedAccessException(bloqueou ? BloqueioLogin.Mensagem : "E-mail ou senha inválidos.");
+        }
+
+        parceiro.RegistrarSucesso();
+        parceiro.UltimoAcessoEm = agora;
         await db.SaveChangesAsync(ct);
         return GerarAuthResponse(parceiro);
     }
@@ -55,6 +66,7 @@ public class ParceiroService(
             throw new InvalidOperationException("Link inválido ou expirado. Peça um novo link.");
 
         parceiro.SenhaHash = hasher.HashPassword(parceiro, dto.Senha);
+        parceiro.RegistrarSucesso();
         parceiro.TokenSenha = null;
         parceiro.TokenSenhaExpiraEm = null;
         parceiro.UltimoAcessoEm = DateTime.UtcNow;
