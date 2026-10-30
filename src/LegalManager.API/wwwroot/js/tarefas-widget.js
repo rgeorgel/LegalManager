@@ -2,6 +2,7 @@
 // andamento do usuário logado em qualquer página do portal admin, permitindo
 // avançar o status (Pendente → Em Andamento → Concluída) sem sair da página.
 // Disponível a partir do plano Plus (chamado por initLayout() em layout.js).
+// O título abre a tarefa no mesmo modal da tela de Tarefas (js/tarefa-modal.js).
 import { apiFetch, getUser } from './api.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
@@ -16,9 +17,6 @@ const PRIORIDADE_COR = {
   Media: '#ca8a04',
   Baixa: '#16a34a',
 };
-
-const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
-const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
 
 let tasks = { Pendente: [], EmAndamento: [] };
 let totals = { Pendente: 0, EmAndamento: 0 };
@@ -56,68 +54,26 @@ export function injectTarefasWidget() {
   `;
   document.body.appendChild(wrap);
 
-  // Fica FORA de #tarefasWidget (que tem `transform`) e é anexado direto ao
-  // <body>: um `transform` em ancestral vira containing block para
-  // position:fixed, então dentro de .tw o overlay ficaria confinado à
-  // caixinha do widget em vez de cobrir a tela inteira.
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'twDetailOverlay';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:420px">
-      <div class="modal-header">
-        <span class="modal-title">Detalhes da tarefa</span>
-        <button type="button" class="modal-close" id="twDetailClose">✕</button>
-      </div>
-      <div class="modal-body" id="twDetailBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="twDetailCloseBtn">Fechar</button>
-        <a href="#" id="twDetailGoBoard" class="btn btn-primary">Ver no quadro →</a>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
   layoutWidgetStack();
 
   document.getElementById('twToggle').addEventListener('click', () => toggle());
   document.getElementById('twClose').addEventListener('click', () => toggle(false));
-  document.getElementById('twDetailClose').addEventListener('click', closeDetail);
-  document.getElementById('twDetailCloseBtn').addEventListener('click', closeDetail);
-  overlay.addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeDetail();
-  });
+  // Tarefa criada/alterada/excluída no modal (por aqui ou pela tela de Tarefas).
+  window.addEventListener('tarefa:alterada', () => loadTasks());
 
   loadTasks();
   refreshTimer = setInterval(loadTasks, REFRESH_MS);
 }
 
-function closeDetail() {
-  document.getElementById('twDetailOverlay')?.classList.remove('open');
-}
-
-function showDetail(id, status) {
-  const t = tasks[status]?.find(item => item.id === id);
-  if (!t) return;
-
-  const prazo = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
-  const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join(' ') : '–';
-  const descricao = t.descricao
-    ? esc(t.descricao).replace(/\n/g, '<br>')
-    : '<span style="color:var(--color-text-muted)">Sem descrição</span>';
-
-  document.getElementById('twDetailBody').innerHTML = `
-    <div class="detail-row"><span class="detail-label">Título</span><span class="detail-value">${esc(t.titulo)}</span></div>
-    <div class="detail-row"><span class="detail-label">Prioridade</span><span class="detail-value">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span></div>
-    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${STATUS_LABEL[status] ?? status}</span></div>
-    <div class="detail-row"><span class="detail-label">Prazo</span><span class="detail-value">${prazo}</span></div>
-    <div class="detail-row"><span class="detail-label">Responsável</span><span class="detail-value">${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
-    ${t.numeroCNJProcesso ? `<div class="detail-row"><span class="detail-label">Processo</span><span class="detail-value">${esc(t.numeroCNJProcesso)}</span></div>` : ''}
-    ${t.nomeContato ? `<div class="detail-row"><span class="detail-label">Contato</span><span class="detail-value">${esc(t.nomeContato)}</span></div>` : ''}
-    <div class="detail-row"><span class="detail-label">Tags</span><span class="detail-value">${tags}</span></div>
-    <div style="margin-top:12px"><span class="detail-label">Descrição</span><div style="margin-top:4px">${descricao}</div></div>
-  `;
-  document.getElementById('twDetailGoBoard').href = `/pages/tarefas.html?tab=kanban&abrirId=${id}`;
-  document.getElementById('twDetailOverlay').classList.add('open');
+// Carregado só no clique: o widget está em todas as páginas e o modal é grande.
+async function showDetail(id) {
+  try {
+    const { abrirTarefa } = await import('./tarefa-modal.js');
+    await abrirTarefa(id);
+  } catch (err) {
+    console.error('Erro ao abrir tarefa do widget', err);
+    location.href = `/pages/tarefas.html?abrirId=${encodeURIComponent(id)}`;
+  }
 }
 
 function toggle(force) {
@@ -186,7 +142,7 @@ function render() {
     btn.addEventListener('click', () => moveTask(btn.dataset.id, btn.dataset.move, btn.dataset.from));
   });
   body.querySelectorAll('[data-detail]').forEach(el => {
-    el.addEventListener('click', () => showDetail(el.dataset.detail, el.dataset.status));
+    el.addEventListener('click', () => showDetail(el.dataset.detail));
   });
 }
 
@@ -214,7 +170,7 @@ function cardHtml(t, status) {
 
   return `
     <div class="tw-card" style="border-left-color:${cor}">
-      <div class="tw-card-title" data-detail="${t.id}" data-status="${status}" title="${esc(t.titulo)}">${esc(t.titulo)}</div>
+      <div class="tw-card-title" data-detail="${t.id}" title="${esc(t.titulo)}">${esc(t.titulo)}</div>
       <div class="tw-card-meta">
         ${prazo ? `<span class="${t.atrasada ? 'tw-overdue' : ''}">📅 ${prazo}</span>` : ''}
         ${t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
@@ -238,6 +194,8 @@ async function moveTask(id, toStatus, fromStatus) {
 
   try {
     await apiFetch(`/tarefas/${id}/mover`, { method: 'PATCH', body: { status: toStatus } });
+    // A tela de Tarefas, se aberta por baixo, recarrega a lista/kanban.
+    window.dispatchEvent(new CustomEvent('tarefa:alterada', { detail: { id, acao: 'movida' } }));
   } catch (err) {
     console.error('Erro ao mover tarefa', err);
     await loadTasks();
@@ -340,14 +298,6 @@ function injectStyles() {
     .tw-btn-back:hover { background: var(--color-border); }
     .tw-more { text-align: center; margin-top: 4px; }
     .tw-more a { font-size: 11px; }
-
-    /* Modal de detalhes — reaproveita .modal-overlay/.modal/.btn etc. de
-       css/styles.css (carregado em todas as páginas do portal); só as
-       classes internas do corpo (detail-row, tag) são escopadas aqui. */
-    #twDetailBody .detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 14px; }
-    #twDetailBody .detail-label { font-weight: 600; color: var(--color-text-muted); min-width: 90px; }
-    #twDetailBody .detail-value { flex: 1; }
-    #twDetailBody .tag { display: inline-block; background: var(--color-bg); color: var(--color-text); font-size: 11px; padding: 2px 8px; border-radius: 999px; margin: 0 4px 4px 0; }
 
     @media (max-width: 768px) {
       .tw { top: auto; bottom: calc(var(--bottom-nav-height, 0px) + 16px + var(--widget-bottom-mobile, 0px)); transform: none; }
