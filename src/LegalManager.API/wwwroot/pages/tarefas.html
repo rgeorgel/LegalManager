@@ -63,7 +63,8 @@
     .badge-atrasada { background:#fef2f2; color:#dc2626; font-size:11px; padding:2px 6px; border-radius:4px; }
     .tarefa-card { border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; background:var(--color-surface); display:flex; flex-direction:column; gap:8px; }
     .tarefa-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; }
-    .tarefa-card-titulo { font-weight:600; font-size:15px; }
+    .tarefa-card-titulo { font-weight:600; font-size:15px; cursor:pointer; }
+    .tarefa-card-titulo:hover { color:var(--color-primary); }
     .tarefa-card-meta { display:flex; flex-wrap:wrap; gap:8px; font-size:13px; color:var(--color-text-muted); }
     .processo-link { color:var(--color-primary); text-decoration:none; font-weight:500; }
     .processo-link:hover { text-decoration:underline; }
@@ -113,13 +114,63 @@
     .kanban-card.prioridade-alta    { border-left:3px solid #ea580c; }
     .kanban-card.prioridade-media   { border-left:3px solid #ca8a04; }
     .kanban-card.prioridade-baixa   { border-left:3px solid #16a34a; }
-    /* Detail modal */
-    .detail-modal { max-width:500px; }
-    .detail-row { display:flex; gap:8px; margin-bottom:8px; font-size:14px; }
-    .detail-label { font-weight:600; color:var(--color-text-muted); min-width:90px; }
-    .detail-value { flex:1; }
-    .detail-description { margin-top:12px; padding:12px; background:#f9fafb; border-radius:var(--radius); font-size:13px; line-height:1.5; white-space:pre-wrap; }
-    .detail-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    /* Modal da tarefa. Na edição (.tm-edicao) ganha o painel de contexto ao lado do formulário
+       e o título vira um campo "inline" em destaque. Cores de fundo via color-mix sobre
+       --color-surface para funcionar nos temas escuros. */
+    .tm-modal { max-width:560px; }
+    .tm-modal.tm-edicao { max-width:940px; }
+    .tm-header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+    .tm-badges { display:flex; gap:6px; flex-wrap:wrap; }
+    .tm-badges:empty { display:none; }
+    .tm-edicao .tm-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
+    .tm-edicao #fTitulo { font-size:20px; font-weight:700; padding:6px 8px; margin-left:-8px; width:calc(100% + 8px); border-color:transparent; background:transparent; }
+    .tm-edicao #fTitulo:hover { border-color:var(--color-border); }
+    .tm-edicao #fTitulo:focus { border-color:var(--color-primary); background:var(--color-surface); }
+    .tm-edicao label[for="fTitulo"] { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .tm-edicao #fDescricao { min-height:110px; }
+    .tm-atalhos { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .tm-atalhos button { border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); border-radius:999px; font-size:12px; padding:3px 10px; cursor:pointer; }
+    .tm-atalhos button:hover { border-color:var(--color-primary); color:var(--color-primary); }
+    .tm-hint { font-size:12px; color:var(--color-text-muted); margin-top:6px; }
+    .tm-footer .tm-excluir { margin-right:auto; }
+    /* Formulário longo: cabeçalho e rodapé (Salvar) ficam visíveis durante a rolagem do modal. */
+    .tm-edicao .modal-header { position:sticky; top:0; z-index:2; background:var(--color-surface); }
+    .tm-edicao .modal-footer { position:sticky; bottom:0; z-index:2; background:var(--color-surface); }
+    .tm-painel { display:flex; flex-direction:column; gap:12px; font-size:13px; }
+    .tm-card { border:1px solid var(--color-border); border-radius:var(--radius); padding:12px 14px; background:var(--color-bg); }
+    .tm-card-titulo { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .tm-card-titulo a { text-transform:none; letter-spacing:0; font-weight:600; }
+    .tm-linha { display:flex; justify-content:space-between; gap:12px; padding:3px 0; }
+    .tm-linha > span:first-child { color:var(--color-text-muted); flex-shrink:0; }
+    .tm-linha > span:last-child { text-align:right; min-width:0; overflow-wrap:anywhere; }
+    .tm-prazo { --tm-cor:var(--color-primary); border-left:4px solid var(--tm-cor); background:color-mix(in srgb, var(--tm-cor) 9%, var(--color-surface)); }
+    .tm-prazo.tm-atrasado { --tm-cor:#dc2626; }
+    .tm-prazo.tm-hoje     { --tm-cor:#ea580c; }
+    .tm-prazo.tm-proximo  { --tm-cor:#ca8a04; }
+    .tm-prazo.tm-ok       { --tm-cor:#16a34a; }
+    .tm-prazo.tm-neutro   { --tm-cor:var(--color-text-muted); }
+    .tm-prazo-rel { font-size:18px; font-weight:700; color:var(--tm-cor); line-height:1.2; }
+    .tm-prazo-data { margin-top:2px; color:var(--color-text); }
+    .tm-prazo-data::first-letter { text-transform:uppercase; }
+    .tm-prazo-calc { margin-top:8px; padding-top:8px; border-top:1px dashed var(--color-border); color:var(--color-text-muted); }
+    .tm-cnj { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; font-weight:600; }
+    .tm-partes { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+    .tm-parte { display:flex; gap:6px; align-items:baseline; }
+    .tm-parte-tipo { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); min-width:42px; }
+    .tm-mov-data { font-weight:600; }
+    .tm-mov-texto { margin-top:4px; color:var(--color-text); line-height:1.45; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; }
+    .tm-vazio { color:var(--color-text-muted); }
+    .tm-carregando { color:var(--color-text-muted); font-style:italic; }
+    @media(max-width:860px) {
+      .tm-edicao .tm-body { grid-template-columns:1fr; }
+    }
+    /* Celular: Salvar ocupa a primeira linha; Excluir e Concluir dividem a segunda (fechar = ×). */
+    @media(max-width:600px) {
+      .tm-edicao .tm-footer { flex-wrap:wrap; }
+      .tm-edicao .tm-footer .btn { flex:1 1 0; margin:0; }
+      .tm-edicao .tm-footer #btnSalvarTarefa { flex-basis:100%; order:-1; }
+      .tm-edicao .tm-footer #btnCancelarTarefa { display:none; }
+    }
     /* Repetição */
     .badge-recorrente { background:var(--color-primary-light); color:var(--color-primary); }
     .rep-linha { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; font-size:14px; }
@@ -243,20 +294,25 @@
 
 <!-- Modal Nova/Editar Tarefa -->
 <div class="modal-overlay" id="modalTarefa" style="display:none">
-  <div class="modal" style="max-width:560px">
+  <div class="modal tm-modal" id="modalTarefaBox">
     <div class="modal-header">
-      <h2 class="modal-title" id="modalTarefaTitulo">Nova Tarefa</h2>
+      <div class="tm-header">
+        <h2 class="modal-title" id="modalTarefaTitulo">Nova Tarefa</h2>
+        <div class="tm-badges" id="modalTarefaBadges"></div>
+      </div>
       <button class="modal-close" id="modalTarefaClose">&times;</button>
     </div>
     <form id="formTarefa" novalidate>
-      <div class="modal-body">
+      <div class="modal-body tm-body">
+       <div class="tm-form">
         <div class="form-group">
-          <label class="form-label">Título *</label>
+          <label class="form-label" for="fTitulo">Título *</label>
           <input type="text" id="fTitulo" class="form-control" maxlength="300" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Descrição</label>
-          <textarea id="fDescricao" class="form-control" rows="3" maxlength="4000"></textarea>
+          <label class="form-label" for="fDescricao">Descrição</label>
+          <textarea id="fDescricao" class="form-control" rows="3" maxlength="4000"
+            placeholder="Detalhes, próximos passos, o que já foi feito…"></textarea>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="form-group">
@@ -279,8 +335,16 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Prazo</label>
+          <label class="form-label" for="fPrazo">Prazo</label>
           <input type="datetime-local" id="fPrazo" class="form-control">
+          <div class="tm-atalhos" id="fPrazoAtalhos" aria-label="Atalhos de prazo">
+            <button type="button" data-prazo="hoje">Hoje</button>
+            <button type="button" data-prazo="amanha">Amanhã</button>
+            <button type="button" data-prazo="+1">+1 dia</button>
+            <button type="button" data-prazo="+7">+1 semana</button>
+            <button type="button" data-prazo="limpar">Sem prazo</button>
+          </div>
+          <div class="tm-hint" id="fPrazoCalcHint" style="display:none"></div>
         </div>
         <div class="form-group" id="fRepGroup">
           <label class="form-label" for="fRepetir">Repetir</label>
@@ -342,32 +406,22 @@
           <input type="text" id="fTags" class="form-control" placeholder="ex: urgente, revisão, cliente-x">
         </div>
         <div id="fmsgErro" class="alert alert-error" style="display:none"></div>
+       </div>
+        <!-- Contexto da tarefa (só na edição): prazo, processo, partes, movimentação, histórico -->
+        <aside class="tm-painel" id="tmPainel" style="display:none"></aside>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer tm-footer">
+        <button type="button" class="btn btn-danger btn-sm tm-excluir" id="btnExcluirTarefa" style="display:none">Excluir</button>
         <button type="button" class="btn btn-secondary" id="btnCancelarTarefa">Cancelar</button>
+        <button type="button" class="btn btn-secondary" id="btnConcluirTarefa" style="display:none">✓ Salvar e concluir</button>
         <button type="submit" class="btn btn-primary" id="btnSalvarTarefa">Salvar</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal Detalhes da Tarefa (Kanban) -->
-<div class="modal-overlay" id="modalDetalhe" style="display:none">
-  <div class="modal detail-modal">
-    <div class="modal-header">
-      <h2 class="modal-title">Detalhes da Tarefa</h2>
-      <button class="modal-close" id="modalDetalheClose">&times;</button>
-    </div>
-    <div class="modal-body" id="modalDetalheBody"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="modalDetalheFechar">Fechar</button>
-      <button class="btn btn-primary" id="modalDetalheEditar">Editar</button>
-    </div>
-  </div>
-</div>
-
 <script type="module">
-import { esc, dataParede, abrirNovoPelaUrl } from '/js/utils.js';
+import { esc, dataParede, inputDataHoraParede, isoLocal, abrirNovoPelaUrl } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch, getUser } from '/js/api.js';
 import { createMultiSelect } from '/js/multiselect.js';
@@ -531,7 +585,7 @@ function tarefaCard(t) {
   <div class="tarefa-card" data-id="${t.id}">
     <div class="tarefa-card-header">
       <div>
-        <span class="tarefa-card-titulo">${esc(t.titulo)}</span>
+        <span class="tarefa-card-titulo" data-detail-id="${t.id}">${esc(t.titulo)}</span>
         ${atrasadaBadge}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -586,14 +640,17 @@ async function concluir(id) {
   await loadTarefas(currentPage);
 }
 
-async function deleteTarefa(id) {
-  const t = allListItems.find(x => x.id === id);
-  if (!confirm(t?.recorrenciaId ? 'Excluir esta ocorrência da tarefa recorrente?' : 'Excluir esta tarefa?')) return;
+// t: a tarefa, quando já carregada (modal); senão vem da lista. Retorna se excluiu.
+async function deleteTarefa(id, t = allListItems.find(x => x.id === id)) {
+  const recorrente = t?.recorrenciaId || t?.recorrencia;
+  if (!confirm(recorrente ? 'Excluir esta ocorrência da tarefa recorrente?' : 'Excluir esta tarefa?')) return false;
   // Sem encerrar, a série continua criando as próximas ocorrências normalmente.
-  const encerrar = t?.recorrenciaId
+  const encerrar = recorrente
     && confirm('Parar também a repetição?\n\nOK: não criar mais ocorrências.\nCancelar: excluir só esta e manter as próximas.');
   await apiFetch(`/tarefas/${id}${encerrar ? '?encerrarRecorrencia=true' : ''}`, { method: 'DELETE' });
-  await loadTarefas(currentPage);
+  if (currentTab === 'kanban') { allKanbanTasks = []; await loadBoard(); }
+  else await loadTarefas(currentPage);
+  return true;
 }
 
 // ── Processos helpers ──────────────────────────────────────────
@@ -612,9 +669,27 @@ function updateProcessoLink() {
 }
 
 // ── Modal create/edit ──────────────────────────────────────────
+// Tarefa aberta na edição, como veio da API: o PUT repete os campos que o formulário não
+// mostra (tipo, contato, contagem do prazo) para não apagá-los.
+let editingTarefa = null;
+
+function modoEdicao(ativo) {
+  document.getElementById('modalTarefaBox').classList.toggle('tm-edicao', ativo);
+  document.getElementById('tmPainel').style.display = ativo ? '' : 'none';
+  document.getElementById('btnExcluirTarefa').style.display = ativo ? '' : 'none';
+  document.getElementById('btnSalvarTarefa').textContent = ativo ? 'Salvar alterações' : 'Salvar';
+  if (!ativo) {
+    document.getElementById('modalTarefaBadges').innerHTML = '';
+    document.getElementById('btnConcluirTarefa').style.display = 'none';
+    document.getElementById('fPrazoCalcHint').style.display = 'none';
+  }
+}
+
 function openCreateModal() {
   editingId = null;
+  editingTarefa = null;
   editingRecorrente = false;
+  modoEdicao(false);
   document.getElementById('modalTarefaTitulo').textContent = 'Nova Tarefa';
   document.getElementById('formTarefa').reset();
   document.getElementById('fStatusGroup').style.display = 'none';
@@ -622,27 +697,227 @@ function openCreateModal() {
   setProcesso(null);
   preencherRepeticao(null);
   document.getElementById('modalTarefa').style.display = 'flex';
+  document.getElementById('modalTarefaBox').scrollTop = 0;
 }
 
 async function openEditModal(id) {
+  const t = await apiFetch(`/tarefas/${id}`);
   editingId = id;
-  document.getElementById('modalTarefaTitulo').textContent = 'Editar Tarefa';
+  editingTarefa = t;
+  editingResponsavelId = t.responsavelId ?? null;
+  modoEdicao(true);
+  document.getElementById('modalTarefaTitulo').textContent = t.tipo === 'Prazo' ? 'Prazo processual' : 'Tarefa';
   document.getElementById('fmsgErro').style.display = 'none';
   document.getElementById('fStatusGroup').style.display = '';
-  const t = await apiFetch(`/tarefas/${id}`);
-  editingResponsavelId = t.responsavelId ?? null;
   document.getElementById('fTitulo').value = t.titulo;
   document.getElementById('fDescricao').value = t.descricao ?? '';
   document.getElementById('fPrioridade').value = t.prioridade;
   document.getElementById('fStatus').value = t.status;
-  document.getElementById('fPrazo').value = t.prazo ? t.prazo.substring(0, 16) : '';
+  document.getElementById('fPrazo').value = inputDataHoraParede(t.prazo);
   document.getElementById('fTags').value = (t.tags ?? []).join(', ');
   setProcesso(t.processoId, t.numeroCNJProcesso);
   // Série já encerrada: a tarefa se comporta como avulsa (escolher uma repetição reativa a série).
   editingRecorrente = !!t.recorrencia?.ativa;
   preencherRepeticao(editingRecorrente ? t.recorrencia : null);
+  renderBadgesModal();
+  document.getElementById('btnConcluirTarefa').style.display =
+    t.status === 'Concluida' || t.status === 'Cancelada' ? 'none' : '';
+  renderPainel(t);
+  atualizarPrazoUI();
   document.getElementById('modalTarefa').style.display = 'flex';
+  document.getElementById('modalTarefaBox').scrollTop = 0;
+  if (t.processoId) carregarContextoProcesso(t);
 }
+
+// Badges do cabeçalho acompanham o formulário (prioridade/status), não só o que está salvo.
+function renderBadgesModal() {
+  if (!editingTarefa) return;
+  const prio = document.getElementById('fPrioridade').value;
+  const status = document.getElementById('fStatus').value;
+  document.getElementById('modalTarefaBadges').innerHTML = `
+    <span class="badge prioridade-${prio.toLowerCase()}">${PRIORIDADE_LABEL[prio] ?? prio}</span>
+    <span class="badge status-${status.toLowerCase()}">${STATUS_LABEL[status] ?? status}</span>
+    ${editingTarefa.recorrenciaId || editingTarefa.recorrencia ? badgeRecorrente({ recorrenciaId: true }) : ''}`;
+}
+['fPrioridade', 'fStatus'].forEach(id =>
+  document.getElementById(id).addEventListener('change', renderBadgesModal));
+
+// ── Painel de contexto (edição) ────────────────────────────────
+const AREA_LABEL = {
+  Civil: 'Cível', Trabalhista: 'Trabalhista', Criminal: 'Criminal', Tributario: 'Tributário',
+  Previdenciario: 'Previdenciário', Administrativo: 'Administrativo', Consumidor: 'Consumidor',
+  Familia: 'Família', Empresarial: 'Empresarial', Ambiental: 'Ambiental', Imobiliario: 'Imobiliário', Outro: 'Outro'
+};
+const FASE_LABEL = {
+  Conhecimento: 'Conhecimento', Recursal: 'Recursal', Execucao: 'Execução', Cumprimento: 'Cumprimento',
+  InqueritoPolicial: 'Inquérito Policial', InvestigacaoDefensiva: 'Invest. Defensiva', Outro: 'Outro'
+};
+const PARTE_LABEL = { Autor: 'Autor', Reu: 'Réu', Interessado: 'Interes.', Terceiro: 'Terceiro' };
+const fmtData = d => d.toLocaleDateString('pt-BR');
+// Carimbos do servidor (CriadoEm, ConcluidaEm) são UTC reais — aqui sim vale new Date().
+const fmtCarimbo = v => v ? fmtData(new Date(v)) : '–';
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+function cardPrazo() {
+  const t = editingTarefa;
+  const prazo = dataParede(document.getElementById('fPrazo').value);
+  const status = document.getElementById('fStatus').value;
+  let classe = 'tm-neutro', rel = 'Sem prazo definido', data = 'Use os atalhos ao lado para definir uma data.';
+  if (status === 'Concluida') {
+    classe = 'tm-ok';
+    rel = 'Concluída';
+    data = t.concluidaEm ? `em ${fmtCarimbo(t.concluidaEm)}` : '';
+  } else if (status === 'Cancelada') {
+    rel = 'Cancelada';
+    data = '';
+  } else if (prazo) {
+    // Prazo é hora "de parede" do escritório; o navegador do advogado está, na prática, no mesmo fuso.
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const dia = new Date(prazo); dia.setHours(0, 0, 0, 0);
+    const dias = Math.round((dia - hoje) / 86400000);
+    if (prazo < new Date() && dias <= 0) {
+      classe = 'tm-atrasado';
+      rel = dias === 0 ? 'Venceu hoje' : `Atrasada há ${plural(-dias, 'dia', 'dias')}`;
+    } else if (dias === 0) { classe = 'tm-hoje'; rel = 'Vence hoje'; }
+    else if (dias === 1) { classe = 'tm-proximo'; rel = 'Vence amanhã'; }
+    else { classe = dias <= 5 ? 'tm-proximo' : 'tm-ok'; rel = `Faltam ${plural(dias, 'dia', 'dias')}`; }
+  }
+  if (prazo && status !== 'Concluida' && status !== 'Cancelada') {
+    const hora = prazo.getHours() || prazo.getMinutes()
+      ? ` às ${prazo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : '';
+    data = prazo.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + hora;
+  }
+  const contagemValida = t.dataInicio && t.quantidadeDias
+    && document.getElementById('fPrazo').value === inputDataHoraParede(t.prazo);
+  const calc = contagemValida
+    ? `<div class="tm-prazo-calc">Contagem: ${plural(t.quantidadeDias, t.tipoCalculo === 'DiasCorridos' ? 'dia corrido' : 'dia útil', t.tipoCalculo === 'DiasCorridos' ? 'dias corridos' : 'dias úteis')} a partir de ${fmtData(dataParede(t.dataInicio))}</div>`
+    : '';
+  return `<div class="tm-card tm-prazo ${classe}" id="tmCardPrazo">
+    <div class="tm-card-titulo">${t.tipo === 'Prazo' ? 'Prazo processual' : 'Prazo'}</div>
+    <div class="tm-prazo-rel">${rel}</div>
+    ${data ? `<div class="tm-prazo-data">${esc(data)}</div>` : ''}
+    ${calc}
+  </div>`;
+}
+
+function renderPainel(t) {
+  const contato = t.contatoId && t.nomeContato
+    ? `<a href="/pages/contato-detalhe.html?id=${t.contatoId}" class="processo-link">${esc(t.nomeContato)}</a>` : null;
+  document.getElementById('tmPainel').innerHTML = `
+    ${cardPrazo()}
+    ${t.processoId ? `<div class="tm-card" id="tmCardProcesso">
+      <div class="tm-card-titulo">Processo <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link">Abrir →</a></div>
+      <div class="tm-cnj">${esc(t.numeroCNJProcesso ?? '')}</div>
+      <div class="tm-carregando" style="margin-top:6px">Carregando dados do processo…</div>
+    </div>
+    <div class="tm-card" id="tmCardMov">
+      <div class="tm-card-titulo">${t.andamentoId ? 'Movimentação de origem' : 'Última movimentação'}</div>
+      <div class="tm-carregando">Carregando…</div>
+    </div>` : ''}
+    <div class="tm-card">
+      <div class="tm-card-titulo">Pessoas</div>
+      <div class="tm-linha"><span>Responsável</span><span>${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
+      ${contato ? `<div class="tm-linha"><span>Contato</span><span>${contato}</span></div>` : ''}
+    </div>
+    <div class="tm-card">
+      <div class="tm-card-titulo">Histórico</div>
+      <div class="tm-linha"><span>Criada</span><span>${fmtCarimbo(t.criadoEm)} · ${esc(t.nomeCriadoPor ?? '')}</span></div>
+      ${t.concluidaEm ? `<div class="tm-linha"><span>Concluída</span><span>${fmtCarimbo(t.concluidaEm)}</span></div>` : ''}
+      ${t.recorrencia ? `<div class="tm-linha"><span>Repetição</span><span>🔁 ${esc(t.recorrencia.descricao)}${t.recorrencia.ativa ? '' : ' (encerrada)'}</span></div>` : ''}
+    </div>`;
+}
+
+// Dados do processo e movimentação chegam depois: o modal já abre com o que a tarefa tem.
+async function carregarContextoProcesso(t) {
+  const [proc, andamentos] = await Promise.allSettled([
+    apiFetch(`/processos/${t.processoId}`),
+    apiFetch(`/processos/${t.processoId}/andamentos`),
+  ]);
+  if (editingTarefa?.id !== t.id) return;   // usuário já abriu outra tarefa
+
+  const cardProc = document.getElementById('tmCardProcesso');
+  if (cardProc) {
+    const p = proc.status === 'fulfilled' ? proc.value : null;
+    const corpo = cardProc.querySelector('.tm-carregando');
+    if (!p) corpo.outerHTML = '<div class="tm-vazio" style="margin-top:6px">Não foi possível carregar o processo.</div>';
+    else {
+      const orgao = [p.vara, p.comarca].filter(Boolean).join(' · ');
+      const partes = (p.partes ?? []).slice(0, 4).map(pt =>
+        `<div class="tm-parte"><span class="tm-parte-tipo">${PARTE_LABEL[pt.tipoParte] ?? pt.tipoParte}</span><span>${esc(pt.nomeContato)}</span></div>`).join('');
+      corpo.outerHTML = `
+        ${p.classe || p.tipoAcao ? `<div style="margin-top:4px">${esc(p.classe || p.tipoAcao)}</div>` : ''}
+        <div style="margin-top:8px">
+          ${p.siglaTribunal || p.tribunal ? `<div class="tm-linha"><span>Tribunal</span><span>${esc(p.siglaTribunal || p.tribunal)}${p.grau ? ` · ${esc(p.grau)}` : ''}</span></div>` : ''}
+          ${orgao ? `<div class="tm-linha"><span>Órgão</span><span>${esc(orgao)}</span></div>` : ''}
+          <div class="tm-linha"><span>Área / fase</span><span>${AREA_LABEL[p.areaDireito] ?? p.areaDireito} · ${FASE_LABEL[p.fase] ?? p.fase}</span></div>
+          ${p.nomeAdvogadoResponsavel ? `<div class="tm-linha"><span>Advogado</span><span>${esc(p.nomeAdvogadoResponsavel)}</span></div>` : ''}
+        </div>
+        ${partes ? `<div class="tm-partes">${partes}</div>` : ''}`;
+    }
+  }
+
+  const cardMov = document.getElementById('tmCardMov');
+  if (cardMov) {
+    const lista = andamentos.status === 'fulfilled' ? andamentos.value ?? [] : [];
+    const mov = (t.andamentoId && lista.find(a => a.id === t.andamentoId))
+      || [...lista].sort((a, b) => String(b.data).localeCompare(String(a.data)))[0];
+    const corpo = cardMov.querySelector('.tm-carregando');
+    if (!mov) corpo.outerHTML = '<div class="tm-vazio">Nenhuma movimentação registrada.</div>';
+    else {
+      const texto = mov.descricaoTraduzidaIA || mov.descricao;
+      corpo.outerHTML = `
+        <div class="tm-mov-data">${fmtData(dataParede(mov.data))}${mov.orgaoJulgador ? ` <span class="tm-vazio">· ${esc(mov.orgaoJulgador)}</span>` : ''}</div>
+        <div class="tm-mov-texto" title="${esc(texto)}">${esc(texto)}</div>`;
+    }
+  }
+}
+
+// ── Prazo: atalhos e reflexo no painel ─────────────────────────
+function atualizarPrazoUI() {
+  if (!editingTarefa) return;
+  const card = document.getElementById('tmCardPrazo');
+  if (card) card.outerHTML = cardPrazo();
+  // Prazo calculado (data de início + N dias): mexer na data à mão desfaz a contagem.
+  const t = editingTarefa;
+  const hint = document.getElementById('fPrazoCalcHint');
+  const mudou = document.getElementById('fPrazo').value !== inputDataHoraParede(t.prazo);
+  hint.style.display = t.dataInicio && t.quantidadeDias && mudou ? '' : 'none';
+  hint.textContent = 'Ao salvar, o prazo passa a ser esta data (a contagem automática deixa de valer).';
+}
+
+document.getElementById('fPrazo').addEventListener('input', atualizarPrazoUI);
+document.getElementById('fStatus').addEventListener('change', atualizarPrazoUI);
+document.getElementById('fPrazoAtalhos').addEventListener('click', e => {
+  const acao = e.target.closest('[data-prazo]')?.dataset.prazo;
+  if (!acao) return;
+  const input = document.getElementById('fPrazo');
+  if (acao === 'limpar') input.value = '';
+  else {
+    const atual = dataParede(input.value);
+    let d;
+    if (acao === 'hoje' || acao === 'amanha') {
+      d = new Date();
+      if (acao === 'amanha') d.setDate(d.getDate() + 1);
+      // Mantém o horário já escolhido; sem prazo ainda, fim do expediente.
+      d.setHours(atual ? atual.getHours() : 18, atual ? atual.getMinutes() : 0, 0, 0);
+    } else {
+      d = atual ? new Date(atual) : (() => { const x = new Date(); x.setHours(18, 0, 0, 0); return x; })();
+      d.setDate(d.getDate() + Number(acao));
+    }
+    input.value = isoLocal(d).substring(0, 16);
+  }
+  input.dispatchEvent(new Event('change'));
+  atualizarPrazoUI();
+});
+
+document.getElementById('btnConcluirTarefa').addEventListener('click', () => {
+  document.getElementById('fStatus').value = 'Concluida';
+  document.getElementById('formTarefa').requestSubmit();
+});
+document.getElementById('btnExcluirTarefa').addEventListener('click', async () => {
+  if (!editingTarefa) return;
+  if (await deleteTarefa(editingTarefa.id, editingTarefa)) closeModal();
+});
 
 // ── Repetição ──────────────────────────────────────────────────
 // Na edição de uma ocorrência, "Aplicar às próximas" desmarcado = muda só esta tarefa
@@ -756,7 +1031,16 @@ document.getElementById('formTarefa').addEventListener('submit', async e => {
 
   try {
     if (editingId) {
+      const t = editingTarefa;
+      // Prazo com contagem (início + N dias): o backend recalcula a data a partir dela, então
+      // só a mantém se o prazo não foi mexido — senão vale a data escolhida.
+      const manterContagem = t?.dataInicio && t?.quantidadeDias && prazoVal === inputDataHoraParede(t.prazo);
       await apiFetch(`/tarefas/${editingId}`, { method: 'PUT', body: JSON.stringify({
+        tipo: t?.tipo ?? 'Tarefa',
+        contatoId: t?.contatoId ?? null,
+        dataInicio: manterContagem ? t.dataInicio : null,
+        quantidadeDias: manterContagem ? t.quantidadeDias : null,
+        tipoCalculo: manterContagem ? t.tipoCalculo : null,
         titulo,
         descricao: document.getElementById('fDescricao').value.trim() || null,
         prioridade: document.getElementById('fPrioridade').value,
@@ -965,60 +1249,16 @@ document.getElementById('btnVerConcluidas').addEventListener('click', () => {
   loadTarefas(1);
 });
 
+// Título da tarefa (lista ou kanban): abre direto no modal de edição, com o painel de contexto.
 document.addEventListener('click', async e => {
   const titleEl = e.target.closest('[data-detail-id]');
-  if (titleEl) {
-    e.stopPropagation();
-    const id = titleEl.dataset.detailId;
-    try {
-      const t = await apiFetch(`/tarefas/${id}`);
-      showDetailModal(t);
-    } catch (err) {
-      alert('Erro ao carregar detalhes: ' + err.message);
-    }
-  }
-});
-
-let detalheAtualId = null;
-
-function showDetailModal(t) {
-  detalheAtualId = t.id;
-  const prazo = t.prazo ? dataParede(t.prazo).toLocaleString('pt-BR') : '–';
-  const tags = t.tags?.length ? t.tags.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') : '';
-  const descricao = t.descricao
-    ? `<div class="detail-description">${esc(t.descricao)}</div>`
-    : '<div class="detail-description" style="color:var(--color-text-muted)">Sem descrição</div>';
-  document.getElementById('modalDetalheBody').innerHTML = `
-    <div class="detail-row"><span class="detail-label">Título</span><span class="detail-value">${esc(t.titulo)}</span></div>
-    <div class="detail-row"><span class="detail-label">Prioridade</span><span class="detail-value">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span></div>
-    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${STATUS_LABEL[t.status] ?? t.status}</span></div>
-    <div class="detail-row"><span class="detail-label">Prazo</span><span class="detail-value">${prazo}</span></div>
-    ${t.recorrencia ? `<div class="detail-row"><span class="detail-label">Repetição</span><span class="detail-value">🔁 ${esc(t.recorrencia.descricao)}${t.recorrencia.ativa ? '' : ' (encerrada)'}</span></div>` : ''}
-    <div class="detail-row"><span class="detail-label">Responsável</span><span class="detail-value">${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
-    <div class="detail-row"><span class="detail-label">Tags</span><span class="detail-value">${tags || '–'}</span></div>
-    <div style="margin-top:12px"><span class="detail-label">Descrição</span>${descricao}</div>
-  `;
-  document.getElementById('modalDetalhe').style.display = 'flex';
-}
-
-document.getElementById('modalDetalheClose').addEventListener('click', () => {
-  document.getElementById('modalDetalhe').style.display = 'none';
-});
-document.getElementById('modalDetalheFechar').addEventListener('click', () => {
-  document.getElementById('modalDetalhe').style.display = 'none';
-});
-document.getElementById('modalDetalheEditar').addEventListener('click', async () => {
-  const id = detalheAtualId;
-  if (!id) return;
-  document.getElementById('modalDetalhe').style.display = 'none';
+  if (!titleEl) return;
+  e.stopPropagation();
   try {
-    await openEditModal(id);
+    await openEditModal(titleEl.dataset.detailId);
   } catch (err) {
-    alert('Erro ao carregar tarefa para edição: ' + err.message);
+    alert('Erro ao carregar a tarefa: ' + err.message);
   }
-});
-document.getElementById('modalDetalhe').addEventListener('click', e => {
-  if (e.target === e.currentTarget) document.getElementById('modalDetalhe').style.display = 'none';
 });
 
 // ── Init ───────────────────────────────────────────────────────
