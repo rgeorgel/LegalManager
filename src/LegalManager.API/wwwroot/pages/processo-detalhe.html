@@ -1595,6 +1595,9 @@ document.getElementById('editarSalvar').addEventListener('click', async () => {
       advogadoResponsavelId: document.getElementById('eAdvogado').value || null,
       monitorado: document.getElementById('eMonitorado').value === 'true',
       observacoes: document.getElementById('eObservacoes').value || null,
+      // O PUT grava o que vier: sem estes, editar um processo encerrado apagaria decisão e resultado.
+      decisao: processo.decisao ?? null,
+      resultado: processo.resultado ?? null,
       partes: processo.partes?.map(p => ({ contatoId: p.contatoId, tipoParte: p.tipoParte })) ?? []
     });
     document.getElementById('modalEditar').classList.remove('open');

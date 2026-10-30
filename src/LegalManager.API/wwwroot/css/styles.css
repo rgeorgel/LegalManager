@@ -349,6 +349,63 @@ tbody tr:last-child td { border-bottom: none; }
   border-top: 1px solid var(--color-border);
 }
 
+/* ── Modal com painel de contexto ────────────────────── */
+/* .ctx-modal com painel (.ctx-com-painel): formulário à esquerda e, à direita, cartões com o
+   contexto do registro (tarefas, processos). Cabeçalho e rodapé ficam fixos na rolagem.
+   Fundos via color-mix sobre --color-surface para funcionar nos temas escuros. */
+.ctx-modal.ctx-com-painel { max-width: 940px; }
+.ctx-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.ctx-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.ctx-badges:empty { display: none; }
+.ctx-com-painel .ctx-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.ctx-com-painel .modal-header { position: sticky; top: 0; z-index: 2; background: var(--color-surface); }
+.ctx-com-painel .modal-footer { position: sticky; bottom: 0; z-index: 2; background: var(--color-surface); }
+.ctx-footer .ctx-esquerda { margin-right: auto; }
+.ctx-secao { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--color-border); }
+.ctx-secao:first-child { margin-top: 0; }
+.ctx-painel { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.ctx-card { border: 1px solid var(--color-border); border-radius: var(--radius); padding: 12px 14px; background: var(--color-bg); }
+.ctx-card-titulo { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ctx-card-titulo a { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.ctx-linha { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.ctx-linha > span:first-child { color: var(--color-text-muted); flex-shrink: 0; }
+.ctx-linha > span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+/* Cartão de destaque (prazo, situação): a cor vem do tom. */
+.ctx-destaque { --ctx-cor: var(--color-primary); border-left: 4px solid var(--ctx-cor); background: color-mix(in srgb, var(--ctx-cor) 9%, var(--color-surface)); }
+.ctx-destaque.ctx-atrasado { --ctx-cor: #dc2626; }
+.ctx-destaque.ctx-hoje     { --ctx-cor: #ea580c; }
+.ctx-destaque.ctx-proximo  { --ctx-cor: #ca8a04; }
+.ctx-destaque.ctx-ok       { --ctx-cor: #16a34a; }
+.ctx-destaque.ctx-neutro   { --ctx-cor: var(--color-text-muted); }
+.ctx-destaque-rel { font-size: 18px; font-weight: 700; color: var(--ctx-cor); line-height: 1.2; }
+.ctx-destaque-data { margin-top: 2px; color: var(--color-text); }
+.ctx-destaque-data::first-letter { text-transform: uppercase; }
+.ctx-destaque-extra { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--color-border); color: var(--color-text-muted); }
+.ctx-cnj { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 600; }
+.ctx-partes { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.ctx-parte { display: flex; gap: 6px; align-items: baseline; }
+.ctx-parte-tipo { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); min-width: 42px; }
+.ctx-mov-data { font-weight: 600; }
+.ctx-mov-texto { margin-top: 4px; color: var(--color-text); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.ctx-itens { display: flex; flex-direction: column; gap: 8px; }
+.ctx-item { display: block; color: inherit; text-decoration: none; }
+.ctx-item:hover .ctx-item-titulo { color: var(--color-primary); }
+.ctx-item-titulo { font-weight: 600; overflow-wrap: anywhere; }
+.ctx-item-sub { font-size: 12px; color: var(--color-text-muted); }
+.ctx-item-sub .ctx-alerta { color: #dc2626; font-weight: 600; }
+.ctx-vazio { color: var(--color-text-muted); }
+.ctx-carregando { color: var(--color-text-muted); font-style: italic; }
+@media (max-width: 860px) {
+  .ctx-com-painel .ctx-body { grid-template-columns: 1fr; }
+}
+/* Celular: o botão principal ocupa a primeira linha; os demais dividem a segunda (fechar = ×). */
+@media (max-width: 600px) {
+  .ctx-com-painel .ctx-footer { flex-wrap: wrap; }
+  .ctx-com-painel .ctx-footer .btn { flex: 1 1 0; margin: 0; }
+  .ctx-com-painel .ctx-footer .btn-primary { flex-basis: 100%; order: -1; }
+  .ctx-com-painel .ctx-footer .ctx-cancelar { display: none; }
+}
+
 /* ── Search / Filter bar ─────────────────────────────── */
 .filter-bar {
   display: flex;

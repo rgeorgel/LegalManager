@@ -114,63 +114,18 @@
     .kanban-card.prioridade-alta    { border-left:3px solid #ea580c; }
     .kanban-card.prioridade-media   { border-left:3px solid #ca8a04; }
     .kanban-card.prioridade-baixa   { border-left:3px solid #16a34a; }
-    /* Modal da tarefa. Na edição (.tm-edicao) ganha o painel de contexto ao lado do formulário
-       e o título vira um campo "inline" em destaque. Cores de fundo via color-mix sobre
-       --color-surface para funcionar nos temas escuros. */
-    .tm-modal { max-width:560px; }
-    .tm-modal.tm-edicao { max-width:940px; }
-    .tm-header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
-    .tm-badges { display:flex; gap:6px; flex-wrap:wrap; }
-    .tm-badges:empty { display:none; }
-    .tm-edicao .tm-body { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
-    .tm-edicao #fTitulo { font-size:20px; font-weight:700; padding:6px 8px; margin-left:-8px; width:calc(100% + 8px); border-color:transparent; background:transparent; }
-    .tm-edicao #fTitulo:hover { border-color:var(--color-border); }
-    .tm-edicao #fTitulo:focus { border-color:var(--color-primary); background:var(--color-surface); }
-    .tm-edicao label[for="fTitulo"] { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
-    .tm-edicao #fDescricao { min-height:110px; }
+    /* Modal da tarefa: base em .ctx-modal (styles.css). Na edição o título vira um campo
+       "inline" em destaque; atalhos de prazo e aviso da contagem são só daqui. */
+    .ctx-modal { max-width:560px; }
+    .ctx-com-painel #fTitulo { font-size:20px; font-weight:700; padding:6px 8px; margin-left:-8px; width:calc(100% + 8px); border-color:transparent; background:transparent; }
+    .ctx-com-painel #fTitulo:hover { border-color:var(--color-border); }
+    .ctx-com-painel #fTitulo:focus { border-color:var(--color-primary); background:var(--color-surface); }
+    .ctx-com-painel label[for="fTitulo"] { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .ctx-com-painel #fDescricao { min-height:110px; }
     .tm-atalhos { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
     .tm-atalhos button { border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); border-radius:999px; font-size:12px; padding:3px 10px; cursor:pointer; }
     .tm-atalhos button:hover { border-color:var(--color-primary); color:var(--color-primary); }
     .tm-hint { font-size:12px; color:var(--color-text-muted); margin-top:6px; }
-    .tm-footer .tm-excluir { margin-right:auto; }
-    /* Formulário longo: cabeçalho e rodapé (Salvar) ficam visíveis durante a rolagem do modal. */
-    .tm-edicao .modal-header { position:sticky; top:0; z-index:2; background:var(--color-surface); }
-    .tm-edicao .modal-footer { position:sticky; bottom:0; z-index:2; background:var(--color-surface); }
-    .tm-painel { display:flex; flex-direction:column; gap:12px; font-size:13px; }
-    .tm-card { border:1px solid var(--color-border); border-radius:var(--radius); padding:12px 14px; background:var(--color-bg); }
-    .tm-card-titulo { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .tm-card-titulo a { text-transform:none; letter-spacing:0; font-weight:600; }
-    .tm-linha { display:flex; justify-content:space-between; gap:12px; padding:3px 0; }
-    .tm-linha > span:first-child { color:var(--color-text-muted); flex-shrink:0; }
-    .tm-linha > span:last-child { text-align:right; min-width:0; overflow-wrap:anywhere; }
-    .tm-prazo { --tm-cor:var(--color-primary); border-left:4px solid var(--tm-cor); background:color-mix(in srgb, var(--tm-cor) 9%, var(--color-surface)); }
-    .tm-prazo.tm-atrasado { --tm-cor:#dc2626; }
-    .tm-prazo.tm-hoje     { --tm-cor:#ea580c; }
-    .tm-prazo.tm-proximo  { --tm-cor:#ca8a04; }
-    .tm-prazo.tm-ok       { --tm-cor:#16a34a; }
-    .tm-prazo.tm-neutro   { --tm-cor:var(--color-text-muted); }
-    .tm-prazo-rel { font-size:18px; font-weight:700; color:var(--tm-cor); line-height:1.2; }
-    .tm-prazo-data { margin-top:2px; color:var(--color-text); }
-    .tm-prazo-data::first-letter { text-transform:uppercase; }
-    .tm-prazo-calc { margin-top:8px; padding-top:8px; border-top:1px dashed var(--color-border); color:var(--color-text-muted); }
-    .tm-cnj { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px; font-weight:600; }
-    .tm-partes { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
-    .tm-parte { display:flex; gap:6px; align-items:baseline; }
-    .tm-parte-tipo { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); min-width:42px; }
-    .tm-mov-data { font-weight:600; }
-    .tm-mov-texto { margin-top:4px; color:var(--color-text); line-height:1.45; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; white-space:pre-line; }
-    .tm-vazio { color:var(--color-text-muted); }
-    .tm-carregando { color:var(--color-text-muted); font-style:italic; }
-    @media(max-width:860px) {
-      .tm-edicao .tm-body { grid-template-columns:1fr; }
-    }
-    /* Celular: Salvar ocupa a primeira linha; Excluir e Concluir dividem a segunda (fechar = ×). */
-    @media(max-width:600px) {
-      .tm-edicao .tm-footer { flex-wrap:wrap; }
-      .tm-edicao .tm-footer .btn { flex:1 1 0; margin:0; }
-      .tm-edicao .tm-footer #btnSalvarTarefa { flex-basis:100%; order:-1; }
-      .tm-edicao .tm-footer #btnCancelarTarefa { display:none; }
-    }
     /* Repetição */
     .badge-recorrente { background:var(--color-primary-light); color:var(--color-primary); }
     .rep-linha { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px; font-size:14px; }
@@ -294,17 +249,17 @@
 
 <!-- Modal Nova/Editar Tarefa -->
 <div class="modal-overlay" id="modalTarefa" style="display:none">
-  <div class="modal tm-modal" id="modalTarefaBox">
+  <div class="modal ctx-modal" id="modalTarefaBox">
     <div class="modal-header">
-      <div class="tm-header">
+      <div class="ctx-header">
         <h2 class="modal-title" id="modalTarefaTitulo">Nova Tarefa</h2>
-        <div class="tm-badges" id="modalTarefaBadges"></div>
+        <div class="ctx-badges" id="modalTarefaBadges"></div>
       </div>
       <button class="modal-close" id="modalTarefaClose">&times;</button>
     </div>
     <form id="formTarefa" novalidate>
-      <div class="modal-body tm-body">
-       <div class="tm-form">
+      <div class="modal-body ctx-body">
+       <div class="ctx-form">
         <div class="form-group">
           <label class="form-label" for="fTitulo">Título *</label>
           <input type="text" id="fTitulo" class="form-control" maxlength="300" required>
@@ -408,11 +363,11 @@
         <div id="fmsgErro" class="alert alert-error" style="display:none"></div>
        </div>
         <!-- Contexto da tarefa (só na edição): prazo, processo, partes, movimentação, histórico -->
-        <aside class="tm-painel" id="tmPainel" style="display:none"></aside>
+        <aside class="ctx-painel" id="tmPainel" style="display:none"></aside>
       </div>
-      <div class="modal-footer tm-footer">
-        <button type="button" class="btn btn-danger btn-sm tm-excluir" id="btnExcluirTarefa" style="display:none">Excluir</button>
-        <button type="button" class="btn btn-secondary" id="btnCancelarTarefa">Cancelar</button>
+      <div class="modal-footer ctx-footer">
+        <button type="button" class="btn btn-danger btn-sm ctx-esquerda" id="btnExcluirTarefa" style="display:none">Excluir</button>
+        <button type="button" class="btn btn-secondary ctx-cancelar" id="btnCancelarTarefa">Cancelar</button>
         <button type="button" class="btn btn-secondary" id="btnConcluirTarefa" style="display:none">✓ Salvar e concluir</button>
         <button type="submit" class="btn btn-primary" id="btnSalvarTarefa">Salvar</button>
       </div>
@@ -674,7 +629,7 @@ function updateProcessoLink() {
 let editingTarefa = null;
 
 function modoEdicao(ativo) {
-  document.getElementById('modalTarefaBox').classList.toggle('tm-edicao', ativo);
+  document.getElementById('modalTarefaBox').classList.toggle('ctx-com-painel', ativo);
   document.getElementById('tmPainel').style.display = ativo ? '' : 'none';
   document.getElementById('btnExcluirTarefa').style.display = ativo ? '' : 'none';
   document.getElementById('btnSalvarTarefa').textContent = ativo ? 'Salvar alterações' : 'Salvar';
@@ -762,9 +717,9 @@ function cardPrazo() {
   const t = editingTarefa;
   const prazo = dataParede(document.getElementById('fPrazo').value);
   const status = document.getElementById('fStatus').value;
-  let classe = 'tm-neutro', rel = 'Sem prazo definido', data = 'Use os atalhos ao lado para definir uma data.';
+  let classe = 'ctx-neutro', rel = 'Sem prazo definido', data = 'Use os atalhos ao lado para definir uma data.';
   if (status === 'Concluida') {
-    classe = 'tm-ok';
+    classe = 'ctx-ok';
     rel = 'Concluída';
     data = t.concluidaEm ? `em ${fmtCarimbo(t.concluidaEm)}` : '';
   } else if (status === 'Cancelada') {
@@ -776,11 +731,11 @@ function cardPrazo() {
     const dia = new Date(prazo); dia.setHours(0, 0, 0, 0);
     const dias = Math.round((dia - hoje) / 86400000);
     if (prazo < new Date() && dias <= 0) {
-      classe = 'tm-atrasado';
+      classe = 'ctx-atrasado';
       rel = dias === 0 ? 'Venceu hoje' : `Atrasada há ${plural(-dias, 'dia', 'dias')}`;
-    } else if (dias === 0) { classe = 'tm-hoje'; rel = 'Vence hoje'; }
-    else if (dias === 1) { classe = 'tm-proximo'; rel = 'Vence amanhã'; }
-    else { classe = dias <= 5 ? 'tm-proximo' : 'tm-ok'; rel = `Faltam ${plural(dias, 'dia', 'dias')}`; }
+    } else if (dias === 0) { classe = 'ctx-hoje'; rel = 'Vence hoje'; }
+    else if (dias === 1) { classe = 'ctx-proximo'; rel = 'Vence amanhã'; }
+    else { classe = dias <= 5 ? 'ctx-proximo' : 'ctx-ok'; rel = `Faltam ${plural(dias, 'dia', 'dias')}`; }
   }
   if (prazo && status !== 'Concluida' && status !== 'Cancelada') {
     const hora = prazo.getHours() || prazo.getMinutes()
@@ -790,12 +745,12 @@ function cardPrazo() {
   const contagemValida = t.dataInicio && t.quantidadeDias
     && document.getElementById('fPrazo').value === inputDataHoraParede(t.prazo);
   const calc = contagemValida
-    ? `<div class="tm-prazo-calc">Contagem: ${plural(t.quantidadeDias, t.tipoCalculo === 'DiasCorridos' ? 'dia corrido' : 'dia útil', t.tipoCalculo === 'DiasCorridos' ? 'dias corridos' : 'dias úteis')} a partir de ${fmtData(dataParede(t.dataInicio))}</div>`
+    ? `<div class="ctx-destaque-extra">Contagem: ${plural(t.quantidadeDias, t.tipoCalculo === 'DiasCorridos' ? 'dia corrido' : 'dia útil', t.tipoCalculo === 'DiasCorridos' ? 'dias corridos' : 'dias úteis')} a partir de ${fmtData(dataParede(t.dataInicio))}</div>`
     : '';
-  return `<div class="tm-card tm-prazo ${classe}" id="tmCardPrazo">
-    <div class="tm-card-titulo">${t.tipo === 'Prazo' ? 'Prazo processual' : 'Prazo'}</div>
-    <div class="tm-prazo-rel">${rel}</div>
-    ${data ? `<div class="tm-prazo-data">${esc(data)}</div>` : ''}
+  return `<div class="ctx-card ctx-destaque ${classe}" id="tmCardPrazo">
+    <div class="ctx-card-titulo">${t.tipo === 'Prazo' ? 'Prazo processual' : 'Prazo'}</div>
+    <div class="ctx-destaque-rel">${rel}</div>
+    ${data ? `<div class="ctx-destaque-data">${esc(data)}</div>` : ''}
     ${calc}
   </div>`;
 }
@@ -805,25 +760,25 @@ function renderPainel(t) {
     ? `<a href="/pages/contato-detalhe.html?id=${t.contatoId}" class="processo-link">${esc(t.nomeContato)}</a>` : null;
   document.getElementById('tmPainel').innerHTML = `
     ${cardPrazo()}
-    ${t.processoId ? `<div class="tm-card" id="tmCardProcesso">
-      <div class="tm-card-titulo">Processo <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link">Abrir →</a></div>
-      <div class="tm-cnj">${esc(t.numeroCNJProcesso ?? '')}</div>
-      <div class="tm-carregando" style="margin-top:6px">Carregando dados do processo…</div>
+    ${t.processoId ? `<div class="ctx-card" id="tmCardProcesso">
+      <div class="ctx-card-titulo">Processo <a href="/pages/processo-detalhe.html?id=${t.processoId}" class="processo-link">Abrir →</a></div>
+      <div class="ctx-cnj">${esc(t.numeroCNJProcesso ?? '')}</div>
+      <div class="ctx-carregando" style="margin-top:6px">Carregando dados do processo…</div>
     </div>
-    <div class="tm-card" id="tmCardMov">
-      <div class="tm-card-titulo">${t.andamentoId ? 'Movimentação de origem' : 'Última movimentação'}</div>
-      <div class="tm-carregando">Carregando…</div>
+    <div class="ctx-card" id="tmCardMov">
+      <div class="ctx-card-titulo">${t.andamentoId ? 'Movimentação de origem' : 'Última movimentação'}</div>
+      <div class="ctx-carregando">Carregando…</div>
     </div>` : ''}
-    <div class="tm-card">
-      <div class="tm-card-titulo">Pessoas</div>
-      <div class="tm-linha"><span>Responsável</span><span>${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
-      ${contato ? `<div class="tm-linha"><span>Contato</span><span>${contato}</span></div>` : ''}
+    <div class="ctx-card">
+      <div class="ctx-card-titulo">Pessoas</div>
+      <div class="ctx-linha"><span>Responsável</span><span>${t.nomeResponsavel ? esc(t.nomeResponsavel) : '–'}</span></div>
+      ${contato ? `<div class="ctx-linha"><span>Contato</span><span>${contato}</span></div>` : ''}
     </div>
-    <div class="tm-card">
-      <div class="tm-card-titulo">Histórico</div>
-      <div class="tm-linha"><span>Criada</span><span>${fmtCarimbo(t.criadoEm)} · ${esc(t.nomeCriadoPor ?? '')}</span></div>
-      ${t.concluidaEm ? `<div class="tm-linha"><span>Concluída</span><span>${fmtCarimbo(t.concluidaEm)}</span></div>` : ''}
-      ${t.recorrencia ? `<div class="tm-linha"><span>Repetição</span><span>🔁 ${esc(t.recorrencia.descricao)}${t.recorrencia.ativa ? '' : ' (encerrada)'}</span></div>` : ''}
+    <div class="ctx-card">
+      <div class="ctx-card-titulo">Histórico</div>
+      <div class="ctx-linha"><span>Criada</span><span>${fmtCarimbo(t.criadoEm)} · ${esc(t.nomeCriadoPor ?? '')}</span></div>
+      ${t.concluidaEm ? `<div class="ctx-linha"><span>Concluída</span><span>${fmtCarimbo(t.concluidaEm)}</span></div>` : ''}
+      ${t.recorrencia ? `<div class="ctx-linha"><span>Repetição</span><span>🔁 ${esc(t.recorrencia.descricao)}${t.recorrencia.ativa ? '' : ' (encerrada)'}</span></div>` : ''}
     </div>`;
 }
 
@@ -838,21 +793,21 @@ async function carregarContextoProcesso(t) {
   const cardProc = document.getElementById('tmCardProcesso');
   if (cardProc) {
     const p = proc.status === 'fulfilled' ? proc.value : null;
-    const corpo = cardProc.querySelector('.tm-carregando');
-    if (!p) corpo.outerHTML = '<div class="tm-vazio" style="margin-top:6px">Não foi possível carregar o processo.</div>';
+    const corpo = cardProc.querySelector('.ctx-carregando');
+    if (!p) corpo.outerHTML = '<div class="ctx-vazio" style="margin-top:6px">Não foi possível carregar o processo.</div>';
     else {
       const orgao = [p.vara, p.comarca].filter(Boolean).join(' · ');
       const partes = (p.partes ?? []).slice(0, 4).map(pt =>
-        `<div class="tm-parte"><span class="tm-parte-tipo">${PARTE_LABEL[pt.tipoParte] ?? pt.tipoParte}</span><span>${esc(pt.nomeContato)}</span></div>`).join('');
+        `<div class="ctx-parte"><span class="ctx-parte-tipo">${PARTE_LABEL[pt.tipoParte] ?? pt.tipoParte}</span><span>${esc(pt.nomeContato)}</span></div>`).join('');
       corpo.outerHTML = `
         ${p.classe || p.tipoAcao ? `<div style="margin-top:4px">${esc(p.classe || p.tipoAcao)}</div>` : ''}
         <div style="margin-top:8px">
-          ${p.siglaTribunal || p.tribunal ? `<div class="tm-linha"><span>Tribunal</span><span>${esc(p.siglaTribunal || p.tribunal)}${p.grau ? ` · ${esc(p.grau)}` : ''}</span></div>` : ''}
-          ${orgao ? `<div class="tm-linha"><span>Órgão</span><span>${esc(orgao)}</span></div>` : ''}
-          <div class="tm-linha"><span>Área / fase</span><span>${AREA_LABEL[p.areaDireito] ?? p.areaDireito} · ${FASE_LABEL[p.fase] ?? p.fase}</span></div>
-          ${p.nomeAdvogadoResponsavel ? `<div class="tm-linha"><span>Advogado</span><span>${esc(p.nomeAdvogadoResponsavel)}</span></div>` : ''}
+          ${p.siglaTribunal || p.tribunal ? `<div class="ctx-linha"><span>Tribunal</span><span>${esc(p.siglaTribunal || p.tribunal)}${p.grau ? ` · ${esc(p.grau)}` : ''}</span></div>` : ''}
+          ${orgao ? `<div class="ctx-linha"><span>Órgão</span><span>${esc(orgao)}</span></div>` : ''}
+          <div class="ctx-linha"><span>Área / fase</span><span>${AREA_LABEL[p.areaDireito] ?? p.areaDireito} · ${FASE_LABEL[p.fase] ?? p.fase}</span></div>
+          ${p.nomeAdvogadoResponsavel ? `<div class="ctx-linha"><span>Advogado</span><span>${esc(p.nomeAdvogadoResponsavel)}</span></div>` : ''}
         </div>
-        ${partes ? `<div class="tm-partes">${partes}</div>` : ''}`;
+        ${partes ? `<div class="ctx-partes">${partes}</div>` : ''}`;
     }
   }
 
@@ -861,13 +816,13 @@ async function carregarContextoProcesso(t) {
     const lista = andamentos.status === 'fulfilled' ? andamentos.value ?? [] : [];
     const mov = (t.andamentoId && lista.find(a => a.id === t.andamentoId))
       || [...lista].sort((a, b) => String(b.data).localeCompare(String(a.data)))[0];
-    const corpo = cardMov.querySelector('.tm-carregando');
-    if (!mov) corpo.outerHTML = '<div class="tm-vazio">Nenhuma movimentação registrada.</div>';
+    const corpo = cardMov.querySelector('.ctx-carregando');
+    if (!mov) corpo.outerHTML = '<div class="ctx-vazio">Nenhuma movimentação registrada.</div>';
     else {
       const texto = mov.descricaoTraduzidaIA || mov.descricao;
       corpo.outerHTML = `
-        <div class="tm-mov-data">${fmtData(dataParede(mov.data))}${mov.orgaoJulgador ? ` <span class="tm-vazio">· ${esc(mov.orgaoJulgador)}</span>` : ''}</div>
-        <div class="tm-mov-texto" title="${esc(texto)}">${esc(texto)}</div>`;
+        <div class="ctx-mov-data">${fmtData(dataParede(mov.data))}${mov.orgaoJulgador ? ` <span class="ctx-vazio">· ${esc(mov.orgaoJulgador)}</span>` : ''}</div>
+        <div class="ctx-mov-texto" title="${esc(texto)}">${esc(texto)}</div>`;
     }
   }
 }

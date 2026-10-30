@@ -62,16 +62,6 @@
     .search-btn { flex-shrink:0; width:42px; height:42px; border:1px solid var(--color-border); border-radius:var(--radius); background:#f3f4f6; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:.2s; }
     .search-btn:hover { background:#e5e7eb; }
     .search-btn:disabled { opacity:.5; cursor:not-allowed; }
-    .process-preview { margin-top:8px; padding:10px 12px; border-radius:6px; font-size:13px; display:none; }
-    .process-preview.encontrado { background:#dcfce7; border:1px solid #86efac; color:#166534; }
-    .process-preview.nao-encontrado { background:#fef3c7; border:1px solid #fde68a; color:#92400e; }
-    .process-preview.loading { background:#f3f4f6; border:1px solid #e5e7eb; color:#6b7280; }
-    .process-preview .preview-tribunal { font-weight:600; }
-    .process-preview .preview-vara { margin-top:4px; }
-    .partes-found-preview { margin-top:8px; padding:10px 12px; border:1px solid #bfdbfe; background:#eff6ff; border-radius:6px; font-size:13px; display:none; }
-    .partes-found-preview .partes-found-title { font-weight:600; margin-bottom:6px; color:#1e40af; }
-    .partes-found-preview ul { margin:0 0 8px 18px; padding:0; }
-    .partes-found-preview li { margin-bottom:2px; }
     .parte-row .parte-datajud-hint { font-size:11px; color:#6b7280; margin-top:2px; }
     .cnj-row { display:flex; gap:8px; align-items:center; }
     .cnj-row .cnj-input-wrap { flex:1; }
@@ -324,6 +314,15 @@
     .paginacao-info { font-size:13px; color:var(--color-text-muted); }
     .paginacao-tamanho { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--color-text-muted); margin:0; }
     .paginacao-tamanho select { width:auto; height:34px; padding:0 28px 0 10px; font-size:13px; }
+    /* Modal do processo: base em .ctx-modal (styles.css). O painel mostra, no cadastro, a leitura
+       do CNJ e a busca no tribunal; na edição (.pm-edicao), o contexto do processo. */
+    .pm-edicao #pmPainelCadastro, .ctx-modal:not(.pm-edicao) #pmPainelEdicao { display:none; }
+    .pm-partes-encontradas { margin:0 0 10px 18px; padding:0; }
+    .pm-partes-encontradas li { margin-bottom:2px; }
+    /* Linha de parte: contato, tipo e o ✕ na mesma linha (a .form-row padrão tem só 2 colunas). */
+    .parte-row { grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto; gap:8px; align-items:start; }
+    .parte-row .form-group { margin-bottom:0; }
+    .pm-gestao { grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); }
     @media(max-width:768px) {
       .processos-grid { grid-template-columns: 1fr; }
       .paginacao-bar { justify-content:center; }
@@ -420,14 +419,19 @@
 
 <!-- Modal Processo -->
 <div class="modal-overlay" id="modalProcesso">
-  <div class="modal" style="max-width:700px">
+  <div class="modal ctx-modal ctx-com-painel" id="modalProcessoBox">
     <div class="modal-header">
-      <span class="modal-title" id="modalTitle">Novo Processo</span>
+      <div class="ctx-header">
+        <span class="modal-title" id="modalTitle">Novo Processo</span>
+        <div class="ctx-badges" id="modalBadges"></div>
+      </div>
       <button class="modal-close" id="modalClose">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body ctx-body">
+     <div class="ctx-form">
       <div id="modalAlert" class="alert alert-error" style="display:none"></div>
       <form id="processoForm">
+        <div class="ctx-secao">Identificação</div>
         <div class="form-group">
           <div class="cnj-row-labels">
             <label>Número CNJ *</label>
@@ -446,12 +450,6 @@
               </div>
             </div>
           </div>
-          <div id="processPreview" class="process-preview"></div>
-          <div id="partesFoundPreview" class="partes-found-preview">
-            <div class="partes-found-title">Partes encontradas na busca</div>
-            <ul id="partesFoundList"></ul>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnUsarPartes">Usar partes encontradas</button>
-          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -459,25 +457,13 @@
             <input type="text" id="fVara" class="form-control" placeholder="1ª Vara Cível">
           </div>
           <div class="form-group">
-            <label>Classe</label>
-            <input type="text" id="fClasse" class="form-control" placeholder="Execução de Título Extrajudicial" readonly>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Assuntos</label>
-            <input type="text" id="fAssuntos" class="form-control" placeholder="Seguro, Contratos..." readonly>
-          </div>
-          <div class="form-group">
-            <label>Data Ajuizamento</label>
-            <input type="text" id="fDataAjuizamento" class="form-control" placeholder="10/08/2022" readonly>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
             <label>Comarca</label>
             <input type="text" id="fComarca" class="form-control" placeholder="São Paulo">
           </div>
+        </div>
+
+        <div class="ctx-secao">Classificação</div>
+        <div class="form-row">
           <div class="form-group">
             <label>Área do Direito *</label>
             <select id="fAreaDireito" class="form-control" required>
@@ -495,12 +481,6 @@
               <option value="Outro">Outro</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Tipo de Ação</label>
-            <input type="text" id="fTipoAcao" class="form-control" placeholder="Ação de Cobrança, Rescisão...">
-          </div>
           <div class="form-group">
             <label>Fase Processual *</label>
             <select id="fFase" class="form-control" required>
@@ -516,9 +496,17 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label>Tipo de Ação</label>
+            <input type="text" id="fTipoAcao" class="form-control" placeholder="Ação de Cobrança, Rescisão...">
+          </div>
+          <div class="form-group">
             <label>Valor da Causa (R$)</label>
             <input type="number" id="fValorCausa" class="form-control" placeholder="0,00" min="0" step="0.01">
           </div>
+        </div>
+
+        <div class="ctx-secao">Gestão</div>
+        <div class="form-row pm-gestao">
           <div class="form-group" id="statusGroup" style="display:none">
             <label>Status</label>
             <select id="fStatus" class="form-control">
@@ -528,8 +516,6 @@
               <option value="Encerrado">Encerrado</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label>Advogado Responsável</label>
             <select id="fAdvogado" class="form-control">
@@ -545,18 +531,36 @@
           </div>
         </div>
 
-        <div class="card-title" style="margin-top:16px;margin-bottom:8px;font-size:14px">Partes do Processo</div>
+        <div class="ctx-secao">Partes do Processo</div>
         <div id="partesContainer"></div>
         <button type="button" class="btn btn-secondary btn-sm" id="btnAddParte" style="margin-bottom:16px">+ Adicionar Parte</button>
 
+        <div class="ctx-secao">Observações</div>
         <div class="form-group">
-          <label>Observações</label>
-          <textarea id="fObservacoes" class="form-control" rows="3"></textarea>
+          <textarea id="fObservacoes" class="form-control" rows="4" aria-label="Observações"
+            placeholder="Estratégia, combinados com o cliente, pendências…"></textarea>
         </div>
       </form>
+     </div>
+      <aside class="ctx-painel" id="pmPainel">
+        <!-- Cadastro: leitura do número CNJ e resultado da busca no tribunal -->
+        <div class="ctx-painel" id="pmPainelCadastro">
+          <div class="ctx-card ctx-destaque ctx-neutro" id="pmCnjInfo"></div>
+          <div class="ctx-card" id="processPreview"></div>
+          <div class="ctx-card" id="partesFoundPreview" style="display:none">
+            <div class="ctx-card-titulo">Partes encontradas</div>
+            <ul class="pm-partes-encontradas" id="partesFoundList"></ul>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnUsarPartes">Usar partes encontradas</button>
+          </div>
+        </div>
+        <!-- Edição: situação, tarefas, movimentação, dados do tribunal -->
+        <div class="ctx-painel" id="pmPainelEdicao"></div>
+      </aside>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+    <div class="modal-footer ctx-footer">
+      <button type="button" class="btn btn-danger btn-sm ctx-esquerda" id="btnEncerrarModal" style="display:none">Encerrar processo</button>
+      <button class="btn btn-secondary ctx-cancelar" id="btnCancelar">Cancelar</button>
+      <a class="btn btn-secondary" id="btnAbrirProcesso" style="display:none">Abrir processo</a>
       <button class="btn btn-primary" id="btnSalvar">Salvar</button>
     </div>
   </div>
@@ -657,7 +661,7 @@
 
 
 <script type="module">
-import { abrirNovoPelaUrl, esc } from '/js/utils.js';
+import { abrirNovoPelaUrl, esc, dataParede } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito, baixarRelatorioProcessos } from '/js/processos.js';
 import { apiFetch } from '/js/api.js';
@@ -817,16 +821,14 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
   const cnj = input.value.trim();
 
   if (!cnj) {
-    preview.className = 'process-preview nao-encontrado';
-    preview.innerHTML = 'Digite um número de processo.';
-    preview.style.display = 'block';
+    preview.className = 'ctx-card ctx-destaque ctx-proximo';
+    preview.innerHTML = '<div class="ctx-card-titulo">Busca no tribunal</div><div>Digite um número de processo.</div>';
     renderPartesFoundPreview(null);
     return;
   }
 
-  preview.className = 'process-preview loading';
-  preview.innerHTML = 'Buscando...';
-  preview.style.display = 'block';
+  preview.className = 'ctx-card';
+  preview.innerHTML = '<div class="ctx-card-titulo">Busca no tribunal</div><div class="ctx-carregando">Buscando…</div>';
   renderPartesFoundPreview(null);
   btn.disabled = true;
 
@@ -843,35 +845,93 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
     if (result.encontrado) {
       const dataAjuizamento = result.dataAjuizamento ? new Date(result.dataAjuizamento).toLocaleDateString('pt-BR') : null;
       const assuntosStr = result.assuntos ? result.assuntos.join(', ') : '';
-      preview.className = 'process-preview encontrado';
+      preview.className = 'ctx-card ctx-destaque ctx-ok';
       const fonteBadge = result.fonte === 'escavador'
-        ? '<span class="badge badge-blue" style="margin-left:6px" title="Encontrado via Escavador — usado como alternativa porque o DataJud (gratuito) ainda não indexou este processo">via Escavador</span>'
-        : '<span class="badge badge-gray" style="margin-left:6px">via DataJud</span>';
-      preview.innerHTML = `<span class="preview-tribunal">✓ Processo encontrado</span>${fonteBadge}<br>
-        <span class="preview-vara">Tribunal: ${esc(result.tribunal ?? 'N/A')} | Vara: ${esc(result.vara ?? 'N/A')}</span><br>
-        <span class="preview-vara">Classe: ${esc(result.classe ?? 'N/A')} | Data: ${esc(dataAjuizamento ?? 'N/A')}</span><br>
-        <span style="font-size:11px;margin-top:4px;display:block;color:#15803d">${result.movimentosCount} movimentação(ões) | <a href="#" onclick="showMovimentacoes(event)" style="color:#15803d;text-decoration:underline">Ver andamentos</a></span>`;
+        ? '<span class="badge badge-blue" title="Encontrado via Escavador — usado como alternativa porque o DataJud (gratuito) ainda não indexou este processo">via Escavador (busca paga)</span>'
+        : '<span class="badge badge-gray">via DataJud</span>';
+      const linha = (rotulo, valor) => valor ? `<div class="ctx-linha"><span>${rotulo}</span><span>${esc(valor)}</span></div>` : '';
+      // Classe, assuntos e data não são campos do formulário: vão no cadastro a partir de lastSearchResult.
+      preview.innerHTML = `<div class="ctx-card-titulo">Busca no tribunal</div>
+        <div class="ctx-destaque-rel">✓ Processo encontrado</div>
+        <div style="margin:4px 0 2px">${fonteBadge}</div>
+        <div class="ctx-destaque-data">${result.movimentosCount} movimentação(ões) · <a href="#" onclick="showMovimentacoes(event)" class="processo-link">Ver andamentos</a></div>
+        <div class="ctx-destaque-extra">
+          ${linha('Tribunal', result.tribunal)}${linha('Vara', result.vara)}${linha('Classe', result.classe)}
+          ${linha('Assuntos', assuntosStr)}${linha('Ajuizamento', dataAjuizamento)}
+        </div>`;
       if (result.vara) document.getElementById('fVara').value = result.vara;
-      if (result.classe) document.getElementById('fClasse').value = result.classe;
-      if (assuntosStr) document.getElementById('fAssuntos').value = assuntosStr;
-      if (dataAjuizamento) document.getElementById('fDataAjuizamento').value = dataAjuizamento;
       const fValorCausa = document.getElementById('fValorCausa');
       if (result.valorCausa != null && !fValorCausa.value) fValorCausa.value = result.valorCausa;
       const fTribunalInput = document.getElementById('fTribunal');
       if (result.siglaTribunal && !fTribunalInput.value) fTribunalInput.value = result.siglaTribunal;
       renderPartesFoundPreview(result.partes);
     } else {
-      preview.className = 'process-preview nao-encontrado';
-      preview.innerHTML = `<span class="preview-tribunal">✗ Processo não encontrado no CNJ</span><br>
-        <span class="preview-vara">Preencha os dados manualmente.</span>`;
+      preview.className = 'ctx-card ctx-destaque ctx-proximo';
+      preview.innerHTML = `<div class="ctx-card-titulo">Busca no tribunal</div>
+        <div class="ctx-destaque-rel">Processo não encontrado no CNJ</div>
+        <div class="ctx-destaque-data">Preencha os dados manualmente.</div>`;
     }
   } catch (err) {
-    preview.className = 'process-preview nao-encontrado';
-    preview.innerHTML = 'Erro ao buscar processo. Tente novamente.';
+    preview.className = 'ctx-card ctx-destaque ctx-atrasado';
+    preview.innerHTML = '<div class="ctx-card-titulo">Busca no tribunal</div><div>Erro ao buscar processo. Tente novamente.</div>';
   } finally {
     btn.disabled = false;
+    // No celular o painel fica abaixo do formulário: leva o resultado para a vista.
+    if (window.innerWidth <= 860) preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 });
+
+function renderBuscaDica() {
+  const preview = document.getElementById('processPreview');
+  preview.className = 'ctx-card';
+  preview.innerHTML = `<div class="ctx-card-titulo">Busca no tribunal</div>
+    <div>Digite o número e clique em 🔍 (ou Enter) para trazer vara, classe, partes e andamentos.</div>
+    ${isPlanoFree() ? '<div class="ctx-vazio" style="margin-top:6px">Disponível a partir do plano Plus.</div>' : ''}`;
+}
+
+// ── Leitura do número CNJ (NNNNNNN-DD.AAAA.J.TR.OOOO, Resolução CNJ 65/2008) ──
+// Mostra ano, justiça, tribunal e foro enquanto o número é digitado e confere o dígito
+// verificador (módulo 97) — pega erro de digitação antes de salvar ou buscar.
+const UF_POR_TR = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SE','SP','TO'];
+const JUSTICA_POR_J = { 1: 'STF', 2: 'CNJ', 3: 'STJ', 4: 'Federal', 5: 'do Trabalho', 6: 'Eleitoral', 7: 'Militar da União', 8: 'Estadual', 9: 'Militar Estadual' };
+
+function lerCnj(valor) {
+  const d = (valor || '').replace(/\D/g, '');
+  if (d.length !== 20) return { digitos: d.length };
+  const [seq, dv, ano, j, tr, origem] = [d.slice(0, 7), d.slice(7, 9), d.slice(9, 13), d[13], d.slice(14, 16), d.slice(16)];
+  const resto = BigInt(seq + ano + j + tr + origem + '00') % 97n;
+  const trNum = Number(tr), uf = UF_POR_TR[trNum - 1];
+  const tribunal = j === '8' && uf ? `TJ${uf}`
+    : j === '4' && trNum >= 1 && trNum <= 6 ? `TRF${trNum}`
+    : j === '5' && trNum >= 1 && trNum <= 24 ? `TRT${trNum}`
+    : j === '6' && uf ? `TRE-${uf}`
+    : j === '3' ? 'STJ' : j === '1' ? 'STF' : null;
+  return { digitos: 20, valido: String(98n - resto).padStart(2, '0') === dv, ano, justica: JUSTICA_POR_J[j], tribunal, origem };
+}
+
+function renderCnjInfo() {
+  const card = document.getElementById('pmCnjInfo');
+  const cnj = lerCnj(document.getElementById('fNumeroCNJ').value);
+  if (cnj.digitos !== 20) {
+    card.className = 'ctx-card ctx-destaque ctx-neutro';
+    card.innerHTML = `<div class="ctx-card-titulo">Número do processo</div>
+      <div class="ctx-destaque-rel">${cnj.digitos ? `Faltam ${20 - cnj.digitos} dígitos` : 'Digite o número CNJ'}</div>
+      <div class="ctx-destaque-data">Formato: NNNNNNN-DD.AAAA.J.TR.OOOO</div>`;
+    return;
+  }
+  // Cadastro: o tribunal sai do próprio número, enquanto o usuário não escolheu outro.
+  if (!editingId && !tribunalTouched && cnj.tribunal && TRIBUNAIS.includes(cnj.tribunal)) tribunalInput.value = cnj.tribunal;
+  const linha = (rotulo, valor) => valor ? `<div class="ctx-linha"><span>${rotulo}</span><span>${esc(valor)}</span></div>` : '';
+  card.className = `ctx-card ctx-destaque ${cnj.valido ? 'ctx-ok' : 'ctx-proximo'}`;
+  card.innerHTML = `<div class="ctx-card-titulo">Número do processo</div>
+    <div class="ctx-destaque-rel">${cnj.valido ? '✓ Número válido' : 'Confira o número'}</div>
+    ${cnj.valido ? '' : '<div class="ctx-destaque-data">O dígito verificador não confere — pode haver erro de digitação.</div>'}
+    <div class="ctx-destaque-extra">
+      ${linha('Ano', cnj.ano)}${linha('Justiça', cnj.justica && (cnj.justica.length <= 3 ? cnj.justica : `Justiça ${cnj.justica}`))}
+      ${linha('Tribunal', cnj.tribunal)}${linha('Foro de origem', cnj.origem)}
+    </div>`;
+}
+document.getElementById('fNumeroCNJ').addEventListener('input', renderCnjInfo);
 
 // Permitir buscar com Enter no campo CNJ
 document.getElementById('fNumeroCNJ').addEventListener('keydown', e => {
@@ -1116,17 +1176,203 @@ pageSizeSelect.addEventListener('change', () => {
   loadProcessos();
 });
 
+// ── Modal de edição com painel de contexto ─────────────────────
+// Processo aberto na edição, como veio da API: o PUT repete decisão e resultado (que o
+// formulário não mostra) para não apagá-los de um processo encerrado.
+let editingProcesso = null;
+
+function modoEdicao(ativo) {
+  document.getElementById('modalProcessoBox').classList.toggle('pm-edicao', ativo);
+  document.getElementById('btnAbrirProcesso').style.display = ativo ? '' : 'none';
+  document.getElementById('btnSalvar').textContent = ativo ? 'Salvar alterações' : 'Salvar';
+  if (!ativo) {
+    document.getElementById('modalBadges').innerHTML = '';
+    document.getElementById('btnEncerrarModal').style.display = 'none';
+  }
+}
+
 window.editProcesso = async id => {
   const { getProcesso } = await import('/js/processos.js');
   try {
     const p = await getProcesso(id);
     editingId = id;
-    document.getElementById('modalTitle').textContent = 'Editar Processo';
+    editingProcesso = p;
+    modoEdicao(true);
+    document.getElementById('modalTitle').textContent = 'Processo';
+    document.getElementById('modalAlert').style.display = 'none';
     document.getElementById('statusGroup').style.display = '';
     fillForm(p);
+    renderBadgesModal();
+    document.getElementById('btnEncerrarModal').style.display = p.status === 'Encerrado' ? 'none' : '';
+    document.getElementById('btnAbrirProcesso').href = `/pages/processo-detalhe.html?id=${id}`;
+    renderPainel(p);
     modal.classList.add('open');
+    document.getElementById('modalProcessoBox').scrollTop = 0;
+    carregarContexto(p);
   } catch (err) { showAlert(err.message); }
 };
+
+// Badges do cabeçalho acompanham o formulário (status, área, monitoramento), não só o que está salvo.
+function renderBadgesModal() {
+  if (!editingProcesso) return;
+  const monitorado = document.getElementById('fMonitorado').value === 'true';
+  document.getElementById('modalBadges').innerHTML = `
+    ${statusBadge(document.getElementById('fStatus').value)}
+    <span class="badge badge-blue">${esc(areaLabel(document.getElementById('fAreaDireito').value))}</span>
+    ${editingProcesso.grau ? `<span class="badge badge-gray">${esc(editingProcesso.grau)}</span>` : ''}
+    ${monitorado ? '<span class="monitoring-badge">🔄 Monitorado</span>' : ''}`;
+}
+['fStatus', 'fAreaDireito', 'fMonitorado'].forEach(id =>
+  document.getElementById(id).addEventListener('change', renderBadgesModal));
+
+document.getElementById('btnEncerrarModal').addEventListener('click', () => {
+  modal.classList.remove('open');
+  openEncerrar(editingId);
+});
+
+// ── Painel de contexto ─────────────────────────────────────────
+const fmtData = d => d ? d.toLocaleDateString('pt-BR') : '–';
+// Carimbos do servidor (CriadoEm, EncerradoEm, consulta ao DataJud) são UTC reais — aqui vale new Date().
+const fmtCarimbo = v => v ? new Date(v).toLocaleDateString('pt-BR') : '–';
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+function diasDesde(d) {
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const dia = new Date(d); dia.setHours(0, 0, 0, 0);
+  return Math.round((hoje - dia) / 86400000);
+}
+
+function tempoDesde(d) {
+  const dias = diasDesde(d);
+  if (dias <= 0) return 'hoje';
+  if (dias === 1) return 'ontem';
+  if (dias < 60) return `há ${dias} dias`;
+  const meses = Math.floor(dias / 30.44);
+  if (meses < 24) return `há ${plural(meses, 'mês', 'meses')}`;
+  return `há ${plural(Math.floor(dias / 365.25), 'ano', 'anos')}`;
+}
+
+function cardSituacao(p) {
+  const ultimo = dataParede(p.ultimoAndamentoEm);
+  let tom = 'ctx-neutro', rel, sub = '';
+  if (p.status === 'Encerrado') { rel = 'Encerrado'; sub = p.encerradoEm ? `em ${fmtCarimbo(p.encerradoEm)}` : ''; }
+  else if (p.status === 'Arquivado') rel = 'Arquivado';
+  else if (p.status === 'Suspenso') { tom = 'ctx-proximo'; rel = 'Suspenso'; }
+  else if (!ultimo) rel = p.andamentosPendentes ? 'Andamentos ainda não buscados' : 'Sem andamentos registrados';
+  else {
+    // Sem andamento há mais de 180 dias é o mesmo corte do monitoramento (passa a ser semanal).
+    const dias = diasDesde(ultimo);
+    if (dias > 180) { tom = 'ctx-hoje'; rel = `Parado ${tempoDesde(ultimo)}`; }
+    else if (dias > 60) { tom = 'ctx-proximo'; rel = `Sem movimentação ${tempoDesde(ultimo)}`; }
+    else { tom = 'ctx-ok'; rel = `Movimentado ${tempoDesde(ultimo)}`; }
+    sub = `Último andamento em ${fmtData(ultimo)}`;
+  }
+  const ajuizamento = dataParede(p.dataAjuizamento || p.dataDistribuicao);
+  const extras = [
+    ajuizamento ? `Ajuizado em ${fmtData(ajuizamento)} (${tempoDesde(ajuizamento)})` : '',
+    p.monitorado
+      ? `🔄 Monitorado${p.ultimaAtualizacaoDataJud ? ` · consultado em ${fmtCarimbo(p.ultimaAtualizacaoDataJud)}` : ''}`
+      : 'Monitoramento desligado',
+    p.decisao ? `Decisão: ${esc(p.decisao)}` : '',
+    p.resultado ? `Resultado: ${esc(p.resultado)}` : '',
+  ].filter(Boolean).map(x => `<div>${x}</div>`).join('');
+  return `<div class="ctx-card ctx-destaque ${tom}">
+    <div class="ctx-card-titulo">Situação</div>
+    <div class="ctx-destaque-rel">${rel}</div>
+    ${sub ? `<div class="ctx-destaque-data">${sub}</div>` : ''}
+    <div class="ctx-destaque-extra">${extras}</div>
+  </div>`;
+}
+
+function cardTribunal(p) {
+  const linha = (rotulo, valor) => valor ? `<div class="ctx-linha"><span>${rotulo}</span><span>${esc(valor)}</span></div>` : '';
+  const tribunal = [p.siglaTribunal || p.tribunal, p.grau].filter(Boolean).join(' · ');
+  const linhas = [
+    linha('Classe', p.classe),
+    linha('Assuntos', p.assuntos),
+    linha('Tribunal', tribunal),
+    linha('Instância', p.instancia),
+    linha('Relator', p.relator),
+    linha('Sistema', [p.sistema, p.formato].filter(Boolean).join(' · ')),
+    linha('Distribuição', p.dataDistribuicao ? fmtData(dataParede(p.dataDistribuicao)) : ''),
+  ].join('');
+  return linhas ? `<div class="ctx-card"><div class="ctx-card-titulo">Dados do tribunal</div>${linhas}</div>` : '';
+}
+
+function renderPainel(p) {
+  const linkProcesso = `/pages/processo-detalhe.html?id=${p.id}`;
+  document.getElementById('pmPainelEdicao').innerHTML = `
+    ${cardSituacao(p)}
+    <div class="ctx-card" id="pmCardTarefas">
+      <div class="ctx-card-titulo">Tarefas e prazos <a href="${linkProcesso}" class="processo-link">Ver no processo →</a></div>
+      <div class="ctx-carregando">Carregando…</div>
+    </div>
+    <div class="ctx-card" id="pmCardMov">
+      <div class="ctx-card-titulo">Últimas movimentações <a href="${linkProcesso}" class="processo-link">Todas →</a></div>
+      <div class="ctx-carregando">Carregando…</div>
+    </div>
+    ${cardTribunal(p)}
+    <div class="ctx-card">
+      <div class="ctx-card-titulo">Histórico</div>
+      <div class="ctx-linha"><span>Cadastrado</span><span>${fmtCarimbo(p.criadoEm)}</span></div>
+      <div class="ctx-linha"><span>Andamentos</span><span>${p.totalAndamentos ?? 0}</span></div>
+      ${p.encerradoEm ? `<div class="ctx-linha"><span>Encerrado</span><span>${fmtCarimbo(p.encerradoEm)}</span></div>` : ''}
+    </div>`;
+}
+
+function itemTarefa(t) {
+  const prazo = dataParede(t.prazo);
+  let quando = 'Sem prazo';
+  if (prazo) {
+    const faltam = -diasDesde(prazo);
+    quando = t.atrasada ? `<span class="ctx-alerta">Atrasada · ${fmtData(prazo)}</span>`
+      : faltam === 0 ? `<span class="ctx-alerta">Vence hoje</span>`
+      : faltam === 1 ? 'Vence amanhã'
+      : `${fmtData(prazo)} · faltam ${plural(faltam, 'dia', 'dias')}`;
+  }
+  return `<a class="ctx-item" href="/pages/tarefas.html?abrirId=${t.id}">
+    <div class="ctx-item-titulo">${t.tipo === 'Prazo' ? '⏰ ' : ''}${esc(t.titulo)}</div>
+    <div class="ctx-item-sub">${quando}${t.nomeResponsavel ? ` · ${esc(t.nomeResponsavel)}` : ''}</div>
+  </a>`;
+}
+
+// Tarefas e movimentações chegam depois: o modal já abre com o que o processo tem.
+async function carregarContexto(p) {
+  const [tarefas, andamentos] = await Promise.allSettled([
+    apiFetch(`/tarefas?processoId=${p.id}&status=Pendente&status=EmAndamento&pageSize=50`),
+    apiFetch(`/processos/${p.id}/andamentos`),
+  ]);
+  if (editingProcesso?.id !== p.id) return;   // usuário já abriu outro processo
+
+  const corpoTarefas = document.querySelector('#pmCardTarefas .ctx-carregando');
+  if (corpoTarefas) {
+    // Mais urgentes primeiro; sem prazo por último.
+    const lista = (tarefas.status === 'fulfilled' ? tarefas.value?.items ?? [] : [])
+      .sort((a, b) => (a.prazo ? String(a.prazo) : '9999').localeCompare(b.prazo ? String(b.prazo) : '9999'));
+    corpoTarefas.outerHTML = tarefas.status !== 'fulfilled'
+      ? '<div class="ctx-vazio">Não foi possível carregar as tarefas.</div>'
+      : !lista.length ? '<div class="ctx-vazio">Nenhuma tarefa em aberto.</div>'
+      : `<div class="ctx-itens">${lista.slice(0, 4).map(itemTarefa).join('')}</div>
+         ${lista.length > 4 ? `<div class="ctx-vazio" style="margin-top:6px">+ ${plural(lista.length - 4, 'outra', 'outras')} em aberto</div>` : ''}`;
+  }
+
+  const corpoMov = document.querySelector('#pmCardMov .ctx-carregando');
+  if (corpoMov) {
+    const lista = (andamentos.status === 'fulfilled' ? andamentos.value ?? [] : [])
+      .sort((a, b) => String(b.data).localeCompare(String(a.data)));
+    corpoMov.outerHTML = andamentos.status !== 'fulfilled'
+      ? '<div class="ctx-vazio">Não foi possível carregar as movimentações.</div>'
+      : !lista.length
+        ? `<div class="ctx-vazio">${p.andamentosPendentes ? 'Os andamentos são buscados quando você abre o processo.' : 'Nenhuma movimentação registrada.'}</div>`
+        : `<div class="ctx-itens">${lista.slice(0, 2).map(a => {
+            const texto = a.descricaoTraduzidaIA || a.descricao;
+            return `<div>
+              <div class="ctx-mov-data">${fmtData(dataParede(a.data))}${a.orgaoJulgador ? ` <span class="ctx-vazio">· ${esc(a.orgaoJulgador)}</span>` : ''}</div>
+              <div class="ctx-mov-texto" title="${esc(texto)}">${esc(texto)}</div>
+            </div>`;
+          }).join('')}</div>`;
+  }
+}
 
 window.openEncerrar = id => {
   encerrandoId = id;
@@ -1262,12 +1508,15 @@ function readForm() {
     partes,
     partesDataJud,
     andamentos,
-    ...dataJudData
+    ...dataJudData,
+    ...(editingId ? { decisao: editingProcesso?.decisao ?? null, resultado: editingProcesso?.resultado ?? null } : {})
   };
 }
 
 function resetModal() {
   editingId = null;
+  editingProcesso = null;
+  modoEdicao(false);
   lastSearchResult = null; // evita que um resultado de busca anterior (não salvo) vaze para outro cadastro
   tribunalTouched = false; // volta a valer o default 'TJSP' visual sem forçar a busca a esse tribunal
   document.getElementById('modalTitle').textContent = 'Novo Processo';
@@ -1276,7 +1525,8 @@ function resetModal() {
   document.getElementById('fMonitorado').value = 'false';
   document.getElementById('partesContainer').innerHTML = '';
   document.getElementById('modalAlert').style.display = 'none';
-  document.getElementById('processPreview').style.display = 'none';
+  renderBuscaDica();
+  renderCnjInfo();
   renderPartesFoundPreview(null);
 }
 
@@ -1301,7 +1551,7 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
   } catch (err) {
     modalAlert.textContent = err.message;
     modalAlert.style.display = 'block';
-  } finally { btn.disabled = false; btn.textContent = 'Salvar'; }
+  } finally { btn.disabled = false; btn.textContent = editingId ? 'Salvar alterações' : 'Salvar'; }
 });
 
 document.getElementById('encerrarConfirmar').addEventListener('click', async () => {
