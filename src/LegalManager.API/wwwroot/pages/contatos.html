@@ -129,6 +129,17 @@
     .paginacao-info { font-size:13px; color:var(--color-text-muted); }
     .paginacao-tamanho { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--color-text-muted); margin:0; }
     .paginacao-tamanho select { width:auto; height:34px; padding:0 28px 0 10px; font-size:13px; }
+    /* Modal do contato: base em .ctx-modal (styles.css). No cadastro o painel confere o
+       documento e procura duplicados; na edição (.ct-edicao), mostra o contexto do contato. */
+    .ct-edicao #ctDuplicados, .ctx-modal:not(.ct-edicao) #ctPainelEdicao { display:none; }
+    .ct-edicao #fNome { font-size:20px; font-weight:700; padding:6px 8px; margin-left:-8px; width:calc(100% + 8px); border-color:transparent; background:transparent; }
+    .ct-edicao #fNome:hover { border-color:var(--color-border); }
+    .ct-edicao #fNome:focus { border-color:var(--color-primary); background:var(--color-surface); }
+    .ct-edicao label[for="fNome"] { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    .ct-endereco { grid-template-columns:minmax(0,2fr) 80px minmax(0,1fr); }
+    .ct-acao { background:none; border:0; padding:0; color:var(--color-primary); font:inherit; font-weight:600; cursor:pointer; }
+    .ct-acao:hover { text-decoration:underline; }
+    @media(max-width:600px) { .ct-endereco { grid-template-columns:minmax(0,1fr) 80px; } }
     @media(max-width:768px) { .paginacao-bar { justify-content:center; } }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
@@ -347,14 +358,23 @@
 
   <!-- Modal Contato -->
   <div class="modal-overlay" id="modalContato">
-    <div class="modal">
+    <div class="modal ctx-modal ctx-com-painel" id="modalContatoBox">
       <div class="modal-header">
-        <span class="modal-title" id="modalTitle">Novo Contato</span>
+        <div class="ctx-header">
+          <span class="modal-title" id="modalTitle">Novo Contato</span>
+          <div class="ctx-badges" id="modalBadges"></div>
+        </div>
         <button class="modal-close" id="modalClose">✕</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body ctx-body">
+       <div class="ctx-form">
         <div id="modalAlert" class="alert alert-error" style="display:none"></div>
         <form id="contatoForm">
+          <div class="ctx-secao">Identificação</div>
+          <div class="form-group">
+            <label for="fNome">Nome *</label>
+            <input type="text" id="fNome" class="form-control" required>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label>Tipo de Pessoa</label>
@@ -374,20 +394,22 @@
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label>Nome *</label>
-            <input type="text" id="fNome" class="form-control" required>
-          </div>
           <div class="form-row">
             <div class="form-group">
               <label>CPF / CNPJ</label>
               <input type="text" id="fCpfCnpj" class="form-control" placeholder="000.000.000-00">
             </div>
             <div class="form-group">
-              <label>OAB</label>
-              <input type="text" id="fOab" class="form-control" placeholder="SP 123456">
+              <label>Data de Nascimento</label>
+              <input type="date" id="fDataNascimento" class="form-control">
             </div>
           </div>
+          <div class="form-group">
+            <label>OAB</label>
+            <input type="text" id="fOab" class="form-control" placeholder="SP 123456">
+          </div>
+
+          <div class="ctx-secao">Contato</div>
           <div class="form-row">
             <div class="form-group">
               <label>E-mail</label>
@@ -398,11 +420,13 @@
               <input type="tel" id="fTelefone" class="form-control" placeholder="(11) 99999-9999">
             </div>
           </div>
+
+          <div class="ctx-secao">Endereço</div>
           <div class="form-group">
             <label>Endereço</label>
             <input type="text" id="fEndereco" class="form-control" placeholder="Rua, número, complemento">
           </div>
-          <div class="form-row">
+          <div class="form-row ct-endereco">
             <div class="form-group">
               <label>Cidade</label>
               <input type="text" id="fCidade" class="form-control">
@@ -411,24 +435,21 @@
               <label>Estado</label>
               <input type="text" id="fEstado" class="form-control" maxlength="2" placeholder="SP">
             </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
               <label>CEP</label>
               <input type="text" id="fCep" class="form-control" placeholder="00000-000">
             </div>
-            <div class="form-group">
-              <label>Data de Nascimento</label>
-              <input type="date" id="fDataNascimento" class="form-control">
-            </div>
           </div>
+
+          <div class="ctx-secao">Organização</div>
           <div class="form-group">
             <label>Tags <span style="color:var(--color-text-muted);font-weight:400">(separadas por vírgula)</span></label>
             <input type="text" id="fTags" class="form-control" placeholder="vip, novo, urgente">
           </div>
           <div class="form-group">
             <label>Observações</label>
-            <textarea id="fObservacoes" class="form-control" rows="3"></textarea>
+            <textarea id="fObservacoes" class="form-control" rows="3"
+              placeholder="Como prefere ser contatado, histórico, combinados…"></textarea>
           </div>
           <div class="form-group">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
@@ -436,9 +457,20 @@
             </label>
           </div>
         </form>
+       </div>
+        <aside class="ctx-painel" id="ctPainel">
+          <!-- Sempre: conferência do CPF/CNPJ (no editar, só aparece se não conferir) -->
+          <div class="ctx-card ctx-destaque ctx-neutro" id="ctDocInfo"></div>
+          <!-- Novo: contatos parecidos já cadastrados -->
+          <div class="ctx-card" id="ctDuplicados"></div>
+          <!-- Editar: relacionamento, perfil, processos, atividade, portal, vínculos -->
+          <div class="ctx-painel" id="ctPainelEdicao"></div>
+        </aside>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      <div class="modal-footer ctx-footer">
+        <button type="button" class="btn btn-danger btn-sm ctx-esquerda" id="btnExcluirContato" style="display:none">Excluir</button>
+        <button class="btn btn-secondary ctx-cancelar" id="btnCancelar">Cancelar</button>
+        <a class="btn btn-secondary" id="btnVerPerfil" style="display:none">Ver perfil</a>
         <button class="btn btn-primary" id="btnSalvar">Salvar</button>
       </div>
     </div>
@@ -636,7 +668,7 @@
   </div>
 
   <script type="module">
-import { abrirNovoPelaUrl, esc } from '/js/utils.js';
+import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
     import { initLayout } from '/js/layout.js';
     import { apiFetch } from '/js/api.js';
     import {
@@ -644,7 +676,8 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       getPortalAcesso, criarPortalAcesso, revogarPortalAcesso,
       getDuplicados, getAniversariantes,
       getFiltrosSalvos, addFiltroSalvo, removeFiltroSalvo, getContatoTags,
-      agendarRetorno, getContatoIds, excluirContatosEmMassa, restaurarContatosEmMassa, adicionarTagsEmMassa
+      agendarRetorno, getContatoIds, excluirContatosEmMassa, restaurarContatosEmMassa, adicionarTagsEmMassa,
+      getContatoPerfil, getVinculos
     } from '/js/contatos.js';
     import { createMultiSelect } from '/js/multiselect.js';
     import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
@@ -1077,16 +1110,329 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
       loadContatos();
     });
 
+    // ── Modal com painel de contexto ───────────────────────────────
+    // Cadastro: o painel confere o CPF/CNPJ e procura contatos parecidos (evita duplicados).
+    // Edição (.ct-edicao): relacionamento, resumo do perfil, processos, atividade, portal e vínculos.
+    const modalBox = document.getElementById('modalContatoBox');
+    let editingContato = null;
+
+    function modoEdicao(ativo) {
+      modalBox.classList.toggle('ct-edicao', ativo);
+      document.getElementById('btnVerPerfil').style.display = ativo ? '' : 'none';
+      document.getElementById('btnSalvar').textContent = ativo ? 'Salvar alterações' : 'Salvar';
+      if (!ativo) {
+        document.getElementById('modalBadges').innerHTML = '';
+        document.getElementById('ctPainelEdicao').innerHTML = '';
+        document.getElementById('btnExcluirContato').style.display = 'none';
+      }
+    }
+
     window.editContato = async (id) => {
       try {
         const { getContato } = await import('/js/contatos.js');
         const c = await getContato(id);
         editingId = id;
-        document.getElementById('modalTitle').textContent = 'Editar Contato';
+        editingContato = c;
+        modoEdicao(true);
+        document.getElementById('modalTitle').textContent = 'Contato';
+        document.getElementById('modalAlert').style.display = 'none';
         fillForm(c);
+        renderBadgesModal();
+        document.getElementById('btnVerPerfil').href = contatoPerfilUrl(id);
+        document.getElementById('btnExcluirContato').style.display = c.ativo === false ? 'none' : '';
+        renderDocInfo();
+        renderPainelEdicao(c);
         modal.classList.add('open');
+        modalBox.scrollTop = 0;
+        carregarContexto(c);
       } catch (err) { showAlert(err.message); }
     };
+
+    // Badges do cabeçalho acompanham o formulário (categoria, tipo de pessoa).
+    function renderBadgesModal() {
+      if (!editingContato) return;
+      const tipo = document.getElementById('fTipo').value;
+      document.getElementById('modalBadges').innerHTML = `
+        <span class="badge badge-blue">${esc(formatTipoContato(document.getElementById('fTipoContato').value))}</span>
+        <span class="badge badge-gray">${tipo === 'PJ' ? 'Pessoa jurídica' : 'Pessoa física'}</span>
+        ${editingContato.importadoAutomaticamente ? '<span class="badge badge-gray">Importado</span>' : ''}
+        ${editingContato.ativo === false ? '<span class="badge badge-red">Excluído</span>' : ''}`;
+    }
+    ['fTipo', 'fTipoContato'].forEach(id =>
+      document.getElementById(id).addEventListener('change', renderBadgesModal));
+
+    document.getElementById('btnExcluirContato').addEventListener('click', async () => {
+      if (!editingContato) return;
+      if (!confirm(`Excluir o contato "${editingContato.nome}"?\n\nPara ver ou restaurar, use o filtro "Só excluídos".`)) return;
+      try {
+        await deleteContato(editingContato.id);
+        modal.classList.remove('open');
+        resetModal();
+        showAlert('Contato excluído.', 'success');
+        loadContatos();
+      } catch (err) {
+        const modalAlert = document.getElementById('modalAlert');
+        modalAlert.textContent = err.message;
+        modalAlert.style.display = 'block';
+      }
+    });
+
+    // ── CPF / CNPJ: dígitos verificadores ──────────────────────────
+    function validarCpf(d) {
+      if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+      for (let t = 9; t < 11; t++) {
+        let soma = 0;
+        for (let i = 0; i < t; i++) soma += Number(d[i]) * (t + 1 - i);
+        if (((soma * 10) % 11) % 10 !== Number(d[t])) return false;
+      }
+      return true;
+    }
+
+    function validarCnpj(d) {
+      if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
+      const dv = n => {
+        let soma = 0, peso = n - 7;
+        for (let i = 0; i < n; i++) { soma += Number(d[i]) * peso--; if (peso < 2) peso = 9; }
+        const resto = soma % 11;
+        return resto < 2 ? 0 : 11 - resto;
+      };
+      return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+    }
+
+    function renderDocInfo() {
+      const card = document.getElementById('ctDocInfo');
+      const d = document.getElementById('fCpfCnpj').value.replace(/\D/g, '');
+      let tom = 'ctx-neutro', rel, sub = '';
+      if (!d) { rel = 'Documento não informado'; sub = 'Com CPF ou CNPJ fica mais fácil achar o contato e evitar duplicados.'; }
+      else if (d.length !== 11 && d.length !== 14) { rel = `${d.length} dígitos`; sub = 'CPF tem 11 dígitos; CNPJ, 14.'; }
+      else {
+        const cpf = d.length === 11;
+        const ok = cpf ? validarCpf(d) : validarCnpj(d);
+        tom = ok ? 'ctx-ok' : 'ctx-proximo';
+        rel = ok ? `✓ ${cpf ? 'CPF' : 'CNPJ'} válido` : `Confira o ${cpf ? 'CPF' : 'CNPJ'}`;
+        if (!ok) sub = 'Os dígitos verificadores não conferem — pode haver erro de digitação.';
+        // Cadastro: documento válido define o tipo de pessoa.
+        const tipo = document.getElementById('fTipo');
+        if (ok && !editingId && tipo.value !== (cpf ? 'PF' : 'PJ')) tipo.value = cpf ? 'PF' : 'PJ';
+      }
+      card.className = `ctx-card ctx-destaque ${tom}`;
+      card.innerHTML = `<div class="ctx-card-titulo">CPF / CNPJ</div>
+        <div class="ctx-destaque-rel">${rel}</div>
+        ${sub ? `<div class="ctx-destaque-data">${sub}</div>` : ''}`;
+      // Na edição o cartão só aparece quando há algo a conferir.
+      card.style.display = editingId && tom !== 'ctx-proximo' ? 'none' : '';
+    }
+    document.getElementById('fCpfCnpj').addEventListener('input', renderDocInfo);
+
+    // ── Cadastro: contatos parecidos já cadastrados ────────────────
+    let duplicadosTimer, duplicadosSeq = 0;
+
+    function renderDuplicadosDica() {
+      const card = document.getElementById('ctDuplicados');
+      card.className = 'ctx-card';
+      card.innerHTML = `<div class="ctx-card-titulo">Duplicados</div>
+        <div class="ctx-vazio">Ao digitar nome, CPF/CNPJ ou e-mail, mostramos os contatos parecidos já cadastrados.</div>`;
+    }
+
+    function agendarDuplicados() {
+      if (editingId) return;
+      clearTimeout(duplicadosTimer);
+      duplicadosTimer = setTimeout(buscarDuplicados, 400);
+    }
+
+    async function buscarDuplicados() {
+      const seq = ++duplicadosSeq;
+      const nome = document.getElementById('fNome').value.trim();
+      const doc = document.getElementById('fCpfCnpj').value.trim();
+      const email = document.getElementById('fEmail').value.trim();
+      const termos = [
+        nome.length >= 4 ? nome : null,
+        doc.replace(/\D/g, '').length >= 11 ? doc : null,
+        email.includes('@') ? email : null,
+      ].filter(Boolean);
+      if (!termos.length) { renderDuplicadosDica(); return; }
+
+      const resultados = await Promise.allSettled(termos.map(busca => getContatos({ busca, pageSize: 5 })));
+      if (seq !== duplicadosSeq || editingId) return;   // digitou de novo ou abriu outro contato
+      const porId = new Map();
+      resultados.forEach(r => { if (r.status === 'fulfilled') (r.value?.items ?? []).forEach(c => porId.set(c.id, c)); });
+      const lista = [...porId.values()].slice(0, 5);
+      const card = document.getElementById('ctDuplicados');
+      if (!lista.length) {
+        card.className = 'ctx-card';
+        card.innerHTML = '<div class="ctx-card-titulo">Duplicados</div><div class="ctx-vazio">✓ Nenhum contato parecido cadastrado.</div>';
+        return;
+      }
+      card.className = 'ctx-card ctx-destaque ctx-proximo';
+      card.innerHTML = `<div class="ctx-card-titulo">Parecidos já cadastrados</div>
+        <div class="ctx-destaque-data" style="margin-bottom:8px">Confira antes de salvar para não duplicar.</div>
+        <div class="ctx-itens">${lista.map(c => `
+          <a class="ctx-item" href="${contatoPerfilUrl(c.id)}" target="_blank" rel="noopener">
+            <div class="ctx-item-titulo">${esc(c.nome)}</div>
+            <div class="ctx-item-sub">${[formatTipoContato(c.tipoContato), c.cpfCnpj, c.email].filter(Boolean).map(esc).join(' · ')}</div>
+          </a>`).join('')}</div>`;
+    }
+    ['fNome', 'fCpfCnpj', 'fEmail'].forEach(id =>
+      document.getElementById(id).addEventListener('input', agendarDuplicados));
+
+    // ── Edição: contexto do contato ────────────────────────────────
+    const fmtData = d => d ? d.toLocaleDateString('pt-BR') : '–';
+    // Carimbos do servidor (CriadoEm) são UTC reais — aqui vale new Date().
+    const fmtCarimbo = v => v ? new Date(v).toLocaleDateString('pt-BR') : '–';
+    const pluralDe = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+    const VINCULO_LABEL = { Socio: 'Sócio', Conjuge: 'Cônjuge', Familiar: 'Familiar', RepresentanteLegal: 'Representante legal', Indicacao: 'Indicação', Outro: 'Outro' };
+    const TIMELINE_ICONE = { Atendimento: '💬', Tarefa: '✅', Financeiro: '💰', Processo: '⚖️' };
+
+    function diasDesde(d) {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      const dia = new Date(d); dia.setHours(0, 0, 0, 0);
+      return Math.round((hoje - dia) / 86400000);
+    }
+
+    function tempoDesde(d) {
+      const dias = diasDesde(d);
+      if (dias <= 0) return 'hoje';
+      if (dias === 1) return 'ontem';
+      if (dias < 60) return `há ${dias} dias`;
+      const meses = Math.floor(dias / 30.44);
+      return meses < 24 ? `há ${pluralDe(meses, 'mês', 'meses')}` : `há ${pluralDe(Math.floor(dias / 365.25), 'ano', 'anos')}`;
+    }
+
+    // Próximo aniversário (pessoa física): idade que vai fazer e quantos dias faltam.
+    function linhaAniversario(valor) {
+      const nasc = dataParede(valor);
+      if (!nasc) return '';
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      const prox = new Date(hoje.getFullYear(), nasc.getMonth(), nasc.getDate());
+      if (prox < hoje) prox.setFullYear(hoje.getFullYear() + 1);
+      const dias = Math.round((prox - hoje) / 86400000);
+      const idade = prox.getFullYear() - nasc.getFullYear();
+      const dia = prox.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      if (dias === 0) return `🎂 Aniversário hoje — ${idade} anos`;
+      if (dias <= 30) return `🎂 Faz ${idade} anos em ${dia} (${dias === 1 ? 'amanhã' : `em ${dias} dias`})`;
+      return `🎂 ${idade - 1} anos · aniversário em ${dia}`;
+    }
+
+    function cartaoCarregando(id, titulo) {
+      return `<div class="ctx-card" id="${id}"><div class="ctx-card-titulo">${titulo}</div><div class="ctx-carregando">Carregando…</div></div>`;
+    }
+
+    function renderPainelEdicao(c) {
+      document.getElementById('ctPainelEdicao').innerHTML = `
+        ${cartaoCarregando('ctCardRelacao', 'Relacionamento')}
+        ${cartaoCarregando('ctCardResumo', `Resumo <a href="${contatoPerfilUrl(c.id)}" class="processo-link">Perfil →</a>`)}
+        ${cartaoCarregando('ctCardProcessos', 'Processos')}
+        ${cartaoCarregando('ctCardAtividade', 'Atividade recente')}
+        ${c.tipoContato === 'Cliente' ? cartaoCarregando('ctCardPortal', 'Portal do cliente') : ''}
+        <div class="ctx-card" id="ctCardVinculos" style="display:none"></div>
+        <div class="ctx-card">
+          <div class="ctx-card-titulo">Histórico</div>
+          <div class="ctx-linha"><span>Cadastrado</span><span>${fmtCarimbo(c.criadoEm)}</span></div>
+          <div class="ctx-linha"><span>Origem</span><span>${c.importadoAutomaticamente ? 'Importado automaticamente' : 'Cadastro manual'}</span></div>
+          ${c.ativo === false ? '<div class="ctx-linha"><span>Situação</span><span>Excluído</span></div>' : ''}
+        </div>`;
+    }
+
+    function trocarCorpo(idCartao, html) {
+      const corpo = document.querySelector(`#${idCartao} .ctx-carregando`);
+      if (corpo) corpo.outerHTML = html;
+    }
+
+    // Perfil, processos, portal e vínculos chegam depois: o modal já abre com o cadastro.
+    async function carregarContexto(c) {
+      const [perfil, processos, portal, vinculos] = await Promise.allSettled([
+        getContatoPerfil(c.id),
+        apiFetch(`/processos?contatoId=${c.id}&page=1&pageSize=5`),
+        c.tipoContato === 'Cliente' ? getPortalAcesso(c.id) : Promise.resolve(null),
+        getVinculos(c.id),
+      ]);
+      if (editingContato?.id !== c.id) return;   // usuário já abriu outro contato
+      const erro = '<div class="ctx-vazio">Não foi possível carregar.</div>';
+
+      // Relacionamento: último atendimento + aniversário.
+      const resumo = perfil.status === 'fulfilled' ? perfil.value?.resumo : null;
+      const cardRelacao = document.getElementById('ctCardRelacao');
+      if (cardRelacao) {
+        const ultimo = dataParede(resumo?.ultimoAtendimentoEm);
+        const dias = ultimo ? diasDesde(ultimo) : null;
+        const tom = dias == null ? 'ctx-neutro' : dias <= 30 ? 'ctx-ok' : dias <= 90 ? 'ctx-proximo' : 'ctx-hoje';
+        const rel = dias == null ? 'Nenhum atendimento registrado'
+          : dias <= 90 ? `Atendido ${tempoDesde(ultimo)}` : `Sem contato ${tempoDesde(ultimo)}`;
+        const aniversario = c.tipo === 'PF' ? linhaAniversario(c.dataNascimento) : '';
+        cardRelacao.className = `ctx-card ctx-destaque ${tom}`;
+        trocarCorpo('ctCardRelacao', `
+          <div class="ctx-destaque-rel">${rel}</div>
+          ${ultimo ? `<div class="ctx-destaque-data">Último atendimento em ${fmtData(ultimo)}</div>` : ''}
+          <div class="ctx-destaque-extra">
+            ${aniversario ? `<div style="margin-bottom:6px">${aniversario}</div>` : ''}
+            <button type="button" class="ct-acao" onclick="openAtendimento('${c.id}')">+ Registrar atendimento</button>
+          </div>`);
+      }
+
+      // Resumo do perfil.
+      if (!resumo) trocarCorpo('ctCardResumo', erro);
+      else {
+        const saldo = Number(resumo.saldoFinanceiro ?? 0);
+        const prazo = resumo.proximoPrazo;
+        trocarCorpo('ctCardResumo', `
+          <div class="ctx-linha"><span>Processos ativos</span><span>${resumo.processosAtivos}</span></div>
+          <div class="ctx-linha"><span>Saldo financeiro</span><span style="font-weight:600;color:${saldo < 0 ? '#dc2626' : saldo > 0 ? '#16a34a' : 'inherit'}">${brl(saldo)}</span></div>
+          <div class="ctx-linha"><span>Próximo prazo</span><span>${prazo ? `${esc(prazo.titulo)} · ${fmtData(dataParede(prazo.data))}` : '–'}</span></div>`);
+      }
+
+      // Processos em que o contato é parte.
+      if (processos.status !== 'fulfilled') trocarCorpo('ctCardProcessos', erro);
+      else {
+        const lista = processos.value?.items ?? [];
+        const total = processos.value?.total ?? lista.length;
+        trocarCorpo('ctCardProcessos', !lista.length
+          ? `<div class="ctx-vazio">Nenhum processo vinculado.</div>
+             <a class="processo-link" style="display:inline-block;margin-top:6px" href="/pages/processos.html?novo=1&contatoId=${encodeURIComponent(c.id)}">+ Cadastrar processo</a>`
+          : `<div class="ctx-itens">${lista.map(p => `
+              <a class="ctx-item" href="/pages/processo-detalhe.html?id=${p.id}">
+                <div class="ctx-item-titulo ctx-cnj">${esc(p.numeroCNJ)}</div>
+                <div class="ctx-item-sub">${[p.status, p.tribunal, p.vara].filter(Boolean).map(esc).join(' · ')}</div>
+              </a>`).join('')}</div>
+             ${total > lista.length ? `<a class="processo-link" style="display:inline-block;margin-top:6px" href="${contatoPerfilUrl(c.id)}">Ver todos (${total}) →</a>` : ''}`);
+      }
+
+      // Atividade recente (linha do tempo do perfil).
+      const timeline = perfil.status === 'fulfilled' ? perfil.value?.timeline ?? [] : null;
+      trocarCorpo('ctCardAtividade', timeline == null ? erro
+        : !timeline.length ? '<div class="ctx-vazio">Nenhuma atividade registrada.</div>'
+        : `<div class="ctx-itens">${[...timeline].sort((a, b) => String(b.data).localeCompare(String(a.data))).slice(0, 3).map(item => {
+            const conteudo = `<div class="ctx-item-titulo">${TIMELINE_ICONE[item.tipo] ?? '•'} ${esc(item.titulo)}</div>
+              <div class="ctx-item-sub">${fmtData(dataParede(item.data))}${item.descricao ? ` · ${esc(item.descricao.length > 70 ? item.descricao.slice(0, 70) + '…' : item.descricao)}` : ''}</div>`;
+            return item.link ? `<a class="ctx-item" href="${esc(item.link)}">${conteudo}</a>` : `<div class="ctx-item">${conteudo}</div>`;
+          }).join('')}</div>`);
+
+      // Portal do cliente.
+      if (c.tipoContato === 'Cliente') {
+        const acesso = portal.status === 'fulfilled' ? portal.value : undefined;
+        const gerenciar = `<button type="button" class="ct-acao" style="margin-top:6px"
+          onclick="openPortal('${c.id}', ${esc(JSON.stringify(c.nome))}, ${esc(JSON.stringify(c.email ?? ''))})">${acesso ? 'Gerenciar acesso' : 'Liberar acesso'}</button>`;
+        trocarCorpo('ctCardPortal', acesso === undefined ? erro : !acesso
+          ? `<div class="ctx-vazio">Sem acesso ao portal.</div>${gerenciar}`
+          : `<div class="ctx-linha"><span>Situação</span><span>${acesso.ativo ? 'Ativo' : 'Inativo'}</span></div>
+             <div class="ctx-linha"><span>Último acesso</span><span>${acesso.ultimoAcessoEm ? fmtCarimbo(acesso.ultimoAcessoEm) : 'Nunca acessou'}</span></div>
+             ${gerenciar}`);
+      }
+
+      // Vínculos com outros contatos (só aparece se houver).
+      const listaVinculos = vinculos.status === 'fulfilled' ? vinculos.value ?? [] : [];
+      const cardVinculos = document.getElementById('ctCardVinculos');
+      if (cardVinculos && listaVinculos.length) {
+        cardVinculos.style.display = '';
+        cardVinculos.innerHTML = `<div class="ctx-card-titulo">Vínculos</div><div class="ctx-itens">${listaVinculos.map(v => {
+          const outroId = v.contatoId === c.id ? v.contatoRelacionadoId : v.contatoId;
+          const outroNome = v.contatoId === c.id ? v.contatoRelacionadoNome : v.contatoNome;
+          return `<a class="ctx-item" href="${contatoPerfilUrl(outroId)}">
+            <div class="ctx-item-titulo">${esc(outroNome)}</div>
+            <div class="ctx-item-sub">${VINCULO_LABEL[v.tipo] ?? esc(v.tipo)}</div>
+          </a>`;
+        }).join('')}</div>`;
+      }
+    }
 
     window.removeContato = async (id, nome) => {
       if (!confirm(`Excluir o contato "${nome}"?\n\nPara ver ou restaurar, use o filtro "Só excluídos".`)) return;
@@ -1152,9 +1498,15 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
 
     function resetModal() {
       editingId = null;
+      editingContato = null;
+      duplicadosSeq++;   // descarta uma busca de duplicados ainda em andamento
+      modoEdicao(false);
       document.getElementById('modalTitle').textContent = 'Novo Contato';
       document.getElementById('contatoForm').reset();
       document.getElementById('modalAlert').style.display = 'none';
+      renderDocInfo();
+      renderDuplicadosDica();
+      modalBox.scrollTop = 0;
     }
 
     document.getElementById('btnNovo').addEventListener('click', () => {
@@ -1199,7 +1551,7 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         modalAlert.style.display = 'block';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Salvar';
+        btn.textContent = editingId ? 'Salvar alterações' : 'Salvar';
       }
     });
 
@@ -1215,6 +1567,11 @@ import { abrirNovoPelaUrl, esc } from '/js/utils.js';
         });
         modalAtend.classList.remove('open');
         showAlert('Atendimento registrado.', 'success');
+        // Registrado pelo painel do modal do contato: atualiza o relacionamento e a atividade.
+        if (editingContato?.id === atendimentoContatoId && modal.classList.contains('open')) {
+          renderPainelEdicao(editingContato);
+          carregarContexto(editingContato);
+        }
       } catch (err) {
         alertEl.textContent = err.message;
         alertEl.style.display = 'block';
