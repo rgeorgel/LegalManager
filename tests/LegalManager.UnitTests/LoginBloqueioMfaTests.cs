@@ -239,6 +239,17 @@ public class LoginBloqueioMfaTests : IDisposable
     }
 
     [Fact]
+    public async Task Status_InformaSeAContaTemSenha_ParaOAvisoDoPainel()
+    {
+        await CriarUsuarioAsync();
+        Assert.True((await _mfa.StatusAsync(_usuario.Id)).TemSenha);
+
+        // Conta só com login Google: sem senha, o MFA não se aplica e o aviso não aparece.
+        await _userManager.RemovePasswordAsync(_usuario);
+        Assert.False((await _mfa.StatusAsync(_usuario.Id)).TemSenha);
+    }
+
+    [Fact]
     public async Task Desativar_ExigeASenha_EDepoisLoginVoltaASerSoComSenha()
     {
         await CriarUsuarioAsync();

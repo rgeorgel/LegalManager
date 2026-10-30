@@ -1213,7 +1213,11 @@ import { esc } from '/js/utils.js';
   // ============================================================
   // INIT
   // ============================================================
-  load();
+  // Link "Ativar agora" do aviso do painel (/js/aviso-mfa.js): rola só depois de load(),
+  // que preenche o plano/uso acima e empurraria a seção para baixo.
+  load().finally(() => {
+    if (location.hash === '#mfa') document.getElementById('mfaSecao').closest('.config-section').scrollIntoView({ block: 'start' });
+  });
   loadPrefs();
   loadAreas();
   loadCats();

@@ -5,6 +5,7 @@ import { apiFetch, isLoggedIn, getUser } from '/js/api.js';
 import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
 import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
 import { mostrarDestaqueNovidade } from '/js/novidades.js';
+import { mostrarAvisoMfa } from '/js/aviso-mfa.js';
 import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 import { esc, brl as brlOuTraco, dataParede, isoLocal } from '/js/utils.js';
 import { initDashboardLayout } from '/js/dashboard-layout.js';
@@ -20,6 +21,7 @@ initOnboardingModal();
 // → novidade em destaque. Um modal por vez.
 initTrialBoasVindasModal(() => initOnboarding(() => mostrarDestaqueNovidade()));
 injectDashboardSwitch(document.getElementById('dashVersao'), 'novo');
+mostrarAvisoMfa(document.querySelector('.d2'));
 
 // Temas escuros são presets com customCss (ver presets.js) — não há classe
 // global, então detecta pela luminância do fundo, como theme.js faz.

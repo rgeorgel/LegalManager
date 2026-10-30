@@ -20,7 +20,7 @@ public class MfaService(UserManager<Usuario> userManager)
     {
         var usuario = await BuscarAsync(usuarioId);
         var restantes = usuario.TwoFactorEnabled ? await userManager.CountRecoveryCodesAsync(usuario) : 0;
-        return new MfaStatusDto(usuario.TwoFactorEnabled, restantes);
+        return new MfaStatusDto(usuario.TwoFactorEnabled, restantes, await userManager.HasPasswordAsync(usuario));
     }
 
     /// <summary>Gera uma chave nova (descarta a anterior, se houver) para cadastrar no app.</summary>

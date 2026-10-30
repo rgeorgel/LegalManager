@@ -400,6 +400,7 @@ import { esc, dataParede } from '/js/utils.js';
     import { initOnboarding, initOnboardingModal } from '/js/onboarding.js';
     import { initTrialBoasVindasModal } from '/js/trial-boas-vindas.js';
     import { mostrarDestaqueNovidade } from '/js/novidades.js';
+    import { mostrarAvisoMfa } from '/js/aviso-mfa.js';
     import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 
     if (!isLoggedIn()) {
@@ -415,6 +416,7 @@ import { esc, dataParede } from '/js/utils.js';
     // disponível sob demanda pelo widget "Tutorial" (injectTourWidget(), via
     // initLayout()).
     initTrialBoasVindasModal(() => initOnboarding(() => mostrarDestaqueNovidade()));
+    mostrarAvisoMfa(document.querySelector('.main-content'));
 
     const free = isPlanoFree();
 

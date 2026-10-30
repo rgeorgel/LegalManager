@@ -8,7 +8,8 @@ public record VerificarMfaDto(
     [Required] string Codigo
 );
 
-public record MfaStatusDto(bool Ativo, int CodigosRecuperacaoRestantes);
+// TemSenha = false: conta só com login Google, que não passa pelo MFA (o aviso do painel some).
+public record MfaStatusDto(bool Ativo, int CodigosRecuperacaoRestantes, bool TemSenha = true);
 
 /// <summary>Chave para cadastrar no app autenticador: QR code (data URI PNG) ou digitação manual.</summary>
 public record MfaConfiguracaoDto(string Chave, string QrCodeDataUri);
