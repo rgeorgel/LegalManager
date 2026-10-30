@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Mesma cobertura da CI (unit + integration, relatório combinado).
+# Requer: dotnet tool install --global dotnet-reportgenerator-globaltool
 set -e
 
 RESULTS_DIR="./coverage-results"
@@ -6,16 +8,20 @@ HTML_DIR="./coverage-html"
 
 rm -rf "$RESULTS_DIR" "$HTML_DIR"
 
-dotnet test tests/LegalManager.UnitTests/LegalManager.UnitTests.csproj \
-  --settings tests/LegalManager.UnitTests/coverage.runsettings \
-  --collect:"XPlat Code Coverage" \
-  --results-directory "$RESULTS_DIR"
+for proj in tests/LegalManager.UnitTests tests/LegalManager.IntegrationTests; do
+  dotnet test "$proj" \
+    --settings tests/coverage.runsettings \
+    --collect:"XPlat Code Coverage" \
+    --results-directory "$RESULTS_DIR"
+done
 
 reportgenerator \
   -reports:"$RESULTS_DIR/**/coverage.cobertura.xml" \
   -targetdir:"$HTML_DIR" \
-  -reporttypes:Html
+  -reporttypes:"Html;TextSummary"
 
+echo ""
+cat "$HTML_DIR/Summary.txt"
 echo ""
 echo "Coverage report generated at $HTML_DIR/index.html"
 

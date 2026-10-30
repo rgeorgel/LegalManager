@@ -28,11 +28,12 @@ jobs:
         run: dotnet build LegalManager.slnx --no-restore -c Release
 
       # Unit e integration usam EF InMemory — não precisam de PostgreSQL.
+      # Ambos coletam cobertura (coverlet); o relatório abaixo junta os dois.
       - name: Testes unitários
-        run: dotnet test tests/LegalManager.UnitTests --no-build -c Release --logger "trx;LogFileName=unit.trx" --results-directory TestResults
+        run: dotnet test tests/LegalManager.UnitTests --no-build -c Release --logger "trx;LogFileName=unit.trx" --results-directory TestResults --settings tests/coverage.runsettings --collect:"XPlat Code Coverage"
 
       - name: Testes de integração
-        run: dotnet test tests/LegalManager.IntegrationTests --no-build -c Release --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+        run: dotnet test tests/LegalManager.IntegrationTests --no-build -c Release --logger "trx;LogFileName=integration.trx" --results-directory TestResults --settings tests/coverage.runsettings --collect:"XPlat Code Coverage"
 
       - name: Publicar resultados dos testes
         if: failure()
@@ -40,6 +41,25 @@ jobs:
         with:
           name: test-results
           path: TestResults
+
+      # Resumo da cobertura na página do run (Summary) + relatório HTML como artefato.
+      - name: Relatório de cobertura
+        if: ${{ !cancelled() && hashFiles('TestResults/**/coverage.cobertura.xml') != '' }}
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:"TestResults/**/coverage.cobertura.xml" \
+            -targetdir:coverage \
+            -reporttypes:"Html;MarkdownSummaryGithub;TextSummary"
+          cat coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          cat coverage/Summary.txt
+
+      - name: Publicar relatório de cobertura
+        if: ${{ !cancelled() && hashFiles('coverage/index.html') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
 
   frontend:
     name: Sintaxe JS (wwwroot)

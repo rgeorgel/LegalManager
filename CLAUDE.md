@@ -22,7 +22,9 @@ node scripts/check-js.mjs
 ## CI
 
 `.github/workflows/ci.yml` roda em todo push na `main` e em PRs: build + testes unitários e de
-integração (.NET, EF InMemory — sem PostgreSQL) e `node scripts/check-js.mjs`.
+integração (.NET, EF InMemory — sem PostgreSQL) e `node scripts/check-js.mjs`. Os testes .NET
+coletam cobertura (`tests/coverage.runsettings`); o resumo combinado aparece no Summary do run e o
+HTML no artefato `coverage-report`. Localmente: `./coverage-test.sh`.
 
 ## Datas (prazos e eventos)
 
