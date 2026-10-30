@@ -61,6 +61,18 @@ jobs:
           name: coverage-report
           path: coverage
 
+      # Falha o job se a cobertura de linhas (unit + integration) cair abaixo do mínimo.
+      - name: Cobertura mínima
+        env:
+          COBERTURA_MINIMA: 80
+        run: |
+          linhas=$(grep -m1 'Line coverage:' coverage/Summary.txt | grep -oE '[0-9]+(\.[0-9]+)?')
+          echo "Cobertura de linhas: ${linhas}% (mínimo: ${COBERTURA_MINIMA}%)"
+          if ! awk -v c="$linhas" -v m="$COBERTURA_MINIMA" 'BEGIN { exit !(c >= m) }'; then
+            echo "::error::Cobertura de linhas ${linhas}% abaixo do mínimo de ${COBERTURA_MINIMA}%."
+            exit 1
+          fi
+
   frontend:
     name: Sintaxe JS (wwwroot)
     runs-on: ubuntu-latest

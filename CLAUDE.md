@@ -24,7 +24,8 @@ node scripts/check-js.mjs
 `.github/workflows/ci.yml` roda em todo push na `main` e em PRs: build + testes unitários e de
 integração (.NET, EF InMemory — sem PostgreSQL) e `node scripts/check-js.mjs`. Os testes .NET
 coletam cobertura (`tests/coverage.runsettings`); o resumo combinado aparece no Summary do run e o
-HTML no artefato `coverage-report`. Localmente: `./coverage-test.sh`.
+HTML no artefato `coverage-report`. O job falha se a cobertura de linhas ficar abaixo de 80%
+(`COBERTURA_MINIMA` no workflow) — código novo precisa vir com testes. Localmente: `./coverage-test.sh`.
 
 ## Datas (prazos e eventos)
 
