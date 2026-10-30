@@ -38,6 +38,9 @@ Texto para pessoas: `BrasiliaTime.PtBr`; formatos de máquina (URL, hash): `Cult
 - **URL**: http://localhost:5123
 - **Rodar**: `dotnet run --project src/LegalManager.API`
 - **Migrations**: `dotnet ef database update --project src/LegalManager.Infrastructure --startup-project src/LegalManager.API`
+  — o histórico até out/2026 foi consolidado em `Persistence/Migrations/*_Baseline`. Bancos anteriores
+  ao squash são marcados como migrados pela API ao iniciar (`MigracoesBaseline.RegistrarAsync`); neles,
+  rode a API uma vez antes de usar o `database update`, que recusa reaplicar a baseline.
 
 ## Testes Frontend (Playwright)
 
