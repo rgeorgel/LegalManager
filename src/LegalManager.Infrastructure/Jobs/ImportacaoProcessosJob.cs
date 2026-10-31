@@ -93,6 +93,7 @@ public class ImportacaoProcessosJob
                 await ImportarItemAsync(importacaoId, itemId, ct);
             }
 
+            var inativosNaFonte = await InativosNaFonteAsync(importacaoId, ct);
             importacao = await RecarregarAsync(importacaoId, ct);
             importacao.Status = StatusImportacao.Concluida;
             importacao.ConcluidoEm = importacao.AtualizadoEm = DateTime.UtcNow;
@@ -100,7 +101,7 @@ public class ImportacaoProcessosJob
                 "Importação de processos concluída",
                 importacao.Total == 0
                     ? $"OAB {importacao.NumeroOab}/{importacao.Uf}: nenhum processo novo encontrado."
-                    : $"OAB {importacao.NumeroOab}/{importacao.Uf}: {Resumo(importacao)}.");
+                    : $"OAB {importacao.NumeroOab}/{importacao.Uf}: {Resumo(importacao, inativosNaFonte)}.");
             await _context.SaveChangesAsync(ct);
 
             _logger.LogInformation(
@@ -298,9 +299,17 @@ public class ImportacaoProcessosJob
         });
     }
 
-    private static string Resumo(ImportacaoProcessos i)
+    /// <summary>Processos desta importação que já entraram arquivados ou suspensos, conforme a fonte.</summary>
+    private Task<int> InativosNaFonteAsync(Guid importacaoId, CancellationToken ct) =>
+        _context.ImportacaoProcessoItens
+            .Where(i => i.ImportacaoId == importacaoId && i.Status == StatusItemImportacao.Importado)
+            .Join(_context.Processos, i => i.ProcessoId, p => (Guid?)p.Id, (_, p) => p.Status)
+            .CountAsync(s => s != StatusProcesso.Ativo, ct);
+
+    private static string Resumo(ImportacaoProcessos i, int inativosNaFonte = 0)
     {
         var partes = new List<string> { $"{i.Importados} processo(s) importado(s)" };
+        if (inativosNaFonte > 0) partes.Add($"{inativosNaFonte} já arquivado(s) ou suspenso(s) no tribunal");
         if (i.JaCadastrados > 0) partes.Add($"{i.JaCadastrados} já cadastrado(s)");
         if (i.Erros > 0) partes.Add($"{i.Erros} com erro");
         return string.Join(", ", partes);

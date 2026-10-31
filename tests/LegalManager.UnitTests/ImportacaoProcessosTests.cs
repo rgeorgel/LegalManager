@@ -413,14 +413,15 @@ public class ImportacaoProcessosTests
     // ── Importador ─────────────────────────────────────────────────────────
 
     private ImportadorProcessosOab CriarImportador(
-        AppDbContext db, Mock<IEscavadorService> escavador, IContatoService? contatos = null) =>
+        AppDbContext db, Mock<IEscavadorService> escavador, IContatoService? contatos = null,
+        DataJudAdapter? dataJud = null, IProcessoService? processos = null, IContatoResolverService? resolver = null) =>
         new(db, CriarTenantContext(),
-            new DataJudAdapter(new HttpClient(), NullLogger<DataJudAdapter>.Instance),
+            dataJud ?? new DataJudAdapter(new HttpClient(), NullLogger<DataJudAdapter>.Instance),
             new EsajTjspProcessosAdapter(new HttpClient(), NullLogger<EsajTjspProcessosAdapter>.Instance),
             escavador.Object,
-            Mock.Of<IProcessoService>(),
+            processos ?? Mock.Of<IProcessoService>(),
             contatos ?? Mock.Of<IContatoService>(),
-            Mock.Of<IContatoResolverService>(),
+            resolver ?? Mock.Of<IContatoResolverService>(),
             FakeConsultaExternaLogService.Instance,
             NullLogger<ImportadorProcessosOab>.Instance);
 
@@ -647,5 +648,118 @@ public class ImportacaoProcessosTests
             It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0001" && x.OabAdvogado == "116546"
                                              && x.UfAdvogado == "MG" && x.NomeAdvogado == "Dra. Fulana de Tal"),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // ── Situação na fonte ───────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Importar_EscavadorArquivadoNoTribunal_CriaArquivadoComMotivo()
+    {
+        var db = await SeedAsync();
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = "{\"fontes_tribunais_estao_arquivadas\":true,\"fontes\":[{\"tipo\":\"TRIBUNAL\",\"arquivado\":true,\"capa\":{\"data_arquivamento\":\"2022-08-15\"}}]}",
+            ExpiraEm = DateTime.UtcNow.AddHours(1), CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var resultado = await CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict))
+            .ImportarAsync(new ImportarProcessoItem("0001", Fonte: "escavador"));
+
+        Assert.Equal(StatusItemImportacao.Importado, resultado.Status);
+        Assert.Equal("Arquivado no tribunal em 15/08/2022", resultado.Mensagem);
+        Assert.Equal(StatusProcesso.Arquivado, (await db.Processos.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task Importar_EscavadorArquivadoMasMovimentouDepois_FicaAtivoParaConferir()
+    {
+        var db = await SeedAsync();
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = "{\"fontes\":[{\"tipo\":\"TRIBUNAL\",\"grau\":1,\"arquivado\":true,\"data_ultima_movimentacao\":\"2023-01-10\",\"capa\":{\"data_arquivamento\":\"2022-08-15\"}}]}",
+            ExpiraEm = DateTime.UtcNow.AddHours(1), CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var resultado = await CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict))
+            .ImportarAsync(new ImportarProcessoItem("0001", Fonte: "escavador"));
+
+        Assert.Equal("Arquivado no tribunal em 15/08/2022. Mantido Ativo para conferir: movimentou em 10/01/2023, depois do arquivamento",
+            resultado.Mensagem);
+        Assert.Equal(StatusProcesso.Ativo, (await db.Processos.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task Job_ResumoContaOsQueEntraramArquivados()
+    {
+        var db = await SeedAsync();
+        var importacao = NovaImportacao(ModoImportacao.Todos);
+        db.ImportacoesProcessos.Add(importacao);
+        var arquivadoId = Guid.NewGuid();
+        var ativoId = Guid.NewGuid();
+        db.Processos.AddRange(
+            new Processo { Id = arquivadoId, TenantId = _tenantId, NumeroCNJ = "0001", Status = StatusProcesso.Arquivado, CriadoEm = DateTime.UtcNow },
+            new Processo { Id = ativoId, TenantId = _tenantId, NumeroCNJ = "0002", Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var importador = ImportadorComPaginas(new PaginaBuscaOab([Preview("0001"), Preview("0002")], null));
+        importador.Setup(i => i.ImportarAsync(It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0001"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResultadoImportacaoItem(StatusItemImportacao.Importado, "Arquivamento definitivo em 12/03/2021", arquivadoId));
+        importador.Setup(i => i.ImportarAsync(It.Is<ImportarProcessoItem>(x => x.NumeroCNJ == "0002"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResultadoImportacaoItem(StatusItemImportacao.Importado, null, ativoId));
+
+        await CriarJob(db, importador).ExecutarAsync(importacao.Id, CancellationToken.None);
+
+        var notificacao = await db.Notificacoes.SingleAsync();
+        Assert.Contains("2 processo(s) importado(s), 1 já arquivado(s) ou suspenso(s) no tribunal", notificacao.Mensagem);
+
+        var itens = Assert.IsType<List<ImportacaoItemDto>>(
+            Assert.IsType<OkObjectResult>((await CriarController(db).controller.Itens(importacao.Id, CancellationToken.None)).Result).Value);
+        Assert.Equal(StatusProcesso.Arquivado, itens.Single(i => i.NumeroCNJ == "0001").StatusProcesso);
+        Assert.Equal("Arquivamento definitivo em 12/03/2021", itens.Single(i => i.NumeroCNJ == "0001").Mensagem);
+        Assert.Equal(StatusProcesso.Ativo, itens.Single(i => i.NumeroCNJ == "0002").StatusProcesso);
+    }
+
+    private sealed class RespostaFixaHandler(string json) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+            Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+    }
+
+    [Fact]
+    public async Task Importar_DataJudComArquivamentoDefinitivo_CriaArquivadoComMotivo()
+    {
+        var db = await SeedAsync();
+        const string json = """
+            {"hits": {"hits": [{"_source": {
+              "numeroProcesso": "00100011120205030001", "grau": "G1", "siglaTribunal": "TRT3",
+              "movimentos": [
+                {"codigo": 26, "nome": "Distribuição", "dataHora": "2020-02-01T10:00:00"},
+                {"codigo": 246, "nome": "Definitivo", "dataHora": "2023-05-10T09:00:00"}
+              ]}}]}}
+            """;
+        var dataJud = new DataJudAdapter(
+            new HttpClient(new RespostaFixaHandler(json)) { BaseAddress = new Uri("https://datajud.test") },
+            NullLogger<DataJudAdapter>.Instance);
+        var resolver = new Mock<IContatoResolverService>();
+        resolver.Setup(r => r.ResolverPartesDataJudAsync(
+                It.IsAny<IReadOnlyList<TribunalParte>>(), It.IsAny<Func<TribunalParte, TipoContato>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+        var processos = new ProcessoService(db, CriarTenantContext(), Mock.Of<IEscavadorService>(), FakeConsultaExternaLogService.Instance);
+
+        var resultado = await CriarImportador(db, new Mock<IEscavadorService>(), dataJud: dataJud, processos: processos, resolver: resolver.Object)
+            .ImportarAsync(new ImportarProcessoItem("0010001-11.2020.5.03.0001"));
+
+        Assert.Equal(StatusItemImportacao.Importado, resultado.Status);
+        Assert.Equal("Arquivamento definitivo em 10/05/2023", resultado.Mensagem);
+        var processo = await db.Processos.SingleAsync();
+        Assert.Equal(StatusProcesso.Arquivado, processo.Status);
+        Assert.Equal(2, await db.Andamentos.CountAsync());
     }
 }

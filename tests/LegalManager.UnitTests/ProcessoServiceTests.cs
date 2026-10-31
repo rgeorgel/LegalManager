@@ -826,4 +826,119 @@ public class ProcessoServiceTests
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.DefinirFavoritoAsync(processo.Id, true));
         Assert.Equal(0, await ctx.ProcessosFavoritos.CountAsync());
     }
+
+    // ── Situação na fonte ───────────────────────────────────────────────────
+
+    private static Andamento AndamentoCnj(Processo p, DateTime data, int? codigo, string descricao) => new()
+    {
+        Id = Guid.NewGuid(), ProcessoId = p.Id, TenantId = p.TenantId, Data = data,
+        Tipo = TipoAndamento.Despacho, Descricao = descricao, Fonte = FonteAndamento.DataJud,
+        CodigoCNJ = codigo, CriadoEm = DateTime.UtcNow
+    };
+
+    [Fact]
+    public async Task SugerirSituacaoNaFonte_ListaSoAtivosQueAFonteDaComoArquivados()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var arquivado = NovoProcesso(tenant.Id, "0001");
+        arquivado.Grau = "G1";
+        var desarquivado = NovoProcesso(tenant.Id, "0002");
+        var jaArquivadoAqui = NovoProcesso(tenant.Id, "0003");
+        jaArquivadoAqui.Status = StatusProcesso.Arquivado;
+        var doEscavador = NovoProcesso(tenant.Id, "0004");
+        doEscavador.AndamentosPendentes = true;
+        var semIndicio = NovoProcesso(tenant.Id, "0005");
+        var deOutroTenant = NovoProcesso(Guid.NewGuid(), "0006");
+        ctx.Processos.AddRange(arquivado, desarquivado, jaArquivadoAqui, doEscavador, semIndicio, deOutroTenant);
+        ctx.Andamentos.AddRange(
+            AndamentoCnj(arquivado, new DateTime(2020, 1, 1), 26, "Distribuído"),
+            AndamentoCnj(arquivado, new DateTime(2021, 3, 12), 22, "Baixa Definitiva"),
+            AndamentoCnj(desarquivado, new DateTime(2021, 3, 12), 246, "Definitivo"),
+            AndamentoCnj(desarquivado, new DateTime(2022, 1, 5), 893, "Desarquivamento"),
+            AndamentoCnj(jaArquivadoAqui, new DateTime(2021, 3, 12), 246, "Definitivo"),
+            AndamentoCnj(semIndicio, new DateTime(2021, 3, 12), null, "Juntada de petição"),
+            AndamentoCnj(deOutroTenant, new DateTime(2021, 3, 12), 246, "Definitivo"));
+        ctx.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0004", Fonte = "escavador",
+            DadosJson = "{\"fontes\":[{\"tipo\":\"TRIBUNAL\",\"capa\":{\"situacao\":\"Arquivado\"}}]}",
+            // Vencido: a revisão usa o cache mesmo depois das 72h da importação.
+            ExpiraEm = DateTime.UtcNow.AddDays(-40), CriadoEm = DateTime.UtcNow.AddDays(-43)
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        var sugestoes = await service.SugerirSituacaoNaFonteAsync();
+
+        Assert.Equal(new[] { "0001", "0004" }, sugestoes.Select(s => s.NumeroCNJ));
+        Assert.All(sugestoes, s => Assert.Equal(StatusProcesso.Arquivado, s.Status));
+        Assert.Equal("Baixa definitiva em 12/03/2021", sugestoes[0].Motivo);
+        Assert.Equal("Situação no tribunal: Arquivado", sugestoes[1].Motivo);
+    }
+
+    [Fact]
+    public async Task SugerirSituacaoNaFonte_MovimentouDepoisDoArquivamento_MarcaParaConferir()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var processo = NovoProcesso(tenant.Id, "0001");
+        ctx.Processos.Add(processo);
+        ctx.Andamentos.AddRange(
+            AndamentoCnj(processo, new DateTime(2021, 3, 12), 246, "Definitivo"),
+            // Andamento sem relação com arquivamento: não entra no cálculo da situação, mas na última movimentação sim.
+            AndamentoCnj(processo, new DateTime(2022, 2, 1), 60, "Juntada de petição"));
+        await ctx.SaveChangesAsync();
+
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+        var sugestao = Assert.Single(await service.SugerirSituacaoNaFonteAsync());
+
+        Assert.Equal(StatusProcesso.Arquivado, sugestao.Status);
+        Assert.Equal("movimentou em 01/02/2022, depois do arquivamento", sugestao.Conferir);
+    }
+
+    [Fact]
+    public async Task AplicarSituacaoNaFonte_AtualizaSoOsIndicadosComIndicioECancelaMonitoramento()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var monitorado = NovoProcesso(tenant.Id, "0001");
+        monitorado.Monitorado = true;
+        monitorado.EscavadorMonitoramentoId = "77";
+        var suspenso = NovoProcesso(tenant.Id, "0002");
+        var semIndicio = NovoProcesso(tenant.Id, "0003");
+        var naoSelecionado = NovoProcesso(tenant.Id, "0004");
+        ctx.Processos.AddRange(monitorado, suspenso, semIndicio, naoSelecionado);
+        ctx.Andamentos.AddRange(
+            AndamentoCnj(monitorado, new DateTime(2021, 3, 12), 246, "Definitivo"),
+            AndamentoCnj(suspenso, new DateTime(2021, 3, 12), 245, "Provisório"),
+            AndamentoCnj(naoSelecionado, new DateTime(2021, 3, 12), 246, "Definitivo"));
+        await ctx.SaveChangesAsync();
+
+        var escavador = new Mock<IEscavadorService>();
+        escavador.Setup(e => e.RemoverMonitoramentoAsync(77, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), escavador.Object, FakeConsultaExternaLogService.Instance);
+
+        var aplicadas = await service.AplicarSituacaoNaFonteAsync([monitorado.Id, suspenso.Id, semIndicio.Id]);
+
+        Assert.Equal(new[] { monitorado.Id, suspenso.Id }, aplicadas.Select(a => a.ProcessoId));
+        ctx.ChangeTracker.Clear();
+        var status = await ctx.Processos.ToDictionaryAsync(p => p.NumeroCNJ, p => p);
+        Assert.Equal(StatusProcesso.Arquivado, status["0001"].Status);
+        Assert.False(status["0001"].Monitorado);
+        Assert.Null(status["0001"].EscavadorMonitoramentoId);
+        Assert.Equal(StatusProcesso.Suspenso, status["0002"].Status);
+        Assert.Equal(StatusProcesso.Ativo, status["0003"].Status);
+        Assert.Equal(StatusProcesso.Ativo, status["0004"].Status);
+        escavador.Verify(e => e.RemoverMonitoramentoAsync(77, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_JaEncerrado_PreencheEncerradoEm()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        var criado = await service.CreateAsync(new CreateProcessoDto(
+            "0001", null, null, null, AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Encerrado, null, null));
+
+        Assert.NotNull((await ctx.Processos.SingleAsync(p => p.Id == criado.Id)).EncerradoEm);
+    }
 }

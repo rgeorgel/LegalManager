@@ -104,7 +104,8 @@ public class ImportacoesController(
         var itens = await db.ImportacaoProcessoItens
             .Where(i => i.ImportacaoId == id)
             .OrderBy(i => i.Ordem)
-            .Select(i => new ImportacaoItemDto(i.Id, i.NumeroCNJ, i.Tribunal, i.Status, i.Mensagem, i.ProcessoId))
+            .Select(i => new ImportacaoItemDto(i.Id, i.NumeroCNJ, i.Tribunal, i.Status, i.Mensagem, i.ProcessoId,
+                db.Processos.Where(p => p.Id == i.ProcessoId).Select(p => (StatusProcesso?)p.Status).FirstOrDefault()))
             .ToListAsync(ct);
         return Ok(itens);
     }

@@ -59,6 +59,7 @@ public class ProcessoService : IProcessoService
             Observacoes = dto.Observacoes,
             Monitorado = dto.Monitorado,
             CriadoEm = DateTime.UtcNow,
+            EncerradoEm = dto.Status == StatusProcesso.Encerrado ? DateTime.UtcNow : null,
             Classe = dto.Classe,
             Assuntos = dto.Assuntos,
             DataAjuizamento = dto.DataAjuizamento,
@@ -421,6 +422,88 @@ public class ProcessoService : IProcessoService
 
         await CancelarMonitoramentoEscavadorAsync(processo);
         await _context.SaveChangesAsync(ct);
+    }
+
+    public Task<List<SugestaoSituacaoDto>> SugerirSituacaoNaFonteAsync(CancellationToken ct = default) =>
+        CalcularSituacaoNaFonteAsync(null, ct);
+
+    public async Task<List<SugestaoSituacaoDto>> AplicarSituacaoNaFonteAsync(
+        IReadOnlyCollection<Guid> processoIds, CancellationToken ct = default)
+    {
+        if (processoIds.Count == 0) return [];
+        // Recalcula em vez de confiar no status enviado: só muda o que a fonte de fato indica.
+        var sugestoes = await CalcularSituacaoNaFonteAsync(processoIds, ct);
+        if (sugestoes.Count == 0) return [];
+
+        var porId = sugestoes.ToDictionary(s => s.ProcessoId);
+        var processos = await _context.Processos
+            .Where(p => p.TenantId == _tenantContext.TenantId && porId.Keys.Contains(p.Id))
+            .ToListAsync(ct);
+        foreach (var processo in processos)
+        {
+            processo.Status = porId[processo.Id].Status;
+            processo.AtualizadoEm = DateTime.UtcNow;
+            if (processo.Status == StatusProcesso.Arquivado)
+                await CancelarMonitoramentoEscavadorAsync(processo);
+        }
+        await _context.SaveChangesAsync(ct);
+        return sugestoes;
+    }
+
+    private async Task<List<SugestaoSituacaoDto>> CalcularSituacaoNaFonteAsync(
+        IReadOnlyCollection<Guid>? processoIds, CancellationToken ct)
+    {
+        var tenantId = _tenantContext.TenantId;
+        var query = _context.Processos.AsNoTracking()
+            .Where(p => p.TenantId == tenantId && p.Status == StatusProcesso.Ativo);
+        if (processoIds != null) query = query.Where(p => processoIds.Contains(p.Id));
+        var processos = await query
+            .Select(p => new { p.Id, p.NumeroCNJ, Tribunal = p.SiglaTribunal ?? p.Tribunal, p.Grau })
+            .ToListAsync(ct);
+        if (processos.Count == 0) return [];
+
+        var ids = processos.Select(p => p.Id).ToList();
+        var codigos = SituacaoProcessoFonte.CodigosRelevantes;
+        // Só os andamentos que podem mudar a situação; os sem código (e-SAJ) são filtrados pelo texto.
+        var movimentos = (await _context.Andamentos.AsNoTracking()
+                .Where(a => a.TenantId == tenantId && ids.Contains(a.ProcessoId)
+                    && ((a.CodigoCNJ != null && codigos.Contains(a.CodigoCNJ.Value))
+                        || (a.CodigoCNJ == null
+                            && (a.Descricao.ToLower().Contains("arquiv") || a.Descricao.ToLower().Contains("baixa")
+                                || a.Descricao.ToLower().Contains("reativ")))))
+                .Select(a => new { a.ProcessoId, a.Data, a.CodigoCNJ, a.Descricao })
+                .ToListAsync(ct))
+            .ToLookup(a => a.ProcessoId, a => new MovimentoSituacao(a.Data, a.CodigoCNJ, a.Descricao));
+        var ultimaMovimentacao = movimentos.Count == 0
+            ? []
+            : await _context.Andamentos.AsNoTracking()
+                .Where(a => a.TenantId == tenantId && ids.Contains(a.ProcessoId))
+                .GroupBy(a => a.ProcessoId)
+                .Select(g => new { ProcessoId = g.Key, Data = g.Max(a => a.Data) })
+                .ToDictionaryAsync(x => x.ProcessoId, x => x.Data, ct);
+
+        // Sem andamentos que indiquem a situação: o JSON da busca no Escavador diz se está arquivado.
+        // Aqui vale mesmo o cache vencido (o prazo de 72h é da importação): arquivamento quase nunca é
+        // desfeito, e a sugestão ainda passa pelo advogado.
+        var cnjs = processos.Select(p => p.NumeroCNJ).ToList();
+        var caches = await _context.ProcessosImportacaoCache.AsNoTracking()
+            .Where(c => c.TenantId == tenantId && c.Fonte == "escavador" && cnjs.Contains(c.NumeroCNJ))
+            .Select(c => new { c.NumeroCNJ, c.DadosJson })
+            .ToListAsync(ct);
+        var cachePorCnj = caches.GroupBy(c => c.NumeroCNJ).ToDictionary(g => g.Key, g => g.First().DadosJson);
+
+        var hoje = FusoHorario.AgoraParede(await _context.DoTenantAsync(tenantId, ct)).Date;
+        var sugestoes = new List<SugestaoSituacaoDto>();
+        foreach (var p in processos)
+        {
+            var situacao = movimentos.Contains(p.Id)
+                ? SituacaoProcessoFonte.PorMovimentos(movimentos[p.Id], p.Grau, ultimaMovimentacao.GetValueOrDefault(p.Id), hoje)
+                : SituacaoProcessoFonte.PorEscavador(cachePorCnj.GetValueOrDefault(p.NumeroCNJ), hoje);
+            if (situacao != null)
+                sugestoes.Add(new SugestaoSituacaoDto(
+                    p.Id, p.NumeroCNJ, p.Tribunal, situacao.Status, situacao.Motivo, situacao.Conferir));
+        }
+        return sugestoes.OrderBy(s => s.NumeroCNJ).ToList();
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)

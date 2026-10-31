@@ -203,6 +203,23 @@ public class ProcessosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Processos ainda Ativos que, pelos dados da fonte, já foram arquivados ou suspensos no tribunal.</summary>
+    [HttpGet("situacao-na-fonte")]
+    public async Task<ActionResult<List<SugestaoSituacaoDto>>> SugerirSituacaoNaFonte(CancellationToken ct) =>
+        Ok(await _service.SugerirSituacaoNaFonteAsync(ct));
+
+    [HttpPost("situacao-na-fonte")]
+    [Authorize(Roles = "Admin,Advogado")]
+    public async Task<ActionResult<List<SugestaoSituacaoDto>>> AplicarSituacaoNaFonte(
+        AplicarSituacaoNaFonteDto dto, CancellationToken ct)
+    {
+        var aplicadas = await _service.AplicarSituacaoNaFonteAsync(dto.ProcessoIds.Distinct().ToList(), ct);
+        foreach (var s in aplicadas)
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, s.ProcessoId,
+                new { Status = StatusProcesso.Ativo }, new { s.Status, s.Motivo }, HttpContext.GetClientIpAddress()), ct);
+        return Ok(aplicadas);
+    }
+
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin,Advogado")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

@@ -32,7 +32,9 @@ public record ImportacaoItemDto(
     string? Tribunal,
     StatusItemImportacao Status,
     string? Mensagem,
-    Guid? ProcessoId
+    Guid? ProcessoId,
+    // Status do processo criado; diferente de Ativo quando a fonte indicou arquivamento.
+    StatusProcesso? StatusProcesso = null
 );
 
 public record ResultadoImportacaoItem(

@@ -13,6 +13,10 @@ public interface IProcessoService
     Task<ProcessoRelatorioDto> GetRelatorioAsync(ProcessoFiltroDto filtro, CancellationToken ct = default);
     Task<IEnumerable<ProcessoUltimoAndamentoDto>> GetUltimosAndamentosAsync(int limite, CancellationToken ct = default);
     Task EncerrarAsync(Guid id, EncerrarProcessoDto dto, CancellationToken ct = default);
+    /// <summary>Processos Ativos que a fonte indica como arquivados ou suspensos (sem consulta externa).</summary>
+    Task<List<SugestaoSituacaoDto>> SugerirSituacaoNaFonteAsync(CancellationToken ct = default);
+    /// <summary>Aplica a situação da fonte aos processos indicados, recalculada aqui; devolve os alterados.</summary>
+    Task<List<SugestaoSituacaoDto>> AplicarSituacaoNaFonteAsync(IReadOnlyCollection<Guid> processoIds, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     /// <summary>Marca/desmarca o processo como favorito do usuário logado (idempotente).</summary>
     Task DefinirFavoritoAsync(Guid processoId, bool favorito, CancellationToken ct = default);

@@ -135,18 +135,15 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             if (item.Fonte == "escavador")
                 return await ImportarEscavadorAsync(item, ct);
 
-            CreateProcessoDto? createDto;
-
-            if (EhTjsp(item.NumeroCNJ, item.Tribunal))
-                createDto = await MontarDtoEsajAsync(item, ct);
-            else
-                createDto = await MontarDtoDataJudAsync(item, ct);
+            var (createDto, situacao) = EhTjsp(item.NumeroCNJ, item.Tribunal)
+                ? await MontarDtoEsajAsync(item, ct)
+                : await MontarDtoDataJudAsync(item, ct);
 
             if (createDto == null)
                 return new ResultadoImportacaoItem(StatusItemImportacao.NaoEncontrado, "Processo não encontrado no tribunal");
 
             var criado = await _processoService.CreateAsync(createDto, ct);
-            return new ResultadoImportacaoItem(StatusItemImportacao.Importado, null, criado.Id);
+            return new ResultadoImportacaoItem(StatusItemImportacao.Importado, situacao?.MensagemImportacao, criado.Id);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -224,6 +221,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             }
         }
 
+        var situacao = SituacaoProcessoFonte.PorEscavador(cache?.DadosJson);
         var processoId = Guid.NewGuid();
         _context.Processos.Add(new Processo
         {
@@ -239,7 +237,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             DataAjuizamento = dataAjuizamento,
             AreaDireito = InferirAreaEscavador(siglaTribunal),
             Fase = FaseProcessual.Conhecimento,
-            Status = StatusProcesso.Ativo,
+            Status = situacao?.StatusAoImportar ?? StatusProcesso.Ativo,
             Monitorado = false,
             EscavadorMonitoramentoId = null,
             AdvogadoResponsavelId = _tenantContext.UserId,
@@ -256,10 +254,10 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         // criar aqui 1 único termo por tenant (idempotente) com o número OAB formatado
         // (ex: "123456/SP"). NÃO criar segundo termo com nome do advogado — Estratégia 3.
         // POST /api/v1/monitoramento-de-diarios-oficiais/criar
-        return new ResultadoImportacaoItem(StatusItemImportacao.Importado, null, processoId);
+        return new ResultadoImportacaoItem(StatusItemImportacao.Importado, situacao?.MensagemImportacao, processoId);
     }
 
-    private async Task<CreateProcessoDto?> MontarDtoEsajAsync(ImportarProcessoItem item, CancellationToken ct)
+    private async Task<(CreateProcessoDto? Dto, SituacaoNaFonte? Situacao)> MontarDtoEsajAsync(ImportarProcessoItem item, CancellationToken ct)
     {
         var (cnj, codigo, foro) = (item.NumeroCNJ, item.Codigo, item.Foro);
         foreach (var grau in new[] { "G1", "G2" })
@@ -270,8 +268,14 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                 && string.IsNullOrEmpty(detalhe.Foro)) continue;
 
             var partesDto = await ResolverPartesAsync(detalhe.Partes, item, ct);
+            // A etiqueta "Situação" é a mais direta; sem ela, os andamentos (que vêm sem código CNJ).
+            var movimentos = detalhe.Movimentos.Select(m => new MovimentoSituacao(m.Data, null, m.Titulo)).ToList();
+            var porEtiqueta = SituacaoProcessoFonte.PorSituacaoTexto(detalhe.Situacao, grau == "G1");
+            var situacao = porEtiqueta != null
+                ? SituacaoProcessoFonte.ComConferencia(porEtiqueta, null, movimentos.Max(m => m.Data))
+                : SituacaoProcessoFonte.PorMovimentos(movimentos, grau);
 
-            return new CreateProcessoDto(
+            return (new CreateProcessoDto(
                 NumeroCNJ: cnj,
                 Tribunal: "TJSP",
                 Vara: detalhe.Vara,
@@ -279,7 +283,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                 AreaDireito: MapearAreaDireito(detalhe.Area),
                 TipoAcao: detalhe.Classe,
                 Fase: FaseProcessual.Conhecimento,
-                Status: MapearStatus(detalhe.Situacao),
+                Status: situacao?.StatusAoImportar ?? StatusProcesso.Ativo,
                 ValorCausa: ParseValor(detalhe.ValorAcao),
                 AdvogadoResponsavelId: _tenantContext.UserId,
                 Classe: detalhe.Classe,
@@ -294,9 +298,9 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                         null,
                         null
                     )).ToList()
-            );
+            ), situacao);
         }
-        return null;
+        return (null, null);
     }
 
     private async Task<List<ProcessoParteDto>> ResolverPartesAsync(
@@ -426,11 +430,12 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             && normalizado.Substring(14, 2) == "26";
     }
 
-    private async Task<CreateProcessoDto?> MontarDtoDataJudAsync(ImportarProcessoItem item, CancellationToken ct)
+    private async Task<(CreateProcessoDto? Dto, SituacaoNaFonte? Situacao)> MontarDtoDataJudAsync(
+        ImportarProcessoItem item, CancellationToken ct)
     {
         var cnj = item.NumeroCNJ;
         var resultado = await _dataJud.ConsultarAsync(cnj, ct);
-        if (!resultado.Encontrado) return null;
+        if (!resultado.Encontrado) return (null, null);
 
         List<ProcessoParteDto> partesDto = [];
         if (resultado.Partes != null)
@@ -447,7 +452,10 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
                 ct);
         }
 
-        return new CreateProcessoDto(
+        var situacao = SituacaoProcessoFonte.PorMovimentos(
+            resultado.Movimentos.Select(m => new MovimentoSituacao(m.Data, m.CodigoCNJ, m.Descricao)), resultado.Grau);
+
+        return (new CreateProcessoDto(
             NumeroCNJ: cnj,
             Tribunal: resultado.SiglaTribunal ?? resultado.NomeTribunal,
             Vara: resultado.Vara,
@@ -455,7 +463,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             AreaDireito: AreaDireito.Outro,
             TipoAcao: resultado.Classe,
             Fase: FaseProcessual.Conhecimento,
-            Status: StatusProcesso.Ativo,
+            Status: situacao?.StatusAoImportar ?? StatusProcesso.Ativo,
             ValorCausa: resultado.ValorCaixa,
             AdvogadoResponsavelId: _tenantContext.UserId,
             Classe: resultado.Classe,
@@ -466,7 +474,7 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             Partes: partesDto,
             Andamentos: resultado.Movimentos.Select(m =>
                 new AndamentoDto(m.Data, m.Descricao, m.CodigoCNJ, m.OrgaoJulgador)).ToList()
-        );
+        ), situacao);
     }
 
     private static List<ProcessoOabPreviewDto> PreviewsEscavador(List<EscavadorProcessoDto> processos) =>
@@ -554,21 +562,6 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             var a when a.Contains("AMBIENT") => AreaDireito.Ambiental,
             _ => AreaDireito.Outro
         };
-
-    private static StatusProcesso MapearStatus(string situacao)
-    {
-        if (string.IsNullOrWhiteSpace(situacao))
-            return StatusProcesso.Ativo;
-
-        var upper = situacao.ToUpperInvariant();
-        if (upper.Contains("EXTINTO") || upper.Contains("ENCERRADO") || upper.Contains("JULGADO"))
-            return StatusProcesso.Encerrado;
-        if (upper.Contains("ARQUIVADO") || upper.Contains("ARQUIVAMENTO"))
-            return StatusProcesso.Arquivado;
-        if (upper.Contains("SUSPENSO") || upper.Contains("SUSPENSÃO"))
-            return StatusProcesso.Suspenso;
-        return StatusProcesso.Ativo;
-    }
 
     private static decimal? ParseValor(string? texto)
     {

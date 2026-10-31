@@ -1,3 +1,4 @@
+using Hangfire;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
@@ -6,6 +7,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -523,6 +525,32 @@ public class SuperAdminController(
         return resultado is null
             ? NotFound(new { message = "Cálculo não encontrado ou registrado antes de os parâmetros serem gravados." })
             : Ok(resultado);
+    }
+
+    /// <summary>
+    /// Prévia do reprocessamento da situação no tribunal: por escritório, quantos processos Ativos
+    /// passariam a Arquivado/Suspenso e quantos ficariam para o advogado conferir. Não altera nada.
+    /// </summary>
+    [HttpGet("processos/situacao-na-fonte")]
+    public async Task<ActionResult<List<ResumoSituacaoNaFonteEscritorio>>> SimularSituacaoNaFonte(
+        [FromServices] ReprocessarSituacaoNaFonteJob job, CancellationToken ct)
+    {
+        if (SuperAdminId() is not { } superAdminId) return Forbid();
+        return Ok(await job.SimularAsync(superAdminId, ct));
+    }
+
+    /// <summary>Enfileira o reprocessamento (execução única; pode ser repetido sem efeito nos já atualizados).</summary>
+    [HttpPost("processos/situacao-na-fonte")]
+    public async Task<IActionResult> ReprocessarSituacaoNaFonte([FromServices] IBackgroundJobClient jobs, CancellationToken ct)
+    {
+        if (SuperAdminId() is not { } superAdminId) return Forbid();
+        var execucaoId = Guid.NewGuid();
+        var jobId = jobs.Enqueue<ReprocessarSituacaoNaFonteJob>(j => j.ExecutarAsync(execucaoId, superAdminId, CancellationToken.None));
+        await audit.LogAsync(new AuditLogEntry(
+            SystemTenantId, superAdminId, AuditActions.Update, AuditEntities.Processo, null,
+            null, new { Acao = "ReprocessarSituacaoNaFonte", execucaoId, jobId },
+            HttpContext.GetClientIpAddress()), ct);
+        return Accepted(new { execucaoId, jobId });
     }
 
     [HttpPut("tenants/{id:guid}/plano")]

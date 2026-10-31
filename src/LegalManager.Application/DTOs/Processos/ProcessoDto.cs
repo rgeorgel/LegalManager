@@ -192,6 +192,20 @@ public record EncerrarProcessoDto(
 
 public record SetVisivelClienteDto(bool Visivel);
 
+/// <summary>Processo Ativo no sistema que, pelos andamentos ou pelo Escavador, já não tramita no tribunal.</summary>
+public record SugestaoSituacaoDto(
+    Guid ProcessoId,
+    string NumeroCNJ,
+    string? Tribunal,
+    StatusProcesso Status,
+    string Motivo,
+    // Preenchido quando houve movimentação que pede conferência antes de aplicar
+    // ("movimentou em 10/09/2026, depois do arquivamento"): vem desmarcado na revisão.
+    string? Conferir = null
+);
+
+public record AplicarSituacaoNaFonteDto([Required] List<Guid> ProcessoIds);
+
 public record SetFavoritoDto(bool Favorito);
 
 public record ProcessoUltimoAndamentoDto(

@@ -189,6 +189,7 @@ builder.Services.AddScoped<EscavadorCallbacksPendentesJob>();
 builder.Services.AddScoped<LegalManager.Infrastructure.Escavador.EscavadorCallbackProcessor>();
 builder.Services.AddScoped<EscavadorOabSyncJob>();
 builder.Services.AddScoped<ImportacaoProcessosJob>();
+builder.Services.AddScoped<ReprocessarSituacaoNaFonteJob>();
 builder.Services.AddScoped<TriagemPublicacoesJob>();
 builder.Services.AddScoped<ITriagemPublicacaoService, TriagemPublicacaoService>();
 builder.Services.AddScoped<PublicacaoMapper>();

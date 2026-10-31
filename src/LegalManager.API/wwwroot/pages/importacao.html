@@ -45,6 +45,12 @@
     .badge-yellow { background: #fef3c7; color: #92400e; }
     .vazio { padding: 40px 24px; text-align: center; color: var(--color-text-muted); }
 
+    .revisao { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; }
+    .revisao-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .revisao-lista { margin-top: 12px; }
+    .revisao-acoes { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .revisao input[type=checkbox] { width: 18px; height: 18px; }
+
     @media (max-width: 768px) {
       .resumo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .col-tribunal { display: none; }
@@ -75,6 +81,7 @@
       <a class="btn btn-secondary" href="/pages/processos.html">Ver processos</a>
     </div>
     <p class="page-intro" id="intro"></p>
+    <div id="revisao"></div>
     <div id="conteudo"><div class="vazio">Carregando...</div></div>
   </main>
 </div>
@@ -101,9 +108,16 @@
     NaoEncontrado: ['Não encontrado', 'badge-yellow'],
     Erro:          ['Erro', 'badge-red'],
   };
+  // Status com que o processo entrou, quando a fonte indicou que ele não tramita mais.
+  const SITUACAO_FONTE = {
+    Arquivado: ['Arquivado no tribunal', 'badge-gray'],
+    Suspenso:  ['Suspenso no tribunal', 'badge-yellow'],
+  };
+  const inativoNaFonte = i => i.status === 'Importado' && !!SITUACAO_FONTE[i.statusProcesso];
   const FILTROS = [
     ['todos', 'Todos', () => true],
     ['importados', 'Importados', i => i.status === 'Importado'],
+    ['inativos', 'Arquivados/suspensos no tribunal', inativoNaFonte],
     ['ja', 'Já cadastrados', i => i.status === 'JaCadastrado'],
     ['erros', 'Com erro', i => i.status === 'Erro' || i.status === 'NaoEncontrado'],
     ['pendentes', 'Aguardando', i => i.status === 'Pendente'],
@@ -118,7 +132,7 @@
   // CriadoEm/ConcluidoEm são carimbos UTC reais do servidor (não hora "de parede").
   const dataHora = v => v ? new Date(v).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
-  if (id) carregarImportacao(); else carregarLista();
+  if (id) carregarImportacao(); else { carregarLista(); carregarRevisao(); }
 
   async function carregarLista() {
     document.getElementById('intro').textContent = 'Suas importações de processos por OAB mais recentes.';
@@ -170,6 +184,101 @@
 
     // Enquanto roda, atualiza a página junto com a barra inferior.
     if (ATIVOS.includes(importacao.status)) setTimeout(carregarImportacao, 3000);
+    else carregarRevisao();
+  }
+
+  // Processos que seguem Ativos aqui mas, pelos andamentos/Escavador, já foram arquivados ou
+  // suspensos no tribunal (ex.: importados antes da detecção existir). O advogado escolhe quais atualizar.
+  async function carregarRevisao(aviso = '') {
+    const el = document.getElementById('revisao');
+    let sugestoes;
+    try {
+      sugestoes = await apiFetch('/processos/situacao-na-fonte');
+    } catch {
+      el.innerHTML = '';
+      return;
+    }
+    if (!sugestoes.length) {
+      el.innerHTML = aviso ? `<div class="revisao"><span class="mensagem">${esc(aviso)}</span></div>` : '';
+      return;
+    }
+
+    const aConferir = sugestoes.filter(s => s.conferir).length;
+    el.innerHTML = `
+      <section class="revisao">
+        <div class="revisao-topo">
+          <div>
+            <strong>${sugestoes.length} processo(s) ativo(s) já parecem arquivados ou suspensos no tribunal</strong>
+            <div class="mensagem">${aviso ? esc(aviso) + ' ' : ''}Identificados pelos dados do tribunal. Marque os que quer atualizar${aConferir
+              ? ` — ${aConferir} tiveram movimentação recente ou depois do arquivamento e vêm desmarcados para você conferir`
+              : ''}.</div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="revisaoAbrir" aria-expanded="false">Revisar</button>
+        </div>
+        <div class="revisao-lista" id="revisaoLista" hidden>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr>
+                <th><input type="checkbox" id="revisaoTodos" ${aConferir ? '' : 'checked'} aria-label="Selecionar todos"></th>
+                <th>Processo</th><th class="col-tribunal">Tribunal</th><th>Atualizar para</th>
+              </tr></thead>
+              <tbody>
+                ${sugestoes.map(s => `
+                  <tr>
+                    <td><input type="checkbox" class="revisao-item" value="${esc(s.processoId)}" ${s.conferir ? '' : 'checked'} aria-label="Selecionar ${esc(s.numeroCNJ)}"></td>
+                    <td class="cnj"><a href="/pages/processo-detalhe.html?id=${encodeURIComponent(s.processoId)}">${esc(s.numeroCNJ)}</a></td>
+                    <td class="col-tribunal">${esc(s.tribunal ?? '—')}</td>
+                    <td>${badge(SITUACAO_FONTE[s.status] ?? [s.status, 'badge-gray'])}<div class="mensagem">${esc(s.motivo)}</div>
+                      ${s.conferir ? `<div class="mensagem"><span class="badge badge-yellow">Conferir</span> ${esc(s.conferir)}</div>` : ''}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="revisao-acoes">
+            <button type="button" class="btn btn-primary" id="revisaoAplicar">Atualizar selecionados</button>
+            <span class="mensagem" id="revisaoMsg" role="status"></span>
+          </div>
+        </div>
+      </section>`;
+
+    const lista = el.querySelector('#revisaoLista');
+    const abrir = el.querySelector('#revisaoAbrir');
+    const aplicar = el.querySelector('#revisaoAplicar');
+    const itensRevisao = () => [...el.querySelectorAll('.revisao-item')];
+    const selecionados = () => itensRevisao().filter(c => c.checked).map(c => c.value);
+    const atualizarBotao = () => {
+      const n = selecionados().length;
+      aplicar.disabled = n === 0;
+      aplicar.textContent = `Atualizar selecionados (${n})`;
+    };
+
+    abrir.addEventListener('click', () => {
+      lista.hidden = !lista.hidden;
+      abrir.setAttribute('aria-expanded', String(!lista.hidden));
+      abrir.textContent = lista.hidden ? 'Revisar' : 'Ocultar';
+    });
+    el.querySelector('#revisaoTodos').addEventListener('change', e => {
+      itensRevisao().forEach(c => { c.checked = e.target.checked; });
+      atualizarBotao();
+    });
+    itensRevisao().forEach(c => c.addEventListener('change', atualizarBotao));
+    atualizarBotao();
+
+    aplicar.addEventListener('click', async () => {
+      const ids = selecionados();
+      if (!ids.length) return;
+      aplicar.disabled = true;
+      try {
+        const aplicadas = await apiFetch('/processos/situacao-na-fonte', {
+          method: 'POST',
+          body: JSON.stringify({ processoIds: ids }),
+        });
+        await carregarRevisao(`${aplicadas.length} processo(s) atualizado(s).`);
+      } catch (e) {
+        el.querySelector('#revisaoMsg').textContent = e?.message || 'Não foi possível atualizar os processos.';
+        atualizarBotao();
+      }
+    });
   }
 
   function renderImportacao(i) {
@@ -232,6 +341,7 @@
                 : esc(it.numeroCNJ)}</td>
               <td class="col-tribunal">${esc(it.tribunal ?? '—')}</td>
               <td>${badge(STATUS_ITEM[it.status] ?? [it.status, 'badge-gray'])}
+                ${inativoNaFonte(it) ? badge(SITUACAO_FONTE[it.statusProcesso]) : ''}
                 ${it.mensagem && it.status !== 'JaCadastrado' ? `<div class="mensagem">${esc(it.mensagem)}</div>` : ''}</td>
             </tr>`).join('')}
         </tbody>
