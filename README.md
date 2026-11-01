@@ -134,6 +134,9 @@ docker compose up -d api
 
 > Se precisar reiniciar tudo (ex: mudança no banco): `docker compose down && docker compose up -d --build`
 
+> Banco externo (ex.: Neon): defina `DB_CONNECTION_STRING` no `.env` e suba com
+> `docker compose up -d --no-deps api` — o container `postgres` não é iniciado.
+
 ## Estrutura de Diretórios
 
 ```

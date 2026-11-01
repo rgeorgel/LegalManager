@@ -35,6 +35,11 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// dotnet run local: valores do .env da raiz (ex.: DB_CONNECTION_STRING para um Postgres externo).
+// Em container o .env não existe (.dockerignore) — lá o docker-compose passa as variáveis.
+if (builder.Environment.IsDevelopment())
+    LegalManager.API.Configuration.ArquivoEnv.Adicionar(builder.Configuration, builder.Environment.ContentRootPath);
+
 var loggerConfig = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
