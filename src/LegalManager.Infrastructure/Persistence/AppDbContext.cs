@@ -59,6 +59,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
     public DbSet<ResumoProcesso> ResumosProcesso => Set<ResumoProcesso>();
     public DbSet<ProcessoImportacaoCache> ProcessosImportacaoCache => Set<ProcessoImportacaoCache>();
+    public DbSet<ProcessoOabEscavador> ProcessosOabEscavador => Set<ProcessoOabEscavador>();
     public DbSet<ImportacaoProcessos> ImportacoesProcessos => Set<ImportacaoProcessos>();
     public DbSet<ImportacaoProcessoItem> ImportacaoProcessoItens => Set<ImportacaoProcessoItem>();
     public DbSet<ContratoHonorario> ContratosHonorarios => Set<ContratoHonorario>();

@@ -461,6 +461,182 @@ public class ImportacaoProcessosTests
         var cache = await db.ProcessosImportacaoCache.OrderBy(c => c.NumeroCNJ).ToListAsync();
         Assert.Equal(new[] { "0001", "0003" }, cache.Select(c => c.NumeroCNJ));
         Assert.Equal("{\"v\":1}", cache[0].DadosJson);
+
+        // A OAB fica vinculada aos processos (inclusive os já cadastrados), para não ser paga de novo.
+        var vinculados = await db.ProcessosOabEscavador.OrderBy(p => p.NumeroCNJ).ToListAsync();
+        Assert.Equal(new[] { "0001", "0003" }, vinculados.Select(p => p.NumeroCNJ));
+        Assert.All(vinculados, p => Assert.Equal(("116546", "MG"), (p.NumeroOab, p.Uf)));
+    }
+
+    // ── Reaproveitamento de OAB já pesquisada (evita pagar o Escavador de novo) ──
+
+    private const string JsonEscavadorTrt3 =
+        "{\"numero_cnj\":\"0001\",\"data_inicio\":\"2021-03-04\"," +
+        "\"unidade_origem\":{\"tribunal_sigla\":\"TRT3\",\"nome\":\"TRT da 3ª Região\",\"cidade\":\"Belo Horizonte\"}," +
+        "\"fontes\":[{\"capa\":{\"orgao_julgador\":\"1ª Vara do Trabalho\",\"classe\":\"Ação Trabalhista\",\"assunto\":\"Horas Extras\"}}]}";
+
+    private static ConsultaExterna LogBuscaEscavador(string parametros, string? resumo, bool sucesso = true) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = Guid.NewGuid(), CriadoEm = DateTime.UtcNow.AddDays(-30),
+        Api = "Escavador", TipoConsulta = "BuscaProcessosPorOab", Origem = "Importação por OAB — Busca de processos",
+        ParametrosJson = parametros, Sucesso = sucesso, ResultadoResumoJson = resumo
+    };
+
+    [Fact]
+    public async Task BuscarPagina_OabJaPesquisadaEmOutroEscritorio_ReaproveitaCacheVencidoSemChamarEscavador()
+    {
+        var db = await SeedAsync();
+        var escritorioAntigo = Guid.NewGuid();
+        db.ProcessosOabEscavador.Add(new ProcessoOabEscavador
+            { Id = Guid.NewGuid(), NumeroOab = "116546", Uf = "MG", NumeroCNJ = "0001", CriadoEm = DateTime.UtcNow.AddDays(-30) });
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = escritorioAntigo, NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = JsonEscavadorTrt3, ExpiraEm = DateTime.UtcNow.AddDays(-27), CriadoEm = DateTime.UtcNow.AddDays(-30)
+        });
+        await db.SaveChangesAsync();
+
+        var escavador = new Mock<IEscavadorService>(MockBehavior.Strict);
+        var pagina = await CriarImportador(db, escavador).BuscarPaginaEscavadorAsync("116546", "mg", null);
+
+        Assert.Null(pagina.ProximoCursor);
+        var p = Assert.Single(pagina.Processos);
+        Assert.Equal(("0001", "escavador", "TRT3"), (p.NumeroCNJ, p.Fonte, p.SiglaTribunal));
+        Assert.Equal(("1ª Vara do Trabalho", "Belo Horizonte", "Ação Trabalhista"), (p.Vara, p.Comarca, p.Classe));
+        Assert.Equal(new DateTime(2021, 3, 4), p.DataAjuizamento);
+
+        // O JSON é copiado para o cache deste escritório, de onde a importação do item lê.
+        var copia = await db.ProcessosImportacaoCache.SingleAsync(c => c.TenantId == _tenantId);
+        Assert.Equal(JsonEscavadorTrt3, copia.DadosJson);
+        Assert.True(copia.ExpiraEm > DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task BuscarPagina_OabJaPesquisadaSemProcessos_NaoChamaEscavador()
+    {
+        var db = await SeedAsync();
+        db.ConsultasExternas.Add(LogBuscaEscavador("{\"oab\":\"116546\",\"uf\":\"MG\",\"continuacao\":false}", "[]"));
+        await db.SaveChangesAsync();
+
+        var pagina = await CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict))
+            .BuscarPaginaEscavadorAsync("116546", "MG", null);
+
+        Assert.Empty(pagina.Processos);
+        Assert.Null(pagina.ProximoCursor);
+    }
+
+    [Fact]
+    public async Task BuscarPagina_BuscaAntigaSoNoLog_UsaResumoTruncadoEOJsonQueExistir()
+    {
+        // Buscas de antes do vínculo OAB→processo só deixaram o log (UF minúscula no formato antigo,
+        // resumo cortado em 20 mil caracteres). Sem o JSON de um processo, fica com o resumo.
+        var db = await SeedAsync();
+        db.ConsultasExternas.Add(LogBuscaEscavador("{\"oab\":\"116546\",\"uf\":\"mg\"}",
+            "[{\"Numero\":\"0001\",\"NomeTribunal\":\"TRT3\",\"Classe\":null,\"DataAjuizamento\":null}," +
+            "{\"Numero\":\"0002\",\"NomeTribunal\":\"TJMG\",\"Classe\":\"Procedimento Comum\",\"DataAjuizamento\":\"2020-05-06T00:00:00\"}," +
+            "{\"Numero\":\"0003\",\"NomeTri"));
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = Guid.NewGuid(), NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = JsonEscavadorTrt3, ExpiraEm = DateTime.UtcNow.AddDays(-1), CriadoEm = DateTime.UtcNow.AddDays(-4)
+        });
+        await db.SaveChangesAsync();
+
+        var pagina = await CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict))
+            .BuscarPaginaEscavadorAsync("116546", "MG", null);
+
+        Assert.Equal(new[] { "0001", "0002" }, pagina.Processos.Select(p => p.NumeroCNJ));
+        Assert.Equal("1ª Vara do Trabalho", pagina.Processos[0].Vara);
+        var doResumo = pagina.Processos[1];
+        Assert.Equal(("TJMG", "Procedimento Comum", new DateTime(2020, 5, 6)),
+            (doResumo.Tribunal, doResumo.Classe, doResumo.DataAjuizamento!.Value));
+        Assert.Equal(new[] { "0001" }, await db.ProcessosImportacaoCache
+            .Where(c => c.TenantId == _tenantId).Select(c => c.NumeroCNJ).ToListAsync());
+    }
+
+    [Fact]
+    public async Task BuscarPagina_Reaproveitada_PaginaComCursorProprioEMarcaJaCadastrados()
+    {
+        var db = await SeedAsync();
+        for (var i = 1; i <= 150; i++)
+            db.ProcessosOabEscavador.Add(new ProcessoOabEscavador
+                { Id = Guid.NewGuid(), NumeroOab = "116546", Uf = "MG", NumeroCNJ = $"{i:0000}", CriadoEm = DateTime.UtcNow });
+        db.Processos.Add(new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, NumeroCNJ = "0120", AreaDireito = AreaDireito.Outro,
+            Fase = FaseProcessual.Conhecimento, Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+        var importador = CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict));
+
+        var primeira = await importador.BuscarPaginaEscavadorAsync("116546", "MG", null);
+        Assert.Equal(100, primeira.Processos.Count);
+        Assert.Equal("reaproveitado:100", primeira.ProximoCursor);
+
+        var segunda = await importador.BuscarPaginaEscavadorAsync("116546", "MG", primeira.ProximoCursor);
+        Assert.Equal(50, segunda.Processos.Count);
+        Assert.Null(segunda.ProximoCursor);
+        Assert.Equal("0101", segunda.Processos[0].NumeroCNJ);
+        Assert.True(segunda.Processos.Single(p => p.NumeroCNJ == "0120").JaCadastrado);
+    }
+
+    [Fact]
+    public async Task BuscarPagina_SoOutraOabOuBuscaComFalha_ChamaEscavador()
+    {
+        var db = await SeedAsync();
+        db.ConsultasExternas.Add(LogBuscaEscavador("{\"oab\":\"1165460\",\"uf\":\"MG\",\"continuacao\":false}", "[{\"Numero\":\"0009\"}]"));
+        db.ConsultasExternas.Add(LogBuscaEscavador("{\"oab\":\"116546\",\"uf\":\"SP\",\"continuacao\":false}", "[{\"Numero\":\"0008\"}]"));
+        db.ConsultasExternas.Add(LogBuscaEscavador("{\"oab\":\"116546\",\"uf\":\"MG\",\"continuacao\":false}", null, sucesso: false));
+        db.ProcessosOabEscavador.Add(new ProcessoOabEscavador
+            { Id = Guid.NewGuid(), NumeroOab = "116546", Uf = "SP", NumeroCNJ = "0007", CriadoEm = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var escavador = new Mock<IEscavadorService>();
+        escavador.Setup(e => e.BuscarPaginaPorOabAsync("116546", "MG", null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorPaginaCursor<EscavadorProcessoDto>([ProcessoEscavador("0001", "{}")], null));
+
+        var pagina = await CriarImportador(db, escavador).BuscarPaginaEscavadorAsync("116546", "MG", null);
+
+        Assert.Equal("0001", Assert.Single(pagina.Processos).NumeroCNJ);
+        escavador.Verify(e => e.BuscarPaginaPorOabAsync("116546", "MG", null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarPagina_ContinuacaoDoEscavador_SegueNoEscavadorMesmoComOabVinculada()
+    {
+        // A página 1 desta mesma importação já vinculou a OAB; as seguintes continuam no Escavador.
+        var db = await SeedAsync();
+        db.ProcessosOabEscavador.Add(new ProcessoOabEscavador
+            { Id = Guid.NewGuid(), NumeroOab = "116546", Uf = "MG", NumeroCNJ = "0001", CriadoEm = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        const string cursor = "https://api.escavador.com/api/v2/advogado/processos?cursor=abc";
+        var escavador = new Mock<IEscavadorService>();
+        escavador.Setup(e => e.BuscarPaginaPorOabAsync("116546", "MG", cursor, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EscavadorPaginaCursor<EscavadorProcessoDto>([ProcessoEscavador("0002", "{}")], null));
+
+        var pagina = await CriarImportador(db, escavador).BuscarPaginaEscavadorAsync("116546", "MG", cursor);
+
+        Assert.Equal("0002", Assert.Single(pagina.Processos).NumeroCNJ);
+        Assert.Equal(2, await db.ProcessosOabEscavador.CountAsync());
+    }
+
+    [Fact]
+    public async Task Importar_Escavador_CacheVencido_UsaMesmoAssim()
+    {
+        var db = await SeedAsync();
+        db.ProcessosImportacaoCache.Add(new ProcessoImportacaoCache
+        {
+            Id = Guid.NewGuid(), TenantId = _tenantId, NumeroCNJ = "0001", Fonte = "escavador",
+            DadosJson = JsonEscavadorTrt3, ExpiraEm = DateTime.UtcNow.AddDays(-1), CriadoEm = DateTime.UtcNow.AddDays(-4)
+        });
+        await db.SaveChangesAsync();
+
+        var resultado = await CriarImportador(db, new Mock<IEscavadorService>(MockBehavior.Strict))
+            .ImportarAsync(new ImportarProcessoItem("0001", Fonte: "escavador"));
+
+        var processo = await db.Processos.SingleAsync(p => p.Id == resultado.ProcessoId);
+        Assert.Equal(("TRT3", "1ª Vara do Trabalho"), (processo.SiglaTribunal, processo.Vara));
     }
 
     [Fact]

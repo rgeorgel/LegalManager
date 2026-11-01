@@ -2551,6 +2551,38 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("ProcessosImportacaoCache");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoOabEscavador", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NumeroCNJ")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("NumeroOab")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Uf")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NumeroOab", "Uf", "NumeroCNJ")
+                        .IsUnique();
+
+                    b.ToTable("ProcessosOabEscavador", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ProcessoParte", b =>
                 {
                     b.Property<Guid>("Id")

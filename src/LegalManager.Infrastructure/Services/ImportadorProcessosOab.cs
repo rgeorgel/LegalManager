@@ -18,6 +18,11 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
 {
     private const string OrigemBuscaOab = "Importação por OAB — Busca de processos";
 
+    // Cursor das páginas montadas com dados já pagos ("reaproveitado:<posição>"); o do
+    // Escavador é sempre uma URL.
+    private const string CursorReaproveitado = "reaproveitado:";
+    private const int TamanhoPaginaReaproveitada = 100;
+
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
     private readonly DataJudAdapter _dataJud;
@@ -62,10 +67,21 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
     public async Task<PaginaBuscaOab> BuscarPaginaEscavadorAsync(
         string numeroOab, string uf, string? cursor, CancellationToken ct = default)
     {
+        numeroOab = numeroOab.Trim();
+        uf = uf.Trim().ToUpperInvariant();
+
+        // Cada página no Escavador é paga: OAB já pesquisada (por este ou outro escritório,
+        // inclusive um já excluído — gente que se cadastra de novo) reaproveita o que temos.
+        if (cursor == null || cursor.StartsWith(CursorReaproveitado, StringComparison.Ordinal))
+        {
+            var reaproveitada = await PaginaReaproveitadaAsync(numeroOab, uf, cursor, ct);
+            if (reaproveitada != null) return reaproveitada;
+        }
+
         var pagina = await _consultaLog.RegistrarAsync(
             "Escavador", "BuscaProcessosPorOab", OrigemBuscaOab,
             new { oab = numeroOab, uf, continuacao = cursor != null },
-            () => _escavador.BuscarPaginaPorOabAsync(numeroOab.Trim(), uf.Trim(), cursor, ct),
+            () => _escavador.BuscarPaginaPorOabAsync(numeroOab, uf, cursor, ct),
             r => (r.Data.Count, r.Data.Select(p => new { p.Numero, p.NomeTribunal, p.Classe, p.DataAjuizamento })),
             ct: ct);
 
@@ -82,7 +98,202 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
             DescartarPendentes<ProcessoImportacaoCache>();
         }
 
+        // Sem o vínculo, a OAB ainda é reconhecida pelo log da consulta (ver ProcessosConhecidosDaOabAsync).
+        try
+        {
+            await VincularProcessosAOabAsync(numeroOab, uf, processos.Select(p => p.Numero!), ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "[Escavador] Falha ao vincular processos à OAB {Oab}/{Uf}", numeroOab, uf);
+            DescartarPendentes<ProcessoOabEscavador>();
+        }
+
         return new PaginaBuscaOab(await MarcarJaCadastradosAsync(PreviewsEscavador(processos), ct), pagina.ProximoCursor);
+    }
+
+    /// <summary>
+    /// Página montada com o que já temos da OAB, sem chamar o Escavador, ou null se a OAB nunca
+    /// foi pesquisada lá. Vale mesmo com o cache vencido, e mesmo sem o JSON de algum processo
+    /// (fica com o resumo do log): pagar de novo pela mesma OAB é o que se quer evitar.
+    /// Pagina com cursor próprio (<see cref="CursorReaproveitado"/>), para o job seguir retomável.
+    /// </summary>
+    private async Task<PaginaBuscaOab?> PaginaReaproveitadaAsync(
+        string numeroOab, string uf, string? cursor, CancellationToken ct)
+    {
+        var conhecidos = await ProcessosConhecidosDaOabAsync(numeroOab, uf, ct);
+        if (conhecidos == null)
+            return cursor == null ? null : new PaginaBuscaOab([], null);
+
+        var inicio = cursor != null
+            && int.TryParse(cursor[CursorReaproveitado.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var n)
+                ? n
+                : 0;
+        var fatia = conhecidos.Keys.Order(StringComparer.Ordinal).Skip(inicio).Take(TamanhoPaginaReaproveitada).ToList();
+        var proximo = inicio + fatia.Count < conhecidos.Count
+            ? CursorReaproveitado + (inicio + fatia.Count).ToString(CultureInfo.InvariantCulture)
+            : null;
+
+        // JSON bruto de qualquer escritório que já tenha importado o processo; o mais recente vence.
+        var jsonPorCnj = (await _context.ProcessosImportacaoCache.AsNoTracking()
+                .Where(c => c.Fonte == "escavador" && fatia.Contains(c.NumeroCNJ))
+                .Select(c => new { c.NumeroCNJ, c.DadosJson, c.ExpiraEm })
+                .ToListAsync(ct))
+            .GroupBy(c => c.NumeroCNJ)
+            .ToDictionary(g => g.Key, g => g.MaxBy(c => c.ExpiraEm)!.DadosJson);
+
+        var processos = fatia
+            .Select(cnj => jsonPorCnj.TryGetValue(cnj, out var json)
+                ? ProcessoDoJsonEscavador(cnj, json, conhecidos[cnj])
+                : conhecidos[cnj] ?? new EscavadorProcessoDto(0, cnj, null, null, null, null, null, null, null))
+            .ToList();
+
+        _logger.LogInformation(
+            "[Escavador] OAB {Oab}/{Uf} já pesquisada: reaproveitando {Qtd} de {Total} processos sem consultar o Escavador",
+            numeroOab, uf, processos.Count, conhecidos.Count);
+
+        // Copia o JSON para o cache deste escritório: é dele que a importação de cada item lê.
+        try
+        {
+            await SalvarCacheEscavadorAsync(processos, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "[Escavador] Falha ao copiar cache de importação para OAB {Oab}/{Uf}", numeroOab, uf);
+            DescartarPendentes<ProcessoImportacaoCache>();
+        }
+
+        return new PaginaBuscaOab(await MarcarJaCadastradosAsync(PreviewsEscavador(processos), ct), proximo);
+    }
+
+    /// <summary>
+    /// CNJs que o Escavador já devolveu para a OAB (com o resumo do log, quando houver), ou null
+    /// se ela nunca foi pesquisada com sucesso. Junta o vínculo OAB→processo com o log das
+    /// consultas — único registro das buscas feitas antes do vínculo existir, e que também
+    /// sobrevive à exclusão do escritório.
+    /// </summary>
+    private async Task<Dictionary<string, EscavadorProcessoDto?>?> ProcessosConhecidosDaOabAsync(
+        string numeroOab, string uf, CancellationToken ct)
+    {
+        var vinculados = await _context.ProcessosOabEscavador.AsNoTracking()
+            .Where(p => p.NumeroOab == numeroOab && p.Uf == uf)
+            .Select(p => p.NumeroCNJ)
+            .ToListAsync(ct);
+
+        // Parâmetros gravados como {"oab":"123","uf":"MG",...}; buscas antigas podem ter a UF minúscula.
+        var chaveOab = $"\"oab\":\"{numeroOab}\"";
+        var chaveUf = $"\"UF\":\"{uf}\"";
+        var resumos = await _context.ConsultasExternas.AsNoTracking()
+            .Where(c => c.Api == "Escavador" && c.TipoConsulta == "BuscaProcessosPorOab" && c.Sucesso
+                     && c.ParametrosJson != null
+                     && c.ParametrosJson.Contains(chaveOab)
+                     && c.ParametrosJson.ToUpper().Contains(chaveUf))
+            .Select(c => c.ResultadoResumoJson)
+            .ToListAsync(ct);
+
+        if (vinculados.Count == 0 && resumos.Count == 0) return null;
+
+        var conhecidos = new Dictionary<string, EscavadorProcessoDto?>(StringComparer.Ordinal);
+        foreach (var p in resumos.SelectMany(ProcessosDoResumoDoLog))
+            conhecidos.TryAdd(p.Numero!, p);
+        foreach (var cnj in vinculados)
+            conhecidos.TryAdd(cnj, null);
+        return conhecidos;
+    }
+
+    /// <summary>
+    /// Processos do resumo gravado no log da busca (<c>[{Numero, NomeTribunal, Classe, DataAjuizamento}]</c>).
+    /// O log trunca JSONs longos, então lê objeto a objeto e ignora o que ficou incompleto.
+    /// </summary>
+    private static List<EscavadorProcessoDto> ProcessosDoResumoDoLog(string? resumoJson)
+    {
+        var processos = new List<EscavadorProcessoDto>();
+        if (string.IsNullOrWhiteSpace(resumoJson)) return processos;
+
+        foreach (System.Text.RegularExpressions.Match m in
+                 System.Text.RegularExpressions.Regex.Matches(resumoJson, @"\{[^{}]*\}"))
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(m.Value);
+                var r = doc.RootElement;
+                var numero = JsonStr(r, "Numero")?.Trim();
+                if (string.IsNullOrEmpty(numero)) continue;
+                DateTime? data = r.TryGetProperty("DataAjuizamento", out var dtEl)
+                                 && dtEl.ValueKind == System.Text.Json.JsonValueKind.String
+                                 && dtEl.TryGetDateTime(out var dt)
+                    ? dt
+                    : null;
+                processos.Add(new EscavadorProcessoDto(
+                    0, numero, null, JsonStr(r, "NomeTribunal"), null, null, JsonStr(r, "Classe"), null, data));
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // Objeto cortado ou malformado: os demais seguem.
+            }
+        }
+        return processos;
+    }
+
+    /// <summary>Mesmos campos que o EscavadorHttpClient extrai da busca, lidos do JSON bruto guardado.</summary>
+    private static EscavadorProcessoDto ProcessoDoJsonEscavador(string cnj, string json, EscavadorProcessoDto? resumo)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var r = doc.RootElement;
+            System.Text.Json.JsonElement capa = default;
+            if (r.TryGetProperty("fontes", out var fontesEl)
+                && fontesEl.ValueKind == System.Text.Json.JsonValueKind.Array
+                && fontesEl.GetArrayLength() > 0)
+                fontesEl[0].TryGetProperty("capa", out capa);
+            var temCapa = capa.ValueKind == System.Text.Json.JsonValueKind.Object;
+            DateTime? data = r.TryGetProperty("data_inicio", out var dtEl)
+                             && dtEl.ValueKind == System.Text.Json.JsonValueKind.String
+                             && dtEl.TryGetDateTime(out var dt)
+                ? dt
+                : resumo?.DataAjuizamento;
+            var nomeUnidade = JsonStr(r, "unidade_origem", "nome");
+
+            return new EscavadorProcessoDto(
+                Id: 0,
+                Numero: cnj,
+                SiglaTribunal: JsonStr(r, "unidade_origem", "tribunal_sigla"),
+                NomeTribunal: nomeUnidade ?? resumo?.NomeTribunal,
+                Vara: (temCapa ? JsonStr(capa, "orgao_julgador") : null) ?? nomeUnidade,
+                Comarca: JsonStr(r, "unidade_origem", "cidade"),
+                Classe: (temCapa ? JsonStr(capa, "classe") : null) ?? resumo?.Classe,
+                Assuntos: temCapa ? JsonStr(capa, "assunto") : null,
+                DataAjuizamento: data,
+                JsonBruto: json);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return resumo ?? new EscavadorProcessoDto(0, cnj, null, null, null, null, null, null, null);
+        }
+    }
+
+    private async Task VincularProcessosAOabAsync(
+        string numeroOab, string uf, IEnumerable<string> numeros, CancellationToken ct)
+    {
+        var cnjs = numeros.Distinct().ToList();
+        if (cnjs.Count == 0) return;
+
+        var existentes = await _context.ProcessosOabEscavador
+            .Where(p => p.NumeroOab == numeroOab && p.Uf == uf && cnjs.Contains(p.NumeroCNJ))
+            .Select(p => p.NumeroCNJ)
+            .ToHashSetAsync(ct);
+        var agora = DateTime.UtcNow;
+        foreach (var cnj in cnjs.Where(c => !existentes.Contains(c)))
+            _context.ProcessosOabEscavador.Add(new ProcessoOabEscavador
+            {
+                Id = Guid.NewGuid(),
+                NumeroOab = numeroOab,
+                Uf = uf,
+                NumeroCNJ = cnj,
+                CriadoEm = agora
+            });
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task<List<ProcessoOabPreviewDto>> BuscarTribunaisAsync(
@@ -184,11 +395,11 @@ public class ImportadorProcessosOab : IImportadorProcessosOab
         var assuntos = item.Assuntos;
         var dataAjuizamento = item.DataAjuizamento;
 
+        // Vale mesmo vencido: é o que o Escavador devolveu, e buscar de novo seria pago.
         var cache = await _context.ProcessosImportacaoCache.FirstOrDefaultAsync(
             c => c.TenantId == _tenantContext.TenantId
               && c.NumeroCNJ == cnj
-              && c.Fonte == "escavador"
-              && c.ExpiraEm > DateTime.UtcNow, ct);
+              && c.Fonte == "escavador", ct);
 
         if (cache != null)
         {

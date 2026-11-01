@@ -12,6 +12,8 @@ public interface IImportadorProcessosOab
     /// <summary>
     /// Uma página da busca no Escavador (<paramref name="cursor"/> null = primeira). Grava o
     /// JSON bruto no cache de importação. Lança em falha, para quem pagina poder tentar de novo.
+    /// OAB já pesquisada antes (em qualquer escritório) não vai ao Escavador: as páginas saem do
+    /// que já temos, com cursor próprio.
     /// </summary>
     Task<PaginaBuscaOab> BuscarPaginaEscavadorAsync(string numeroOab, string uf, string? cursor, CancellationToken ct = default);
 
