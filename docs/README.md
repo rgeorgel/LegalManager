@@ -5,6 +5,9 @@
 ### Setup
 - [Instruções de configuração](setup/setup_instructions.md)
 
+### Operação
+- [Backup diário e restauração do banco](operacao/backup-e-restauracao.md)
+
 ### Plano de Implementação
 - [Plano geral do sistema](plano/implementation_plan.md)
 
