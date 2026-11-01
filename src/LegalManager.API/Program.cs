@@ -337,7 +337,12 @@ builder.Services.AddHttpClient("TJSP", c =>
 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
-builder.Services.AddHangfireServer();
+// Hangfire:Desabilitado=true — ex.: API local apontando para o banco de produção. Este processo não
+// executa jobs nem registra/remove os recorrentes (o storage é o próprio banco, compartilhado);
+// o painel continua no ar e o que for enfileirado fica pendente para outro servidor.
+var hangfireDesabilitado = builder.Configuration.GetValue<bool>("Hangfire:Desabilitado");
+if (!hangfireDesabilitado)
+    builder.Services.AddHangfireServer();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
@@ -550,82 +555,10 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-RecurringJob.AddOrUpdate<AlertasJob>(
-    "alertas-diarios",
-    job => job.ExecutarAsync(),
-    "0 * * * *",
-    // De hora em hora: o resumo diário sai só à meia-noite no fuso de cada escritório (AlertasJob.HoraResumo);
-    // os demais alertas deduplicam por dia.
-    new RecurringJobOptions { TimeZone = BrasiliaTime.Tz });
-
-RecurringJob.AddOrUpdate<TrialRevertJob>(
-    "trial-revert",
-    job => job.ExecutarAsync(),
-    "0 * * * *"); // hourly catch-up for expired trials and promo/cancelled plans whose users haven't logged in
-
-RecurringJob.AddOrUpdate<TarefasRecorrentesJob>(
-    "tarefas-recorrentes",
-    job => job.ExecutarAsync(),
-    "5 * * * *"); // hourly: cria a próxima ocorrência das tarefas recorrentes cuja última já venceu
-
-RecurringJob.AddOrUpdate<MonitoramentoJob>(
-    "monitoramento-processos",
-    job => job.ExecutarAsync(),
-    "0 6 * * *"); // daily at 06:00 UTC (03:00 Brasília)
-
-RecurringJob.AddOrUpdate<DjeJob>(
-    "captura-dje",
-    job => job.ExecutarAsync(CancellationToken.None),
-    "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
-
-RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
-    "indices-correcao-mensal",
-    job => job.ExecutarAsync(),
-    "0 6 1,11,21 * *"); // dias 1, 11 e 21 de cada mês às 06:00 UTC (~a cada 10 dias) — reduz a janela de defasagem em relação à publicação da BCB
-
-// Limpeza de recurring jobs órfãos: CapturaPublicacaoJob e EscavadorCallbackPollingJob
-// foram removidos em 56ac1d8, substituídos por DjeJob ("captura-dje") e
-// EscavadorMovimentacoesPollingJob ("escavador-movimentacoes-polling"), mas
-// RecurringJob.AddOrUpdate não apaga os registros antigos do storage do Hangfire.
-// TODO: remover estas linhas após confirmar que os jobs órfãos sumiram de todos os ambientes.
-RecurringJob.RemoveIfExists("captura-publicacoes");
-RecurringJob.RemoveIfExists("escavador-callback-polling");
-
-// Escavador: o webhook é o canal primário. Backstop diário e gratuito: callbacks cuja entrega
-// falhou. O polling por processo é cobrado por consulta — fica registrado só para disparo manual
-// no painel do Hangfire (Cron.Never), ex.: recuperar histórico depois de uma falha longa.
-RecurringJob.AddOrUpdate<EscavadorCallbacksPendentesJob>(
-    "escavador-callbacks-pendentes",
-    job => job.ExecutarAsync(),
-    builder.Configuration["Escavador:CallbacksPendentesCron"] ?? "0 6 * * *");
-RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
-    "escavador-movimentacoes-polling",
-    job => job.ExecutarAsync(),
-    Cron.Never());
-
-// Triagem IA das publicações (mesmo modelo do IA:Model): a cada 5 min extrai prazo/audiência das
-// publicações novas e grava a sugestão que o advogado confirma na tela de Publicações.
-RecurringJob.RemoveIfExists("publicacao-classificacao-ia");
-RecurringJob.AddOrUpdate<TriagemPublicacoesJob>(
-    "publicacao-triagem-ia",
-    job => job.ExecutarAsync(),
-    "*/5 * * * *");
-
-// Sync de OABs com Escavador (retry de monitoramentos não criados)
-if (builder.Configuration.GetValue<bool>("Escavador:OabSyncEnabled", true))
-{
-    var oabCron = builder.Configuration["Escavador:OabSyncCron"] ?? "0 5 * * *";
-    RecurringJob.AddOrUpdate<EscavadorOabSyncJob>(
-        "escavador-oab-sync",
-        job => job.ExecutarAsync(),
-        oabCron);
-}
-
-RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
-    "escavador-tier-semanal",
-    job => job.AplicarTierSemanalAsync(),
-    "0 7 1 * *"); // dia 1 de cada mês às 07:00 — Estratégia 5 (downgrade para semanal após 180 dias)
-// Para ativar a Estratégia 4 (cancelar) em vez da 5, substituir por: job => job.SuspenderMonitoramentosAsync()
+if (hangfireDesabilitado)
+    app.Logger.LogWarning("Hangfire desabilitado (Hangfire:Desabilitado=true): nenhum job será executado nem registrado por esta instância");
+else
+    RegistrarJobsRecorrentes(builder.Configuration);
 
 app.MapControllers();
 // Links de redefinição enviados antes da correção apontavam para /reset-password (sem .html),
@@ -675,4 +608,84 @@ static async Task SeedSuperAdminAsync(IServiceProvider services, IConfiguration 
         if (result.Succeeded)
             await userManager.AddToRoleAsync(admin, "SuperAdmin");
     }
+}
+
+static void RegistrarJobsRecorrentes(IConfiguration config)
+{
+    RecurringJob.AddOrUpdate<AlertasJob>(
+        "alertas-diarios",
+        job => job.ExecutarAsync(),
+        "0 * * * *",
+        // De hora em hora: o resumo diário sai só à meia-noite no fuso de cada escritório (AlertasJob.HoraResumo);
+        // os demais alertas deduplicam por dia.
+        new RecurringJobOptions { TimeZone = BrasiliaTime.Tz });
+
+    RecurringJob.AddOrUpdate<TrialRevertJob>(
+        "trial-revert",
+        job => job.ExecutarAsync(),
+        "0 * * * *"); // hourly catch-up for expired trials and promo/cancelled plans whose users haven't logged in
+
+    RecurringJob.AddOrUpdate<TarefasRecorrentesJob>(
+        "tarefas-recorrentes",
+        job => job.ExecutarAsync(),
+        "5 * * * *"); // hourly: cria a próxima ocorrência das tarefas recorrentes cuja última já venceu
+
+    RecurringJob.AddOrUpdate<MonitoramentoJob>(
+        "monitoramento-processos",
+        job => job.ExecutarAsync(),
+        "0 6 * * *"); // daily at 06:00 UTC (03:00 Brasília)
+
+    RecurringJob.AddOrUpdate<DjeJob>(
+        "captura-dje",
+        job => job.ExecutarAsync(CancellationToken.None),
+        "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
+
+    RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
+        "indices-correcao-mensal",
+        job => job.ExecutarAsync(),
+        "0 6 1,11,21 * *"); // dias 1, 11 e 21 de cada mês às 06:00 UTC (~a cada 10 dias) — reduz a janela de defasagem em relação à publicação da BCB
+
+    // Limpeza de recurring jobs órfãos: CapturaPublicacaoJob e EscavadorCallbackPollingJob
+    // foram removidos em 56ac1d8, substituídos por DjeJob ("captura-dje") e
+    // EscavadorMovimentacoesPollingJob ("escavador-movimentacoes-polling"), mas
+    // RecurringJob.AddOrUpdate não apaga os registros antigos do storage do Hangfire.
+    // TODO: remover estas linhas após confirmar que os jobs órfãos sumiram de todos os ambientes.
+    RecurringJob.RemoveIfExists("captura-publicacoes");
+    RecurringJob.RemoveIfExists("escavador-callback-polling");
+
+    // Escavador: o webhook é o canal primário. Backstop diário e gratuito: callbacks cuja entrega
+    // falhou. O polling por processo é cobrado por consulta — fica registrado só para disparo manual
+    // no painel do Hangfire (Cron.Never), ex.: recuperar histórico depois de uma falha longa.
+    RecurringJob.AddOrUpdate<EscavadorCallbacksPendentesJob>(
+        "escavador-callbacks-pendentes",
+        job => job.ExecutarAsync(),
+        config["Escavador:CallbacksPendentesCron"] ?? "0 6 * * *");
+    RecurringJob.AddOrUpdate<EscavadorMovimentacoesPollingJob>(
+        "escavador-movimentacoes-polling",
+        job => job.ExecutarAsync(),
+        Cron.Never());
+
+    // Triagem IA das publicações (mesmo modelo do IA:Model): a cada 5 min extrai prazo/audiência das
+    // publicações novas e grava a sugestão que o advogado confirma na tela de Publicações.
+    RecurringJob.RemoveIfExists("publicacao-classificacao-ia");
+    RecurringJob.AddOrUpdate<TriagemPublicacoesJob>(
+        "publicacao-triagem-ia",
+        job => job.ExecutarAsync(),
+        "*/5 * * * *");
+
+    // Sync de OABs com Escavador (retry de monitoramentos não criados)
+    if (config.GetValue<bool>("Escavador:OabSyncEnabled", true))
+    {
+        var oabCron = config["Escavador:OabSyncCron"] ?? "0 5 * * *";
+        RecurringJob.AddOrUpdate<EscavadorOabSyncJob>(
+            "escavador-oab-sync",
+            job => job.ExecutarAsync(),
+            oabCron);
+    }
+
+    RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
+        "escavador-tier-semanal",
+        job => job.AplicarTierSemanalAsync(),
+        "0 7 1 * *"); // dia 1 de cada mês às 07:00 — Estratégia 5 (downgrade para semanal após 180 dias)
+    // Para ativar a Estratégia 4 (cancelar) em vez da 5, substituir por: job => job.SuspenderMonitoramentosAsync()
 }

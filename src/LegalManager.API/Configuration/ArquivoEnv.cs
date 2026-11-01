@@ -7,7 +7,7 @@ namespace LegalManager.API.Configuration;
 /// Lê o <c>.env</c> da raiz do repositório quando a API roda com <c>dotnet run</c> (Development) —
 /// o docker-compose já o lê sozinho, mas o ASP.NET não.
 ///
-/// - Nomes do docker-compose (<c>DB_CONNECTION_STRING</c>) são traduzidos para a chave de
+/// - Nomes do docker-compose (<c>DB_CONNECTION_STRING</c>, <c>HANGFIRE_DESABILITADO</c>) são traduzidos para a chave de
 ///   configuração (<see cref="Mapeamento"/>); nomes no formato do ASP.NET (<c>Secao__Chave</c>)
 ///   entram direto. O resto do arquivo é ignorado — <c>ASPNETCORE_ENVIRONMENT=Production</c> no
 ///   .env não muda o ambiente local.
@@ -21,6 +21,7 @@ public static class ArquivoEnv
     private static readonly Dictionary<string, string> Mapeamento = new(StringComparer.OrdinalIgnoreCase)
     {
         ["DB_CONNECTION_STRING"] = "ConnectionStrings:DefaultConnection",
+        ["HANGFIRE_DESABILITADO"] = "Hangfire:Desabilitado",
     };
 
     /// <summary>Adiciona o .env encontrado a partir de <paramref name="inicio"/> (subindo até a raiz do repositório).</summary>

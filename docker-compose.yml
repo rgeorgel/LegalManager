@@ -51,6 +51,7 @@ services:
       Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}
       Hangfire__DashboardUser: ${HANGFIRE_DASHBOARD_USER:-admin}
       Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:?HANGFIRE_DASHBOARD_PASSWORD is required}
+      Hangfire__Desabilitado: ${HANGFIRE_DESABILITADO:-false}
       OciStorage__Namespace: ${OCI_NAMESPACE:-}
       OciStorage__Region: ${OCI_REGION:-sa-saopaulo-1}
       OciStorage__BucketName: ${OCI_BUCKET_NAME:-legal-manager-docs}

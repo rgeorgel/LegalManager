@@ -31,6 +31,12 @@ public class ArquivoEnvTests : IDisposable
     }
 
     [Fact]
+    public void Ler_MapeiaHangfireDesabilitado()
+    {
+        Assert.Equal("true", ArquivoEnv.Ler(["HANGFIRE_DESABILITADO=true"])["Hangfire:Desabilitado"]);
+    }
+
+    [Fact]
     public void Ler_AceitaChavesNoFormatoAspNet_EExport()
     {
         var valores = ArquivoEnv.Ler(["export Escavador__UseMock=true", "Jwt__Key = abc "]);
