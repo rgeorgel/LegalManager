@@ -130,6 +130,25 @@ export async function apiDownload(path) {
   return { blob: await res.blob(), nomeArquivo };
 }
 
+/**
+ * Traduz o `errors` de um ValidationProblem do ASP.NET ({ "Descricao": ["The Descricao field is required."] })
+ * para uma frase em português. Mensagens já escritas pelo backend em [ErrorMessage] passam como estão.
+ */
+function mensagemDeValidacao(errors) {
+  let entradas = Object.entries(errors);
+  // JSON inválido gera também "The dto field is required." (nome do parâmetro da action) — só ruído.
+  if (entradas.length > 1) entradas = entradas.filter(([chave]) => !/^[a-z]\w*$/.test(chave));
+  const mensagens = entradas.flatMap(([chave, lista]) => {
+    const campo = chave.replace(/^\$\./, '').split('.').pop();
+    return (Array.isArray(lista) ? lista : [lista]).map(m => {
+      if (/^The \S+ field is required\.$/.test(m)) return `O campo ${campo} é obrigatório.`;
+      if (/could not be converted|is not valid/i.test(m)) return `Valor inválido no campo ${campo}.`;
+      return m;
+    });
+  });
+  return [...new Set(mensagens)].join(' ');
+}
+
 export async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
@@ -165,11 +184,13 @@ export async function apiFetch(path, options = {}) {
     let errorMsg = '';
     let errorBody = null;
     const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
+    // Erros de validação do ASP.NET vêm como application/problem+json.
+    if (/[/+]json\b/.test(contentType)) {
       try {
         const body = errorBody = await res.json();
-        errorMsg = body.message || body.title
-          || (body.errors ? Object.values(body.errors).flat().join('; ') : '');
+        errorMsg = body.message
+          || (body.errors ? mensagemDeValidacao(body.errors) : '')
+          || body.title;
       } catch {}
     } else {
       const text = (await res.text() || '').trim();

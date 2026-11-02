@@ -1665,14 +1665,20 @@ document.getElementById('encerrarConfirmar').addEventListener('click', async () 
 document.getElementById('andamentoSalvar').addEventListener('click', async () => {
   const btn = document.getElementById('andamentoSalvar');
   const alertEl = document.getElementById('andamentoAlert');
+  const dados = {
+    data: document.getElementById('aData').value,
+    tipo: document.getElementById('aTipo').value,
+    descricao: document.getElementById('aDescricao').value.trim()
+  };
+  const faltando = [!dados.data && 'Data', !dados.tipo && 'Tipo', !dados.descricao && 'Descrição'].filter(Boolean);
+  if (faltando.length) {
+    alertEl.textContent = `Preencha ${faltando.length > 1 ? 'os campos' : 'o campo'}: ${faltando.join(', ')}.`;
+    alertEl.style.display = 'block';
+    return;
+  }
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   alertEl.style.display = 'none';
   try {
-    const dados = {
-      data: document.getElementById('aData').value,
-      tipo: document.getElementById('aTipo').value,
-      descricao: document.getElementById('aDescricao').value
-    };
     if (andamentoEditandoId) await updateAndamento(processoId, andamentoEditandoId, dados);
     else await addAndamento(processoId, dados);
     document.getElementById('modalAndamento').classList.remove('open');
