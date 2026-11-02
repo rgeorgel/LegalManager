@@ -15,37 +15,8 @@
     }
   </script>
   <meta charset="UTF-8">
-  <!-- Google tag (gtag.js) — only loads in non-local environments -->
-  <script>
-    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      var s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
-      document.head.appendChild(s);
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-Z40PJ2FYE2');
-    }
-  </script>
-  <!-- Meta Pixel -- only loads in non-local environments -->
-  <script>
-    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '2569880286763335');
-      fbq('track', 'PageView');
-    }
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
-  /></noscript>
+  <!-- Sem Google Analytics/Meta Pixel no portal do cliente: área logada, títulos e URLs
+       trazem dados do processo (e o Pixel é a causa provável do aviso de COOP ao abrir o portal por e-mail). -->
 <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal do Cliente — Causify</title>
