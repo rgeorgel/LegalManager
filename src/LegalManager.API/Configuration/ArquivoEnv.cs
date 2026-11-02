@@ -7,7 +7,7 @@ namespace LegalManager.API.Configuration;
 /// Lê o <c>.env</c> da raiz do repositório quando a API roda com <c>dotnet run</c> (Development) —
 /// o docker-compose já o lê sozinho, mas o ASP.NET não.
 ///
-/// - Nomes do docker-compose (<c>DB_CONNECTION_STRING</c>, <c>HANGFIRE_DESABILITADO</c>) são traduzidos para a chave de
+/// - Nomes do docker-compose (<c>DB_CONNECTION_STRING</c>, <c>HANGFIRE_DESABILITADO</c>, <c>ADSTERRA_*</c>) são traduzidos para a chave de
 ///   configuração (<see cref="Mapeamento"/>); nomes no formato do ASP.NET (<c>Secao__Chave</c>)
 ///   entram direto. O resto do arquivo é ignorado — <c>ASPNETCORE_ENVIRONMENT=Production</c> no
 ///   .env não muda o ambiente local.
@@ -22,6 +22,14 @@ public static class ArquivoEnv
     {
         ["DB_CONNECTION_STRING"] = "ConnectionStrings:DefaultConnection",
         ["HANGFIRE_DESABILITADO"] = "Hangfire:Desabilitado",
+        ["ADSTERRA_ENABLED"] = "Adsterra:Enabled",
+        ["ADSTERRA_BANNER_HOST"] = "Adsterra:BannerHost",
+        ["ADSTERRA_BANNER_300X250"] = "Adsterra:Banners:300x250",
+        ["ADSTERRA_BANNER_728X90"] = "Adsterra:Banners:728x90",
+        ["ADSTERRA_BANNER_468X60"] = "Adsterra:Banners:468x60",
+        ["ADSTERRA_BANNER_320X50"] = "Adsterra:Banners:320x50",
+        ["ADSTERRA_NATIVE_SCRIPT"] = "Adsterra:NativeScriptUrl",
+        ["ADSTERRA_FRAME_ORIGIN"] = "Adsterra:FrameOrigin",
     };
 
     /// <summary>Adiciona o .env encontrado a partir de <paramref name="inicio"/> (subindo até a raiz do repositório).</summary>

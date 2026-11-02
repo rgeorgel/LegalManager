@@ -223,6 +223,8 @@ builder.Services.AddScoped<SeedService>();
 builder.Services.AddScoped<IHonorarioService, HonorarioService>();
 builder.Services.AddScoped<IConfiguracaoHonorarioService, ConfiguracaoHonorarioService>();
 builder.Services.AddSingleton<TenantAnonymizer>();
+var adsterra = LegalManager.API.Configuration.Adsterra.Ler(builder.Configuration);
+builder.Services.AddSingleton(adsterra);
 builder.Services.AddScoped<ITenantExportService, TenantExportService>();
 builder.Services.AddScoped<ITenantImportService, TenantImportService>();
 builder.Services.AddScoped<ITenantDeletionService, TenantDeletionService>();
@@ -404,6 +406,8 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+foreach (var aviso in adsterra.Avisos)
+    app.Logger.LogWarning("Publicidade (Adsterra): {Aviso}", aviso);
 
 using (var scope = app.Services.CreateScope())
 {
@@ -479,9 +483,21 @@ app.Use(async (ctx, next) =>
         "font-src 'self' data: https://client.crisp.chat; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +
-        "frame-src 'self' blob: https://www.facebook.com https://accounts.google.com; " +
+        "frame-src 'self' blob: https://www.facebook.com https://accounts.google.com" + (adsterra.Origem is { } origemAnuncios ? " " + origemAnuncios : "") + "; " +
         "base-uri 'self'; " +
         "object-src 'none';";
+    await next();
+});
+
+// Host próprio dos anúncios (ADSTERRA_FRAME_ORIGIN): aponta para esta API, mas só serve a página do
+// anúncio — o app (login, páginas, API) nunca roda na origem em que o script do anunciante roda.
+app.Use(async (ctx, next) =>
+{
+    if (adsterra.EhHostDoFrame(ctx.Request.Host) && !ctx.Request.Path.StartsWithSegments("/api/publicidade/anuncio"))
+    {
+        ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
     await next();
 });
 

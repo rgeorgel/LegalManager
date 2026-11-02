@@ -1,0 +1,162 @@
+// Publicidade (Adsterra) para escritórios no plano Free. Liga/desliga no .env (ADSTERRA_ENABLED);
+// quem vê é decidido pelo servidor em GET /api/publicidade (plano lido do banco). Planos pagos
+// nem chegam a perguntar.
+//
+// Cada anúncio é um iframe sandbox de /api/publicidade/anuncio/{formato}, servido pelo host
+// próprio dos anúncios (cfg.origem, ADSTERRA_FRAME_ORIGIN) — outra origem, então o script do
+// anunciante não alcança o token da sessão (sessionStorage) nem o DOM do app. Sem host próprio, o
+// iframe vem do app sem allow-same-origin (origem opaca). O formato é escolhido pelo espaço livre do bloco
+// (e trocado se ele mudar, ex.: alternar lista/grade), entre os configurados no servidor.
+import { apiFetch } from './api.js';
+import { isPlanoFree } from './layout.js';
+import { trackEvent } from './analytics.js';
+
+// Mesmas permissões do CSP da resposta (Adsterra.Sandbox). allow-same-origin só no host próprio:
+// na origem do app ele desfaria o isolamento.
+const SANDBOX = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
+
+const TAMANHOS = {
+  '300x250': [300, 250],
+  '728x90': [728, 90],
+  '468x60': [468, 60],
+  '320x50': [320, 50],
+  nativo: [null, 250], // largura do bloco; a altura vem do próprio anúncio (postMessage)
+};
+
+// Ordem de preferência por tipo de espaço; vale o primeiro configurado que cabe na largura.
+const PREFERENCIA = {
+  bloco: ['300x250', 'nativo', '320x50'],
+  nativo: ['nativo', '300x250', '320x50'],
+  faixa: ['728x90', '468x60', '320x50', '300x250'],
+  auto: ['728x90', '300x250', '320x50'],
+};
+
+let config = null;
+
+function carregarConfig() {
+  config ??= !isPlanoFree()
+    ? Promise.resolve(null)
+    : apiFetch('/publicidade')
+      .then(c => (c?.ativo && c.formatos?.length ? c : null))
+      .catch(() => null);
+  return config;
+}
+
+/**
+ * Insere um anúncio depois de cada `cada` itens (`seletor`, filhos diretos de `container`).
+ * Chame após cada renderização da lista: os anúncios anteriores são removidos antes.
+ * @param {HTMLElement} container
+ * @param {{ seletor: string, cada: number, tipo?: keyof PREFERENCIA }} opts
+ */
+export async function intercalarAnuncios(container, { seletor, cada, tipo = 'auto' }) {
+  const cfg = await carregarConfig();
+  container.querySelectorAll(':scope > .pub-slot').forEach(s => s.remove());
+  if (!cfg) return;
+  container.querySelectorAll(`:scope > ${seletor}`).forEach((el, i) => {
+    if ((i + 1) % cada === 0) el.after(criarSlot(cfg, tipo));
+  });
+}
+
+/**
+ * Anúncios no grid do dashboard, nas `posicoes` (1-based) entre os blocos visíveis — a
+ * personalização (ordem, blocos ocultos) não os tira do lugar. Somem no modo de edição.
+ * @param {HTMLElement} grid
+ * @param {{ posicao: number, tipo: keyof PREFERENCIA }[]} anuncios
+ */
+export async function anunciosNoDashboard(grid, anuncios) {
+  const cfg = await carregarConfig();
+  if (!cfg || !grid) return;
+  const itens = [...anuncios]
+    .sort((a, b) => a.posicao - b.posicao)
+    .map(a => ({ ...a, slot: criarSlot(cfg, a.tipo, 'd2-card') }));
+
+  const posicionar = () => {
+    if (grid.classList.contains('d2-editando')) return;
+    const seq = [...grid.children].filter(el => el.matches('[data-widget]:not(.d2-oculto)'));
+    for (const { posicao, slot } of itens) {
+      const anterior = seq[Math.min(posicao - 1, seq.length) - 1];
+      if (!anterior) { if (grid.firstElementChild !== slot) grid.prepend(slot); }
+      else if (anterior.nextElementSibling !== slot) anterior.after(slot);
+      seq.splice(Math.min(posicao - 1, seq.length), 0, slot);
+    }
+  };
+
+  posicionar();
+  // O layout salvo é aplicado depois (cache local e servidor) reordenando os filhos do grid;
+  // ocultar/exibir blocos troca a classe deles. As mudanças que este código faz são idempotentes.
+  new MutationObserver(registros => {
+    if (registros.some(r => r.type === 'childList' || r.target === grid || r.target.parentElement === grid)) posicionar();
+  }).observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+}
+
+function criarSlot(cfg, tipo, classeExtra = '') {
+  injectStyles();
+  const slot = document.createElement('aside');
+  slot.className = `pub-slot ${classeExtra}`.trim();
+  slot.setAttribute('aria-label', 'Publicidade');
+  slot.innerHTML = `<div class="pub-topo"><span>Publicidade</span>
+      <a href="/pages/assinatura.html" class="pub-remover">Remover anúncios</a></div>
+    <div class="pub-area"></div>`;
+  slot.querySelector('.pub-remover').addEventListener('click', () => trackEvent('publicidade_remover_click', { tipo }));
+
+  const area = slot.querySelector('.pub-area');
+  let atual = null;
+  new ResizeObserver(() => {
+    const largura = area.clientWidth;
+    if (!largura) return; // oculto (ex.: modo de edição do dashboard): mantém o anúncio
+    const formato = escolherFormato(cfg.formatos, PREFERENCIA[tipo] ?? PREFERENCIA.auto, largura);
+    if (formato === atual) return;
+    atual = formato;
+    area.replaceChildren(criarIframe(formato, cfg.origem));
+  }).observe(area);
+  return slot;
+}
+
+function escolherFormato(disponiveis, preferencia, largura) {
+  const candidatos = preferencia.filter(f => disponiveis.includes(f));
+  return candidatos.find(f => (TAMANHOS[f][0] ?? 0) <= largura)
+    ?? candidatos.at(-1)
+    ?? disponiveis[0];
+}
+
+function criarIframe(formato, origem) {
+  const [largura, altura] = TAMANHOS[formato] ?? TAMANHOS['300x250'];
+  const f = document.createElement('iframe');
+  f.className = 'pub-frame';
+  f.title = 'Publicidade';
+  f.loading = 'lazy';
+  f.setAttribute('sandbox', origem ? `${SANDBOX} allow-same-origin` : SANDBOX);
+  f.setAttribute('scrolling', 'no');
+  f.src = `${origem ?? ''}/api/publicidade/anuncio/${encodeURIComponent(formato)}`;
+  f.style.width = largura ? `${largura}px` : '100%';
+  f.style.height = `${altura}px`;
+  return f;
+}
+
+// Altura do Native Banner, informada pela página do iframe. A mensagem é aceita só se vier de
+// um iframe de anúncio desta página (a origem não ajuda: é "null" sem o host próprio).
+window.addEventListener('message', e => {
+  const altura = e.data?.pubAltura;
+  if (typeof altura !== 'number') return;
+  const frame = [...document.querySelectorAll('iframe.pub-frame')].find(f => f.contentWindow === e.source);
+  if (frame) frame.style.height = `${Math.min(Math.max(Math.round(altura), 50), 600)}px`;
+});
+
+function injectStyles() {
+  if (document.getElementById('pubStyles')) return;
+  const s = document.createElement('style');
+  s.id = 'pubStyles';
+  s.textContent = `
+    .pub-slot { display: flex; flex-direction: column; gap: 8px; min-width: 0; overflow: hidden;
+      padding: 10px 14px 14px; border: 1px dashed var(--color-border); border-radius: var(--radius, 12px);
+      background: var(--color-surface); }
+    .pub-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+    .pub-remover { text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--color-primary); text-decoration: none; }
+    .pub-remover:hover { text-decoration: underline; }
+    .pub-area { display: flex; justify-content: center; align-items: center; flex: 1; min-width: 0; }
+    .pub-frame { display: block; max-width: 100%; border: 0; background: transparent; }
+    .d2-editando > .pub-slot { display: none; }
+  `;
+  document.head.appendChild(s);
+}

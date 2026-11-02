@@ -298,6 +298,7 @@ public class EmailService : IEmailService
         Flag("Portal do Cliente", PlanoRestricoes.PermitePortalCliente);
         Flag("Assistente de IA", PlanoRestricoes.PermiteAssistenteIA);
         Flag("Templates de documentos", PlanoRestricoes.PermiteTemplatesDocumentos);
+        Flag("Exibe publicidade", p => p == PlanoTipo.Free); // anúncios só no Free (ver PublicidadeController)
 
         static string Celula(string valor, bool destaque) => valor switch
         {

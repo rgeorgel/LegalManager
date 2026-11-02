@@ -84,6 +84,15 @@ services:
       Logfire__Endpoint: ${LOGFIRE_ENDPOINT:-https://logfire-us.pydantic.dev/v1/logs}
       Logfire__ServiceName: ${LOGFIRE_SERVICE_NAME:-causify-api}
       Logfire__ServiceVersion: ${LOGFIRE_SERVICE_VERSION:-1.0.0}
+      # Publicidade do Adsterra (só plano Free) — desligada por padrão; ver .env.example.
+      Adsterra__Enabled: ${ADSTERRA_ENABLED:-false}
+      Adsterra__BannerHost: ${ADSTERRA_BANNER_HOST:-}
+      Adsterra__Banners__300x250: ${ADSTERRA_BANNER_300X250:-}
+      Adsterra__Banners__728x90: ${ADSTERRA_BANNER_728X90:-}
+      Adsterra__Banners__468x60: ${ADSTERRA_BANNER_468X60:-}
+      Adsterra__Banners__320x50: ${ADSTERRA_BANNER_320X50:-}
+      Adsterra__NativeScriptUrl: ${ADSTERRA_NATIVE_SCRIPT:-}
+      Adsterra__FrameOrigin: ${ADSTERRA_FRAME_ORIGIN:-}
     depends_on:
       postgres:
         condition: service_healthy

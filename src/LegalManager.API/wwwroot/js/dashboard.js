@@ -9,6 +9,7 @@ import { mostrarAvisoMfa } from '/js/aviso-mfa.js';
 import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 import { esc, brl as brlOuTraco, dataParede, isoLocal } from '/js/utils.js';
 import { initDashboardLayout } from '/js/dashboard-layout.js';
+import { anunciosNoDashboard } from '/js/publicidade.js';
 
 if (!isLoggedIn()) {
   window.location.href = '/login.html';
@@ -43,6 +44,11 @@ initDashboardLayout({
   botao: document.getElementById('d2Personalizar'),
   userId: user?.id,
 });
+// Plano Free (com a publicidade ligada no servidor): um anúncio sempre na 2ª posição do grid e outro na 6ª.
+anunciosNoDashboard(document.getElementById('d2Grid'), [
+  { posicao: 2, tipo: 'bloco' },
+  { posicao: 6, tipo: 'nativo' },
+]);
 const plano = getPlano();
 const free = isPlanoFree();
 const planoPro = ['Pro', 'Max', 'Enterprise'].includes(plano);

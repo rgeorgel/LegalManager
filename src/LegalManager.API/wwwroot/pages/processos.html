@@ -664,6 +664,7 @@
 import { abrirNovoPelaUrl, esc, dataParede } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito, baixarRelatorioProcessos } from '/js/processos.js';
+import { intercalarAnuncios } from '/js/publicidade.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { getContato } from '/js/contatos.js';
@@ -1064,6 +1065,7 @@ function renderTable(items) {
       </div>
     </div>`;
   }).join('');
+  intercalarAnuncios(grid, { seletor: '.processo-card', cada: 4 }); // só no plano Free
 }
 
 // Linha "rótulo: valor" do card. Sem valor, mostra "—"; o Valor da causa vazio some na

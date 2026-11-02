@@ -230,6 +230,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { createMultiSelect } from '/js/multiselect.js';
 import { abrirNovaTarefa, abrirTarefa, excluirTarefa, PRIORIDADE_LABEL, STATUS_LABEL, badgeRecorrente } from '/js/tarefa-modal.js';
+import { intercalarAnuncios } from '/js/publicidade.js';
 
 initLayout();
 
@@ -363,6 +364,7 @@ function renderLista(items, data) {
   container.innerHTML = items.map(t => tarefaCard(t)).join('');
   renderPagination(data);
   bindListActions();
+  intercalarAnuncios(container, { seletor: '.tarefa-card', cada: 3, tipo: 'faixa' }); // só no plano Free
 }
 
 function tarefaCard(t) {
