@@ -253,7 +253,7 @@ function injectStyles() {
     .pw-card + .pw-card { border-top: 1px solid var(--color-border); padding-top: 12px; }
 
     @media (max-width: 768px) {
-      .pw { top: auto; bottom: 16px; transform: none; }
+      .pw { top: auto; bottom: calc(16px + var(--bottom-nav-total, 0px)); transform: none; }
       .pw-panel { top: auto; bottom: 0; transform: translateX(12px); max-height: min(420px, calc(100vh - 96px)); }
       .pw.open .pw-panel { transform: translateX(0); }
     }
