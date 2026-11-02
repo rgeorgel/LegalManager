@@ -63,7 +63,7 @@ services:
       IA__ApiKey: ${IA_API_KEY:-}
       IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}
       IA__BaseUrl: ${IA_BASE_URL:-}
-      IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-30}
+      IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-90}
       IA__ReasoningEffort: ${IA_REASONING_EFFORT:-}
       # Assistente de IA (opcional): sem ASSISTENTE_PROVIDER, reaproveita a configuração IA__*.
       Assistente__Provider: ${ASSISTENTE_PROVIDER:-}

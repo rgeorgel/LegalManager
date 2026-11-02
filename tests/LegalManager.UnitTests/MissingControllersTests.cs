@@ -1039,6 +1039,34 @@ public class IAControllerTests
         var result = await controller.ObterPeca(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
+
+    [Fact]
+    public async Task GerarResumo_Retorna503ComMensagem_QuandoIADemora()
+    {
+        var resumo = CreateResumoMock();
+        resumo.Setup(s => s.GerarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException("A IA demorou demais para responder."));
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, resumo.Object);
+
+        var result = await controller.GerarResumo(new GerarResumoDto(Guid.NewGuid()), CancellationToken.None);
+
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(503, obj.StatusCode);
+        Assert.Contains("demorou", System.Text.Json.JsonSerializer.Serialize(obj.Value));
+    }
+
+    [Fact]
+    public async Task GerarPeca_Retorna503_QuandoProvedorDeIAFalha()
+    {
+        var peca = CreatePecaMock();
+        peca.Setup(s => s.GerarPecaAsync(It.IsAny<GerarPecaDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("500"));
+        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
+
+        var result = await controller.GerarPeca(new GerarPecaDto(null, Domain.Entities.TipoPecaJuridica.PeticaoInicial, "Petição"), CancellationToken.None);
+
+        Assert.Equal(503, Assert.IsType<ObjectResult>(result.Result).StatusCode);
+    }
 }
 
 // ─── CreditosController ───────────────────────────────────────────────────────

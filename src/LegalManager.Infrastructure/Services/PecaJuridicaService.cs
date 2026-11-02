@@ -61,10 +61,13 @@ public class PecaJuridicaService : IPecaJuridicaService
             }
         }
 
-        var conteudoGerado = await _iaService.GerarPecaJuridicaAsync(contextoCompleto, tipoPecaStr, ct);
-
-        var jurisprudencia = await _iaService.BuscarJurisprudenciaAsync(
+        // Em paralelo: as duas chamadas juntas precisam caber no limite de tempo da requisição.
+        var gerarPeca = _iaService.GerarPecaJuridicaAsync(contextoCompleto, tipoPecaStr, ct);
+        var buscarJurisprudencia = _iaService.BuscarJurisprudenciaAsync(
             dto.DescricaoSolicitacao.Split('\n').FirstOrDefault() ?? dto.DescricaoSolicitacao, ct);
+        await Task.WhenAll(gerarPeca, buscarJurisprudencia);
+        var conteudoGerado = await gerarPeca;
+        var jurisprudencia = await buscarJurisprudencia;
 
         var peca = new PecaGerada
         {

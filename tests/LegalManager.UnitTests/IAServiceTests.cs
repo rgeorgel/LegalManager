@@ -475,6 +475,47 @@ public class IAServiceTests
         Assert.Equal(2, handler.Corpos.Count);
     }
 
+    private static IConfiguration OpenAIConfigComTimeout(int segundos) =>
+        BuildConfig(new Dictionary<string, string?>
+        {
+            ["IA:Provider"] = "OpenAI",
+            ["IA:ApiKey"] = "test-key",
+            ["IA:Model"] = "gpt-4",
+            ["IA:TimeoutSeconds"] = segundos.ToString()
+        });
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_IANaoRespondeNoPrazo_LancaTimeoutException()
+    {
+        var handler = new MockHttpMessageHandler(RespostaOpenAI("Resumo.")) { Atraso = TimeSpan.FromSeconds(5) };
+        var svc = new IAService(new HttpClient(handler), OpenAIConfigComTimeout(1));
+
+        var ex = await Assert.ThrowsAsync<TimeoutException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1"));
+        Assert.Equal(IAService.MensagemTimeout, ex.Message);
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_CancelamentoDaRequisicao_NaoViraTimeout()
+    {
+        var handler = new MockHttpMessageHandler(RespostaOpenAI("Resumo.")) { Atraso = TimeSpan.FromSeconds(5) };
+        var svc = new IAService(new HttpClient(handler), OpenAIConfig());
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1", cts.Token));
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_SemTempoParaCorrecao_SoRemoveOsCaracteres()
+    {
+        var handler = MockHttpMessageHandler.EmSequencia(RespostaOpenAI("Prazo 残余 encerrado."));
+        var svc = new IAService(new HttpClient(handler), OpenAIConfigComTimeout(5));
+
+        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        Assert.Equal("Prazo encerrado.", result);
+        Assert.Single(handler.Corpos);
+    }
+
     [Fact]
     public void RemoverOutroAlfabeto_PreservaQuebraDeLinhaMarkdownEIndentacao()
     {
@@ -495,6 +536,7 @@ public class IAServiceTests
 
         public Uri? RequestUri { get; private set; }
         public List<string> Corpos { get; } = [];
+        public TimeSpan Atraso { get; init; }
 
         public MockHttpMessageHandler(object responseBody)
             : this(JsonSerializer.Serialize(responseBody)) { }
@@ -523,6 +565,7 @@ public class IAServiceTests
         {
             RequestUri = request.RequestUri;
             Corpos.Add(request.Content is null ? "" : await request.Content.ReadAsStringAsync(ct));
+            if (Atraso > TimeSpan.Zero) await Task.Delay(Atraso, ct);
             return new HttpResponseMessage(_statusCode)
             {
                 Content = new StringContent(_respostas.Count > 0 ? _respostas.Dequeue() : _rawResponse ?? string.Empty)

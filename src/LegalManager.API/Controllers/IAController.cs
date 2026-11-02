@@ -45,6 +45,10 @@ public class IAController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        {
+            return IAIndisponivel(ex);
+        }
     }
 
     [HttpGet("traduzir-andamento/{andamentoId:guid}")]
@@ -67,6 +71,10 @@ public class IAController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        {
+            return IAIndisponivel(ex);
         }
     }
 
@@ -107,6 +115,10 @@ public class IAController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        {
+            return IAIndisponivel(ex);
+        }
     }
 
     [HttpGet("resumo-processo")]
@@ -119,6 +131,15 @@ public class IAController : ControllerBase
     }
 
     public record SetVisivelClienteDto(bool Visivel);
+
+    /// <summary>Provedor de IA lento ou fora do ar: 503 com mensagem, em vez de um 500 genérico.</summary>
+    private ObjectResult IAIndisponivel(Exception ex) =>
+        StatusCode(StatusCodes.Status503ServiceUnavailable, new
+        {
+            message = ex is TimeoutException
+                ? ex.Message
+                : "O serviço de IA está indisponível no momento. Tente novamente em instantes."
+        });
 
     [HttpPatch("resumo-processo/{id:guid}/visivel-cliente")]
     public async Task<ActionResult<ResumoProcessoResponseDto>> SetResumoVisivelCliente(

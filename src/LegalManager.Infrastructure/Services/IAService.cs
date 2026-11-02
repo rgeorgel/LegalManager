@@ -15,7 +15,7 @@ public class IAService : IIAService
     private readonly string _apiKey;
     private readonly string _model;
     private readonly string _baseUrl;
-    private readonly int _timeoutSeconds;
+    private readonly TimeSpan _orcamento;
     private readonly string? _reasoningEffort;
 
     public IAService(HttpClient httpClient, IConfiguration config)
@@ -25,11 +25,15 @@ public class IAService : IIAService
         _apiKey = config["IA:ApiKey"] ?? throw new InvalidOperationException("IA:ApiKey não configurado");
         _model = config["IA:Model"] ?? "claude-3-5-sonnet-latest";
         _baseUrl = config["IA:BaseUrl"] ?? "";
-        _timeoutSeconds = int.TryParse(config["IA:TimeoutSeconds"], out var t) ? t : 30;
+        _orcamento = TimeSpan.FromSeconds(int.TryParse(config["IA:TimeoutSeconds"], out var t) ? t : 90);
         _reasoningEffort = string.IsNullOrWhiteSpace(config["IA:ReasoningEffort"]) ? null : config["IA:ReasoningEffort"];
 
-        _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
+        // O prazo é controlado por operação em EnviarPromptAsync (ver _orcamento).
+        _httpClient.Timeout = Timeout.InfiniteTimeSpan;
     }
+
+    /// <summary>Abaixo disso não vale pedir a reescrita de idioma: só remove os caracteres estrangeiros.</summary>
+    private static readonly TimeSpan MinimoParaCorrecao = TimeSpan.FromSeconds(10);
 
     public async Task<string> TraduzirTextoAsync(string texto, CancellationToken ct = default)
     {
@@ -43,7 +47,8 @@ public class IAService : IIAService
             Andamento: {texto}
             """;
 
-        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), ct);
+        var inicio = Stopwatch.GetTimestamp();
+        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), inicio, ct);
     }
 
     public async Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default)
@@ -72,8 +77,9 @@ public class IAService : IIAService
             Forneça apenas o texto da peça em português brasileiro. NADA de outras línguas.
             """;
 
+        var inicio = Stopwatch.GetTimestamp();
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return await GarantirPortuguesAsync(resultado, ct);
+        return await GarantirPortuguesAsync(resultado, inicio, ct);
     }
 
 public async Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default)
@@ -100,8 +106,9 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             Forneça APENAS o conteúdo do modelo, em português brasileiro. Nada de outras línguas, nada de JSON, nada de tags de pensamento.
             """;
 
+        var inicio = Stopwatch.GetTimestamp();
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), ct);
+        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), inicio, ct);
     }
 
     private string LimparETValidarResposta(string texto)
@@ -126,23 +133,29 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
 
     /// <summary>
     /// Alguns modelos (ex.: MiniMax, Qwen) misturam chinês ou inglês no texto mesmo com a regra no
-    /// prompt. Se a heurística detectar outro idioma, pede uma reescrita em português; o que ainda
+    /// prompt. Se a heurística detectar outro idioma, pede uma reescrita em português, dentro do
+    /// que sobrou do orçamento da operação (iniciada em <paramref name="inicio"/>); o que ainda
     /// sobrar de outro alfabeto é removido. Se a reescrita falhar, fica o original sem esses caracteres.
     /// </summary>
-    private async Task<string> GarantirPortuguesAsync(string texto, CancellationToken ct)
+    private async Task<string> GarantirPortuguesAsync(string texto, long inicio, CancellationToken ct)
     {
         if (!IdiomaResposta.PareceTerOutroIdioma(texto)) return texto;
 
         Activity.Current?.SetTag("gen_ai.idioma_corrigido", true);
         var resultado = texto;
-        try
+        var restante = _orcamento - Stopwatch.GetElapsedTime(inicio);
+        if (restante >= MinimoParaCorrecao)
         {
-            var corrigido = LimparETValidarResposta(await EnviarPromptAsync(texto, ct, IdiomaResposta.PromptCorrecao));
-            if (corrigido.Length > 0) resultado = corrigido;
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            Activity.Current?.AddException(ex);
+            try
+            {
+                var corrigido = LimparETValidarResposta(
+                    await EnviarPromptAsync(texto, ct, IdiomaResposta.PromptCorrecao, restante));
+                if (corrigido.Length > 0) resultado = corrigido;
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                Activity.Current?.AddException(ex);
+            }
         }
 
         return IdiomaResposta.TemOutroAlfabeto(resultado)
@@ -246,8 +259,9 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             {contextoProcesso}
             """;
 
+        var inicio = Stopwatch.GetTimestamp();
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), ct);
+        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), inicio, ct);
     }
 
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
@@ -266,23 +280,35 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             Responda EXCLUSIVAMENTE em Português do Brasil.
             """;
 
-        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), ct);
+        var inicio = Stopwatch.GetTimestamp();
+        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), inicio, ct);
     }
 
+    /// <summary>
+    /// Envia o prompt com prazo de <paramref name="limite"/> (padrão: o orçamento inteiro). Estourar
+    /// o prazo vira <see cref="TimeoutException"/>, para não se confundir com o cancelamento da requisição.
+    /// </summary>
     private async Task<string> EnviarPromptAsync(
-        string prompt, CancellationToken ct, string sistema = IdiomaResposta.InstrucaoSistema)
+        string prompt, CancellationToken ct, string sistema = IdiomaResposta.InstrucaoSistema, TimeSpan? limite = null)
     {
-        if (_provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase))
-        {
-            return await EnviarAnthropicAsync(prompt, sistema, ct);
-        }
-        else if (_provider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase))
-        {
-            return await EnviarOpenAIAsync(prompt, sistema, ct);
-        }
+        Func<CancellationToken, Task<string>> enviar =
+            _provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase) ? c => EnviarAnthropicAsync(prompt, sistema, c)
+            : _provider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase) ? c => EnviarOpenAIAsync(prompt, sistema, c)
+            : throw new NotSupportedException($"Provedor IA '{_provider}' não suportado. Use 'Anthropic' ou 'OpenAI'.");
 
-        throw new NotSupportedException($"Provedor IA '{_provider}' não suportado. Use 'Anthropic' ou 'OpenAI'.");
+        using var prazo = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        prazo.CancelAfter(limite ?? _orcamento);
+        try
+        {
+            return await enviar(prazo.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException(MensagemTimeout);
+        }
     }
+
+    public const string MensagemTimeout = "A IA demorou demais para responder. Tente novamente em instantes.";
 
     private async Task<string> EnviarAnthropicAsync(string prompt, string sistema, CancellationToken ct)
     {
