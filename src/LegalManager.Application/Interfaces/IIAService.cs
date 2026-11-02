@@ -21,3 +21,8 @@ public interface IIAService
     Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default);
     Task<string> GerarResumoProcessoAsync(string contextoProcesso, CancellationToken ct = default);
 }
+/// <summary>
+/// O provedor de IA não entregou uma resposta utilizável (recusa, limite de uso, resposta vazia).
+/// A mensagem é para o usuário.
+/// </summary>
+public class IAIndisponivelException(string message) : Exception(message);

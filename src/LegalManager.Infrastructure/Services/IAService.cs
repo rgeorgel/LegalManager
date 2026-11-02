@@ -5,6 +5,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Services;
 
@@ -17,10 +18,12 @@ public class IAService : IIAService
     private readonly string _baseUrl;
     private readonly TimeSpan _orcamento;
     private readonly string? _reasoningEffort;
+    private readonly ILogger<IAService>? _logger;
 
-    public IAService(HttpClient httpClient, IConfiguration config)
+    public IAService(HttpClient httpClient, IConfiguration config, ILogger<IAService>? logger = null)
     {
         _httpClient = httpClient;
+        _logger = logger;
         _provider = config["IA:Provider"] ?? "Anthropic";
         _apiKey = config["IA:ApiKey"] ?? throw new InvalidOperationException("IA:ApiKey não configurado");
         _model = config["IA:Model"] ?? "claude-3-5-sonnet-latest";
@@ -385,7 +388,8 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         using var doc = await JsonDocument.ParseAsync(stream);
 
         var root = doc.RootElement;
-        if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+        if (root.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array
+            && choices.GetArrayLength() > 0)
         {
             var firstChoice = choices[0];
             if (firstChoice.TryGetProperty("message", out var message) &&
@@ -395,6 +399,28 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             }
         }
 
-        throw new InvalidOperationException("Resposta da API OpenAI em formato inesperado.");
+        // Provedores compatíveis (ex.: MiniMax) respondem 200 sem "choices" e com o erro em
+        // "base_resp" (filtro de conteúdo, limite de requisições, saldo...).
+        if (root.TryGetProperty("base_resp", out var baseResp)
+            && baseResp.TryGetProperty("status_code", out var codigo) && codigo.TryGetInt32(out var c) && c != 0)
+        {
+            var detalhe = baseResp.TryGetProperty("status_msg", out var msg) ? msg.GetString() : null;
+            _logger?.LogWarning("IA: provedor recusou a requisição (código {Codigo}: {Detalhe})", c, detalhe);
+            Activity.Current?.SetTag("gen_ai.erro_provedor", $"{c}: {detalhe}");
+            throw new IAIndisponivelException(MensagemErroProvedor(c));
+        }
+
+        _logger?.LogWarning("IA: resposta sem conteúdo (campos: {Campos})",
+            root.ValueKind == JsonValueKind.Object ? string.Join(", ", root.EnumerateObject().Select(p => p.Name)) : root.ValueKind.ToString());
+        throw new IAIndisponivelException("O serviço de IA respondeu em um formato inesperado. Tente novamente em instantes.");
     }
+
+    /// <summary>Códigos de erro do MiniMax (base_resp.status_code) em mensagem para o usuário.</summary>
+    internal static string MensagemErroProvedor(int codigo) => codigo switch
+    {
+        1002 or 1039 => "O serviço de IA está com muitas requisições no momento. Tente novamente em instantes.",
+        1026 or 1027 => "O provedor de IA recusou o conteúdo deste processo pelo filtro de conteúdo sensível. Tente novamente; se persistir, o resumo não pode ser gerado para este processo.",
+        1001 => MensagemTimeout,
+        _ => $"O serviço de IA está indisponível no momento (código {codigo}). Tente novamente em instantes."
+    };
 }

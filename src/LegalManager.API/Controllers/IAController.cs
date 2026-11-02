@@ -45,7 +45,7 @@ public class IAController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
         {
             return IAIndisponivel(ex);
         }
@@ -72,7 +72,7 @@ public class IAController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
         {
             return IAIndisponivel(ex);
         }
@@ -115,7 +115,7 @@ public class IAController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException)
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
         {
             return IAIndisponivel(ex);
         }
@@ -136,7 +136,7 @@ public class IAController : ControllerBase
     private ObjectResult IAIndisponivel(Exception ex) =>
         StatusCode(StatusCodes.Status503ServiceUnavailable, new
         {
-            message = ex is TimeoutException
+            message = ex is TimeoutException or IAIndisponivelException
                 ? ex.Message
                 : "O serviço de IA está indisponível no momento. Tente novamente em instantes."
         });

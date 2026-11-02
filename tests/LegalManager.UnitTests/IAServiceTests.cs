@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Services;
@@ -174,7 +175,7 @@ public class IAServiceTests
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.com") };
         var svc = new IAService(httpClient, OpenAIConfig());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.TraduzirTextoAsync("texto"));
+        await Assert.ThrowsAsync<IAIndisponivelException>(() => svc.TraduzirTextoAsync("texto"));
     }
 
     [Fact]
@@ -185,7 +186,7 @@ public class IAServiceTests
         var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.com") };
         var svc = new IAService(httpClient, OpenAIConfig());
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.TraduzirTextoAsync("texto"));
+        await Assert.ThrowsAsync<IAIndisponivelException>(() => svc.TraduzirTextoAsync("texto"));
     }
 
     // ── GerarPecaJuridicaAsync ───────────────────────────────────────────────
@@ -514,6 +515,19 @@ public class IAServiceTests
 
         Assert.Equal("Prazo encerrado.", result);
         Assert.Single(handler.Corpos);
+    }
+
+    [Theory]
+    [InlineData(1027, "filtro de conteúdo sensível")]
+    [InlineData(1002, "muitas requisições")]
+    [InlineData(1008, "código 1008")]
+    public async Task OpenAI_ErroEmBaseRespSemChoices_LancaIAIndisponivelComMotivo(int codigo, string trecho)
+    {
+        var json = JsonSerializer.Serialize(new { id = "x", choices = (object?)null, base_resp = new { status_code = codigo, status_msg = "erro" } });
+        var svc = new IAService(new HttpClient(new MockHttpMessageHandler(json)), OpenAIConfig());
+
+        var ex = await Assert.ThrowsAsync<IAIndisponivelException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1"));
+        Assert.Contains(trecho, ex.Message);
     }
 
     [Fact]
