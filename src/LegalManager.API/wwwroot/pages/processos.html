@@ -1551,7 +1551,11 @@ document.getElementById('btnSalvar').addEventListener('click', async () => {
     showAlert(editingId ? 'Processo atualizado.' : 'Processo cadastrado.', 'success');
     loadProcessos();
   } catch (err) {
-    modalAlert.textContent = err.message;
+    if (err.status === 409 && err.data?.processoId) {
+      modalAlert.innerHTML = `${esc(err.message)} <a href="/pages/processo-detalhe.html?id=${encodeURIComponent(err.data.processoId)}">Abrir o processo cadastrado</a>`;
+    } else {
+      modalAlert.textContent = err.message;
+    }
     modalAlert.style.display = 'block';
   } finally { btn.disabled = false; btn.textContent = editingId ? 'Salvar alterações' : 'Salvar'; }
 });

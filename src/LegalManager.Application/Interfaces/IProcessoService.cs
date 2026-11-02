@@ -30,3 +30,12 @@ public interface IProcessoService
     Task AdicionarParteAsync(Guid processoId, Guid contatoId, string tipoParte, CancellationToken ct = default);
     Task RemoverParteAsync(Guid processoId, Guid contatoId, CancellationToken ct = default);
 }
+
+/// <summary>
+/// Já existe no escritório um processo com o número CNJ informado. A mensagem é para o usuário;
+/// <see cref="ProcessoId"/> permite à tela levar direto ao processo existente.
+/// </summary>
+public class ProcessoDuplicadoException(Guid processoId, string message) : InvalidOperationException(message)
+{
+    public Guid ProcessoId { get; } = processoId;
+}

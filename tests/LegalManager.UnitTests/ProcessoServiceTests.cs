@@ -89,8 +89,26 @@ public class ProcessoServiceTests
         var dto = new CreateProcessoDto("1111111-11.2024.8.26.0001", null, null, null,
             AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
 
-        await service.CreateAsync(dto);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(dto));
+        var existente = await service.CreateAsync(dto);
+        var ex = await Assert.ThrowsAsync<ProcessoDuplicadoException>(() => service.CreateAsync(dto));
+        Assert.Equal(existente.Id, ex.ProcessoId);
+        Assert.Equal("O processo 1111111-11.2024.8.26.0001 já está cadastrado no sistema.", ex.Message);
+    }
+
+    [Fact]
+    public async Task CreateAsync_CNJDuplicadoDeProcessoArquivado_InformaSituacao()
+    {
+        var (ctx, tenant, usuario, _) = await SeedAsync();
+        var service = new ProcessoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), new Mock<IEscavadorService>().Object, FakeConsultaExternaLogService.Instance);
+
+        var dto = new CreateProcessoDto("2222222-22.2024.8.26.0001", null, null, null,
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
+        var existente = await service.CreateAsync(dto);
+        await service.DeleteAsync(existente.Id); // arquiva
+
+        var ex = await Assert.ThrowsAsync<ProcessoDuplicadoException>(() => service.CreateAsync(dto));
+        Assert.Equal(existente.Id, ex.ProcessoId);
+        Assert.Contains("(arquivado)", ex.Message);
     }
 
     [Fact]
@@ -427,7 +445,7 @@ public class ProcessoServiceTests
         var dto2 = new CreateProcessoDto("0000001-00.2024.8.26.0001", null, null, null,
             AreaDireito.Trabalhista, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(dto2));
+        await Assert.ThrowsAsync<ProcessoDuplicadoException>(() => service.CreateAsync(dto2));
     }
 
     [Fact]

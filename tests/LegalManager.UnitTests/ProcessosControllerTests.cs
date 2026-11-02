@@ -185,6 +185,63 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
     }
 
     [Fact]
+    public async Task Create_ProcessoDuplicado_Retorna409ComIdDoExistente()
+    {
+        var service = CreateProcessoServiceMock();
+        var existenteId = Guid.NewGuid();
+        service.Setup(s => s.CreateAsync(It.IsAny<CreateProcessoDto>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ProcessoDuplicadoException(existenteId, "O processo X já está cadastrado no sistema."));
+        var audit = CreateAuditServiceMock();
+        var controller = new ProcessosController(service.Object, CreateMonitoramentoServiceMock().Object, audit.Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        var result = await controller.Create(CreateProcessoDtoPadrao(), CancellationToken.None);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status409Conflict, conflict.StatusCode);
+        var body = conflict.Value!;
+        Assert.Equal("processo_duplicado", body.GetType().GetProperty("error")!.GetValue(body));
+        Assert.Equal("O processo X já está cadastrado no sistema.", body.GetType().GetProperty("message")!.GetValue(body));
+        Assert.Equal(existenteId, body.GetType().GetProperty("processoId")!.GetValue(body));
+        audit.Verify(a => a.LogAsync(It.IsAny<AuditLogEntry>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Create_LimiteDeMonitorados_Retorna400ComMensagem()
+    {
+        var service = CreateProcessoServiceMock();
+        service.Setup(s => s.CreateAsync(It.IsAny<CreateProcessoDto>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Limite de 5 processos monitorados atingido no plano Free."));
+        var controller = new ProcessosController(service.Object, CreateMonitoramentoServiceMock().Object, CreateAuditServiceMock().Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        var result = await controller.Create(CreateProcessoDtoPadrao(), CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var body = badRequest.Value!;
+        Assert.Equal("Limite de 5 processos monitorados atingido no plano Free.", body.GetType().GetProperty("message")!.GetValue(body));
+    }
+
+    [Fact]
+    public async Task Update_CnjDeOutroProcesso_Retorna409()
+    {
+        var service = CreateProcessoServiceMock();
+        var existenteId = Guid.NewGuid();
+        service.Setup(s => s.UpdateAsync(It.IsAny<Guid>(), It.IsAny<UpdateProcessoDto>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ProcessoDuplicadoException(existenteId, "O processo X já está cadastrado no sistema."));
+        var controller = new ProcessosController(service.Object, CreateMonitoramentoServiceMock().Object, CreateAuditServiceMock().Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        var dto = new UpdateProcessoDto("0000001-00.2024.8.26.0001", null, null, null, AreaDireito.Civil,
+            null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null, null, null, null, null, null);
+        var result = await controller.Update(Guid.NewGuid(), dto, CancellationToken.None);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal(existenteId, conflict.Value!.GetType().GetProperty("processoId")!.GetValue(conflict.Value));
+    }
+
+    private static CreateProcessoDto CreateProcessoDtoPadrao() =>
+        new("0000001-00.2024.8.26.0001", null, null, null,
+            AreaDireito.Civil, null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null);
+
+    [Fact]
     public async Task GetById_ExistingProcesso_ReturnsOk()
     {
         var service = CreateProcessoServiceMock();

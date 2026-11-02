@@ -29,8 +29,7 @@ public class ProcessoService : IProcessoService
 
     public async Task<ProcessoResponseDto> CreateAsync(CreateProcessoDto dto, CancellationToken ct = default)
     {
-        if (await _context.Processos.AnyAsync(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == dto.NumeroCNJ, ct))
-            throw new InvalidOperationException($"Processo com número CNJ '{dto.NumeroCNJ}' já cadastrado.");
+        await GarantirCnjDisponivelAsync(dto.NumeroCNJ, null, ct);
 
         if (dto.Monitorado)
         {
@@ -107,9 +106,8 @@ public class ProcessoService : IProcessoService
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct)
             ?? throw new KeyNotFoundException("Processo não encontrado.");
 
-        if (processo.NumeroCNJ != dto.NumeroCNJ &&
-            await _context.Processos.AnyAsync(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == dto.NumeroCNJ && p.Id != id, ct))
-            throw new InvalidOperationException($"Número CNJ '{dto.NumeroCNJ}' já pertence a outro processo.");
+        if (processo.NumeroCNJ != dto.NumeroCNJ)
+            await GarantirCnjDisponivelAsync(dto.NumeroCNJ, id, ct);
 
         processo.NumeroCNJ = dto.NumeroCNJ;
         processo.Tribunal = dto.Tribunal;
@@ -195,6 +193,29 @@ public class ProcessoService : IProcessoService
 
         await _context.SaveChangesAsync(ct);
         return await LoadResponseAsync(id, ct) ?? throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Lança <see cref="ProcessoDuplicadoException"/> se outro processo do escritório já usa o CNJ —
+    /// inclusive arquivado ou encerrado, que some da lista padrão e confunde quem tenta recadastrar.
+    /// </summary>
+    private async Task GarantirCnjDisponivelAsync(string numeroCnj, Guid? ignorarId, CancellationToken ct)
+    {
+        var existente = await _context.Processos
+            .Where(p => p.TenantId == _tenantContext.TenantId && p.NumeroCNJ == numeroCnj && p.Id != ignorarId)
+            .Select(p => new { p.Id, p.Status })
+            .FirstOrDefaultAsync(ct);
+        if (existente is null) return;
+
+        var situacao = existente.Status switch
+        {
+            StatusProcesso.Arquivado => " (arquivado)",
+            StatusProcesso.Encerrado => " (encerrado)",
+            StatusProcesso.Suspenso => " (suspenso)",
+            _ => ""
+        };
+        throw new ProcessoDuplicadoException(existente.Id,
+            $"O processo {numeroCnj} já está cadastrado no sistema{situacao}.");
     }
 
     public async Task<ProcessoResponseDto?> GetByIdAsync(Guid id, CancellationToken ct = default)

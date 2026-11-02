@@ -163,10 +163,11 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     let errorMsg = '';
+    let errorBody = null;
     const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       try {
-        const body = await res.json();
+        const body = errorBody = await res.json();
         errorMsg = body.message || body.title
           || (body.errors ? Object.values(body.errors).flat().join('; ') : '');
       } catch {}
@@ -186,7 +187,10 @@ export async function apiFetch(path, options = {}) {
             : `HTTP ${res.status}`;
       errorMsg = hint;
     }
+    // status e corpo JSON ficam no erro para a tela tratar casos específicos (ex.: 409 com o id do registro existente).
     const err = new Error(errorMsg);
+    err.status = res.status;
+    err.data = errorBody;
     trackApiCall('api', method, path, { ok: false, error: err, status: res.status });
     throw err;
   }

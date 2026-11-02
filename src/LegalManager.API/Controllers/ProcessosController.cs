@@ -149,7 +149,20 @@ public class ProcessosController : ControllerBase
 [HttpPost]
     public async Task<ActionResult<ProcessoResponseDto>> Create(CreateProcessoDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto, ct);
+        ProcessoResponseDto result;
+        try
+        {
+            result = await _service.CreateAsync(dto, ct);
+        }
+        catch (ProcessoDuplicadoException ex)
+        {
+            return ProcessoDuplicado(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
         await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Create, AuditEntities.Processo, result.Id, null, dto), ct);
 
         // Resolução/criação de Contato a partir de Partes encontradas na busca DataJud (preview)
@@ -174,6 +187,10 @@ public class ProcessosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    // A tela usa processoId para oferecer o link até o processo já cadastrado.
+    private ConflictObjectResult ProcessoDuplicado(ProcessoDuplicadoException ex) =>
+        Conflict(new { error = "processo_duplicado", message = ex.Message, processoId = ex.ProcessoId });
+
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ProcessoResponseDto>> Update(Guid id, UpdateProcessoDto dto, CancellationToken ct)
     {
@@ -183,6 +200,10 @@ public class ProcessosController : ControllerBase
             var result = await _service.UpdateAsync(id, dto, ct);
             await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Processo, id, existing, result, HttpContext.GetClientIpAddress()), ct);
             return Ok(result);
+        }
+        catch (ProcessoDuplicadoException ex)
+        {
+            return ProcessoDuplicado(ex);
         }
         catch (InvalidOperationException ex)
         {

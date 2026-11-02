@@ -132,7 +132,8 @@ public class ProcessoServiceAdditionalTests
         var c2 = await svc.CreateAsync(MakeCreateDto("0000002-11.2024.8.26.0001"));
         var dto = new UpdateProcessoDto("0000001-11.2024.8.26.0001", null, null, null, AreaDireito.Civil,
             null, FaseProcessual.Conhecimento, StatusProcesso.Ativo, null, null, null, null, null, null, null);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.UpdateAsync(c2.Id, dto));
+        var ex = await Assert.ThrowsAsync<ProcessoDuplicadoException>(() => svc.UpdateAsync(c2.Id, dto));
+        Assert.NotEqual(c2.Id, ex.ProcessoId);
     }
 
     [Fact]
