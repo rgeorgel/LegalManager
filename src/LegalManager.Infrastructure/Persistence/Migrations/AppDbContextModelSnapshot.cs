@@ -2952,8 +2952,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("GeradoPorId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("MensagemErro")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<Guid>("ProcessoId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");

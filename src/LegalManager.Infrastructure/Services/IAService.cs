@@ -17,6 +17,7 @@ public class IAService : IIAService
     private readonly string _model;
     private readonly string _baseUrl;
     private readonly TimeSpan _orcamento;
+    private readonly TimeSpan _orcamentoBackground;
     private readonly string? _reasoningEffort;
     private readonly ILogger<IAService>? _logger;
 
@@ -29,6 +30,8 @@ public class IAService : IIAService
         _model = config["IA:Model"] ?? "claude-3-5-sonnet-latest";
         _baseUrl = config["IA:BaseUrl"] ?? "";
         _orcamento = TimeSpan.FromSeconds(int.TryParse(config["IA:TimeoutSeconds"], out var t) ? t : 90);
+        // Operações em background (resumo do processo) não têm o limite de 100 s do Cloudflare.
+        _orcamentoBackground = TimeSpan.FromSeconds(int.TryParse(config["IA:TimeoutBackgroundSeconds"], out var tb) ? tb : 240);
         _reasoningEffort = string.IsNullOrWhiteSpace(config["IA:ReasoningEffort"]) ? null : config["IA:ReasoningEffort"];
 
         // O prazo é controlado por operação em EnviarPromptAsync (ver _orcamento).
@@ -140,13 +143,14 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
     /// que sobrou do orçamento da operação (iniciada em <paramref name="inicio"/>); o que ainda
     /// sobrar de outro alfabeto é removido. Se a reescrita falhar, fica o original sem esses caracteres.
     /// </summary>
-    private async Task<string> GarantirPortuguesAsync(string texto, long inicio, CancellationToken ct)
+    private async Task<string> GarantirPortuguesAsync(
+        string texto, long inicio, CancellationToken ct, TimeSpan? orcamento = null)
     {
         if (!IdiomaResposta.PareceTerOutroIdioma(texto)) return texto;
 
         Activity.Current?.SetTag("gen_ai.idioma_corrigido", true);
         var resultado = texto;
-        var restante = _orcamento - Stopwatch.GetElapsedTime(inicio);
+        var restante = (orcamento ?? _orcamento) - Stopwatch.GetElapsedTime(inicio);
         if (restante >= MinimoParaCorrecao)
         {
             try
@@ -263,8 +267,8 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             """;
 
         var inicio = Stopwatch.GetTimestamp();
-        var resultado = await EnviarPromptAsync(prompt, ct);
-        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), inicio, ct);
+        var resultado = await EnviarPromptAsync(prompt, ct, limite: _orcamentoBackground);
+        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), inicio, ct, _orcamentoBackground);
     }
 
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
@@ -369,7 +373,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
                 new { role = "system", content = sistema },
                 new { role = "user", content = prompt }
             },
-            ["max_tokens"] = 4096
+            ["max_tokens"] = MaxTokensOpenAI
         };
         if (_reasoningEffort is not null) requestBody["reasoning_effort"] = _reasoningEffort;
 
@@ -392,11 +396,22 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             && choices.GetArrayLength() > 0)
         {
             var firstChoice = choices[0];
-            if (firstChoice.TryGetProperty("message", out var message) &&
-                message.TryGetProperty("content", out var content))
+            var texto = firstChoice.TryGetProperty("message", out var message) &&
+                message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.String
+                ? content.GetString()
+                : null;
+            if (!string.IsNullOrEmpty(texto)) return texto;
+
+            // Modelos de raciocínio podem gastar todo o max_tokens pensando e voltar só com
+            // "reasoning_content", sem a resposta.
+            if (firstChoice.TryGetProperty("finish_reason", out var fim) && fim.ValueKind == JsonValueKind.String
+                && fim.GetString() == "length")
             {
-                return content.GetString() ?? string.Empty;
+                _logger?.LogWarning("IA: resposta cortada pelo limite de tokens ({Max}) sem conteúdo", MaxTokensOpenAI);
+                throw new IAIndisponivelException(
+                    "A IA não conseguiu concluir a resposta (limite de tamanho atingido). Tente novamente.");
             }
+            if (texto is not null) return texto;
         }
 
         // Provedores compatíveis (ex.: MiniMax) respondem 200 sem "choices" e com o erro em
@@ -414,6 +429,12 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             root.ValueKind == JsonValueKind.Object ? string.Join(", ", root.EnumerateObject().Select(p => p.Name)) : root.ValueKind.ToString());
         throw new IAIndisponivelException("O serviço de IA respondeu em um formato inesperado. Tente novamente em instantes.");
     }
+
+    /// <summary>
+    /// Inclui o raciocínio dos modelos que pensam antes de responder (MiniMax, o1...): com 4096 o
+    /// raciocínio às vezes consumia tudo e a resposta vinha vazia.
+    /// </summary>
+    private const int MaxTokensOpenAI = 16384;
 
     /// <summary>Códigos de erro do MiniMax (base_resp.status_code) em mensagem para o usuário.</summary>
     internal static string MensagemErroProvedor(int codigo) => codigo switch

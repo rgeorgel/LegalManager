@@ -926,6 +926,9 @@
 
       <!-- Painel: Resumo Atual -->
       <div id="panelResumoAtual" style="display:none">
+        <!-- Gerando (background) ou erro -->
+        <div id="resumoEstado" style="display:none"></div>
+        <div id="resumoConcluidoBox">
         <div style="margin-bottom:12px;padding:10px 14px;background:#f0fdf4;border-radius:6px;border-left:4px solid #16a34a;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
           <span style="font-size:13px;color:#166534;flex:1;min-width:180px"><strong>Resumo gerado por IA</strong> — Revise o conteúdo. Este é um resumo automático.</span>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -942,6 +945,7 @@
         <div data-view-container="resumoConteudo">
           <div data-view-pane="visual" id="resumoConteudoVisual" class="md-content" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;max-height:450px;overflow-y:auto"></div>
           <div data-view-pane="markdown" id="resumoConteudoMarkdown" style="display:none;background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;max-height:450px;overflow-y:auto"></div>
+        </div>
         </div>
       </div>
 
@@ -1004,7 +1008,7 @@ import { aplicarVariaveis, carregarTimbre, imprimirTexto, rotuloVariavel, timbre
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker, cadastrarContatoRapido } from '/js/contato-picker.js';
-import { gerarPeca, getCreditos, gerarResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
+import { gerarPeca, getCreditos, gerarResumoProcesso, obterResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento, updateAndamento, deleteAndamento, setFavorito, encerrarProcesso } from '/js/processos.js';
 import { renderMarkdown } from '/js/markdown.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
@@ -2422,7 +2426,8 @@ function ativarTabResumo(tab) {
   const eHistorico = tab === 'historico';
   document.getElementById('panelResumoAtual').style.display = eHistorico ? 'none' : '';
   document.getElementById('panelResumoHistorico').style.display = eHistorico ? '' : 'none';
-  document.getElementById('resumoCopiar').style.display = eHistorico ? 'none' : '';
+  const concluido = (window._resumoAtual?.status ?? 'Concluido') === 'Concluido';
+  document.getElementById('resumoCopiar').style.display = eHistorico || !concluido ? 'none' : '';
   const tabAtual = document.getElementById('tabResumoAtual');
   const tabHist = document.getElementById('tabResumoHistorico');
   tabAtual.style.background = eHistorico ? '' : 'var(--color-primary)';
@@ -2452,7 +2457,65 @@ document.addEventListener('click', e => {
   if (container) setResumoView(container, btn.dataset.view);
 });
 
+// A geração roda em background (ResumoProcessoJob): consulta o status até sair de "Gerando".
+let resumoPollTimer = null;
+function acompanharResumo(resumoId) {
+  clearTimeout(resumoPollTimer);
+  const verificar = async () => {
+    let r;
+    try {
+      r = await obterResumoProcesso(resumoId);
+    } catch {
+      resumoPollTimer = setTimeout(verificar, 6000);
+      return;
+    }
+    if (r.status === 'Gerando') {
+      resumoPollTimer = setTimeout(verificar, 3000);
+      return;
+    }
+    const modalAberto = document.getElementById('modalResumoResultado').classList.contains('open');
+    if (modalAberto && window._resumoAtual?.id === r.id) {
+      mostrarResumoNoModal(r);
+    } else if (r.status === 'Concluido') {
+      showAlert('O resumo do processo está pronto. Clique em "Resumo IA" para ver.', 'success');
+    } else {
+      showAlert(r.mensagemErro || 'Não foi possível gerar o resumo do processo.');
+    }
+  };
+  resumoPollTimer = setTimeout(verificar, 3000);
+}
+
+function mostrarEstadoResumo(resumo) {
+  const estado = document.getElementById('resumoEstado');
+  if (resumo.status === 'Gerando') {
+    estado.innerHTML = `
+      <div style="text-align:center;padding:32px 16px">
+        <span class="spinner" style="width:28px;height:28px;border-color:var(--color-border);border-top-color:var(--color-primary)"></span>
+        <p style="margin:14px 0 6px;font-weight:600">Gerando o resumo do processo…</p>
+        <p style="margin:0;font-size:13px;color:var(--color-text-muted)">Isso pode levar alguns minutos. Você pode fechar esta janela ou sair da página: avisaremos nas notificações quando ficar pronto.</p>
+      </div>`;
+  } else {
+    estado.innerHTML = `
+      <div class="alert alert-error" style="display:block">
+        <strong>Não foi possível gerar o resumo.</strong><br>${esc(resumo.mensagemErro || 'Tente novamente.')}
+      </div>
+      <p style="font-size:13px;color:var(--color-text-muted)">Clique em "Gerar Novo" para tentar de novo.</p>`;
+  }
+}
+
 function mostrarResumoNoModal(resumo) {
+  window._resumoAtual = resumo;
+  const concluido = (resumo.status ?? 'Concluido') === 'Concluido';
+  document.getElementById('resumoEstado').style.display = concluido ? 'none' : '';
+  document.getElementById('resumoConcluidoBox').style.display = concluido ? '' : 'none';
+  if (!concluido) {
+    mostrarEstadoResumo(resumo);
+    document.getElementById('tabResumoAtual').style.display = '';
+    ativarTabResumo('atual');
+    if (resumo.status === 'Gerando') acompanharResumo(resumo.id);
+    return;
+  }
+
   const markdown = resumo.conteudo ?? '';
   const visualEl = document.getElementById('resumoConteudoVisual');
   const mdEl = document.getElementById('resumoConteudoMarkdown');
@@ -2462,7 +2525,6 @@ function mostrarResumoNoModal(resumo) {
   document.getElementById('tabResumoAtual').style.display = '';
   ativarTabResumo('atual');
   setResumoView(document.querySelector('#panelResumoAtual [data-view-container]'), 'visual');
-  window._resumoAtual = resumo;
   updateShareButton('atual', resumo);
 }
 
@@ -2543,7 +2605,14 @@ async function carregarHistoricoResumos() {
         : '';
       const shareBtn = `<button type="button" class="resumo-share-btn${r.visivelCliente ? ' shared' : ''}" data-resumo-id="${r.id}" onclick="toggleResumoCompartilhar('hist', ${i})" title="${r.visivelCliente ? 'Ocultar do cliente' : 'Compartilhar com o cliente'}">${r.visivelCliente ? '🚫 Ocultar' : '👥 Compartilhar'}</button>`;
 
-      const bodyHtml = isFirst
+      const bodyHtml = r.status === 'Gerando'
+        ? `<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--color-text-muted)">
+             <span class="spinner" style="width:14px;height:14px;border-color:var(--color-border);border-top-color:var(--color-primary)"></span> Gerando resumo…
+             <button class="btn btn-secondary btn-sm" style="font-size:12px;margin-left:auto" onclick="verResumoCompleto(${i})">Acompanhar</button>
+           </div>`
+        : r.status === 'Erro'
+        ? `<div style="font-size:13px;color:var(--color-danger)">⚠️ ${esc(r.mensagemErro || 'Não foi possível gerar o resumo.')}</div>`
+        : isFirst
         ? `<div data-view-container="resumoHist-${i}">
              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">
                ${sharedBadge}
@@ -2599,6 +2668,9 @@ document.getElementById('btnResumoIA').addEventListener('click', async () => {
   ativarTabResumo('historico');
   document.getElementById('modalResumoResultado').classList.add('open');
   await carregarHistoricoResumos();
+  // Pedido ainda em andamento: abre direto no acompanhamento.
+  const maisRecente = window._resumosHistorico?.[0];
+  if (maisRecente?.processoId === processoId && maisRecente.status === 'Gerando') mostrarResumoNoModal(maisRecente);
 });
 
 document.getElementById('tabResumoAtual').addEventListener('click', () => ativarTabResumo('atual'));
@@ -2652,7 +2724,7 @@ document.getElementById('resumoConfirmGerar').addEventListener('click', async ()
   const btn = document.getElementById('resumoConfirmGerar');
   const alertEl = document.getElementById('resumoConfirmAlert');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Gerando...';
+  btn.innerHTML = '<span class="spinner"></span> Enviando...';
   alertEl.style.display = 'none';
   try {
     const result = await gerarResumoProcesso(processoId);
@@ -2731,6 +2803,16 @@ carregarAndamentosIniciais();
 // Link direto para uma aba (ex.: alerta de documento enviado pelo cliente → ?tab=documentos).
 const tabInicial = new URLSearchParams(window.location.search).get('tab');
 if (tabInicial && document.querySelector(`.tab-btn[data-tab="${CSS.escape(tabInicial)}"]`)) switchTab(tabInicial);
+
+// Link da notificação de resumo pronto (?resumo=<id>): abre o resumo.
+const resumoInicial = new URLSearchParams(window.location.search).get('resumo');
+if (resumoInicial) {
+  obterResumoProcesso(resumoInicial).then(r => {
+    if (r.processoId !== processoId) return;
+    document.getElementById('modalResumoResultado').classList.add('open');
+    mostrarResumoNoModal(r);
+  }).catch(() => {});
+}
 </script>
 </body>
 </html>

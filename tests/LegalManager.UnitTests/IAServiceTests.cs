@@ -486,13 +486,28 @@ public class IAServiceTests
         });
 
     [Fact]
-    public async Task GerarResumoProcessoAsync_IANaoRespondeNoPrazo_LancaTimeoutException()
+    public async Task TraduzirTextoAsync_IANaoRespondeNoPrazo_LancaTimeoutException()
     {
         var handler = new MockHttpMessageHandler(RespostaOpenAI("Resumo.")) { Atraso = TimeSpan.FromSeconds(5) };
         var svc = new IAService(new HttpClient(handler), OpenAIConfigComTimeout(1));
 
-        var ex = await Assert.ThrowsAsync<TimeoutException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1"));
+        var ex = await Assert.ThrowsAsync<TimeoutException>(() => svc.TraduzirTextoAsync("Andamento"));
         Assert.Equal(IAService.MensagemTimeout, ex.Message);
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_UsaOrcamentoDeBackground()
+    {
+        var handler = new MockHttpMessageHandler(RespostaOpenAI("Resumo.")) { Atraso = TimeSpan.FromSeconds(2) };
+        var config = BuildConfig(new Dictionary<string, string?>
+        {
+            ["IA:Provider"] = "OpenAI", ["IA:ApiKey"] = "k", ["IA:Model"] = "m",
+            ["IA:TimeoutSeconds"] = "1", ["IA:TimeoutBackgroundSeconds"] = "30"
+        });
+        var svc = new IAService(new HttpClient(handler), config);
+
+        Assert.Equal("Resumo.", await svc.GerarResumoProcessoAsync("Número CNJ: 1"));
+        await Assert.ThrowsAsync<TimeoutException>(() => svc.TraduzirTextoAsync("texto"));
     }
 
     [Fact]
@@ -506,12 +521,12 @@ public class IAServiceTests
     }
 
     [Fact]
-    public async Task GerarResumoProcessoAsync_SemTempoParaCorrecao_SoRemoveOsCaracteres()
+    public async Task TraduzirTextoAsync_SemTempoParaCorrecao_SoRemoveOsCaracteres()
     {
         var handler = MockHttpMessageHandler.EmSequencia(RespostaOpenAI("Prazo 残余 encerrado."));
         var svc = new IAService(new HttpClient(handler), OpenAIConfigComTimeout(5));
 
-        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+        var result = await svc.TraduzirTextoAsync("Andamento");
 
         Assert.Equal("Prazo encerrado.", result);
         Assert.Single(handler.Corpos);
@@ -528,6 +543,20 @@ public class IAServiceTests
 
         var ex = await Assert.ThrowsAsync<IAIndisponivelException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1"));
         Assert.Contains(trecho, ex.Message);
+    }
+
+    [Fact]
+    public async Task OpenAI_SoRaciocinioCortadoPeloLimite_LancaIAIndisponivel()
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            choices = new[] { new { finish_reason = "length", message = new { role = "assistant", reasoning_content = "We need answer Portuguese..." } } },
+            base_resp = new { status_code = 0, status_msg = "" }
+        });
+        var svc = new IAService(new HttpClient(new MockHttpMessageHandler(json)), OpenAIConfig());
+
+        var ex = await Assert.ThrowsAsync<IAIndisponivelException>(() => svc.GerarResumoProcessoAsync("Número CNJ: 1"));
+        Assert.Contains("limite de tamanho", ex.Message);
     }
 
     [Fact]

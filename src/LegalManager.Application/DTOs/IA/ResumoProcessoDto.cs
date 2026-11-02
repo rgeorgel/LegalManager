@@ -8,5 +8,7 @@ public record ResumoProcessoResponseDto(
     string Conteudo,
     string GeradoPorNome,
     DateTime GeradoEm,
-    bool VisivelCliente
+    bool VisivelCliente,
+    string Status = "Concluido",
+    string? MensagemErro = null
 );

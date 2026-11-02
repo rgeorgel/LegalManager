@@ -226,7 +226,8 @@ public class PortalClienteService : IPortalClienteService
         if (!autorizado) throw new UnauthorizedAccessException("Acesso negado ao processo.");
 
         return await _context.ResumosProcesso
-            .Where(r => r.ProcessoId == processoId && r.TenantId == tenantId && r.VisivelCliente)
+            .Where(r => r.ProcessoId == processoId && r.TenantId == tenantId && r.VisivelCliente
+                        && r.Status == StatusResumoProcesso.Concluido)
             .OrderByDescending(r => r.GeradoEm)
             .Select(r => new MeuResumoDto(
                 r.Id, r.Conteudo, r.GeradoPor!.UserName ?? "Escritório", r.GeradoEm))

@@ -780,7 +780,7 @@ public sealed class TenantTimelineService(AppDbContext db)
         }
 
         var resumos = await BuscarAsync(c, db.ResumosProcesso.AsNoTracking()
-            .Where(r => r.TenantId == c.TenantId && r.GeradoEm < c.LimiteUtc)
+            .Where(r => r.TenantId == c.TenantId && r.GeradoEm < c.LimiteUtc && r.Status == StatusResumoProcesso.Concluido)
             .OrderByDescending(r => r.GeradoEm)
             .Select(r => new { r.GeradoEm, r.GeradoPorId, NumeroCNJ = r.Processo.NumeroCNJ }),
             LimiteAgrupado, r => r.GeradoEm, ct);

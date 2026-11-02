@@ -939,7 +939,7 @@ public class IAControllerTests
     {
         var mock = new Mock<IResumoProcessoService>();
         var dto = new ResumoProcessoResponseDto(Guid.NewGuid(), Guid.NewGuid(), "Resumo", "Usuário", DateTime.UtcNow, false);
-        mock.Setup(s => s.GerarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.SolicitarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(dto);
         mock.Setup(s => s.ListarAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([dto]);
@@ -1041,18 +1041,23 @@ public class IAControllerTests
     }
 
     [Fact]
-    public async Task GerarResumo_Retorna503ComMensagem_QuandoIADemora()
+    public async Task GerarResumo_Retorna202ComOResumoEmGeracao()
     {
-        var resumo = CreateResumoMock();
-        resumo.Setup(s => s.GerarAsync(It.IsAny<GerarResumoDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new TimeoutException("A IA demorou demais para responder."));
-        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, resumo.Object);
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
 
         var result = await controller.GerarResumo(new GerarResumoDto(Guid.NewGuid()), CancellationToken.None);
 
-        var obj = Assert.IsType<ObjectResult>(result.Result);
-        Assert.Equal(503, obj.StatusCode);
-        Assert.Contains("demorou", System.Text.Json.JsonSerializer.Serialize(obj.Value));
+        Assert.IsType<AcceptedResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task ObterResumo_NotFound_QuandoNaoExiste()
+    {
+        var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
+
+        var result = await controller.ObterResumo(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     [Fact]

@@ -101,6 +101,10 @@ public class IAController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
+    /// <summary>
+    /// Pede o resumo: a geração roda em background (202 com o resumo em status Gerando); a tela
+    /// acompanha por GET resumo-processo/{id}.
+    /// </summary>
     [HttpPost("resumo-processo")]
     public async Task<ActionResult<ResumoProcessoResponseDto>> GerarResumo(
         GerarResumoDto dto,
@@ -108,17 +112,20 @@ public class IAController : ControllerBase
     {
         try
         {
-            var result = await _resumoService.GerarAsync(dto, _tenantContext.UserId, ct);
-            return Ok(result);
+            var result = await _resumoService.SolicitarAsync(dto, _tenantContext.UserId, ct);
+            return Accepted(result);
         }
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
-        {
-            return IAIndisponivel(ex);
-        }
+    }
+
+    [HttpGet("resumo-processo/{id:guid}")]
+    public async Task<ActionResult<ResumoProcessoResponseDto>> ObterResumo(Guid id, CancellationToken ct)
+    {
+        var result = await _resumoService.ObterAsync(id, ct);
+        return result == null ? NotFound() : Ok(result);
     }
 
     [HttpGet("resumo-processo")]

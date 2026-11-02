@@ -115,4 +115,7 @@ public enum ModoImportacao { Todos, Selecionados }
 
 public enum StatusImportacao { Pendente, Buscando, Importando, Concluida, Erro }
 
+/// <summary>O resumo de processo é gerado em background (ResumoProcessoJob).</summary>
+public enum StatusResumoProcesso { Gerando, Concluido, Erro }
+
 public enum StatusItemImportacao { Pendente, Importado, JaCadastrado, NaoEncontrado, Erro }

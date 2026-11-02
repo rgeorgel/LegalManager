@@ -42,6 +42,11 @@ export async function gerarResumoProcesso(processoId) {
   });
 }
 
+// A geração roda em background: o POST devolve o resumo em status "Gerando".
+export async function obterResumoProcesso(resumoId) {
+  return apiFetch(`/ia/resumo-processo/${resumoId}`);
+}
+
 export async function listarResumosProcesso(processoId) {
   return apiFetch(`/ia/resumo-processo?processoId=${processoId}`);
 }
