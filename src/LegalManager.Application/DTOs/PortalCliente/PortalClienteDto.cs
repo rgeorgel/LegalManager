@@ -25,7 +25,9 @@ public record ClientePerfilDto(
     string Nome,
     string Email,
     string? Telefone,
-    TenantThemeDto? Tema
+    TenantThemeDto? Tema,
+    // Nome exibido no portal ao lado (ou no lugar) da logo do escritório.
+    string? NomeEscritorio = null
 );
 
 public record MeuProcessoDto(

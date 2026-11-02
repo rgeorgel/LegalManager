@@ -561,4 +561,38 @@ public class PortalClienteServiceTests
 
         await service.NotificarDocumentoEnviadoAsync(Guid.NewGuid(), contato.Id, tenant.Id, "doc.pdf");
     }
+
+    // ── Perfil com tema do escritório ─────────────────────
+
+    [Fact]
+    public async Task GetPerfilAsync_RetornaTemaENomeDoEscritorio()
+    {
+        var (ctx, tenant, contato, acesso) = await SeedAsync();
+        tenant.PrimaryColor = "#7c3aed";
+        tenant.SidebarColor = "#ffffff";
+        tenant.AccentColor = "#0ea5e9";
+        tenant.LogoUrl = "http://localhost:6600/api/tenants/x/logo";
+        await ctx.SaveChangesAsync();
+
+        var perfil = await CreateService(ctx).GetPerfilAsync(acesso.Id);
+
+        Assert.Equal(contato.Nome, perfil.Nome);
+        Assert.Equal("Escritório Teste", perfil.NomeEscritorio);
+        Assert.NotNull(perfil.Tema);
+        Assert.Equal("#7c3aed", perfil.Tema!.PrimaryColor);
+        Assert.Equal("#ffffff", perfil.Tema.SidebarColor);
+        Assert.Equal("#0ea5e9", perfil.Tema.AccentColor);
+        Assert.Equal("http://localhost:6600/api/tenants/x/logo", perfil.Tema.LogoUrl);
+    }
+
+    [Fact]
+    public async Task LoginAsync_RetornaNomeDoEscritorio()
+    {
+        var (ctx, _, _, _) = await SeedAsync();
+
+        var result = await CreateService(ctx).LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123"));
+
+        Assert.Equal("Escritório Teste", result.Perfil.NomeEscritorio);
+        Assert.NotNull(result.Perfil.Tema);
+    }
 }

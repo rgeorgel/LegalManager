@@ -11,6 +11,18 @@ public static class ExtratoHonorarioPdfRenderer
     private const string CorGold = "#c9a84c";
     private const string CorMuted = "#5f5e5a";
 
+    // Cor do tema do escritório quando válida (#RGB ou #RRGGBB); senão, a padrão.
+    public static string CorOuPadrao(string? cor, string padrao)
+    {
+        var c = cor?.Trim();
+        if (c is null || !System.Text.RegularExpressions.Regex.IsMatch(c, "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"))
+            return padrao;
+        return c.Length == 4 ? $"#{c[1]}{c[1]}{c[2]}{c[2]}{c[3]}{c[3]}" : c;
+    }
+
+    private static string Primaria(ExtratoPdfDadosDto d) => CorOuPadrao(d.CorPrimaria, CorNavy);
+    private static string Destaque(ExtratoPdfDadosDto d) => CorOuPadrao(d.CorDestaque, CorGold);
+
     public static byte[] Renderizar(ExtratoPdfDadosDto d, string? webRootPath = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
@@ -53,7 +65,7 @@ public static class ExtratoHonorarioPdfRenderer
                 });
                 row.RelativeItem().AlignRight().Column(c =>
                 {
-                    c.Item().Text(d.NomeEscritorio).Bold().FontSize(14).FontColor(CorNavy);
+                    c.Item().Text(d.NomeEscritorio).Bold().FontSize(14).FontColor(Primaria(d));
                     if (!string.IsNullOrEmpty(d.Advogado) || !string.IsNullOrEmpty(d.Oab))
                         c.Item().Text($"{d.Advogado}{(string.IsNullOrEmpty(d.Oab) ? "" : " — " + d.Oab)}").FontSize(9).FontColor(CorMuted);
                     if (!string.IsNullOrEmpty(d.Endereco)) c.Item().Text(d.Endereco).FontSize(9).FontColor(CorMuted);
@@ -61,8 +73,8 @@ public static class ExtratoHonorarioPdfRenderer
                         c.Item().Text($"{(string.IsNullOrEmpty(d.Telefone) ? "" : "Tel: " + d.Telefone)}{(string.IsNullOrEmpty(d.Email) ? "" : (!string.IsNullOrEmpty(d.Telefone) ? " · " : "") + d.Email)}").FontSize(9).FontColor(CorMuted);
                 });
             });
-            col.Item().PaddingTop(4).BorderBottom(3).BorderColor(CorGold);
-            col.Item().PaddingTop(10).AlignCenter().Text("EXTRATO DE HONORÁRIOS").Bold().FontSize(14).FontColor(CorNavy);
+            col.Item().PaddingTop(4).BorderBottom(3).BorderColor(Destaque(d));
+            col.Item().PaddingTop(10).AlignCenter().Text("EXTRATO DE HONORÁRIOS").Bold().FontSize(14).FontColor(Primaria(d));
         });
     }
 
@@ -116,13 +128,13 @@ public static class ExtratoHonorarioPdfRenderer
                 });
                 tab.Header(h =>
                 {
-                    h.Cell().Background(CorNavy).Padding(5).Text("Parc.").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Vencimento").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Valor").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Juros/Multa").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Status").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Pago em").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(CorNavy).Padding(5).Text("Total").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Parc.").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Vencimento").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Valor").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Juros/Multa").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Status").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Pago em").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Total").FontColor("#fff").FontSize(8).Bold();
                 });
                 foreach (var r in d.Parcelas)
                 {

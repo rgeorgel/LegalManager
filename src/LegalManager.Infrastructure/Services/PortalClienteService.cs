@@ -76,14 +76,8 @@ public class PortalClienteService : IPortalClienteService
                 acesso.Contato.Nome,
                 acesso.Email,
                 acesso.Contato.Telefone,
-                new TenantThemeDto(
-                    acesso.Tenant.PrimaryColor,
-                    acesso.Tenant.SidebarColor,
-                    acesso.Tenant.AccentColor,
-                    acesso.Tenant.LayoutMode,
-                    acesso.Tenant.LogoUrl,
-                    acesso.Tenant.CustomCss
-                )
+                TemaDo(acesso.Tenant),
+                acesso.Tenant.Nome
             )
         );
     }
@@ -140,11 +134,22 @@ public class PortalClienteService : IPortalClienteService
     {
         var acesso = await _context.AcessosCliente
             .Include(a => a.Contato)
+            .Include(a => a.Tenant)
             .FirstOrDefaultAsync(a => a.Id == acessoId, ct)
             ?? throw new KeyNotFoundException("Acesso não encontrado.");
 
-        return new ClientePerfilDto(acesso.Id, acesso.ContatoId, acesso.Contato.Nome, acesso.Email, acesso.Contato.Telefone, null);
+        // O portal relê o perfil a cada página: mudanças de tema/logo do escritório aparecem sem novo login.
+        return new ClientePerfilDto(acesso.Id, acesso.ContatoId, acesso.Contato.Nome, acesso.Email,
+            acesso.Contato.Telefone, TemaDo(acesso.Tenant), acesso.Tenant.Nome);
     }
+
+    private static TenantThemeDto TemaDo(Tenant tenant) => new(
+        tenant.PrimaryColor,
+        tenant.SidebarColor,
+        tenant.AccentColor,
+        tenant.LayoutMode,
+        tenant.LogoUrl,
+        tenant.CustomCss);
 
     public async Task<IEnumerable<MeuProcessoDto>> GetMeusProcessosAsync(
         Guid contatoId, Guid tenantId, CancellationToken ct = default)

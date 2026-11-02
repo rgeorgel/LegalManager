@@ -20,27 +20,27 @@
   <title>Meus Honorários – Portal do Cliente</title>
   <link rel="stylesheet" href="/cliente/css/portal.css">
   <style>
-    .contrato { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:16px 18px; margin-bottom:14px; border-left:4px solid #C9A84C; box-shadow:0 1px 4px rgba(0,0,0,.04); }
-    .contrato h3 { margin:0 0 6px; font-size:16px; font-weight:700; color:#1B2A4A; }
-    .contrato .num { font-size:11px; color:#6B7A99; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+    .contrato { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:16px 18px; margin-bottom:14px; border-left:4px solid var(--color-accent); box-shadow:0 1px 4px rgba(0,0,0,.04); }
+    .contrato h3 { margin:0 0 6px; font-size:16px; font-weight:700; color:var(--color-text); }
+    .contrato .num { font-size:11px; color:var(--color-text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
     .contrato-info { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px 16px; margin-top:12px; font-size:13px; }
-    .contrato-info .lbl { color:#6B7A99; font-size:10px; text-transform:uppercase; letter-spacing:.3px; }
+    .contrato-info .lbl { color:var(--color-text-muted); font-size:10px; text-transform:uppercase; letter-spacing:.3px; }
     .contrato-info .val { font-weight:700; margin-top:3px; }
     .badge-ok { background:#d1fae5; color:#059669; font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; }
     .badge-err { background:#fee2e2; color:#b91c1c; font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; }
-    .badge-muted { background:#f1f3f8; color:#6B7A99; font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; }
+    .badge-muted { background:#f1f3f8; color:var(--color-text-muted); font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; }
     .badge-warn { background:#fef3c7; color:#b45309; font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700; }
 
-    .empty { text-align:center; padding:40px 16px; color:#6B7A99; }
+    .empty { text-align:center; padding:40px 16px; color:var(--color-text-muted); }
     .empty p { font-size:14px; margin-top:8px; }
 
     .parcela-row { padding:10px 0; border-bottom:1px solid #e5e7eb; font-size:13px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     .parcela-row:last-child { border-bottom:none; }
     .parcela-info { display:flex; flex-direction:column; }
     .parcela-num { font-weight:700; }
-    .parcela-venc { font-size:11px; color:#6B7A99; }
-    .btn-mini { background:transparent; border:1px solid #C9A84C; color:#1B2A4A; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; }
-    .btn-mini:hover { background:#C9A84C; color:#fff; }
+    .parcela-venc { font-size:11px; color:var(--color-text-muted); }
+    .btn-mini { background:transparent; border:1px solid var(--color-primary); color:var(--color-primary); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; }
+    .btn-mini:hover { background:var(--color-primary); color:#fff; }
   </style>
 </head>
 <body>
@@ -108,7 +108,7 @@ import { esc as escapeHtml } from '/js/utils.js';
         card.style.borderLeftColor = (c.parcelasVencidas ?? c.ParcelasVencidas) > 0 ? '#dc2626'
           : status === 'Quitado' ? '#059669'
           : status === 'Suspenso' ? '#b45309'
-          : '#C9A84C';
+          : 'var(--color-accent)';
         card.innerHTML = `
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
             <div style="min-width:0;flex:1">
@@ -125,7 +125,7 @@ import { esc as escapeHtml } from '/js/utils.js';
           </div>
           <div style="margin-top:14px">
             <details>
-              <summary style="cursor:pointer;font-size:13px;font-weight:600;color:#1B2A4A;padding:4px 0">📋 Ver parcelas (${c.totalParcelas ?? c.TotalParcelas ?? 0})</summary>
+              <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--color-primary);padding:4px 0">📋 Ver parcelas (${c.totalParcelas ?? c.TotalParcelas ?? 0})</summary>
               <div id="parcelas-${contratoId}" style="padding:8px 0">Carregando...</div>
             </details>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
@@ -141,7 +141,7 @@ import { esc as escapeHtml } from '/js/utils.js';
             try {
               const r = await listarParcelasCliente(contratoId);
               const parcelas = r?.parcelas ?? r?.Parcelas ?? [];
-              if (!parcelas.length) { cont.innerHTML = '<div style="color:#6B7A99">Nenhuma parcela</div>'; return; }
+              if (!parcelas.length) { cont.innerHTML = '<div style="color:var(--color-text-muted)">Nenhuma parcela</div>'; return; }
               const totalNaoEntrada = parcelas.filter(p => !(p.isEntrada ?? p.IsEntrada)).length;
               cont.innerHTML = parcelas.map(p => {
                 const st = p.status ?? p.Status;

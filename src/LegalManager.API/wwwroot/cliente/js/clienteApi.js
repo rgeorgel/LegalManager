@@ -22,6 +22,20 @@ export function setSession(data) {
   });
 }
 
+/** Relê o perfil (com tema e logo atuais do escritório) e atualiza a sessão. */
+export async function atualizarPerfil() {
+  const perfil = await clienteApiFetch('/me');
+  if (!perfil) return null;
+  sessionStorage.setItem(USER_KEY, JSON.stringify(perfil));
+  sessionStorage.setItem(THEME_KEY, JSON.stringify(perfil.tema ?? null));
+  return perfil;
+}
+
+/** Tema do escritório guardado na sessão do portal (não o do painel do escritório). */
+export function getTemaPortal() {
+  try { return JSON.parse(sessionStorage.getItem(THEME_KEY) || 'null'); } catch { return null; }
+}
+
 export function clearSession() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);

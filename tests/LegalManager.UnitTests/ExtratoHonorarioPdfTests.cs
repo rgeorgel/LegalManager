@@ -49,4 +49,23 @@ public class ExtratoHonorarioPdfTests
     {
         AssertPdf(ExtratoHonorarioPdfRenderer.Renderizar(Dados(0m, logoUrl: "ftp://nao-suportado/logo.png"), "/caminho/inexistente"));
     }
+
+    [Fact]
+    public void Renderiza_ComCoresDoEscritorio()
+    {
+        AssertPdf(ExtratoHonorarioPdfRenderer.Renderizar(Dados(1045.5m) with { CorPrimaria = "#7c3aed", CorDestaque = "#0ea5e9" }));
+    }
+
+    [Theory]
+    [InlineData("#7c3aed", "#7c3aed")]
+    [InlineData(" #ABC ", "#AABBCC")]
+    [InlineData(null, "#0f2744")]
+    [InlineData("", "#0f2744")]
+    [InlineData("red", "#0f2744")]
+    [InlineData("#12345", "#0f2744")]
+    [InlineData("#1234567", "#0f2744")]
+    public void CorOuPadrao_AceitaSoHexValido(string? cor, string esperado)
+    {
+        Assert.Equal(esperado, ExtratoHonorarioPdfRenderer.CorOuPadrao(cor, "#0f2744"));
+    }
 }

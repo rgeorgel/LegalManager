@@ -736,7 +736,9 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             c.DataInicio,
             pago, pendente, atraso,
             linhas,
-            DateTime.Now
+            DateTime.Now,
+            tenant?.PrimaryColor,
+            tenant?.AccentColor
         );
     }
 

@@ -200,7 +200,10 @@ public record ExtratoPdfDadosDto(
     decimal TotalPendente,
     decimal TotalEmAtraso,
     IEnumerable<ExtratoParcelaPdfDto> Parcelas,
-    DateTime EmitidoEm
+    DateTime EmitidoEm,
+    // Cores do tema do escritório (Configurações → Tema); null = cores padrão do extrato.
+    string? CorPrimaria = null,
+    string? CorDestaque = null
 );
 
 public record ExtratoParcelaPdfDto(

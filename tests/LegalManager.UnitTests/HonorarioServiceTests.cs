@@ -641,4 +641,30 @@ public class HonorarioServiceTests
         Assert.True(LegalManager.Domain.PlanoRestricoes.PermiteHonorariosContratos(PlanoTipo.Enterprise));
         Assert.False(LegalManager.Domain.PlanoRestricoes.PermiteHonorariosContratos(PlanoTipo.Free));
     }
+
+    [Fact]
+    public async Task ObterDadosExtrato_LevaCoresDoTemaDoEscritorio()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var tenant = db.Tenants.First(t => t.Id == tenantId);
+        tenant.PrimaryColor = "#7c3aed";
+        tenant.AccentColor = "#0ea5e9";
+        await db.SaveChangesAsync();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var contrato = await service.CriarAsync(tenantId, usuarioId, new CriarContratoHonorarioDto(
+            ContatoId: contatoId, ProcessoId: null, NumeroContrato: null,
+            Objeto: "Consultoria", ValorTotal: 5000m,
+            FormaPagamento: FormaPagamentoContrato.AVista,
+            Periodicidade: null, NumeroParcelas: null,
+            DataPrimeiraParcela: DateTime.UtcNow.Date.AddDays(10),
+            ValorEntrada: null, VencimentoEntrada: null,
+            PercentualMulta: null, PercentualJurosMensal: null,
+            TipoCobranca: "Boleto/PIX", Observacoes: null,
+            DataInicio: DateTime.UtcNow.Date, DataFim: null));
+
+        var dados = await service.ObterDadosExtratoAsync(contrato.Id, tenantId, null);
+
+        Assert.Equal("#7c3aed", dados.CorPrimaria);
+        Assert.Equal("#0ea5e9", dados.CorDestaque);
+    }
 }

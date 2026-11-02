@@ -1,5 +1,5 @@
-import { getUser, logout, isLoggedIn, urlLogin } from './clienteApi.js';
-import { applyTenantTheme, getStoredTheme } from '/js/theme.js';
+import { getUser, logout, isLoggedIn, urlLogin, atualizarPerfil, getTemaPortal } from './clienteApi.js';
+import { applyTenantTheme, sanitizeHex } from '/js/theme.js';
 import { injectPerguntasWidget } from './clientePerguntas.js';
 
 import { esc as escapeHtml } from '/js/utils.js';
@@ -15,13 +15,13 @@ export function initLayout(activePage) {
   const user = requireAuth();
   if (!user) return null;
 
-  applyTenantTheme(getStoredTheme() || user?.tema);
+  aplicarTemaPortal(getTemaPortal() || user?.tema);
 
   const navEl = document.getElementById('portalNav');
   if (!navEl) return user;
 
   navEl.innerHTML = `
-    <span class="portal-nav-brand">⚖️ Portal do Cliente</span>
+    <a class="portal-nav-brand" href="/cliente/dashboard.html" id="navBrand">${marcaHtml(user)}</a>
     <button class="nav-toggle" id="navToggle">☰</button>
     <nav class="portal-nav-links" id="navLinks">
       <a href="/cliente/dashboard.html" ${activePage === 'dashboard' ? 'class="active"' : ''}>Início</a>
@@ -44,7 +44,42 @@ export function initLayout(activePage) {
   // pendente para o cliente, não injeta nada (nem o botão flutuante aparece).
   injectPerguntasWidget();
 
+  // O tema guardado no login pode estar velho: relê o perfil e reaplica se o escritório mudou algo.
+  atualizarPerfil().then(perfil => {
+    if (!perfil) return;
+    aplicarTemaPortal(perfil.tema);
+    const brand = document.getElementById('navBrand');
+    if (brand) brand.innerHTML = marcaHtml(perfil);
+  }).catch(() => {});
+
   return user;
+}
+
+// Logo do escritório (Configurações → Tema); sem logo, o nome do escritório.
+function marcaHtml(perfil) {
+  const tema = perfil?.tema;
+  const nome = perfil?.nomeEscritorio || 'Portal do Cliente';
+  if (tema?.logoUrl) {
+    return `<img src="${escapeHtml(tema.logoUrl)}" alt="${escapeHtml(nome)}" class="portal-nav-logo"
+      onerror="this.replaceWith(Object.assign(document.createElement('span'), { textContent: this.alt }))">`;
+  }
+  return `<span>⚖️ ${escapeHtml(nome)}</span>`;
+}
+
+function luminancia(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16));
+  return (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+}
+
+// Aplica as cores do escritório; a barra usa a cor do menu lateral do painel e o texto
+// escurece quando ela é clara (ex.: menu branco).
+function aplicarTemaPortal(tema) {
+  if (!tema) return;
+  applyTenantTheme(tema);
+  const nav = sanitizeHex(tema.sidebarColor);
+  document.documentElement.classList.toggle('portal-nav-clara', !!nav && luminancia(nav) > 0.6);
 }
 
 
