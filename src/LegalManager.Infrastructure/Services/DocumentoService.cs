@@ -28,7 +28,7 @@ public class DocumentoService : IDocumentoService
         var doc = await _context.Documentos
             .Include(d => d.Processo)
             .Include(d => d.Cliente)
-            .FirstOrDefaultAsync(d => d.Id == id, ct);
+            .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct);
 
         return doc == null ? null : MapToDto(doc);
     }
@@ -253,7 +253,7 @@ public class DocumentoService : IDocumentoService
     public async Task<string> GetDownloadUrlAsync(Guid id, CancellationToken ct = default)
     {
         var documento = await _context.Documentos
-            .FirstOrDefaultAsync(d => d.Id == id, ct)
+            .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct)
             ?? throw new KeyNotFoundException("Documento não encontrado.");
 
         return await _storageService.GetPresignedUrlAsync(documento.ObjectKey, 30, ct);
@@ -262,7 +262,7 @@ public class DocumentoService : IDocumentoService
     public async Task<(Stream stream, string contentType, string fileName)> GetFileStreamAsync(Guid id, CancellationToken ct = default)
     {
         var documento = await _context.Documentos
-            .FirstOrDefaultAsync(d => d.Id == id, ct)
+            .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct)
             ?? throw new KeyNotFoundException("Documento não encontrado.");
 
         var stream = await _storageService.DownloadAsync(documento.ObjectKey, ct);

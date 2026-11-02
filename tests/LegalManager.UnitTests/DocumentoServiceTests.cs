@@ -563,6 +563,98 @@ public class DocumentoServiceTests
         Assert.Contains("https://fake-url.example.com/download", url);
     }
 
+    // Leituras por id não podem atravessar escritórios: quem souber o Guid de um documento de
+    // outro tenant recebe "não encontrado", e o arquivo nem chega a ser pedido ao storage.
+    private static async Task<Documento> SeedDocumentoDeOutroTenantAsync(AppDbContext ctx)
+    {
+        var outroTenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Nome = "Outro Escritório",
+            Plano = PlanoTipo.Pro,
+            Status = StatusTenant.Ativo,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(outroTenant);
+        var documento = new Documento
+        {
+            Id = Guid.NewGuid(),
+            TenantId = outroTenant.Id,
+            Nome = "Sigiloso.pdf",
+            ObjectKey = $"{outroTenant.Id}/sigiloso.pdf",
+            ContentType = "application/pdf",
+            TamanhoBytes = 100,
+            Tipo = TipoDocumento.Prova,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Documentos.Add(documento);
+        await ctx.SaveChangesAsync();
+        return documento;
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_DocumentoDeOutroTenant_RetornaNull()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var documento = await SeedDocumentoDeOutroTenantAsync(ctx);
+
+        Assert.Null(await service.GetByIdAsync(documento.Id));
+    }
+
+    [Fact]
+    public async Task GetDownloadUrlAsync_DocumentoDeOutroTenant_ThrowsKeyNotFoundException()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+        var documento = await SeedDocumentoDeOutroTenantAsync(ctx);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetDownloadUrlAsync(documento.Id));
+        storage.Verify(s => s.GetPresignedUrlAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetFileStreamAsync_DocumentoDeOutroTenant_ThrowsKeyNotFoundException()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+        var documento = await SeedDocumentoDeOutroTenantAsync(ctx);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetFileStreamAsync(documento.Id));
+        storage.Verify(s => s.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetFileStreamAsync_DocumentoDoTenant_RetornaArquivo()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var storage = new Mock<IStorageService>();
+        storage.Setup(s => s.DownloadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MemoryStream([1, 2, 3]));
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), storage.Object);
+        var documento = new Documento
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenant.Id,
+            Nome = "Peticao.pdf",
+            ObjectKey = $"{tenant.Id}/peticao.pdf",
+            ContentType = "application/pdf",
+            TamanhoBytes = 3,
+            Tipo = TipoDocumento.Prova,
+            CriadoEm = DateTime.UtcNow
+        };
+        ctx.Documentos.Add(documento);
+        await ctx.SaveChangesAsync();
+
+        var (stream, contentType, fileName) = await service.GetFileStreamAsync(documento.Id);
+
+        Assert.Equal(3, stream.Length);
+        Assert.Equal("application/pdf", contentType);
+        Assert.Equal("Peticao.pdf", fileName);
+    }
+
     [Fact]
     public async Task GetCotaAsync_ReturnsUsedAndTotalQuota()
     {

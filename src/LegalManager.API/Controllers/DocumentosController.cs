@@ -104,21 +104,43 @@ public class DocumentosController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
     {
-        await _service.DeleteAsync(id, ct);
-        return NoContent();
+        try
+        {
+            await _service.DeleteAsync(id, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("{id:guid}/download")]
     public async Task<ActionResult<string>> GetDownloadUrl(Guid id, CancellationToken ct = default)
     {
-        var url = await _service.GetDownloadUrlAsync(id, ct);
-        return Ok(new { url });
+        try
+        {
+            var url = await _service.GetDownloadUrlAsync(id, ct);
+            return Ok(new { url });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("{id:guid}/file")]
     public async Task<IActionResult> GetFile(Guid id, CancellationToken ct = default)
     {
-        var (stream, contentType, fileName) = await _service.GetFileStreamAsync(id, ct);
+        Stream stream; string contentType, fileName;
+        try
+        {
+            (stream, contentType, fileName) = await _service.GetFileStreamAsync(id, ct);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
         // Documentos antigos guardam o Content-Type que o navegador mandou (pode ser text/html).
         // Fora de PDF/imagem, entrega como binário: o front abre num blob: da mesma origem.
         if (!ArquivoPermitido.PodePreVisualizar(contentType))

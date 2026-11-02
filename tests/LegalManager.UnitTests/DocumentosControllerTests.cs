@@ -115,6 +115,60 @@ public class DocumentosControllerTests
     }
 
     [Fact]
+    public async Task GetDownloadUrl_DocumentoInexistenteOuDeOutroTenant_ReturnsNotFound()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.GetDownloadUrlAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeyNotFoundException());
+
+        var result = await controller.GetDownloadUrl(Guid.NewGuid());
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetFile_DocumentoInexistenteOuDeOutroTenant_ReturnsNotFound()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.GetFileStreamAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeyNotFoundException());
+
+        var result = await controller.GetFile(Guid.NewGuid());
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task GetFile_DocumentoDoTenant_RetornaArquivo()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.GetFileStreamAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((Stream)new MemoryStream([1]), "application/pdf", "a.pdf"));
+
+        var result = await controller.GetFile(Guid.NewGuid());
+
+        var file = Assert.IsType<FileStreamResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
+        Assert.Equal("a.pdf", file.FileDownloadName);
+    }
+
+    [Fact]
+    public async Task Delete_DocumentoInexistenteOuDeOutroTenant_ReturnsNotFound()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeyNotFoundException());
+
+        var result = await controller.Delete(Guid.NewGuid());
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
     public async Task GetCota_ReturnsOkWithQuota()
     {
         var service = CreateMockService();
