@@ -38,6 +38,20 @@ export function isLoggedIn() {
   return !!getToken();
 }
 
+/** Tela de login guardando a página atual para voltar a ela depois (ex.: link de processo compartilhado). */
+export function urlLogin() {
+  const atual = location.pathname + location.search;
+  return atual.startsWith('/cliente/') && !/^\/cliente\/(index\.html)?$/.test(location.pathname)
+    ? `/cliente/index.html?next=${encodeURIComponent(atual)}`
+    : '/cliente/index.html';
+}
+
+/** Destino seguro do ?next= da tela de login: só páginas do próprio portal. */
+export function destinoAposLogin() {
+  const next = new URLSearchParams(location.search).get('next');
+  return next && next.startsWith('/cliente/') && !next.startsWith('//') ? next : '/cliente/dashboard.html';
+}
+
 export async function clienteApiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
@@ -51,7 +65,7 @@ export async function clienteApiFetch(path, options = {}) {
 
   if (res.status === 401) {
     clearSession();
-    window.location.href = '/cliente/index.html';
+    window.location.href = urlLogin();
     return;
   }
 
@@ -151,6 +165,21 @@ export const portalApi = {
   getAndamentos: (id) => clienteApiFetch(`/meus-processos/${id}/andamentos`),
   getResumos: (id) => clienteApiFetch(`/meus-processos/${id}/resumos`),
   getDocumentos: (id) => clienteApiFetch(`/meus-processos/${id}/documentos`),
+  // Conteúdo do documento como Blob (PDF/imagem com o tipo real; demais como binário).
+  getDocumentoArquivo: async (processoId, documentoId) => {
+    const path = `/meus-processos/${processoId}/documentos/${documentoId}/arquivo`;
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    trackApiCall('portal_api', 'GET', '/meus-processos/:id/documentos/:docId/arquivo', { ok: res.ok, status: res.status });
+    if (res.status === 401) {
+      clearSession();
+      window.location.href = urlLogin();
+      return null;
+    }
+    if (!res.ok) throw new Error(res.status === 404 ? 'Documento não encontrado.' : `Erro ao abrir o documento (HTTP ${res.status}).`);
+    return res.blob();
+  },
   uploadDocumento: (processoId, file, tipo = 'Prova', nome = null) => {
     const token = getToken();
     const formData = new FormData();

@@ -109,6 +109,7 @@
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a class="btn btn-secondary" id="btnNovoProcesso" href="/pages/processos.html?novo=1">⚖️ Novo processo</a>
         <button class="btn btn-secondary" id="btnAgendarRetorno">📅 Agendar retorno</button>
+        <button class="btn btn-secondary" id="btnPortal" style="display:none">🔑 Portal do cliente</button>
         <button class="btn btn-primary" id="btnEditar">✏️ Editar</button>
       </div>
     </div>
@@ -243,7 +244,8 @@
 <script type="module">
   import { initLayout, isPlanoFree } from '/js/layout.js';
   import { getContato, getContatoPerfil, getVinculos, addVinculo, removeVinculo, agendarRetorno,
-    addAtendimento, updateAtendimento, deleteAtendimento } from '/js/contatos.js';
+    addAtendimento, updateAtendimento, deleteAtendimento, getPortalAcesso } from '/js/contatos.js';
+  import { abrirPortalAcesso } from '/js/portal-acesso.js';
   import { setupVoltarButton, contatoPerfilUrl } from '/js/contato-nav.js';
   import { createContatoPicker } from '/js/contato-picker.js';
   import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
@@ -327,6 +329,22 @@
       location.href = `/pages/contatos.html?editId=${c.id}`;
     });
 
+    // Portal do cliente: libera/gerencia o acesso sem passar pela edição do cadastro.
+    const btnPortal = document.getElementById('btnPortal');
+    if (c.tipoContato === 'Cliente') {
+      btnPortal.style.display = '';
+      btnPortal.onclick = () => abrirPortalAcesso({
+        contatoId: c.id, nome: c.nome, email: c.email, telefone: c.telefone,
+        onAlterado: acesso => {
+          rotuloPortal(acesso);
+          if (!acesso) showAlert('Acesso ao portal revogado.', 'success');
+        }
+      });
+      getPortalAcesso(c.id).then(rotuloPortal).catch(() => {});
+    } else {
+      btnPortal.style.display = 'none';
+    }
+
     const rows = [
       ['E-mail', c.email ? `<a href="mailto:${c.email}">${c.email}</a>` : '—'],
       ['Telefone', c.telefone || '—'],
@@ -341,6 +359,13 @@
     document.getElementById('infoList').innerHTML = rows.map(([label, value]) => `
       <div class="info-row"><span class="info-label">${label}</span><span class="info-value">${value}</span></div>
     `).join('');
+  }
+
+  function rotuloPortal(acesso) {
+    document.getElementById('btnPortal').textContent = acesso ? '🔑 Portal do cliente ✓' : '🔑 Liberar portal';
+    document.getElementById('btnPortal').title = acesso
+      ? 'Cliente já tem acesso ao portal — gerenciar ou compartilhar o link'
+      : 'Criar acesso do cliente ao portal';
   }
 
   function renderPerfil(perfil) {

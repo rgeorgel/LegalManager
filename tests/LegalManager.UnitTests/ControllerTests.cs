@@ -380,6 +380,107 @@ public class PortalClienteControllerTests
         var result = await controller.GetAndamentos(Guid.NewGuid(), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result.Result);
     }
+
+    private static PortalClienteController CriarControllerCliente(
+        Mock<IPortalClienteService> service, Mock<IDocumentoService> documentos, Guid contatoId, Guid tenantId)
+    {
+        var controller = new PortalClienteController(service.Object, documentos.Object, new Mock<ITenantContext>().Object);
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new System.Security.Claims.Claim("contatoId", contatoId.ToString()),
+            new System.Security.Claims.Claim("tenantId", tenantId.ToString())
+        }));
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = user } };
+        return controller;
+    }
+
+    private static MeuProcessoDto ProcessoDoCliente(Guid id) => new(
+        id, "1234567-89.2024.8.26.0001", null, null, AreaDireito.Civil, FaseProcessual.Conhecimento,
+        StatusProcesso.Ativo, TipoParteProcesso.Autor, 0, DateTime.UtcNow);
+
+    [Fact]
+    public async Task GetDocumentoArquivo_ProcessoDeOutroCliente_RetornaNotFound()
+    {
+        var service = CreateServiceMock();
+        var documentos = new Mock<IDocumentoService>();
+        var controller = CriarControllerCliente(service, documentos, Guid.NewGuid(), Guid.NewGuid());
+
+        var result = await controller.GetDocumentoArquivo(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result);
+        documentos.Verify(d => d.GetFileStreamAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetDocumentoArquivo_DocumentoDeOutroProcesso_RetornaNotFound()
+    {
+        var processoId = Guid.NewGuid();
+        var documentoId = Guid.NewGuid();
+        var service = CreateServiceMock();
+        service.Setup(s => s.GetProcessoAsync(processoId, It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ProcessoDoCliente(processoId));
+        var documentos = new Mock<IDocumentoService>();
+        documentos.Setup(d => d.GetByIdAsync(documentoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DocumentoDto { Id = documentoId, ProcessoId = Guid.NewGuid() });
+        var controller = CriarControllerCliente(service, documentos, Guid.NewGuid(), Guid.NewGuid());
+
+        var result = await controller.GetDocumentoArquivo(processoId, documentoId, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result);
+        documentos.Verify(d => d.GetFileStreamAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("application/pdf", "application/pdf")]
+    [InlineData("image/png", "image/png")]
+    [InlineData("text/html", "application/octet-stream")]
+    public async Task GetDocumentoArquivo_DocumentoDoProcesso_RetornaArquivo(string tipoGravado, string tipoEntregue)
+    {
+        var processoId = Guid.NewGuid();
+        var documentoId = Guid.NewGuid();
+        var service = CreateServiceMock();
+        service.Setup(s => s.GetProcessoAsync(processoId, It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ProcessoDoCliente(processoId));
+        var documentos = new Mock<IDocumentoService>();
+        documentos.Setup(d => d.GetByIdAsync(documentoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DocumentoDto { Id = documentoId, ProcessoId = processoId });
+        documentos.Setup(d => d.GetFileStreamAsync(documentoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((Stream)new MemoryStream(new byte[] { 1, 2, 3 }), tipoGravado, "arquivo"));
+        var controller = CriarControllerCliente(service, documentos, Guid.NewGuid(), Guid.NewGuid());
+
+        var result = await controller.GetDocumentoArquivo(processoId, documentoId, CancellationToken.None);
+
+        var file = Assert.IsType<FileStreamResult>(result);
+        Assert.Equal(tipoEntregue, file.ContentType);
+        Assert.Equal("arquivo", file.FileDownloadName);
+    }
+
+    [Fact]
+    public async Task UploadDocumento_NotificaEscritorio()
+    {
+        var processoId = Guid.NewGuid();
+        var contatoId = Guid.NewGuid();
+        var tenantId = Guid.NewGuid();
+        var service = CreateServiceMock();
+        service.Setup(s => s.GetProcessoAsync(processoId, contatoId, tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ProcessoDoCliente(processoId));
+        var documentos = new Mock<IDocumentoService>();
+        documentos.Setup(d => d.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<DocumentoUploadDto>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DocumentoDto { Id = Guid.NewGuid(), ProcessoId = processoId, Nome = "comprovante.pdf" });
+        var controller = CriarControllerCliente(service, documentos, contatoId, tenantId);
+        var bytes = new byte[] { 1, 2, 3 };
+        var file = new FormFile(new MemoryStream(bytes), 0, bytes.Length, "file", "comprovante.pdf")
+        {
+            Headers = new HeaderDictionary(), ContentType = "application/pdf"
+        };
+
+        var result = await controller.UploadDocumento(processoId, file, TipoDocumento.Prova, null, CancellationToken.None);
+
+        Assert.IsType<CreatedResult>(result.Result);
+        service.Verify(s => s.NotificarDocumentoEnviadoAsync(processoId, contatoId, tenantId, "comprovante.pdf", It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
 
 public class PublicacoesControllerTests

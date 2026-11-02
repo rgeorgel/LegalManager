@@ -143,6 +143,7 @@
     .type-trialexpirando{ background: #fff7ed; color: #c2410c; }
     .type-geral         { background: #f3f4f6; color: #374151; }
     .type-novoandamento { background: #dbeafe; color: #1d4ed8; }
+    .type-documentocliente { background: #ede9fe; color: #6d28d9; }
 
     .notif-link-hint {
       font-size: 11px;
@@ -268,6 +269,7 @@
       <button class="filter-tab" data-filter="prazotarefa">✅ Tarefas <span class="tab-count" id="tc-prazotarefa">0</span></button>
       <button class="filter-tab" data-filter="prazoevento">📅 Eventos <span class="tab-count" id="tc-prazoevento">0</span></button>
       <button class="filter-tab" data-filter="novoandamento">⚖️ Andamentos <span class="tab-count" id="tc-novoandamento">0</span></button>
+      <button class="filter-tab" data-filter="documentocliente">📎 Docs do cliente <span class="tab-count" id="tc-documentocliente">0</span></button>
       <button class="filter-tab" data-filter="trialexpirando">⚠️ Trial <span class="tab-count" id="tc-trialexpirando">0</span></button>
       <button class="filter-tab" data-filter="geral">📋 Geral <span class="tab-count" id="tc-geral">0</span></button>
     </div>
@@ -298,7 +300,8 @@ import { esc } from '/js/utils.js';
     PrazoEvento:    'Evento',
     TrialExpirando: 'Trial',
     Geral:          'Geral',
-    NovoAndamento:  'Andamento'
+    NovoAndamento:  'Andamento',
+    DocumentoCliente: 'Documento do cliente'
   };
 
   const TIPO_ICONS = {
@@ -306,7 +309,8 @@ import { esc } from '/js/utils.js';
     PrazoEvento:    '📅',
     TrialExpirando: '⚠️',
     Geral:          '🔔',
-    NovoAndamento:  '⚖️'
+    NovoAndamento:  '⚖️',
+    DocumentoCliente: '📎'
   };
 
   let currentFilter = 'todos';

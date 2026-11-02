@@ -90,10 +90,7 @@
 
     async function loadDashboard() {
       const user = initLayout('dashboard');
-      if (!user) {
-        window.location.href = '/cliente/index.html';
-        return;
-      }
+      if (!user) return; // initLayout já mandou para o login (voltando a esta página depois)
 
       document.getElementById('welcomeTitle').textContent = `Olá, ${user.nome.split(' ')[0]}!`;
       

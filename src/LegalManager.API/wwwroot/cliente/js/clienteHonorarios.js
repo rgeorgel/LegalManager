@@ -1,14 +1,14 @@
-import { portalApi } from './clienteApi.js';
+import { clienteApiFetch } from './clienteApi.js';
 
 const brl = (v) => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtDate = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
 
 export async function listarContratosCliente() {
-  return portalApi('/portal/meus-honorarios/contratos');
+  return clienteApiFetch('/meus-honorarios/contratos');
 }
 
 export async function listarParcelasCliente(contratoId) {
-  return portalApi(`/portal/meus-honorarios/contratos/${contratoId}/parcelas`);
+  return clienteApiFetch(`/meus-honorarios/contratos/${contratoId}/parcelas`);
 }
 
 export async function abrirExtratoPdf(contratoId) {

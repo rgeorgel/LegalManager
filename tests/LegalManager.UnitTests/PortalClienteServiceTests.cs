@@ -462,4 +462,103 @@ public class PortalClienteServiceTests
         Assert.NotEqual(PasswordVerificationResult.Failed, _hasher.VerifyHashedPassword(acesso2, acesso2.SenhaHash, "NovaSenha@456"));
         _emailMock.Verify(e => e.EnviarResetSenhaAsync("cliente@teste.com", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // ── Documento enviado pelo cliente ────────────────────
+
+    private static Usuario NovoUsuario(Guid tenantId, PerfilUsuario perfil, bool ativo = true) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, Nome = perfil.ToString(), Perfil = perfil, Ativo = ativo,
+        Email = $"{Guid.NewGuid():N}@x.com", UserName = $"{Guid.NewGuid():N}@x.com"
+    };
+
+    private static Processo NovoProcesso(Guid tenantId, Guid? responsavelId) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = "1234567-89.2024.8.26.0001",
+        AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+        Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow, AdvogadoResponsavelId = responsavelId
+    };
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_AvisaAdvogadoResponsavel()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var responsavel = NovoUsuario(tenant.Id, PerfilUsuario.Advogado);
+        var admin = NovoUsuario(tenant.Id, PerfilUsuario.Admin);
+        ctx.Users.AddRange(responsavel, admin);
+        var processo = NovoProcesso(tenant.Id, responsavel.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await CreateService(ctx).NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "comprovante.pdf");
+
+        var n = Assert.Single(ctx.Notificacoes);
+        Assert.Equal(responsavel.Id, n.UsuarioId);
+        Assert.Equal(TipoNotificacao.DocumentoCliente, n.Tipo);
+        Assert.Contains(processo.NumeroCNJ, n.Titulo);
+        Assert.Contains("Cliente Teste", n.Mensagem);
+        Assert.Contains("comprovante.pdf", n.Mensagem);
+        Assert.Equal($"/pages/processo-detalhe.html?id={processo.Id}&tab=documentos", n.Url);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_SemResponsavelAtivo_AvisaAdmins()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var responsavelInativo = NovoUsuario(tenant.Id, PerfilUsuario.Advogado, ativo: false);
+        var admin1 = NovoUsuario(tenant.Id, PerfilUsuario.Admin);
+        var admin2 = NovoUsuario(tenant.Id, PerfilUsuario.Admin);
+        var colaborador = NovoUsuario(tenant.Id, PerfilUsuario.Colaborador);
+        var adminOutroEscritorio = NovoUsuario(Guid.NewGuid(), PerfilUsuario.Admin);
+        ctx.Users.AddRange(responsavelInativo, admin1, admin2, colaborador, adminOutroEscritorio);
+        var processo = NovoProcesso(tenant.Id, responsavelInativo.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await CreateService(ctx).NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "doc.pdf");
+
+        var destinatarios = ctx.Notificacoes.Select(n => n.UsuarioId).ToHashSet();
+        Assert.Equal(new HashSet<Guid> { admin1.Id, admin2.Id }, destinatarios);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_ProcessoDeOutroEscritorio_NaoNotifica()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var admin = NovoUsuario(tenant.Id, PerfilUsuario.Admin);
+        ctx.Users.Add(admin);
+        var processo = NovoProcesso(Guid.NewGuid(), null);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await CreateService(ctx).NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "doc.pdf");
+
+        Assert.Empty(ctx.Notificacoes);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_NomeLongo_ETruncado()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var admin = NovoUsuario(tenant.Id, PerfilUsuario.Admin);
+        ctx.Users.Add(admin);
+        var processo = NovoProcesso(tenant.Id, null);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await CreateService(ctx).NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, new string('a', 500));
+
+        var n = Assert.Single(ctx.Notificacoes);
+        Assert.Contains(new string('a', 200) + "…", n.Mensagem);
+        Assert.DoesNotContain(new string('a', 201), n.Mensagem);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_ErroNoBanco_NaoLanca()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var service = CreateService(ctx);
+        await ctx.DisposeAsync();
+
+        await service.NotificarDocumentoEnviadoAsync(Guid.NewGuid(), contato.Id, tenant.Id, "doc.pdf");
+    }
 }

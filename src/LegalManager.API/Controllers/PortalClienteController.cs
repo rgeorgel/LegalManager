@@ -4,6 +4,7 @@ using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -155,9 +156,31 @@ public class PortalClienteController : ControllerBase
         try
         {
             var result = await _documentoService.UploadAsync(stream, file.FileName, file.ContentType, uploadInfo, null, ct);
+            await _service.NotificarDocumentoEnviadoAsync(processoId, contatoId, tenantId, result.Nome, ct);
             return Created($"/api/portal/meus-processos/{processoId}/documentos/{result.Id}", result);
         }
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("meus-processos/{processoId:guid}/documentos/{documentoId:guid}/arquivo")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> GetDocumentoArquivo(Guid processoId, Guid documentoId, CancellationToken ct)
+    {
+        var (contatoId, tenantId) = GetContatoTenant();
+        var processo = await _service.GetProcessoAsync(processoId, contatoId, tenantId, ct);
+        if (processo == null)
+            return NotFound();
+
+        // O processo já é do cliente (e do escritório dele); o documento precisa ser desse processo.
+        var documento = await _documentoService.GetByIdAsync(documentoId, ct);
+        if (documento?.ProcessoId != processoId)
+            return NotFound();
+
+        var (stream, contentType, fileName) = await _documentoService.GetFileStreamAsync(documentoId, ct);
+        // Mesmo critério do escritório: fora de PDF/imagem, entrega como binário (só download).
+        if (!ArquivoPermitido.PodePreVisualizar(contentType))
+            contentType = "application/octet-stream";
+        return File(stream, contentType, fileName);
     }
 
     private Guid GetAcessoId() =>

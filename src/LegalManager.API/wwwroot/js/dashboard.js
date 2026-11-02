@@ -349,7 +349,7 @@ $('agNext').addEventListener('click', () => loadAgenda(addDays(ag.inicio, 7)));
 $('agHoje').addEventListener('click', () => loadAgenda(new Date()));
 
 // ── Notificações ───────────────────────────────────────
-const NOTIF_ICON = { PrazoTarefa: '⏳', PrazoEvento: '📅', TrialExpirando: '⭐', Geral: '📣', NovoAndamento: '⚖️', TarefaAtrasada: '⚠️' };
+const NOTIF_ICON = { PrazoTarefa: '⏳', PrazoEvento: '📅', TrialExpirando: '⭐', Geral: '📣', NovoAndamento: '⚖️', TarefaAtrasada: '⚠️', DocumentoCliente: '📎' };
 
 function tempoRelativo(iso) {
   const min = Math.round((Date.now() - new Date(iso)) / 60000);

@@ -55,7 +55,7 @@
   <header class="portal-nav" id="portalNav"></header>
 
   <main class="portal-page">
-    <button class="back-link" onclick="history.back()">← Voltar</button>
+    <button class="back-link" onclick="history.length > 1 ? history.back() : (location.href = '/cliente/processos.html')">← Voltar</button>
 
     <div id="processoHeader">
       <div class="loading"><span class="spinner spinner-dark"></span></div>
@@ -72,6 +72,21 @@
     </div>
   </main>
 
+  <!-- Visualizador de documento -->
+  <div class="doc-viewer" id="docViewer" role="dialog" aria-modal="true" aria-labelledby="docViewerTitulo">
+    <div class="doc-viewer-box">
+      <div class="doc-viewer-header">
+        <span class="doc-viewer-titulo" id="docViewerTitulo">Documento</span>
+        <div class="doc-viewer-acoes">
+          <a class="btn btn-sm btn-secondary" id="docViewerNovaAba" target="_blank" rel="noopener" style="display:none">↗ Abrir em nova aba</a>
+          <a class="btn btn-sm btn-primary" id="docViewerBaixar" style="display:none">⬇ Baixar</a>
+          <button class="btn btn-sm btn-secondary" id="docViewerFechar" aria-label="Fechar">✕</button>
+        </div>
+      </div>
+      <div class="doc-viewer-corpo" id="docViewerCorpo"></div>
+    </div>
+  </div>
+
   <script type="module">
 import { esc as escapeHtml } from '/js/utils.js';
     import { initLayout, formatDate, formatDateTime, statusBadge, faseBadge, tipoParteLabel } from '/cliente/js/clienteLayout.js';
@@ -87,10 +102,7 @@ import { esc as escapeHtml } from '/js/utils.js';
 
     async function loadProcesso() {
       const user = initLayout('processos');
-      if (!user) {
-        window.location.href = '/cliente/index.html';
-        return;
-      }
+      if (!user) return; // initLayout já mandou para o login (voltando a esta página depois)
 
       const headerEl = document.getElementById('processoHeader');
       const tabsContainer = document.getElementById('tabsContainer');
@@ -215,7 +227,21 @@ import { esc as escapeHtml } from '/js/utils.js';
           if (arr.length === 0) {
             document.getElementById('documentosList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📎</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
           } else {
-            document.getElementById('documentosList').innerHTML = `<table class="table" style="width:100%"><thead><tr style="text-align:left"><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Enviado em</th></tr></thead><tbody>${arr.map(d => `<tr><td>${escapeHtml(d.nome)}</td><td><span class="badge badge-gray">${d.tipo}</span></td><td>${d.tamanhoFormatado}</td><td>${formatDate(d.criadoEm)}</td></tr>`).join('')}</tbody></table>`;
+            document.getElementById('documentosList').innerHTML = `<div style="overflow-x:auto"><table class="table" style="width:100%"><thead><tr style="text-align:left"><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Enviado em</th><th></th></tr></thead><tbody>${arr.map(d => `<tr>
+              <td><button type="button" class="doc-nome-link" data-doc-ver="${escapeHtml(d.id)}">${escapeHtml(d.nome)}</button></td>
+              <td><span class="badge badge-gray">${escapeHtml(TIPO_DOC[d.tipo] || d.tipo)}</span></td>
+              <td>${escapeHtml(d.tamanhoFormatado || '')}</td>
+              <td>${formatDate(d.criadoEm)}</td>
+              <td style="white-space:nowrap;text-align:right">
+                ${podeVisualizar(d.contentType) ? `<button type="button" class="btn btn-sm btn-secondary" data-doc-ver="${escapeHtml(d.id)}">👁 Ver</button>` : ''}
+                <button type="button" class="btn btn-sm btn-secondary" data-doc-baixar="${escapeHtml(d.id)}">⬇ Baixar</button>
+              </td>
+            </tr>`).join('')}</tbody></table></div>`;
+            const porId = Object.fromEntries(arr.map(d => [d.id, d]));
+            document.querySelectorAll('[data-doc-ver]').forEach(b =>
+              b.addEventListener('click', () => verDocumento(porId[b.dataset.docVer])));
+            document.querySelectorAll('[data-doc-baixar]').forEach(b =>
+              b.addEventListener('click', () => baixarDocumento(porId[b.dataset.docBaixar], b)));
           }
 
           document.getElementById('btnNovoDocumento').addEventListener('click', () => {
@@ -275,6 +301,97 @@ import { esc as escapeHtml } from '/js/utils.js';
 
       loadAndamentos();
     }
+
+    // ── Documentos: visualizar / baixar ────────────────────
+    const TIPO_DOC = { Peticao: 'Petição', Decisao: 'Decisão', Contrato: 'Contrato', Prova: 'Prova', Modelo: 'Modelo', Outro: 'Outro' };
+    // Só PDF e imagem abrem dentro do portal (mesmo critério do servidor); o resto é baixado.
+    const TIPOS_VISUALIZAVEIS = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+    const EXTENSOES = { 'application/pdf': '.pdf', 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' };
+    const podeVisualizar = (contentType) => TIPOS_VISUALIZAVEIS.includes(contentType);
+
+    const viewer = document.getElementById('docViewer');
+    const viewerCorpo = document.getElementById('docViewerCorpo');
+    let viewerUrl = null;
+
+    function nomeArquivo(doc) {
+      // O nome pode ter sido digitado sem extensão ("Comprovante de residência").
+      const ext = EXTENSOES[doc.contentType];
+      return ext && !doc.nome.toLowerCase().endsWith(ext) && !/\.[a-z0-9]{2,5}$/i.test(doc.nome) ? doc.nome + ext : doc.nome;
+    }
+
+    function fecharViewer() {
+      viewer.classList.remove('open');
+      viewerCorpo.innerHTML = '';
+      if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+    }
+
+    async function verDocumento(doc) {
+      if (!doc) return;
+      if (!podeVisualizar(doc.contentType)) { baixarDocumento(doc); return; }
+      document.getElementById('docViewerTitulo').textContent = doc.nome;
+      const novaAba = document.getElementById('docViewerNovaAba');
+      const baixar = document.getElementById('docViewerBaixar');
+      novaAba.style.display = 'none';
+      baixar.style.display = 'none';
+      viewerCorpo.innerHTML = '<div class="loading"><span class="spinner spinner-dark"></span></div>';
+      viewer.classList.add('open');
+      try {
+        const blob = await portalApi.getDocumentoArquivo(processoId, doc.id);
+        if (!blob) return;
+        // O blob: herda a origem do portal — só tipos seguros são exibidos aqui.
+        if (!podeVisualizar(blob.type)) { fecharViewer(); salvarBlob(blob, nomeArquivo(doc)); return; }
+        if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+        viewerUrl = URL.createObjectURL(blob);
+        viewerCorpo.innerHTML = '';
+        if (blob.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = viewerUrl;
+          img.alt = doc.nome;
+          viewerCorpo.appendChild(img);
+        } else {
+          const iframe = document.createElement('iframe');
+          iframe.src = viewerUrl;
+          iframe.title = doc.nome;
+          viewerCorpo.appendChild(iframe);
+        }
+        novaAba.href = viewerUrl;
+        novaAba.style.display = '';
+        baixar.href = viewerUrl;
+        baixar.download = nomeArquivo(doc);
+        baixar.style.display = '';
+      } catch (err) {
+        viewerCorpo.innerHTML = `<div class="alert alert-error" style="margin:16px">${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function salvarBlob(blob, nome) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nome;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
+
+    async function baixarDocumento(doc, btn = null) {
+      if (!doc) return;
+      const texto = btn?.textContent;
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-dark"></span>'; }
+      try {
+        const blob = await portalApi.getDocumentoArquivo(processoId, doc.id);
+        if (blob) salvarBlob(blob, nomeArquivo(doc));
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = texto; }
+      }
+    }
+
+    document.getElementById('docViewerFechar').addEventListener('click', fecharViewer);
+    viewer.addEventListener('click', e => { if (e.target === viewer) fecharViewer(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && viewer.classList.contains('open')) fecharViewer(); });
 
     async function loadResumos() {
       const tabContent = document.getElementById('tabContent');

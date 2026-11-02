@@ -73,10 +73,7 @@
 
     async function loadProcessos() {
       const user = initLayout('processos');
-      if (!user) {
-        window.location.href = '/cliente/index.html';
-        return;
-      }
+      if (!user) return; // initLayout já mandou para o login (voltando a esta página depois)
 
       const content = document.getElementById('content');
 

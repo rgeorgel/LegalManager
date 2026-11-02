@@ -85,9 +85,9 @@
   </div>
 
   <script type="module">
-    import { login, isLoggedIn } from '/cliente/js/clienteApi.js';
+    import { login, isLoggedIn, destinoAposLogin } from '/cliente/js/clienteApi.js';
 
-    if (isLoggedIn()) window.location.href = '/cliente/dashboard.html';
+    if (isLoggedIn()) window.location.href = destinoAposLogin();
 
     const form = document.getElementById('loginForm');
     const alertEl = document.getElementById('alert');
@@ -111,7 +111,7 @@
           document.getElementById('email').value,
           document.getElementById('senha').value
         );
-        window.location.href = '/cliente/dashboard.html';
+        window.location.href = destinoAposLogin();
       } catch (err) {
         alertEl.textContent = err.message;
         alertEl.style.display = 'block';

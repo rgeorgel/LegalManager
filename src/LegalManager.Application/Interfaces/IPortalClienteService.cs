@@ -12,6 +12,8 @@ public interface IPortalClienteService
     Task<MeuProcessoDto?> GetProcessoAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
     Task<IEnumerable<MeuAndamentoDto>> GetAndamentosAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
     Task<IEnumerable<MeuResumoDto>> GetResumosAsync(Guid processoId, Guid contatoId, Guid tenantId, CancellationToken ct = default);
+    /// <summary>Avisa o escritório (sino) de que o cliente enviou um documento pelo portal. Nunca lança.</summary>
+    Task NotificarDocumentoEnviadoAsync(Guid processoId, Guid contatoId, Guid tenantId, string nomeDocumento, CancellationToken ct = default);
 
     // Office-side management
     Task<AcessoPortalInfoDto> CriarAcessoAsync(Guid contatoId, CriarAcessoPortalDto dto, Guid tenantId, CancellationToken ct = default);

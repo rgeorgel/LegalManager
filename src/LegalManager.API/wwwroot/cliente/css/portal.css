@@ -541,3 +541,21 @@ a:hover { text-decoration: underline; }
 .md-content table.md-table th { background: #f3f4f6; font-weight: 600; }
 .md-content table.md-table tbody tr:nth-child(even) { background: #f9fafb; }
 .md-content table.md-table p { margin: 0; }
+
+/* ── Visualizador de documento ─────────────────────────── */
+.doc-nome-link { background: none; border: none; padding: 0; color: var(--color-primary); font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.doc-viewer { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15, 23, 42, 0.7); padding: 24px; }
+.doc-viewer.open { display: flex; align-items: center; justify-content: center; }
+.doc-viewer-box { background: #fff; border-radius: 10px; width: 100%; max-width: 1000px; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.doc-viewer-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--color-border); }
+.doc-viewer-titulo { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-viewer-acoes { display: flex; gap: 8px; flex-shrink: 0; }
+.doc-viewer-corpo { flex: 1; min-height: 0; position: relative; background: #f3f4f6; overflow: auto; display: flex; align-items: center; justify-content: center; }
+.doc-viewer-corpo iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; background: #fff; }
+.doc-viewer-corpo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+@media (max-width: 640px) {
+  .doc-viewer { padding: 0; }
+  .doc-viewer-box { border-radius: 0; }
+  .doc-viewer-header { flex-wrap: wrap; }
+  .doc-viewer-titulo { flex-basis: 100%; }
+}

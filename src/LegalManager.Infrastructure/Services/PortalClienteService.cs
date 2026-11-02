@@ -228,6 +228,55 @@ public class PortalClienteService : IPortalClienteService
             .ToListAsync(ct);
     }
 
+    // Vai para o advogado responsável pelo processo; sem responsável ativo, para os admins do escritório.
+    public async Task NotificarDocumentoEnviadoAsync(
+        Guid processoId, Guid contatoId, Guid tenantId, string nomeDocumento, CancellationToken ct = default)
+    {
+        try
+        {
+            var processo = await _context.Processos.AsNoTracking()
+                .Where(p => p.Id == processoId && p.TenantId == tenantId)
+                .Select(p => new { p.NumeroCNJ, p.AdvogadoResponsavelId })
+                .FirstOrDefaultAsync(ct);
+            if (processo == null) return;
+
+            var nomeCliente = await _context.Contatos.AsNoTracking()
+                .Where(c => c.Id == contatoId && c.TenantId == tenantId)
+                .Select(c => c.Nome)
+                .FirstOrDefaultAsync(ct) ?? "Cliente";
+
+            var ativos = _context.Users.Where(u => u.TenantId == tenantId && u.Ativo);
+            var destinatarios = processo.AdvogadoResponsavelId is { } responsavelId
+                    && await ativos.AnyAsync(u => u.Id == responsavelId, ct)
+                ? [responsavelId]
+                : await ativos.Where(u => u.Perfil == PerfilUsuario.Admin).Select(u => u.Id).ToListAsync(ct);
+
+            var agora = DateTime.UtcNow;
+            var documento = nomeDocumento.Length > 200 ? nomeDocumento[..200] + "…" : nomeDocumento;
+            foreach (var usuarioId in destinatarios)
+            {
+                _context.Notificacoes.Add(new Notificacao
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenantId,
+                    UsuarioId = usuarioId,
+                    Tipo = TipoNotificacao.DocumentoCliente,
+                    Titulo = $"Documento enviado pelo cliente — {processo.NumeroCNJ}",
+                    Mensagem = $"{nomeCliente} enviou \"{documento}\" pelo Portal do Cliente.",
+                    Url = $"/pages/processo-detalhe.html?id={processoId}&tab=documentos",
+                    Lida = false,
+                    CriadaEm = agora
+                });
+            }
+            await _context.SaveChangesAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            // O documento já foi gravado: falha no aviso não pode virar erro para o cliente.
+            _logger.LogError(ex, "Erro ao notificar documento enviado pelo cliente no processo {ProcessoId}", processoId);
+        }
+    }
+
     public async Task<AcessoPortalInfoDto> CriarAcessoAsync(
         Guid contatoId, CriarAcessoPortalDto dto, Guid tenantId, CancellationToken ct = default)
     {

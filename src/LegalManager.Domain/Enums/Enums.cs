@@ -49,7 +49,7 @@ public enum FrequenciaRecorrencia { Diaria, Semanal, Mensal }
 
 public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }
 
-public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada }
+public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada, DocumentoCliente }
 
 public enum TipoPublicacao { Prazo, Audiencia, Decisao, Despacho, Intimacao, Outro }
 
