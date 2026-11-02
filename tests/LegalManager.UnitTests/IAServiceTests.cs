@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 
@@ -365,14 +366,135 @@ public class IAServiceTests
         Assert.Equal("{}", result);
     }
 
+    // ── Idioma da resposta ───────────────────────────────────────────────────
+
+    private static object RespostaOpenAI(string text) => new { choices = new[] { new { message = new { content = text } } } };
+
+    private static (IAService svc, MockHttpMessageHandler handler) BuildOpenAIServiceEmSequencia(params string[] textos)
+    {
+        var handler = MockHttpMessageHandler.EmSequencia(textos.Select(RespostaOpenAI).ToArray());
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.com") };
+        return (new IAService(httpClient, OpenAIConfig()), handler);
+    }
+
+    [Fact]
+    public async Task OpenAI_EnviaRegraDeIdiomaComoMensagemDeSistema()
+    {
+        var (svc, handler) = BuildOpenAIService("Resumo em português.");
+
+        await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        using var corpo = JsonDocument.Parse(handler.Corpos.Single());
+        var primeira = corpo.RootElement.GetProperty("messages")[0];
+        Assert.Equal("system", primeira.GetProperty("role").GetString());
+        Assert.Contains("português do Brasil", primeira.GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task Anthropic_EnviaRegraDeIdiomaNoCampoSystem()
+    {
+        var (svc, handler) = BuildAnthropicService("Resumo em português.");
+
+        await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        using var corpo = JsonDocument.Parse(handler.Corpos.Single());
+        Assert.Contains("português do Brasil", corpo.RootElement.GetProperty("system").GetString());
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_TextoEmPortugues_NaoPedeCorrecao()
+    {
+        var (svc, handler) = BuildOpenAIService("## Visão Geral\n\nProcesso arquivado definitivamente.");
+
+        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        Assert.Equal("## Visão Geral\n\nProcesso arquivado definitivamente.", result);
+        Assert.Single(handler.Corpos);
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_ComCaracteresChineses_PedeReescritaEmPortugues()
+    {
+        var (svc, handler) = BuildOpenAIServiceEmSequencia(
+            "**Área:** a系统中 consta “Outro”.",
+            "**Área:** no sistema consta “Outro”.");
+
+        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        Assert.Equal("**Área:** no sistema consta “Outro”.", result);
+        Assert.Equal(2, handler.Corpos.Count);
+        using var correcao = JsonDocument.Parse(handler.Corpos[1]);
+        var mensagens = correcao.RootElement.GetProperty("messages");
+        Assert.Contains("revisor", mensagens[0].GetProperty("content").GetString());
+        Assert.Contains("a系统中", mensagens[1].GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_CorrecaoAindaComChines_RemoveOsCaracteres()
+    {
+        var (svc, _) = BuildOpenAIServiceEmSequencia(
+            "Verificar se a parte quer reabrir a讨论.",
+            "Acompanhar eventual prazo残余 ou comunicação oficial.");
+
+        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        Assert.Equal("Acompanhar eventual prazo ou comunicação oficial.", result);
+    }
+
+    [Fact]
+    public async Task GerarResumoProcessoAsync_CorrecaoFalha_RemoveCaracteresDoOriginal()
+    {
+        var handler = MockHttpMessageHandler.EmSequencia(RespostaOpenAI("Prazo 残余 encerrado."), new { erro = true });
+        var svc = new IAService(new HttpClient(handler), OpenAIConfig());
+
+        var result = await svc.GerarResumoProcessoAsync("Número CNJ: 1");
+
+        Assert.Equal("Prazo encerrado.", result);
+    }
+
+    [Fact]
+    public async Task GerarPecaJuridicaAsync_TextoEmPortugues_NaoPedeCorrecao()
+    {
+        var (svc, handler) = BuildOpenAIService("Petição inicial em português brasileiro.");
+
+        await svc.GerarPecaJuridicaAsync("Ação de cobrança", "PeticaoInicial");
+
+        Assert.Single(handler.Corpos);
+    }
+
+    [Fact]
+    public async Task TraduzirTextoAsync_ComPalavrasEmIngles_PedeReescrita()
+    {
+        var (svc, handler) = BuildOpenAIServiceEmSequencia(
+            "The judge decided that the case is closed.",
+            "O juiz decidiu que o processo foi encerrado.");
+
+        var result = await svc.TraduzirTextoAsync("Arquivamento definitivo");
+
+        Assert.Equal("O juiz decidiu que o processo foi encerrado.", result);
+        Assert.Equal(2, handler.Corpos.Count);
+    }
+
+    [Fact]
+    public void RemoverOutroAlfabeto_PreservaQuebraDeLinhaMarkdownEIndentacao()
+    {
+        var texto = "- **Área:** a系统中 consta  \n  - item，ok";
+
+        var result = IdiomaResposta.RemoverOutroAlfabeto(texto);
+
+        Assert.Equal("- **Área:** a consta  \n  - itemok", result);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private class MockHttpMessageHandler : HttpMessageHandler
     {
+        private readonly Queue<string> _respostas = new();
         private readonly string? _rawResponse;
         private readonly HttpStatusCode _statusCode;
 
         public Uri? RequestUri { get; private set; }
+        public List<string> Corpos { get; } = [];
 
         public MockHttpMessageHandler(object responseBody)
             : this(JsonSerializer.Serialize(responseBody)) { }
@@ -388,13 +510,23 @@ public class IAServiceTests
             _statusCode = statusCode;
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        /// <summary>Respostas devolvidas em ordem; depois da última, repete a última.</summary>
+        public static MockHttpMessageHandler EmSequencia(params object[] corpos)
+        {
+            var serializados = corpos.Select(c => JsonSerializer.Serialize(c)).ToArray();
+            var handler = new MockHttpMessageHandler(serializados[^1]);
+            foreach (var c in serializados) handler._respostas.Enqueue(c);
+            return handler;
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             RequestUri = request.RequestUri;
-            return Task.FromResult(new HttpResponseMessage(_statusCode)
+            Corpos.Add(request.Content is null ? "" : await request.Content.ReadAsStringAsync(ct));
+            return new HttpResponseMessage(_statusCode)
             {
-                Content = new StringContent(_rawResponse ?? string.Empty)
-            });
+                Content = new StringContent(_respostas.Count > 0 ? _respostas.Dequeue() : _rawResponse ?? string.Empty)
+            };
         }
     }
 }

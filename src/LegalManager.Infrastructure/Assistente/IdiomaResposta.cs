@@ -26,9 +26,10 @@ public static partial class IdiomaResposta
 
     [GeneratedRegex(@"\[([^\]]*)\]\([^)]*\)")] private static partial Regex LinkMarkdown();
     [GeneratedRegex(@"https?://\S+|[\w.+-]+@[\w-]+\.[\w.]+|`[^`]*`")] private static partial Regex UrlEmailCodigo();
-    [GeneratedRegex(@"[\p{IsCJKUnifiedIdeographs}\p{IsHiragana}\p{IsKatakana}\p{IsHangulSyllables}\p{IsCyrillic}\p{IsArabic}\p{IsHebrew}\p{IsThai}]")]
+    [GeneratedRegex(@"[\p{IsCJKUnifiedIdeographs}\p{IsCJKUnifiedIdeographsExtensionA}\p{IsCJKSymbolsandPunctuation}\p{IsHalfwidthandFullwidthForms}\p{IsHiragana}\p{IsKatakana}\p{IsHangulSyllables}\p{IsCyrillic}\p{IsArabic}\p{IsHebrew}\p{IsThai}]")]
     private static partial Regex OutroAlfabeto();
     [GeneratedRegex(@"[A-Za-zÀ-ÿ]+(?:'[A-Za-z]+)?")] private static partial Regex Palavra();
+    [GeneratedRegex(@"(?<=\S)[ \t]{2,}(?=\S)")] private static partial Regex EspacosRepetidos();
 
     /// <summary>True se o texto parece conter trechos em outro idioma.</summary>
     public static bool PareceTerOutroIdioma(string? texto)
@@ -50,13 +51,33 @@ public static partial class IdiomaResposta
         return false;
     }
 
+    /// <summary>
+    /// Última barreira quando a reescrita não resolve: tira os caracteres de outros alfabetos
+    /// (chinês, japonês, cirílico...) que ainda sobraram no texto.
+    /// </summary>
+    public static string RemoverOutroAlfabeto(string texto) =>
+        EspacosRepetidos().Replace(OutroAlfabeto().Replace(texto, ""), " ");
+
+    public static bool TemOutroAlfabeto(string? texto) =>
+        !string.IsNullOrEmpty(texto) && OutroAlfabeto().IsMatch(texto);
+
+    /// <summary>Regra de idioma enviada como instrução de sistema nas chamadas de IA.</summary>
+    public const string InstrucaoSistema = """
+        Você escreve para advogados e clientes de um escritório de advocacia brasileiro.
+        Escreva SEMPRE e EXCLUSIVAMENTE em português do Brasil, com ortografia correta.
+        Nunca use palavras, expressões ou caracteres de outros idiomas ou alfabetos (inglês, espanhol,
+        chinês, japonês, coreano, cirílico etc.), nem mesmo no meio de uma palavra ou frase em português.
+        Se pensar em um termo de outro idioma, escreva o equivalente em português.
+        """;
+
     public const string PromptCorrecao = """
         Você é um revisor de textos em português do Brasil. O texto que o usuário enviar foi escrito por
-        um assistente de um escritório de advocacia e contém trechos em outro idioma (por exemplo, inglês)
-        misturados com português.
+        um assistente de um escritório de advocacia e contém trechos em outro idioma (por exemplo, inglês
+        ou caracteres chineses) misturados com português.
 
         Reescreva o texto INTEIRO exclusivamente em português do Brasil:
         - Traduza todo trecho em outro idioma, com o mesmo sentido e tom (formal, quando for um e-mail ou mensagem a cliente).
+        - Corrija palavras emendadas ou truncadas que tenham ficado sem sentido.
         - Mantenha EXATAMENTE: nomes de pessoas e empresas, números, valores, datas, números de processo e de contrato, e-mails, telefones e links.
         - Mantenha a formatação Markdown (títulos, listas, negrito, tabelas, links).
         - Não acrescente nem remova informações. Não comente a revisão.

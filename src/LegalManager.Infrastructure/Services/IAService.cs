@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using LegalManager.Application.Interfaces;
+using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Observability;
 using Microsoft.Extensions.Configuration;
 
@@ -42,7 +43,7 @@ public class IAService : IIAService
             Andamento: {texto}
             """;
 
-        return await EnviarPromptAsync(prompt, ct);
+        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), ct);
     }
 
     public async Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default)
@@ -72,7 +73,7 @@ public class IAService : IIAService
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return await CorrigirIdiomaPortugues(resultado, ct);
+        return await GarantirPortuguesAsync(resultado, ct);
     }
 
 public async Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default)
@@ -100,8 +101,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        var limpo = LimparETValidarResposta(resultado);
-        return limpo;
+        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), ct);
     }
 
     private string LimparETValidarResposta(string texto)
@@ -124,27 +124,30 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         return texto.Trim();
     }
 
-    private async Task<string> CorrigirIdiomaPortugues(string textoOriginal, CancellationToken ct)
+    /// <summary>
+    /// Alguns modelos (ex.: MiniMax, Qwen) misturam chinês ou inglês no texto mesmo com a regra no
+    /// prompt. Se a heurística detectar outro idioma, pede uma reescrita em português; o que ainda
+    /// sobrar de outro alfabeto é removido. Se a reescrita falhar, fica o original sem esses caracteres.
+    /// </summary>
+    private async Task<string> GarantirPortuguesAsync(string texto, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(textoOriginal)) return textoOriginal;
+        if (!IdiomaResposta.PareceTerOutroIdioma(texto)) return texto;
 
-        var promptCorrecao = $$$"""
-            Você é um revisor jurídico brasileiro. O texto abaixo foi gerado por outro sistema de IA e pode conter palavras, frases ou símbolos em idiomas estrangeiros (inglês, espanhol, chinês, japonês, etc.) misturados com português.
+        Activity.Current?.SetTag("gen_ai.idioma_corrigido", true);
+        var resultado = texto;
+        try
+        {
+            var corrigido = LimparETValidarResposta(await EnviarPromptAsync(texto, ct, IdiomaResposta.PromptCorrecao));
+            if (corrigido.Length > 0) resultado = corrigido;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Activity.Current?.AddException(ex);
+        }
 
-            SUA TAREFA:
-            1. Identifique TODAS as palavras, frases ou símbolos que NÃO são português brasileiro
-            2. Substitua cada palavra/frase foreign pela versão correta em português brasileiro
-            3. Se uma palavra não tiver tradução direta adequada, remova-a
-            4. Mantenha toda a estrutura jurídica e formatação intacta
-            5. Retorne EXCLUSIVAMENTE o texto CORRIGIDO em português brasileiro
-
-            Texto original:
-            {{{textoOriginal}}}
-
-            Texto corrigido em português brasileiro:
-            """;
-
-        return await EnviarPromptAsync(promptCorrecao, ct);
+        return IdiomaResposta.TemOutroAlfabeto(resultado)
+            ? IdiomaResposta.RemoverOutroAlfabeto(resultado)
+            : resultado;
     }
 
     /// <summary>Publicações maiores que isso vão com o começo e o fim (o prazo costuma estar no fim).</summary>
@@ -244,7 +247,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             """;
 
         var resultado = await EnviarPromptAsync(prompt, ct);
-        return LimparETValidarResposta(resultado);
+        return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), ct);
     }
 
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
@@ -263,24 +266,25 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
             Responda EXCLUSIVAMENTE em Português do Brasil.
             """;
 
-        return await EnviarPromptAsync(prompt, ct);
+        return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), ct);
     }
 
-    private async Task<string> EnviarPromptAsync(string prompt, CancellationToken ct)
+    private async Task<string> EnviarPromptAsync(
+        string prompt, CancellationToken ct, string sistema = IdiomaResposta.InstrucaoSistema)
     {
         if (_provider.Equals("Anthropic", StringComparison.OrdinalIgnoreCase))
         {
-            return await EnviarAnthropicAsync(prompt, ct);
+            return await EnviarAnthropicAsync(prompt, sistema, ct);
         }
         else if (_provider.Equals("OpenAI", StringComparison.OrdinalIgnoreCase))
         {
-            return await EnviarOpenAIAsync(prompt, ct);
+            return await EnviarOpenAIAsync(prompt, sistema, ct);
         }
 
         throw new NotSupportedException($"Provedor IA '{_provider}' não suportado. Use 'Anthropic' ou 'OpenAI'.");
     }
 
-    private async Task<string> EnviarAnthropicAsync(string prompt, CancellationToken ct)
+    private async Task<string> EnviarAnthropicAsync(string prompt, string sistema, CancellationToken ct)
     {
         var baseUrl = string.IsNullOrEmpty(_baseUrl)
             ? "https://api.anthropic.com/v1"
@@ -290,6 +294,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         {
             model = _model,
             max_tokens = 4096,
+            system = sistema,
             messages = new[] { new { role = "user", content = prompt } }
         };
 
@@ -321,7 +326,7 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         throw new InvalidOperationException("Resposta da API Anthropic em formato inesperado.");
     }
 
-    private async Task<string> EnviarOpenAIAsync(string prompt, CancellationToken ct)
+    private async Task<string> EnviarOpenAIAsync(string prompt, string sistema, CancellationToken ct)
     {
         var baseUrl = string.IsNullOrEmpty(_baseUrl)
             ? "https://api.openai.com/v1"
@@ -330,7 +335,11 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         var requestBody = new Dictionary<string, object>
         {
             ["model"] = _model,
-            ["messages"] = new[] { new { role = "user", content = prompt } },
+            ["messages"] = new[]
+            {
+                new { role = "system", content = sistema },
+                new { role = "user", content = prompt }
+            },
             ["max_tokens"] = 4096
         };
         if (_reasoningEffort is not null) requestBody["reasoning_effort"] = _reasoningEffort;
