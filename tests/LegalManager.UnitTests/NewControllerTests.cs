@@ -103,7 +103,8 @@ public class AssinaturaControllerTests
         Guid tenantId,
         IStripeService? stripe = null,
         Usuario? admin = null,
-        string? frontendUrl = null)
+        string? frontendUrl = null,
+        bool usoGratuitoIA = false)
     {
         var tenantMock = CreateTenantContextMock(tenantId);
         var config = CreateConfigMock(frontendUrl);
@@ -115,7 +116,8 @@ public class AssinaturaControllerTests
             tenantMock.Object,
             userManager,
             config.Object,
-            NullLogger<AssinaturaController>.Instance);
+            NullLogger<AssinaturaController>.Instance,
+            usoGratuitoIA);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -654,6 +656,23 @@ public class AssinaturaControllerTests
         var controller = CreateController(ctx, tenantId, stripe.Object, admin);
         var result = await controller.ComprarCreditos(new ComprarCreditosDto("basico"), CancellationToken.None);
         Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ComprarCreditos_ReturnsBadRequest_SemCheckout_QuandoUsoIAGratuito()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant { Id = tenantId, Nome = "Test", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, Cnpj = "123", CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+        var admin = new Usuario { Id = Guid.NewGuid(), TenantId = tenantId, Email = "admin@test.com", UserName = "admin@test.com", Nome = "Admin", Ativo = true };
+        var stripe = CreateStripeServiceMock(checkoutUrl: "https://checkout.test");
+        var controller = CreateController(ctx, tenantId, stripe.Object, admin, usoGratuitoIA: true);
+
+        var result = await controller.ComprarCreditos(new ComprarCreditosDto("basico"), CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        stripe.Verify(s => s.CriarCheckoutAvulsoAsync(It.IsAny<CriarCheckoutAvulsoInput>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

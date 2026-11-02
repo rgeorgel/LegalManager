@@ -227,6 +227,26 @@
     .credits-stat-value { font-size: 22px; font-weight: 800; }
     .credits-stat-value.green { color: #16a34a; }
 
+    .ia-gratis-banner {
+      max-width: 900px;
+      margin: 0 auto 20px;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border: 1px solid #86efac;
+      background: #f0fdf4;
+      color: #166534;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .ia-gratis-banner-icon { font-size: 20px; line-height: 1.2; }
+    .ia-gratis-banner strong { display: block; font-size: 15px; margin-bottom: 2px; }
+    .credits-grid.compra-desabilitada .credit-card { opacity: .6; }
+    .credits-grid.compra-desabilitada .credit-card:hover { border-color: var(--color-border); box-shadow: none; }
+    .credits-grid.compra-desabilitada .credit-card.featured-credit:hover { border-color: #f59e0b; box-shadow: 0 0 0 1px #f59e0b; }
+
     .credits-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -548,6 +568,15 @@
     <!-- Tab: Créditos IA -->
     <div class="tab-panel" id="tab-creditos">
 
+      <!-- IA temporariamente gratuita: compra desabilitada (exibido por loadCreditos) -->
+      <div class="ia-gratis-banner" id="iaGratisBanner" style="display:none" role="status">
+        <span class="ia-gratis-banner-icon" aria-hidden="true">🎉</span>
+        <div>
+          <strong>O uso da IA está temporariamente gratuito</strong>
+          Traduza andamentos, gere peças jurídicas, resumos de processos e modelos com IA à vontade — nada é descontado dos seus créditos. A compra de pacotes está suspensa durante este período.
+        </div>
+      </div>
+
       <!-- Resumo de créditos disponíveis -->
       <div class="credits-summary" id="creditsSummary">
         <div class="credits-stat">
@@ -559,7 +588,7 @@
           <span class="credits-stat-label">Peças disponíveis</span>
           <span class="credits-stat-value green" id="creditPeca">—</span>
         </div>
-        <div style="margin-left:auto;font-size:13px;color:var(--color-text-muted);max-width:280px">
+        <div id="creditsSummaryInfo" style="margin-left:auto;font-size:13px;color:var(--color-text-muted);max-width:280px">
           Créditos são usados ao traduzir andamentos e gerar peças jurídicas com IA. Não expiram e acumulam com futuras compras.
         </div>
       </div>
@@ -1206,23 +1235,30 @@ import { esc } from '/js/utils.js';
 
   // --- Créditos IA tab ---
 
+  // Promise compartilhada: os pacotes precisam saber se a compra está suspensa (IA gratuita).
+  const creditosPromise = apiFetch('/creditos').catch(e => { console.error(e); return null; });
+
   async function loadCreditos() {
-    try {
-      const data = await apiFetch('/creditos');
-      const traducao = data.creditos?.find(c => c.tipo === 'TraducaoAndamento');
-      const peca = data.creditos?.find(c => c.tipo === 'GeracaoPeca');
-      document.getElementById('creditTraducao').textContent = traducao?.quantidadeDisponivel ?? 0;
-      document.getElementById('creditPeca').textContent = peca?.quantidadeDisponivel ?? 0;
-    } catch (e) {
-      console.error(e);
+    const data = await creditosPromise;
+    if (!data) return;
+    const traducao = data.creditos?.find(c => c.tipo === 'TraducaoAndamento');
+    const peca = data.creditos?.find(c => c.tipo === 'GeracaoPeca');
+    document.getElementById('creditTraducao').textContent = data.usoGratuito ? 'Ilimitado' : (traducao?.quantidadeDisponivel ?? 0);
+    document.getElementById('creditPeca').textContent = data.usoGratuito ? 'Ilimitado' : (peca?.quantidadeDisponivel ?? 0);
+    if (data.usoGratuito) {
+      document.getElementById('iaGratisBanner').style.display = '';
+      document.getElementById('creditsSummaryInfo').textContent =
+        'Durante o período gratuito o uso da IA não desconta créditos. Seu saldo atual fica guardado para depois.';
     }
   }
 
   async function loadPacotes() {
     try {
-      const pacotes = await apiFetch('/assinatura/creditos/pacotes');
+      const [pacotes, creditos] = await Promise.all([apiFetch('/assinatura/creditos/pacotes'), creditosPromise]);
+      const compraSuspensa = !!creditos?.usoGratuito;
       const grid = document.getElementById('creditsGrid');
       grid.innerHTML = '';
+      grid.classList.toggle('compra-desabilitada', compraSuspensa);
 
       pacotes.forEach(p => {
         const valStr = p.valor.toFixed(2);
@@ -1255,8 +1291,9 @@ import { esc } from '/js/utils.js';
             <span class="credit-price-cents">,${centavos}</span>
           </div>
           <button class="btn btn-primary btn-comprar" data-id="${esc(p.id)}" data-nome="${esc(p.nome)}" data-valor="${valStr}" style="width:100%"
-            ${isAdmin ? '' : 'disabled title="Apenas o administrador pode comprar"'}>
-            Comprar
+            ${compraSuspensa ? 'disabled title="Uso da IA temporariamente gratuito"'
+              : isAdmin ? '' : 'disabled title="Apenas o administrador pode comprar"'}>
+            ${compraSuspensa ? 'Indisponível no momento' : 'Comprar'}
           </button>
         `;
 

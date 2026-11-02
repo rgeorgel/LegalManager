@@ -894,10 +894,10 @@
     </div>
     <div class="modal-body">
       <div id="resumoConfirmAlert" class="alert alert-error" style="display:none"></div>
-      <div style="padding:14px 16px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px">
-        <div style="font-weight:600;color:#92400e;margin-bottom:6px">⚠️ Uso de Crédito de IA</div>
-        <div style="font-size:13px;color:#78350f;line-height:1.5">
-          Esta operação consome <strong>1 crédito de Tradução de Partes</strong>. O sistema irá analisar todos os
+      <div id="resumoAvisoCredito" style="padding:14px 16px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;margin-bottom:16px">
+        <div id="resumoAvisoTitulo" style="font-weight:600;color:#92400e;margin-bottom:6px">⚠️ Uso de Crédito de IA</div>
+        <div id="resumoAvisoTexto" style="font-size:13px;color:#78350f;line-height:1.5">
+          Esta operação consome <strong id="resumoAvisoConsumo">1 crédito de Tradução de Partes</strong>. O sistema irá analisar todos os
           dados do processo (partes, andamentos, documentos e tarefas) e gerar um resumo completo em linguagem clara.
         </div>
       </div>
@@ -1687,9 +1687,13 @@ async function loadCreditos() {
   try {
     const dados = await getCreditos();
     const credPeca = dados.creditos?.find(c => c.tipo === 'GeracaoPeca');
-    creditosDisponiveis = credPeca?.quantidadeDisponivel ?? 0;
+    creditosDisponiveis = dados.usoGratuito ? Infinity : (credPeca?.quantidadeDisponivel ?? 0);
     const el = document.getElementById('creditosInfo');
-    if (creditosDisponiveis > 0) {
+    if (dados.usoGratuito) {
+      el.innerHTML = `🎉 Uso da IA temporariamente <strong>gratuito</strong> — gerar peças não desconta créditos.`;
+      el.style.background = '#f0fdf4';
+      el.style.color = '#166534';
+    } else if (creditosDisponiveis > 0) {
       el.innerHTML = `🔮 Créditos disponíveis: <strong>${creditosDisponiveis}</strong>`;
       el.style.background = '#f0fdf4';
       el.style.color = '#166534';
@@ -2612,6 +2616,18 @@ async function abrirConfirmacaoResumo() {
   document.getElementById('modalResumoConfirm').classList.add('open');
   try {
     const creditos = await getCreditos();
+    if (creditos.usoGratuito) {
+      const aviso = document.getElementById('resumoAvisoCredito');
+      aviso.style.background = '#f0fdf4';
+      aviso.style.borderColor = '#86efac';
+      document.getElementById('resumoAvisoTitulo').textContent = '🎉 Uso da IA temporariamente gratuito';
+      document.getElementById('resumoAvisoTitulo').style.color = '#166534';
+      document.getElementById('resumoAvisoTexto').style.color = '#166534';
+      document.getElementById('resumoAvisoConsumo').textContent = 'nenhum crédito';
+      document.getElementById('resumoCreditos').textContent = '';
+      document.getElementById('resumoConfirmGerar').disabled = false;
+      return;
+    }
     const creditoResumo = creditos.creditos?.find(c => c.tipo === 'TraducaoAndamento');
     const disponiveis = creditoResumo?.quantidadeDisponivel ?? 0;
     document.getElementById('resumoCreditos').textContent = `Créditos de Tradução de Partes disponíveis: ${disponiveis}`;

@@ -35,7 +35,8 @@ public class AssinaturaController(
     ITenantContext tenantContext,
     UserManager<Usuario> userManager,
     IConfiguration config,
-    ILogger<AssinaturaController> logger) : ControllerBase
+    ILogger<AssinaturaController> logger,
+    bool usoGratuitoIA = CreditosIAConstants.UsoGratuito) : ControllerBase
 {
     private static List<PacoteCreditosDto> _pacotes => PacotesCreditos.Todos;
 
@@ -423,6 +424,9 @@ public class AssinaturaController(
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ComprarCreditos([FromBody] ComprarCreditosDto dto, CancellationToken ct)
     {
+        if (usoGratuitoIA)
+            return BadRequest(new { message = "O uso da IA está temporariamente gratuito — não é preciso comprar créditos." });
+
         var pacote = _pacotes.FirstOrDefault(p => p.Id == dto.PacoteId);
         if (pacote is null)
             return BadRequest(new { message = "Pacote inválido." });

@@ -687,7 +687,7 @@
     <div class="modal-body">
       <div id="gerarIAAlert" class="alert" style="display:none"></div>
       <p style="margin-bottom:16px;color:var(--color-text-muted);font-size:14px">
-        Descreva o documento e a IA escreve um modelo completo, já com as variáveis. Você revisa no editor antes de salvar. Consome 1 crédito de peça jurídica.
+        Descreva o documento e a IA escreve um modelo completo, já com as variáveis. Você revisa no editor antes de salvar. <span id="iaConsumoCredito">Consome 1 crédito de peça jurídica.</span>
       </p>
       <div class="form-group">
         <label for="iaDescricao">O que o modelo deve conter? *</label>
@@ -2158,6 +2158,11 @@ document.getElementById('btnGerarIA').addEventListener('click', () => {
   document.getElementById('iaDescricao').value = '';
   modalGerarIA.classList.add('open');
   document.getElementById('iaDescricao').focus();
+  apiFetch('/creditos').then(c => {
+    document.getElementById('iaConsumoCredito').textContent = c?.usoGratuito
+      ? '🎉 Uso da IA temporariamente gratuito — não desconta créditos.'
+      : 'Consome 1 crédito de peça jurídica.';
+  }).catch(() => {});
 });
 
 document.getElementById('iaExemplos').addEventListener('click', e => {

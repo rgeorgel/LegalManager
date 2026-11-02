@@ -14,5 +14,7 @@ public record CreditoAIResponseDto(
 
 public record CreditosTotaisDto(
     List<CreditoAIResponseDto> Creditos,
-    int TotalDisponivelGeral
+    int TotalDisponivelGeral,
+    // IA temporariamente gratuita: as funcionalidades não descontam créditos e a compra fica bloqueada.
+    bool UsoGratuito = false
 );

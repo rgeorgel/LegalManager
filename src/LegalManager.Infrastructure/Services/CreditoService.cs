@@ -1,5 +1,6 @@
 using LegalManager.Application.DTOs.IA;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -12,6 +13,8 @@ public class CreditoService : ICreditoService
 {
     private readonly AppDbContext _context;
     private readonly ITenantContext _tenantContext;
+    // Enquanto a IA está gratuita, toda checagem passa e nada é descontado do saldo.
+    private readonly bool _usoGratuito;
     private readonly Dictionary<TipoCreditoAI, int> _creditosPadrao = new()
     {
         { TipoCreditoAI.TraducaoAndamento, 5 },
@@ -19,10 +22,12 @@ public class CreditoService : ICreditoService
         { TipoCreditoAI.ClassificacaoPublicacao, 0 }
     };
 
-    public CreditoService(AppDbContext context, ITenantContext tenantContext)
+    public CreditoService(AppDbContext context, ITenantContext tenantContext,
+        bool usoGratuito = CreditosIAConstants.UsoGratuito)
     {
         _context = context;
         _tenantContext = tenantContext;
+        _usoGratuito = usoGratuito;
     }
 
     public async Task<CreditosTotaisDto> ObterCreditosAsync(CancellationToken ct = default)
@@ -44,11 +49,13 @@ public class CreditoService : ICreditoService
 
         var totalGeral = response.Sum(c => c.QuantidadeDisponivel);
 
-        return new CreditosTotaisDto(response, totalGeral);
+        return new CreditosTotaisDto(response, totalGeral, _usoGratuito);
     }
 
     public async Task<bool> TemCreditoDisponivelAsync(TipoCreditoAI tipo, int quantidade = 1, CancellationToken ct = default)
     {
+        if (_usoGratuito) return true;
+
         var tenantId = _tenantContext.TenantId;
         var credito = await _context.CreditosAI
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.Tipo == tipo, ct);
@@ -60,6 +67,8 @@ public class CreditoService : ICreditoService
 
     public async Task<bool> ConsumirCreditoAsync(TipoCreditoAI tipo, int quantidade = 1, CancellationToken ct = default)
     {
+        if (_usoGratuito) return true;
+
         var tenantId = _tenantContext.TenantId;
         var credito = await _context.CreditosAI
             .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.Tipo == tipo, ct);

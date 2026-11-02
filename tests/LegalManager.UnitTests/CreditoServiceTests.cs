@@ -60,7 +60,7 @@ public class CreditoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.ObterCreditosAsync();
 
         Assert.Single(result.Creditos);
@@ -71,7 +71,7 @@ public class CreditoServiceTests
     public async Task ObterCreditosAsync_DeveRetornarVazio_QuandoNenhumCredito()
     {
         var (ctx, tenantId) = await SeedTenantAsync();
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
 
         var result = await service.ObterCreditosAsync();
 
@@ -95,7 +95,7 @@ public class CreditoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca);
 
         Assert.True(result);
@@ -117,7 +117,7 @@ public class CreditoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.TemCreditoDisponivelAsync(TipoCreditoAI.TraducaoAndamento);
 
         Assert.False(result);
@@ -127,7 +127,7 @@ public class CreditoServiceTests
     public async Task TemCreditoDisponivelAsync_DeveRetornarFalse_QuandoCreditoNaoExiste()
     {
         var (ctx, tenantId) = await SeedTenantAsync();
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
 
         var result = await service.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca);
 
@@ -151,7 +151,7 @@ public class CreditoServiceTests
         ctx.CreditosAI.Add(credito);
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca);
 
         Assert.True(result);
@@ -164,7 +164,7 @@ public class CreditoServiceTests
     public async Task ConsumirCreditoAsync_DeveRetornarFalse_QuandoNaoHaCredito()
     {
         var (ctx, tenantId) = await SeedTenantAsync();
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
 
         var result = await service.ConsumirCreditoAsync(TipoCreditoAI.ClassificacaoPublicacao);
 
@@ -187,7 +187,7 @@ public class CreditoServiceTests
         });
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.ConsumirCreditoAsync(TipoCreditoAI.TraducaoAndamento, 2);
 
         Assert.False(result);
@@ -197,7 +197,7 @@ public class CreditoServiceTests
     public async Task InicializarCreditosPadraoAsync_DeveCriarCreditos_QuandoNenhumExiste()
     {
         var (ctx, tenantId) = await SeedTenantAsync();
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
 
         await service.InicializarCreditosPadraoAsync(tenantId, PlanoTipo.Pro);
 
@@ -225,7 +225,7 @@ public class CreditoServiceTests
         }
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         await service.InicializarCreditosPadraoAsync(tenantId, PlanoTipo.Pro);
 
         var count = await ctx.CreditosAI.Where(c => c.TenantId == tenantId).CountAsync();
@@ -242,9 +242,61 @@ public class CreditoServiceTests
         );
         await ctx.SaveChangesAsync();
 
-        var service = new CreditoService(ctx, CreateTenantContext(tenantId));
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false);
         var result = await service.ObterCreditosAsync();
 
         Assert.Equal(4, result.TotalDisponivelGeral);
+    }
+
+    // ─── IA temporariamente gratuita (CreditosIAConstants.UsoGratuito) ──────────
+
+    [Fact]
+    public async Task UsoGratuito_TemCreditoDisponivel_RetornaTrue_MesmoSemSaldo()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        ctx.CreditosAI.Add(new CreditoAI
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoCreditoAI.GeracaoPeca,
+            QuantidadeTotal = 2, QuantidadeUsada = 2, Origem = OrigemCreditoAI.Cortesai, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: true);
+
+        Assert.True(await service.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca));
+        Assert.True(await service.TemCreditoDisponivelAsync(TipoCreditoAI.TraducaoAndamento));
+    }
+
+    [Fact]
+    public async Task UsoGratuito_ConsumirCredito_NaoDescontaDoSaldo()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+        var credito = new CreditoAI
+        {
+            Id = Guid.NewGuid(), TenantId = tenantId, Tipo = TipoCreditoAI.TraducaoAndamento,
+            QuantidadeTotal = 5, QuantidadeUsada = 1, Origem = OrigemCreditoAI.Cortesai, CriadoEm = DateTime.UtcNow
+        };
+        ctx.CreditosAI.Add(credito);
+        await ctx.SaveChangesAsync();
+
+        var service = new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: true);
+
+        Assert.True(await service.ConsumirCreditoAsync(TipoCreditoAI.TraducaoAndamento));
+        Assert.True(await service.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca));
+        var atual = await ctx.CreditosAI.FindAsync(credito.Id);
+        Assert.Equal(1, atual!.QuantidadeUsada);
+        Assert.Equal(1, await ctx.CreditosAI.CountAsync(c => c.TenantId == tenantId));
+    }
+
+    [Fact]
+    public async Task ObterCreditosAsync_InformaSeUsoEstaGratuito()
+    {
+        var (ctx, tenantId) = await SeedTenantAsync();
+
+        var gratuito = await new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: true).ObterCreditosAsync();
+        var pago = await new CreditoService(ctx, CreateTenantContext(tenantId), usoGratuito: false).ObterCreditosAsync();
+
+        Assert.True(gratuito.UsoGratuito);
+        Assert.False(pago.UsoGratuito);
     }
 }
