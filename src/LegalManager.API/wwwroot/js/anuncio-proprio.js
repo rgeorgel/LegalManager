@@ -57,6 +57,21 @@ export function criarAnuncioProprio(anuncio, { link = true } = {}) {
   return el;
 }
 
+/**
+ * Pinta a moldura em volta do anúncio (o bloco "Publicidade") com a cor dele, para o anúncio
+ * ocupar o bloco inteiro. Sem cor válida, volta ao visual neutro.
+ * Fundo e borda vão inline: vencem o CSS da página (ex.: .d2-card do dashboard).
+ */
+export function pintarMoldura(moldura, cor) {
+  injectStyles();
+  const colorida = corValida(cor);
+  moldura.classList.toggle('pub-moldura-colorida', colorida);
+  moldura.style.background = colorida ? cor : '';
+  moldura.style.borderColor = colorida ? cor : '';
+  if (colorida) moldura.style.setProperty('--pub-tinta', corDoTexto(cor));
+  else moldura.style.removeProperty('--pub-tinta');
+}
+
 function injectStyles() {
   if (document.getElementById('pubProprioStyles')) return;
   const s = document.createElement('style');
@@ -76,6 +91,12 @@ function injectStyles() {
     .pub-proprio-colorido .pub-proprio-texto { color: inherit; opacity: .88; }
     .pub-proprio-colorido .pub-proprio-botao { padding: 6px 14px; border-radius: 999px;
       background: var(--pub-tinta); color: var(--pub-cor); }
+    /* Moldura já pintada (pintarMoldura): o anúncio se funde a ela, alinhado ao rótulo "Publicidade". */
+    .pub-moldura-colorida .pub-proprio { padding: 4px 0; border-radius: 0; }
+    .pub-moldura-colorida a.pub-proprio-colorido:hover { filter: none; }
+    .pub-moldura-colorida a.pub-proprio:hover .pub-proprio-botao { filter: brightness(.92); }
+    .pub-moldura-colorida .pub-topo, .pub-moldura-colorida .pub-remover { color: var(--pub-tinta); }
+    .pub-moldura-colorida .pub-topo > span { opacity: .75; }
   `;
   document.head.appendChild(s);
 }

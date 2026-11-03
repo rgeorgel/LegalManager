@@ -16,7 +16,7 @@
 import { apiFetch } from './api.js';
 import { isPlanoFree } from './layout.js';
 import { trackEvent } from './analytics.js';
-import { criarAnuncioProprio } from './anuncio-proprio.js';
+import { criarAnuncioProprio, pintarMoldura } from './anuncio-proprio.js';
 
 // Mesmas permissões do CSP da resposta (Adsterra.Sandbox). allow-same-origin só no host próprio:
 // na origem do app ele desfaria o isolamento.
@@ -167,6 +167,7 @@ function mostrarProprio(slot, area, cfg, tipo, motivo) {
   const anuncio = proximoProprio(cfg.proprios);
   if (!anuncio) { slot.hidden = true; return; } // nenhum cadastrado: some em vez de ficar vazio
   area.replaceChildren(criarProprio(anuncio, tipo, motivo));
+  pintarMoldura(slot, anuncio.cor); // o bloco todo na cor do anúncio
   const exibido = () => trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo, motivo });
   if (motivo === 'vazio') { exibido(); return; } // o vazio só é decidido com o bloco já à vista
   // Sorteado ao montar a lista: conta a exibição quando o bloco aparece na tela.
