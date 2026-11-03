@@ -10,7 +10,8 @@ public record SuperAdminDashboardDto(
     TrialDashboardDto Trial,
     CuponsDashboardDto Cupons,
     PerguntasDashboardDto Perguntas,
-    UsoDashboardDto Uso
+    UsoDashboardDto Uso,
+    PublicidadeDashboardDto Publicidade
 );
 
 /// <summary>
@@ -113,3 +114,25 @@ public record UsoDashboardDto(
     int ConsultasExternas7Dias,
     int ConsultasExternasFalhas7Dias
 );
+
+/// <summary>
+/// Desempenho dos anúncios próprios (AnuncioProprioEstatistica, por dia de Brasília). O Adsterra
+/// não entra: os números dele ficam no painel do Adsterra.
+/// </summary>
+public record PublicidadeDashboardDto(
+    int PercentualProprios,
+    int AnunciosAtivos,
+    int Impressoes7Dias,
+    int Cliques7Dias,
+    int ImpressoesAnteriores7Dias,
+    int CliquesAnteriores7Dias,
+    int Impressoes30Dias,
+    int Cliques30Dias,
+    List<SerieAnuncioDiaDto> PorDia,
+    List<AnuncioDesempenhoDto> PorAnuncio
+);
+
+public record SerieAnuncioDiaDto(DateOnly Dia, int Impressoes, int Cliques);
+
+/// <summary>Totais dos últimos 30 dias de cada anúncio cadastrado (ativos primeiro).</summary>
+public record AnuncioDesempenhoDto(Guid Id, string? Icone, string Titulo, string? Cor, bool Ativo, int Impressoes, int Cliques);

@@ -107,6 +107,26 @@
     .sa-mini-valor { font-size: 18px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
     .sa-mini-sub { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
 
+    /* Publicidade: barras empilhadas (impressões) com a parte clicada destacada */
+    .sa-barra-fill.sa-pub-imp { display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+    .sa-pub-clique { width: 100%; background: var(--color-success); min-height: 0; }
+    .sa-pub-legenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--color-text-muted); margin-top: 8px; }
+    .sa-pub-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+    .sa-pub-cor { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto; border: 1px solid var(--color-border); background: var(--sa-soft); }
+    .sa-pub-inativo { opacity: .55; }
+    .sa-pub-tabela { font-size: 13px; }
+    .sa-pub-cab, .sa-pub-row { display: grid; grid-template-columns: minmax(0, 1fr) 74px 58px 50px; gap: 8px; align-items: center; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .sa-pub-cab { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); padding-bottom: 6px; }
+    .sa-pub-row { padding: 7px 0; border-top: 1px solid var(--color-border); }
+    .sa-pub-cab > :first-child, .sa-pub-row > :first-child { text-align: left; }
+    @media (max-width: 420px) {
+      .sa-pub-cab, .sa-pub-row { grid-template-columns: minmax(0, 1fr) 66px 46px 44px; gap: 6px; }
+      .sa-pub-cab { text-transform: none; letter-spacing: 0; }
+    }
+    .sa-pub-nome { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 500; }
+    .sa-pub-nome > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+    .sa-pub-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; }
+    @media (max-width: 900px) { .sa-pub-grid { grid-template-columns: 1fr; } }
     .sa-skel { height: 14px; border-radius: 6px; margin: 8px 0; background: linear-gradient(90deg, var(--sa-soft) 25%, var(--color-border) 50%, var(--sa-soft) 75%); background-size: 200% 100%; animation: sa-shimmer 1.4s infinite; }
     @keyframes sa-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
   </style>
@@ -203,6 +223,11 @@
           <div class="sa-kpi-valor" id="kIa">—</div>
           <div class="sa-kpi-sub" id="kIaSub"></div>
         </a>
+        <a class="sa-kpi d2-oculto" href="/superadmin/anuncios-proprios.html" data-kpi="publicidade" data-titulo="Anúncios próprios">
+          <div class="sa-kpi-label">📣 Anúncios próprios · 7 dias</div>
+          <div class="sa-kpi-valor" id="kPublicidade">—</div>
+          <div class="sa-kpi-sub" id="kPublicidadeSub"></div>
+        </a>
       </section>
 
       <!-- Blocos personalizáveis (ordem, largura, altura e visibilidade). A ordem aqui é o padrão. -->
@@ -281,6 +306,14 @@
             <div class="sa-card-title">⚙️ Uso do produto · 7 dias</div>
           </div>
           <div id="wUso"><div class="sa-skel"></div><div class="sa-skel"></div></div>
+        </div>
+
+        <div class="sa-card d2-w3" data-widget="publicidade" data-titulo="Anúncios próprios">
+          <div class="sa-card-head">
+            <div class="sa-card-title">📣 Anúncios próprios</div>
+            <a class="sa-card-link" href="/superadmin/anuncios-proprios.html">Gerenciar →</a>
+          </div>
+          <div id="wPublicidade"><div class="sa-skel"></div><div class="sa-skel"></div></div>
         </div>
       </section>
     </main>
@@ -377,7 +410,7 @@
     document.addEventListener('focusout', () => { dica.style.display = 'none'; });
 
     function render(d) {
-      const { receita: r, cadastros: c, acessos: a, tenants: t, trial, cupons, perguntas: p, uso } = d;
+      const { receita: r, cadastros: c, acessos: a, tenants: t, trial, cupons, perguntas: p, uso, publicidade: pub } = d;
 
       // ── KPIs ──
       set('kMrr', brl(r.mrrReal));
@@ -406,6 +439,9 @@
       set('kWaitlist', num(t.waitlistPendente));
       set('kIa', num(uso.interacoesIa7Dias));
       set('kIaSub', `${num(uso.usuariosIa7Dias)} usuário(s) usaram`);
+      set('kPublicidade', `${num(pub.impressoes7Dias)} <span style="font-size:13px;font-weight:600;color:var(--color-text-muted)">impressões</span>`);
+      set('kPublicidadeSub', `${num(pub.cliques7Dias)} clique(s) · CTR ${ctr(pub.cliques7Dias, pub.impressoes7Dias)} · `
+        + `${delta(pub.impressoes7Dias, pub.impressoesAnteriores7Dias)} vs semana anterior`);
 
       // ── Cadastros por semana ──
       set('wCadastros', barras(c.porSemana.map(s => {
@@ -517,9 +553,79 @@
           <div class="sa-mini"><div class="sa-mini-label">Consultas externas</div><div class="sa-mini-valor">${num(uso.consultasExternas7Dias)}</div><div class="sa-mini-sub">${num(uso.consultasExternasFalhas7Dias)} com falha</div></div>
         </div>`);
 
+      // ── Anúncios próprios ──
+      set('wPublicidade', renderPublicidade(pub));
+
       const receitaHora = new Date(r.calculadoEm).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
       const geradoHora = new Date(d.geradoEm).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
       set('saAtualizado', `Atualizado às ${geradoHora} · receita do Stripe de ${receitaHora}`);
+    }
+
+    /** Taxa de cliques; "—" sem impressões. */
+    function ctr(cliques, impressoes) {
+      return impressoes > 0
+        ? `${(cliques / impressoes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`
+        : '—';
+    }
+
+    function renderPublicidade(pub) {
+      const max = Math.max(1, ...pub.porDia.map(x => x.impressoes));
+      const passo = Math.ceil(pub.porDia.length / 7);
+      const grafico = `
+        <div class="sa-barras" role="img" aria-label="Impressões e cliques por dia">
+          ${pub.porDia.map((x, n) => `
+            <div class="sa-barra${n === pub.porDia.length - 1 ? ' atual' : ''}" tabindex="0"
+                 data-dica="${esc(`${diaCurto(x.dia)}: ${num(x.impressoes)} impressão(ões) · ${num(x.cliques)} clique(s) · CTR ${ctr(x.cliques, x.impressoes)}`)}">
+              ${n === pub.porDia.length - 1 || (x.impressoes === max && x.impressoes > 0) ? `<span class="sa-barra-rotulo">${num(x.impressoes)}</span>` : ''}
+              <div class="sa-barra-fill sa-pub-imp" style="height:${(x.impressoes / max * 100).toFixed(1)}%">
+                <div class="sa-pub-clique" style="height:${x.impressoes ? Math.min(100, x.cliques / x.impressoes * 100).toFixed(1) : 0}%"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div class="sa-eixo" aria-hidden="true">
+          ${pub.porDia.map((x, n) => `<span>${(pub.porDia.length - 1 - n) % passo === 0 ? diaCurto(x.dia) : ''}</span>`).join('')}
+        </div>
+        <table class="sr-only"><caption>Impressões e cliques por dia</caption>
+          ${pub.porDia.map(x => `<tr><th>${diaCurto(x.dia)}</th><td>${x.impressoes} impressões</td><td>${x.cliques} cliques</td></tr>`).join('')}
+        </table>
+        <div class="sa-pub-legenda">
+          <span><i style="background:color-mix(in srgb, var(--color-primary) 55%, var(--color-surface))"></i>Impressões</span>
+          <span><i style="background:var(--color-success)"></i>Cliques</span>
+          <span>últimos 14 dias</span>
+        </div>`;
+
+      const minis = `
+        <div class="sa-minis" style="margin-top:14px">
+          <div class="sa-mini"><div class="sa-mini-label">Impressões · 7 dias</div><div class="sa-mini-valor">${num(pub.impressoes7Dias)}</div>
+            <div class="sa-mini-sub">${delta(pub.impressoes7Dias, pub.impressoesAnteriores7Dias)}</div></div>
+          <div class="sa-mini"><div class="sa-mini-label">Cliques · 7 dias</div><div class="sa-mini-valor">${num(pub.cliques7Dias)}</div>
+            <div class="sa-mini-sub">${delta(pub.cliques7Dias, pub.cliquesAnteriores7Dias)} · CTR ${ctr(pub.cliques7Dias, pub.impressoes7Dias)}</div></div>
+        </div>`;
+
+      const lista = pub.porAnuncio.length
+        ? `<div class="sa-pub-tabela" role="table" aria-label="Desempenho por anúncio nos últimos 30 dias">
+            <div class="sa-pub-cab" role="row"><span role="columnheader">Anúncio · 30 dias</span><span role="columnheader">Impressões</span><span role="columnheader">Cliques</span><span role="columnheader">CTR</span></div>
+            ${pub.porAnuncio.map(x => `
+              <div class="sa-pub-row${x.ativo ? '' : ' sa-pub-inativo'}" role="row">
+                <span class="sa-pub-nome" role="cell" title="${esc(x.titulo)}${x.ativo ? '' : ' (inativo)'}">
+                  <span class="sa-pub-cor" ${/^#[0-9a-f]{6}$/i.test(x.cor ?? '') ? `style="background:${x.cor};border-color:${x.cor}"` : ''}></span>
+                  <span>${x.icone ? `${esc(x.icone)} ` : ''}${esc(x.titulo)}</span>
+                </span>
+                <span role="cell">${num(x.impressoes)}</span>
+                <span role="cell">${num(x.cliques)}</span>
+                <strong role="cell">${ctr(x.cliques, x.impressoes)}</strong>
+              </div>`).join('')}
+          </div>`
+        : vazio('Nenhum anúncio cadastrado.');
+
+      return `
+        <div class="sa-pub-grid">
+          <div>${grafico}${minis}</div>
+          <div>${lista}</div>
+        </div>
+        <div class="sa-card-nota">${num(pub.anunciosAtivos)} anúncio(s) ativo(s) · ${num(pub.percentualProprios)}% dos espaços sorteiam um anúncio próprio
+          (os demais tentam o Adsterra e usam o próprio quando ele vem vazio). 30 dias: <strong>${num(pub.impressoes30Dias)}</strong> impressões,
+          <strong>${num(pub.cliques30Dias)}</strong> cliques. Os números do Adsterra ficam no painel dele.</div>`;
     }
 
     async function carregar(atualizarReceita = false) {

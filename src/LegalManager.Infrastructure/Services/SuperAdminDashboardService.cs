@@ -27,6 +27,7 @@ public class SuperAdminDashboardService(
     private static readonly TimeSpan ReceitaCacheDuracao = TimeSpan.FromMinutes(10);
     private const int SemanasSerie = 12;
     private const int DiasSerieLogins = 14;
+    private const int DiasSeriePublicidade = 14;
 
     private record TenantLinha(
         Guid Id, string Nome, PlanoTipo Plano, StatusTenant Status, DateTime CriadoEm,
@@ -73,7 +74,8 @@ public class SuperAdminDashboardService(
             Trial(tenants, usuarios, agora),
             Cupons(tenants, usuarios),
             await PerguntasAsync(tenants, usuarios, agora, ct),
-            await UsoAsync(agora, ct));
+            await UsoAsync(agora, ct),
+            await PublicidadeAsync(agora, ct));
     }
 
     // ── Receita ──────────────────────────────────────────────────────────
@@ -388,5 +390,53 @@ public class SuperAdminDashboardService(
             ia?.Usuarios ?? 0,
             consultas?.Total ?? 0,
             consultas?.Falhas ?? 0);
+    }
+
+    // ── Publicidade (anúncios próprios) ──────────────────────────────────
+
+    private async Task<PublicidadeDashboardDto> PublicidadeAsync(DateTime agora, CancellationToken ct)
+    {
+        var hoje = DateOnly.FromDateTime(BrasiliaTime.DeUtc(agora));
+        var desde30 = hoje.AddDays(-29);
+        var desde7 = hoje.AddDays(-6);
+        var desde14 = hoje.AddDays(-13);
+        var inicioSerie = hoje.AddDays(1 - DiasSeriePublicidade);
+
+        var percentual = await db.ConfiguracoesPublicidade.AsNoTracking()
+            .Where(c => c.Id == ConfiguracaoPublicidade.IdUnico)
+            .Select(c => (int?)c.PercentualProprios)
+            .FirstOrDefaultAsync(ct) ?? 0;
+        var anuncios = await db.AnunciosProprios.AsNoTracking()
+            .OrderByDescending(a => a.Ativo).ThenByDescending(a => a.CriadoEm)
+            .Select(a => new { a.Id, a.Icone, a.Titulo, a.Cor, a.Ativo })
+            .ToListAsync(ct);
+        var linhas = await db.AnunciosPropriosEstatisticas.AsNoTracking()
+            .Where(e => e.Dia >= desde30 && e.Dia <= hoje)
+            .ToListAsync(ct);
+
+        var porDia = linhas.GroupBy(e => e.Dia)
+            .ToDictionary(g => g.Key, g => (Impressoes: g.Sum(e => e.Impressoes), Cliques: g.Sum(e => e.Cliques)));
+        var porAnuncio = linhas.GroupBy(e => e.AnuncioProprioId)
+            .ToDictionary(g => g.Key, g => (Impressoes: g.Sum(e => e.Impressoes), Cliques: g.Sum(e => e.Cliques)));
+        var ultimos7 = linhas.Where(e => e.Dia >= desde7).ToList();
+        var anteriores7 = linhas.Where(e => e.Dia >= desde14 && e.Dia < desde7).ToList();
+
+        return new PublicidadeDashboardDto(
+            percentual,
+            anuncios.Count(a => a.Ativo),
+            ultimos7.Sum(e => e.Impressoes),
+            ultimos7.Sum(e => e.Cliques),
+            anteriores7.Sum(e => e.Impressoes),
+            anteriores7.Sum(e => e.Cliques),
+            linhas.Sum(e => e.Impressoes),
+            linhas.Sum(e => e.Cliques),
+            Enumerable.Range(0, DiasSeriePublicidade)
+                .Select(i => inicioSerie.AddDays(i))
+                .Select(d => new SerieAnuncioDiaDto(d, porDia.GetValueOrDefault(d).Impressoes, porDia.GetValueOrDefault(d).Cliques))
+                .ToList(),
+            anuncios
+                .Select(a => new AnuncioDesempenhoDto(a.Id, a.Icone, a.Titulo, a.Cor, a.Ativo,
+                    porAnuncio.GetValueOrDefault(a.Id).Impressoes, porAnuncio.GetValueOrDefault(a.Id).Cliques))
+                .ToList());
     }
 }

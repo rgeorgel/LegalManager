@@ -2,6 +2,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -230,5 +231,56 @@ public class SuperAdminDashboardServiceTests
         Assert.Equal(1, p.Respostas7Dias);
         var resumo = Assert.Single(p.PorPergunta);
         Assert.Equal((2, 1), (resumo.Alcance, resumo.Respostas));
+    }
+
+    [Fact]
+    public async Task Publicidade_SomaImpressoesECliquesPorPeriodoEPorAnuncio()
+    {
+        using var ctx = CreateContext();
+        var hoje = DateOnly.FromDateTime(BrasiliaTime.DeUtc(DateTime.UtcNow));
+        var ativo = new AnuncioProprio { Id = Guid.NewGuid(), Titulo = "Assine", Texto = "t", TextoBotao = "b", LinkUrl = "/x", Cor = "#112233", Ativo = true, CriadoEm = DateTime.UtcNow.AddDays(-5) };
+        var inativo = new AnuncioProprio { Id = Guid.NewGuid(), Titulo = "Antigo", Texto = "t", TextoBotao = "b", LinkUrl = "/x", Ativo = false, CriadoEm = DateTime.UtcNow };
+        ctx.AnunciosProprios.AddRange(inativo, ativo);
+        ctx.ConfiguracoesPublicidade.Add(new ConfiguracaoPublicidade { Id = ConfiguracaoPublicidade.IdUnico, PercentualProprios = 30 });
+        AnuncioProprioEstatistica Dia(AnuncioProprio a, int diasAtras, int impressoes, int cliques) =>
+            new() { AnuncioProprioId = a.Id, Dia = hoje.AddDays(-diasAtras), Impressoes = impressoes, Cliques = cliques };
+        ctx.AnunciosPropriosEstatisticas.AddRange(
+            Dia(ativo, 0, 100, 5),
+            Dia(ativo, 6, 50, 1),
+            Dia(ativo, 7, 40, 2),     // semana anterior
+            Dia(inativo, 13, 10, 0),  // semana anterior
+            Dia(inativo, 20, 30, 3),  // só nos 30 dias
+            Dia(ativo, 30, 999, 99)); // fora da janela
+        await ctx.SaveChangesAsync();
+
+        var p = (await CreateService(ctx).ObterAsync()).Publicidade;
+
+        Assert.Equal(30, p.PercentualProprios);
+        Assert.Equal(1, p.AnunciosAtivos);
+        Assert.Equal((150, 6), (p.Impressoes7Dias, p.Cliques7Dias));
+        Assert.Equal((50, 2), (p.ImpressoesAnteriores7Dias, p.CliquesAnteriores7Dias));
+        Assert.Equal((230, 11), (p.Impressoes30Dias, p.Cliques30Dias));
+
+        Assert.Equal(14, p.PorDia.Count);
+        Assert.Equal(hoje, p.PorDia[^1].Dia);
+        Assert.Equal((100, 5), (p.PorDia[^1].Impressoes, p.PorDia[^1].Cliques));
+        Assert.Equal((10, 0), (p.PorDia[0].Impressoes, p.PorDia[0].Cliques));
+
+        Assert.Equal([ativo.Id, inativo.Id], p.PorAnuncio.Select(a => a.Id));
+        Assert.Equal((190, 8), (p.PorAnuncio[0].Impressoes, p.PorAnuncio[0].Cliques));
+        Assert.Equal((40, 3), (p.PorAnuncio[1].Impressoes, p.PorAnuncio[1].Cliques));
+        Assert.Equal("#112233", p.PorAnuncio[0].Cor);
+    }
+
+    [Fact]
+    public async Task Publicidade_SemConfiguracaoNemEstatisticas_RetornaZeros()
+    {
+        using var ctx = CreateContext();
+
+        var p = (await CreateService(ctx).ObterAsync()).Publicidade;
+
+        Assert.Equal(0, p.PercentualProprios);
+        Assert.Empty(p.PorAnuncio);
+        Assert.All(p.PorDia, d => Assert.Equal((0, 0), (d.Impressoes, d.Cliques)));
     }
 }
