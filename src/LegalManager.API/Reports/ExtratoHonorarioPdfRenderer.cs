@@ -101,15 +101,19 @@ public static class ExtratoHonorarioPdfRenderer
                 g.Item().Text($"Forma: {d.FormaPagamento}");
                 g.Item().Text($"Tipo de Cobrança: {d.TipoCobranca}");
                 g.Item().Text($"Processo: {d.NumeroProcesso ?? "—"}");
-                g.Item().Text($"Encargos: Multa {d.PercentualMulta.ToString("P0", PtBr)} + Juros {d.PercentualJurosMensal.ToString("P1", PtBr)}/mês");
+                g.Item().Text(SemEncargos(d)
+                    ? "Encargos: sem multa ou juros"
+                    : $"Encargos: Multa {d.PercentualMulta.ToString("P0", PtBr)} + Juros {d.PercentualJurosMensal.ToString("P1", PtBr)}/mês");
             });
 
             if (d.TotalEmAtraso > 0)
             {
                 col.Item().PaddingTop(12).Background("#FFF5F5").Border(1).BorderColor("#FECACA").Padding(8).Column(cw =>
                 {
-                    cw.Item().Text("⚠ ENCARGOS DE ATRASO").FontSize(8).Bold().FontColor("#DC2626");
-                    cw.Item().PaddingTop(2).Text($"Sobre os valores em atraso incidem multa de {d.PercentualMulta.ToString("P0", PtBr)} (incidência única) e juros de mora de {d.PercentualJurosMensal.ToString("P1", PtBr)} ao mês pro rata die, conforme contrato de honorários. Total atualizado: {FormatBRL(d.TotalEmAtraso)}");
+                    cw.Item().Text(SemEncargos(d) ? "⚠ VALORES EM ATRASO" : "⚠ ENCARGOS DE ATRASO").FontSize(8).Bold().FontColor("#DC2626");
+                    cw.Item().PaddingTop(2).Text(SemEncargos(d)
+                        ? $"Sem multa ou juros, conforme contrato de honorários. Total em atraso: {FormatBRL(d.TotalEmAtraso)}"
+                        : $"Sobre os valores em atraso incidem multa de {d.PercentualMulta.ToString("P0", PtBr)} (incidência única) e juros de mora de {d.PercentualJurosMensal.ToString("P1", PtBr)} ao mês pro rata die, conforme contrato de honorários. Total atualizado: {FormatBRL(d.TotalEmAtraso)}");
                 });
             }
 
@@ -180,4 +184,6 @@ public static class ExtratoHonorarioPdfRenderer
     private static readonly System.Globalization.CultureInfo PtBr = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
 
     private static string FormatBRL(decimal v) => v.ToString("C", PtBr);
+
+    private static bool SemEncargos(ExtratoPdfDadosDto d) => d.PercentualMulta <= 0 && d.PercentualJurosMensal <= 0;
 }

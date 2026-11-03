@@ -238,20 +238,35 @@
             <div><b>Data Início:</b> ${fmtDate(c.dataInicio ?? c.DataInicio)}</div>
             ${(c.objeto ?? c.Objeto) ? `<div style="grid-column:1/-1"><b>Serviço:</b> ${escapeHtml(c.objeto ?? c.Objeto)}</div>` : ''}
             ${(c.numeroProcesso ?? c.NumeroProcesso) ? `<div style="grid-column:1/-1"><b>Processo:</b> ${(c.processoId ?? c.ProcessoId) ? `<a href="/pages/processo-detalhe.html?id=${c.processoId ?? c.ProcessoId}">${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</a>` : escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</div>` : ''}
-            <div style="grid-column:1/-1"><b>Encargos:</b> Multa ${((c.percentualMulta ?? c.PercentualMulta) * 100).toFixed(0)}% + Juros ${((c.percentualJurosMensal ?? c.PercentualJurosMensal) * 100).toFixed(1)}%/mês</div>
+            <div style="grid-column:1/-1"><b>Encargos:</b> ${textoEncargos(c)}</div>
             ${(c.observacoes ?? c.Observacoes) ? `<div style="grid-column:1/-1"><b>Observações:</b> ${escapeHtml(c.observacoes ?? c.Observacoes)}</div>` : ''}
           </div>
         </div>
       `;
       const emAtraso = c.valorEmAtraso ?? c.ValorEmAtraso;
+      const multa = c.percentualMulta ?? c.PercentualMulta;
+      const juros = c.percentualJurosMensal ?? c.PercentualJurosMensal;
+      const temEncargos = multa > 0 || juros > 0;
       document.getElementById('alertAtraso').innerHTML = (emAtraso > 0) ? `
         <div class="alert-danger">
-          <b>⚠️ Encargos de Atraso Incidentes:</b><br>
-          Multa: <b>${((c.percentualMulta ?? c.PercentualMulta) * 100).toFixed(0)}%</b> (incidência única sobre cada parcela em atraso)<br>
-          Juros de Mora: <b>${((c.percentualJurosMensal ?? c.PercentualJurosMensal) * 100).toFixed(1)}% ao mês</b> pro rata die<br>
-          Total atualizado em atraso: <b>${brl(emAtraso)}</b>
+          <b>⚠️ ${temEncargos ? 'Encargos de Atraso Incidentes' : 'Parcelas em Atraso'}:</b><br>
+          ${multa > 0 ? `Multa: <b>${fmtPct(multa)}</b> (incidência única sobre cada parcela em atraso)<br>` : ''}
+          ${juros > 0 ? `Juros de Mora: <b>${fmtPct(juros)} ao mês</b> pro rata die<br>` : ''}
+          ${temEncargos ? 'Total atualizado em atraso' : 'Total em atraso (sem multa ou juros)'}: <b>${brl(emAtraso)}</b>
         </div>
       ` : '';
+    }
+
+    // Fração → "2%", "1,5%", "2,25%".
+    function fmtPct(fracao) {
+      return `${(fracao * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+    }
+
+    function textoEncargos(c) {
+      const multa = c.percentualMulta ?? c.PercentualMulta;
+      const juros = c.percentualJurosMensal ?? c.PercentualJurosMensal;
+      if (!(multa > 0) && !(juros > 0)) return 'Sem multa ou juros';
+      return [multa > 0 && `Multa ${fmtPct(multa)}`, juros > 0 && `Juros ${fmtPct(juros)}/mês`].filter(Boolean).join(' + ');
     }
 
     function renderKpis(c) {

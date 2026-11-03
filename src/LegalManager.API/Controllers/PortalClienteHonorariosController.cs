@@ -4,6 +4,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,18 +16,6 @@ namespace LegalManager.API.Controllers;
 [Authorize(Roles = "Cliente")]
 public class PortalClienteHonorariosController(AppDbContext db) : ControllerBase
 {
-    private static (decimal multa, decimal juros, int dias, decimal total) CalcularJuros(decimal valor, DateTime vencimento, DateTime referencia)
-    {
-        var dv = vencimento.Date;
-        var dr = referencia.Date;
-        if (dr <= dv) return (0m, 0m, 0, valor);
-        var dias = (int)(dr - dv).TotalDays;
-        var meses = dias / 30m;
-        var multa = Math.Round(valor * 0.02m, 2, MidpointRounding.AwayFromZero);
-        var juros = Math.Round(valor * 0.015m * meses, 2, MidpointRounding.AwayFromZero);
-        return (multa, juros, dias, Math.Round(valor + multa + juros, 2, MidpointRounding.AwayFromZero));
-    }
-
     private (Guid contatoId, Guid tenantId) GetContatoTenant()
     {
         var contatoId = Guid.Parse(User.FindFirstValue("contatoId") ?? Guid.Empty.ToString());
@@ -67,7 +56,7 @@ public class PortalClienteHonorariosController(AppDbContext db) : ControllerBase
                     var dias = (hoje - p.Vencimento.Date).Days;
                     if (dias > 0)
                     {
-                        var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                        var j = HonorarioService.CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, c.PercentualMulta, c.PercentualJurosMensal);
                         atraso += j.total;
                         vencidas++;
                     }
@@ -97,9 +86,11 @@ public class PortalClienteHonorariosController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<ParcelasContratoDto>> GetParcelas(Guid id, CancellationToken ct)
     {
         var (contatoId, tenantId) = GetContatoTenant();
-        var contratoExiste = await db.ContratosHonorarios
-            .AnyAsync(x => x.Id == id && x.TenantId == tenantId && x.ContatoId == contatoId, ct);
-        if (!contratoExiste) return NotFound();
+        var encargos = await db.ContratosHonorarios
+            .Where(x => x.Id == id && x.TenantId == tenantId && x.ContatoId == contatoId)
+            .Select(x => new { x.PercentualMulta, x.PercentualJurosMensal })
+            .FirstOrDefaultAsync(ct);
+        if (encargos is null) return NotFound();
 
         var parcelas = await db.ParcelasHonorarios
             .AsNoTracking()
@@ -117,7 +108,7 @@ public class PortalClienteHonorariosController(AppDbContext db) : ControllerBase
                 var d = (hoje - p.Vencimento.Date).Days;
                 if (d > 0)
                 {
-                    var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                    var j = HonorarioService.CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, encargos.PercentualMulta, encargos.PercentualJurosMensal);
                     juros = Math.Round(j.multa + j.juros, 2);
                     valorAtual = j.total;
                     dias = j.dias;

@@ -40,7 +40,7 @@ public class HonorarioServiceTests
     public async Task CalcularJuros_DentroVencimento_Zero()
     {
         var (db, _, _, _, _) = CriarContexto();
-        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, DateTime.UtcNow.Date.AddDays(1), DateTime.UtcNow.Date);
+        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, DateTime.UtcNow.Date.AddDays(1), DateTime.UtcNow.Date, 0.02m, 0.015m);
         Assert.Equal(0m, m);
         Assert.Equal(0m, j);
         Assert.Equal(0, d);
@@ -53,7 +53,7 @@ public class HonorarioServiceTests
         // valor 1000, 30 dias = multa 20 + juros 15 = 35 → 1035
         var hoje = new DateTime(2026, 6, 30);
         var venc = new DateTime(2026, 5, 31);
-        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, venc, hoje);
+        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, venc, hoje, 0.02m, 0.015m);
         Assert.Equal(20m, m);
         Assert.Equal(15m, j);
         Assert.Equal(30, d);
@@ -66,10 +66,54 @@ public class HonorarioServiceTests
         // 60 dias = 2 meses → juros = 1000 * 0.015 * 2 = 30
         var hoje = new DateTime(2026, 7, 30);
         var venc = new DateTime(2026, 5, 31);
-        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, venc, hoje);
+        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, venc, hoje, 0.02m, 0.015m);
         Assert.Equal(20m, m);
         Assert.Equal(30m, j);
         Assert.Equal(1050m, t);
+    }
+
+    [Fact]
+    public void CalcularJuros_ContratoSemEncargos_NaoAcrescentaNada()
+    {
+        var (m, j, d, t) = HonorarioService.CalcularJuros(1000m, new DateTime(2026, 5, 31), new DateTime(2026, 6, 30), 0m, 0m);
+        Assert.Equal(0m, m);
+        Assert.Equal(0m, j);
+        Assert.Equal(30, d);
+        Assert.Equal(1000m, t);
+    }
+
+    [Fact]
+    public void CalcularJuros_UsaPercentuaisDoContrato()
+    {
+        // multa 10% = 100; juros 1% a.m. por 30 dias = 10
+        var (m, j, _, t) = HonorarioService.CalcularJuros(1000m, new DateTime(2026, 5, 31), new DateTime(2026, 6, 30), 0.10m, 0.01m);
+        Assert.Equal(100m, m);
+        Assert.Equal(10m, j);
+        Assert.Equal(1110m, t);
+    }
+
+    [Fact]
+    public async Task ContratoComEncargosZerados_ParcelaVencidaNaoTemMultaNemJuros()
+    {
+        var (db, service, _, tenantId, contatoId) = CriarContexto();
+        var usuarioId = db.Users.Select(u => u.Id).First();
+        var dto = new CriarContratoHonorarioDto(
+            ContatoId: contatoId, ProcessoId: null, NumeroContrato: null,
+            Objeto: "Consultoria", ValorTotal: 1000m,
+            FormaPagamento: FormaPagamentoContrato.AVista,
+            Periodicidade: null, NumeroParcelas: null,
+            DataPrimeiraParcela: DateTime.UtcNow.Date.AddDays(-45),
+            ValorEntrada: null, VencimentoEntrada: null,
+            PercentualMulta: 0m, PercentualJurosMensal: 0m,
+            TipoCobranca: "Boleto/PIX", Observacoes: null,
+            DataInicio: DateTime.UtcNow.Date.AddDays(-60), DataFim: null
+        );
+
+        var contrato = await service.CriarAsync(tenantId, usuarioId, dto);
+        var parcela = (await service.ListarParcelasAsync(contrato.Id, tenantId)).Parcelas.Single();
+
+        Assert.Equal(0m, parcela.JurosMulta);
+        Assert.Equal(1000m, parcela.ValorAtualizado);
     }
 
     [Fact]

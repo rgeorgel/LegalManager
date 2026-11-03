@@ -298,8 +298,9 @@
         formaPagamento: isAvista ? 1 : isParcelado ? 2 : 3,
         tipoCobranca: document.getElementById('tipoCobranca').value,
         observacoes: document.getElementById('observacoes').value.trim() || null,
-        percentualMulta: (parseFloat(document.getElementById('percentualMulta').value) || 2) / 100,
-        percentualJurosMensal: (parseFloat(document.getElementById('percentualJuros').value) || 1.5) / 100,
+        // Campo vazio ou 0 = sem encargo (os campos já vêm preenchidos com o padrão).
+        percentualMulta: (parseFloat(document.getElementById('percentualMulta').value) || 0) / 100,
+        percentualJurosMensal: (parseFloat(document.getElementById('percentualJuros').value) || 0) / 100,
         dataInicio: document.getElementById('dataInicio').value,
         dataFim: null,
       };

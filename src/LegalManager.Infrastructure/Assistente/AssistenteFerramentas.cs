@@ -880,6 +880,7 @@ public partial class AssistenteFerramentas
             .Select(k => new
             {
                 k.Id, k.NumeroContrato, k.Objeto, k.Status, k.ValorTotal, k.FormaPagamento, k.DataInicio,
+                k.PercentualMulta, k.PercentualJurosMensal,
                 Cliente = k.Contato.Nome,
                 Processo = k.Processo != null ? k.Processo.NumeroCNJ : null,
                 Parcelas = k.Parcelas.Select(p => new { p.Status, p.Vencimento, p.ValorOriginal, p.ValorPago }).ToList()
@@ -905,7 +906,7 @@ public partial class AssistenteFerramentas
                 valorPago = validas.Where(p => p.Status == StatusParcelaHonorario.Pago).Sum(p => p.ValorPago ?? p.ValorOriginal),
                 valorAVencer = validas.Where(p => p.Status != StatusParcelaHonorario.Pago && !EmAtraso(p.Status, p.Vencimento, hoje))
                     .Sum(p => p.ValorOriginal),
-                valorEmAtrasoComMultaEJuros = atrasadas.Sum(p => Services.HonorarioService.CalcularJuros(p.ValorOriginal, p.Vencimento, hoje).total),
+                valorEmAtrasoComMultaEJuros = atrasadas.Sum(p => Services.HonorarioService.CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, k.PercentualMulta, k.PercentualJurosMensal).total),
                 parcelasEmAtraso = atrasadas.Count,
                 parcelasPagas = validas.Count(p => p.Status == StatusParcelaHonorario.Pago),
                 parcelasTotal = validas.Count,
@@ -971,7 +972,7 @@ public partial class AssistenteFerramentas
                     vencimento = Data(x.Vencimento),
                     valor = x.ValorOriginal,
                     valorAtualizadoComMultaEJuros = atraso
-                        ? Services.HonorarioService.CalcularJuros(x.ValorOriginal, x.Vencimento, hoje).total
+                        ? Services.HonorarioService.CalcularJuros(x.ValorOriginal, x.Vencimento, hoje, k.PercentualMulta, k.PercentualJurosMensal).total
                         : (decimal?)null,
                     valorPago = x.ValorPago,
                     pagamento = Data(x.DataPagamento),

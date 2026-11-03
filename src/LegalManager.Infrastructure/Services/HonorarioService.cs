@@ -46,7 +46,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
                     var dias = (hoje - p.Vencimento.Date).Days;
                     if (dias > 0)
                     {
-                        var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                        var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, c.PercentualMulta, c.PercentualJurosMensal);
                         atraso += j.total;
                         atrasoCount++;
                     }
@@ -419,8 +419,9 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
 
     public async Task<ParcelasContratoDto> ListarParcelasAsync(Guid contratoId, Guid tenantId, CancellationToken ct = default)
     {
-        var existe = await db.ContratosHonorarios.AnyAsync(x => x.Id == contratoId && x.TenantId == tenantId, ct);
-        if (!existe) throw new KeyNotFoundException("Contrato não encontrado.");
+        var c = await db.ContratosHonorarios.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == contratoId && x.TenantId == tenantId, ct)
+            ?? throw new KeyNotFoundException("Contrato não encontrado.");
 
         var parcelas = await db.ParcelasHonorarios
             .AsNoTracking()
@@ -428,7 +429,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             .OrderBy(p => p.Numero).ThenBy(p => p.Vencimento)
             .ToListAsync(ct);
 
-        return new ParcelasContratoDto(contratoId, parcelas.Select(MapearParcela));
+        return new ParcelasContratoDto(contratoId, parcelas.Select(p => MapearParcela(p, c)));
     }
 
     public async Task<ParcelaHonorarioDto> QuitarParcelaAsync(Guid contratoId, Guid parcelaId, Guid tenantId, QuitarParcelaDto dto, CancellationToken ct = default)
@@ -443,7 +444,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         var p = c.Parcelas.FirstOrDefault(x => x.Id == parcelaId)
             ?? throw new KeyNotFoundException("Parcela não encontrada.");
 
-        if (p.Status == StatusParcelaHonorario.Pago) return MapearParcela(p);
+        if (p.Status == StatusParcelaHonorario.Pago) return MapearParcela(p, c);
         if (p.Status == StatusParcelaHonorario.Cancelado)
             throw new InvalidOperationException("Parcela cancelada não pode ser paga.");
 
@@ -512,7 +513,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         ), ct);
 
         await db.SaveChangesAsync(ct);
-        return MapearParcela(p);
+        return MapearParcela(p, c);
     }
 
     public async Task<ParcelaHonorarioDto> CancelarParcelaAsync(Guid contratoId, Guid parcelaId, Guid tenantId, Guid usuarioId, string motivo, CancellationToken ct = default)
@@ -544,7 +545,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         });
 
         await db.SaveChangesAsync(ct);
-        return MapearParcela(p);
+        return MapearParcela(p, c);
     }
 
     public async Task EstornarPagamentoParcelaAsync(Guid contratoId, Guid parcelaId, Guid tenantId, CancellationToken ct = default)
@@ -689,7 +690,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             }
             else if (st == StatusParcelaHonorario.Vencido)
             {
-                var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, c.PercentualMulta, c.PercentualJurosMensal);
                 jurosMulta = Math.Round(j.multa + j.juros, 2);
                 valorFinal = j.total;
                 atraso += j.total;
@@ -861,15 +862,20 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         return list;
     }
 
-    public static (decimal multa, decimal juros, int dias, decimal total) CalcularJuros(decimal valor, DateTime vencimento, DateTime referencia)
+    /// <summary>
+    /// Multa (incidência única) e juros pro rata die de uma parcela vencida, com os percentuais do contrato
+    /// (frações: 0.02 = 2%). Contrato com 0% não gera encargo.
+    /// </summary>
+    public static (decimal multa, decimal juros, int dias, decimal total) CalcularJuros(
+        decimal valor, DateTime vencimento, DateTime referencia, decimal percentualMulta, decimal percentualJurosMensal)
     {
         var dv = vencimento.Date;
         var dr = referencia.Date;
         if (dr <= dv) return (0m, 0m, 0, valor);
         var dias = (int)(dr - dv).TotalDays;
         var meses = dias / 30m;
-        var multa = Math.Round(valor * 0.02m, 2, MidpointRounding.AwayFromZero);
-        var juros = Math.Round(valor * 0.015m * meses, 2, MidpointRounding.AwayFromZero);
+        var multa = Math.Round(valor * percentualMulta, 2, MidpointRounding.AwayFromZero);
+        var juros = Math.Round(valor * percentualJurosMensal * meses, 2, MidpointRounding.AwayFromZero);
         return (multa, juros, dias, Math.Round(valor + multa + juros, 2, MidpointRounding.AwayFromZero));
     }
 
@@ -982,7 +988,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
                     var dias = (hoje - p.Vencimento.Date).Days;
                     if (dias > 0)
                     {
-                        var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                        var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, c.PercentualMulta, c.PercentualJurosMensal);
                         atraso += j.total;
                         vencidas++;
                     }
@@ -1032,7 +1038,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
         );
     }
 
-    private static ParcelaHonorarioDto MapearParcela(ParcelaHonorario p)
+    private static ParcelaHonorarioDto MapearParcela(ParcelaHonorario p, ContratoHonorario c)
     {
         var hoje = DateTime.UtcNow.Date;
         decimal? juros = null, valorAtualizado = null;
@@ -1042,7 +1048,7 @@ public class HonorarioService(AppDbContext db, IAuditService audit) : IHonorario
             var d = (hoje - p.Vencimento.Date).Days;
             if (d > 0)
             {
-                var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje);
+                var j = CalcularJuros(p.ValorOriginal, p.Vencimento, hoje, c.PercentualMulta, c.PercentualJurosMensal);
                 juros = Math.Round(j.multa + j.juros, 2);
                 valorAtualizado = j.total;
                 dias = j.dias;
