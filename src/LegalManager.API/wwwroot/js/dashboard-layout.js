@@ -18,6 +18,8 @@ const LARGURAS = [1, 2, 3];
 const ALTURAS = [1, 2, 0.5];
 const CLASSE_ALTURA = { 0.5: 'd2-hm', 2: 'd2-h2' };
 const ROTULO_ALTURA = { 0.5: '½', 1: '1', 2: '2' };
+// Fora de initDashboardLayout: aplicarTudo(cache) roda síncrono na init e já compara layouts.
+const iguais = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
  * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, alturas?: boolean, compacto?: boolean, dispensavel?: string }} Secao
@@ -138,8 +140,6 @@ export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cac
     const obj = Array.isArray(layout) ? { widgets: layout } : layout;
     for (const s of secoes) aplicar(s, obj?.[s.chave]);
   }
-
-  const iguais = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
   function lerCache() {
     try {
