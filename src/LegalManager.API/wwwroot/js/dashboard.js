@@ -38,7 +38,8 @@ const user = getUser();
 // Aplica o layout personalizado (KPIs e blocos: ordem, largura, altura e visibilidade) o quanto antes.
 initDashboardLayout({
   secoes: [
-    { chave: 'kpis', grid: document.getElementById('d2Kpis'), attr: 'kpi', compacto: true },
+    // Atalhos saem quando sobrariam sozinhos na 2ª linha de KPIs (telas médias).
+    { chave: 'kpis', grid: document.getElementById('d2Kpis'), attr: 'kpi', compacto: true, dispensavel: 'atalhos' },
     { chave: 'widgets', grid: document.getElementById('d2Grid'), attr: 'widget', larguras: true, alturas: true },
   ],
   botao: document.getElementById('d2Personalizar'),

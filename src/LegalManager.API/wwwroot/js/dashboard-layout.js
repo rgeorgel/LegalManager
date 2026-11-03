@@ -20,7 +20,9 @@ const CLASSE_ALTURA = { 0.5: 'd2-hm', 2: 'd2-h2' };
 const ROTULO_ALTURA = { 0.5: '½', 1: '1', 2: '2' };
 
 /**
- * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, alturas?: boolean, compacto?: boolean }} Secao
+ * @typedef {{ chave: string, grid: HTMLElement, attr: string, larguras?: boolean, alturas?: boolean, compacto?: boolean, dispensavel?: string }} Secao
+ * `dispensavel` é o id de um item que some sozinho quando a seção está no layout padrão e
+ * tirá-lo faz os demais caberem numa linha só (em vez de um item sobrando na linha de baixo).
  * `api` troca o cliente HTTP (o superadmin usa saFetch, com o token dele) e `cachePrefixo`
  * separa o cache local de dashboards diferentes do mesmo usuário.
  * @param {{ secoes: Secao[], botao: HTMLElement, userId?: string, api?: Function, cachePrefixo?: string }} opts
@@ -37,6 +39,7 @@ export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cac
     s.ids = new Set(s.padrao.map(w => w.id));
     s.grid.classList.add('d2-secao');
     if (s.compacto) s.grid.classList.add('d2-secao-compacta');
+    if (s.dispensavel) new ResizeObserver(() => ajustarDispensavel(s)).observe(s.grid);
   }
 
   const cacheKey = `${cachePrefixo}:${userId ?? 'anon'}`;
@@ -113,6 +116,21 @@ export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cac
       el.classList.toggle('d2-oculto', w.oculto);
       atualizarFerramentas(s, el);
     }
+    ajustarDispensavel(s);
+  }
+
+  // Só no layout padrão (quem personalizou escolheu o que ver) e fora da edição. Com auto-fit,
+  // o número de colunas depende só da largura do grid, não de quantos itens há nele.
+  function ajustarDispensavel(s) {
+    const el = s.dispensavel && s.grid.querySelector(`:scope > [data-${s.attr}="${s.dispensavel}"]`);
+    if (!el) return;
+    let dispensar = false;
+    if (!editando && iguais(lerDoDom(s), s.padrao)) {
+      const visiveis = s.grid.querySelectorAll(`${s.sel}:not(.d2-oculto)`).length;
+      const colunas = getComputedStyle(s.grid).gridTemplateColumns.split(' ').length;
+      dispensar = colunas < visiveis && colunas >= visiveis - 1;
+    }
+    el.classList.toggle('d2-dispensado', dispensar);
   }
 
   // Aceita também o formato antigo do cache (só a lista de blocos).
@@ -147,6 +165,7 @@ export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cac
         garantirFerramentas(s, el);
         el.draggable = true;
       });
+      ajustarDispensavel(s);
     }
     mostrarEditBar();
     botao?.setAttribute('aria-pressed', 'true');
@@ -163,6 +182,7 @@ export function initDashboardLayout({ secoes, botao, userId, api = apiFetch, cac
     for (const s of secoes) {
       s.grid.classList.remove('d2-editando');
       s.grid.querySelectorAll(s.sel).forEach(el => { el.draggable = false; });
+      ajustarDispensavel(s);
     }
     editBar?.remove();
     editBar = null;
@@ -339,6 +359,7 @@ function injectStyles() {
   // !important nas cores dos botões: o preset escuro força `button { color: inherit !important }`.
   s.textContent = `
     .d2-wtools { display: none; }
+    .d2-secao > .d2-dispensado { display: none; }
     .d2-editando > * { outline: 2px dashed var(--color-border); outline-offset: -2px; cursor: grab; }
     .d2-editando > *:hover { outline-color: var(--color-primary); }
     .d2-editando > * > :not(.d2-wtools) { pointer-events: none; user-select: none; }
