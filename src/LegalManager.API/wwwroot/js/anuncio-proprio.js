@@ -52,8 +52,12 @@ export function criarAnuncioProprio(anuncio, { link = true } = {}) {
   const corpo = document.createElement('span');
   corpo.className = 'pub-proprio-corpo';
   corpo.append(parte('pub-proprio-titulo', anuncio.titulo), parte('pub-proprio-texto', anuncio.texto));
-  if (anuncio.icone) el.append(parte('pub-proprio-icone', anuncio.icone));
-  el.append(corpo, parte('pub-proprio-botao', `${anuncio.textoBotao} →`));
+  // O conteúdo fica num filho: o layout responde à largura do anúncio (container query).
+  const conteudo = document.createElement('span');
+  conteudo.className = 'pub-proprio-conteudo';
+  if (anuncio.icone) conteudo.append(parte('pub-proprio-icone', anuncio.icone));
+  conteudo.append(corpo, parte('pub-proprio-botao', `${anuncio.textoBotao} →`));
+  el.append(conteudo);
   return el;
 }
 
@@ -77,9 +81,9 @@ function injectStyles() {
   const s = document.createElement('style');
   s.id = 'pubProprioStyles';
   s.textContent = `
-    .pub-proprio { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; width: 100%;
-      box-sizing: border-box; padding: 14px 16px; border-radius: 10px; background: var(--color-bg);
-      color: var(--color-text); text-decoration: none; }
+    .pub-proprio { display: block; width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: 10px;
+      background: var(--color-bg); color: var(--color-text); text-decoration: none; container-type: inline-size; }
+    .pub-proprio-conteudo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
     a.pub-proprio:hover { background: var(--color-border); }
     .pub-proprio-icone { font-size: 26px; line-height: 1; }
     .pub-proprio-corpo { display: flex; flex-direction: column; gap: 3px; flex: 1 1 220px; min-width: 0; }
@@ -97,6 +101,17 @@ function injectStyles() {
     .pub-moldura-colorida a.pub-proprio:hover .pub-proprio-botao { filter: brightness(.92); }
     .pub-moldura-colorida .pub-topo, .pub-moldura-colorida .pub-remover { color: var(--pub-tinta); }
     .pub-moldura-colorida .pub-topo > span { opacity: .75; }
+    /* Faixa (listas) fica em linha. Bloco estreito (cards do dashboard, grade de processos):
+       empilhado e centralizado, com título maior e o botão no meio. */
+    @container (max-width: 520px) {
+      .pub-proprio .pub-proprio-conteudo { flex-direction: column; flex-wrap: nowrap; gap: 12px; text-align: center; }
+      .pub-proprio .pub-proprio-icone { font-size: 40px; }
+      .pub-proprio .pub-proprio-corpo { flex: 0 1 auto; align-items: center; gap: 6px; }
+      .pub-proprio .pub-proprio-titulo { font-size: 18px; line-height: 1.3; }
+      .pub-proprio .pub-proprio-texto { font-size: 13.5px; line-height: 1.5; }
+      .pub-proprio .pub-proprio-botao { margin-top: 4px; font-size: 14px; }
+      .pub-proprio-colorido .pub-proprio-botao { padding: 9px 20px; }
+    }
   `;
   document.head.appendChild(s);
 }
