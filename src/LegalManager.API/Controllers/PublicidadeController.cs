@@ -1,4 +1,5 @@
 using LegalManager.API.Configuration;
+using LegalManager.Application.DTOs.Publicidade;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
@@ -9,7 +10,9 @@ using Microsoft.EntityFrameworkCore;
 namespace LegalManager.API.Controllers;
 
 /// <param name="Origem">De onde carregar o iframe (host próprio dos anúncios); null = a do app.</param>
-public record PublicidadeDto(bool Ativo, IReadOnlyList<string> Formatos, string? Origem = null);
+/// <param name="Proprios">Anúncios do Causify para o espaço que o Adsterra deixar vazio.</param>
+public record PublicidadeDto(
+    bool Ativo, IReadOnlyList<string> Formatos, string? Origem = null, IReadOnlyList<AnuncioProprioDto>? Proprios = null);
 
 // Publicidade do Adsterra para escritórios no plano Free (planos pagos não têm anúncio).
 // Liga/desliga pelo .env (ADSTERRA_ENABLED); ver Configuration/Adsterra.cs.
@@ -18,6 +21,9 @@ public record PublicidadeDto(bool Ativo, IReadOnlyList<string> Formatos, string?
 // isolado por sandbox (no iframe e no CSP da resposta). Com ADSTERRA_FRAME_ORIGIN o iframe vem de
 // um host próprio (outra origem: sem acesso ao sessionStorage com o token nem ao DOM do app); sem
 // ele, de uma origem opaca. Ver Configuration/Adsterra.cs.
+//
+// Espaço que o Adsterra deixa vazio (bloqueador de anúncios, sem campanha) recebe um anúncio
+// próprio do Causify (AnuncioProprio) — decidido no navegador, em /js/publicidade.js.
 [ApiController]
 [Route("api/publicidade")]
 [Authorize]
@@ -59,9 +65,13 @@ public class PublicidadeController : ControllerBase
             .Select(t => (PlanoTipo?)t.Plano)
             .FirstOrDefaultAsync(ct);
 
-        return plano == PlanoTipo.Free
-            ? Ok(new PublicidadeDto(true, formatos, _adsterra.Origem))
-            : Ok(new PublicidadeDto(false, []));
+        if (plano != PlanoTipo.Free) return Ok(new PublicidadeDto(false, []));
+
+        var proprios = await _context.AnunciosProprios.AsNoTracking()
+            .Where(a => a.Ativo)
+            .Select(a => new AnuncioProprioDto(a.Id, a.Icone, a.Titulo, a.Texto, a.TextoBotao, a.LinkUrl, a.Cor))
+            .ToListAsync(ct);
+        return Ok(new PublicidadeDto(true, formatos, _adsterra.Origem, proprios));
     }
 
     // Anônimo: o iframe não leva o token (que fica no sessionStorage). Só serve o script já

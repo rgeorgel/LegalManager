@@ -7,13 +7,21 @@
 // anunciante não alcança o token da sessão (sessionStorage) nem o DOM do app. Sem host próprio, o
 // iframe vem do app sem allow-same-origin (origem opaca). O formato é escolhido pelo espaço livre do bloco
 // (e trocado se ele mudar, ex.: alternar lista/grade), entre os configurados no servidor.
+//
+// Se o Adsterra não desenhar nada (bloqueador de anúncios, sem campanha), o bloco recebe um anúncio
+// próprio do Causify (cfg.proprios, cadastrados no super admin): a página do iframe avisa
+// { pubEstado: 'vazio' }, ou o iframe nem responde (bloqueado) até ESPERA_MS depois de visível.
 import { apiFetch } from './api.js';
 import { isPlanoFree } from './layout.js';
 import { trackEvent } from './analytics.js';
+import { criarAnuncioProprio } from './anuncio-proprio.js';
 
 // Mesmas permissões do CSP da resposta (Adsterra.Sandbox). allow-same-origin só no host próprio:
 // na origem do app ele desfaria o isolamento.
 const SANDBOX = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation';
+
+// A página do iframe espera até 5 s depois do load antes de dizer 'vazio'; folga para carregar.
+const ESPERA_MS = 10000;
 
 const TAMANHOS = {
   '300x250': [300, 250],
@@ -32,6 +40,10 @@ const PREFERENCIA = {
 };
 
 let config = null;
+// Ações de cada bloco ao receber o estado da sua página de anúncio (ver ouvinte de 'message').
+const estados = new WeakMap();
+// Anúncios próprios ainda não usados nesta página: blocos vizinhos mostram anúncios diferentes.
+let fila = [];
 
 function carregarConfig() {
   config ??= !isPlanoFree()
@@ -101,15 +113,55 @@ function criarSlot(cfg, tipo, classeExtra = '') {
 
   const area = slot.querySelector('.pub-area');
   let atual = null;
-  new ResizeObserver(() => {
+  let estado = 'carregando'; // → 'ok' (Adsterra desenhou) ou 'proprio' (anúncio do Causify no lugar)
+  let espera = null;
+
+  const substituir = () => {
+    clearTimeout(espera);
+    if (estado !== 'carregando') return;
+    estado = 'proprio';
+    observador.disconnect();
+    visibilidade.disconnect();
+    const anuncio = proximoProprio(cfg.proprios);
+    if (!anuncio) { slot.hidden = true; return; } // nenhum cadastrado: some em vez de ficar vazio
+    area.replaceChildren(criarProprio(anuncio, tipo));
+    trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo });
+  };
+  estados.set(slot, {
+    ok: () => { if (estado === 'carregando') { estado = 'ok'; clearTimeout(espera); } },
+    vazio: substituir,
+  });
+
+  const observador = new ResizeObserver(() => {
     const largura = area.clientWidth;
     if (!largura) return; // oculto (ex.: modo de edição do dashboard): mantém o anúncio
     const formato = escolherFormato(cfg.formatos, PREFERENCIA[tipo] ?? PREFERENCIA.auto, largura);
     if (formato === atual) return;
     atual = formato;
     area.replaceChildren(criarIframe(formato, cfg.origem));
-  }).observe(area);
+  });
+  observador.observe(area);
+
+  // O iframe é lazy: o prazo para o anúncio aparecer só começa quando o bloco fica visível.
+  const visibilidade = new IntersectionObserver(entradas => {
+    if (!entradas.some(e => e.isIntersecting)) return;
+    visibilidade.disconnect();
+    espera = setTimeout(substituir, ESPERA_MS);
+  });
+  visibilidade.observe(slot);
   return slot;
+}
+
+function proximoProprio(proprios) {
+  if (!proprios?.length) return null;
+  if (fila.length === 0) fila = [...proprios].sort(() => Math.random() - 0.5);
+  return fila.pop();
+}
+
+function criarProprio(anuncio, tipo) {
+  const el = criarAnuncioProprio(anuncio);
+  el.addEventListener('click', () => trackEvent('publicidade_propria_click', { anuncio: anuncio.id, tipo }));
+  return el;
 }
 
 function escolherFormato(disponiveis, preferencia, largura) {
@@ -135,11 +187,15 @@ function criarIframe(formato, origem) {
 
 // Altura do Native Banner, informada pela página do iframe. A mensagem é aceita só se vier de
 // um iframe de anúncio desta página (a origem não ajuda: é "null" sem o host próprio).
+// O mesmo vale para o estado ({ pubEstado: 'ok' | 'vazio' }).
 window.addEventListener('message', e => {
   const altura = e.data?.pubAltura;
-  if (typeof altura !== 'number') return;
+  const estado = e.data?.pubEstado;
+  if (typeof altura !== 'number' && estado !== 'ok' && estado !== 'vazio') return;
   const frame = [...document.querySelectorAll('iframe.pub-frame')].find(f => f.contentWindow === e.source);
-  if (frame) frame.style.height = `${Math.min(Math.max(Math.round(altura), 50), 600)}px`;
+  if (!frame) return;
+  if (typeof altura === 'number') frame.style.height = `${Math.min(Math.max(Math.round(altura), 50), 600)}px`;
+  else estados.get(frame.closest('.pub-slot'))?.[estado]();
 });
 
 function injectStyles() {
@@ -157,6 +213,7 @@ function injectStyles() {
     .pub-area { display: flex; justify-content: center; align-items: center; flex: 1; min-width: 0; }
     .pub-frame { display: block; max-width: 100%; border: 0; background: transparent; }
     .d2-editando > .pub-slot { display: none; }
+    .pub-slot[hidden] { display: none; }
   `;
   document.head.appendChild(s);
 }

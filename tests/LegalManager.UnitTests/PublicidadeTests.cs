@@ -154,6 +154,18 @@ public class PublicidadeTests
     }
 
     [Theory]
+    [InlineData("300x250")]
+    [InlineData(Adsterra.Nativo)]
+    public void Html_AvisaOEstadoDepoisDoScriptDoAnunciante(string formato)
+    {
+        var html = Ligado().Html(formato)!;
+
+        var estado = html.IndexOf(Adsterra.Estado, StringComparison.Ordinal);
+        Assert.True(estado > html.IndexOf("invoke.js", StringComparison.Ordinal));
+        Assert.Contains("pubEstado", Adsterra.Estado);
+    }
+
+    [Theory]
     [InlineData("468x60")] // suportado, mas sem chave
     [InlineData("999x999")]
     public void Html_FormatoNaoConfigurado_RetornaNull(string formato)
@@ -286,6 +298,31 @@ public class PublicidadeTests
 
         Assert.False(dto.Ativo);
         Assert.Empty(dto.Formatos);
+    }
+
+    [Fact]
+    public async Task Get_PlanoFree_EnviaSoOsAnunciosPropriosAtivos()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+        db.AnunciosProprios.AddRange(
+            new AnuncioProprio { Id = Guid.NewGuid(), Icone = "🚫", Titulo = "Sem anúncios", Texto = "t", TextoBotao = "Ver planos", LinkUrl = "/pages/assinatura.html", Cor = "#1e3a8a", Ativo = true },
+            new AnuncioProprio { Id = Guid.NewGuid(), Titulo = "Guardado", Texto = "t", TextoBotao = "b", LinkUrl = "/", Ativo = false });
+        await db.SaveChangesAsync();
+
+        var proprio = Assert.Single((await GetAsync(controller)).Proprios!);
+
+        Assert.Equal(("🚫", "Sem anúncios", "Ver planos", "/pages/assinatura.html", "#1e3a8a"),
+            (proprio.Icone, proprio.Titulo, proprio.TextoBotao, proprio.LinkUrl, proprio.Cor));
+    }
+
+    [Fact]
+    public async Task Get_PlanoPago_SemAnunciosProprios()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Pro);
+        db.AnunciosProprios.Add(new AnuncioProprio { Id = Guid.NewGuid(), Titulo = "x", Texto = "t", TextoBotao = "b", LinkUrl = "/", Ativo = true });
+        await db.SaveChangesAsync();
+
+        Assert.Null((await GetAsync(controller)).Proprios);
     }
 
     [Fact]

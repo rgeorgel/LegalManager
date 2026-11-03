@@ -77,6 +77,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<ComissaoParceiro> ComissoesParceiros => Set<ComissaoParceiro>();
     public DbSet<SolicitacaoPagamentoParceiro> SolicitacoesPagamentoParceiros => Set<SolicitacaoPagamentoParceiro>();
     public DbSet<Novidade> Novidades => Set<Novidade>();
+    public DbSet<AnuncioProprio> AnunciosProprios => Set<AnuncioProprio>();
     public DbSet<InteracaoAssistente> InteracoesAssistente => Set<InteracaoAssistente>();
     public DbSet<AcaoAssistente> AcoesAssistente => Set<AcaoAssistente>();
     public DbSet<TriagemPublicacao> TriagensPublicacao => Set<TriagemPublicacao>();

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Anúncios próprios</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #f9fafb; }
+    .sub { font-size: 12px; color: var(--color-text-muted); }
+    .titulo { font-weight: 600; }
+    .amostra { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; border: 1px solid var(--color-border); background: var(--color-bg); }
+    .action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); }
+    .action-btn:hover { background: var(--color-bg); }
+    .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .actions { white-space: nowrap; display: flex; gap: 4px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
+    .barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .contagem { font-size: 13px; color: var(--color-text-muted); }
+    /* Alternador lista/blocos — mesmo padrão de Tarefas, Contatos e Processos */
+    .view-toggle { display: flex; gap: 4px; align-items: center; }
+    .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: #f3f4f6; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
+    .view-btn:hover { background: #e5e7eb; }
+    .view-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    /* Cards: cada um já é a pré-visualização do anúncio como o cliente vê */
+    .anuncios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+    @media (max-width: 768px) { .anuncios-grid { grid-template-columns: 1fr; } }
+    .anuncio-card { display: flex; flex-direction: column; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; overflow: hidden; }
+    .anuncio-card-preview { flex: 1; padding: 12px 14px 14px; }
+    .anuncio-card.inativo .anuncio-card-preview > :not(.preview-topo) { opacity: .45; filter: grayscale(.6); }
+    .anuncio-card-rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      padding: 10px 14px; border-top: 1px solid var(--color-border); background: #f8fafc; }
+    .anuncio-card-link { padding: 0 14px 10px; font-size: 12px; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vazio { text-align: center; color: var(--color-text-muted); padding: 32px; border: 1px dashed var(--color-border); border-radius: 12px; }
+    .preview-topo { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin-bottom: 8px; }
+    .preview-topo span:last-child { text-transform: none; letter-spacing: 0; color: var(--color-primary); }
+    /* Formulário */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row.icone-titulo { grid-template-columns: 90px 1fr; }
+    @media (max-width: 480px) { .form-row, .form-row.icone-titulo { grid-template-columns: 1fr; } }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; }
+    .checkbox-row input { width: auto; min-height: auto; }
+    .field-hint { font-size: 11px; color: var(--color-text-muted); margin-top: 4px; }
+    textarea.form-control { min-height: 80px; resize: vertical; font-family: inherit; }
+    .cores { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .cor-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+    .cor-btn.ativa { border-color: var(--color-text); box-shadow: 0 0 0 2px var(--color-surface) inset; }
+    .cor-btn.sem-cor { background: linear-gradient(135deg, #fff 45%, #dc2626 47%, #dc2626 53%, #fff 55%); }
+    .cor-personalizada { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-muted); margin-left: 4px; }
+    .cor-personalizada input { width: 36px; height: 30px; padding: 0; border: 1px solid var(--color-border); border-radius: 6px; cursor: pointer; background: none; }
+    .preview-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); margin: 12px 0 6px; }
+    .previews { display: grid; grid-template-columns: 300px 1fr; gap: 12px; align-items: start; }
+    @media (max-width: 640px) { .previews { grid-template-columns: 1fr; } }
+    .preview { border: 1px dashed var(--color-border); border-radius: 12px; padding: 10px 14px 14px; min-width: 0; }
+    .preview-nome { font-size: 11px; color: var(--color-text-muted); margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Anúncios próprios</h1>
+        <button class="btn btn-primary" id="novoBtn">+ Novo anúncio</button>
+      </div>
+      <p class="hint">
+        Aparecem só para escritórios no plano <strong>Free</strong>, nos espaços de publicidade que o Adsterra
+        deixa vazios (bloqueador de anúncios ou nenhuma campanha disponível). Cada espaço sorteia um dos ativos,
+        sem repetir na mesma página. Desligar o Adsterra no .env (ADSTERRA_ENABLED) desliga estes também.
+      </p>
+
+      <div class="barra">
+        <span class="contagem" id="contagem"></span>
+        <div class="view-toggle">
+          <button type="button" class="view-btn" id="viewLista" title="Visualização em lista">☰</button>
+          <button type="button" class="view-btn" id="viewBlocos" title="Visualização em blocos">⊞</button>
+        </div>
+      </div>
+      <div id="conteudo"><div class="vazio">Carregando...</div></div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="formOverlay">
+    <div class="modal" style="max-width:760px">
+      <div class="modal-header">
+        <span class="modal-title" id="formTitle">Novo anúncio</span>
+        <button type="button" class="modal-close" id="formClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row icone-titulo">
+          <div class="form-group">
+            <label for="fIcone">Ícone</label>
+            <input class="form-control" id="fIcone" maxlength="16" placeholder="📣">
+          </div>
+          <div class="form-group">
+            <label for="fTitulo">Título</label>
+            <input class="form-control" id="fTitulo" maxlength="80" placeholder="Ex: Trabalhe sem anúncios">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="fTexto">Texto</label>
+          <textarea class="form-control" id="fTexto" maxlength="200" placeholder="Uma ou duas frases sobre o benefício para o advogado."></textarea>
+          <div class="field-hint"><span id="fTextoConta">0</span>/200 caracteres.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fLink">Link</label>
+            <input class="form-control" id="fLink" maxlength="300" placeholder="/pages/assinatura.html">
+            <div class="field-hint">Caminho do sistema (mesma aba) ou URL https (abre em outra aba).</div>
+          </div>
+          <div class="form-group">
+            <label for="fBotao">Texto do botão</label>
+            <input class="form-control" id="fBotao" maxlength="30" placeholder="Ver planos">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cor de fundo</label>
+          <div class="cores" id="cores"></div>
+          <div class="field-hint">O texto fica claro ou escuro sozinho, conforme o contraste com a cor.</div>
+        </div>
+        <div class="form-group checkbox-row">
+          <input type="checkbox" id="fAtivo">
+          <label for="fAtivo" style="margin:0">Ativo (pode ser exibido)</label>
+        </div>
+        <div class="preview-label">Pré-visualização</div>
+        <div class="previews">
+          <div>
+            <div class="preview-nome">Bloco (dashboard)</div>
+            <div class="preview"><div class="preview-topo"><span>Publicidade</span><span>Remover anúncios</span></div><div id="previewBloco"></div></div>
+          </div>
+          <div>
+            <div class="preview-nome">Faixa (listas)</div>
+            <div class="preview"><div class="preview-topo"><span>Publicidade</span><span>Remover anúncios</span></div><div id="previewFaixa"></div></div>
+          </div>
+        </div>
+        <div class="form-error" id="formError" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="formCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="formSaveBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteOverlay">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Excluir anúncio</span>
+        <button type="button" class="modal-close" id="deleteClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir <strong id="deleteTitulo"></strong>? Esta ação não pode ser desfeita.
+          Para só tirar do ar, desative.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="deleteCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { criarAnuncioProprio, corValida } from '/js/anuncio-proprio.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const $ = id => document.getElementById(id);
+    let anuncios = [];
+    let editingId = null;
+    let deletingId = null;
+    let corSelecionada = null;
+
+    // Paleta sugerida; qualquer outra entra pelo seletor "Outra".
+    const CORES = [
+      ['#1e3a8a', 'Azul-marinho'], ['#2563eb', 'Azul'], ['#0f766e', 'Verde-água'], ['#15803d', 'Verde'],
+      ['#6d28d9', 'Roxo'], ['#be185d', 'Rosa'], ['#dc2626', 'Vermelho'], ['#ea580c', 'Laranja'],
+      ['#fbbf24', 'Amarelo'], ['#111827', 'Preto'],
+    ];
+
+    // Mesma regra do servidor (SuperAdminAnunciosPropriosController.Validar).
+    const linkValido = s => (s.startsWith('/') && !s.startsWith('//') && !s.startsWith('/\\')) || /^https:\/\/\S+$/i.test(s);
+
+    // ── Visualização (blocos/lista), lembrada neste navegador ──────────────
+    const VIEW_KEY = 'superadmin.anunciosProprios.view';
+    let view = (() => { try { return localStorage.getItem(VIEW_KEY) === 'lista' ? 'lista' : 'blocos'; } catch { return 'blocos'; } })();
+    function trocarView(nova) {
+      view = nova;
+      try { localStorage.setItem(VIEW_KEY, view); } catch { }
+      render();
+    }
+    $('viewLista').addEventListener('click', () => trocarView('lista'));
+    $('viewBlocos').addEventListener('click', () => trocarView('blocos'));
+
+    async function load() {
+      try {
+        anuncios = await saFetch('/superadmin/anuncios-proprios');
+        render();
+      } catch (e) {
+        $('conteudo').innerHTML = `<div class="vazio" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
+      }
+    }
+
+    const acoes = a => `
+      <button class="action-btn" data-acao="editar" data-id="${a.id}">Editar</button>
+      <button class="action-btn" data-acao="alternar" data-id="${a.id}">${a.ativo ? 'Desativar' : 'Ativar'}</button>
+      <button class="action-btn danger" data-acao="excluir" data-id="${a.id}">Excluir</button>`;
+    const status = a => a.ativo
+      ? '<span class="badge badge-green">Ativo</span>'
+      : '<span class="badge badge-gray">Inativo</span>';
+
+    function render() {
+      $('viewLista').classList.toggle('active', view === 'lista');
+      $('viewBlocos').classList.toggle('active', view === 'blocos');
+      const ativos = anuncios.filter(a => a.ativo).length;
+      $('contagem').textContent = anuncios.length
+        ? `${anuncios.length} anúncio${anuncios.length > 1 ? 's' : ''} · ${ativos} ativo${ativos === 1 ? '' : 's'}`
+        : '';
+
+      if (anuncios.length === 0) {
+        $('conteudo').innerHTML = '<div class="vazio">Nenhum anúncio cadastrado ainda. Sem anúncios ativos, o espaço vazio some da tela.</div>';
+        return;
+      }
+
+      if (view === 'blocos') {
+        $('conteudo').innerHTML = `<div class="anuncios-grid">${anuncios.map(a => `
+          <div class="anuncio-card${a.ativo ? '' : ' inativo'}">
+            <div class="anuncio-card-preview" data-preview="${a.id}">
+              <div class="preview-topo"><span>Publicidade</span><span>Remover anúncios</span></div>
+            </div>
+            <div class="anuncio-card-link" title="${esc(a.linkUrl)}">Leva para ${esc(a.linkUrl)}</div>
+            <div class="anuncio-card-rodape">
+              ${status(a)}
+              <div class="actions">${acoes(a)}</div>
+            </div>
+          </div>`).join('')}</div>`;
+        // O anúncio em si é montado pelo mesmo código do portal (textContent, sem HTML).
+        for (const a of anuncios)
+          $('conteudo').querySelector(`[data-preview="${a.id}"]`).append(criarAnuncioProprio(a, { link: false }));
+        return;
+      }
+
+      $('conteudo').innerHTML = `
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th></th><th>Anúncio</th><th>Botão</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>${anuncios.map(a => `
+              <tr>
+                <td><div class="amostra" data-cor="${a.id}">${esc(a.icone ?? '')}</div></td>
+                <td>
+                  <div class="titulo">${esc(a.titulo)}</div>
+                  <div class="sub">${esc(a.texto)}</div>
+                </td>
+                <td>
+                  <div>${esc(a.textoBotao)}</div>
+                  <div class="sub">→ ${esc(a.linkUrl)}</div>
+                </td>
+                <td>${status(a)}</td>
+                <td class="actions">${acoes(a)}</td>
+              </tr>`).join('')}</tbody>
+          </table>
+        </div>`;
+      for (const a of anuncios)
+        if (corValida(a.cor)) $('conteudo').querySelector(`[data-cor="${a.id}"]`).style.background = a.cor;
+    }
+
+    const payloadDe = a => ({
+      icone: a.icone, titulo: a.titulo, texto: a.texto, textoBotao: a.textoBotao, linkUrl: a.linkUrl, cor: a.cor, ativo: a.ativo,
+    });
+
+    $('conteudo').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-acao]');
+      if (!btn) return;
+      const a = anuncios.find(x => x.id === btn.dataset.id);
+      if (!a) return;
+
+      switch (btn.dataset.acao) {
+        case 'editar': abrirFormulario(a); break;
+        case 'alternar': {
+          btn.disabled = true;
+          try {
+            await saFetch(`/superadmin/anuncios-proprios/${a.id}`, {
+              method: 'PUT', body: JSON.stringify({ ...payloadDe(a), ativo: !a.ativo }),
+            });
+            await load();
+          } catch (err) {
+            alert('Erro: ' + err.message);
+            btn.disabled = false;
+          }
+          break;
+        }
+        case 'excluir':
+          deletingId = a.id;
+          $('deleteTitulo').textContent = a.titulo;
+          $('deleteOverlay').classList.add('open');
+          break;
+      }
+    });
+
+    // ── Cor ──────────────────────────────────────────────────────────────────
+
+    $('cores').innerHTML = `
+      <button type="button" class="cor-btn sem-cor" data-cor="" title="Sem cor (neutro)"></button>
+      ${CORES.map(([cor, nome]) => `<button type="button" class="cor-btn" data-cor="${cor}" title="${nome}" style="background:${cor}"></button>`).join('')}
+      <label class="cor-personalizada">Outra <input type="color" id="fCorPersonalizada" value="#2563eb"></label>`;
+
+    function selecionarCor(cor) {
+      corSelecionada = corValida(cor) ? cor.toLowerCase() : null;
+      const naPaleta = CORES.some(([c]) => c === corSelecionada);
+      for (const b of $('cores').querySelectorAll('.cor-btn'))
+        b.classList.toggle('ativa', (b.dataset.cor || null) === corSelecionada);
+      if (corSelecionada && !naPaleta) $('fCorPersonalizada').value = corSelecionada;
+      $('fCorPersonalizada').parentElement.style.fontWeight = corSelecionada && !naPaleta ? '700' : '';
+      atualizarPreview();
+    }
+    $('cores').addEventListener('click', e => {
+      const b = e.target.closest('.cor-btn');
+      if (b) selecionarCor(b.dataset.cor);
+    });
+    $('fCorPersonalizada').addEventListener('input', e => selecionarCor(e.target.value));
+
+    // ── Criar/editar ────────────────────────────────────────────────────────
+
+    function abrirFormulario(a) {
+      editingId = a?.id ?? null;
+      $('formTitle').textContent = editingId ? 'Editar anúncio' : 'Novo anúncio';
+      $('formError').hidden = true;
+      $('fIcone').value = a?.icone ?? '';
+      $('fTitulo').value = a?.titulo ?? '';
+      $('fTexto').value = a?.texto ?? '';
+      $('fLink').value = a?.linkUrl ?? '/pages/assinatura.html';
+      $('fBotao').value = a?.textoBotao ?? 'Ver planos';
+      $('fAtivo').checked = a?.ativo ?? true;
+      selecionarCor(a ? a.cor : CORES[0][0]);
+      $('formOverlay').classList.add('open');
+      $('fTitulo').focus();
+    }
+
+    function atualizarPreview() {
+      $('fTextoConta').textContent = $('fTexto').value.length;
+      const anuncio = {
+        icone: $('fIcone').value.trim(),
+        titulo: $('fTitulo').value.trim() || 'Título do anúncio',
+        texto: $('fTexto').value.trim() || 'Texto do anúncio...',
+        textoBotao: $('fBotao').value.trim() || 'Ver planos',
+        linkUrl: '/',
+        cor: corSelecionada,
+      };
+      $('previewBloco').replaceChildren(criarAnuncioProprio(anuncio, { link: false }));
+      $('previewFaixa').replaceChildren(criarAnuncioProprio(anuncio, { link: false }));
+    }
+    ['fIcone', 'fTitulo', 'fTexto', 'fBotao'].forEach(id => $(id).addEventListener('input', atualizarPreview));
+
+    const fecharForm = () => $('formOverlay').classList.remove('open');
+    $('novoBtn').addEventListener('click', () => abrirFormulario(null));
+    $('formClose').addEventListener('click', fecharForm);
+    $('formCancelBtn').addEventListener('click', fecharForm);
+
+    $('formSaveBtn').addEventListener('click', async () => {
+      const errorEl = $('formError');
+      errorEl.hidden = true;
+      const erro = msg => { errorEl.textContent = msg; errorEl.hidden = false; };
+
+      const payload = {
+        icone: $('fIcone').value.trim() || null,
+        titulo: $('fTitulo').value.trim(),
+        texto: $('fTexto').value.trim(),
+        textoBotao: $('fBotao').value.trim(),
+        linkUrl: $('fLink').value.trim(),
+        cor: corSelecionada,
+        ativo: $('fAtivo').checked,
+      };
+
+      if (!payload.titulo) return erro('Informe o título.');
+      if (!payload.texto) return erro('Informe o texto.');
+      if (!payload.textoBotao) return erro('Informe o texto do botão.');
+      if (!payload.linkUrl) return erro('Informe o link.');
+      if (!linkValido(payload.linkUrl))
+        return erro('O link deve ser um caminho do sistema (ex: /pages/assinatura.html) ou uma URL https.');
+
+      const saveBtn = $('formSaveBtn');
+      saveBtn.disabled = true;
+      try {
+        if (editingId) {
+          await saFetch(`/superadmin/anuncios-proprios/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        } else {
+          await saFetch('/superadmin/anuncios-proprios', { method: 'POST', body: JSON.stringify(payload) });
+        }
+        fecharForm();
+        await load();
+      } catch (e) {
+        erro(e.message || 'Erro ao salvar.');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    // ── Exclusão ─────────────────────────────────────────────────────────────
+
+    const fecharDelete = () => $('deleteOverlay').classList.remove('open');
+    $('deleteClose').addEventListener('click', fecharDelete);
+    $('deleteCancelBtn').addEventListener('click', fecharDelete);
+    $('deleteConfirmBtn').addEventListener('click', async () => {
+      if (!deletingId) return;
+      try {
+        await saFetch(`/superadmin/anuncios-proprios/${deletingId}`, { method: 'DELETE' });
+        fecharDelete();
+        await load();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

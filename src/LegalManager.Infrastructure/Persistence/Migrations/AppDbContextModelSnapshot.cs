@@ -221,6 +221,121 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Andamentos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.AnuncioProprio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Cor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Icone")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("LinkUrl")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TextoBotao")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ativo");
+
+                    b.ToTable("AnunciosProprios");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("6b1f3a52-8c1e-4d7a-9f0b-2a5c7e9d1b01"),
+                            Ativo = true,
+                            Cor = "#1e3a8a",
+                            CriadoEm = new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Icone = "🚫",
+                            LinkUrl = "/pages/assinatura.html",
+                            Texto = "Nos planos pagos do Causify não há publicidade: só você e os seus processos.",
+                            TextoBotao = "Ver planos",
+                            Titulo = "Trabalhe sem anúncios"
+                        },
+                        new
+                        {
+                            Id = new Guid("6b1f3a52-8c1e-4d7a-9f0b-2a5c7e9d1b02"),
+                            Ativo = true,
+                            Cor = "#6d28d9",
+                            CriadoEm = new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Icone = "📰",
+                            LinkUrl = "/pages/assinatura.html",
+                            Texto = "No plano Pro, o Causify captura as publicações da sua OAB e você não perde nenhum prazo.",
+                            TextoBotao = "Conhecer o Pro",
+                            Titulo = "Publicações sem abrir o Diário"
+                        },
+                        new
+                        {
+                            Id = new Guid("6b1f3a52-8c1e-4d7a-9f0b-2a5c7e9d1b03"),
+                            Ativo = true,
+                            Cor = "#0f766e",
+                            CriadoEm = new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Icone = "🗂️",
+                            LinkUrl = "/pages/assinatura.html",
+                            Texto = "Organize as tarefas do escritório em colunas e arraste os cartões conforme o trabalho avança. A partir do Plus.",
+                            TextoBotao = "Conhecer o Plus",
+                            Titulo = "Tarefas em Kanban"
+                        },
+                        new
+                        {
+                            Id = new Guid("6b1f3a52-8c1e-4d7a-9f0b-2a5c7e9d1b04"),
+                            Ativo = true,
+                            Cor = "#fbbf24",
+                            CriadoEm = new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Icone = "💰",
+                            LinkUrl = "/pages/assinatura.html",
+                            Texto = "Lance honorários, custas e recebimentos em cada processo e saiba quanto o escritório tem a receber. A partir do Plus.",
+                            TextoBotao = "Conhecer o Plus",
+                            Titulo = "Financeiro por processo"
+                        },
+                        new
+                        {
+                            Id = new Guid("6b1f3a52-8c1e-4d7a-9f0b-2a5c7e9d1b05"),
+                            Ativo = true,
+                            Cor = "#be185d",
+                            CriadoEm = new DateTime(2026, 11, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Icone = "🤝",
+                            LinkUrl = "/pages/assinatura.html",
+                            Texto = "Dê ao cliente um acesso para acompanhar os processos dele, sem ligações perguntando o andamento. A partir do Plus.",
+                            TextoBotao = "Conhecer o Plus",
+                            Titulo = "Portal do cliente"
+                        });
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.AreaAtuacao", b =>
                 {
                     b.Property<Guid>("Id")

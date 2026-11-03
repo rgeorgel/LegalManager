@@ -22,7 +22,8 @@ const NAV_GROUPS = [
       { href: '/superadmin/codigos-promocionais.html', label: '🎟️ Códigos promocionais' },
       { href: '/superadmin/parceiros.html', label: '🤝 Parceiros' },
       { href: '/superadmin/precos-planos.html', label: '💲 Preços dos planos' },
-      { href: '/superadmin/novidades.html', label: '✨ Novidades' }
+      { href: '/superadmin/novidades.html', label: '✨ Novidades' },
+      { href: '/superadmin/anuncios-proprios.html', label: '📣 Anúncios próprios' }
     ]
   },
   {

@@ -219,6 +219,29 @@ public sealed partial record Adsterra(
         })();
         """;
 
+    // Diz ao app se o anúncio apareceu: { pubEstado: 'ok' } ou, sem nada visível alguns segundos
+    // depois do load, { pubEstado: 'vazio' } — script bloqueado ou vazio (sem campanha). O app então
+    // mostra um anúncio próprio no lugar (ver /js/publicidade.js).
+    public const string Estado = """
+        (() => {
+          const visivel = () => [...document.body.querySelectorAll('*')].some(el => {
+            if (/^(SCRIPT|STYLE|NOSCRIPT)$/.test(el.tagName)) return false;
+            const r = el.getBoundingClientRect();
+            return r.width > 10 && r.height > 10;
+          });
+          const avisar = estado => parent.postMessage({ pubEstado: estado }, '*');
+          addEventListener('load', () => {
+            let tentativas = 0;
+            const checar = () => {
+              if (visivel()) avisar('ok');
+              else if (++tentativas >= 10) avisar('vazio');
+              else setTimeout(checar, 500);
+            };
+            checar();
+          });
+        })();
+        """;
+
     private static string Pagina(string corpo) => $$"""
         <!doctype html>
         <html lang="pt-BR">
@@ -232,6 +255,9 @@ public sealed partial record Adsterra(
         </head>
         <body>
         {{corpo}}
+        <script>
+        {{Estado}}
+        </script>
         </body>
         </html>
         """;
