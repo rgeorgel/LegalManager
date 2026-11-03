@@ -13,6 +13,8 @@
 //   (mistura ajustada no super admin);
 // - vazio: o Adsterra não desenhou nada (bloqueador de anúncios, sem campanha) — a página do iframe
 //   avisa { pubEstado: 'vazio' }, ou o iframe nem responde (bloqueado) até ESPERA_MS depois de visível.
+// Impressões (anúncio próprio na tela) e cliques vão para o servidor, que soma por anúncio e dia
+// para o super admin acompanhar o desempenho de cada um.
 import { apiFetch } from './api.js';
 import { isPlanoFree } from './layout.js';
 import { trackEvent } from './analytics.js';
@@ -24,6 +26,9 @@ const SANDBOX = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow
 
 // A página do iframe espera até 5 s depois do load antes de dizer 'vazio'; folga para carregar.
 const ESPERA_MS = 10000;
+
+// Impressões juntas num envio só (vários blocos aparecem quase ao mesmo tempo).
+const ENVIO_MS = 2000;
 
 const TAMANHOS = {
   '300x250': [300, 250],
@@ -46,6 +51,9 @@ let config = null;
 const estados = new WeakMap();
 // Anúncios próprios ainda não usados nesta página: blocos vizinhos mostram anúncios diferentes.
 let fila = [];
+// Eventos de anúncio próprio ainda não enviados ao servidor.
+const pendentes = { impressoes: [], cliques: [] };
+let envio = null;
 
 function carregarConfig() {
   config ??= !isPlanoFree()
@@ -168,7 +176,10 @@ function mostrarProprio(slot, area, cfg, tipo, motivo) {
   if (!anuncio) { slot.hidden = true; return; } // nenhum cadastrado: some em vez de ficar vazio
   area.replaceChildren(criarProprio(anuncio, tipo, motivo));
   pintarMoldura(slot, anuncio.cor); // o bloco todo na cor do anúncio
-  const exibido = () => trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo, motivo });
+  const exibido = () => {
+    trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo, motivo });
+    registrar('impressoes', anuncio.id);
+  };
   if (motivo === 'vazio') { exibido(); return; } // o vazio só é decidido com o bloco já à vista
   // Sorteado ao montar a lista: conta a exibição quando o bloco aparece na tela.
   const visivel = new IntersectionObserver(entradas => {
@@ -187,9 +198,29 @@ function proximoProprio(proprios) {
 
 function criarProprio(anuncio, tipo, motivo) {
   const el = criarAnuncioProprio(anuncio);
-  el.addEventListener('click', () => trackEvent('publicidade_propria_click', { anuncio: anuncio.id, tipo, motivo }));
+  el.addEventListener('click', () => {
+    trackEvent('publicidade_propria_click', { anuncio: anuncio.id, tipo, motivo });
+    registrar('cliques', anuncio.id);
+  });
   return el;
 }
+
+function registrar(evento, id) {
+  pendentes[evento].push(id);
+  if (evento === 'cliques') enviarEventos(); // o clique costuma sair da página: vai na hora
+  else envio ??= setTimeout(enviarEventos, ENVIO_MS);
+}
+
+// keepalive: o envio sobrevive à navegação (clique no anúncio, troca de página).
+function enviarEventos() {
+  clearTimeout(envio);
+  envio = null;
+  if (!pendentes.impressoes.length && !pendentes.cliques.length) return;
+  const body = { impressoes: pendentes.impressoes.splice(0), cliques: pendentes.cliques.splice(0) };
+  apiFetch('/publicidade/proprios/eventos', { method: 'POST', body, keepalive: true }).catch(() => {});
+}
+window.addEventListener('pagehide', enviarEventos);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') enviarEventos(); });
 
 function escolherFormato(disponiveis, preferencia, largura) {
   const candidatos = preferencia.filter(f => disponiveis.includes(f));

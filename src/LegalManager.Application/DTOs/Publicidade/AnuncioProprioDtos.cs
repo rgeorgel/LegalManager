@@ -13,7 +13,7 @@ public record AnuncioProprioDto(
     string? Cor
 );
 
-// Super admin (inclui os inativos).
+// Super admin (inclui os inativos). Impressões e cliques somados no período pedido.
 public record AnuncioProprioAdminDto(
     Guid Id,
     string? Icone,
@@ -23,7 +23,9 @@ public record AnuncioProprioAdminDto(
     string LinkUrl,
     string? Cor,
     bool Ativo,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    int Impressoes = 0,
+    int Cliques = 0
 );
 
 public record SalvarAnuncioProprioDto(
@@ -40,3 +42,7 @@ public record SalvarAnuncioProprioDto(
 public record ConfiguracaoPublicidadeDto(int PercentualProprios, DateTime? AtualizadoEm);
 
 public record SalvarConfiguracaoPublicidadeDto([Range(0, 100)] int PercentualProprios);
+
+// Portal: anúncios próprios que apareceram na tela / foram clicados desde o último envio.
+// Um id repetido conta mais de uma vez (o mesmo anúncio em dois blocos).
+public record RegistrarEventosAnunciosDto(List<Guid>? Impressoes, List<Guid>? Cliques);

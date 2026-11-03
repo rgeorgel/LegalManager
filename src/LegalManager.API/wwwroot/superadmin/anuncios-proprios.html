@@ -49,6 +49,12 @@
     .anuncio-card.inativo .anuncio-card-preview { opacity: .5; filter: grayscale(.6); }
     .anuncio-card-rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
       padding: 10px 14px; border-top: 1px solid var(--color-border); background: #f8fafc; }
+    .anuncio-card-numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 14px 12px; }
+    .numero { display: flex; flex-direction: column; gap: 1px; }
+    .numero strong { font-size: 18px; line-height: 1.2; }
+    .numero span { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .barra-direita { display: flex; align-items: center; gap: 8px; }
+    .barra-direita select { width: auto; min-height: 36px; }
     .anuncio-card-link { padding: 0 14px 10px; font-size: 12px; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .vazio { text-align: center; color: var(--color-text-muted); padding: 32px; border: 1px dashed var(--color-border); border-radius: 12px; }
     .preview-topo { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); margin-bottom: 8px; }
@@ -117,7 +123,8 @@
         Aparecem só para escritórios no plano <strong>Free</strong>: na parte dos espaços de publicidade definida
         abaixo e em qualquer espaço que o Adsterra deixe vazio (bloqueador de anúncios ou nenhuma campanha
         disponível). Cada espaço sorteia um dos ativos, sem repetir na mesma página. Desligar o Adsterra no .env
-        (ADSTERRA_ENABLED) desliga estes também.
+        (ADSTERRA_ENABLED) desliga estes também. Impressão conta quando o anúncio aparece na tela do cliente;
+        navegação impersonando um escritório não conta.
       </p>
 
       <section class="mistura" aria-labelledby="misturaTitulo">
@@ -140,9 +147,17 @@
 
       <div class="barra">
         <span class="contagem" id="contagem"></span>
-        <div class="view-toggle">
-          <button type="button" class="view-btn" id="viewLista" title="Visualização em lista">☰</button>
-          <button type="button" class="view-btn" id="viewBlocos" title="Visualização em blocos">⊞</button>
+        <div class="barra-direita">
+          <select class="form-control" id="periodo" aria-label="Período das impressões e cliques">
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="0">Desde o início</option>
+          </select>
+          <div class="view-toggle">
+            <button type="button" class="view-btn" id="viewLista" title="Visualização em lista">☰</button>
+            <button type="button" class="view-btn" id="viewBlocos" title="Visualização em blocos">⊞</button>
+          </div>
         </div>
       </div>
       <div id="conteudo"><div class="vazio">Carregando...</div></div>
@@ -263,9 +278,25 @@
     $('viewLista').addEventListener('click', () => trocarView('lista'));
     $('viewBlocos').addEventListener('click', () => trocarView('blocos'));
 
+    // ── Período das impressões e cliques, lembrado neste navegador ─────────
+    const PERIODO_KEY = 'superadmin.anunciosProprios.periodo';
+    const periodoSalvo = (() => { try { return localStorage.getItem(PERIODO_KEY); } catch { return null; } })();
+    if ([...$('periodo').options].some(o => o.value === periodoSalvo)) $('periodo').value = periodoSalvo;
+    else $('periodo').value = '30';
+    $('periodo').addEventListener('change', () => {
+      try { localStorage.setItem(PERIODO_KEY, $('periodo').value); } catch { }
+      load();
+    });
+
+    const fmt = n => n.toLocaleString('pt-BR');
+    // Taxa de cliques; sem impressão no período não há taxa.
+    const ctr = a => a.impressoes
+      ? `${(a.cliques / a.impressoes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`
+      : '—';
+
     async function load() {
       try {
-        anuncios = await saFetch('/superadmin/anuncios-proprios');
+        anuncios = await saFetch(`/superadmin/anuncios-proprios?dias=${$('periodo').value}`);
         render();
         renderMistura();
       } catch (e) {
@@ -301,6 +332,11 @@
               <div class="preview-topo"><span>Publicidade</span><span>Remover anúncios</span></div>
             </div>
             <div class="anuncio-card-link" title="${esc(a.linkUrl)}">Leva para ${esc(a.linkUrl)}</div>
+            <div class="anuncio-card-numeros">
+              <div class="numero"><strong>${fmt(a.impressoes)}</strong><span>Impressões</span></div>
+              <div class="numero"><strong>${fmt(a.cliques)}</strong><span>Cliques</span></div>
+              <div class="numero" title="Cliques ÷ impressões"><strong>${ctr(a)}</strong><span>CTR</span></div>
+            </div>
             <div class="anuncio-card-rodape">
               ${status(a)}
               <div class="actions">${acoes(a)}</div>
@@ -318,7 +354,7 @@
       $('conteudo').innerHTML = `
         <div style="overflow-x:auto">
           <table class="data-table">
-            <thead><tr><th></th><th>Anúncio</th><th>Botão</th><th>Status</th><th>Ações</th></tr></thead>
+            <thead><tr><th></th><th>Anúncio</th><th>Botão</th><th>Impressões</th><th>Cliques</th><th title="Cliques ÷ impressões">CTR</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody>${anuncios.map(a => `
               <tr>
                 <td><div class="amostra" data-cor="${a.id}">${esc(a.icone ?? '')}</div></td>
@@ -330,6 +366,9 @@
                   <div>${esc(a.textoBotao)}</div>
                   <div class="sub">→ ${esc(a.linkUrl)}</div>
                 </td>
+                <td>${fmt(a.impressoes)}</td>
+                <td>${fmt(a.cliques)}</td>
+                <td>${ctr(a)}</td>
                 <td>${status(a)}</td>
                 <td class="actions">${acoes(a)}</td>
               </tr>`).join('')}</tbody>

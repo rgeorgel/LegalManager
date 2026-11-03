@@ -3,6 +3,7 @@ using LegalManager.API.Controllers;
 using LegalManager.Application.DTOs.Publicidade;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -145,9 +146,48 @@ public class AnunciosPropriosTests
         ctx.AnunciosProprios.AddRange(Novo("inativo novo", false, 0), Novo("ativo antigo", true, 5), Novo("ativo novo", true, 1));
         await ctx.SaveChangesAsync();
 
-        var lista = Valor(await CreateController(ctx).Listar(CancellationToken.None));
+        var lista = Valor(await CreateController(ctx).Listar(ct: CancellationToken.None));
 
         Assert.Equal(new[] { "ativo novo", "ativo antigo", "inativo novo" }, lista.Select(a => a.Titulo));
+    }
+
+    [Fact]
+    public async Task Listar_SomaImpressoesECliquesDoPeriodo()
+    {
+        using var ctx = CreateContext();
+        var a = Guid.NewGuid();
+        var semEventos = Guid.NewGuid();
+        ctx.AnunciosProprios.AddRange(
+            new AnuncioProprio { Id = a, Titulo = "com eventos", Texto = "t", TextoBotao = "b", LinkUrl = "/", Ativo = true, CriadoEm = DateTime.UtcNow },
+            new AnuncioProprio { Id = semEventos, Titulo = "sem eventos", Texto = "t", TextoBotao = "b", LinkUrl = "/", Ativo = true, CriadoEm = DateTime.UtcNow.AddDays(-1) });
+        var hoje = DateOnly.FromDateTime(BrasiliaTime.Hoje);
+        ctx.AnunciosPropriosEstatisticas.AddRange(
+            new AnuncioProprioEstatistica { AnuncioProprioId = a, Dia = hoje, Impressoes = 10, Cliques = 2 },
+            new AnuncioProprioEstatistica { AnuncioProprioId = a, Dia = hoje.AddDays(-6), Impressoes = 5, Cliques = 1 },
+            new AnuncioProprioEstatistica { AnuncioProprioId = a, Dia = hoje.AddDays(-7), Impressoes = 100, Cliques = 9 });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx);
+
+        var semana = Valor(await controller.Listar(7, CancellationToken.None));
+        var tudo = Valor(await controller.Listar(0, CancellationToken.None));
+
+        Assert.Equal((15, 3), (semana[0].Impressoes, semana[0].Cliques));
+        Assert.Equal((115, 12), (tudo[0].Impressoes, tudo[0].Cliques));
+        Assert.Equal((0, 0), (tudo[1].Impressoes, tudo[1].Cliques));
+    }
+
+    [Fact]
+    public async Task Excluir_LevaJuntoAsEstatisticas()
+    {
+        using var ctx = CreateContext();
+        var controller = CreateController(ctx);
+        var criado = Valor(await controller.Criar(Dto(), CancellationToken.None));
+        ctx.AnunciosPropriosEstatisticas.Add(new AnuncioProprioEstatistica { AnuncioProprioId = criado.Id, Dia = new DateOnly(2026, 11, 3), Impressoes = 1 });
+        await ctx.SaveChangesAsync();
+
+        await controller.Excluir(criado.Id, CancellationToken.None);
+
+        Assert.Empty(ctx.AnunciosPropriosEstatisticas);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using LegalManager.Application.DTOs.Publicidade;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -81,6 +82,63 @@ public class PublicidadeController : ControllerBase
             .Select(c => c.PercentualProprios)
             .FirstOrDefaultAsync(ct);
         return Ok(new PublicidadeDto(true, formatos, _adsterra.Origem, proprios, percentual));
+    }
+
+    // Máximo de eventos aceitos por envio (o portal manda a cada poucos segundos).
+    public const int MaxEventosPorEnvio = 100;
+
+    // Impressões (anúncio próprio apareceu na tela) e cliques, somados por anúncio e dia de
+    // Brasília. Navegação de super admin impersonando um escritório não conta.
+    [HttpPost("proprios/eventos")]
+    public async Task<IActionResult> RegistrarEventos([FromBody] RegistrarEventosAnunciosDto dto, CancellationToken ct)
+    {
+        if (_tenantContext.ImpersonadoPorId.HasValue || _tenantContext.UserRole == PerfilUsuario.Cliente.ToString())
+            return NoContent();
+
+        var impressoes = (dto.Impressoes ?? []).Take(MaxEventosPorEnvio).ToList();
+        var cliques = (dto.Cliques ?? []).Take(MaxEventosPorEnvio).ToList();
+        var ids = impressoes.Concat(cliques).Distinct().ToList();
+        if (ids.Count == 0) return NoContent();
+
+        // Só anúncios que existem (id inventado ou anúncio já excluído é ignorado).
+        var existentes = await _context.AnunciosProprios.AsNoTracking()
+            .Where(a => ids.Contains(a.Id))
+            .Select(a => a.Id)
+            .ToListAsync(ct);
+
+        var dia = DateOnly.FromDateTime(BrasiliaTime.Hoje);
+        foreach (var id in existentes)
+            await SomarAsync(id, dia, impressoes.Count(i => i == id), cliques.Count(c => c == id), ct);
+
+        return NoContent();
+    }
+
+    private async Task SomarAsync(Guid anuncioId, DateOnly dia, int impressoes, int cliques, CancellationToken ct)
+    {
+        // Upsert atômico no Postgres: dois envios simultâneos nunca perdem contagem.
+        if (_context.Database.IsRelational())
+        {
+            await _context.Database.ExecuteSqlAsync($"""
+                INSERT INTO "AnunciosPropriosEstatisticas" ("AnuncioProprioId", "Dia", "Impressoes", "Cliques")
+                VALUES ({anuncioId}, {dia}, {impressoes}, {cliques})
+                ON CONFLICT ("AnuncioProprioId", "Dia") DO UPDATE SET
+                    "Impressoes" = "AnunciosPropriosEstatisticas"."Impressoes" + EXCLUDED."Impressoes",
+                    "Cliques" = "AnunciosPropriosEstatisticas"."Cliques" + EXCLUDED."Cliques"
+                """, ct);
+            return;
+        }
+
+        // EF InMemory (testes) não suporta SQL.
+        var linha = await _context.AnunciosPropriosEstatisticas
+            .FirstOrDefaultAsync(e => e.AnuncioProprioId == anuncioId && e.Dia == dia, ct);
+        if (linha is null)
+        {
+            linha = new AnuncioProprioEstatistica { AnuncioProprioId = anuncioId, Dia = dia };
+            _context.AnunciosPropriosEstatisticas.Add(linha);
+        }
+        linha.Impressoes += impressoes;
+        linha.Cliques += cliques;
+        await _context.SaveChangesAsync(ct);
     }
 
     // Anônimo: o iframe não leva o token (que fica no sessionStorage). Só serve o script já

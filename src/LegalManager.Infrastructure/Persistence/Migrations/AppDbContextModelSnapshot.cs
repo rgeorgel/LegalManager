@@ -336,6 +336,25 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.AnuncioProprioEstatistica", b =>
+                {
+                    b.Property<Guid>("AnuncioProprioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Dia")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Cliques")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Impressoes")
+                        .HasColumnType("integer");
+
+                    b.HasKey("AnuncioProprioId", "Dia");
+
+                    b.ToTable("AnunciosPropriosEstatisticas");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.AreaAtuacao", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3946,6 +3965,15 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Processo");
 
                     b.Navigation("RegistradoPor");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.AnuncioProprioEstatistica", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.AnuncioProprio", null)
+                        .WithMany()
+                        .HasForeignKey("AnuncioProprioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.AreaAtuacao", b =>

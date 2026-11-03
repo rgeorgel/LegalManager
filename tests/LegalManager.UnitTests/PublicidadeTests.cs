@@ -3,6 +3,7 @@ using LegalManager.API.Controllers;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -37,14 +38,15 @@ public class PublicidadeTests
         ("NativeScriptUrl", $"//pl123.exemplo-ads.com/{Hash}/invoke.js"));
 
     private static (PublicidadeController controller, AppDbContext db, Guid tenantId) Controller(
-        Adsterra adsterra, PlanoTipo plano, string perfil = nameof(PerfilUsuario.Advogado), string host = "causify.com.br")
+        Adsterra adsterra, PlanoTipo plano, string perfil = nameof(PerfilUsuario.Advogado), string host = "causify.com.br",
+        Guid? impersonadoPorId = null)
     {
         var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var tenantId = Guid.NewGuid();
         db.Tenants.Add(new Tenant { Id = tenantId, Nome = "Escritório", Plano = plano, Status = StatusTenant.Ativo });
         db.SaveChanges();
-        var tenant = Mock.Of<ITenantContext>(t => t.TenantId == tenantId && t.UserRole == perfil);
+        var tenant = Mock.Of<ITenantContext>(t => t.TenantId == tenantId && t.UserRole == perfil && t.ImpersonadoPorId == impersonadoPorId);
         var http = new DefaultHttpContext();
         http.Request.Host = new HostString(host);
         var controller = new PublicidadeController(db, tenant, adsterra)
@@ -460,5 +462,87 @@ public class PublicidadeTests
         Assert.Equal(new[] { "300x250", "728x90", "468x60", "320x50", Adsterra.Nativo }, adsterra.Formatos);
         Assert.Equal("https://ads.exemplo.com", adsterra.Origem);
         Assert.Equal("https://exemplo.com", adsterra.OrigemApp!.GetLeftPart(UriPartial.Authority));
+    }
+
+    // ── Impressões e cliques dos anúncios próprios ──────────────────────
+
+    private static async Task<Guid> AnuncioAsync(AppDbContext db)
+    {
+        var id = Guid.NewGuid();
+        db.AnunciosProprios.Add(new AnuncioProprio { Id = id, Titulo = "x", Texto = "t", TextoBotao = "b", LinkUrl = "/", Ativo = true });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_SomaPorAnuncioEDia()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+        var a = await AnuncioAsync(db);
+        var b = await AnuncioAsync(db);
+
+        // O mesmo anúncio em dois blocos conta duas vezes.
+        Assert.IsType<NoContentResult>(await controller.RegistrarEventos(new([a, a, b], [a]), CancellationToken.None));
+        Assert.IsType<NoContentResult>(await controller.RegistrarEventos(new([a], null), CancellationToken.None));
+
+        var hoje = DateOnly.FromDateTime(BrasiliaTime.Hoje);
+        var linhaA = await db.AnunciosPropriosEstatisticas.SingleAsync(e => e.AnuncioProprioId == a);
+        var linhaB = await db.AnunciosPropriosEstatisticas.SingleAsync(e => e.AnuncioProprioId == b);
+        Assert.Equal((hoje, 3, 1), (linhaA.Dia, linhaA.Impressoes, linhaA.Cliques));
+        Assert.Equal((1, 0), (linhaB.Impressoes, linhaB.Cliques));
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_IgnoraAnuncioInexistente()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+
+        await controller.RegistrarEventos(new([Guid.NewGuid()], [Guid.NewGuid()]), CancellationToken.None);
+
+        Assert.Empty(db.AnunciosPropriosEstatisticas);
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_ImpersonandoNaoConta()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free, impersonadoPorId: Guid.NewGuid());
+        var a = await AnuncioAsync(db);
+
+        Assert.IsType<NoContentResult>(await controller.RegistrarEventos(new([a], [a]), CancellationToken.None));
+
+        Assert.Empty(db.AnunciosPropriosEstatisticas);
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_ClienteDoPortalNaoConta()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free, perfil: nameof(PerfilUsuario.Cliente));
+        var a = await AnuncioAsync(db);
+
+        await controller.RegistrarEventos(new([a], null), CancellationToken.None);
+
+        Assert.Empty(db.AnunciosPropriosEstatisticas);
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_LimitaEventosPorEnvio()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+        var a = await AnuncioAsync(db);
+
+        await controller.RegistrarEventos(
+            new(Enumerable.Repeat(a, PublicidadeController.MaxEventosPorEnvio + 50).ToList(), []), CancellationToken.None);
+
+        Assert.Equal(PublicidadeController.MaxEventosPorEnvio, (await db.AnunciosPropriosEstatisticas.SingleAsync()).Impressoes);
+    }
+
+    [Fact]
+    public async Task RegistrarEventos_Vazio_NaoGravaNada()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+
+        Assert.IsType<NoContentResult>(await controller.RegistrarEventos(new(null, null), CancellationToken.None));
+
+        Assert.Empty(db.AnunciosPropriosEstatisticas);
     }
 }

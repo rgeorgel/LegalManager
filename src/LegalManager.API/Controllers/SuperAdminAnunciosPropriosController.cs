@@ -4,6 +4,7 @@ using LegalManager.Application.DTOs.Publicidade;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain;
 using LegalManager.Domain.Entities;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,8 +22,9 @@ public partial class SuperAdminAnunciosPropriosController(AppDbContext db, IAudi
 {
     private const string Entidade = "AnuncioProprio";
 
+    // `dias`: impressões e cliques dos últimos N dias, contando hoje (data de Brasília); 0 = desde sempre.
     [HttpGet]
-    public async Task<ActionResult<List<AnuncioProprioAdminDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<List<AnuncioProprioAdminDto>>> Listar([FromQuery] int dias = 30, CancellationToken ct = default)
     {
         // Ativos primeiro, depois do mais recente para o mais antigo.
         var anuncios = await db.AnunciosProprios
@@ -30,7 +32,22 @@ public partial class SuperAdminAnunciosPropriosController(AppDbContext db, IAudi
             .ThenByDescending(a => a.CriadoEm)
             .ToListAsync(ct);
 
-        return Ok(anuncios.Select(ToDto).ToList());
+        var estatisticas = db.AnunciosPropriosEstatisticas.AsQueryable();
+        if (dias > 0)
+        {
+            var desde = DateOnly.FromDateTime(BrasiliaTime.Hoje).AddDays(1 - dias);
+            estatisticas = estatisticas.Where(e => e.Dia >= desde);
+        }
+        var totais = await estatisticas
+            .GroupBy(e => e.AnuncioProprioId)
+            .Select(g => new { Id = g.Key, Impressoes = g.Sum(e => e.Impressoes), Cliques = g.Sum(e => e.Cliques) })
+            .ToDictionaryAsync(t => t.Id, ct);
+
+        return Ok(anuncios.Select(a => ToDto(a) with
+        {
+            Impressoes = totais.GetValueOrDefault(a.Id)?.Impressoes ?? 0,
+            Cliques = totais.GetValueOrDefault(a.Id)?.Cliques ?? 0,
+        }).ToList());
     }
 
     [HttpPost]
