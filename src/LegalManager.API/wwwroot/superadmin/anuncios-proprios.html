@@ -73,6 +73,22 @@
     @media (max-width: 640px) { .previews { grid-template-columns: 1fr; } }
     .preview { border: 1px dashed var(--color-border); border-radius: 12px; padding: 10px 14px 14px; min-width: 0; }
     .preview-nome { font-size: 11px; color: var(--color-text-muted); margin-bottom: 4px; }
+    /* Mistura próprios × Adsterra */
+    .mistura { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+    .mistura-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mistura h2 { font-size: 15px; margin: 0 0 2px; }
+    .mistura-controle { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .mistura-controle input[type=range] { flex: 1 1 220px; accent-color: var(--color-primary); }
+    .mistura-numero { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+    .mistura-numero input { width: 72px; text-align: right; }
+    .mistura-barra { display: flex; height: 10px; border-radius: 999px; overflow: hidden; margin: 14px 0 6px; background: #cbd5e1; }
+    .mistura-barra span:first-child { background: var(--color-primary); transition: width .15s; }
+    .mistura-legenda { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; font-weight: 600; }
+    .mistura-legenda span:first-child { color: var(--color-primary); }
+    .mistura-legenda span:last-child { color: #64748b; }
+    .mistura-explica { font-size: 12px; color: var(--color-text-muted); margin: 8px 0 0; }
+    .mistura-explica.aviso { color: #b45309; }
+    .mistura-status { font-size: 12px; color: var(--color-text-muted); }
   </style>
 </head>
 <body>
@@ -95,10 +111,29 @@
         <button class="btn btn-primary" id="novoBtn">+ Novo anúncio</button>
       </div>
       <p class="hint">
-        Aparecem só para escritórios no plano <strong>Free</strong>, nos espaços de publicidade que o Adsterra
-        deixa vazios (bloqueador de anúncios ou nenhuma campanha disponível). Cada espaço sorteia um dos ativos,
-        sem repetir na mesma página. Desligar o Adsterra no .env (ADSTERRA_ENABLED) desliga estes também.
+        Aparecem só para escritórios no plano <strong>Free</strong>: na parte dos espaços de publicidade definida
+        abaixo e em qualquer espaço que o Adsterra deixe vazio (bloqueador de anúncios ou nenhuma campanha
+        disponível). Cada espaço sorteia um dos ativos, sem repetir na mesma página. Desligar o Adsterra no .env
+        (ADSTERRA_ENABLED) desliga estes também.
       </p>
+
+      <section class="mistura" aria-labelledby="misturaTitulo">
+        <div class="mistura-topo">
+          <div>
+            <h2 id="misturaTitulo">Mistura com o Adsterra</h2>
+            <div class="sub">Quantos % dos espaços de publicidade mostram direto um anúncio próprio.</div>
+          </div>
+          <span class="mistura-status" id="misturaStatus"></span>
+        </div>
+        <div class="mistura-controle">
+          <input type="range" id="misturaRange" min="0" max="100" step="5" aria-label="Percentual de anúncios próprios" disabled>
+          <label class="mistura-numero"><input type="number" class="form-control" id="misturaNumero" min="0" max="100" step="1" aria-label="Percentual de anúncios próprios" disabled>%</label>
+          <button type="button" class="btn btn-primary btn-sm" id="misturaSalvar" disabled>Salvar</button>
+        </div>
+        <div class="mistura-barra" aria-hidden="true"><span id="barraProprios"></span><span id="barraAdsterra"></span></div>
+        <div class="mistura-legenda"><span id="legendaProprios"></span><span id="legendaAdsterra"></span></div>
+        <p class="mistura-explica" id="misturaExplica"></p>
+      </section>
 
       <div class="barra">
         <span class="contagem" id="contagem"></span>
@@ -229,6 +264,7 @@
       try {
         anuncios = await saFetch('/superadmin/anuncios-proprios');
         render();
+        renderMistura();
       } catch (e) {
         $('conteudo').innerHTML = `<div class="vazio" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
       }
@@ -428,6 +464,68 @@
       }
     });
 
+    // ── Mistura próprios × Adsterra ──────────────────────────────────────────
+
+    let percentualSalvo = null;
+    const percentualDigitado = () => Math.min(Math.max(Math.round(Number($('misturaNumero').value) || 0), 0), 100);
+
+    function renderMistura() {
+      if (percentualSalvo === null) return;
+      const p = percentualDigitado();
+      $('misturaRange').value = p;
+      $('barraProprios').style.width = `${p}%`;
+      $('barraAdsterra').style.width = `${100 - p}%`;
+      $('legendaProprios').textContent = `Próprios ${p}%`;
+      $('legendaAdsterra').textContent = `Adsterra ${100 - p}%`;
+      $('misturaSalvar').disabled = p === percentualSalvo;
+
+      const explica = $('misturaExplica');
+      const semAtivos = !anuncios.some(a => a.ativo);
+      explica.classList.toggle('aviso', semAtivos && p > 0);
+      explica.textContent = semAtivos && p > 0
+        ? 'Nenhum anúncio próprio ativo: enquanto for assim, todos os espaços tentam o Adsterra.'
+        : p === 0
+          ? 'Todos os espaços tentam o Adsterra; um anúncio próprio só entra quando ele vem vazio.'
+          : p === 100
+            ? 'Todos os espaços mostram um anúncio próprio; o Adsterra não é carregado.'
+            : `Em média, ${p} de cada 100 espaços mostram um anúncio próprio. Os outros tentam o Adsterra e, ` +
+              'se ele vier vazio, também recebem um próprio.';
+    }
+
+    async function carregarMistura() {
+      try {
+        const c = await saFetch('/superadmin/anuncios-proprios/configuracao');
+        percentualSalvo = c.percentualProprios;
+        $('misturaNumero').value = percentualSalvo;
+        $('misturaRange').disabled = $('misturaNumero').disabled = false;
+        $('misturaStatus').textContent = c.atualizadoEm
+          ? `Alterado em ${new Date(c.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`
+          : '';
+        renderMistura();
+      } catch (e) {
+        $('misturaExplica').textContent = 'Erro ao carregar: ' + e.message;
+      }
+    }
+
+    $('misturaRange').addEventListener('input', e => { $('misturaNumero').value = e.target.value; renderMistura(); });
+    $('misturaNumero').addEventListener('input', renderMistura);
+    $('misturaNumero').addEventListener('change', () => { $('misturaNumero').value = percentualDigitado(); renderMistura(); });
+    $('misturaSalvar').addEventListener('click', async () => {
+      const btn = $('misturaSalvar');
+      btn.disabled = true;
+      try {
+        const c = await saFetch('/superadmin/anuncios-proprios/configuracao', {
+          method: 'PUT', body: JSON.stringify({ percentualProprios: percentualDigitado() }),
+        });
+        percentualSalvo = c.percentualProprios;
+        $('misturaStatus').textContent = 'Salvo ✓ — vale para as próximas páginas abertas pelos clientes.';
+        renderMistura();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+        btn.disabled = false;
+      }
+    });
+
     // ── Exclusão ─────────────────────────────────────────────────────────────
 
     const fecharDelete = () => $('deleteOverlay').classList.remove('open');
@@ -445,6 +543,7 @@
     });
 
     load();
+    carregarMistura();
   </script>
 </body>
 </html>

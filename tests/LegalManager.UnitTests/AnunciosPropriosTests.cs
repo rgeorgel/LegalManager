@@ -213,4 +213,49 @@ public class AnunciosPropriosTests
             Assert.Null(SuperAdminAnunciosPropriosController.Validar(new(a.Icone, a.Titulo, a.Texto, a.TextoBotao, a.LinkUrl, a.Ativo, a.Cor)));
         });
     }
+
+    // ── Mistura com o Adsterra ───────────────────────────────────────────
+
+    [Fact]
+    public async Task ObterConfiguracao_SemLinha_Zero()
+    {
+        using var ctx = CreateContext();
+
+        var config = Valor(await CreateController(ctx).ObterConfiguracao(CancellationToken.None));
+
+        Assert.Equal(0, config.PercentualProprios);
+        Assert.Null(config.AtualizadoEm);
+    }
+
+    [Fact]
+    public async Task SalvarConfiguracao_CriaEDepoisAtualizaALinhaUnica()
+    {
+        using var ctx = CreateContext();
+        var audit = new Mock<IAuditService>();
+        var controller = CreateController(ctx, audit);
+
+        Valor(await controller.SalvarConfiguracao(new(30), CancellationToken.None));
+        var config = Valor(await controller.SalvarConfiguracao(new(75), CancellationToken.None));
+
+        Assert.Equal(75, config.PercentualProprios);
+        Assert.NotNull(config.AtualizadoEm);
+        var linha = Assert.Single(ctx.ConfiguracoesPublicidade);
+        Assert.Equal((ConfiguracaoPublicidade.IdUnico, 75), (linha.Id, linha.PercentualProprios));
+        Assert.NotNull(linha.AtualizadoPorId);
+        Assert.Equal(75, Valor(await controller.ObterConfiguracao(CancellationToken.None)).PercentualProprios);
+        audit.Verify(a => a.LogAsync(It.Is<AuditLogEntry>(e => e.Entidade == "ConfiguracaoPublicidade"), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(101)]
+    public async Task SalvarConfiguracao_ForaDe0a100_BadRequest(int percentual)
+    {
+        using var ctx = CreateContext();
+
+        var resultado = await CreateController(ctx).SalvarConfiguracao(new(percentual), CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(resultado.Result);
+        Assert.Empty(ctx.ConfiguracoesPublicidade);
+    }
 }

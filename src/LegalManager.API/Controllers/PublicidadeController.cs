@@ -1,5 +1,6 @@
 using LegalManager.API.Configuration;
 using LegalManager.Application.DTOs.Publicidade;
+using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
@@ -11,8 +12,10 @@ namespace LegalManager.API.Controllers;
 
 /// <param name="Origem">De onde carregar o iframe (host próprio dos anúncios); null = a do app.</param>
 /// <param name="Proprios">Anúncios do Causify para o espaço que o Adsterra deixar vazio.</param>
+/// <param name="PercentualProprios">% dos espaços que mostram direto um anúncio próprio, sem tentar o Adsterra.</param>
 public record PublicidadeDto(
-    bool Ativo, IReadOnlyList<string> Formatos, string? Origem = null, IReadOnlyList<AnuncioProprioDto>? Proprios = null);
+    bool Ativo, IReadOnlyList<string> Formatos, string? Origem = null, IReadOnlyList<AnuncioProprioDto>? Proprios = null,
+    int PercentualProprios = 0);
 
 // Publicidade do Adsterra para escritórios no plano Free (planos pagos não têm anúncio).
 // Liga/desliga pelo .env (ADSTERRA_ENABLED); ver Configuration/Adsterra.cs.
@@ -23,7 +26,9 @@ public record PublicidadeDto(
 // ele, de uma origem opaca. Ver Configuration/Adsterra.cs.
 //
 // Espaço que o Adsterra deixa vazio (bloqueador de anúncios, sem campanha) recebe um anúncio
-// próprio do Causify (AnuncioProprio) — decidido no navegador, em /js/publicidade.js.
+// próprio do Causify (AnuncioProprio). Além disso, PercentualProprios (ConfiguracaoPublicidade,
+// ajustado no super admin) dos espaços já começam com um próprio. Sorteio no navegador, em
+// /js/publicidade.js.
 [ApiController]
 [Route("api/publicidade")]
 [Authorize]
@@ -71,7 +76,11 @@ public class PublicidadeController : ControllerBase
             .Where(a => a.Ativo)
             .Select(a => new AnuncioProprioDto(a.Id, a.Icone, a.Titulo, a.Texto, a.TextoBotao, a.LinkUrl, a.Cor))
             .ToListAsync(ct);
-        return Ok(new PublicidadeDto(true, formatos, _adsterra.Origem, proprios));
+        var percentual = await _context.ConfiguracoesPublicidade.AsNoTracking()
+            .Where(c => c.Id == ConfiguracaoPublicidade.IdUnico)
+            .Select(c => c.PercentualProprios)
+            .FirstOrDefaultAsync(ct);
+        return Ok(new PublicidadeDto(true, formatos, _adsterra.Origem, proprios, percentual));
     }
 
     // Anônimo: o iframe não leva o token (que fica no sessionStorage). Só serve o script já

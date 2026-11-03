@@ -8,9 +8,11 @@
 // iframe vem do app sem allow-same-origin (origem opaca). O formato é escolhido pelo espaço livre do bloco
 // (e trocado se ele mudar, ex.: alternar lista/grade), entre os configurados no servidor.
 //
-// Se o Adsterra não desenhar nada (bloqueador de anúncios, sem campanha), o bloco recebe um anúncio
-// próprio do Causify (cfg.proprios, cadastrados no super admin): a página do iframe avisa
-// { pubEstado: 'vazio' }, ou o iframe nem responde (bloqueado) até ESPERA_MS depois de visível.
+// Anúncios próprios do Causify (cfg.proprios, cadastrados no super admin) entram de dois jeitos:
+// - sorteio: cfg.percentualProprios % dos blocos já nascem com um próprio, sem iframe do Adsterra
+//   (mistura ajustada no super admin);
+// - vazio: o Adsterra não desenhou nada (bloqueador de anúncios, sem campanha) — a página do iframe
+//   avisa { pubEstado: 'vazio' }, ou o iframe nem responde (bloqueado) até ESPERA_MS depois de visível.
 import { apiFetch } from './api.js';
 import { isPlanoFree } from './layout.js';
 import { trackEvent } from './analytics.js';
@@ -112,6 +114,11 @@ function criarSlot(cfg, tipo, classeExtra = '') {
   slot.querySelector('.pub-remover').addEventListener('click', () => trackEvent('publicidade_remover_click', { tipo }));
 
   const area = slot.querySelector('.pub-area');
+  if (sortearProprio(cfg)) {
+    mostrarProprio(slot, area, cfg, tipo, 'sorteio');
+    return slot;
+  }
+
   let atual = null;
   let estado = 'carregando'; // → 'ok' (Adsterra desenhou) ou 'proprio' (anúncio do Causify no lugar)
   let espera = null;
@@ -122,10 +129,7 @@ function criarSlot(cfg, tipo, classeExtra = '') {
     estado = 'proprio';
     observador.disconnect();
     visibilidade.disconnect();
-    const anuncio = proximoProprio(cfg.proprios);
-    if (!anuncio) { slot.hidden = true; return; } // nenhum cadastrado: some em vez de ficar vazio
-    area.replaceChildren(criarProprio(anuncio, tipo));
-    trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo });
+    mostrarProprio(slot, area, cfg, tipo, 'vazio');
   };
   estados.set(slot, {
     ok: () => { if (estado === 'carregando') { estado = 'ok'; clearTimeout(espera); } },
@@ -152,15 +156,37 @@ function criarSlot(cfg, tipo, classeExtra = '') {
   return slot;
 }
 
+// O bloco começa com um anúncio próprio (sem tentar o Adsterra)? Sem nenhum ativo, nunca.
+function sortearProprio(cfg) {
+  const percentual = Math.min(Math.max(Number(cfg.percentualProprios) || 0, 0), 100);
+  return cfg.proprios?.length > 0 && Math.random() * 100 < percentual;
+}
+
+// `motivo`: 'sorteio' (percentual do super admin) ou 'vazio' (o Adsterra não entregou).
+function mostrarProprio(slot, area, cfg, tipo, motivo) {
+  const anuncio = proximoProprio(cfg.proprios);
+  if (!anuncio) { slot.hidden = true; return; } // nenhum cadastrado: some em vez de ficar vazio
+  area.replaceChildren(criarProprio(anuncio, tipo, motivo));
+  const exibido = () => trackEvent('publicidade_propria_exibida', { anuncio: anuncio.id, tipo, motivo });
+  if (motivo === 'vazio') { exibido(); return; } // o vazio só é decidido com o bloco já à vista
+  // Sorteado ao montar a lista: conta a exibição quando o bloco aparece na tela.
+  const visivel = new IntersectionObserver(entradas => {
+    if (!entradas.some(e => e.isIntersecting)) return;
+    visivel.disconnect();
+    exibido();
+  });
+  visivel.observe(slot);
+}
+
 function proximoProprio(proprios) {
   if (!proprios?.length) return null;
   if (fila.length === 0) fila = [...proprios].sort(() => Math.random() - 0.5);
   return fila.pop();
 }
 
-function criarProprio(anuncio, tipo) {
+function criarProprio(anuncio, tipo, motivo) {
   const el = criarAnuncioProprio(anuncio);
-  el.addEventListener('click', () => trackEvent('publicidade_propria_click', { anuncio: anuncio.id, tipo }));
+  el.addEventListener('click', () => trackEvent('publicidade_propria_click', { anuncio: anuncio.id, tipo, motivo }));
   return el;
 }
 

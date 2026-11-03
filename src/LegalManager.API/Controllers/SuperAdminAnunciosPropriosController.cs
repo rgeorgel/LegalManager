@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LegalManager.API.Controllers;
 
-// Cadastro dos anúncios do próprio Causify (ver AnuncioProprio). O portal recebe os ativos em
-// PublicidadeController.Get.
+// Cadastro dos anúncios do próprio Causify (ver AnuncioProprio) e da mistura com o Adsterra
+// (ConfiguracaoPublicidade). O portal recebe os dois em PublicidadeController.Get.
 [ApiController]
 [Route("api/superadmin/anuncios-proprios")]
 [Authorize(Roles = "SuperAdmin")]
@@ -82,6 +82,42 @@ public partial class SuperAdminAnunciosPropriosController(AppDbContext db, IAudi
         await db.SaveChangesAsync(ct);
 
         return NoContent();
+    }
+
+    // Quantos % dos espaços mostram direto um anúncio próprio, em vez de tentar o Adsterra.
+    [HttpGet("configuracao")]
+    public async Task<ActionResult<ConfiguracaoPublicidadeDto>> ObterConfiguracao(CancellationToken ct)
+    {
+        var config = await db.ConfiguracoesPublicidade.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == ConfiguracaoPublicidade.IdUnico, ct);
+        return Ok(new ConfiguracaoPublicidadeDto(config?.PercentualProprios ?? 0, config?.AtualizadoEm));
+    }
+
+    [HttpPut("configuracao")]
+    public async Task<ActionResult<ConfiguracaoPublicidadeDto>> SalvarConfiguracao(
+        [FromBody] SalvarConfiguracaoPublicidadeDto dto, CancellationToken ct)
+    {
+        if (dto.PercentualProprios is < 0 or > 100)
+            return BadRequest(new { message = "O percentual deve ficar entre 0 e 100." });
+
+        var config = await db.ConfiguracoesPublicidade.FirstOrDefaultAsync(c => c.Id == ConfiguracaoPublicidade.IdUnico, ct);
+        var anterior = config is null ? null : new { config.PercentualProprios };
+        if (config is null)
+        {
+            config = new ConfiguracaoPublicidade { Id = ConfiguracaoPublicidade.IdUnico };
+            db.ConfiguracoesPublicidade.Add(config);
+        }
+        config.PercentualProprios = dto.PercentualProprios;
+        config.AtualizadoEm = DateTime.UtcNow;
+        config.AtualizadoPorId = GetSuperAdminId();
+
+        await audit.LogAsync(new AuditLogEntry(
+            TenantConstants.SystemTenantId, GetSuperAdminId(), AuditActions.Update, "ConfiguracaoPublicidade",
+            config.Id.ToString(), anterior, new { config.PercentualProprios },
+            HttpContext.GetClientIpAddress()), ct);
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new ConfiguracaoPublicidadeDto(config.PercentualProprios, config.AtualizadoEm));
     }
 
     public static string? Validar(SalvarAnuncioProprioDto dto)

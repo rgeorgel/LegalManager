@@ -722,6 +722,32 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("ConfiguracoesHonorarios");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ConfiguracaoPublicidade", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AtualizadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PercentualProprios")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConfiguracoesPublicidade");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            PercentualProprios = 0
+                        });
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ConsultaExterna", b =>
                 {
                     b.Property<Guid>("Id")

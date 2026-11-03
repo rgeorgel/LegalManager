@@ -316,6 +316,24 @@ public class PublicidadeTests
     }
 
     [Fact]
+    public async Task Get_PlanoFree_EnviaOPercentualDeAnunciosProprios()
+    {
+        var (controller, db, _) = Controller(Ligado(), PlanoTipo.Free);
+        db.ConfiguracoesPublicidade.Add(new ConfiguracaoPublicidade { Id = ConfiguracaoPublicidade.IdUnico, PercentualProprios = 40 });
+        await db.SaveChangesAsync();
+
+        Assert.Equal(40, (await GetAsync(controller)).PercentualProprios);
+    }
+
+    [Fact]
+    public async Task Get_SemConfiguracao_PercentualZero()
+    {
+        var (controller, _, _) = Controller(Ligado(), PlanoTipo.Free);
+
+        Assert.Equal(0, (await GetAsync(controller)).PercentualProprios);
+    }
+
+    [Fact]
     public async Task Get_PlanoPago_SemAnunciosProprios()
     {
         var (controller, db, _) = Controller(Ligado(), PlanoTipo.Pro);

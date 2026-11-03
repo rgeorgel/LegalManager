@@ -35,3 +35,8 @@ public record SalvarAnuncioProprioDto(
     bool Ativo,
     [MaxLength(7)] string? Cor = null
 );
+
+// Mistura entre anúncios próprios e Adsterra (ver ConfiguracaoPublicidade).
+public record ConfiguracaoPublicidadeDto(int PercentualProprios, DateTime? AtualizadoEm);
+
+public record SalvarConfiguracaoPublicidadeDto([Range(0, 100)] int PercentualProprios);
