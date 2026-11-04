@@ -353,12 +353,78 @@ public class AssistenteAcoesTests
     private sealed class LlmRoteiro(params LlmResposta[] respostas) : IAssistenteLlmClient
     {
         private int _i;
+        public List<IReadOnlyList<LlmMensagem>> Chamadas { get; } = [];
         public string Provedor => "Teste";
         public string Modelo => "modelo-teste";
         public Task<LlmResposta> EnviarAsync(string sistema, IReadOnlyList<LlmMensagem> mensagens,
-            IReadOnlyList<LlmFerramenta> ferramentas, CancellationToken ct = default) =>
-            Task.FromResult(respostas[Math.Min(_i++, respostas.Length - 1)]);
+            IReadOnlyList<LlmFerramenta> ferramentas, CancellationToken ct = default)
+        {
+            Chamadas.Add(mensagens.ToList());
+            return Task.FromResult(respostas[Math.Min(_i++, respostas.Length - 1)]);
+        }
     }
+
+    // ── Cartão prometido sem proposta ────────────────────────────────────────
+
+    [Fact]
+    public async Task Perguntar_CitaCartaoSemProposta_CobraAFerramentaUmaVez()
+    {
+        var tenant = Tenant();
+        var llm = new LlmRoteiro(
+            new LlmResposta([new LlmTexto("A tarefa está pronta para ser confirmada no cartão abaixo.")], 10, 5),
+            new LlmResposta([new LlmChamadaFerramenta("c1", "criar_tarefa", Args(new { titulo = "Enviar minuta", prazo = "2026-11-06 10:00" }))], 10, 5),
+            new LlmResposta([new LlmTexto("Confira e confirme no cartão abaixo.")], 10, 5));
+        var svc = new AssistenteService(llm, Ferramentas(tenant), _db, tenant, NullLogger<AssistenteService>.Instance);
+
+        var r = await svc.PerguntarAsync(new AssistentePerguntaDto([new("user", "Crie uma tarefa para sexta às 10h")]));
+
+        Assert.Single(r.Acoes!);
+        Assert.Equal(3, llm.Chamadas.Count);
+        var cobranca = llm.Chamadas[1][^1].Blocos.OfType<LlmTexto>().Single().Texto;
+        Assert.Equal(AssistenteService.CobrancaCartao, cobranca);
+        Assert.DoesNotContain(AssistenteService.AvisoSemCartao, r.Resposta);
+    }
+
+    [Fact]
+    public async Task Perguntar_InsisteNoCartaoSemProposta_AvisaQueNadaFoiPreparado()
+    {
+        var tenant = Tenant();
+        var llm = new LlmRoteiro(new LlmResposta([new LlmTexto("Confirme no cartão abaixo.")], 10, 5));
+        var svc = new AssistenteService(llm, Ferramentas(tenant), _db, tenant, NullLogger<AssistenteService>.Instance);
+
+        var r = await svc.PerguntarAsync(new AssistentePerguntaDto([new("user", "Crie uma tarefa")]));
+
+        Assert.Equal(2, llm.Chamadas.Count); // cobra uma vez só
+        Assert.Empty(r.Acoes!);
+        Assert.EndsWith(AssistenteService.AvisoSemCartao, r.Resposta);
+    }
+
+    [Fact]
+    public async Task Perguntar_RespostaSemCartao_NaoCobra()
+    {
+        var tenant = Tenant();
+        var llm = new LlmRoteiro(new LlmResposta([new LlmTexto("Quer que eu prepare a alteração para você confirmar?")], 10, 5));
+        var svc = new AssistenteService(llm, Ferramentas(tenant), _db, tenant, NullLogger<AssistenteService>.Instance);
+
+        var r = await svc.PerguntarAsync(new AssistentePerguntaDto([new("user", "Mude o telefone")]));
+
+        Assert.Single(llm.Chamadas);
+        Assert.Equal("Quer que eu prepare a alteração para você confirmar?", r.Resposta);
+    }
+
+    [Theory]
+    [InlineData("Por favor, confira os detalhes no cartão abaixo e confirme.", true)]
+    [InlineData("O cartão está pronto para você confirmar.", true)]
+    [InlineData("Um cartão com a alteração aparecerá logo abaixo da mensagem.", true)]
+    [InlineData("Confirme ou cancele a operação no cartão que aparecerá abaixo.", true)]
+    [InlineData("Por favor, confira os detalhes no cartão que apareceu acima.", true)]
+    [InlineData("Peça para ele conferir e confirmar no cartão.", true)]
+    [InlineData("Quer que eu prepare a alteração para você confirmar?", false)]
+    [InlineData("Quer que eu prepare um cartão para você confirmar?", false)]
+    [InlineData("Não há telefone cadastrado para o contato.", false)]
+    [InlineData("", false)]
+    public void PrometeCartao_Frases(string texto, bool esperado) =>
+        Assert.Equal(esperado, AssistenteService.PrometeCartao(texto));
 
     [Fact]
     public async Task Perguntar_DevolveEGravaAcaoPendente_EHistoricoMostraSituacao()

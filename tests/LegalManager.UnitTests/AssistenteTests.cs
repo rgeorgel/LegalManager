@@ -754,5 +754,24 @@ public class AssistenteTests
         var hoje = BrasiliaTime.AgoraParede;
         Assert.Contains(hoje.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), llm.Sistemas[0]);
         Assert.Contains(hoje.ToString("MMMM", BrasiliaTime.PtBr), llm.Sistemas[0]);
+        Assert.Contains("Esta semana:", llm.Sistemas[0]);
+    }
+
+    [Theory]
+    [InlineData("2026-11-03", "2026-11-02")] // terça
+    [InlineData("2026-11-02", "2026-11-02")] // segunda
+    [InlineData("2026-11-08", "2026-11-02")] // domingo fecha a semana
+    public void Calendario_SemanaDeSegundaADomingo(string hoje, string segunda)
+    {
+        var agora = DateTime.Parse(hoje, System.Globalization.CultureInfo.InvariantCulture).AddHours(21);
+
+        var cal = AssistenteService.Calendario(agora);
+
+        var linhas = cal.Split('\n');
+        Assert.StartsWith($"  - Esta semana: segunda-feira {segunda}", linhas[0]);
+        Assert.Contains($"{hoje} (hoje)", linhas[0]);
+        Assert.Contains("sexta-feira " + DateTime.Parse(segunda).AddDays(4).ToString("yyyy-MM-dd"), linhas[0]);
+        Assert.StartsWith("  - Próxima semana: segunda-feira " + DateTime.Parse(segunda).AddDays(7).ToString("yyyy-MM-dd"), linhas[1]);
+        Assert.DoesNotContain("(hoje)", linhas[1]);
     }
 }

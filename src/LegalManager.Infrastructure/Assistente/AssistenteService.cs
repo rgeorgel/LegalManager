@@ -65,6 +65,7 @@ public class AssistenteService(
             var sistema = await MontarSistemaAsync(ct);
             var disponiveis = ferramentas.Disponiveis();
             string? resposta = null;
+            var cobrouCartao = false;
 
             for (var rodada = 0; rodada < MaxRodadas; rodada++)
             {
@@ -75,6 +76,18 @@ public class AssistenteService(
                 var chamadas = r.Chamadas.ToList();
                 if (chamadas.Count == 0)
                 {
+                    // O modelo às vezes descreve a alteração e manda "confirmar no cartão" sem ter chamado a
+                    // ferramenta: o usuário ficaria esperando um cartão que não existe. Cobra uma vez.
+                    if (!cobrouCartao && rodada < MaxRodadas - 1 && ferramentas.AcoesPropostas.Count == 0
+                        && PrometeCartao(r.Texto))
+                    {
+                        cobrouCartao = true;
+                        logger.LogInformation("Assistente IA: resposta citou cartão sem proposta; cobrando a ferramenta ({Id})", interacao.Id);
+                        activity?.SetTag("assistente.cobrou_cartao", true);
+                        mensagens.Add(new LlmMensagem(LlmPapel.Assistente, r.Blocos));
+                        mensagens.Add(new LlmMensagem(LlmPapel.Usuario, [new LlmTexto(CobrancaCartao)]));
+                        continue;
+                    }
                     resposta = r.Texto;
                     break;
                 }
@@ -103,6 +116,8 @@ public class AssistenteService(
                 resposta = "Não consegui concluir a consulta. Tente reformular a pergunta de forma mais específica.";
             else if (IdiomaResposta.PareceTerOutroIdioma(resposta))
                 resposta = await CorrigirIdiomaAsync(resposta, interacao, ct);
+            if (ferramentas.AcoesPropostas.Count == 0 && PrometeCartao(resposta))
+                resposta += "\n\n> " + AvisoSemCartao;
 
             interacao.Resposta = resposta;
             interacao.Sucesso = true;
@@ -295,6 +310,39 @@ public class AssistenteService(
         return mensagens;
     }
 
+    internal const string CobrancaCartao =
+        "Atenção: sua resposta fala de um cartão para o usuário conferir/confirmar, mas você não chamou nenhuma " +
+        "ferramenta de alteração, então NENHUM cartão foi criado. Se o usuário pediu essa alteração e você tem os " +
+        "dados, chame agora a ferramenta adequada (com data e hora completas, se houver). Se falta alguma " +
+        "informação, pergunte ao usuário sem mencionar cartão.";
+
+    internal const string AvisoSemCartao =
+        "Não consegui preparar o cartão de confirmação desta vez, então nada foi alterado. Peça novamente, se quiser.";
+
+    private static readonly System.Text.RegularExpressions.Regex RegexCartao = new(
+        @"cart[aã]o\s+(abaixo|acima|ao\s+lado|que\s+apare|com\s+a|est[aá]|de\s+confirma)|\b(no|um|o)\s+cart[aã]o\s+(abaixo|acima|que)|confirm\w*\s+no\s+cart[aã]o",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>A resposta diz ao usuário que há um cartão de confirmação (abaixo/acima/que aparecerá...).</summary>
+    internal static bool PrometeCartao(string? texto) => !string.IsNullOrEmpty(texto) && RegexCartao.IsMatch(texto);
+
+    /// <summary>
+    /// Datas desta semana e da próxima (segunda a domingo). O gpt-oss errava a conta de "até sexta-feira"
+    /// partindo só de "hoje é terça, 3 de novembro".
+    /// </summary>
+    internal static string Calendario(DateTime agora)
+    {
+        var hoje = agora.Date;
+        var segunda = hoje.AddDays(-(((int)hoje.DayOfWeek + 6) % 7));
+        string Semana(DateTime inicio) => string.Join(", ", Enumerable.Range(0, 7).Select(i =>
+        {
+            var d = inicio.AddDays(i);
+            var dia = d.ToString("dddd", BrasiliaTime.PtBr) + " " + d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            return d == hoje ? dia + " (hoje)" : dia;
+        }));
+        return $"  - Esta semana: {Semana(segunda)}.\n  - Próxima semana: {Semana(segunda.AddDays(7))}.";
+    }
+
     private async Task<string> MontarSistemaAsync(CancellationToken ct)
     {
         var escritorio = await db.Tenants.AsNoTracking().Where(t => t.Id == tenant.TenantId)
@@ -320,7 +368,9 @@ public class AssistenteService(
             Contexto:
             - Usuário: {usuario} (perfil {tenant.UserRole}, id {tenant.UserId}).
             - Plano do escritório: {tenant.Plano}.
-            - Agora no escritório: {hoje}. Use esta data para interpretar "hoje", "amanhã", "esta semana", "mês passado" etc.{restricoes}
+            - Agora no escritório: {hoje}. Use esta data para interpretar "hoje", "amanhã", "esta semana", "mês passado" etc.
+            - Calendário (use estas datas para dias da semana, sem calcular por conta própria):
+            {Calendario(agora)}{restricoes}
 
             IDIOMA (regra absoluta): escreva TUDO exclusivamente em português do Brasil — inclusive e-mails, mensagens a clientes, modelos e resumos que o usuário pedir. Nunca use frases ou palavras em inglês ou em outro idioma, mesmo que os dados das ferramentas tenham termos estrangeiros (exceto nomes próprios).
 
