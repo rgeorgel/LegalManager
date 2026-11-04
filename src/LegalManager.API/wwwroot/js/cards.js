@@ -23,6 +23,8 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {string}  o.href         Detalhe da entidade: o card inteiro e o título abrem este link.
  * @param {string}  o.titulo       Texto do título (uma linha; completo na dica).
  * @param {boolean} [o.tituloMono] Título em fonte monoespaçada (identificadores como o CNJ).
+ * @param {boolean} [o.tituloCompleto] Título quebra linha e aparece inteiro (quando o título é o
+ *                                 conteúdo, como o texto de uma tarefa). Abre mão do alinhamento.
  * @param {string} [o.estado]      Cor da borda esquerda: ok | danger | warn | info | muted.
  * @param {string} [o.classe]      Classes extras no card (ex.: "favorito").
  * @param {Object<string,string>} [o.dados]  Atributos data-* do card (ex.: { id } → data-id).
@@ -32,10 +34,11 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {string[]} [o.tagsHtml]  Selos da 2ª linha (nº, processo...). Classe "ent-encolhe" no
  *                                 selo que pode ser cortado com reticências quando faltar espaço.
  * @param {string} [o.descricao]   Linha de descrição (a linha é reservada mesmo vazia).
- * @param {{rotulo:string, valor?:string, dica?:string}[]} [o.campos]  Linhas "rótulo  valor" na
+ * @param {{rotulo:string, valor?:string, valorHtml?:string, dica?:string, perigo?:boolean}[]} [o.campos]  Linhas "rótulo  valor" na
  *                                 largura do card, para textos (parte, vara, responsável...). Uma
  *                                 linha cada, com reticências; vazio mostra "—" (a linha não some,
- *                                 para manter o alinhamento entre cards).
+ *                                 para manter o alinhamento entre cards). `valorHtml` (ex.: link
+ *                                 para o processo) entra como está, no lugar de `valor`.
  * @param {{rotulo:string, valor:string, perigo?:boolean, dica?:string, peso?:number}[]} [o.numeros]
  *                                 Grade de valores curtos (2–4: dinheiro, contagens), uma linha
  *                                 cada; a dica padrão é o próprio valor; "peso" alarga a coluna.
@@ -57,7 +60,7 @@ export function cardEntidade(o) {
     <div class="ent-card${estado}${classe}" data-href="${esc(o.href)}"${dados}>
       <div class="ent-card-top">
         ${o.prefixoHtml ? `<div class="ent-card-prefixo">${o.prefixoHtml}</div>` : ''}
-        <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}"><a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a></div>
+        <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}${o.tituloCompleto ? ' is-completo' : ''}"><a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a></div>
         ${o.statusHtml ? `<div class="ent-card-status">${o.statusHtml}</div>` : ''}
       </div>
       ${o.tagsHtml ? `<div class="ent-card-tags">${o.tagsHtml.filter(Boolean).join('')}</div>` : ''}
@@ -65,9 +68,10 @@ export function cardEntidade(o) {
       ${campos.length ? `
         <div class="ent-card-campos">
           ${campos.map(c => {
-            const vazio = c.valor == null || c.valor === '';
+            const vazio = !c.valorHtml && (c.valor == null || c.valor === '');
+            const dica = c.dica ?? c.valor;
             return `<div class="ent-card-campo-lbl">${esc(c.rotulo)}</div>
-            <div class="ent-card-campo-val${vazio ? ' is-vazio' : ''}"${vazio ? '' : ` title="${esc(c.dica ?? c.valor)}"`}>${vazio ? '—' : esc(c.valor)}</div>`;
+            <div class="ent-card-campo-val${vazio ? ' is-vazio' : c.perigo ? ' is-danger' : ''}"${!vazio && dica ? ` title="${esc(dica)}"` : ''}>${vazio ? '—' : c.valorHtml || esc(c.valor)}</div>`;
           }).join('')}
         </div>` : ''}
       ${numeros.length ? `
@@ -94,20 +98,100 @@ export function cardEntidade(o) {
 /**
  * Faz o clique em qualquer ponto de um card (.ent-card[data-href]) abrir o detalhe.
  * Links, botões e campos dentro do card mantêm o próprio comportamento; texto selecionado não
- * navega; Ctrl/⌘/Shift ou botão do meio abrem em nova aba. Chame uma vez por contêiner — os
- * cards podem ser re-renderizados à vontade (delegação de eventos).
+ * navega; Ctrl/⌘/Shift ou botão do meio abrem o href em nova aba. Chame uma vez por contêiner —
+ * os cards podem ser re-renderizados à vontade (delegação de eventos).
+ *
+ * Entidade sem página própria (abre num modal, como a tarefa): passe `abrir(card)`. O clique
+ * simples no card ou no título chama `abrir` em vez de navegar; o href continua valendo para
+ * nova aba (use uma URL que abra o modal, ex.: `?abrirId=`).
+ * @param {HTMLElement} container
+ * @param {{abrir?: (card: HTMLElement, e: MouseEvent) => void}} [opcoes]
  */
-export function ativarCardsClicaveis(container) {
+export function ativarCardsClicaveis(container, { abrir } = {}) {
   if (!container || container.dataset.cardsClicaveis) return;
   container.dataset.cardsClicaveis = '1';
-  const abrir = (e) => {
+  const aoClicar = (e) => {
     const card = e.target.closest('.ent-card[data-href]');
     if (!card || !container.contains(card)) return;
-    if (e.target.closest('a, button, input, select, textarea, label')) return;
+    const noTitulo = e.target.closest('.ent-card-titulo a');
+    if (!noTitulo && e.target.closest('a, button, input, select, textarea, label')) return;
     if (e.type === 'click' && String(window.getSelection?.() ?? '').length) return;
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) window.open(card.dataset.href, '_blank', 'noopener');
-    else window.location.href = card.dataset.href;
+    const novaAba = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+    if (noTitulo && (novaAba || !abrir)) return; // o próprio link resolve
+    if (novaAba) { window.open(card.dataset.href, '_blank', 'noopener'); return; }
+    if (abrir) { e.preventDefault(); abrir(card, e); return; }
+    window.location.href = card.dataset.href;
   };
-  container.addEventListener('click', abrir);
-  container.addEventListener('auxclick', e => { if (e.button === 1) abrir(e); });
+  container.addEventListener('click', aoClicar);
+  container.addEventListener('auxclick', e => { if (e.button === 1) aoClicar(e); });
+}
+
+// ── Menu de ações do card (⋮) ─────────────────────────────────────────────
+// Botão no statusHtml: `<button type="button" class="ent-card-menu" aria-haspopup="menu"
+// aria-expanded="false" data-...>⋮</button>`; no clique, chame abrirMenuCard(botao, itens).
+let menuAberto = null;
+
+/** Fecha o menu ⋮ aberto, se houver. */
+export function fecharMenuCard() {
+  if (!menuAberto) return;
+  const { menu, botao, limpar } = menuAberto;
+  menuAberto = null;
+  limpar();
+  menu.remove();
+  botao.setAttribute('aria-expanded', 'false');
+}
+
+/**
+ * Abre o menu de ações junto ao botão ⋮ (abaixo e alinhado à direita; acima, se faltar espaço).
+ * Fecha com clique fora, Esc, rolagem ou ao escolher um item. Clicar de novo no mesmo botão fecha.
+ * @param {HTMLElement} botao
+ * @param {({rotulo:string, icone?:string, perigo?:boolean, acao:() => void}|false|null)[]} itens
+ *        Itens falsy são ignorados (facilita itens condicionais).
+ */
+export function abrirMenuCard(botao, itens) {
+  const mesmo = menuAberto?.botao === botao;
+  fecharMenuCard();
+  if (mesmo) return;
+  const menu = document.createElement('div');
+  menu.className = 'ent-menu';
+  menu.setAttribute('role', 'menu');
+  for (const it of itens.filter(Boolean)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ent-menu-item' + (it.perigo ? ' is-perigo' : '');
+    b.setAttribute('role', 'menuitem');
+    b.innerHTML = `<span class="ent-menu-icone" aria-hidden="true">${it.icone ?? ''}</span><span>${esc(it.rotulo)}</span>`;
+    b.addEventListener('click', e => { e.stopPropagation(); fecharMenuCard(); it.acao(); });
+    menu.appendChild(b);
+  }
+  document.body.appendChild(menu);
+
+  const r = botao.getBoundingClientRect();
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  const left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8));
+  const top = r.bottom + 4 + h > window.innerHeight - 8 ? Math.max(8, r.top - 4 - h) : r.bottom + 4;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  botao.setAttribute('aria-expanded', 'true');
+
+  const fora = e => { if (!menu.contains(e.target) && !botao.contains(e.target)) fecharMenuCard(); };
+  const tecla = e => { if (e.key === 'Escape') { fecharMenuCard(); botao.focus(); } };
+  const fechar = () => fecharMenuCard();
+  setTimeout(() => {
+    if (menuAberto?.menu !== menu) return;
+    document.addEventListener('click', fora, true);
+    document.addEventListener('keydown', tecla);
+    window.addEventListener('scroll', fechar, true);
+    window.addEventListener('resize', fechar);
+  }, 0);
+  menuAberto = {
+    menu, botao,
+    limpar: () => {
+      document.removeEventListener('click', fora, true);
+      document.removeEventListener('keydown', tecla);
+      window.removeEventListener('scroll', fechar, true);
+      window.removeEventListener('resize', fechar);
+    },
+  };
+  menu.querySelector('button')?.focus({ preventScroll: true });
 }

@@ -77,8 +77,7 @@
     .view-btn:hover { background:#e5e7eb; }
     .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
     .tarefas-list { display:flex; flex-direction:column; gap:10px; }
-    .tarefas-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
-    @media(max-width:768px) { .tarefas-grid { grid-template-columns:1fr; } }
+    /* Visão em blocos: card de entidade do sistema (.ent-* em styles.css, js/cards.js). */
     /* Kanban */
     .kanban-board { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; align-items:start; }
     .kanban-col { background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius); padding:12px; min-height:300px; }
@@ -231,6 +230,7 @@ import { apiFetch } from '/js/api.js';
 import { createMultiSelect } from '/js/multiselect.js';
 import { abrirNovaTarefa, abrirTarefa, excluirTarefa, PRIORIDADE_LABEL, STATUS_LABEL, badgeRecorrente } from '/js/tarefa-modal.js';
 import { intercalarAnuncios } from '/js/publicidade.js';
+import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
 
 initLayout();
 
@@ -264,6 +264,7 @@ switchTab(initTab);
 // ── Lista: state ───────────────────────────────────────────────
 let currentPage = 1;
 let allListItems = [];
+let ultimaPagina = null;
 
 // ── Toggle de visualização (lista/blocos) ────────────────────────
 const VIEW_KEY = 'tarefas.viewMode';
@@ -276,21 +277,42 @@ function applyView() {
   const container = document.getElementById('tarefasList');
   document.getElementById('viewList').classList.toggle('active', currentView === 'lista');
   document.getElementById('viewBlocos').classList.toggle('active', currentView === 'blocos');
-  container.classList.toggle('tarefas-list', currentView === 'lista');
-  container.classList.toggle('tarefas-grid', currentView === 'blocos');
+  container.className = currentView === 'blocos' ? 'ent-grid' : 'tarefas-list';
 }
 
 document.getElementById('viewList').addEventListener('click', () => {
   currentView = 'lista';
   try { localStorage.setItem(VIEW_KEY, currentView); } catch {}
   applyView();
+  if (allListItems.length) renderLista(allListItems, ultimaPagina);
 });
 document.getElementById('viewBlocos').addEventListener('click', () => {
   currentView = 'blocos';
   try { localStorage.setItem(VIEW_KEY, currentView); } catch {}
   applyView();
+  if (allListItems.length) renderLista(allListItems, ultimaPagina);
 });
 applyView();
+
+// Blocos: o card inteiro abre a tarefa no modal (não há página de detalhe); o href
+// (?abrirId=) vale para Ctrl/⌘ + clique, em nova aba.
+const abrirTarefaDoCard = async id => {
+  try { await abrirTarefa(id); }
+  catch (err) { alert('Erro ao carregar a tarefa: ' + err.message); }
+};
+ativarCardsClicaveis(document.getElementById('tarefasList'), { abrir: card => abrirTarefaDoCard(card.dataset.id) });
+document.getElementById('tarefasList').addEventListener('click', e => {
+  const botao = e.target.closest('[data-menu-tarefa]');
+  if (!botao) return;
+  const id = botao.dataset.menuTarefa;
+  const t = allListItems.find(x => x.id === id);
+  const encerrada = t && (t.status === 'Concluida' || t.status === 'Cancelada');
+  abrirMenuCard(botao, [
+    !encerrada && { icone: '✓', rotulo: 'Concluir', acao: () => concluir(id) },
+    { icone: '✏️', rotulo: 'Editar', acao: () => abrirTarefaDoCard(id) },
+    { icone: '🗑️', rotulo: 'Excluir', perigo: true, acao: () => deleteTarefa(id) },
+  ]);
+});
 
 // Status, prioridade e tipo: seleção múltipla (nada marcado = todos). Criados aqui, antes do
 // primeiro uso; o onChange chama loadTarefas, que é hoisted.
@@ -350,6 +372,7 @@ async function loadTarefas(page = 1) {
   try {
     const data = await apiFetch(`/tarefas?${params}`);
     allListItems = data.items ?? [];
+    ultimaPagina = data;
     renderLista(allListItems, data);
   } catch (e) { console.error(e); }
 }
@@ -361,10 +384,51 @@ function renderLista(items, data) {
     document.getElementById('pagination').innerHTML = '';
     return;
   }
-  container.innerHTML = items.map(t => tarefaCard(t)).join('');
+  const blocos = currentView === 'blocos';
+  container.innerHTML = items.map(blocos ? cardTarefa : tarefaCard).join('');
   renderPagination(data);
   bindListActions();
-  intercalarAnuncios(container, { seletor: '.tarefa-card', cada: 3, tipo: 'faixa' }); // só no plano Free
+  intercalarAnuncios(container, { seletor: blocos ? '.ent-card' : '.tarefa-card', cada: 3, tipo: 'faixa' }); // só no plano Free
+}
+
+// Visão em blocos: card de entidade do sistema (js/cards.js). O clique no card abre a tarefa no
+// modal (onde se edita); Concluir e Excluir ficam no menu ⋮ ao lado do status. O título aparece
+// inteiro: é o texto da tarefa.
+const MAX_TAGS_CARD = 3;
+const fmtPrazo = (prazo) => prazo
+  ? dataParede(prazo).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+  : '';
+function cardTarefa(t) {
+  const encerrada = t.status === 'Concluida' || t.status === 'Cancelada';
+  const tags = t.tags ?? [];
+  const extras = tags.length - MAX_TAGS_CARD;
+  const processo = t.numeroCNJProcesso
+    ? (t.processoId
+      ? `⚖️ <a href="/pages/processo-detalhe.html?id=${encodeURIComponent(t.processoId)}" class="processo-link">${esc(t.numeroCNJProcesso)}</a>`
+      : `⚖️ ${esc(t.numeroCNJProcesso)}`)
+    : '';
+  return cardEntidade({
+    href: `/pages/tarefas.html?abrirId=${encodeURIComponent(t.id)}`,
+    titulo: t.titulo,
+    tituloCompleto: true,
+    estado: t.atrasada ? 'danger' : encerrada ? 'muted' : 'info',
+    dados: { id: t.id },
+    statusHtml: `<span class="badge status-${t.status.toLowerCase()}">${esc(STATUS_LABEL[t.status] ?? t.status)}</span>`
+      + `<button type="button" class="ent-card-menu" data-menu-tarefa="${esc(t.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações para ${esc(t.titulo)}">⋮</button>`,
+    tagsHtml: [
+      t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '',
+      t.tipo === 'Prazo' ? '<span class="badge" style="background:#ede9fe;color:#6d28d9">⏰ Prazo</span>' : '',
+      badgeRecorrente(t),
+      `<span class="badge prioridade-${t.prioridade.toLowerCase()}">${esc(PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade)}</span>`,
+      ...tags.slice(0, MAX_TAGS_CARD).map(tag => `<span class="tag">${esc(tag)}</span>`),
+      extras > 0 ? `<span class="tag" title="${esc(tags.slice(MAX_TAGS_CARD).join(', '))}">+${extras}</span>` : '',
+    ],
+    campos: [
+      { rotulo: 'Prazo', valor: fmtPrazo(t.prazo), perigo: t.atrasada },
+      { rotulo: 'Responsável', valor: t.nomeResponsavel },
+      { rotulo: 'Processo', valorHtml: processo, dica: t.numeroCNJProcesso },
+    ],
+  });
 }
 
 function tarefaCard(t) {

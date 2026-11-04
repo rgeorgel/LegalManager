@@ -44,6 +44,8 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 
 - **O card inteiro abre o detalhe** (`href`); o título também é o link (teclado, clique do meio).
   Ctrl/⌘ abre em nova aba; texto selecionado não navega. Chame `ativarCardsClicaveis(container)` uma vez.
+  Entidade sem página própria (abre em modal, como a tarefa): `ativarCardsClicaveis(container, { abrir })`
+  e um `href` que abra o modal (ex.: `?abrirId=`), para Ctrl/⌘ + clique em nova aba.
 - **Sem botões "Ver" nem "Editar"** no card — a edição acontece dentro do detalhe. No rodapé só
   ações secundárias (ex.: `ICONES.download` + "Extrato"), com ícones bem distintos e rótulo quando couber.
 - **Faixas de altura fixa** para alinhar cards vizinhos: título + status, selos (`tagsHtml`;
@@ -51,24 +53,29 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
   texto completo na dica. Passe `descricao: ''` quando vazia, para reservar a linha.
 - **Textos** (parte, vara, responsável...) em `campos`: linhas "rótulo  valor" na largura do card,
   peso normal, uma linha com reticências (no celular quebram). Vazio mostra "—" e a linha fica.
+  `valorHtml` para link (ex.: processo); `perigo` pinta de vermelho (ex.: prazo atrasado).
 - **Valores curtos** (dinheiro, contagens) em `numeros`: grade de 2–4 colunas, uma linha cada
   (`perigo` pinta de vermelho; `peso` alarga uma coluna; `dica` substitui a dica padrão).
   Não ponha texto longo em `numeros` — corta demais.
 - **Peso de fonte contido**: só título e valores curtos em semi-negrito; o resto em peso normal.
+- Quando o título é o próprio conteúdo (texto da tarefa): `tituloCompleto: true` — quebra linha e
+  aparece inteiro, mesmo no desktop (abre mão do alinhamento do topo).
 - Identificadores (CNJ): `tituloMono: true` — no celular o status desce de linha e o título não é cortado.
 - `dados: { id }` vira `data-id` no card; `classe` adiciona modificadores da página (ex.: `favorito`).
 - **Rodapé**: à esquerda `meta` (principal em negrito, secundário, `progresso` 0–100); à direita `acoesHtml`.
-  Sem `meta` nem `acoesHtml`, não há rodapé. Menu de várias ações (⋮, `ent-card-menu`) vai no
-  `statusHtml`, ao lado do status — não gaste uma linha de rodapé só com ele. Caixa de seleção
-  (ações em massa) vai em `prefixoHtml`.
+  Sem `meta` nem `acoesHtml`, não há rodapé. Ações da entidade (concluir, excluir...) vão no menu ⋮:
+  botão `.ent-card-menu` no `statusHtml` e `abrirMenuCard(botao, itens)` de `js/cards.js` no clique
+  (itens `{ icone, rotulo, acao, perigo }`; falsy é ignorado) — não gaste uma linha de rodapé com
+  botões. Referência: `cardTarefa` em `pages/tarefas.html`. (Contatos ainda usa um menu próprio.)
+  Caixa de seleção (ações em massa) vai em `prefixoHtml`.
 - No celular (uma coluna) título e campos quebram linha e aparecem inteiros; no desktop, uma linha.
 - **Borda esquerda = estado**: `estado` ok | danger | warn | info | muted.
 - Campos `*Html` entram como estão (escape é de quem chama); os demais são escapados pelo componente.
 - Cores sempre por variável de tema (`--color-surface`, `--color-text`...), nunca `#fff` fixo.
 - Grade `.ent-grid`: no celular vira uma coluna sem estourar a largura (`minmax(0,1fr)`).
 
-Já migradas: Honorários Contratos, Processos e Contatos (visão em blocos; as listas seguem com
-marcação própria). Ainda com card próprio, a migrar: Tarefas, Publicações, Documentos.
+Já migradas: Honorários Contratos, Processos, Contatos e Tarefas (visão em blocos; as listas e o
+kanban seguem com marcação própria). Ainda com card próprio, a migrar: Publicações, Documentos.
 
 ## Backend
 
