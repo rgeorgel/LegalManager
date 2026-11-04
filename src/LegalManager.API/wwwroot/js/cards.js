@@ -20,7 +20,8 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
 /**
  * Monta o HTML de um card de entidade.
  * @param {object} o
- * @param {string}  o.href         Detalhe da entidade: o card inteiro e o título abrem este link.
+ * @param {string} [o.href]        Detalhe da entidade: o card inteiro e o título abrem este link.
+ *                                 Sem href (entidade sem detalhe, ex.: publicação), o card não é clicável.
  * @param {string}  o.titulo       Texto do título (uma linha; completo na dica).
  * @param {boolean} [o.tituloMono] Título em fonte monoespaçada (identificadores como o CNJ).
  * @param {boolean} [o.tituloCompleto] Título quebra linha e aparece inteiro (quando o título é o
@@ -42,6 +43,8 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {{rotulo:string, valor:string, perigo?:boolean, dica?:string, peso?:number}[]} [o.numeros]
  *                                 Grade de valores curtos (2–4: dinheiro, contagens), uma linha
  *                                 cada; a dica padrão é o próprio valor; "peso" alarga a coluna.
+ * @param {string} [o.corpoHtml]   Conteúdo livre depois dos campos/valores (ex.: texto de uma
+ *                                 publicação). Use com parcimônia: o padrão são faixas fixas.
  * @param {{principal?:string, secundarioHtml?:string, progresso?:number}} [o.meta]  Rodapé à esquerda.
  * @param {string} [o.acoesHtml]   Ações secundárias no rodapé à direita (nunca "Ver"/"Editar").
  */
@@ -57,10 +60,10 @@ export function cardEntidade(o) {
   const prog = meta && typeof meta.progresso === 'number'
     ? Math.max(0, Math.min(100, meta.progresso)) : null;
   return `
-    <div class="ent-card${estado}${classe}" data-href="${esc(o.href)}"${dados}>
+    <div class="ent-card${estado}${classe}"${o.href ? ` data-href="${esc(o.href)}"` : ''}${dados}>
       <div class="ent-card-top">
         ${o.prefixoHtml ? `<div class="ent-card-prefixo">${o.prefixoHtml}</div>` : ''}
-        <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}${o.tituloCompleto ? ' is-completo' : ''}"><a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a></div>
+        <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}${o.tituloCompleto ? ' is-completo' : ''}">${o.href ? `<a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a>` : `<span title="${esc(o.titulo)}">${esc(o.titulo)}</span>`}</div>
         ${o.statusHtml ? `<div class="ent-card-status">${o.statusHtml}</div>` : ''}
       </div>
       ${o.tagsHtml ? `<div class="ent-card-tags">${o.tagsHtml.filter(Boolean).join('')}</div>` : ''}
@@ -80,6 +83,7 @@ export function cardEntidade(o) {
             <div><div class="ent-card-num-lbl">${esc(n.rotulo)}</div>
             <div class="ent-card-num-val${n.perigo ? ' is-danger' : ''}" title="${esc(n.dica ?? n.valor)}">${esc(n.valor)}</div></div>`).join('')}
         </div>` : ''}
+      ${o.corpoHtml ? `<div class="ent-card-corpo">${o.corpoHtml}</div>` : ''}
       ${meta || o.acoesHtml ? `
         <div class="ent-card-rodape">
           ${meta ? `
@@ -151,11 +155,12 @@ export function fecharMenuCard() {
 export function abrirMenuCard(botao, itens) {
   const mesmo = menuAberto?.botao === botao;
   fecharMenuCard();
-  if (mesmo) return;
+  const validos = itens.filter(Boolean);
+  if (mesmo || !validos.length) return;
   const menu = document.createElement('div');
   menu.className = 'ent-menu';
   menu.setAttribute('role', 'menu');
-  for (const it of itens.filter(Boolean)) {
+  for (const it of validos) {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'ent-menu-item' + (it.perigo ? ' is-perigo' : '');

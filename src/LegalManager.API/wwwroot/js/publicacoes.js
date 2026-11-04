@@ -2,6 +2,7 @@ import { initLayout } from './layout.js';
 import { apiFetch } from './api.js';
 
 import { esc, dataParede, fmtDataParede, inputDataHoraParede } from './utils.js';
+import { cardEntidade, abrirMenuCard } from './cards.js';
 initLayout();
 
 const TIPO_LABEL = {
@@ -154,6 +155,82 @@ document.getElementById('listaPubs').addEventListener('click', e => {
   return acaoTriagem(btn, 'aceitar', { titulo: titulo || null, data, criarEvento: evento });
 });
 
+// Card de entidade do sistema (js/cards.js), numa coluna (são textos para ler). Publicação não tem
+// página de detalhe: o card não é clicável; o texto, a sugestão da IA e o "Ver mais" ficam no corpo
+// e as ações (lida, IA, PDF, Escavador, arquivar) no menu ⋮ ao lado do status.
+const STATUS_BADGE = { Nova: 'pub-badge-nova', Lida: 'pub-badge-lida', Arquivada: 'pub-badge-arquivada' };
+const FONTE_BADGE = {
+  Escavador: '<span class="pub-badge" style="background:#ecfdf5;color:#065f46">📡 Escavador</span>',
+  DJe: '<span class="pub-badge" style="background:#fef3c7;color:#92400e">📰 DJe</span>',
+  Manual: '<span class="pub-badge" style="background:#f3f4f6;color:#6b7280">✍️ Manual</span>'
+};
+
+// Sem nenhuma ação disponível (arquivada, já analisada, sem links), o ⋮ não aparece.
+const temAcoes = p => p.status !== 'Arquivada' || !p.triagem || !!p.linkPdf || !!p.linkEscavador;
+
+function cardPublicacao(p) {
+  const processo = p.numeroCNJ
+    ? (p.processoId
+      ? `<a href="/pages/processo-detalhe.html?id=${encodeURIComponent(p.processoId)}">${esc(p.numeroCNJ)}</a>`
+      : esc(p.numeroCNJ))
+    : '';
+  const longo = (p.conteudo?.length ?? 0) > 300;
+  return cardEntidade({
+    titulo: TIPO_LABEL[p.tipo] ?? p.tipo,
+    estado: p.urgente ? 'danger' : p.status === 'Nova' ? 'warn' : p.status === 'Arquivada' ? 'muted' : '',
+    dados: { id: p.id },
+    statusHtml: `<span class="pub-badge ${STATUS_BADGE[p.status] ?? ''}">${esc(STATUS_LABEL[p.status] ?? p.status)}</span>`
+      + (temAcoes(p) ? `<button type="button" class="ent-card-menu" data-menu-pub="${esc(p.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações da publicação">⋮</button>` : ''),
+    tagsHtml: [
+      p.urgente ? '<span class="pub-badge-urgente">🔴 URGENTE</span>' : '',
+      FONTE_BADGE[p.fonteCaptura] ?? '',
+    ],
+    campos: [
+      { rotulo: 'Processo', valorHtml: processo, dica: p.numeroCNJ },
+      { rotulo: 'Publicada em', valor: fmtDataParede(p.dataPublicacao) },
+      { rotulo: 'Diário', valor: [p.diario, p.tribunal].filter(Boolean).join(' — ') },
+    ],
+    corpoHtml: `
+      ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}
+      ${renderTriagem(p)}
+      ${p.snippet ? `<div class="pub-snippet">${esc(p.snippet)}</div>` : ''}
+      <div class="pub-conteudo" id="conteudo-${esc(p.id)}">${esc(p.conteudo)}</div>
+      ${longo ? `<button type="button" class="pub-ver-mais" data-action="expandir" data-id="${esc(p.id)}" aria-expanded="false">Ver mais</button>` : ''}`,
+  });
+}
+
+async function acaoPublicacao(id, caminho, metodo = 'PATCH') {
+  try {
+    await apiFetch(`/publicacoes/${id}/${caminho}`, { method: metodo });
+    load();
+  } catch (e) {
+    alert(e.message || 'Não foi possível concluir. Tente de novo.');
+  }
+}
+
+document.getElementById('listaPubs').addEventListener('click', e => {
+  const expandir = e.target.closest('[data-action="expandir"]');
+  if (expandir) {
+    const el = document.getElementById(`conteudo-${expandir.dataset.id}`);
+    const aberto = el.classList.toggle('expanded');
+    expandir.textContent = aberto ? 'Ver menos' : 'Ver mais';
+    expandir.setAttribute('aria-expanded', String(aberto));
+    return;
+  }
+  const botao = e.target.closest('[data-menu-pub]');
+  if (!botao) return;
+  const p = pubs.find(x => x.id === botao.dataset.menuPub);
+  if (!p) return;
+  const abrir = url => window.open(url, '_blank', 'noopener');
+  abrirMenuCard(botao, [
+    p.status === 'Nova' && { icone: '✓', rotulo: 'Marcar como lida', acao: () => acaoPublicacao(p.id, 'lida') },
+    !p.triagem && { icone: '🤖', rotulo: 'Analisar com IA', acao: () => acaoPublicacao(p.id, 'triagem/refazer', 'POST') },
+    p.linkPdf && { icone: '📄', rotulo: 'Ver PDF', acao: () => abrir(p.linkPdf) },
+    p.linkEscavador && { icone: '🔗', rotulo: 'Ver no Escavador', acao: () => abrir(p.linkEscavador) },
+    p.status !== 'Arquivada' && { icone: '🗄️', rotulo: 'Arquivar', acao: () => acaoPublicacao(p.id, 'arquivar') },
+  ]);
+});
+
 function render() {
   const list = document.getElementById('listaPubs');
   const sem = document.getElementById('semPubs');
@@ -164,58 +241,7 @@ function render() {
     return;
   }
   sem.style.display = 'none';
-  list.innerHTML = pubs.map(p => {
-    const statusClass = { Nova: 'pub-badge-nova', Lida: 'pub-badge-lida', Arquivada: 'pub-badge-arquivada' }[p.status];
-    const fonteBadge = {
-      Escavador: '<span class="pub-badge" style="background:#ecfdf5;color:#065f46">📡 Escavador</span>',
-      DJe: '<span class="pub-badge" style="background:#fef3c7;color:#92400e">📰 DJe</span>',
-      Manual: '<span class="pub-badge" style="background:#f3f4f6;color:#6b7280">✍️ Manual</span>'
-    }[p.fonteCaptura] ?? '';
-    return `
-    <div class="pub-card${p.urgente ? ' pub-card-urgente' : ''}" data-id="${p.id}">
-      <div class="pub-card-header">
-        <div class="pub-card-tipo">
-          ${p.urgente ? '<span class="pub-badge-urgente">🔴 URGENTE</span>' : ''}
-          <span class="pub-tipo">${TIPO_LABEL[p.tipo] ?? p.tipo}</span>
-          <span class="pub-badge ${statusClass}">${STATUS_LABEL[p.status]}</span>
-          ${fonteBadge}
-          ${p.numeroCNJ ? `<span style="font-size:12px;color:var(--color-text-muted)">${esc(p.numeroCNJ)}</span>` : ''}
-        </div>
-        <span class="pub-card-meta">${fmtDataParede(p.dataPublicacao)} — ${esc(p.diario)}${p.tribunal ? ' — ' + esc(p.tribunal) : ''}</span>
-      </div>
-      ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}
-      ${renderTriagem(p)}
-      ${p.snippet ? `<div class="pub-snippet" style="font-size:13px;color:var(--color-text-muted);margin-bottom:6px;font-style:italic">${esc(p.snippet)}</div>` : ''}
-      <div class="pub-card-conteudo" id="conteudo-${p.id}">${esc(p.conteudo)}</div>
-      <div class="pub-card-actions">
-        ${p.conteudo.length > 300 ? `<button class="btn btn-secondary btn-sm" data-action="expandir" data-id="${p.id}">Ver mais</button>` : ''}
-        ${p.linkPdf ? `<a class="btn btn-secondary btn-sm" href="${esc(p.linkPdf)}" target="_blank" rel="noopener">📄 Ver PDF</a>` : ''}
-        ${p.linkEscavador ? `<a class="btn btn-secondary btn-sm" href="${esc(p.linkEscavador)}" target="_blank" rel="noopener">🔗 Ver no Escavador</a>` : ''}
-        ${!p.triagem ? `<button class="btn btn-secondary btn-sm" data-action="triagem-refazer" data-id="${p.id}">🤖 Analisar com IA</button>` : ''}
-        ${p.status === 'Nova' ? `<button class="btn btn-primary btn-sm" data-action="lida" data-id="${p.id}">Marcar como lida</button>` : ''}
-        ${p.status !== 'Arquivada' ? `<button class="btn btn-secondary btn-sm" data-action="arquivar" data-id="${p.id}">Arquivar</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-
-  document.querySelectorAll('[data-action="lida"]').forEach(btn =>
-    btn.addEventListener('click', async () => {
-      await apiFetch(`/publicacoes/${btn.dataset.id}/lida`, { method: 'PATCH' });
-      load();
-    }));
-
-  document.querySelectorAll('[data-action="arquivar"]').forEach(btn =>
-    btn.addEventListener('click', async () => {
-      await apiFetch(`/publicacoes/${btn.dataset.id}/arquivar`, { method: 'PATCH' });
-      load();
-    }));
-
-  document.querySelectorAll('[data-action="expandir"]').forEach(btn =>
-    btn.addEventListener('click', () => {
-      const el = document.getElementById(`conteudo-${btn.dataset.id}`);
-      el.classList.toggle('expanded');
-      btn.textContent = el.classList.contains('expanded') ? 'Ver menos' : 'Ver mais';
-    }));
+  list.innerHTML = pubs.map(cardPublicacao).join('');
 }
 
 document.getElementById('btnFiltrar').addEventListener('click', load);

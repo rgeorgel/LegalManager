@@ -55,21 +55,14 @@
     .pub-badge-nova { background:#fef3c7; color:#92400e; }
     .pub-badge-lida { background:#f3f4f6; color:#6b7280; }
     .pub-badge-arquivada { background:#e5e7eb; color:#9ca3af; }
-    .pub-tipo { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:600; background:#eff6ff; color:#1d4ed8; }
-    .pub-card { border:1px solid var(--color-border); border-radius:var(--radius); background:var(--color-surface); padding:16px; margin-bottom:12px; transition:border-color 0.15s,box-shadow 0.15s; }
-    .pub-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow); }
-    .pub-card:active { border-color:var(--color-primary); background:var(--color-bg); }
-    .pub-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
-    .pub-card-tipo { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .pub-card-meta { font-size:12px; color:var(--color-text-muted); }
-    .pub-card-conteudo { font-size:14px; color:var(--color-text); line-height:1.6; max-height:90px; overflow:hidden; position:relative; }
-    .pub-card-conteudo.expanded { max-height:none; }
-    .pub-card-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+    /* Card de entidade do sistema (.ent-* em styles.css, js/cards.js), numa coluna. */
+    .pub-lista { display:flex; flex-direction:column; gap:12px; }
+    .pub-snippet { font-size:13px; color:var(--color-text-muted); margin-bottom:6px; font-style:italic; }
+    .pub-conteudo { font-size:14px; color:var(--color-text); line-height:1.6; max-height:90px; overflow:hidden; overflow-wrap:anywhere; }
+    .pub-conteudo.expanded { max-height:none; }
+    .pub-ver-mais { margin-top:6px; padding:0; border:none; background:none; color:var(--color-primary); font:inherit; font-size:13px; font-weight:500; cursor:pointer; }
+    .pub-ver-mais:hover { text-decoration:underline; }
     .badge-count { background:var(--color-danger); color:#fff; padding:2px 8px; border-radius:10px; font-size:12px; }
-    .view-btn { padding:6px 14px; border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius); cursor:pointer; font-size:13px; }
-    .view-btn:hover { background:var(--color-bg); }
-    .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
-    .pub-card-urgente { border-color:#ef4444 !important; }
     .pub-badge-urgente { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; background:#fee2e2; color:#991b1b; }
     .pub-ia-resumo { font-size:13px; color:#6d28d9; background:#f5f3ff; border-radius:4px; padding:8px 12px; margin-bottom:8px; border-left:3px solid #7c3aed; }
     .pub-sugestao { border:1px solid var(--color-border); border-left:3px solid var(--color-primary); border-radius:var(--radius); background:var(--color-bg); padding:12px 14px; margin-bottom:10px; font-size:13px; color:var(--color-text); }
@@ -152,7 +145,7 @@
       <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
     </div>
 
-    <div id="listaPubs"></div>
+    <div id="listaPubs" class="pub-lista"></div>
     <div id="semPubs" style="display:none;color:var(--color-text-muted);padding:32px;text-align:center">
       Nenhuma publicação encontrada.
     </div>
