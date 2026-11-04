@@ -22,6 +22,8 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {object} o
  * @param {string} [o.href]        Detalhe da entidade: o card inteiro e o título abrem este link.
  *                                 Sem href (entidade sem detalhe, ex.: publicação), o card não é clicável.
+ * @param {boolean} [o.abrivel]    Sem href mas clicável (abre um modal via ativarCardsClicaveis({ abrir })),
+ *                                 ex.: modelo de documento. Também abre com Enter (o card recebe foco).
  * @param {string}  o.titulo       Texto do título (uma linha; completo na dica).
  * @param {boolean} [o.tituloMono] Título em fonte monoespaçada (identificadores como o CNJ).
  * @param {boolean} [o.tituloCompleto] Título quebra linha e aparece inteiro (quando o título é o
@@ -60,14 +62,14 @@ export function cardEntidade(o) {
   const prog = meta && typeof meta.progresso === 'number'
     ? Math.max(0, Math.min(100, meta.progresso)) : null;
   return `
-    <div class="ent-card${estado}${classe}"${o.href ? ` data-href="${esc(o.href)}"` : ''}${dados}>
+    <div class="ent-card${estado}${classe}"${o.href ? ` data-href="${esc(o.href)}"` : o.abrivel ? ' data-abrir="1" tabindex="0"' : ''}${dados}>
       <div class="ent-card-top">
         ${o.prefixoHtml ? `<div class="ent-card-prefixo">${o.prefixoHtml}</div>` : ''}
         <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}${o.tituloCompleto ? ' is-completo' : ''}">${o.href ? `<a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a>` : `<span title="${esc(o.titulo)}">${esc(o.titulo)}</span>`}</div>
         ${o.statusHtml ? `<div class="ent-card-status">${o.statusHtml}</div>` : ''}
       </div>
       ${o.tagsHtml ? `<div class="ent-card-tags">${o.tagsHtml.filter(Boolean).join('')}</div>` : ''}
-      ${'descricao' in o ? `<div class="ent-card-desc"${desc ? ` title="${esc(desc)}"` : ''}>${desc ? esc(desc) : '&nbsp;'}</div>` : ''}
+      ${'descricao' in o ? `<div class="ent-card-desc${desc ? '' : ' is-vazia'}"${desc ? ` title="${esc(desc)}"` : ''}>${desc ? esc(desc) : '&nbsp;'}</div>` : ''}
       ${campos.length ? `
         <div class="ent-card-campos">
           ${campos.map(c => {
@@ -114,20 +116,29 @@ export function cardEntidade(o) {
 export function ativarCardsClicaveis(container, { abrir } = {}) {
   if (!container || container.dataset.cardsClicaveis) return;
   container.dataset.cardsClicaveis = '1';
+  const SELETOR = '.ent-card[data-href], .ent-card[data-abrir]';
   const aoClicar = (e) => {
-    const card = e.target.closest('.ent-card[data-href]');
+    const card = e.target.closest(SELETOR);
     if (!card || !container.contains(card)) return;
     const noTitulo = e.target.closest('.ent-card-titulo a');
-    if (!noTitulo && e.target.closest('a, button, input, select, textarea, label')) return;
+    if (!noTitulo && e.target.closest('a, button, input, select, textarea, label, summary')) return;
     if (e.type === 'click' && String(window.getSelection?.() ?? '').length) return;
+    const href = card.dataset.href;
     const novaAba = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
     if (noTitulo && (novaAba || !abrir)) return; // o próprio link resolve
-    if (novaAba) { window.open(card.dataset.href, '_blank', 'noopener'); return; }
+    if (novaAba && href) { window.open(href, '_blank', 'noopener'); return; }
+    if (e.button === 1) return; // sem href não há nova aba
     if (abrir) { e.preventDefault(); abrir(card, e); return; }
-    window.location.href = card.dataset.href;
+    if (href) window.location.href = href;
   };
   container.addEventListener('click', aoClicar);
   container.addEventListener('auxclick', e => { if (e.button === 1) aoClicar(e); });
+  // Card sem link (data-abrir) recebe foco: Enter abre, como num botão.
+  container.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !abrir || !e.target.matches?.('.ent-card[data-abrir]')) return;
+    e.preventDefault();
+    abrir(e.target, e);
+  });
 }
 
 // ── Menu de ações do card (⋮) ─────────────────────────────────────────────

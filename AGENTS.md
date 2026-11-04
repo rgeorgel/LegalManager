@@ -142,11 +142,15 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 - Cores sempre por variável de tema (`--color-surface`, `--color-text`...), nunca `#fff` fixo.
 - Grade `.ent-grid`: no celular vira uma coluna sem estourar a largura (`minmax(0,1fr)`).
 
+- Clicável sem página nem URL (modelo de documento → modal "Usar"): `abrivel: true` + `abrir` em
+  `ativarCardsClicaveis`; o card recebe foco e abre com Enter.
 - Entidade sem detalhe (publicação): sem `href` — o card não é clicável. Conteúdo longo (texto,
   formulário da sugestão da IA) em `corpoHtml`; numa coluna, não em `.ent-grid`.
 
 Já migradas: Honorários Contratos, Processos, Contatos, Tarefas (visão em blocos; as listas e o
-kanban seguem com marcação própria) e Publicações. Ainda com card próprio, a migrar: Documentos.
+kanban seguem com marcação própria), Publicações e Modelos (Documentos). A lista de arquivos de
+Documentos é um explorador (linhas), não card. Pendente: o menu ⋮ de Contatos ainda é próprio
+(trocar por `abrirMenuCard`).
 
 ## Pitfalls Conhecidos
 

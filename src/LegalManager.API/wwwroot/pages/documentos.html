@@ -79,22 +79,11 @@
     .mv-toolbar .form-control { width:auto; }
     .mv-toolbar #modBusca { flex:1; min-width:200px; }
     .mv-count { font-size:13px; color:var(--color-text-muted); white-space:nowrap; }
-    .mv-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
-    .mv-card { display:flex; flex-direction:column; gap:10px; padding:16px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
-    .mv-card:hover { border-color:var(--color-primary); box-shadow:var(--shadow-md); }
-    .mv-card:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
-    .mv-card-head { display:flex; gap:10px; align-items:flex-start; }
-    .mv-card-icon { width:36px; height:36px; flex-shrink:0; border-radius:8px; background:var(--mv-tint); color:var(--color-primary); display:flex; align-items:center; justify-content:center; font-size:18px; }
-    .mv-card-title { font-weight:600; font-size:15px; line-height:1.3; word-break:break-word; }
-    .mv-card-desc { font-size:13px; color:var(--color-text-muted); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    /* Cards de modelo: card de entidade do sistema (.ent-* em styles.css, js/cards.js). */
     .mv-card-snippet { font-family:Georgia, 'Times New Roman', serif; font-size:12.5px; line-height:1.55; color:var(--color-text); background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; padding:10px 12px; height:84px; overflow:hidden; white-space:pre-wrap; word-break:break-word; position:relative; }
     .mv-card-snippet::after { content:''; position:absolute; left:0; right:0; bottom:0; height:28px; background:linear-gradient(transparent, var(--color-bg)); }
-    .mv-card-meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--color-text-muted); }
+    #modLista .ent-card-corpo { margin-top:10px; padding-top:0; border-top:none; }
     .mv-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:12px; background:var(--mv-tint); color:var(--color-text); font-weight:500; }
-    .mv-card-actions { display:flex; gap:6px; margin-top:auto; padding-top:4px; }
-    .mv-card-actions .btn-primary { flex:1; justify-content:center; }
-    .mv-icon-btn { min-width:36px; padding:0 10px; justify-content:center; }
-    .mv-icon-btn.mv-danger:hover { color:var(--color-danger); border-color:var(--color-danger); }
 
     .mv-empty { text-align:center; padding:40px 20px 24px; }
     .mv-empty h2 { font-size:18px; margin:8px 0 6px; }
@@ -764,6 +753,7 @@ import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
 import { esc } from '/js/utils.js';
+import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { createProcessoPicker } from '/js/processo-picker.js';
 import {
@@ -1654,33 +1644,29 @@ function modelosFiltrados() {
   return lista;
 }
 
+// Card de entidade do sistema (js/cards.js). O card inteiro usa o modelo (ou, no exemplo, abre o
+// editor para adicioná-lo); Editar, Duplicar e Excluir ficam no menu ⋮. A prévia do texto vai no
+// corpo, com altura fixa, para os cards ficarem alinhados.
 function cardModeloHtml(m, { exemplo = false, indice = 0 } = {}) {
   const vars = extrairVariaveis(m.conteudo);
-  const meta = exemplo
-    ? '<span>Modelo de exemplo</span>'
-    : `<span>Criado em ${new Date(m.criadoEm).toLocaleDateString('pt-BR')}${m.nomeCriadoPor ? ` · ${esc(m.nomeCriadoPor)}` : ''}</span>`;
-  const acoes = exemplo
-    ? `<button type="button" class="btn btn-primary btn-sm" data-acao="exemplo" data-indice="${indice}">Adicionar e editar</button>`
-    : `<button type="button" class="btn btn-primary btn-sm" data-acao="usar">Usar modelo</button>
-       <button type="button" class="btn btn-secondary btn-sm" data-acao="editar">Editar</button>
-       <button type="button" class="btn btn-secondary btn-sm mv-icon-btn" data-acao="duplicar" title="Duplicar" aria-label="Duplicar">⧉</button>
-       <button type="button" class="btn btn-secondary btn-sm mv-icon-btn mv-danger" data-acao="excluir" title="Excluir" aria-label="Excluir">🗑</button>`;
-  return `
-    <div class="card mv-card" ${exemplo ? '' : `tabindex="0" data-id="${esc(m.id)}"`}>
-      <div class="mv-card-head">
-        <div class="mv-card-icon">📄</div>
-        <div style="min-width:0">
-          <div class="mv-card-title">${esc(m.nome)}</div>
-          ${m.descricao ? `<div class="mv-card-desc">${esc(m.descricao)}</div>` : ''}
-        </div>
-      </div>
-      <div class="mv-card-snippet">${previewHtml(m.conteudo.slice(0, 320))}</div>
-      <div class="mv-card-meta">
-        <span class="mv-chip" title="${esc(vars.join(', '))}">{ } ${vars.length} ${vars.length === 1 ? 'variável' : 'variáveis'}</span>
-        ${meta}
-      </div>
-      <div class="mv-card-actions">${acoes}</div>
-    </div>`;
+  return cardEntidade({
+    abrivel: true,
+    titulo: m.nome,
+    estado: exemplo ? 'muted' : 'info',
+    classe: exemplo ? 'mv-exemplo' : '',
+    dados: exemplo ? { indice } : { id: m.id },
+    statusHtml: exemplo
+      ? '<span class="mv-chip">Exemplo</span>'
+      : `<button type="button" class="ent-card-menu" data-menu-modelo="${esc(m.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações do modelo ${esc(m.nome)}">⋮</button>`,
+    descricao: m.descricao || '',
+    corpoHtml: `<div class="mv-card-snippet">${previewHtml(m.conteudo.slice(0, 320))}</div>`,
+    meta: {
+      principal: `{ } ${vars.length} ${vars.length === 1 ? 'variável' : 'variáveis'}`,
+      secundarioHtml: exemplo
+        ? 'Clique para adicionar e editar'
+        : `Criado em ${new Date(m.criadoEm).toLocaleDateString('pt-BR')}${m.nomeCriadoPor ? ` · ${esc(m.nomeCriadoPor)}` : ''}`,
+    },
+  });
 }
 
 function renderModelos() {
@@ -1700,7 +1686,7 @@ function renderModelos() {
         </div>
         <div class="mv-exemplos">
           <div class="mv-exemplos-title">Ou comece com um exemplo</div>
-          <div class="mv-grid">${MODELOS_EXEMPLO.map((m, i) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
+          <div class="ent-grid">${MODELOS_EXEMPLO.map((m, i) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
         </div>
       </div>`;
     return;
@@ -1722,7 +1708,7 @@ function renderModelos() {
       </div>${exemplosRestantesHtml()}`;
     return;
   }
-  lista.innerHTML = `<div class="mv-grid">${filtrados.map(m => cardModeloHtml(m)).join('')}</div>${exemplosRestantesHtml()}`;
+  lista.innerHTML = `<div class="ent-grid">${filtrados.map(m => cardModeloHtml(m)).join('')}</div>${exemplosRestantesHtml()}`;
 }
 
 // Exemplos que o escritório ainda não adicionou (pelo nome), para continuarem acessíveis
@@ -1737,37 +1723,44 @@ function exemplosRestantesHtml() {
   return `
     <details class="mv-exemplos"${termos.length ? ' open' : ''}>
       <summary class="mv-exemplos-title">Modelos de exemplo (${restantes.length})</summary>
-      <div class="mv-grid">${restantes.map(({ m, i }) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
+      <div class="ent-grid">${restantes.map(({ m, i }) => cardModeloHtml(m, { exemplo: true, indice: i })).join('')}</div>
     </details>`;
 }
 
 document.getElementById('modBusca').addEventListener('input', renderModelos);
 document.getElementById('modOrdem').addEventListener('change', renderModelos);
 
+// Clique no card: usa o modelo (exemplo: abre o editor com ele). Enter no card faz o mesmo.
+ativarCardsClicaveis(document.getElementById('modLista'), {
+  abrir: card => {
+    if (card.dataset.indice != null) {
+      const ex = MODELOS_EXEMPLO[Number(card.dataset.indice)];
+      if (ex) abrirEditor({ nome: ex.nome, descricao: ex.descricao, conteudo: ex.conteudo, titulo: 'Novo modelo (exemplo)' });
+      return;
+    }
+    const modelo = modelos.find(m => m.id === card.dataset.id);
+    if (modelo) abrirUso(modelo);
+  },
+});
+
 document.getElementById('modLista').addEventListener('click', e => {
-  const btn = e.target.closest('[data-acao]');
-  const card = e.target.closest('.mv-card');
-  const modelo = card?.dataset.id ? modelos.find(m => m.id === card.dataset.id) : null;
-  const acao = btn?.dataset.acao ?? (modelo ? 'usar' : null);
-  if (!acao) return;
+  const menu = e.target.closest('[data-menu-modelo]');
+  if (menu) {
+    const modelo = modelos.find(m => m.id === menu.dataset.menuModelo);
+    if (!modelo) return;
+    abrirMenuCard(menu, [
+      { icone: '📝', rotulo: 'Usar modelo', acao: () => abrirUso(modelo) },
+      { icone: '✏️', rotulo: 'Editar', acao: () => abrirEditor({ ...modelo, titulo: 'Editar modelo' }) },
+      { icone: '⧉', rotulo: 'Duplicar', acao: () => duplicarModelo(modelo) },
+      { icone: '🗑️', rotulo: 'Excluir', perigo: true, acao: () => excluirModelo(modelo) },
+    ]);
+    return;
+  }
+  // Botões do estado vazio (criar, gerar com IA, limpar busca).
+  const acao = e.target.closest('[data-acao]')?.dataset.acao;
   if (acao === 'novo') abrirEditor();
   else if (acao === 'ia') document.getElementById('btnGerarIA').click();
   else if (acao === 'limpar-busca') { document.getElementById('modBusca').value = ''; renderModelos(); }
-  else if (acao === 'exemplo') {
-    const ex = MODELOS_EXEMPLO[Number(btn.dataset.indice)];
-    abrirEditor({ nome: ex.nome, descricao: ex.descricao, conteudo: ex.conteudo, titulo: 'Novo modelo (exemplo)' });
-  }
-  else if (!modelo) return;
-  else if (acao === 'usar') abrirUso(modelo);
-  else if (acao === 'editar') abrirEditor({ ...modelo, titulo: 'Editar modelo' });
-  else if (acao === 'duplicar') duplicarModelo(modelo);
-  else if (acao === 'excluir') excluirModelo(modelo);
-});
-
-document.getElementById('modLista').addEventListener('keydown', e => {
-  if (e.key !== 'Enter' || !e.target.matches('.mv-card[data-id]')) return;
-  const modelo = modelos.find(m => m.id === e.target.dataset.id);
-  if (modelo) abrirUso(modelo);
 });
 
 async function duplicarModelo(m) {

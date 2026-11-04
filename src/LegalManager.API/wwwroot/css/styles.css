@@ -802,8 +802,9 @@ body.com-widgets-laterais .main-content {
 .ent-card.is-warn { border-left-color: #d97706; }
 .ent-card.is-info { border-left-color: var(--color-primary); }
 .ent-card.is-muted { border-left-color: #6b7280; }
-.ent-card[data-href] { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
-.ent-card[data-href]:hover {
+.ent-card:is([data-href], [data-abrir]) { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.ent-card[data-abrir]:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.ent-card:is([data-href], [data-abrir]):hover {
   border-top-color: var(--color-primary); border-right-color: var(--color-primary); border-bottom-color: var(--color-primary);
   box-shadow: 0 4px 14px rgba(15, 23, 42, .10);
 }
@@ -877,6 +878,8 @@ body.com-widgets-laterais .main-content {
   .ent-card-titulo.is-mono { flex: 1 0 auto; max-width: 100%; }
   /* Uma coluna só: sem vizinho para alinhar, título e campos aparecem inteiros (no toque não há dica). */
   .ent-card-titulo:not(.is-mono) { white-space: normal; overflow-wrap: anywhere; }
+  .ent-card-desc { white-space: normal; overflow-wrap: anywhere; }
+  .ent-card-desc.is-vazia { display: none; }
   .ent-card-campos { grid-template-columns: 84px minmax(0, 1fr); }
   .ent-card-campo-val { white-space: normal; overflow-wrap: anywhere; }
   .ent-card-nums { gap: 8px; }
