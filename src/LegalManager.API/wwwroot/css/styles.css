@@ -809,10 +809,11 @@ body.com-widgets-laterais .main-content {
 }
 
 .ent-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.ent-card-titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ent-card-titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ent-card-titulo a { color: inherit; }
+.ent-card-titulo.is-mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 14px; font-weight: 600; letter-spacing: .02em; line-height: 1.7; }
 .ent-card-titulo a:hover { color: var(--color-primary); text-decoration: underline; }
-.ent-card-status { flex-shrink: 0; }
+.ent-card-status { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
 .ent-card-tags { display: flex; gap: 6px; margin-top: 6px; min-width: 0; min-height: 22px; overflow: hidden; white-space: nowrap; }
 .ent-card-tags > * { flex-shrink: 0; }
 .ent-card-tags > .ent-encolhe { flex-shrink: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; }
@@ -821,24 +822,39 @@ body.com-widgets-laterais .main-content {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* Campos de texto: rótulo à esquerda (largura fixa, igual em todos os cards), valor em peso normal. */
+.ent-card-campos {
+  display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 5px 10px; align-items: baseline;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);
+}
+.ent-card-campo-lbl { font-size: 10px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ent-card-campo-val { font-size: 13px; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ent-card-campo-val.is-vazio { color: var(--color-text-muted); }
+
 .ent-card-nums {
-  display: grid; grid-template-columns: repeat(var(--ent-cols, 3), minmax(0, 1fr)); gap: 10px 14px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px;
   margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);
 }
 .ent-card-num-lbl { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .3px; }
-.ent-card-num-val { font-size: 14px; font-weight: 700; margin-top: 3px; }
+.ent-card-num-val { font-size: 14px; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ent-card-rodape { display: flex; align-items: flex-end; gap: 10px; margin-top: auto; padding-top: 12px; }
 .ent-card-meta { flex: 1; min-width: 0; font-size: 12px; color: var(--color-text-muted); }
 .ent-card-meta-linha { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; }
 .ent-card-meta-linha > * { white-space: nowrap; }
-.ent-card-meta-linha b { color: var(--color-text); font-weight: 600; }
+.ent-card-meta-linha b { color: var(--color-text); font-weight: 500; }
 .ent-card-prog { height: 5px; background: var(--color-border); border-radius: 3px; margin-top: 5px; overflow: hidden; }
 .ent-card-prog > span { display: block; height: 100%; background: linear-gradient(90deg, #C9A84C, #E2C06A); border-radius: 3px; }
 .ent-card-acoes { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
 .ent-card-acoes .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-.ent-card .is-danger { color: #dc2626; font-weight: 700; }
+.ent-card .is-danger { color: #dc2626; font-weight: 600; }
 @media (max-width: 480px) {
+  /* Identificador (CNJ) não pode ser cortado: no celular o status desce para a linha de baixo. */
+  .ent-card-top:has(.is-mono) { flex-wrap: wrap; }
+  .ent-card-titulo.is-mono { flex: 1 0 auto; max-width: 100%; }
+  /* Uma coluna só: sem vizinho para alinhar, o texto dos campos aparece inteiro. */
+  .ent-card-campos { grid-template-columns: 84px minmax(0, 1fr); }
+  .ent-card-campo-val { white-space: normal; overflow-wrap: anywhere; }
   .ent-card-nums { gap: 8px; }
   .ent-card-num-val { font-size: 13px; }
 }

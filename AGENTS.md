@@ -117,14 +117,22 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 - **Faixas de altura fixa** para alinhar cards vizinhos: título + status, selos (`tagsHtml`;
   `ent-encolhe` no selo que pode ser cortado), descrição — cada uma em uma linha com reticências e
   texto completo na dica. Passe `descricao: ''` quando vazia, para reservar a linha.
-- **Valores** em grade de colunas fixas (`numeros`, 2–4 itens; `perigo` pinta de vermelho).
+- **Textos** (parte, vara, responsável...) em `campos`: linhas "rótulo  valor" na largura do card,
+  peso normal, uma linha com reticências (no celular quebram). Vazio mostra "—" e a linha fica.
+- **Valores curtos** (dinheiro, contagens) em `numeros`: grade de 2–4 colunas, uma linha cada
+  (`perigo` pinta de vermelho; `peso` alarga uma coluna; `dica` substitui a dica padrão).
+  Não ponha texto longo em `numeros` — corta demais.
+- **Peso de fonte contido**: só título e valores curtos em semi-negrito; o resto em peso normal.
+- Identificadores (CNJ): `tituloMono: true` — no celular o status desce de linha e o título não é cortado.
+- `dados: { id }` vira `data-id` no card; `classe` adiciona modificadores da página (ex.: `favorito`).
 - **Rodapé**: à esquerda `meta` (principal em negrito, secundário, `progresso` 0–100); à direita `acoesHtml`.
 - **Borda esquerda = estado**: `estado` ok | danger | warn | info | muted.
 - Campos `*Html` entram como estão (escape é de quem chama); os demais são escapados pelo componente.
 - Cores sempre por variável de tema (`--color-surface`, `--color-text`...), nunca `#fff` fixo.
 - Grade `.ent-grid`: no celular vira uma coluna sem estourar a largura (`minmax(0,1fr)`).
 
-Telas ainda com card próprio, a migrar: Processos, Contatos, Tarefas, Publicações, Documentos.
+Já migradas: Honorários Contratos, Processos (visão em blocos; a lista segue com marcação própria).
+Ainda com card próprio, a migrar: Contatos, Tarefas, Publicações, Documentos.
 
 ## Pitfalls Conhecidos
 

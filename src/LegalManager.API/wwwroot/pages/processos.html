@@ -98,6 +98,7 @@
     .fav-btn[aria-pressed="true"] { color:#f59e0b; }
     .fav-btn:disabled { opacity:.5; cursor:wait; }
     .processo-card.favorito { border-color:#fcd34d; }
+    .ent-card.favorito { border-top-color:#fcd34d; border-right-color:#fcd34d; border-bottom-color:#fcd34d; }
 
     /* Card grid layout */
     .processos-grid {
@@ -665,6 +666,7 @@ import { abrirNovoPelaUrl, esc, dataParede } from '/js/utils.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { getProcessos, createProcesso, updateProcesso, encerrarProcesso, deleteProcesso, setFavorito, baixarRelatorioProcessos } from '/js/processos.js';
 import { intercalarAnuncios } from '/js/publicidade.js';
+import { cardEntidade, ativarCardsClicaveis } from '/js/cards.js';
 import { apiFetch } from '/js/api.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { getContato } from '/js/contatos.js';
@@ -952,6 +954,7 @@ try {
 } catch { /* storage indisponível: fica o padrão */ }
 let currentFilters = {};
 let currentView = 'grid';
+let ultimosItens = [];
 let editingId = null;
 let encerrandoId = null;
 let advogados = [];
@@ -1012,6 +1015,14 @@ function renderTable(items) {
   }
   empty.style.display = 'none';
   grid.style.display = '';
+  ultimosItens = items;
+  aplicarClasseVisao();
+
+  if (currentView === 'grid') {
+    grid.innerHTML = items.map(cardProcesso).join('');
+    intercalarAnuncios(grid, { seletor: '.ent-card', cada: 4 }); // só no plano Free
+    return;
+  }
 
   grid.innerHTML = items.map(p => {
     const areaMap = { Tributario: 'Tributário', Trabalhista: 'Trabalhista', Criminal: 'Criminal',
@@ -1068,6 +1079,48 @@ function renderTable(items) {
   intercalarAnuncios(grid, { seletor: '.processo-card', cada: 4 }); // só no plano Free
 }
 
+// Visão em blocos: card de entidade do sistema (js/cards.js). Editar e Encerrar ficam no
+// detalhe do processo; no card, só a estrela de favorito.
+const ESTADO_PROCESSO = { Ativo: 'ok', Suspenso: 'warn', Arquivado: 'muted', Encerrado: 'muted' };
+function cardProcesso(p) {
+  const statusCls = { Ativo: 'ativo', Suspenso: 'suspenso', Arquivado: 'arquivado', Encerrado: 'encerrado' }[p.status] || 'gray';
+  const valor = p.valorCausa ? 'R$ ' + Number(p.valorCausa).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : null;
+  const pendentes = p.andamentosPendentes && !p.totalAndamentos;
+  return cardEntidade({
+    href: `/pages/processo-detalhe.html?id=${encodeURIComponent(p.id)}`,
+    titulo: p.numeroCNJ,
+    tituloMono: true,
+    estado: ESTADO_PROCESSO[p.status] ?? 'muted',
+    classe: p.favorito ? 'favorito' : '',
+    dados: { id: p.id },
+    statusHtml: `${favBtn(p.favorito)}<span class="badge status-${statusCls}">${esc(p.status)}</span>`,
+    tagsHtml: [
+      `<span class="badge badge-blue">${esc(areaLabel(p.areaDireito) || '—')}</span>`,
+      p.grau ? `<span class="badge badge-gray">${esc(p.grau)}</span>` : '',
+      p.monitorado ? '<span class="monitoring-badge">🔄 Monitorado</span>' : '',
+    ],
+    campos: [
+      { rotulo: 'Parte', valor: p.nomeCliente },
+      { rotulo: 'Tribunal', valor: p.tribunal },
+      { rotulo: 'Vara', valor: p.vara },
+      { rotulo: 'Responsável', valor: p.nomeAdvogadoResponsavel },
+    ],
+    meta: {
+      principal: pendentes
+        ? '⏳ Andamentos ao abrir'
+        : `${p.totalAndamentos ?? 0} andamento${p.totalAndamentos === 1 ? '' : 's'}`,
+      secundarioHtml: valor ? `Causa ${esc(valor)}` : '',
+    },
+  });
+}
+
+// Lista e blocos têm marcações diferentes: a troca de visão redesenha os itens já carregados.
+function aplicarClasseVisao() {
+  document.getElementById('processosContainer').className =
+    currentView === 'grid' ? 'ent-grid processos-cards' : 'processos-grid list-view';
+}
+ativarCardsClicaveis(document.getElementById('processosContainer'));
+
 // Linha "rótulo: valor" do card. Sem valor, mostra "—"; o Valor da causa vazio some na
 // visão em cards, mas fica como coluna na lista para manter as colunas alinhadas.
 function infoRow(campo, rotulo, valor) {
@@ -1090,14 +1143,14 @@ document.getElementById('processosContainer').addEventListener('click', async e 
   const btn = e.target.closest('.fav-btn');
   if (!btn) return;
   e.stopPropagation();
-  const card = btn.closest('.processo-card');
+  const card = btn.closest('.processo-card, .ent-card');
   const favorito = btn.getAttribute('aria-pressed') !== 'true';
   btn.disabled = true;
   try {
     await setFavorito(card.dataset.id, favorito);
     if (!favorito && currentFilters.favoritos) {
       card.remove();
-      if (!document.querySelector('#processosContainer .processo-card')) loadProcessos();
+      if (!document.querySelector('#processosContainer :is(.processo-card, .ent-card)')) loadProcessos();
       return;
     }
     btn.outerHTML = favBtn(favorito);
@@ -1588,14 +1641,14 @@ document.getElementById('viewGrid').addEventListener('click', () => {
   currentView = 'grid';
   document.getElementById('viewGrid').classList.add('active');
   document.getElementById('viewList').classList.remove('active');
-  document.getElementById('processosContainer').classList.remove('list-view');
+  if (ultimosItens.length) renderTable(ultimosItens); else aplicarClasseVisao();
 });
 
 document.getElementById('viewList').addEventListener('click', () => {
   currentView = 'list';
   document.getElementById('viewList').classList.add('active');
   document.getElementById('viewGrid').classList.remove('active');
-  document.getElementById('processosContainer').classList.add('list-view');
+  if (ultimosItens.length) renderTable(ultimosItens); else aplicarClasseVisao();
 });
 
 const filtFavoritos = document.getElementById('filtFavoritos');
