@@ -37,20 +37,6 @@
     .hp-meta-fill.pending { background:linear-gradient(90deg,#C9A84C,#E2C06A); }
     .hp-meta-pct { font-size:11px; font-weight:700; color:#fff; }
 
-    .ci { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px; margin-bottom:10px; border-left:4px solid var(--color-border); box-shadow:var(--shadow); }
-    .ci.ng { border-left-color:#dc2626; }
-    .ci.ok { border-left-color:#059669; }
-    .ci.mu { border-left-color:#6b7280; }
-    .ci-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-    .ci-name { font-size:16px; font-weight:700; }
-    .ci-sub { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
-    .ci-nums { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px 14px; margin-top:10px; font-size:12px; }
-    .ci-nums .cl { color:var(--color-text-muted); font-size:10px; text-transform:uppercase; letter-spacing:.3px; }
-    .ci-nums .cv { font-weight:700; font-size:14px; margin-top:3px; }
-    .ci-nums .cv.danger { color:#dc2626; }
-    .prog { height:5px; background:var(--color-border); border-radius:3px; margin-top:10px; overflow:hidden; }
-    .prog-fill { height:100%; background:linear-gradient(90deg,#C9A84C,#E2C06A); border-radius:3px; }
-
     .badge-sm { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
     .badge-ok { background:#d1fae5; color:#059669; }
     .badge-err { background:#fee2e2; color:#dc2626; }
@@ -67,10 +53,7 @@
     .view-btn:hover { background:var(--color-border); }
     .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
 
-    .ci-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
-    .ci-grid .ci { margin-bottom:0; display:flex; flex-direction:column; }
-    .ci-grid .ci-actions { margin-top:auto; padding-top:12px; }
-    @media (max-width:480px) { .ci-grid { grid-template-columns:1fr; } }
+    /* Visão em blocos: card de entidade do sistema (.ent-* em styles.css, js/cards.js). */
 
     /* Visão em lista no padrão de Processos: uma linha-card por contrato (cliente, nº, status
        e ações em cima; abaixo, grade de "rótulo sobre valor"). Sem tabela, sem scroll lateral. */
@@ -104,7 +87,6 @@
       padding:4px 10px; font-size:12px; cursor:pointer; }
     .sort-chip:hover { border-color:var(--color-primary); color:var(--color-primary); }
     .sort-chip.active { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
-    .ci .danger { color:#dc2626; font-weight:700; }
 
     .empty { text-align:center; padding:38px 16px; color:var(--color-text-muted); }
     .empty p { margin-bottom:14px; }
@@ -183,13 +165,16 @@
 
   <script type="module">
     import { initLayout } from '/js/layout.js';
+    import { cardEntidade, ativarCardsClicaveis, ICONES } from '/js/cards.js';
     import {
       brl, fmtDate, escapeHtml, notify, pick,
       listarContratos, getDashboard,
       mapForma, statusContrato, STATUS_CONTRATO_LABELS
     } from '/js/honorarios.js';
-    import { contatoPerfilUrl } from '/js/contato-nav.js';
     initLayout();
+
+    // Nesta tela o foco é o contrato: o nome do cliente abre o contrato, não o perfil do contato.
+    const detalheUrl = (id) => `/pages/honorarios-contrato-detalhe.html?id=${encodeURIComponent(id)}`;
 
     const PAGE_SIZE = 50;
     // Ordenação pelas colunas da lista (vale também para os blocos). Sem coluna escolhida, o
@@ -352,7 +337,7 @@
       if (currentView === 'list') {
         el.innerHTML = `<div class="ct-lista">${ultimosItens.map(c => renderLinha(c)).join('')}</div>`;
       } else {
-        el.innerHTML = `<div class="ci-grid">${ultimosItens.map(c => renderCard(c)).join('')}</div>`;
+        el.innerHTML = `<div class="ent-grid">${ultimosItens.map(c => renderCard(c)).join('')}</div>`;
       }
     }
 
@@ -402,7 +387,7 @@
           <div class="ct-row-top">
             <div class="ct-row-id">
               <div class="ct-row-nome">
-                <a href="${contatoPerfilUrl(pick(c, 'contatoId'))}">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
+                <a href="${detalheUrl(id)}" title="Abrir contrato">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
                 <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
                 <span class="badge-sm ${info.cls}">${info.label}</span>
               </div>
@@ -436,46 +421,46 @@
       applyView();
       renderItens();
     }
+    ativarCardsClicaveis(document.getElementById('lista'));
     document.getElementById('viewList').addEventListener('click', () => setView('list'));
     document.getElementById('viewCards').addEventListener('click', () => setView('cards'));
     applyView();
 
     function renderCard(c) {
       const st = statusContrato(c);
-      const cls = (st === 'Inadimplente') ? 'ng' : (st === 'Quitado' || st === 'Encerrado' || st === 'Distratado') ? 'mu' : (st === 'Suspenso') ? 'mu' : 'ok';
+      const estado = st === 'Inadimplente' ? 'danger'
+        : (st === 'Quitado' || st === 'Encerrado' || st === 'Distratado' || st === 'Suspenso') ? 'muted' : 'ok';
       const info = fmtStatus(st);
       const aReceber = (c.valorPendente ?? c.ValorPendente ?? 0) + (c.valorEmAtraso ?? c.ValorEmAtraso ?? 0);
       const totalParc = c.totalParcelas ?? c.TotalParcelas ?? 0;
       const pagas = c.parcelasPagas ?? c.ParcelasPagas ?? 0;
-      const prog = totalParc > 0 ? (pagas / totalParc * 100) : 0;
-      const proxVenc = c.proximoVencimento ? fmtDate(c.proximoVencimento) : `${pagas}/${totalParc}`;
-      return `
-        <div class="ci ${cls}">
-          <div class="ci-top">
-            <div style="min-width:0;flex:1">
-              <div class="ci-name"><a href="${contatoPerfilUrl(pick(c, 'contatoId'))}" style="color:inherit">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a></div>
-              <div class="ci-sub">
-                <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
-                ${c.numeroProcesso || c.NumeroProcesso ? `<span class="badge-sm badge-proc" title="Processo">⚖ ${escapeHtml(c.numeroProcesso ?? c.NumeroProcesso)}</span>` : ''}
-                ${c.objeto || c.Objeto ? `· ${escapeHtml((c.objeto ?? c.Objeto).slice(0, 80))}` : ''}
-              </div>
-            </div>
-            <span class="badge-sm ${info.cls}">${info.label}</span>
-          </div>
-          <div class="ci-nums">
-            <div><div class="cl">Total</div><div class="cv">${brl(c.valorTotal ?? c.ValorTotal)}</div></div>
-            <div><div class="cl">A Receber</div><div class="cv ${st === 'Inadimplente' ? 'danger' : ''}">${brl(aReceber)}</div></div>
-            <div><div class="cl">Pago</div><div class="cv">${brl(c.valorPago ?? c.ValorPago)}</div></div>
-            <div><div class="cl">Forma</div><div class="cv" style="font-size:12px">${mapForma(c.formaPagamento ?? c.FormaPagamento)}</div></div>
-          </div>
-          <div class="prog"><div class="prog-fill" style="width:${prog.toFixed(0)}%"></div></div>
-          <div class="ci-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-detalhe.html?id=${c.id ?? c.Id}">📄 Ver</a>
-            <a class="btn btn-secondary btn-sm" href="/pages/honorarios-contrato-novo.html?id=${c.id ?? c.Id}">✏️ Editar</a>
-            <button class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${c.id ?? c.Id}')">📑 Extrato</button>
-          </div>
-        </div>
-      `;
+      const vencidas = c.parcelasVencidas ?? c.ParcelasVencidas ?? 0;
+      const id = c.id ?? c.Id;
+      const proc = c.numeroProcesso ?? c.NumeroProcesso;
+      return cardEntidade({
+        href: detalheUrl(id),
+        titulo: c.nomeContato ?? c.NomeContato,
+        estado,
+        statusHtml: `<span class="badge-sm ${info.cls}">${info.label}</span>`,
+        tagsHtml: [
+          `<span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>`,
+          proc ? `<span class="badge-sm badge-proc ent-encolhe" title="Processo ${escapeHtml(proc)}">⚖ ${escapeHtml(proc)}</span>` : '',
+        ],
+        descricao: c.objeto ?? c.Objeto ?? '',
+        numeros: [
+          { rotulo: 'Total', valor: brl(c.valorTotal ?? c.ValorTotal) },
+          { rotulo: 'A Receber', valor: brl(aReceber), perigo: st === 'Inadimplente' },
+          { rotulo: 'Pago', valor: brl(c.valorPago ?? c.ValorPago) },
+        ],
+        meta: {
+          principal: mapForma(c.formaPagamento ?? c.FormaPagamento),
+          secundarioHtml: totalParc > 0
+            ? `${pagas}/${totalParc} pagas${vencidas > 0 ? ` · <span class="is-danger">${vencidas} vencida(s)</span>` : ''}`
+            : '',
+          progresso: totalParc > 0 ? (pagas / totalParc * 100) : 0,
+        },
+        acoesHtml: `<button type="button" class="btn btn-secondary btn-sm" onclick="window._extratoPdf('${escapeHtml(id)}')" title="Baixar extrato em PDF">${ICONES.download} Extrato</button>`,
+      });
     }
 
     function renderPaginacao(total) {

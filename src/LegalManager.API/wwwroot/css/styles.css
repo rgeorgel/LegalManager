@@ -782,3 +782,63 @@ body.com-widgets-laterais .main-content {
   body.com-widgets-laterais .main-content { padding-right: 44px; }
 }
 
+
+/* ── Card de entidade (padrão do sistema) ───────────────────────────────
+   Visão em blocos de listagens (contratos, processos, contatos, tarefas...). Monte com
+   cardEntidade() de js/cards.js e ligue o clique com ativarCardsClicaveis(); regras em
+   CLAUDE.md → "Padrão de card". Cada faixa tem altura fixa (uma linha, reticências) para
+   que valores e rodapé fiquem alinhados entre cards vizinhos. */
+.ent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 12px; }
+@media (max-width: 480px) { .ent-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.ent-card {
+  display: flex; flex-direction: column; min-width: 0;
+  background: var(--color-surface); color: var(--color-text);
+  border: 1px solid var(--color-border); border-left: 4px solid var(--color-border);
+  border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow);
+}
+.ent-card.is-ok { border-left-color: #059669; }
+.ent-card.is-danger { border-left-color: #dc2626; }
+.ent-card.is-warn { border-left-color: #d97706; }
+.ent-card.is-info { border-left-color: var(--color-primary); }
+.ent-card.is-muted { border-left-color: #6b7280; }
+.ent-card[data-href] { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.ent-card[data-href]:hover {
+  border-top-color: var(--color-primary); border-right-color: var(--color-primary); border-bottom-color: var(--color-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .10);
+}
+
+.ent-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.ent-card-titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ent-card-titulo a { color: inherit; }
+.ent-card-titulo a:hover { color: var(--color-primary); text-decoration: underline; }
+.ent-card-status { flex-shrink: 0; }
+.ent-card-tags { display: flex; gap: 6px; margin-top: 6px; min-width: 0; min-height: 22px; overflow: hidden; white-space: nowrap; }
+.ent-card-tags > * { flex-shrink: 0; }
+.ent-card-tags > .ent-encolhe { flex-shrink: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; }
+.ent-card-desc {
+  font-size: 12px; color: var(--color-text-muted); margin-top: 6px; min-height: 1.4em; line-height: 1.4em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.ent-card-nums {
+  display: grid; grid-template-columns: repeat(var(--ent-cols, 3), minmax(0, 1fr)); gap: 10px 14px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);
+}
+.ent-card-num-lbl { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .3px; }
+.ent-card-num-val { font-size: 14px; font-weight: 700; margin-top: 3px; }
+
+.ent-card-rodape { display: flex; align-items: flex-end; gap: 10px; margin-top: auto; padding-top: 12px; }
+.ent-card-meta { flex: 1; min-width: 0; font-size: 12px; color: var(--color-text-muted); }
+.ent-card-meta-linha { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; }
+.ent-card-meta-linha > * { white-space: nowrap; }
+.ent-card-meta-linha b { color: var(--color-text); font-weight: 600; }
+.ent-card-prog { height: 5px; background: var(--color-border); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+.ent-card-prog > span { display: block; height: 100%; background: linear-gradient(90deg, #C9A84C, #E2C06A); border-radius: 3px; }
+.ent-card-acoes { display: flex; gap: 6px; flex-shrink: 0; margin-left: auto; }
+.ent-card-acoes .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.ent-card .is-danger { color: #dc2626; font-weight: 700; }
+@media (max-width: 480px) {
+  .ent-card-nums { gap: 8px; }
+  .ent-card-num-val { font-size: 13px; }
+}

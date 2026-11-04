@@ -104,6 +104,28 @@ Painel `/superadmin/tenants.html` (e detail modal) oferece botões **Exportar** 
 - **Idioma**: Português (BR) em toda a interface
 - sessionStorage para auth — não usar localStorage
 
+## Padrão de card (visão em blocos das listagens)
+
+Todo card de listagem usa o componente compartilhado: CSS `.ent-*` em `wwwroot/css/styles.css` e
+`cardEntidade()` / `ativarCardsClicaveis()` / `ICONES` em `wwwroot/js/cards.js`. Não crie CSS de
+card próprio na página. Referência: `pages/honorarios-contratos.html` (`renderCard`).
+
+- **O card inteiro abre o detalhe** (`href`); o título também é o link (teclado, clique do meio).
+  Ctrl/⌘ abre em nova aba; texto selecionado não navega. Chame `ativarCardsClicaveis(container)` uma vez.
+- **Sem botões "Ver" nem "Editar"** no card — a edição acontece dentro do detalhe. No rodapé só
+  ações secundárias (ex.: `ICONES.download` + "Extrato"), com ícones bem distintos e rótulo quando couber.
+- **Faixas de altura fixa** para alinhar cards vizinhos: título + status, selos (`tagsHtml`;
+  `ent-encolhe` no selo que pode ser cortado), descrição — cada uma em uma linha com reticências e
+  texto completo na dica. Passe `descricao: ''` quando vazia, para reservar a linha.
+- **Valores** em grade de colunas fixas (`numeros`, 2–4 itens; `perigo` pinta de vermelho).
+- **Rodapé**: à esquerda `meta` (principal em negrito, secundário, `progresso` 0–100); à direita `acoesHtml`.
+- **Borda esquerda = estado**: `estado` ok | danger | warn | info | muted.
+- Campos `*Html` entram como estão (escape é de quem chama); os demais são escapados pelo componente.
+- Cores sempre por variável de tema (`--color-surface`, `--color-text`...), nunca `#fff` fixo.
+- Grade `.ent-grid`: no celular vira uma coluna sem estourar a largura (`minmax(0,1fr)`).
+
+Telas ainda com card próprio, a migrar: Processos, Contatos, Tarefas, Publicações, Documentos.
+
 ## Pitfalls Conhecidos
 
 - Erros de sintaxe JS (ex: `}` extra) só aparecem em runtime → sempre rode `check-js.ps1` após editar `.js`
