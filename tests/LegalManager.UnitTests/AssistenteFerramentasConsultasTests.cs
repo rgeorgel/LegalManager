@@ -376,6 +376,19 @@ public class AssistenteFerramentasConsultasTests
     }
 
     [Fact]
+    public async Task Opcionais_Null_ContamComoNaoInformados()
+    {
+        // gpt-oss manda null em vez de omitir os parâmetros opcionais.
+        var resumo = await Executar("resumo_financeiro", new { de = (string?)null, ate = (string?)null });
+        Assert.Equal(1000m, resumo.GetProperty("receitasRecebidas").GetDecimal());
+
+        var todos = await Executar("listar_lancamentos", new { });
+        var comNulls = await Executar("listar_lancamentos",
+            new { tipo = (string?)null, vencidos = (bool?)null, contato_id = (string?)null, limite = (int?)null });
+        Assert.Equal(todos.GetProperty("total").GetInt32(), comNulls.GetProperty("total").GetInt32());
+    }
+
+    [Fact]
     public async Task ListarLancamentos_Filtros()
     {
         var vencidos = await Executar("listar_lancamentos", new { vencidos = true, tipo = "Receita", contato_id = _clienteId });

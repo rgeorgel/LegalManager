@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using LegalManager.Application.DTOs.Assistente;
 using LegalManager.Application.Interfaces;
@@ -301,7 +302,9 @@ public class AssistenteService(
         var usuario = await db.Users.AsNoTracking().Where(u => u.Id == tenant.UserId)
             .Select(u => u.Nome).FirstOrDefaultAsync(ct) ?? "usuário";
         var agora = FusoHorario.AgoraParede(await db.DoTenantAsync(tenant.TenantId, ct));
-        var hoje = agora.ToString("dddd, dd/MM/yyyy HH:mm", BrasiliaTime.PtBr);
+        // Por extenso e em ISO: "03/11/2026" sozinho foi lido como 11 de março (formato americano) pelo gpt-oss.
+        var hoje = agora.ToString("dddd, d 'de' MMMM 'de' yyyy, HH:mm", BrasiliaTime.PtBr)
+            + " (" + agora.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ", no formato ano-mês-dia das ferramentas)";
 
         var foraDoPlano = new List<string>();
         if (!PlanoRestricoes.PermiteFinanceiro(tenant.Plano)) foraDoPlano.Add("financeiro");

@@ -112,6 +112,31 @@ public class AssistenteAcoesTests
     }
 
     [Fact]
+    public async Task AtualizarContato_CampoNull_NaoLimpa()
+    {
+        // gpt-oss manda null nos campos que não quer mudar; só "" limpa.
+        var c = SeedContato();
+
+        var (_, erro, acao) = await ProporAsync("atualizar_contato",
+            new { contato_id = c.Id.ToString(), email = "nova@x.com", telefone = (string?)null, nome = (string?)null });
+
+        Assert.False(erro);
+        var dto = AssistenteAcoes.ParaDto(acao!);
+        Assert.Contains(dto.Alteracoes, x => x.Campo == "E-mail");
+        Assert.DoesNotContain(dto.Alteracoes, x => x.Campo is "Telefone" or "Nome");
+    }
+
+    [Fact]
+    public async Task RegistrarHoras_MinutosNull_ErroDeArgumento()
+    {
+        var (json, erro, acao) = await ProporAsync("registrar_horas", new { minutos = (int?)null, descricao = "Revisão" });
+
+        Assert.True(erro);
+        Assert.Contains("minutos", json);
+        Assert.Null(acao);
+    }
+
+    [Fact]
     public async Task AtualizarContato_Confirmar_GravaSoOsCamposAlterados()
     {
         var c = SeedContato();

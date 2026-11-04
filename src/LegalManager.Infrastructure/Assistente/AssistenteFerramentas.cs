@@ -1096,9 +1096,14 @@ public partial class AssistenteFerramentas
 
     private static int Limite(JsonElement a)
     {
-        var n = a.ValueKind == JsonValueKind.Object && a.TryGetProperty("limite", out var v) && v.TryGetInt32(out var i) ? i : LimitePadrao;
+        var n = Inteiro(a, "limite") ?? LimitePadrao;
         return Math.Clamp(n, 1, LimiteMaximo);
     }
+
+    /// <summary>Inteiro opcional; null se não veio, veio null ou não é número (TryGetInt32 lança fora de Number).</summary>
+    private static int? Inteiro(JsonElement a, string nome) =>
+        a.ValueKind == JsonValueKind.Object && a.TryGetProperty(nome, out var v)
+        && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var i) ? i : null;
 
     private static Guid? Id(JsonElement a, string nome)
     {
@@ -1145,9 +1150,22 @@ public partial class AssistenteFerramentas
     private static JsonObject Schema((string Nome, JsonObject Def)[] props, string[] obrigatorios)
     {
         var properties = new JsonObject();
-        foreach (var (nome, def) in props) properties[nome] = def;
+        foreach (var (nome, def) in props) properties[nome] = obrigatorios.Contains(nome) ? def : Anulavel(def);
         var schema = new JsonObject { ["type"] = "object", ["properties"] = properties };
         if (obrigatorios.Length > 0) schema["required"] = new JsonArray(obrigatorios.Select(o => (JsonNode)o).ToArray());
         return schema;
+    }
+
+    /// <summary>
+    /// Parâmetro opcional também aceita null: alguns modelos (ex.: gpt-oss) mandam <c>null</c> em vez de omitir
+    /// o campo, e provedores que validam a chamada contra o schema (ex.: Groq) recusam a requisição inteira.
+    /// Para os handlers, null equivale a "não informado" (ver <see cref="Texto"/>, <see cref="Campo"/>).
+    /// </summary>
+    internal static JsonObject Anulavel(JsonObject def)
+    {
+        if (def["type"] is JsonValue t && t.TryGetValue<string>(out var tipo))
+            def["type"] = new JsonArray(tipo, "null");
+        if (def["enum"] is JsonArray valores) valores.Add(null);
+        return def;
     }
 }

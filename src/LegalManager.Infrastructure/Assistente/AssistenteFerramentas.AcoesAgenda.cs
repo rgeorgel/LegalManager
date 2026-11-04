@@ -142,7 +142,7 @@ public partial class AssistenteFerramentas
     private static DateTime? FimEvento(JsonElement a, DateTime inicio)
     {
         DateTime? fim = DataHoraArg(a, "fim");
-        if (fim is null && a.ValueKind == JsonValueKind.Object && a.TryGetProperty("duracao_minutos", out var d) && d.TryGetInt32(out var min))
+        if (fim is null && Inteiro(a, "duracao_minutos") is { } min)
         {
             if (min is <= 0 or > MaxMinutosPorRegistro) throw new ArgumentException("duracao_minutos inválida.");
             fim = inicio.AddMinutes(min);
@@ -182,8 +182,7 @@ public partial class AssistenteFerramentas
     private async Task<object> RegistrarHorasAsync(JsonElement a, CancellationToken ct)
     {
         LimiteDeAcoes();
-        if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("minutos", out var m) || !m.TryGetInt32(out var minutos)
-            || minutos is <= 0 or > MaxMinutosPorRegistro)
+        if (Inteiro(a, "minutos") is not { } minutos || minutos is <= 0 or > MaxMinutosPorRegistro)
             throw new ArgumentException($"Informe minutos entre 1 e {MaxMinutosPorRegistro}.");
         var agora = await AgoraAsync(ct);
         var dia = DataArg(a, "data") is { } d ? DateTime.SpecifyKind(d, DateTimeKind.Unspecified) : agora.Date;

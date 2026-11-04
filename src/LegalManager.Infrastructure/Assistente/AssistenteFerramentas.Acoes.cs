@@ -392,13 +392,14 @@ public partial class AssistenteFerramentas
     }
 
     /// <summary>
-    /// Campo de texto opcional: false se não veio; valor null quando veio vazio/null (limpar o campo).
+    /// Campo de texto opcional: false se não veio ou veio null; valor null quando veio "" (limpar o campo).
+    /// null não limpa: modelos como o gpt-oss mandam null nos campos que não querem mudar.
     /// </summary>
     private static bool Campo(JsonElement a, string nome, out string? valor)
     {
         valor = null;
         if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty(nome, out var v)) return false;
-        if (v.ValueKind == JsonValueKind.Null) return true;
+        if (v.ValueKind == JsonValueKind.Null) return false;
         if (v.ValueKind != JsonValueKind.String) throw new ArgumentException($"{nome} deve ser texto.");
         var s = v.GetString()!.Trim();
         valor = s.Length == 0 ? null : s;

@@ -8,6 +8,7 @@ using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure;
 using LegalManager.Infrastructure.Assistente;
 using LegalManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -269,6 +270,7 @@ public class AssistenteTests
     {
         private int _i;
         public List<IReadOnlyList<LlmMensagem>> Chamadas { get; } = [];
+        public List<string> Sistemas { get; } = [];
         public string Provedor => "Teste";
         public string Modelo => "modelo-teste";
 
@@ -276,6 +278,7 @@ public class AssistenteTests
             IReadOnlyList<LlmFerramenta> ferramentas, CancellationToken ct = default)
         {
             Chamadas.Add(mensagens.ToList());
+            Sistemas.Add(sistema);
             return Task.FromResult(respostas[Math.Min(_i++, respostas.Length - 1)]);
         }
     }
@@ -719,5 +722,37 @@ public class AssistenteTests
     public void LimparRaciocinio_RemoveThink()
     {
         Assert.Equal("Resposta", AssistenteLlmClient.LimparRaciocinio("<think>pensando…</think>\nResposta"));
+    }
+
+    // ── Compatibilidade com provedores (gpt-oss no Groq) ─────────────────────
+
+    [Fact]
+    public void Ferramentas_OpcionaisAceitamNull_ObrigatoriosNao()
+    {
+        var (db, a, _) = SeedDoisTenants();
+        var defs = Ferramentas(db, Tenant(a, PlanoTipo.Pro)).Disponiveis().ToDictionary(f => f.Nome, f => f.Parametros);
+        JsonNode Prop(string ferramenta, string param) => defs[ferramenta]["properties"]![param]!;
+
+        Assert.Equal("""["string","null"]""", Prop("resumo_financeiro", "de")["type"]!.ToJsonString());
+        Assert.Equal("""["array","null"]""", Prop("atualizar_contato", "tags_adicionar")["type"]!.ToJsonString());
+        Assert.Equal("\"string\"", Prop("atualizar_contato", "contato_id")["type"]!.ToJsonString());
+        // Com enum, o null também precisa estar na lista, senão a validação do provedor recusa.
+        Assert.Contains(Prop("listar_lancamentos", "tipo")["enum"]!.AsArray(), v => v is null);
+    }
+
+    [Fact]
+    public async Task Perguntar_PromptTrazDataPorExtensoEEmIso()
+    {
+        // "03/11/2026" sozinho foi lido como 11 de março pelo gpt-oss.
+        var (db, a, _) = SeedDoisTenants();
+        var tenant = Tenant(a, PlanoTipo.Pro);
+        var llm = new LlmFalso(new LlmResposta([new LlmTexto("ok")], 1, 1));
+        var svc = new AssistenteService(llm, Ferramentas(db, tenant), db, tenant, NullLogger<AssistenteService>.Instance);
+
+        await svc.PerguntarAsync(new AssistentePerguntaDto([new("user", "oi")]));
+
+        var hoje = BrasiliaTime.AgoraParede;
+        Assert.Contains(hoje.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), llm.Sistemas[0]);
+        Assert.Contains(hoje.ToString("MMMM", BrasiliaTime.PtBr), llm.Sistemas[0]);
     }
 }
