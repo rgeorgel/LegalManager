@@ -148,8 +148,8 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
   formulário da sugestão da IA) em `corpoHtml`; numa coluna, não em `.ent-grid`.
 
 Já migradas: Honorários Contratos, Processos, Contatos, Tarefas (visão em blocos; as listas e o
-kanban seguem com marcação própria), Publicações e Modelos (Documentos). A lista de arquivos de
-Documentos é um explorador (linhas), não card. Pendente: o menu ⋮ de Contatos ainda é próprio
+kanban seguem com marcação própria), Publicações e Documentos (arquivos em blocos e Modelos; a
+lista de arquivos segue em linhas). Pendente: o menu ⋮ de Contatos ainda é próprio
 (trocar por `abrirMenuCard`).
 
 ## Pitfalls Conhecidos
