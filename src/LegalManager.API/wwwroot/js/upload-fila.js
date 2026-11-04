@@ -2,12 +2,13 @@
 // validação no navegador (tipo e tamanho), renomear antes de enviar e progresso real de
 // cada arquivo (XMLHttpRequest — o fetch não informa o progresso do envio).
 // A página decide os metadados (tipo, processo, pasta...) e o que fazer ao terminar.
+// Usado no escritório (Documentos) e no Portal do Cliente — por isso não importa /js/api.js
+// (que mexe na sessão do escritório ao carregar): URL, token e renovação vêm por parâmetro.
 import { esc } from '/js/utils.js';
-import { apiFetch } from '/js/api.js';
 
 // Mesma lista do servidor (ArquivoPermitido.cs) — lá a assinatura do arquivo é conferida.
 export const EXTENSOES_DOCUMENTO = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'odt', 'ods', 'rtf', 'txt', 'csv', 'png', 'jpg', 'jpeg', 'webp'];
-export const TAMANHO_MAXIMO = 100_000_000; // [RequestSizeLimit] do DocumentosController
+export const TAMANHO_MAXIMO = 100_000_000; // [RequestSizeLimit] do DocumentosController e do PortalClienteController
 
 const SIMULTANEOS = 3;
 
@@ -45,8 +46,17 @@ const ICONE_REMOVER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6
  * @param {HTMLInputElement} o.input input[type=file] (multiple)
  * @param {HTMLElement} o.lista      onde os arquivos aparecem
  * @param {(estado: object) => void} [o.aoMudar] chamado a cada mudança (contagens, fase)
+ * @param {string} [o.url]           destino do POST (multipart, campo "file")
+ * @param {() => string} [o.token]   token Bearer de cada envio
+ * @param {() => Promise<boolean>} [o.renovarSessao] tenta renovar a sessão após um 401;
+ *        true = renovou, reenvia uma vez. Sem ela, o 401 vira erro no item.
  */
-export function createUploadFila({ zona, input, lista, aoMudar = () => {} }) {
+export function createUploadFila({
+  zona, input, lista, aoMudar = () => {},
+  url = '/api/documentos/upload',
+  token = () => sessionStorage.getItem('access_token'),
+  renovarSessao = renovarSessaoEscritorio,
+}) {
   let itens = [];
   let seq = 0;
   let fase = 'selecao'; // selecao | enviando | fim
@@ -253,8 +263,8 @@ export function createUploadFila({ zona, input, lista, aoMudar = () => {} }) {
 
       const xhr = new XMLHttpRequest();
       xhrs.set(item.id, xhr);
-      xhr.open('POST', '/api/documentos/upload');
-      xhr.setRequestHeader('Authorization', `Bearer ${sessionStorage.getItem('access_token')}`);
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Authorization', `Bearer ${token()}`);
       xhr.upload.onprogress = e => {
         if (!e.lengthComputable) return;
         const p = Math.min(100, Math.round(e.loaded / e.total * 100));
@@ -271,13 +281,15 @@ export function createUploadFila({ zona, input, lista, aoMudar = () => {} }) {
       };
       xhr.onload = async () => {
         if (xhr.status >= 200 && xhr.status < 300) return terminar('ok');
-        if (xhr.status === 401 && !tentouRenovar) {
-          // Token expirado: o apiFetch renova a sessão; tenta mais uma vez.
+        if (xhr.status === 401 && !tentouRenovar && renovarSessao) {
+          // Token expirado: renova a sessão e tenta mais uma vez.
           xhrs.delete(item.id);
-          try { await apiFetch('/documentos/cota'); } catch { /* sem sessão: cai no erro abaixo */ }
-          item.progresso = 0;
-          await enviarUm(item, campos, true);
-          return resolve();
+          if (await renovarSessao().catch(() => false)) {
+            item.progresso = 0;
+            await enviarUm(item, campos, true);
+            return resolve();
+          }
+          return terminar('erro', 'Sua sessão expirou. Entre novamente.');
         }
         terminar('erro', mensagemErro(xhr));
       };
@@ -307,6 +319,13 @@ export function createUploadFila({ zona, input, lista, aoMudar = () => {} }) {
   }
 
   return { adicionar, enviar, limpar, estado };
+}
+
+// Escritório: qualquer chamada do apiFetch renova o token vencido (import sob demanda).
+async function renovarSessaoEscritorio() {
+  const { apiFetch } = await import('/js/api.js');
+  try { await apiFetch('/documentos/cota'); } catch { /* sem sessão: o reenvio falha de novo */ }
+  return true;
 }
 
 function mensagemErro(xhr) {

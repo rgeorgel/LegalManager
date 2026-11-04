@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using LegalManager.Application.DTOs.PortalCliente;
 using LegalManager.Application.DTOs.Tenants;
 using LegalManager.Application.Interfaces;
@@ -26,6 +28,10 @@ public class PortalClienteService : IPortalClienteService
 
     public static readonly TimeSpan ValidadeRedefinicao = TimeSpan.FromHours(1);
 
+    /// <summary>Envios do cliente no mesmo processo dentro desta janela somam no mesmo aviso.</summary>
+    public static readonly TimeSpan JanelaAgrupamentoDocumentos = TimeSpan.FromMinutes(10);
+    private static readonly Regex QuantidadeDocumentos = new(@"^(\d+) documentos pelo Portal do Cliente", RegexOptions.Compiled);
+
     public PortalClienteService(
         AppDbContext context,
         IConfiguration config,
@@ -43,22 +49,44 @@ public class PortalClienteService : IPortalClienteService
     public async Task<PortalAuthResponseDto> LoginAsync(LoginPortalDto dto, CancellationToken ct = default)
     {
         var email = dto.Email.Trim().ToLowerInvariant();
-        var acesso = await _context.AcessosCliente
+        // O mesmo e-mail pode ter acesso em mais de um escritório; cada acesso é de um só
+        // escritório (o JWT leva um tenant). A senha é conferida em cada um — nunca se entra num
+        // acesso sem a senha dele, senão um escritório que criasse um acesso com o e-mail do
+        // cliente e uma senha conhecida passaria a ver os processos dele nos outros escritórios.
+        var acessos = await _context.AcessosCliente
             .Include(a => a.Contato)
             .Include(a => a.Tenant)
-            .FirstOrDefaultAsync(a => a.Email == email && a.Ativo, ct)
-            ?? throw new UnauthorizedAccessException("E-mail ou senha inválidos.");
+            .Where(a => a.Email == email && a.Ativo)
+            .ToListAsync(ct);
+        if (acessos.Count == 0)
+            throw new UnauthorizedAccessException("E-mail ou senha inválidos.");
+
+        // Preferência: o acesso que é parte do processo do link; depois o usado mais recentemente.
+        var contatosDoProcesso = dto.ProcessoId is { } processoId
+            ? await _context.ProcessoPartes
+                .Where(pt => pt.ProcessoId == processoId)
+                .Select(pt => new { pt.ContatoId, pt.Processo.TenantId })
+                .ToListAsync(ct)
+            : [];
+        var candidatos = acessos
+            .OrderByDescending(a => contatosDoProcesso.Any(c => c.ContatoId == a.ContatoId && c.TenantId == a.TenantId))
+            .ThenByDescending(a => a.UltimoAcessoEm ?? DateTime.MinValue)
+            .ThenBy(a => a.CriadoEm)
+            .ToList();
 
         var agora = DateTime.UtcNow;
-        if (acesso.EstaBloqueado(agora))
+        var liberados = candidatos.Where(a => !a.EstaBloqueado(agora)).ToList();
+        if (liberados.Count == 0)
             throw new UnauthorizedAccessException(BloqueioLogin.Mensagem);
 
-        var result = _hasher.VerifyHashedPassword(acesso, acesso.SenhaHash, dto.Senha);
-        if (result == PasswordVerificationResult.Failed)
+        var acesso = liberados.FirstOrDefault(a =>
+            _hasher.VerifyHashedPassword(a, a.SenhaHash, dto.Senha) != PasswordVerificationResult.Failed);
+        if (acesso == null)
         {
-            var bloqueou = acesso.RegistrarFalha(agora);
+            foreach (var a in liberados) a.RegistrarFalha(agora);
             await _context.SaveChangesAsync(ct);
-            throw new UnauthorizedAccessException(bloqueou ? BloqueioLogin.Mensagem : "E-mail ou senha inválidos.");
+            var todosBloqueados = candidatos.All(a => a.EstaBloqueado(agora));
+            throw new UnauthorizedAccessException(todosBloqueados ? BloqueioLogin.Mensagem : "E-mail ou senha inválidos.");
         }
 
         acesso.RegistrarSucesso();
@@ -259,8 +287,29 @@ public class PortalClienteService : IPortalClienteService
 
             var agora = DateTime.UtcNow;
             var documento = nomeDocumento.Length > 200 ? nomeDocumento[..200] + "…" : nomeDocumento;
+            var url = $"/pages/processo-detalhe.html?id={processoId}&tab=documentos";
+            var prefixo = $"{nomeCliente} enviou ";
+            var desde = agora - JanelaAgrupamentoDocumentos;
             foreach (var usuarioId in destinatarios)
             {
+                // Vários arquivos de uma vez (o portal envia um por requisição) viram um aviso só:
+                // o ainda não lido, do mesmo cliente e processo, dos últimos minutos, é atualizado.
+                var recente = await _context.Notificacoes
+                    .Where(n => n.UsuarioId == usuarioId && n.TenantId == tenantId && !n.Lida
+                             && n.Tipo == TipoNotificacao.DocumentoCliente && n.Url == url && n.CriadaEm >= desde)
+                    .OrderByDescending(n => n.CriadaEm)
+                    .FirstOrDefaultAsync(ct);
+                if (recente != null && recente.Mensagem.StartsWith(prefixo, StringComparison.Ordinal))
+                {
+                    var anteriores = QuantidadeDocumentos.Match(recente.Mensagem[prefixo.Length..]) is { Success: true } m
+                        ? int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)
+                        : 1;
+                    recente.Titulo = $"Documentos enviados pelo cliente — {processo.NumeroCNJ}";
+                    recente.Mensagem = $"{prefixo}{anteriores + 1} documentos pelo Portal do Cliente. Último: \"{documento}\".";
+                    recente.CriadaEm = agora;
+                    continue;
+                }
+
                 _context.Notificacoes.Add(new Notificacao
                 {
                     Id = Guid.NewGuid(),
@@ -268,8 +317,8 @@ public class PortalClienteService : IPortalClienteService
                     UsuarioId = usuarioId,
                     Tipo = TipoNotificacao.DocumentoCliente,
                     Titulo = $"Documento enviado pelo cliente — {processo.NumeroCNJ}",
-                    Mensagem = $"{nomeCliente} enviou \"{documento}\" pelo Portal do Cliente.",
-                    Url = $"/pages/processo-detalhe.html?id={processoId}&tab=documentos",
+                    Mensagem = $"{prefixo}\"{documento}\" pelo Portal do Cliente.",
+                    Url = url,
                     Lida = false,
                     CriadaEm = agora
                 });

@@ -166,6 +166,133 @@ public class PortalClienteServiceTests
             service.LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123")));
     }
 
+    // ── LoginAsync com o mesmo e-mail em dois escritórios ─
+
+    /// <summary>
+    /// Segundo escritório com acesso do mesmo e-mail (cliente@teste.com) e um processo em que o
+    /// contato dele é parte. O primeiro acesso (de SeedAsync) foi usado por último.
+    /// </summary>
+    private async Task<(AcessoCliente outroAcesso, Processo processoDoOutro)> SeedOutroEscritorioAsync(
+        AppDbContext ctx, AcessoCliente primeiro, string senha)
+    {
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(), Nome = "Outro Escritório", Plano = PlanoTipo.Free,
+            Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow
+        };
+        var contato = new Contato
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Cliente no Outro", Tipo = TipoPessoa.PF,
+            TipoContato = TipoContato.Cliente, Email = "cliente@teste.com", Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        var acesso = new AcessoCliente
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, ContatoId = contato.Id, Email = "cliente@teste.com",
+            Ativo = true, CriadoEm = DateTime.UtcNow, Contato = contato, Tenant = tenant,
+            UltimoAcessoEm = DateTime.UtcNow.AddDays(-2)
+        };
+        acesso.SenhaHash = _hasher.HashPassword(acesso, senha);
+        var processo = new Processo
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "0600095-47.2021.6.14.0098",
+            AreaDireito = AreaDireito.Civil, Fase = FaseProcessual.Conhecimento,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(tenant);
+        ctx.Contatos.Add(contato);
+        ctx.AcessosCliente.Add(acesso);
+        ctx.Processos.Add(processo);
+        ctx.ProcessoPartes.Add(new ProcessoParte
+        {
+            Id = Guid.NewGuid(), ProcessoId = processo.Id, ContatoId = contato.Id, TipoParte = TipoParteProcesso.Autor
+        });
+        primeiro.UltimoAcessoEm = DateTime.UtcNow.AddDays(-1);
+        await ctx.SaveChangesAsync();
+        return (acesso, processo);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DoisEscritorios_SemProcesso_EntraNoUsadoPorUltimo()
+    {
+        var (ctx, _, contato, acesso) = await SeedAsync();
+        await SeedOutroEscritorioAsync(ctx, acesso, "Senha@123");
+
+        var result = await CreateService(ctx).LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123"));
+
+        Assert.Equal(contato.Id, result.Perfil.ContatoId);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DoisEscritorios_ComProcesso_EntraNoAcessoQueEParteDele()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        var (outro, processo) = await SeedOutroEscritorioAsync(ctx, acesso, "Senha@123");
+
+        var result = await CreateService(ctx).LoginAsync(
+            new LoginPortalDto("cliente@teste.com", "Senha@123", processo.Id));
+
+        Assert.Equal(outro.ContatoId, result.Perfil.ContatoId);
+        Assert.Equal(outro.Id, result.Perfil.AcessoId);
+        Assert.Equal("Outro Escritório", result.Perfil.NomeEscritorio);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DoisEscritorios_SenhaDeOutroAcesso_NaoEntraNoDoProcesso()
+    {
+        // A senha só vale para o acesso em que foi definida: com a senha do primeiro escritório,
+        // o link de um processo do segundo não abre o acesso do segundo.
+        var (ctx, _, contato, acesso) = await SeedAsync();
+        var (outro, processo) = await SeedOutroEscritorioAsync(ctx, acesso, "OutraSenha@456");
+
+        var result = await CreateService(ctx).LoginAsync(
+            new LoginPortalDto("cliente@teste.com", "Senha@123", processo.Id));
+
+        Assert.Equal(contato.Id, result.Perfil.ContatoId);
+        Assert.Equal(0, (await ctx.AcessosCliente.FindAsync(outro.Id))!.TentativasLoginFalhas);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DoisEscritorios_SenhaErradaEmTodos_ContaFalhaEmCadaUm()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        var (outro, processo) = await SeedOutroEscritorioAsync(ctx, acesso, "OutraSenha@456");
+        var service = CreateService(ctx);
+
+        var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.LoginAsync(new LoginPortalDto("cliente@teste.com", "SenhaErrada", processo.Id)));
+
+        Assert.Equal("E-mail ou senha inválidos.", ex.Message);
+        Assert.Equal(1, (await ctx.AcessosCliente.FindAsync(acesso.Id))!.TentativasLoginFalhas);
+        Assert.Equal(1, (await ctx.AcessosCliente.FindAsync(outro.Id))!.TentativasLoginFalhas);
+    }
+
+    [Fact]
+    public async Task LoginAsync_DoisEscritorios_UmBloqueado_EntraNoOutro()
+    {
+        var (ctx, _, contato, acesso) = await SeedAsync();
+        var (outro, processo) = await SeedOutroEscritorioAsync(ctx, acesso, "Senha@123");
+        outro.BloqueadoAte = DateTime.UtcNow.AddMinutes(10);
+        await ctx.SaveChangesAsync();
+
+        var result = await CreateService(ctx).LoginAsync(
+            new LoginPortalDto("cliente@teste.com", "Senha@123", processo.Id));
+
+        Assert.Equal(contato.Id, result.Perfil.ContatoId);
+    }
+
+    [Fact]
+    public async Task LoginAsync_TodosBloqueados_AvisaBloqueio()
+    {
+        var (ctx, _, _, acesso) = await SeedAsync();
+        acesso.BloqueadoAte = DateTime.UtcNow.AddMinutes(10);
+        await ctx.SaveChangesAsync();
+
+        var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            CreateService(ctx).LoginAsync(new LoginPortalDto("cliente@teste.com", "Senha@123")));
+
+        Assert.Equal(BloqueioLogin.Mensagem, ex.Message);
+    }
+
     // ── CriarAcessoAsync ──────────────────────────────────
 
     [Fact]
@@ -533,6 +660,71 @@ public class PortalClienteServiceTests
         await CreateService(ctx).NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "doc.pdf");
 
         Assert.Empty(ctx.Notificacoes);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_VariosArquivosSeguidos_ViramUmAvisoSo()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var responsavel = NovoUsuario(tenant.Id, PerfilUsuario.Advogado);
+        ctx.Users.Add(responsavel);
+        var processo = NovoProcesso(tenant.Id, responsavel.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+        var service = CreateService(ctx);
+
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "rg.pdf");
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "cpf.pdf");
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "comprovante.jpg");
+
+        var n = Assert.Single(ctx.Notificacoes);
+        Assert.Equal($"Documentos enviados pelo cliente — {processo.NumeroCNJ}", n.Titulo);
+        Assert.Equal("Cliente Teste enviou 3 documentos pelo Portal do Cliente. Último: \"comprovante.jpg\".", n.Mensagem);
+        Assert.False(n.Lida);
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_AvisoJaLidoOuAntigo_CriaOutro()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var responsavel = NovoUsuario(tenant.Id, PerfilUsuario.Advogado);
+        ctx.Users.Add(responsavel);
+        var processo = NovoProcesso(tenant.Id, responsavel.Id);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+        var service = CreateService(ctx);
+
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "a.pdf");
+        ctx.Notificacoes.Single().Lida = true;
+        await ctx.SaveChangesAsync();
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "b.pdf");
+        var segunda = ctx.Notificacoes.Single(x => !x.Lida);
+        segunda.CriadaEm = DateTime.UtcNow - PortalClienteService.JanelaAgrupamentoDocumentos - TimeSpan.FromMinutes(1);
+        await ctx.SaveChangesAsync();
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "c.pdf");
+
+        Assert.Equal(3, ctx.Notificacoes.Count());
+        Assert.All(ctx.Notificacoes, x => Assert.DoesNotContain("documentos pelo", x.Mensagem));
+    }
+
+    [Fact]
+    public async Task NotificarDocumentoEnviado_OutroClienteNoMesmoProcesso_NaoSomaNoAvisoDoPrimeiro()
+    {
+        var (ctx, tenant, contato, _) = await SeedAsync();
+        var responsavel = NovoUsuario(tenant.Id, PerfilUsuario.Advogado);
+        ctx.Users.Add(responsavel);
+        var processo = NovoProcesso(tenant.Id, responsavel.Id);
+        ctx.Processos.Add(processo);
+        var outro = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Outra Parte", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, CriadoEm = DateTime.UtcNow };
+        ctx.Contatos.Add(outro);
+        await ctx.SaveChangesAsync();
+        var service = CreateService(ctx);
+
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, contato.Id, tenant.Id, "a.pdf");
+        await service.NotificarDocumentoEnviadoAsync(processo.Id, outro.Id, tenant.Id, "b.pdf");
+
+        Assert.Equal(2, ctx.Notificacoes.Count());
+        Assert.Contains(ctx.Notificacoes, x => x.Mensagem == "Outra Parte enviou \"b.pdf\" pelo Portal do Cliente.");
     }
 
     [Fact]

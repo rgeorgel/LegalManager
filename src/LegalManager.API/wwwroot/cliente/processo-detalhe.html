@@ -21,6 +21,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Processo – Portal do Cliente</title>
   <link rel="stylesheet" href="/cliente/css/portal.css">
+  <link rel="stylesheet" href="/css/upload-fila.css">
 </head>
 <body>
   <header class="portal-nav" id="portalNav"></header>
@@ -61,8 +62,9 @@
   <script type="module">
 import { esc as escapeHtml } from '/js/utils.js';
     import { initLayout, formatDate, formatDateTime, statusBadge, faseBadge, tipoParteLabel, areaLabel, tipoAndamentoLabel, icone } from '/cliente/js/clienteLayout.js';
-    import { portalApi } from '/cliente/js/clienteApi.js';
+    import { portalApi, clearSession, urlLogin } from '/cliente/js/clienteApi.js';
     import { renderMarkdown } from '/js/markdown.js';
+    import { montarPainelUpload, ativarSoltarNaPagina } from '/cliente/js/portal-upload.js';
 
     let processoId = new URLSearchParams(location.search).get('id');
     if (!processoId) {
@@ -79,12 +81,25 @@ import { esc as escapeHtml } from '/js/utils.js';
       const tabsContainer = document.getElementById('tabsContainer');
       const tabContent = document.getElementById('tabContent');
 
-      let uploadForm, uploadStatus;
-
       try {
-        const p = await portalApi.getProcesso(processoId);
+        // 404: o processo não é deste acesso — em geral é de outro escritório em que o cliente
+        // também tem acesso com o mesmo e-mail. Entrar de novo pelo link escolhe o acesso certo.
+        // Sem redirecionar sozinho: se o processo não for mesmo dele, não fica em loop.
+        const p = await portalApi.getProcesso(processoId).catch(err => {
+          if (err.status === 404) return null;
+          throw err;
+        });
         if (!p) {
-          headerEl.innerHTML = `<div class="alert alert-error">Processo não encontrado.</div>`;
+          headerEl.innerHTML = `
+            <div class="alert alert-error">
+              Este processo não está neste acesso. Se ele é de outro escritório, entre novamente para abri-lo.
+              <div style="margin-top:12px"><button type="button" class="btn btn-sm btn-primary" id="btnEntrarNovamente">Entrar novamente</button></div>
+            </div>`;
+          document.getElementById('btnEntrarNovamente').addEventListener('click', () => {
+            const destino = urlLogin();
+            clearSession();
+            location.href = destino;
+          });
           return;
         }
 
@@ -152,126 +167,113 @@ import { esc as escapeHtml } from '/js/utils.js';
         }
       }
 
+      // ── Documentos ─────────────────────────────────────────
+      let painelUpload = null;
+      let arquivosPendentes = null; // soltos na página com outra aba aberta
+
       async function loadDocumentos() {
+        painelUpload = null;
         tabContent.innerHTML = '<div class="loading"><span class="spinner spinner-dark"></span></div>';
         try {
-          const docs = await portalApi.getDocumentos(processoId);
-          const arr = docs || [];
+          const arr = (await portalApi.getDocumentos(processoId)) || [];
 
           tabContent.innerHTML = `
-            <div class="card">
+            <div class="card docs-card">
               <div class="card-header">
                 <span class="card-title">Documentos</span>
-                <button class="btn btn-sm btn-primary" id="btnNovoDocumento" style="margin-left:auto">+ Enviar documento</button>
+                <span class="docs-contagem" id="docsContagem"></span>
+                <button class="btn btn-sm btn-primary pu-btn-abrir" id="btnNovoDocumento">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg>
+                  Enviar documentos
+                </button>
               </div>
-              <div id="documentosUpload" style="display:none;padding:16px;border-bottom:1px solid var(--color-border)">
-                <form id="uploadForm" class="form-inline" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
-                  <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
-                    <label for="uploadFile">Arquivo</label>
-                    <input type="file" id="uploadFile" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.rtf,.txt,.csv,.png,.jpg,.jpeg,.webp" required>
-                  </div>
-                  <div class="form-group" style="flex:1;min-width:120px;margin-bottom:0">
-                    <label for="uploadTipo">Tipo</label>
-                    <select id="uploadTipo" class="form-control">
-                      <option value="Prova">Prova</option>
-                      <option value="Peticao">Petição</option>
-                      <option value="Contrato">Contrato</option>
-                      <option value="Decisao">Decisão</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                  </div>
-                  <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0">
-                    <label for="uploadNome">Nome (opcional)</label>
-                    <input type="text" id="uploadNome" class="form-control" placeholder="Descrição do arquivo">
-                  </div>
-                  <div style="display:flex;gap:8px;padding-bottom:0">
-                    <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelUpload">Cancelar</button>
-                  </div>
-                </form>
-                <div id="uploadStatus" style="margin-top:12px"></div>
-              </div>
+              <div id="documentosUpload"></div>
               <div id="documentosList"></div>
             </div>`;
 
-          uploadForm = document.getElementById('uploadForm');
-          uploadStatus = document.getElementById('uploadStatus');
-
-          if (arr.length === 0) {
-            document.getElementById('documentosList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📎</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
-          } else {
-            document.getElementById('documentosList').innerHTML = `<ul class="doc-lista">${arr.map(d => `
-              <li class="doc-item">
-                <span class="doc-icone">${icone('documento')}</span>
-                <div class="doc-corpo">
-                  <button type="button" class="doc-nome-link" data-doc-ver="${escapeHtml(d.id)}">${escapeHtml(d.nome)}</button>
-                  <div class="doc-meta">${escapeHtml(TIPO_DOC[d.tipo] || d.tipo)} · ${escapeHtml(d.tamanhoFormatado || '')} · ${formatDate(d.criadoEm)}</div>
-                </div>
-                <div class="doc-acoes">
-                  ${podeVisualizar(d.contentType) ? `<button type="button" class="btn btn-sm btn-secondary" data-doc-ver="${escapeHtml(d.id)}" title="Visualizar">👁<span class="doc-acao-rotulo"> Ver</span></button>` : ''}
-                  <button type="button" class="btn btn-sm btn-secondary" data-doc-baixar="${escapeHtml(d.id)}" title="Baixar">⬇<span class="doc-acao-rotulo"> Baixar</span></button>
-                </div>
-              </li>`).join('')}</ul>`;
-            const porId = Object.fromEntries(arr.map(d => [d.id, d]));
-            document.querySelectorAll('[data-doc-ver]').forEach(b =>
-              b.addEventListener('click', () => verDocumento(porId[b.dataset.docVer])));
-            document.querySelectorAll('[data-doc-baixar]').forEach(b =>
-              b.addEventListener('click', () => baixarDocumento(porId[b.dataset.docBaixar], b)));
-          }
-
-          document.getElementById('btnNovoDocumento').addEventListener('click', () => {
-            document.getElementById('documentosUpload').style.display = '';
-            document.getElementById('btnNovoDocumento').style.display = 'none';
+          const btnNovo = document.getElementById('btnNovoDocumento');
+          painelUpload = montarPainelUpload(document.getElementById('documentosUpload'), {
+            processoId,
+            aoEnviar: () => recarregarListaDocs(),
+            aoAbrirFechar: aberto => btnNovo.classList.toggle('pu-oculto', aberto),
           });
+          btnNovo.addEventListener('click', () => { painelUpload.abrir(); painelUpload.focar(); });
 
-          document.getElementById('btnCancelUpload').addEventListener('click', () => {
-            document.getElementById('documentosUpload').style.display = 'none';
-            document.getElementById('btnNovoDocumento').style.display = '';
-            uploadForm.reset();
-            uploadStatus.innerHTML = '';
-          });
-
-          uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const fileInput = document.getElementById('uploadFile');
-            const tipoSelect = document.getElementById('uploadTipo');
-            const nomeInput = document.getElementById('uploadNome');
-            const file = fileInput.files[0];
-            if (!file) return;
-            const submitBtn = uploadForm.querySelector('[type=submit]');
-            submitBtn.disabled = true;
-            uploadStatus.innerHTML = '<div class="alert alert-info">Enviando...</div>';
-            try {
-              const res = await portalApi.uploadDocumento(processoId, file, tipoSelect.value, nomeInput.value || null);
-              if (!res.ok) {
-                const body = await res.json().catch(() => ({}));
-                throw new Error(body.message || body.title || `Erro ${res.status}`);
-              }
-              uploadStatus.innerHTML = '<div class="alert alert-success">Documento enviado com sucesso.</div>';
-              uploadForm.reset();
-              document.getElementById('documentosUpload').style.display = 'none';
-              document.getElementById('btnNovoDocumento').style.display = '';
-              await loadDocumentos();
-            } catch (err) {
-              uploadStatus.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
-            } finally {
-              submitBtn.disabled = false;
-            }
-          });
+          renderListaDocs(arr);
+          if (arquivosPendentes) { painelUpload.adicionar(arquivosPendentes); arquivosPendentes = null; }
+          else if (!arr.length) painelUpload.abrir(); // sem documentos: a área de envio já aparece
         } catch (err) {
-          tabContent.innerHTML = `<div class="alert alert-error" style="margin:16px">${err.message}</div>`;
+          tabContent.innerHTML = `<div class="alert alert-error" style="margin:16px">${escapeHtml(err.message)}</div>`;
         }
+      }
+
+      function renderListaDocs(arr, novos = new Set()) {
+        const lista = document.getElementById('documentosList');
+        if (!lista) return;
+        document.getElementById('docsContagem').textContent = arr.length ? arr.length : '';
+        if (arr.length === 0) {
+          lista.innerHTML = '<div class="empty-state docs-vazio"><div class="empty-state-icon">📎</div><div class="empty-state-title">Nenhum documento</div><div class="empty-state-desc">Envie documentos para este processo.</div></div>';
+          return;
+        }
+        lista.innerHTML = `<ul class="doc-lista">${arr.map(d => `
+          <li class="doc-item${novos.has(d.id) ? ' doc-novo' : ''}">
+            <span class="doc-icone">${icone('documento')}</span>
+            <div class="doc-corpo">
+              <button type="button" class="doc-nome-link" data-doc-ver="${escapeHtml(d.id)}">${escapeHtml(d.nome)}</button>
+              <div class="doc-meta">${novos.has(d.id) ? '<span class="doc-selo-novo">Novo</span> ' : ''}${escapeHtml(TIPO_DOC[d.tipo] || d.tipo)} · ${escapeHtml(d.tamanhoFormatado || '')} · ${formatDate(d.criadoEm)}</div>
+            </div>
+            <div class="doc-acoes">
+              ${podeVisualizar(d.contentType) ? `<button type="button" class="btn btn-sm btn-secondary" data-doc-ver="${escapeHtml(d.id)}" title="Visualizar">👁<span class="doc-acao-rotulo"> Ver</span></button>` : ''}
+              <button type="button" class="btn btn-sm btn-secondary" data-doc-baixar="${escapeHtml(d.id)}" title="Baixar">⬇<span class="doc-acao-rotulo"> Baixar</span></button>
+            </div>
+          </li>`).join('')}</ul>`;
+        const porId = Object.fromEntries(arr.map(d => [d.id, d]));
+        lista.querySelectorAll('[data-doc-ver]').forEach(b =>
+          b.addEventListener('click', () => verDocumento(porId[b.dataset.docVer])));
+        lista.querySelectorAll('[data-doc-baixar]').forEach(b =>
+          b.addEventListener('click', () => baixarDocumento(porId[b.dataset.docBaixar], b)));
+      }
+
+      // Depois de um envio: só a lista é refeita (o painel segue com a fila) e os novos piscam.
+      async function recarregarListaDocs() {
+        const antes = new Set([...document.querySelectorAll('#documentosList [data-doc-baixar]')].map(b => b.dataset.docBaixar));
+        try {
+          const arr = (await portalApi.getDocumentos(processoId)) || [];
+          renderListaDocs(arr, new Set(arr.map(d => d.id).filter(id => !antes.has(id))));
+        } catch { /* a lista antiga continua; o envio em si já deu certo */ }
+      }
+
+      const abaAtiva = () => document.querySelector('.tab-btn.active')?.dataset.tab;
+      function abrirAba(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        if (tab === 'andamentos') loadAndamentos();
+        else if (tab === 'resumos') loadResumos();
+        else loadDocumentos();
       }
 
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const tab = btn.dataset.tab;
-          if (tab === 'andamentos') loadAndamentos();
-          else if (tab === 'resumos') loadResumos();
-          else loadDocumentos();
+          if (abaAtiva() === 'documentos' && btn.dataset.tab !== 'documentos'
+              && painelUpload?.aberto() && !confirmarSaidaDoUpload()) return;
+          abrirAba(btn.dataset.tab);
         });
+      });
+
+      function confirmarSaidaDoUpload() {
+        return !document.querySelector('.up-item.up-enviando')
+          || confirm('Há arquivos sendo enviados. Sair e cancelar o envio dos que faltam?');
+      }
+
+      // Arrastar arquivos para qualquer lugar do processo (em qualquer aba) abre o envio com eles.
+      ativarSoltarNaPagina({
+        podeSoltar: () => tabsContainer.style.display !== 'none' && !document.getElementById('docViewer').classList.contains('open'),
+        mostrarTela: () => !(abaAtiva() === 'documentos' && painelUpload?.aberto()),
+        destino: () => `Documentos do processo ${document.querySelector('.detail-cnj')?.textContent || ''}`.trim(),
+        aoSoltar: arquivos => {
+          if (abaAtiva() === 'documentos' && painelUpload) { painelUpload.adicionar(arquivos); return; }
+          arquivosPendentes = arquivos;
+          abrirAba('documentos');
+        },
       });
 
       loadAndamentos();

@@ -90,6 +90,7 @@ export async function clienteApiFetch(path, options = {}) {
       errorMsg = body.message || body.title || errorMsg;
     } catch {}
     const err = new Error(errorMsg);
+    err.status = res.status;
     trackApiCall('portal_api', method, path, { ok: false, error: err, status: res.status });
     throw err;
   }
@@ -103,11 +104,22 @@ export async function clienteApiFetch(path, options = {}) {
   return json;
 }
 
+/**
+ * Processo do link que trouxe o cliente ao login (?next=/cliente/processo-detalhe.html?id=…).
+ * Com o mesmo e-mail em mais de um escritório, o login entra no acesso que é parte dele.
+ */
+function processoDoDestino() {
+  const destino = new URL(destinoAposLogin(), location.origin);
+  if (destino.pathname !== '/cliente/processo-detalhe.html') return null;
+  const id = destino.searchParams.get('id');
+  return id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
+}
+
 export async function login(email, senha) {
   const data = await fetch(`${API_BASE}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha })
+    body: JSON.stringify({ email, senha, processoId: processoDoDestino() })
   });
   if (!data.ok) {
     const body = await data.json().catch(() => ({}));
@@ -194,19 +206,5 @@ export const portalApi = {
     if (!res.ok) throw new Error(res.status === 404 ? 'Documento não encontrado.' : `Erro ao abrir o documento (HTTP ${res.status}).`);
     return res.blob();
   },
-  uploadDocumento: (processoId, file, tipo = 'Prova', nome = null) => {
-    const token = getToken();
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('tipo', tipo);
-    if (nome) formData.append('nome', nome);
-    return fetch(`${API_BASE}/meus-processos/${processoId}/documentos`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    }).then(res => {
-      trackApiCall('portal_api', 'POST', '/meus-processos/:id/documentos', { ok: res.ok, status: res.status });
-      return res;
-    });
-  }
+  // Envio de documentos: /cliente/js/portal-upload.js (fila com progresso via XMLHttpRequest).
 };

@@ -480,7 +480,7 @@ app.Use(async (ctx, next) =>
         "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://www.clarity.ms https://*.clarity.ms https://static.cloudflareinsights.com https://connect.facebook.net https://accounts.google.com https://snap.licdn.com https://a.causify.com.br https://*.i.posthog.com; " +
         "style-src 'self' 'unsafe-inline' https://client.crisp.chat https://accounts.google.com; " +
-        "img-src 'self' data: https:; " +
+        "img-src 'self' data: blob: https:; " + // blob: miniaturas do upload e imagens no visualizador
         "font-src 'self' data: https://client.crisp.chat; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +

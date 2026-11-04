@@ -4,9 +4,14 @@ using LegalManager.Domain.Enums;
 
 namespace LegalManager.Application.DTOs.PortalCliente;
 
+/// <param name="ProcessoId">
+/// Processo que o cliente quer abrir (link compartilhado pelo escritório). Com o mesmo e-mail em
+/// mais de um escritório, o login prefere o acesso que é parte desse processo.
+/// </param>
 public record LoginPortalDto(
     [Required] string Email,
-    [Required] string Senha
+    [Required] string Senha,
+    Guid? ProcessoId = null
 );
 
 public record SolicitarRedefinicaoPortalDto([Required, EmailAddress] string Email);
