@@ -58,13 +58,17 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 - Identificadores (CNJ): `tituloMono: true` — no celular o status desce de linha e o título não é cortado.
 - `dados: { id }` vira `data-id` no card; `classe` adiciona modificadores da página (ex.: `favorito`).
 - **Rodapé**: à esquerda `meta` (principal em negrito, secundário, `progresso` 0–100); à direita `acoesHtml`.
+  Sem `meta` nem `acoesHtml`, não há rodapé. Menu de várias ações (⋮, `ent-card-menu`) vai no
+  `statusHtml`, ao lado do status — não gaste uma linha de rodapé só com ele. Caixa de seleção
+  (ações em massa) vai em `prefixoHtml`.
+- No celular (uma coluna) título e campos quebram linha e aparecem inteiros; no desktop, uma linha.
 - **Borda esquerda = estado**: `estado` ok | danger | warn | info | muted.
 - Campos `*Html` entram como estão (escape é de quem chama); os demais são escapados pelo componente.
 - Cores sempre por variável de tema (`--color-surface`, `--color-text`...), nunca `#fff` fixo.
 - Grade `.ent-grid`: no celular vira uma coluna sem estourar a largura (`minmax(0,1fr)`).
 
-Já migradas: Honorários Contratos, Processos (visão em blocos; a lista segue com marcação própria).
-Ainda com card próprio, a migrar: Contatos, Tarefas, Publicações, Documentos.
+Já migradas: Honorários Contratos, Processos e Contatos (visão em blocos; as listas seguem com
+marcação própria). Ainda com card próprio, a migrar: Tarefas, Publicações, Documentos.
 
 ## Backend
 

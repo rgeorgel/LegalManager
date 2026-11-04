@@ -100,29 +100,14 @@
     .view-btn:hover { background:var(--color-border); }
     .view-btn.active { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
 
-    .contatos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; padding:4px 0; }
-    .contato-card { background:var(--color-surface); color:var(--color-text); border:1px solid var(--color-border); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:12px; transition:box-shadow .15s, border-color .15s; cursor:pointer; }
-    .contato-card:hover { border-color:var(--color-text-muted); box-shadow:0 4px 12px rgba(0,0,0,.08); }
-    .contato-card .card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-    .contato-card .card-name { font-size:14px; font-weight:600; }
-    .contato-card .card-name a { color:inherit; text-decoration:none; }
-    .contato-card .card-name a:hover { color:var(--color-primary); text-decoration:underline; }
-    .contato-card .card-badges { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-    .contato-card .card-divider { height:1px; background:var(--color-border); opacity:.5; }
-    .contato-card .card-info-row { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--color-text-muted); }
-    .contato-card .card-info-row .label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--color-text-muted); min-width:70px; }
-    .contato-card .card-info-row .value { color:var(--color-text); font-weight:500; }
-    .contato-card .card-info-row .value.empty { color:var(--color-text-muted); font-style:italic; }
-    .contato-card .card-footer { display:flex; align-items:center; justify-content:flex-end; padding-top:4px; }
-    @media(max-width:768px) { .contatos-grid { grid-template-columns:1fr; } }
+    /* Visão em blocos: card de entidade do sistema (.ent-* em styles.css, js/cards.js). */
     .bulk-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; margin-bottom:12px; border:1px solid var(--color-primary); border-radius:8px; background:var(--color-surface); font-size:14px; }
     .bulk-bar .bulk-link { background:none; border:none; padding:0; font:inherit; color:var(--color-primary); text-decoration:underline; cursor:pointer; }
     .bulk-bar .bulk-spacer { flex:1; }
     .col-select { width:36px; }
-    .col-select input, .card-select { width:16px; height:16px; cursor:pointer; }
+    .col-select input { width:16px; height:16px; cursor:pointer; }
     tr.contato-excluido td:not(.col-select) { opacity:.6; }
-    .contato-card.contato-excluido { opacity:.7; }
-    .contato-card .card-header .card-select { flex-shrink:0; margin-top:2px; }
+    .ent-card.contato-excluido { opacity:.7; }
     .paginacao-bar { display:flex; align-items:center; justify-content:space-between; gap:12px 16px; flex-wrap:wrap; margin-top:20px; }
     .paginacao-bar .pagination { margin-top:0; flex-wrap:wrap; }
     .paginacao-bar .pagination .reticencias { padding:6px 4px; color:var(--color-text-muted); }
@@ -247,7 +232,7 @@
         </div>
       </div>
 
-      <div id="contatosCardsContainer" class="contatos-grid" style="display:none"></div>
+      <div id="contatosCardsContainer" class="ent-grid" style="display:none"></div>
 
       <div class="paginacao-bar" id="paginacaoBar" style="display:none">
         <span class="paginacao-info" id="paginacaoInfo"></span>
@@ -627,6 +612,7 @@ import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
     import { createMultiSelect } from '/js/multiselect.js';
     import { mascaraCpfCnpj, mascaraTelefone, mascaraCep, mascaraOab } from '/js/mascaras.js';
     import { contatoPerfilUrl, goToContatoPerfil } from '/js/contato-nav.js';
+    import { cardEntidade, ativarCardsClicaveis } from '/js/cards.js';
     window.goToContatoPerfil = goToContatoPerfil;
 
     initLayout();
@@ -805,6 +791,7 @@ import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
     }
     document.getElementById('tableBody').addEventListener('change', onCheckContato);
     document.getElementById('contatosCardsContainer').addEventListener('change', onCheckContato);
+    ativarCardsClicaveis(document.getElementById('contatosCardsContainer'));
     // O card inteiro abre o perfil: o clique no checkbox não pode chegar até ele.
     document.getElementById('contatosCardsContainer').addEventListener('click', (e) => {
       if (e.target.classList.contains('contato-check')) e.stopPropagation();
@@ -934,39 +921,36 @@ import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
         </div>`;
         return;
       }
-      grid.innerHTML = items.map(c => `
-        <div class="contato-card${c.ativo ? '' : ' contato-excluido'}" onclick="window.location.href='${contatoPerfilUrl(c.id)}'">
-          <div class="card-header">
-            <input type="checkbox" class="contato-check card-select" value="${c.id}" aria-label="Selecionar ${esc(c.nome)}">
-            <div class="card-name" style="flex:1"><a href="${contatoPerfilUrl(c.id)}" onclick="event.stopPropagation()">${c.nome}</a></div>
-            <span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${c.tipo}</span>
-          </div>
-          <div class="card-badges">
-            <span class="badge badge-gray">${formatTipoContato(c.tipoContato)}</span>
-            ${c.ativo ? '' : '<span class="badge badge-red">Excluído</span>'}
-            ${c.importadoAutomaticamente ? '<span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : ''}
-            ${c.tags.map(t => `<span class="badge badge-blue">${t}</span>`).join('')}
-          </div>
-          <div class="card-divider"></div>
-          <div>
-            <div class="card-info-row">
-              <span class="label">CPF/CNPJ</span>
-              <span class="value ${c.cpfCnpj ? '' : 'empty'}">${c.cpfCnpj || '—'}</span>
-            </div>
-            <div class="card-info-row" style="margin-top:6px">
-              <span class="label">E-mail</span>
-              <span class="value ${c.email ? '' : 'empty'}">${c.email || '—'}</span>
-            </div>
-            <div class="card-info-row" style="margin-top:6px">
-              <span class="label">Telefone</span>
-              <span class="value ${c.telefone ? '' : 'empty'}">${c.telefone || '—'}</span>
-            </div>
-          </div>
-          <div class="card-divider"></div>
-          <div class="card-footer" onclick="event.stopPropagation()">
-            <button class="btn btn-secondary btn-sm" style="padding:4px 18px;font-size:16px;line-height:1;text-align:center" onclick="toggleRowMenu(this, '${c.id}')">⋮</button>
-          </div>
-        </div>`).join('');
+      grid.innerHTML = items.map(cardContato).join('');
+    }
+
+    // Visão em blocos: card de entidade do sistema (js/cards.js). O card abre o perfil; as
+    // demais ações (editar, atendimento, docs, portal...) ficam no menu ⋮ ao lado do tipo.
+    const MAX_TAGS_CARD = 3;
+    function cardContato(c) {
+      const tags = c.tags ?? [];
+      const extras = tags.length - MAX_TAGS_CARD;
+      return cardEntidade({
+        href: contatoPerfilUrl(c.id),
+        titulo: c.nome,
+        estado: c.ativo ? 'ok' : 'muted',
+        classe: c.ativo ? '' : 'contato-excluido',
+        prefixoHtml: `<input type="checkbox" class="contato-check card-select" value="${esc(c.id)}" aria-label="Selecionar ${esc(c.nome)}">`,
+        statusHtml: `<span class="badge badge-${c.tipo === 'PF' ? 'blue' : 'gray'}">${esc(c.tipo)}</span>`
+          + `<button type="button" class="ent-card-menu" onclick="toggleRowMenu(this, '${esc(c.id)}')" title="Mais ações" aria-label="Mais ações para ${esc(c.nome)}">⋮</button>`,
+        tagsHtml: [
+          `<span class="badge badge-gray">${esc(formatTipoContato(c.tipoContato))}</span>`,
+          c.ativo ? '' : '<span class="badge badge-red">Excluído</span>',
+          c.importadoAutomaticamente ? '<span class="badge badge-gray" title="Cadastrado automaticamente durante a importação de um processo">🔗 Importado</span>' : '',
+          ...tags.slice(0, MAX_TAGS_CARD).map(t => `<span class="badge badge-blue">${esc(t)}</span>`),
+          extras > 0 ? `<span class="badge badge-gray" title="${esc(tags.slice(MAX_TAGS_CARD).join(', '))}">+${extras}</span>` : '',
+        ],
+        campos: [
+          { rotulo: 'CPF/CNPJ', valor: c.cpfCnpj },
+          { rotulo: 'E-mail', valor: c.email },
+          { rotulo: 'Telefone', valor: c.telefone },
+        ],
+      });
     }
 
     function attachRowMenus(items) {

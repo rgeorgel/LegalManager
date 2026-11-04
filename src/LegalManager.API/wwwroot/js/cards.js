@@ -26,7 +26,9 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {string} [o.estado]      Cor da borda esquerda: ok | danger | warn | info | muted.
  * @param {string} [o.classe]      Classes extras no card (ex.: "favorito").
  * @param {Object<string,string>} [o.dados]  Atributos data-* do card (ex.: { id } → data-id).
- * @param {string} [o.statusHtml]  Selo à direita do título (ex.: badge de status).
+ * @param {string} [o.prefixoHtml] Antes do título (ex.: caixa de seleção para ações em massa).
+ * @param {string} [o.statusHtml]  Selo à direita do título (ex.: badge de status). Um menu de
+ *                                 ações (⋮, classe "ent-card-menu") vai aqui, não no rodapé.
  * @param {string[]} [o.tagsHtml]  Selos da 2ª linha (nº, processo...). Classe "ent-encolhe" no
  *                                 selo que pode ser cortado com reticências quando faltar espaço.
  * @param {string} [o.descricao]   Linha de descrição (a linha é reservada mesmo vazia).
@@ -54,6 +56,7 @@ export function cardEntidade(o) {
   return `
     <div class="ent-card${estado}${classe}" data-href="${esc(o.href)}"${dados}>
       <div class="ent-card-top">
+        ${o.prefixoHtml ? `<div class="ent-card-prefixo">${o.prefixoHtml}</div>` : ''}
         <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}"><a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a></div>
         ${o.statusHtml ? `<div class="ent-card-status">${o.statusHtml}</div>` : ''}
       </div>

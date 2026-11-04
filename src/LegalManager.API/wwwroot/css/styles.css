@@ -814,6 +814,14 @@ body.com-widgets-laterais .main-content {
 .ent-card-titulo.is-mono { font-family: 'SF Mono', 'Consolas', monospace; font-size: 14px; font-weight: 600; letter-spacing: .02em; line-height: 1.7; }
 .ent-card-titulo a:hover { color: var(--color-primary); text-decoration: underline; }
 .ent-card-status { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.ent-card-menu {
+  width: 28px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 6px; background: none; color: var(--color-text-muted);
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
+.ent-card-menu:hover, .ent-card-menu:focus-visible { border-color: var(--color-border); background: var(--color-bg); color: var(--color-text); }
+.ent-card-prefixo { flex-shrink: 0; display: flex; align-items: center; min-height: 24px; }
+.ent-card-prefixo input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
 .ent-card-tags { display: flex; gap: 6px; margin-top: 6px; min-width: 0; min-height: 22px; overflow: hidden; white-space: nowrap; }
 .ent-card-tags > * { flex-shrink: 0; }
 .ent-card-tags > .ent-encolhe { flex-shrink: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; }
@@ -852,7 +860,8 @@ body.com-widgets-laterais .main-content {
   /* Identificador (CNJ) não pode ser cortado: no celular o status desce para a linha de baixo. */
   .ent-card-top:has(.is-mono) { flex-wrap: wrap; }
   .ent-card-titulo.is-mono { flex: 1 0 auto; max-width: 100%; }
-  /* Uma coluna só: sem vizinho para alinhar, o texto dos campos aparece inteiro. */
+  /* Uma coluna só: sem vizinho para alinhar, título e campos aparecem inteiros (no toque não há dica). */
+  .ent-card-titulo:not(.is-mono) { white-space: normal; overflow-wrap: anywhere; }
   .ent-card-campos { grid-template-columns: 84px minmax(0, 1fr); }
   .ent-card-campo-val { white-space: normal; overflow-wrap: anywhere; }
   .ent-card-nums { gap: 8px; }
