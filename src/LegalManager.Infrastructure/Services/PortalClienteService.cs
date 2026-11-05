@@ -378,7 +378,10 @@ public class PortalClienteService : IPortalClienteService
 
         _context.AcessosCliente.Add(acesso);
         await _context.SaveChangesAsync(ct);
-        _ = _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
+        // Aguardado: sem o await a requisição terminava antes do Resend responder, o HttpClient
+        // (descartado com o escopo da requisição) cancelava o envio e o cliente não recebia o e-mail.
+        // Falha no envio não derruba a liberação — o EmailService só registra no log.
+        await _email.EnviarAcessoPortalAsync(emailNormalizado, contato.Nome, nomeEscritorio, dto.Senha, portalUrl, ct);
 
         return MapInfo(acesso);
     }

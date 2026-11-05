@@ -335,6 +335,34 @@ public class PortalClienteServiceTests
     }
 
     [Fact]
+    public async Task CriarAcessoAsync_AcessoNovo_SoTerminaDepoisDoEnvioDoEmail()
+    {
+        // Regressão: o envio era disparado sem await; a requisição terminava antes do Resend
+        // responder e o HttpClient descartado com ela cancelava o e-mail de acesso.
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Free, Status = StatusTenant.Trial, CriadoEm = DateTime.UtcNow };
+        var contato = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Novo Cliente", Tipo = TipoPessoa.PF, TipoContato = TipoContato.Cliente, Ativo = true, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(tenant);
+        ctx.Contatos.Add(contato);
+        await ctx.SaveChangesAsync();
+
+        var envio = new TaskCompletionSource();
+        _emailMock.Setup(e => e.EnviarAcessoPortalAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(envio.Task);
+
+        var criacao = CreateService(ctx).CriarAcessoAsync(contato.Id,
+            new CriarAcessoPortalDto("novo@cliente.com", "Senha@123"), tenant.Id);
+
+        await Task.Delay(50);
+        Assert.False(criacao.IsCompleted, "A liberação respondeu antes de o e-mail terminar de ser enviado.");
+
+        envio.SetResult();
+        var result = await criacao;
+        Assert.Equal("novo@cliente.com", result.Email);
+    }
+
+    [Fact]
     public async Task CriarAcessoAsync_AtualizaAcesso_QuandoJaExiste()
     {
         var (ctx, tenant, contato, acesso) = await SeedAsync();
