@@ -16,7 +16,7 @@ namespace LegalManager.API.Controllers;
 [ApiController]
 [Route("api/superadmin/guias")]
 [Authorize(Roles = "SuperAdmin")]
-public class SuperAdminGuiasController(AppDbContext db, IAuditService audit, IStorageService storage) : ControllerBase
+public class SuperAdminGuiasController(AppDbContext db, IAuditService audit) : ControllerBase
 {
     private const string Entidade = "Artigo";
 
@@ -98,29 +98,6 @@ public class SuperAdminGuiasController(AppDbContext db, IAuditService audit, ISt
     {
         var r = GuiaMarkdown.Renderizar(dto.Conteudo);
         return Ok(new PreviaGuiaResultadoDto(r.Html, r.MinutosLeitura));
-    }
-
-    [HttpPost("imagens")]
-    [RequestSizeLimit(ImagemGuia.TamanhoMaximo + 64 * 1024)]
-    public async Task<ActionResult<ImagemGuiaDto>> EnviarImagem(IFormFile? arquivo, CancellationToken ct)
-    {
-        if (arquivo == null) return BadRequest(new { message = "Selecione uma imagem." });
-
-        await using var stream = arquivo.OpenReadStream();
-        string extensao, contentType;
-        try
-        {
-            (extensao, contentType) = ImagemGuia.Validar(stream, arquivo.FileName, arquivo.Length);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-
-        var nome = Guid.NewGuid().ToString("N") + extensao;
-        await storage.UploadAsync(stream, ImagemGuia.ObjectKey(nome), contentType, ct);
-
-        return Ok(new ImagemGuiaDto(ImagemGuia.PrefixoUrl + nome));
     }
 
     private static string SlugDe(SalvarGuiaDto dto) =>

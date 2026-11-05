@@ -164,7 +164,8 @@
                 <label for="fCapa">Capa (opcional)</label>
                 <div class="com-botao">
                   <input class="form-control" id="fCapa" maxlength="500" placeholder="/guias/img/... ou https://">
-                  <button type="button" class="btn btn-secondary btn-sm" id="capaBtn" title="Enviar imagem de capa">Enviar</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="capaBibliotecaBtn" title="Escolher uma imagem da biblioteca">Biblioteca</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="capaBtn" title="Enviar uma imagem nova (vai para a pasta guias)">Enviar</button>
                 </div>
                 <div class="field-hint">Ideal 1200×630 (preview no WhatsApp/LinkedIn).</div>
                 <img class="capa-mini" id="capaMini" alt="" hidden>
@@ -196,9 +197,9 @@
                 <button type="button" data-fmt="ol" title="Passo a passo numerado">1. Passos</button>
                 <button type="button" data-fmt="quote" title="Destaque / dica">Dica</button>
                 <span class="sep"></span>
-                <button type="button" id="imagemBtn" title="Inserir imagem (também dá para colar ou arrastar)">🖼 Imagem</button>
+                <button type="button" id="imagemBtn" title="Escolher da biblioteca de imagens (também dá para colar ou arrastar um arquivo)">🖼 Imagem</button>
               </div>
-              <textarea class="form-control" id="fConteudo" maxlength="100000" placeholder="Escreva em Markdown. Use “Seção” para dividir o guia — com 3 ou mais seções a página ganha um índice.&#10;&#10;Cole (Ctrl+V) ou arraste imagens aqui para enviá-las."></textarea>
+              <textarea class="form-control" id="fConteudo" maxlength="100000" placeholder="Escreva em Markdown. Use “Seção” para dividir o guia — com 3 ou mais seções a página ganha um índice.&#10;&#10;Cole (Ctrl+V) ou arraste imagens aqui: elas vão para a pasta “guias” da biblioteca."></textarea>
               <div class="status-envio" id="statusEnvio" aria-live="polite"></div>
             </div>
 
@@ -226,7 +227,6 @@
     </main>
   </div>
 
-  <input type="file" id="arquivoImagem" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
   <input type="file" id="arquivoCapa" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
 
   <div class="modal-overlay" id="deleteOverlay">
@@ -248,7 +248,9 @@
   <script type="module">
     import { esc } from '/js/utils.js';
     import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
-    import { saFetch, getToken } from '/superadmin/js/superAdminApi.js';
+    import { saFetch } from '/superadmin/js/superAdminApi.js';
+    import { enviarImagem, markdownDe } from '/superadmin/js/imagensApi.js';
+    import { escolherImagem } from '/superadmin/js/imagensSeletor.js';
 
     initAdminLayout();
 
@@ -507,17 +509,14 @@
 
     // ── Imagens ─────────────────────────────────────────────────────────────
 
-    async function enviarImagem(arquivo) {
-      const form = new FormData();
-      form.append('arquivo', arquivo);
-      const res = await fetch('/api/superadmin/guias/imagens', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}` },
-        body: form,
-      });
-      const corpo = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(corpo.message || `HTTP ${res.status}`);
-      return corpo.url;
+    // Imagens do guia vão para a pasta "guias" da biblioteca (superadmin → Imagens). Captura
+    // colada chega como "image.png": usa o endereço do guia como nome (nome repetido vira -2, -3...).
+    async function enviarParaBiblioteca(arquivo, sufixo = '') {
+      const generico = /^image\.(png|jpe?g|gif|webp)$/i.test(arquivo.name);
+      const base = $('fSlug').value.trim() || gerarSlug($('fTitulo').value) || 'guia';
+      const nome = sufixo ? base + sufixo : generico ? base : null;
+      const img = await enviarImagem(arquivo, { pasta: 'guias', nome, conflito: 'renomear' });
+      return img.url;
     }
 
     const descricaoDe = nome => nome.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').replace(/[\[\]]/g, '').trim() || 'imagem';
@@ -532,7 +531,7 @@
         substituirSelecao(() => ({ texto: `\n${marcador}\n` }));
         $('statusEnvio').textContent = `Enviando ${arquivo.name}…`;
         try {
-          const url = await enviarImagem(arquivo);
+          const url = await enviarParaBiblioteca(arquivo);
           area.value = area.value.replace(marcador, `![${descricaoDe(arquivo.name)}](${url})`);
           $('statusEnvio').textContent = 'Imagem enviada. Troque o texto entre [ ] por uma descrição da imagem (acessibilidade e Google).';
         } catch (e) {
@@ -543,8 +542,16 @@
       }
     }
 
-    $('imagemBtn').addEventListener('click', () => $('arquivoImagem').click());
-    $('arquivoImagem').addEventListener('change', e => { inserirImagens(e.target.files); e.target.value = ''; });
+    // Botão 🖼: escolhe da biblioteca (ou envia uma nova por lá) e insere no cursor.
+    $('imagemBtn').addEventListener('click', async () => {
+      const ini = area.selectionStart, fim = area.selectionEnd;
+      const img = await escolherImagem({ pasta: 'guias', titulo: 'Inserir imagem no guia' });
+      if (!img) return area.focus();
+      area.focus();
+      area.setSelectionRange(ini, fim);
+      substituirSelecao(() => ({ texto: `\n${markdownDe(img)}\n` }));
+      $('statusEnvio').textContent = 'Imagem inserida. Troque o texto entre [ ] por uma descrição da imagem (acessibilidade e Google).';
+    });
     area.addEventListener('paste', e => {
       const arquivos = [...(e.clipboardData?.files ?? [])];
       if (arquivos.some(a => a.type.startsWith('image/'))) { e.preventDefault(); inserirImagens(arquivos); }
@@ -568,7 +575,7 @@
       btn.disabled = true;
       btn.textContent = 'Enviando…';
       try {
-        $('fCapa').value = await enviarImagem(arquivo);
+        $('fCapa').value = await enviarParaBiblioteca(arquivo, '-capa');
         $('fCapa').dispatchEvent(new Event('input'));
       } catch (err) {
         alert('Não foi possível enviar a capa: ' + err.message);
@@ -576,6 +583,13 @@
         btn.disabled = false;
         btn.textContent = 'Enviar';
       }
+    });
+
+    $('capaBibliotecaBtn').addEventListener('click', async () => {
+      const img = await escolherImagem({ pasta: 'guias', titulo: 'Escolher a capa' });
+      if (!img) return;
+      $('fCapa').value = img.url;
+      $('fCapa').dispatchEvent(new Event('input'));
     });
 
     // ── Salvar ──────────────────────────────────────────────────────────────

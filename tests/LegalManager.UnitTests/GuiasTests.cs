@@ -206,9 +206,9 @@ public class SuperAdminGuiasTests
     private static AppDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
-    private static SuperAdminGuiasController CreateController(AppDbContext ctx, IStorageService? storage = null)
+    private static SuperAdminGuiasController CreateController(AppDbContext ctx)
     {
-        var controller = new SuperAdminGuiasController(ctx, new Mock<IAuditService>().Object, storage ?? new Mock<IStorageService>().Object);
+        var controller = new SuperAdminGuiasController(ctx, new Mock<IAuditService>().Object);
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()) };
         controller.ControllerContext = new ControllerContext
         {
@@ -385,41 +385,6 @@ public class SuperAdminGuiasTests
         Assert.Contains("<strong>oi</strong>", dto.Html);
         Assert.Contains("&lt;b&gt;", dto.Html);
         Assert.Equal(1, dto.MinutosLeitura);
-    }
-
-    private static IFormFile Arquivo(string nome, byte[] bytes) =>
-        new FormFile(new MemoryStream(bytes), 0, bytes.Length, "arquivo", nome);
-
-    [Fact]
-    public async Task EnviarImagem_ValidaESobeNoStorage()
-    {
-        using var ctx = CreateContext();
-        var storage = new Mock<IStorageService>();
-        string? chave = null;
-        storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), "image/png", It.IsAny<CancellationToken>()))
-            .Callback<Stream, string, string, CancellationToken>((_, k, _, _) => chave = k)
-            .ReturnsAsync("ok");
-
-        var result = await CreateController(ctx, storage.Object)
-            .EnviarImagem(Arquivo("tela.png", [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2]), CancellationToken.None);
-
-        var dto = Assert.IsType<ImagemGuiaDto>(Assert.IsType<OkObjectResult>(result.Result).Value);
-        Assert.StartsWith("/guias/img/", dto.Url);
-        Assert.EndsWith(".png", dto.Url);
-        Assert.Equal("guias/" + dto.Url["/guias/img/".Length..], chave);
-        Assert.True(ImagemGuia.NomeServivel(dto.Url["/guias/img/".Length..]));
-    }
-
-    [Fact]
-    public async Task EnviarImagem_RejeitaArquivoInvalidoOuAusente()
-    {
-        using var ctx = CreateContext();
-        var storage = new Mock<IStorageService>();
-        var controller = CreateController(ctx, storage.Object);
-
-        Assert.IsType<BadRequestObjectResult>((await controller.EnviarImagem(Arquivo("x.png", "<html>"u8.ToArray()), CancellationToken.None)).Result);
-        Assert.IsType<BadRequestObjectResult>((await controller.EnviarImagem(null, CancellationToken.None)).Result);
-        storage.VerifyNoOtherCalls();
     }
 }
 

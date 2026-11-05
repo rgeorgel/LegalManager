@@ -1721,6 +1721,50 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("HonorariosCalculos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ImagemPublica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(130)
+                        .HasColumnType("character varying(130)");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("PastaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Tamanho")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PastaId", "Nome")
+                        .IsUnique();
+
+                    b.ToTable("ImagensPublicas");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ImportacaoProcessoItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2360,6 +2404,28 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Pastas");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.PastaImagem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nome")
+                        .IsUnique();
+
+                    b.ToTable("PastasImagens");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.PecaGerada", b =>
@@ -4430,6 +4496,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ImagemPublica", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.PastaImagem", "Pasta")
+                        .WithMany("Imagens")
+                        .HasForeignKey("PastaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Pasta");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.ImportacaoProcessoItem", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.ImportacaoProcessos", "Importacao")
@@ -5016,6 +5093,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("LegalManager.Domain.Entities.Pasta", b =>
                 {
                     b.Navigation("SubPastas");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.PastaImagem", b =>
+                {
+                    b.Navigation("Imagens");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Processo", b =>

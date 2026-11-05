@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Imagens</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .main-content [hidden] { display: none !important; }
+    .hint { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; max-width: 900px; }
+    .hint code { font-size: 12px; }
+    .layout-imagens { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (max-width: 760px) { .layout-imagens { grid-template-columns: minmax(0, 1fr); } }
+
+    .pastas { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 8px; }
+    .pastas-titulo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); padding: 6px 8px; }
+    .pasta-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 10px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--color-text); text-align: left; min-height: 36px; }
+    .pasta-item:hover { background: var(--color-bg); }
+    .pasta-item.ativa { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
+    .pasta-item .qtd { font-size: 11px; color: var(--color-text-muted); font-weight: 400; }
+    .pastas-vazio { font-size: 12px; color: var(--color-text-muted); padding: 8px 10px; }
+    @media (max-width: 760px) {
+      .pastas { display: flex; gap: 6px; overflow-x: auto; padding: 6px; }
+      .pastas-titulo { display: none; }
+      .pasta-item { width: auto; white-space: nowrap; flex-shrink: 0; }
+    }
+
+    .conteudo { min-width: 0; }
+    .barra-pasta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .barra-pasta h2 { font-size: 16px; margin: 0; flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+    .barra-pasta h2 small { font-weight: 400; color: var(--color-text-muted); font-size: 12px; }
+    .busca { max-width: 220px; }
+
+    .zona { position: relative; border: 2px dashed transparent; border-radius: var(--radius); min-height: 200px; transition: border-color .15s, background .15s; }
+    .zona.arrastando { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+    .zona-vazia { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 220px; border: 2px dashed var(--color-border); border-radius: var(--radius); color: var(--color-text-muted); font-size: 13px; text-align: center; padding: 24px; }
+    .zona-vazia strong { color: var(--color-text); font-size: 14px; }
+
+    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+    .img-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+    .img-miniatura { display: block; aspect-ratio: 4 / 3; background-color: var(--color-bg);
+      background-image: linear-gradient(45deg, rgba(127,127,127,.12) 25%, transparent 25%, transparent 75%, rgba(127,127,127,.12) 75%),
+                        linear-gradient(45deg, rgba(127,127,127,.12) 25%, transparent 25%, transparent 75%, rgba(127,127,127,.12) 75%);
+      background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+    .img-miniatura img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .img-info { padding: 10px 10px 4px; min-width: 0; }
+    .img-nome { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .img-meta { font-size: 11px; color: var(--color-text-muted); display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .img-uso { font-size: 11px; margin-top: 4px; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .img-uso.sem-uso { opacity: .7; }
+    .img-acoes { display: flex; gap: 4px; padding: 8px 10px 10px; flex-wrap: wrap; margin-top: auto; }
+    .acao { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 8px; font-size: 12px; cursor: pointer; color: var(--color-text); min-height: 28px; }
+    .acao:hover { background: var(--color-bg); }
+    .acao.perigo:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .acao-mais { position: relative; margin-left: auto; }
+    .acao-mais summary { list-style: none; }
+    .acao-mais summary::-webkit-details-marker { display: none; }
+    .menu-mais { position: absolute; right: 0; bottom: calc(100% + 4px); z-index: 5; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: var(--shadow-md); padding: 4px; min-width: 150px; display: flex; flex-direction: column; }
+    .menu-mais button { background: none; border: none; text-align: left; padding: 8px 10px; font-size: 13px; border-radius: 5px; cursor: pointer; color: var(--color-text); }
+    .menu-mais button:hover { background: var(--color-bg); }
+    .menu-mais button.perigo { color: var(--color-danger); }
+
+    .fila { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 12px; }
+    .fila:empty { display: none; }
+    .fila-item { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 6px; background: var(--color-bg); }
+    .fila-item.erro { color: var(--color-danger); }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 2000; pointer-events: none; }
+    .toast[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Imagens</h1>
+        <button class="btn btn-secondary" id="novaPastaBtn">+ Nova pasta</button>
+      </div>
+      <p class="hint">
+        Imagens públicas do site, para guias, novidades e páginas. Cada uma fica em
+        <code>/imagens/pasta/nome.png</code> — qualquer pessoa com o endereço consegue abrir, então não
+        envie nada com dados de clientes. PNG, JPG, GIF ou WEBP, até 5 MB.
+      </p>
+
+      <div class="layout-imagens">
+        <nav class="pastas" id="pastas" aria-label="Pastas">
+          <div class="pastas-titulo">Pastas</div>
+          <div class="pastas-vazio">Carregando...</div>
+        </nav>
+
+        <section class="conteudo">
+          <div class="barra-pasta" id="barraPasta" hidden>
+            <h2 id="tituloPasta"></h2>
+            <input type="search" class="form-control busca" id="busca" placeholder="Buscar nesta pasta" aria-label="Buscar imagens">
+            <button class="btn btn-secondary btn-sm" id="excluirPastaBtn" hidden>Excluir pasta</button>
+            <button class="btn btn-primary btn-sm" id="enviarBtn">Enviar imagens</button>
+          </div>
+          <div class="fila" id="fila" aria-live="polite"></div>
+          <div class="zona" id="zona">
+            <div class="zona-vazia" id="semPasta">
+              <strong>Crie uma pasta para começar</strong>
+              <span>Organize por assunto, por exemplo <code>guias</code>, <code>portal-do-cliente</code> ou <code>marketing</code>.</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <input type="file" id="arquivos" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+  <input type="file" id="arquivoSubstituto" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import {
+      listarPastas, criarPasta, excluirPasta, listarImagens, renomearImagem, excluirImagem,
+      substituirImagem, enviarPerguntandoConflito, urlAbsoluta, markdownDe, tamanhoLegivel,
+    } from '/superadmin/js/imagensApi.js';
+
+    initAdminLayout();
+
+    const $ = id => document.getElementById(id);
+    let pastas = [];
+    let pastaAtual = null;
+    let imagens = [];
+    let substituindo = null;
+
+    function avisar(texto) {
+      const t = $('toast');
+      t.textContent = texto;
+      t.hidden = false;
+      clearTimeout(avisar.timer);
+      avisar.timer = setTimeout(() => { t.hidden = true; }, 2200);
+    }
+
+    async function copiar(texto, rotulo) {
+      try { await navigator.clipboard.writeText(texto); avisar(`${rotulo} copiado`); }
+      catch { prompt('Copie:', texto); }
+    }
+
+    // ── Pastas ──────────────────────────────────────────────────────────────
+
+    async function carregarPastas(selecionar) {
+      pastas = await listarPastas();
+      const alvo = selecionar ?? pastaAtual?.nome ?? new URLSearchParams(location.search).get('pasta');
+      renderPastas();
+      const pasta = pastas.find(p => p.nome === alvo) ?? pastas[0] ?? null;
+      if (pasta) await abrirPasta(pasta);
+      else mostrarSemPasta();
+    }
+
+    function renderPastas() {
+      $('pastas').innerHTML = '<div class="pastas-titulo">Pastas</div>' + (pastas.length
+        ? pastas.map(p => `<button type="button" class="pasta-item${p.id === pastaAtual?.id ? ' ativa' : ''}" data-id="${p.id}">
+            <span>📁 ${esc(p.nome)}</span><span class="qtd">${p.quantidade}</span></button>`).join('')
+        : '<div class="pastas-vazio">Nenhuma pasta ainda.</div>');
+    }
+
+    $('pastas').addEventListener('click', e => {
+      const btn = e.target.closest('.pasta-item');
+      const pasta = btn && pastas.find(p => p.id === btn.dataset.id);
+      if (pasta) abrirPasta(pasta);
+    });
+
+    $('novaPastaBtn').addEventListener('click', async () => {
+      const nome = prompt('Nome da pasta (ex: portal-do-cliente):');
+      if (!nome?.trim()) return;
+      try {
+        const pasta = await criarPasta(nome.trim());
+        await carregarPastas(pasta.nome);
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    $('excluirPastaBtn').addEventListener('click', async () => {
+      if (!pastaAtual || !confirm(`Excluir a pasta "${pastaAtual.nome}"?`)) return;
+      try {
+        await excluirPasta(pastaAtual.id);
+        pastaAtual = null;
+        history.replaceState(null, '', location.pathname);
+        await carregarPastas();
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    function mostrarSemPasta() {
+      pastaAtual = null;
+      $('barraPasta').hidden = true;
+      $('zona').innerHTML = $('semPasta')?.outerHTML ?? `
+        <div class="zona-vazia" id="semPasta"><strong>Crie uma pasta para começar</strong>
+        <span>Organize por assunto, por exemplo <code>guias</code>, <code>portal-do-cliente</code> ou <code>marketing</code>.</span></div>`;
+    }
+
+    async function abrirPasta(pasta) {
+      pastaAtual = pasta;
+      renderPastas();
+      history.replaceState(null, '', `?pasta=${encodeURIComponent(pasta.nome)}`);
+      $('barraPasta').hidden = false;
+      $('busca').value = '';
+      $('zona').innerHTML = '<p class="sub" style="color:var(--color-text-muted);padding:16px">Carregando...</p>';
+      try {
+        imagens = await listarImagens(pasta.id);
+        renderImagens();
+      } catch (e) {
+        $('zona').innerHTML = `<p style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</p>`;
+      }
+    }
+
+    // ── Imagens ─────────────────────────────────────────────────────────────
+
+    function renderImagens() {
+      $('tituloPasta').innerHTML = `📁 ${esc(pastaAtual.nome)} <small>/imagens/${esc(pastaAtual.nome)}/</small>`;
+      $('excluirPastaBtn').hidden = imagens.length > 0;
+
+      const termo = $('busca').value.trim().toLowerCase();
+      const visiveis = termo ? imagens.filter(i => i.nome.includes(termo)) : imagens;
+
+      if (!imagens.length) {
+        $('zona').innerHTML = `<div class="zona-vazia"><strong>Pasta vazia</strong>
+          <span>Arraste imagens para cá, cole com Ctrl+V ou use o botão <em>Enviar imagens</em>. Dá para enviar várias de uma vez.</span></div>`;
+        return;
+      }
+      if (!visiveis.length) {
+        $('zona').innerHTML = '<p style="color:var(--color-text-muted);padding:16px">Nenhuma imagem com esse nome.</p>';
+        return;
+      }
+
+      $('zona').innerHTML = `<div class="grade">${visiveis.map(cardImagem).join('')}</div>`;
+    }
+
+    function cardImagem(i) {
+      const usos = i.usos.length
+        ? `<div class="img-uso" title="${esc(i.usos.map(u => `${u.tipo}: ${u.titulo}`).join('\n'))}">Usada em ${i.usos.length === 1 ? esc(i.usos[0].titulo) : `${i.usos.length} lugares`}</div>`
+        : '<div class="img-uso sem-uso">Não usada em guias nem novidades</div>';
+      // ?v= força o navegador a buscar a versão nova logo depois de substituir.
+      const versao = new Date(i.atualizadoEm).getTime();
+      return `
+        <article class="img-card" data-id="${i.id}">
+          <a class="img-miniatura" href="${esc(i.url)}" target="_blank" rel="noopener" title="Abrir em nova aba">
+            <img src="${esc(i.url)}?v=${versao}" alt="${esc(i.nome)}" loading="lazy">
+          </a>
+          <div class="img-info">
+            <div class="img-nome" title="${esc(i.nome)}">${esc(i.nome)}</div>
+            <div class="img-meta"><span>${tamanhoLegivel(i.tamanho)}</span><span>·</span><span>${new Date(i.atualizadoEm).toLocaleDateString('pt-BR')}</span></div>
+            ${usos}
+          </div>
+          <div class="img-acoes">
+            <button type="button" class="acao" data-acao="link">Copiar link</button>
+            <button type="button" class="acao" data-acao="markdown" title="Para colar no conteúdo de um guia">Markdown</button>
+            <details class="acao-mais">
+              <summary class="acao" aria-label="Mais ações">⋯</summary>
+              <div class="menu-mais">
+                <button type="button" data-acao="renomear">Renomear</button>
+                <button type="button" data-acao="substituir">Substituir arquivo</button>
+                <button type="button" data-acao="excluir" class="perigo">Excluir</button>
+              </div>
+            </details>
+          </div>
+        </article>`;
+    }
+
+    $('busca').addEventListener('input', renderImagens);
+
+    $('zona').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-acao]');
+      if (!btn) return;
+      const img = imagens.find(i => i.id === btn.closest('.img-card')?.dataset.id);
+      if (!img) return;
+      btn.closest('details')?.removeAttribute('open');
+
+      switch (btn.dataset.acao) {
+        case 'link': copiar(urlAbsoluta(img.url), 'Link'); break;
+        case 'markdown': copiar(markdownDe(img), 'Markdown'); break;
+        case 'renomear': await renomear(img); break;
+        case 'substituir':
+          substituindo = img;
+          $('arquivoSubstituto').click();
+          break;
+        case 'excluir': await excluir(img); break;
+      }
+    });
+
+    // Fecha o menu ⋯ ao clicar fora.
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.acao-mais[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); });
+    });
+
+    const avisoUsos = img => img.usos.length
+      ? `\n\nAtenção: ela é usada em ${img.usos.map(u => `${u.tipo.toLowerCase()} "${u.titulo}"`).join(', ')} — esses lugares vão mostrar uma imagem quebrada até você trocar o endereço.`
+      : '';
+
+    async function renomear(img) {
+      const atual = img.nome.replace(/\.[a-z]+$/, '');
+      const novo = prompt(`Novo nome para "${img.nome}" (a extensão é mantida):${avisoUsos(img)}`, atual);
+      if (!novo?.trim() || novo.trim() === atual) return;
+      try {
+        await renomearImagem(img.id, novo.trim());
+        avisar('Imagem renomeada');
+        await abrirPasta(pastaAtual);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function excluir(img) {
+      if (!confirm(`Excluir "${img.nome}"? O endereço deixa de funcionar.${avisoUsos(img)}`)) return;
+      try {
+        await excluirImagem(img.id);
+        avisar('Imagem excluída');
+        await carregarPastas(pastaAtual.nome);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    $('arquivoSubstituto').addEventListener('change', async e => {
+      const arquivo = e.target.files[0];
+      e.target.value = '';
+      if (!arquivo || !substituindo) return;
+      try {
+        await substituirImagem(substituindo.id, arquivo);
+        avisar('Arquivo substituído — o endereço continua o mesmo');
+        await abrirPasta(pastaAtual);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        substituindo = null;
+      }
+    });
+
+    // ── Envio ───────────────────────────────────────────────────────────────
+
+    async function enviar(arquivos) {
+      const lista = [...arquivos];
+      if (!lista.length || !pastaAtual) return;
+      const fila = $('fila');
+      for (const arquivo of lista) {
+        const linha = document.createElement('div');
+        linha.className = 'fila-item';
+        linha.innerHTML = `<span>${esc(arquivo.name)}</span><span>Enviando…</span>`;
+        fila.appendChild(linha);
+        try {
+          const img = await enviarPerguntandoConflito(arquivo, pastaAtual.nome);
+          linha.lastElementChild.textContent = `✓ ${img.nome}`;
+          setTimeout(() => linha.remove(), 2500);
+        } catch (e) {
+          linha.classList.add('erro');
+          linha.lastElementChild.textContent = e.message;
+          setTimeout(() => linha.remove(), 8000);
+        }
+      }
+      await carregarPastas(pastaAtual.nome);
+    }
+
+    $('enviarBtn').addEventListener('click', () => $('arquivos').click());
+    $('arquivos').addEventListener('change', e => { enviar(e.target.files); e.target.value = ''; });
+
+    const zona = $('zona');
+    zona.addEventListener('dragover', e => {
+      if (!pastaAtual || ![...e.dataTransfer.types].includes('Files')) return;
+      e.preventDefault();
+      zona.classList.add('arrastando');
+    });
+    zona.addEventListener('dragleave', e => { if (!zona.contains(e.relatedTarget)) zona.classList.remove('arrastando'); });
+    zona.addEventListener('drop', e => {
+      zona.classList.remove('arrastando');
+      if (!pastaAtual || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      enviar(e.dataTransfer.files);
+    });
+    document.addEventListener('paste', e => {
+      if (!pastaAtual || e.target.closest('input, textarea')) return;
+      const arquivos = [...(e.clipboardData?.files ?? [])].filter(a => a.type.startsWith('image/'));
+      if (arquivos.length) { e.preventDefault(); enviar(arquivos); }
+    });
+
+    carregarPastas().catch(e => {
+      $('pastas').innerHTML = `<div class="pastas-vazio" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
+    });
+  </script>
+</body>
+</html>

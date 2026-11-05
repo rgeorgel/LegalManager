@@ -24,6 +24,7 @@ const NAV_GROUPS = [
       { href: '/superadmin/precos-planos.html', label: '💲 Preços dos planos' },
       { href: '/superadmin/novidades.html', label: '✨ Novidades' },
       { href: '/superadmin/guias.html', label: '📖 Guias' },
+      { href: '/superadmin/imagens.html', label: '🖼️ Imagens' },
       { href: '/superadmin/anuncios-proprios.html', label: '📣 Anúncios próprios' }
     ]
   },
