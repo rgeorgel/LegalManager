@@ -169,6 +169,8 @@
           <option value="nome:desc">Nome: Z–A</option>
           <option value="ultimoAcesso:desc">Último acesso: mais recente</option>
           <option value="ultimoAcesso:asc">Último acesso: mais antigo</option>
+          <option value="expiracao:asc">Expiração: vence antes</option>
+          <option value="expiracao:desc">Expiração: vence depois</option>
         </select>
         <button type="button" class="filtros-btn" id="filtrosBtn" aria-expanded="false" aria-controls="filtrosPainel">
           Filtros <span class="filtros-count" id="filtrosCount" hidden></span>
@@ -266,7 +268,7 @@
         const raw = localStorage.getItem(SORT_STORAGE_KEY);
         if (!raw) return null;
         const saved = JSON.parse(raw);
-        if (!['nome', 'cadastro', 'ultimoAcesso'].includes(saved.sortBy)) return null;
+        if (!['nome', 'cadastro', 'ultimoAcesso', 'expiracao'].includes(saved.sortBy)) return null;
         if (!['asc', 'desc'].includes(saved.sortDir)) return null;
         return saved;
       } catch { return null; }

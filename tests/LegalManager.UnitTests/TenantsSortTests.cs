@@ -319,4 +319,86 @@ public class TenantsSortTests
 
         Assert.Equal(5, ExtractTotal(response));
     }
+
+    private static Tenant NewTenantExpira(string nome, StatusTenant status, DateTime? trialExpira, DateTime? planoExpira)
+    {
+        var t = NewTenant(nome, DateTime.UtcNow);
+        t.Status = status;
+        t.TrialExpiraEm = trialExpira;
+        t.PlanoExpiraEm = planoExpira;
+        return t;
+    }
+
+    [Fact]
+    public async Task SortByExpiracao_Asc_VenceAntesPrimeiro_UsaTrialNoTrialEPlanoNosDemais()
+    {
+        using var ctx = CreateContext();
+        var agora = DateTime.UtcNow;
+        // Trial: vale TrialExpiraEm (o PlanoExpiraEm distante é ignorado).
+        var trial = NewTenantExpira("Trial", StatusTenant.Trial, agora.AddDays(3), agora.AddDays(400));
+        // Ativo: vale PlanoExpiraEm (o TrialExpiraEm antigo é ignorado).
+        var ativo = NewTenantExpira("Ativo", StatusTenant.Ativo, agora.AddDays(-100), agora.AddDays(10));
+        var vencido = NewTenantExpira("Vencido", StatusTenant.Ativo, null, agora.AddDays(-2));
+        var longe = NewTenantExpira("Longe", StatusTenant.Ativo, null, agora.AddDays(200));
+        ctx.Tenants.AddRange(longe, ativo, trial, vencido);
+        await ctx.SaveChangesAsync();
+
+        var ids = ExtractIds(await CallAsync(CreateController(ctx), sortBy: "expiracao", sortDir: "asc"));
+
+        Assert.Equal(new[] { vencido.Id, trial.Id, ativo.Id, longe.Id }, ids);
+    }
+
+    [Fact]
+    public async Task SortByExpiracao_Desc_VenceDepoisPrimeiro()
+    {
+        using var ctx = CreateContext();
+        var agora = DateTime.UtcNow;
+        var t1 = NewTenantExpira("A", StatusTenant.Ativo, null, agora.AddDays(5));
+        var t2 = NewTenantExpira("B", StatusTenant.Ativo, null, agora.AddDays(50));
+        var t3 = NewTenantExpira("C", StatusTenant.Trial, agora.AddDays(20), null);
+        ctx.Tenants.AddRange(t1, t2, t3);
+        await ctx.SaveChangesAsync();
+
+        var ids = ExtractIds(await CallAsync(CreateController(ctx), sortBy: "expiracao", sortDir: "desc"));
+
+        Assert.Equal(new[] { t2.Id, t3.Id, t1.Id }, ids);
+    }
+
+    [Theory]
+    [InlineData("asc")]
+    [InlineData("desc")]
+    public async Task SortByExpiracao_SemDataSemprePorUltimo(string sortDir)
+    {
+        using var ctx = CreateContext();
+        var agora = DateTime.UtcNow;
+        var semData = NewTenantExpira("SemData", StatusTenant.Ativo, null, null);
+        // Trial sem TrialExpiraEm também conta como sem data, mesmo com PlanoExpiraEm.
+        var trialSemData = NewTenantExpira("TrialSemData", StatusTenant.Trial, null, agora.AddDays(1));
+        var comData1 = NewTenantExpira("ComData1", StatusTenant.Ativo, null, agora.AddDays(1));
+        var comData2 = NewTenantExpira("ComData2", StatusTenant.Ativo, null, agora.AddDays(30));
+        ctx.Tenants.AddRange(semData, comData1, trialSemData, comData2);
+        await ctx.SaveChangesAsync();
+
+        var ids = ExtractIds(await CallAsync(CreateController(ctx), sortBy: "expiracao", sortDir: sortDir));
+
+        Assert.Equal(new[] { semData.Id, trialSemData.Id }.ToHashSet(), ids.Skip(2).ToHashSet());
+    }
+
+    [Fact]
+    public async Task SortByExpiracao_PaginacaoSobreOConjuntoInteiro()
+    {
+        using var ctx = CreateContext();
+        var agora = DateTime.UtcNow;
+        var tenants = Enumerable.Range(1, 5)
+            .Select(i => NewTenantExpira($"T{i}", StatusTenant.Ativo, null, agora.AddDays(i * 7)))
+            .ToList();
+        ctx.Tenants.AddRange(tenants.AsEnumerable().Reverse());
+        await ctx.SaveChangesAsync();
+
+        var allIds = new List<Guid>();
+        for (var page = 1; page <= 3; page++)
+            allIds.AddRange(ExtractIds(await CallAsync(CreateController(ctx), sortBy: "expiracao", sortDir: "asc", page: page, pageSize: 2)));
+
+        Assert.Equal(tenants.Select(t => t.Id), allIds);
+    }
 }

@@ -130,6 +130,27 @@ public class SuperAdminController(
         [FromServices] SuperAdminDashboardService dashboard, [FromQuery] bool atualizarReceita, CancellationToken ct)
         => Ok(await dashboard.ObterAsync(atualizarReceita, ct));
 
+    /// <summary>
+    /// Ordena por quanto falta para o plano expirar — a mesma data que a lista mostra em
+    /// "Expira" (wwwroot/superadmin/tenants.html, datasHtml): em Trial, TrialExpiraEm; nos
+    /// demais, PlanoExpiraEm. Asc = vence antes primeiro (os já vencidos no topo). Sem data de
+    /// expiração (ex.: Free, assinatura sem prazo) fica sempre por último, em asc ou desc.
+    /// Desempate por nome para a paginação ficar estável.
+    /// </summary>
+    private static IQueryable<Tenant> OrdenarPorExpiracao(IQueryable<Tenant> query, bool ascending)
+    {
+        var comData = query.Select(t => new
+        {
+            Tenant = t,
+            Expira = t.Status == StatusTenant.Trial ? t.TrialExpiraEm : t.PlanoExpiraEm
+        });
+        var semDataPorUltimo = comData.OrderBy(x => x.Expira == null);
+        var ordenado = ascending
+            ? semDataPorUltimo.ThenBy(x => x.Expira)
+            : semDataPorUltimo.ThenByDescending(x => x.Expira);
+        return ordenado.ThenBy(x => x.Tenant.Nome).Select(x => x.Tenant);
+    }
+
     [HttpGet("tenants")]
     public async Task<IActionResult> GetTenants(
         [FromQuery] string? search,
@@ -170,7 +191,7 @@ public class SuperAdminController(
         query = FiltrarTema(query, tema);
 
         var normalizedSortBy = sortBy?.Trim().ToLowerInvariant();
-        if (normalizedSortBy is not ("nome" or "cadastro" or "ultimoacesso"))
+        if (normalizedSortBy is not ("nome" or "cadastro" or "ultimoacesso" or "expiracao"))
             normalizedSortBy = "cadastro";
 
         var ascending = string.Equals(sortDir?.Trim(), "asc", StringComparison.OrdinalIgnoreCase);
@@ -214,9 +235,12 @@ public class SuperAdminController(
         }
         else
         {
-            var orderedTenants = normalizedSortBy == "nome"
-                ? (ascending ? query.OrderBy(t => t.Nome) : query.OrderByDescending(t => t.Nome))
-                : (ascending ? query.OrderBy(t => t.CriadoEm) : query.OrderByDescending(t => t.CriadoEm));
+            IQueryable<Tenant> orderedTenants = normalizedSortBy switch
+            {
+                "nome" => ascending ? query.OrderBy(t => t.Nome) : query.OrderByDescending(t => t.Nome),
+                "expiracao" => OrdenarPorExpiracao(query, ascending),
+                _ => ascending ? query.OrderBy(t => t.CriadoEm) : query.OrderByDescending(t => t.CriadoEm)
+            };
 
             tenantIds = await orderedTenants
                 .Skip((page - 1) * pageSize)
