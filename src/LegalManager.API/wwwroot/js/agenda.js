@@ -66,6 +66,10 @@ function advance(view, date, dir) {
 }
 
 // --- Helpers ---
+// Cor do item: a escolhida na tarefa (ou a do tipo de evento), vinda do backend. Só "#rrggbb"
+// entra no style; qualquer outra coisa cai no cinza padrão.
+const corItem = it => /^#[0-9a-f]{6}$/i.test(it.cor ?? '') ? it.cor : '#6b7280';
+
 // Limites da consulta na hora local, sem fuso: eventos são gravados na hora "de parede"
 // de Brasília (ver dataParede em utils.js), então o intervalo usa o mesmo referencial.
 const toLocalISO = isoLocal;
@@ -151,7 +155,7 @@ function renderListaView() {
     return `<div class="agenda-group-title">${title}</div>` +
       items.map(item => `
       <div class="agenda-item" data-id="${item.id}" data-tipo="${item.tipo}">
-        <div class="agenda-item-dot" style="background:${item.cor}"></div>
+        <div class="agenda-item-dot${item.prevista ? ' is-prevista' : ''}" style="background:${corItem(item)}"></div>
         <div class="agenda-item-body">
           <div class="agenda-item-titulo">${esc(item.titulo)}</div>
           <div class="agenda-item-meta">
@@ -226,7 +230,7 @@ function renderSemanaView(start) {
         const dur = (dataParede(it.dataHoraFim) - dtStart) / 3600000;
         height = Math.max(20, dur * SLOT_PX - 4);
       }
-      return `<div class="evento-chip" style="position:absolute;top:${top}px;left:2px;right:2px;height:${height}px;background:${it.cor};white-space:normal;line-height:1.3;overflow:hidden" data-id="${it.id}" data-tipo="${it.tipo}" title="${esc(it.titulo)}">${esc(it.titulo)}</div>`;
+      return `<div class="evento-chip${it.prevista ? ' is-prevista' : ''}" style="position:absolute;top:${top}px;left:2px;right:2px;height:${height}px;background:${corItem(it)};white-space:normal;line-height:1.3;overflow:hidden" data-id="${it.id}" data-tipo="${it.tipo}" title="${esc(it.titulo)}">${esc(it.titulo)}</div>`;
     }).join('');
 
     return `<div style="position:relative;height:${totalH}px;border-right:1px solid var(--color-border-light,#f3f4f6)">${hLines}${chips}</div>`;
@@ -257,7 +261,7 @@ function renderDiaView(day) {
   if (!dayItems.length) return '<p style="color:var(--color-text-muted);padding:16px">Nenhum evento neste dia.</p>';
 
   return dayItems.map(it => `
-  <div class="agenda-item" style="border-left:4px solid ${it.cor};cursor:pointer" data-id="${it.id}" data-tipo="${it.tipo}">
+  <div class="agenda-item" style="border-left:4px solid ${corItem(it)};cursor:pointer" data-id="${it.id}" data-tipo="${it.tipo}">
     <div class="agenda-item-body">
       <div class="agenda-item-titulo">${esc(it.titulo)}</div>
       <div class="agenda-item-meta">
@@ -290,7 +294,7 @@ function renderMesView(start) {
     const today = new Date(); today.setHours(0,0,0,0);
     const isToday = date.getTime() === today.getTime();
     const dots = items.slice(0, 3).map(it =>
-      `<div class="evento-chip" style="background:${it.cor};font-size:10px" data-id="${it.id}" data-tipo="${it.tipo}">${esc(it.titulo)}</div>`
+      `<div class="evento-chip${it.prevista ? ' is-prevista' : ''}" style="background:${corItem(it)};font-size:10px" data-id="${it.id}" data-tipo="${it.tipo}">${esc(it.titulo)}</div>`
     ).join('');
     cells.push(`
     <div style="border:1px solid var(--color-border);border-radius:4px;padding:4px;min-height:70px;background:${isToday ? '#eff6ff' : 'var(--color-surface)'}">

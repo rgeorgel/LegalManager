@@ -62,6 +62,8 @@
     .status-cancelada   { background:#fee2e2; color:#e02424; }
     .badge-atrasada { background:#fef2f2; color:#dc2626; font-size:11px; padding:2px 6px; border-radius:4px; }
     .tarefa-card { border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; background:var(--color-surface); display:flex; flex-direction:column; gap:8px; }
+    .tarefa-card.tem-cor { border-left:4px solid var(--cor-tarefa); }
+    .tarefa-card-header .cor-tarefa { margin-right:6px; }
     .tarefa-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; }
     .tarefa-card-titulo { font-weight:600; font-size:15px; cursor:pointer; }
     .tarefa-card-titulo:hover { color:var(--color-primary); }
@@ -155,6 +157,7 @@
         <div id="filtStatus" style="flex:0 1 200px"></div>
         <div id="filtPrioridade" style="flex:0 1 200px"></div>
         <div id="filtTipo" style="flex:0 1 170px"></div>
+        <div id="filtCor" style="flex:0 1 160px"></div>
         <select id="filtDiasEncerradas" class="form-control" style="flex:0 1 auto;width:auto" title="Concluídas e canceladas exibidas; pendentes e em andamento aparecem sempre">
           <option value="3">Concluídas/canceladas: últimos 3 dias</option>
           <option value="7">Concluídas/canceladas: últimos 7 dias</option>
@@ -180,6 +183,7 @@
         <input type="search" id="filtBuscaKanban" class="form-control" placeholder="Buscar tarefas...">
         <div id="filtPrioridadeKanban" style="flex:0 1 200px"></div>
         <div id="filtTipoKanban" style="flex:0 1 170px"></div>
+        <div id="filtCorKanban" style="flex:0 1 160px"></div>
         <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer">
           <input type="checkbox" id="filtAtrasadaKanban"> Apenas atrasadas
         </label>
@@ -231,6 +235,7 @@ import { createMultiSelect } from '/js/multiselect.js';
 import { abrirNovaTarefa, abrirTarefa, excluirTarefa, PRIORIDADE_LABEL, STATUS_LABEL, badgeRecorrente } from '/js/tarefa-modal.js';
 import { intercalarAnuncios } from '/js/publicidade.js';
 import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
+import { marcaCor, corValida, opcoesFiltroCor, estilizarFiltroCor } from '/js/cores-tarefa.js';
 
 initLayout();
 
@@ -327,6 +332,10 @@ const filtPrioridade = createMultiSelect(document.getElementById('filtPrioridade
 const filtTipo = createMultiSelect(document.getElementById('filtTipo'), {
   placeholder: 'Todos os tipos', plural: 'tipos', options: opcoes(TIPO_LABEL), onChange: () => loadTarefas(1)
 });
+const filtCor = createMultiSelect(document.getElementById('filtCor'), {
+  placeholder: 'Todas as cores', plural: 'cores', options: opcoesFiltroCor(), onChange: () => loadTarefas(1)
+});
+estilizarFiltroCor(document.getElementById('filtCor'));
 
 function getFilters() {
   return {
@@ -334,6 +343,7 @@ function getFilters() {
     status: filtStatus.getValues(),
     prioridade: filtPrioridade.getValues(),
     tipo: filtTipo.getValues(),
+    cor: filtCor.getValues(),
     atrasada: document.getElementById('filtAtrasada').checked ? 'true' : '',
     dias: diasEncerradas(),
   };
@@ -366,6 +376,7 @@ async function loadTarefas(page = 1) {
   f.status.forEach(v => params.append('status', v));
   f.prioridade.forEach(v => params.append('prioridade', v));
   f.tipo.forEach(v => params.append('tipo', v));
+  f.cor.forEach(v => params.append('cor', v));
   if (f.atrasada) params.set('atrasada', 'true');
   if (f.dias) params.set('concluidasUltimosDias', f.dias);
 
@@ -413,6 +424,7 @@ function cardTarefa(t) {
     tituloCompleto: true,
     estado: t.atrasada ? 'danger' : encerrada ? 'muted' : 'info',
     dados: { id: t.id },
+    prefixoHtml: marcaCor(t.cor),
     statusHtml: `<span class="badge status-${t.status.toLowerCase()}">${esc(STATUS_LABEL[t.status] ?? t.status)}</span>`
       + `<button type="button" class="ent-card-menu" data-menu-tarefa="${esc(t.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações para ${esc(t.titulo)}">⋮</button>`,
     tagsHtml: [
@@ -439,9 +451,10 @@ function tarefaCard(t) {
   const tags = t.tags?.map(tag => `<span class="tag">${esc(tag)}</span>`).join('') ?? '';
 
   return `
-  <div class="tarefa-card" data-id="${t.id}">
+  <div class="tarefa-card${corValida(t.cor) ? ' tem-cor' : ''}" data-id="${t.id}"${corValida(t.cor) ? ` style="--cor-tarefa:${corValida(t.cor)}"` : ''}>
     <div class="tarefa-card-header">
       <div>
+        ${marcaCor(t.cor)}
         <span class="tarefa-card-titulo" data-detail-id="${t.id}">${esc(t.titulo)}</span>
         ${atrasadaBadge}
       </div>
@@ -517,12 +530,17 @@ const filtPrioridadeKanban = createMultiSelect(document.getElementById('filtPrio
 const filtTipoKanban = createMultiSelect(document.getElementById('filtTipoKanban'), {
   placeholder: 'Todos os tipos', plural: 'tipos', options: opcoes(TIPO_LABEL), onChange: () => renderBoard()
 });
+const filtCorKanban = createMultiSelect(document.getElementById('filtCorKanban'), {
+  placeholder: 'Todas as cores', plural: 'cores', options: opcoesFiltroCor(), onChange: () => renderBoard()
+});
+estilizarFiltroCor(document.getElementById('filtCorKanban'));
 
 function getKanbanFilters() {
   return {
     busca: document.getElementById('filtBuscaKanban').value.trim(),
     prioridade: filtPrioridadeKanban.getValues(),
     tipo: filtTipoKanban.getValues(),
+    cor: filtCorKanban.getValues(),
     atrasada: document.getElementById('filtAtrasadaKanban').checked,
   };
 }
@@ -588,6 +606,7 @@ function renderBoard() {
       if (f.busca && !t.titulo.toLowerCase().includes(f.busca.toLowerCase())) return false;
       if (f.prioridade.length && !f.prioridade.includes(t.prioridade)) return false;
       if (f.tipo.length && !f.tipo.includes(t.tipo)) return false;
+      if (f.cor.length && !f.cor.includes(corValida(t.cor) ?? 'sem')) return false;
       if (f.atrasada && !t.atrasada) return false;
       return true;
     });
@@ -613,7 +632,7 @@ function renderKanbanCard(t) {
   const prazo = t.prazo ? (() => { const d = dataParede(t.prazo); return !isNaN(d) ? d.toLocaleDateString('pt-BR') : null; })() : null;
   const atrasada = t.atrasada ? '<span class="badge-atrasada">Atrasada</span>' : '';
   return `<div class="kanban-card prioridade-${(t.prioridade ?? '').toLowerCase()}" draggable="true" data-id="${t.id}" data-status="${t.status}">
-    <div class="kanban-card-title" data-detail-id="${t.id}">${esc(t.titulo)}</div>
+    <div class="kanban-card-title" data-detail-id="${t.id}">${marcaCor(t.cor)}${marcaCor(t.cor) ? ' ' : ''}${esc(t.titulo)}</div>
     <div class="kanban-card-meta">
       <span style="background:#e5e7eb;padding:1px 6px;border-radius:3px">${PRIORIDADE_LABEL[t.prioridade] ?? t.prioridade}</span>
       ${prazo ? `<span>📅 ${prazo}</span>` : ''}

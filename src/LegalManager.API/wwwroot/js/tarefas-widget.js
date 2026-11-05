@@ -7,6 +7,7 @@ import { apiFetch, getUser } from './api.js';
 import { layoutWidgetStack } from './widget-stack.js';
 
 import { esc, dataParede } from './utils.js';
+import { marcaCor } from './cores-tarefa.js';
 const OPEN_KEY = 'tarefasWidgetOpen';
 const REFRESH_MS = 120000;
 const PAGE_SIZE = 30;
@@ -170,7 +171,7 @@ function cardHtml(t, status) {
 
   return `
     <div class="tw-card" style="border-left-color:${cor}">
-      <div class="tw-card-title" data-detail="${t.id}" title="${esc(t.titulo)}">${esc(t.titulo)}</div>
+      <div class="tw-card-title" data-detail="${t.id}" title="${esc(t.titulo)}">${marcaCor(t.cor)}${marcaCor(t.cor) ? ' ' : ''}${esc(t.titulo)}</div>
       <div class="tw-card-meta">
         ${prazo ? `<span class="${t.atrasada ? 'tw-overdue' : ''}">📅 ${prazo}</span>` : ''}
         ${t.numeroCNJProcesso ? `<span>⚖️ ${esc(t.numeroCNJProcesso)}</span>` : ''}
@@ -276,6 +277,7 @@ function injectStyles() {
     .tw-card { background: var(--color-bg); border: 1px solid var(--color-border); border-left: 3px solid #9ca3af; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; }
     .tw-card-title { font-size: 12px; font-weight: 600; color: var(--color-text); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tw-card-title:hover { color: var(--color-primary); }
+    .tw-card-title .cor-tarefa { width: 9px; height: 9px; margin-right: 2px; }
     .tw-card-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--color-text-muted); margin-top: 4px; }
     .tw-overdue { color: var(--color-danger); font-weight: 600; }
     .tw-atrasada { background: #fde8e8; color: var(--color-danger); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }

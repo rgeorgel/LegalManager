@@ -8,6 +8,7 @@
 import { esc, dataParede, inputDataHoraParede, isoLocal } from './utils.js';
 import { apiFetch, getUser } from './api.js';
 import { createProcessoPicker } from './processo-picker.js';
+import { CORES_TAREFA } from './cores-tarefa.js';
 
 export const PRIORIDADE_LABEL = { Baixa: 'Baixa', Media: 'Média', Alta: 'Alta', Urgente: 'Urgente' };
 export const STATUS_LABEL = { Pendente: 'Pendente', EmAndamento: 'Em Andamento', Concluida: 'Concluída', Cancelada: 'Cancelada' };
@@ -65,6 +66,14 @@ const HTML = `<div class="modal-overlay" id="modalTarefa" style="display:none">
           </div>
         </div>
         <div class="form-group">
+          <span class="form-label" id="fCorLbl">Cor</span>
+          <div class="tm-cores" role="radiogroup" aria-labelledby="fCorLbl">
+            <label title="Sem cor"><input type="radio" name="fCor" value="" checked aria-label="Sem cor"><span class="tm-cor-sem"></span></label>
+            ${CORES_TAREFA.map(c => `<label title="${c.nome}"><input type="radio" name="fCor" value="${c.valor}" aria-label="${c.nome}"><span style="--c:${c.valor}"></span></label>`).join('')}
+          </div>
+          <div class="tm-hint">Use cores para agrupar suas tarefas — aparecem na lista e na agenda.</div>
+        </div>
+        <div class="form-group">
           <label class="form-label" for="fPrazo">Prazo</label>
           <input type="datetime-local" id="fPrazo" class="form-control">
           <div class="tm-atalhos" id="fPrazoAtalhos" aria-label="Atalhos de prazo">
@@ -119,7 +128,7 @@ const HTML = `<div class="modal-overlay" id="modalTarefa" style="display:none">
           <div class="rep-hint" id="fRepHint"></div>
           <label class="rep-aplicar" id="fRepAplicarWrap" style="display:none">
             <input type="checkbox" id="fRepAplicar" checked style="margin-top:3px">
-            <span>Aplicar também às próximas ocorrências (título, descrição, prioridade, processo, tags e repetição)</span>
+            <span>Aplicar também às próximas ocorrências (título, descrição, prioridade, cor, processo, tags e repetição)</span>
           </label>
         </div>
         <div class="form-group">
@@ -186,6 +195,15 @@ const CSS = `
 #modalTarefa .rep-hint:empty { display:none; }
 #modalTarefa .rep-aplicar { display:flex; gap:6px; align-items:flex-start; margin-top:8px; font-size:13px; cursor:pointer; }
 #modalTarefa #fRepDetalhes:disabled { opacity:.55; }
+#modalTarefa .tm-cores { display:flex; gap:8px; flex-wrap:wrap; }
+#modalTarefa .tm-cores label { position:relative; cursor:pointer; line-height:0; }
+#modalTarefa .tm-cores input { position:absolute; opacity:0; pointer-events:none; }
+#modalTarefa .tm-cores label > span { display:block; width:26px; height:26px; border-radius:50%; background:var(--c); box-shadow:0 0 0 2px var(--color-surface); transition:box-shadow .12s, transform .12s; }
+#modalTarefa .tm-cores label:hover > span { transform:scale(1.08); }
+#modalTarefa .tm-cores label:has(input:checked) > span { box-shadow:0 0 0 2px var(--color-surface), 0 0 0 4px var(--c, var(--color-text-muted)); }
+#modalTarefa .tm-cores label:has(input:checked) > span:not(.tm-cor-sem)::after { content:'✓'; display:flex; align-items:center; justify-content:center; height:100%; color:#fff; font-size:14px; font-weight:700; line-height:1; }
+#modalTarefa .tm-cores label:has(input:focus-visible) > span { outline:2px solid var(--color-primary); outline-offset:4px; }
+#modalTarefa .tm-cores .tm-cor-sem { background:linear-gradient(to top right, transparent calc(50% - 1px), var(--color-text-muted) calc(50% - 1px), var(--color-text-muted) calc(50% + 1px), transparent calc(50% + 1px)), var(--color-surface); border:1px solid var(--color-border); box-sizing:border-box; }
 `;
 
 let iniciado = false;
@@ -241,6 +259,18 @@ function updateProcessoLink() {
   btn.style.display = processoPicker.getValue() ? '' : 'none';
 }
 
+// ── Cor ────────────────────────────────────────────────────────
+// Cor fora da paleta (gravada por outro meio) deixa nenhuma opção marcada e é mantida no PUT.
+function setCor(cor) {
+  const valor = (cor ?? '').toLowerCase();
+  document.querySelectorAll('#modalTarefa input[name="fCor"]').forEach(r => { r.checked = r.value === valor; });
+}
+
+/** "" = sem cor; "#rrggbb"; null = nenhuma opção marcada (mantém a atual). */
+function corSelecionada() {
+  return document.querySelector('#modalTarefa input[name="fCor"]:checked')?.value ?? null;
+}
+
 // ── Modal create/edit ──────────────────────────────────────────
 // Tarefa aberta na edição, como veio da API: o PUT repete os campos que o formulário não
 // mostra (tipo, contato, contagem do prazo) para não apagá-los.
@@ -290,6 +320,7 @@ async function openEditModal(id) {
   document.getElementById('fStatus').value = t.status;
   document.getElementById('fPrazo').value = inputDataHoraParede(t.prazo);
   document.getElementById('fTags').value = (t.tags ?? []).join(', ');
+  setCor(t.cor);
   setProcesso(t.processoId, t.numeroCNJProcesso);
   // Série já encerrada: a tarefa se comporta como avulsa (escolher uma repetição reativa a série).
   editingRecorrente = !!t.recorrencia?.ativa;
@@ -629,6 +660,7 @@ function iniciar() {
           // Editar não transfere a tarefa para quem editou.
           responsavelId: editingResponsavelId || getUser()?.id || null,
           tags,
+          cor: corSelecionada(),
           recorrencia,
           // Ocorrência de série: só mexe na série com "Aplicar às próximas". Tarefa avulsa: só
           // quando o usuário escolheu uma repetição (senão nada muda).
@@ -643,6 +675,7 @@ function iniciar() {
           processoId: processoVal,
           responsavelId: getUser()?.id || null,
           tags,
+          cor: corSelecionada() || null,
           recorrencia
         })});
       }

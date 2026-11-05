@@ -266,7 +266,7 @@ public class AssistenteAcoes(
     private async Task<TarefaResponseDto> GravarTarefaAsync(TarefaResponseDto t, CancellationToken ct)
     {
         var result = await tarefas.UpdateAsync(t.Id, new UpdateTarefaDto(t.Titulo, t.Descricao, t.ResponsavelId, t.Prazo,
-            t.Prioridade, t.Status, t.ProcessoId, t.ContatoId, t.Tags, t.Tipo), ct);
+            t.Prioridade, t.Status, t.ProcessoId, t.ContatoId, t.Tags, t.Tipo, Cor: t.Cor ?? ""), ct);
         if (t.DataInicio is null && t.QuantidadeDias is null && t.TipoCalculo is null) return result;
 
         var entidade = await db.Tarefas.FirstAsync(x => x.Id == t.Id && x.TenantId == tenant.TenantId, ct);

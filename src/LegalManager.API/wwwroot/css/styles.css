@@ -837,6 +837,8 @@ body.com-widgets-laterais .main-content {
 .ent-menu-icone { width: 18px; text-align: center; }
 .ent-card-prefixo { flex-shrink: 0; display: flex; align-items: center; min-height: 24px; }
 .ent-card-prefixo input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+/* Cor escolhida pelo usuário para agrupar tarefas (js/cores-tarefa.js → marcaCor). */
+.cor-tarefa { display: inline-block; flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--cor-tarefa); box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3px var(--cor-tarefa); vertical-align: -1px; }
 .ent-card-tags { display: flex; gap: 6px; margin-top: 6px; min-width: 0; min-height: 22px; overflow: hidden; white-space: nowrap; }
 .ent-card-tags > * { flex-shrink: 0; }
 .ent-card-tags > .ent-encolhe { flex-shrink: 1; min-width: 0; display: block; overflow: hidden; text-overflow: ellipsis; }

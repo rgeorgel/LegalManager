@@ -19,7 +19,9 @@ public record CreateTarefaDto(
     TipoCalculo? TipoCalculo = null,
     DateOnly[]? FeriadosAdicionais = null,
     // Repetição: a tarefa criada é a primeira ocorrência; exige Prazo.
-    RecorrenciaDto? Recorrencia = null
+    RecorrenciaDto? Recorrencia = null,
+    // Cor para agrupar ("#rrggbb"); null ou vazio = sem cor.
+    string? Cor = null
 );
 
 public record UpdateTarefaDto(
@@ -40,7 +42,9 @@ public record UpdateTarefaDto(
     // true: Recorrencia vira a regra das próximas ocorrências (e os dados desta tarefa, o modelo
     // delas); Recorrencia null encerra a série. Numa tarefa avulsa, true + Recorrencia cria a série.
     RecorrenciaDto? Recorrencia = null,
-    bool AtualizarRecorrencia = false
+    bool AtualizarRecorrencia = false,
+    // Cor ("#rrggbb"). null mantém a atual (quem não mostra o campo não a apaga); "" remove.
+    string? Cor = null
 );
 
 /// <summary>
@@ -90,7 +94,8 @@ public record TarefaResponseDto(
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
     TipoCalculo? TipoCalculo = null,
-    RecorrenciaResponseDto? Recorrencia = null
+    RecorrenciaResponseDto? Recorrencia = null,
+    string? Cor = null
 );
 
 public record TarefaListItemDto(
@@ -114,7 +119,8 @@ public record TarefaListItemDto(
     DateTime? DataInicio = null,
     int? QuantidadeDias = null,
     TipoCalculo? TipoCalculo = null,
-    Guid? RecorrenciaId = null
+    Guid? RecorrenciaId = null,
+    string? Cor = null
 );
 
 public record TarefaFiltroDto(
@@ -131,7 +137,9 @@ public record TarefaFiltroDto(
     IReadOnlyCollection<TipoTarefa>? Tipo = null,
     // Esconde concluídas (por ConcluidaEm) e canceladas (por AtualizadoEm) há mais de N dias;
     // demais status não são afetados.
-    int? ConcluidasUltimosDias = null
+    int? ConcluidasUltimosDias = null,
+    // Cores ("#rrggbb"; "sem" = tarefas sem cor): qualquer uma delas; null ou vazio = todas.
+    IReadOnlyCollection<string>? Cor = null
 );
 
 // ── Dashboard: prazos e tarefas (cálculo no backend, payload enxuto) ──────

@@ -38,6 +38,7 @@ public class TarefasController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string[]? tipo = null,
         [FromQuery] int? concluidasUltimosDias = null,
+        [FromQuery] string[]? cor = null,
         CancellationToken ct = default)
     {
         // status, prioridade e tipo aceitam um valor ou vários (?status=Pendente&status=EmAndamento).
@@ -47,7 +48,8 @@ public class TarefasController : ControllerBase
             FiltroEnums.Parse<PrioridadeTarefa>(prioridade),
             responsavelId, processoId, contatoId, atrasada, page, pageSize,
             FiltroEnums.Parse<TipoTarefa>(tipo),
-            concluidasUltimosDias);
+            concluidasUltimosDias,
+            cor);
 
         return Ok(await _service.GetAllAsync(filtro, ct));
     }

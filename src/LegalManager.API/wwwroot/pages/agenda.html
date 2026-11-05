@@ -64,6 +64,9 @@
     .hora-label { font-size:11px; color:var(--color-text-muted); padding:4px; text-align:right; border-right:1px solid var(--color-border); vertical-align:top; }
     .hora-cell { border-right:1px solid var(--color-border-light,#f3f4f6); border-bottom:1px solid var(--color-border-light,#f3f4f6); min-height:48px; position:relative; }
     .evento-chip { border-radius:4px; padding:2px 6px; font-size:11px; font-weight:600; color:#fff; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:2px; }
+    /* Ocorrência prevista de tarefa recorrente (ainda não criada): mesma cor da série, mais apagada. */
+    .evento-chip.is-prevista { opacity:.6; outline:1px dashed rgba(255,255,255,.7); outline-offset:-3px; }
+    .agenda-item-dot.is-prevista { opacity:.6; }
 
     /* List view */
     .agenda-list { display:flex; flex-direction:column; gap:8px; }

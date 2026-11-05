@@ -161,6 +161,7 @@ public static class RecorrenciaTarefas
             Prioridade = serie.Prioridade,
             Status = StatusTarefa.Pendente,
             Tipo = serie.Tipo,
+            Cor = serie.Cor,
             ProcessoId = serie.ProcessoId,
             ContatoId = serie.ContatoId,
             RecorrenciaId = serie.Id,
@@ -179,6 +180,7 @@ public static class RecorrenciaTarefas
         serie.Descricao = tarefa.Descricao;
         serie.Prioridade = tarefa.Prioridade;
         serie.Tipo = tarefa.Tipo;
+        serie.Cor = tarefa.Cor;
         serie.ResponsavelId = tarefa.ResponsavelId;
         serie.ProcessoId = tarefa.ProcessoId;
         serie.ContatoId = tarefa.ContatoId;

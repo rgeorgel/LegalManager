@@ -19,6 +19,8 @@ public class Tarefa
     public PrioridadeTarefa Prioridade { get; set; }
     public StatusTarefa Status { get; set; }
     public TipoTarefa Tipo { get; set; }
+    /// <summary>Cor escolhida pelo usuário para agrupar tarefas ("#rrggbb"); null = sem cor.</summary>
+    public string? Cor { get; set; }
     public Guid? AndamentoId { get; set; }
     /// <summary>Série recorrente que gerou a tarefa (cada ocorrência é uma tarefa independente).</summary>
     public Guid? RecorrenciaId { get; set; }

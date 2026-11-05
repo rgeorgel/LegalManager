@@ -14,6 +14,7 @@ public class TarefaConfiguration : IEntityTypeConfiguration<Tarefa>
         builder.Property(t => t.DataInicio).IsRequired(false);
         builder.Property(t => t.QuantidadeDias).IsRequired(false);
         builder.Property(t => t.TipoCalculo).IsRequired(false);
+        builder.Property(t => t.Cor).HasMaxLength(7);
 
         builder.HasOne(t => t.Tenant)
             .WithMany()
@@ -69,6 +70,7 @@ public class RecorrenciaTarefaConfiguration : IEntityTypeConfiguration<Recorrenc
         builder.Property(r => r.Titulo).HasMaxLength(300).IsRequired();
         builder.Property(r => r.Descricao).HasMaxLength(4000);
         builder.Property(r => r.Tags).HasMaxLength(2000);
+        builder.Property(r => r.Cor).HasMaxLength(7);
 
         builder.HasOne(r => r.Tenant)
             .WithMany()

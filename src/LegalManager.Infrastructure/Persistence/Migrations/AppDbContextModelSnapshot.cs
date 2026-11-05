@@ -2902,6 +2902,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ContatoId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Cor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -3209,6 +3213,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("ContatoId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Cor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");

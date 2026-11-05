@@ -43,6 +43,7 @@ public class TarefaService : ITarefaService
             ContatoId = dto.ContatoId,
             Tipo = dto.Tipo,
             AndamentoId = dto.AndamentoId,
+            Cor = CoresTarefa.Normalizar(dto.Cor),
             CriadoEm = DateTime.UtcNow
         };
 
@@ -152,6 +153,7 @@ public class TarefaService : ITarefaService
         tarefa.ProcessoId = dto.ProcessoId;
         tarefa.ContatoId = dto.ContatoId;
         tarefa.Tipo = dto.Tipo;
+        if (dto.Cor is not null) tarefa.Cor = CoresTarefa.Normalizar(dto.Cor);
         tarefa.AtualizadoEm = DateTime.UtcNow;
 
         if (dto.Status == StatusTarefa.Concluida && tarefa.Status != StatusTarefa.Concluida)
@@ -217,6 +219,14 @@ public class TarefaService : ITarefaService
         if (filtro.Tipo is { Count: > 0 } tipos)
             query = query.Where(t => tipos.Contains(t.Tipo));
 
+        if (filtro.Cor is { Count: > 0 } coresFiltro)
+        {
+            // "sem" = tarefas sem cor; as demais, normalizadas como na gravação (inválidas são ignoradas).
+            var semCor = coresFiltro.Contains(CoresTarefa.SemCor);
+            var cores = coresFiltro.Select(CoresTarefa.NormalizarOuNull).OfType<string>().ToList();
+            query = query.Where(t => (semCor && t.Cor == null) || (t.Cor != null && cores.Contains(t.Cor)));
+        }
+
         if (filtro.ConcluidasUltimosDias is int dias)
         {
             // Carimbos do servidor (UTC real), então o corte é em UTC. Cancelada não tem data
@@ -258,7 +268,8 @@ public class TarefaService : ITarefaService
                 t.DataInicio,
                 t.QuantidadeDias,
                 t.TipoCalculo,
-                t.RecorrenciaId
+                t.RecorrenciaId,
+                t.Cor
             ))
             .ToListAsync(ct);
 
@@ -379,7 +390,8 @@ public class TarefaService : ITarefaService
                 t.DataInicio,
                 t.QuantidadeDias,
                 t.TipoCalculo,
-                null // Recorrencia: preenchida abaixo (expression tree não aceita argumento opcional omitido)
+                null, // Recorrencia: preenchida abaixo (expression tree não aceita argumento opcional omitido)
+                t.Cor
             ))
             .FirstOrDefaultAsync(ct);
         if (dto is null) return null;

@@ -191,7 +191,7 @@ public class EventoService : IEventoService
                 t.Responsavel != null ? t.Responsavel.Nome : null,
                 t.Processo != null ? t.Processo.NumeroCNJ : null,
                 t.Prazo.Value < now ? "Atrasada" : "Pendente",
-                "#6b7280",
+                t.Cor ?? CoresTarefa.PadraoAgenda,
                 t.RecorrenciaId,
                 false,
                 null
@@ -248,7 +248,7 @@ public class EventoService : IEventoService
                     s.NomeResponsavel,
                     s.NumeroCNJ,
                     "Prevista",
-                    "#9ca3af",
+                    s.Serie.Cor ?? CoresTarefa.PadraoPrevista,
                     s.Serie.Id,
                     true,
                     ultimas.TryGetValue(s.Serie.Id, out var tarefaId) ? tarefaId : null)))

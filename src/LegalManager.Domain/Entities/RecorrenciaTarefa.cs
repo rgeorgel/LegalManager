@@ -39,6 +39,8 @@ public class RecorrenciaTarefa
     public Guid? ResponsavelId { get; set; }
     public Guid? ProcessoId { get; set; }
     public Guid? ContatoId { get; set; }
+    /// <summary>Cor das ocorrências ("#rrggbb"); null = sem cor.</summary>
+    public string? Cor { get; set; }
     /// <summary>Tags separadas por vírgula.</summary>
     public string? Tags { get; set; }
 
