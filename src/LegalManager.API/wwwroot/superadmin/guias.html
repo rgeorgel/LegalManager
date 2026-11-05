@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Guias</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--color-surface); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--color-border); }
+    .data-table th { text-align: left; padding: 10px 12px; background: var(--color-bg); border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .sub { font-size: 12px; color: var(--color-text-muted); }
+    .titulo { font-weight: 600; }
+    .action-btn { background: none; border: 1px solid var(--color-border); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--color-text); text-decoration: none; display: inline-block; }
+    .action-btn:hover { background: var(--color-bg); }
+    .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .actions { white-space: nowrap; display: flex; gap: 4px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; max-width: 900px; }
+
+    /* Editor */
+    .editor[hidden], .lista[hidden] { display: none; }
+    .editor-topo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .editor-topo h1 { flex: 1; min-width: 200px; }
+    .editor-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (max-width: 1100px) { .editor-grid { grid-template-columns: minmax(0, 1fr); } }
+    .painel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 16px; min-width: 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+    .field-hint { font-size: 11px; color: var(--color-text-muted); margin-top: 4px; }
+    .field-hint code { font-size: 11px; }
+    .slug-wrap { display: flex; align-items: center; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+    .slug-wrap span { padding: 0 8px; color: var(--color-text-muted); font-size: 13px; background: var(--color-bg); align-self: stretch; display: flex; align-items: center; border-right: 1px solid var(--color-border); }
+    .slug-wrap input { border: none; flex: 1; min-width: 0; }
+    .com-botao { display: flex; gap: 6px; }
+    .com-botao input { flex: 1; min-width: 0; }
+    .barra { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border: 1px solid var(--color-border); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; background: var(--color-bg); }
+    .barra button { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 5px; padding: 3px 9px; font-size: 12px; cursor: pointer; color: var(--color-text); min-height: 28px; }
+    .barra button:hover { border-color: var(--color-primary); }
+    .barra .sep { width: 1px; background: var(--color-border); margin: 2px 4px; }
+    #fResumo { font-family: inherit; }
+    #fConteudo { min-height: 520px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.55; border-radius: 0 0 var(--radius) var(--radius); }
+    #fConteudo.arrastando { outline: 2px dashed var(--color-primary); outline-offset: -4px; }
+    .status-envio { font-size: 12px; color: var(--color-text-muted); min-height: 18px; margin-top: 4px; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; }
+    .checkbox-row input { width: auto; min-height: auto; }
+    .capa-mini { display: block; max-width: 100%; max-height: 120px; border-radius: 6px; margin-top: 8px; border: 1px solid var(--color-border); }
+
+    /* Pré-visualização: mesma hierarquia da página pública, nas cores do tema do painel. */
+    .previa-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+    .previa-cab .sub { white-space: nowrap; }
+    .previa { position: sticky; top: calc(var(--header-height, 56px) + 12px); max-height: calc(100vh - var(--header-height, 56px) - 40px); overflow-y: auto; }
+    .previa-corpo { font-size: 15px; line-height: 1.7; color: var(--color-text); overflow-wrap: anywhere; }
+    .previa-corpo h1.pv-titulo { font-size: 26px; line-height: 1.2; margin: 0 0 8px; }
+    .previa-corpo .pv-resumo { color: var(--color-text-muted); font-size: 16px; margin: 0 0 16px; }
+    .previa-corpo .pv-capa { width: 100%; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--color-border); }
+    .previa-corpo h2 { font-size: 20px; margin: 24px 0 8px; }
+    .previa-corpo h3 { font-size: 16px; margin: 18px 0 6px; }
+    .previa-corpo p { margin: 0 0 12px; }
+    .previa-corpo ul, .previa-corpo ol { margin: 0 0 12px 22px; }
+    .previa-corpo img { display: block; max-width: 100%; height: auto; border-radius: 8px; margin: 12px auto; border: 1px solid var(--color-border); }
+    .previa-corpo blockquote { border-left: 3px solid var(--color-primary); padding: 6px 12px; margin: 12px 0; background: var(--color-bg); color: var(--color-text-muted); }
+    .previa-corpo code { background: var(--color-bg); border-radius: 4px; padding: 1px 4px; font-size: 13px; }
+    .previa-corpo pre { background: var(--color-bg); padding: 10px; border-radius: 8px; overflow-x: auto; }
+    .previa-corpo table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; margin: 12px 0; }
+    .previa-corpo th, .previa-corpo td { border-bottom: 1px solid var(--color-border); padding: 6px 8px; text-align: left; }
+    .rodape-editor { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+    .rodape-editor .form-error { margin: 0 auto 0 0; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button id="hamburger" class="hamburger">☰</button>
+      <a href="/superadmin/dashboard.html" class="header-logo">
+        <img src="/images/causify-logo-navbar-clara.png" alt="Causify" style="height:28px">
+      </a>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span class="header-tenant" style="font-size:11px;color:#9ca3af;margin-left:4px"></span>
+        <button id="logoutBtn" class="btn btn-sm">Sair</button>
+      </div>
+    </header>
+    <aside class="sidebar"><ul class="sidebar-nav"></ul></aside>
+    <main class="main-content">
+
+      <!-- ── Lista ───────────────────────────────────────────────────────── -->
+      <section class="lista" id="vistaLista">
+        <div class="page-header">
+          <h1 class="page-title">Guias</h1>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn btn-secondary" href="/guias" target="_blank" rel="noopener">Ver Central ↗</a>
+            <button class="btn btn-primary" id="novoBtn">+ Novo guia</button>
+          </div>
+        </div>
+        <p class="hint">
+          Guias públicos em <strong>/guias</strong>: qualquer pessoa lê (e o Google indexa); só quem
+          entra na conta pode marcar como <strong>útil</strong>. Use para mostrar funcionalidades passo a
+          passo, com imagens. Rascunhos não aparecem. Não use dados reais de clientes nas capturas de tela.
+        </p>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Guia</th>
+                <th>Categoria</th>
+                <th>Publicado em</th>
+                <th>Útil</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Editor ──────────────────────────────────────────────────────── -->
+      <section class="editor" id="vistaEditor" hidden>
+        <div class="editor-topo">
+          <button type="button" class="btn btn-secondary btn-sm" id="voltarBtn">← Guias</button>
+          <h1 class="page-title" id="editorTitulo">Novo guia</h1>
+          <a class="btn btn-secondary btn-sm" id="verPublicoBtn" target="_blank" rel="noopener" hidden>Ver página ↗</a>
+        </div>
+
+        <div class="editor-grid">
+          <div class="painel">
+            <div class="form-group">
+              <label for="fTitulo">Título</label>
+              <input class="form-control" id="fTitulo" maxlength="160" placeholder="Ex: Como liberar o portal do cliente para acompanhar processos">
+            </div>
+            <div class="form-group">
+              <label for="fSlug">Endereço</label>
+              <div class="slug-wrap"><span>/guias/</span><input class="form-control" id="fSlug" maxlength="120" placeholder="gerado-a-partir-do-titulo" autocapitalize="off" spellcheck="false"></div>
+              <div class="field-hint" id="slugHint">Letras minúsculas, números e hífens. Depois de publicado, trocar quebra links já compartilhados.</div>
+            </div>
+            <div class="form-group">
+              <label for="fResumo">Resumo</label>
+              <textarea class="form-control" id="fResumo" maxlength="300" rows="2" style="min-height:60px" placeholder="Uma ou duas frases: aparece no card da listagem e no Google."></textarea>
+              <div class="field-hint"><span id="resumoConta">0</span>/300 · o Google mostra ~155 caracteres.</div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fCategoria">Categoria</label>
+                <select class="form-control" id="fCategoria"></select>
+              </div>
+              <div class="form-group">
+                <label for="fCapa">Capa (opcional)</label>
+                <div class="com-botao">
+                  <input class="form-control" id="fCapa" maxlength="500" placeholder="/guias/img/... ou https://">
+                  <button type="button" class="btn btn-secondary btn-sm" id="capaBtn" title="Enviar imagem de capa">Enviar</button>
+                </div>
+                <div class="field-hint">Ideal 1200×630 (preview no WhatsApp/LinkedIn).</div>
+                <img class="capa-mini" id="capaMini" alt="" hidden>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fLink">Botão "Abrir no Causify" (opcional)</label>
+                <input class="form-control" id="fLink" maxlength="300" placeholder="/pages/honorarios-contratos.html">
+                <div class="field-hint">Tela do sistema. Quem não tem conta vai para o cadastro.</div>
+              </div>
+              <div class="form-group">
+                <label for="fLinkTexto">Texto do botão</label>
+                <input class="form-control" id="fLinkTexto" maxlength="40" placeholder="Abrir no Causify">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0">
+              <label for="fConteudo">Conteúdo</label>
+              <div class="barra" role="toolbar" aria-label="Formatação">
+                <button type="button" data-fmt="h2" title="Seção (aparece no índice)">Seção</button>
+                <button type="button" data-fmt="h3" title="Subtítulo">Subtítulo</button>
+                <span class="sep"></span>
+                <button type="button" data-fmt="b" title="Negrito"><strong>N</strong></button>
+                <button type="button" data-fmt="i" title="Itálico"><em>I</em></button>
+                <button type="button" data-fmt="link" title="Link">Link</button>
+                <span class="sep"></span>
+                <button type="button" data-fmt="ul" title="Lista">• Lista</button>
+                <button type="button" data-fmt="ol" title="Passo a passo numerado">1. Passos</button>
+                <button type="button" data-fmt="quote" title="Destaque / dica">Dica</button>
+                <span class="sep"></span>
+                <button type="button" id="imagemBtn" title="Inserir imagem (também dá para colar ou arrastar)">🖼 Imagem</button>
+              </div>
+              <textarea class="form-control" id="fConteudo" maxlength="100000" placeholder="Escreva em Markdown. Use “Seção” para dividir o guia — com 3 ou mais seções a página ganha um índice.&#10;&#10;Cole (Ctrl+V) ou arraste imagens aqui para enviá-las."></textarea>
+              <div class="status-envio" id="statusEnvio" aria-live="polite"></div>
+            </div>
+
+            <div class="form-group checkbox-row" style="margin-top:12px">
+              <input type="checkbox" id="fPublicado">
+              <label for="fPublicado" style="margin:0">Publicado (visível em /guias)</label>
+            </div>
+
+            <div class="rodape-editor">
+              <div class="form-error" id="formError" hidden></div>
+              <button type="button" class="btn btn-secondary" id="cancelarBtn">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="salvarBtn">Salvar</button>
+            </div>
+          </div>
+
+          <div class="painel previa">
+            <div class="previa-cab">
+              <strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-muted)">Pré-visualização</strong>
+              <span class="sub" id="previaInfo"></span>
+            </div>
+            <div class="previa-corpo" id="previa"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input type="file" id="arquivoImagem" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+  <input type="file" id="arquivoCapa" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+
+  <div class="modal-overlay" id="deleteOverlay">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <span class="modal-title">Excluir guia</span>
+        <button type="button" class="modal-close" id="deleteClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja excluir <strong id="deleteTitulo"></strong>? O endereço deixa de funcionar e as marcações de "útil" são perdidas.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="deleteCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { esc } from '/js/utils.js';
+    import { initAdminLayout } from '/superadmin/js/superAdminLayout.js';
+    import { saFetch, getToken } from '/superadmin/js/superAdminApi.js';
+
+    initAdminLayout();
+
+    const $ = id => document.getElementById(id);
+    let guias = [];
+    let categorias = [];
+    let editando = null;      // guia em edição (null = novo)
+    let slugManual = false;   // o usuário mexeu no endereço: para de gerar pelo título
+    let salvoComo = '';       // snapshot do formulário salvo, para avisar de alterações perdidas
+    let deletingId = null;
+
+    const fmtData = iso => new Date(iso).toLocaleDateString('pt-BR');
+    const nomeCategoria = slug => categorias.find(c => c.slug === slug)?.nome ?? slug;
+    // Mesmas regras do servidor (GuiaSlug / GuiaMarkdown).
+    const caminhoLocal = s => s.startsWith('/') && !s.startsWith('//') && !s.startsWith('/\\');
+    const imagemOk = s => caminhoLocal(s) || /^https:\/\//i.test(s);
+    const gerarSlug = texto => (texto || '')
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      .slice(0, 120).replace(/-+$/, '');
+
+    // ── Lista ───────────────────────────────────────────────────────────────
+
+    async function carregar() {
+      try {
+        [guias, categorias] = await Promise.all([
+          saFetch('/superadmin/guias'),
+          categorias.length ? categorias : saFetch('/superadmin/guias/categorias'),
+        ]);
+        if (!$('fCategoria').options.length) {
+          $('fCategoria').innerHTML = categorias.map(c => `<option value="${esc(c.slug)}">${esc(c.nome)}</option>`).join('');
+        }
+        renderLista();
+      } catch (e) {
+        $('tableBody').innerHTML = `<tr><td colspan="6" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+      }
+    }
+
+    function renderLista() {
+      if (guias.length === 0) {
+        $('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum guia ainda. Comece por uma funcionalidade que gera muita dúvida no suporte.</td></tr>';
+        return;
+      }
+      $('tableBody').innerHTML = guias.map(g => `
+        <tr>
+          <td>
+            <div class="titulo">${esc(g.titulo)}</div>
+            <div class="sub">/guias/${esc(g.slug)}</div>
+          </td>
+          <td>${esc(nomeCategoria(g.categoria))}</td>
+          <td>${g.publicadoEm ? fmtData(g.publicadoEm) : '<span class="sub">—</span>'}</td>
+          <td>${g.curtidas || '<span class="sub">0</span>'}</td>
+          <td>${g.publicado ? '<span class="badge badge-green">Publicado</span>' : '<span class="badge badge-gray">Rascunho</span>'}</td>
+          <td class="actions">
+            <button class="action-btn" data-acao="editar" data-id="${g.id}">Editar</button>
+            ${g.publicado ? `<a class="action-btn" href="/guias/${esc(g.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : ''}
+            <button class="action-btn" data-acao="alternar" data-id="${g.id}">${g.publicado ? 'Despublicar' : 'Publicar'}</button>
+            <button class="action-btn danger" data-acao="excluir" data-id="${g.id}">Excluir</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    const payloadDe = g => ({
+      titulo: g.titulo, slug: g.slug, resumo: g.resumo, conteudo: g.conteudo, categoria: g.categoria,
+      capaUrl: g.capaUrl, linkUrl: g.linkUrl, linkTexto: g.linkTexto, publicado: g.publicado,
+    });
+
+    $('tableBody').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-acao]');
+      if (!btn) return;
+      const g = guias.find(x => x.id === btn.dataset.id);
+      if (!g) return;
+
+      switch (btn.dataset.acao) {
+        case 'editar': abrirEditor(g); break;
+        case 'alternar':
+          btn.disabled = true;
+          try {
+            await saFetch(`/superadmin/guias/${g.id}`, { method: 'PUT', body: JSON.stringify({ ...payloadDe(g), publicado: !g.publicado }) });
+            await carregar();
+          } catch (err) {
+            alert('Erro: ' + err.message);
+            btn.disabled = false;
+          }
+          break;
+        case 'excluir':
+          deletingId = g.id;
+          $('deleteTitulo').textContent = g.titulo;
+          $('deleteOverlay').classList.add('open');
+          break;
+      }
+    });
+
+    // ── Editor ──────────────────────────────────────────────────────────────
+
+    const campos = ['fTitulo', 'fSlug', 'fResumo', 'fCategoria', 'fCapa', 'fLink', 'fLinkTexto', 'fConteudo'];
+
+    function lerFormulario() {
+      return {
+        titulo: $('fTitulo').value.trim(),
+        slug: $('fSlug').value.trim() || null,
+        resumo: $('fResumo').value.trim(),
+        conteudo: $('fConteudo').value,
+        categoria: $('fCategoria').value,
+        capaUrl: $('fCapa').value.trim() || null,
+        linkUrl: $('fLink').value.trim() || null,
+        linkTexto: $('fLinkTexto').value.trim() || null,
+        publicado: $('fPublicado').checked,
+      };
+    }
+    const alterado = () => !$('vistaEditor').hidden && JSON.stringify(lerFormulario()) !== salvoComo;
+
+    function abrirEditor(g) {
+      editando = g;
+      slugManual = !!g;
+      $('editorTitulo').textContent = g ? 'Editar guia' : 'Novo guia';
+      $('formError').hidden = true;
+      $('fTitulo').value = g?.titulo ?? '';
+      $('fSlug').value = g?.slug ?? '';
+      $('fResumo').value = g?.resumo ?? '';
+      $('fCategoria').value = g?.categoria ?? categorias[0]?.slug ?? '';
+      $('fCapa').value = g?.capaUrl ?? '';
+      $('fLink').value = g?.linkUrl ?? '';
+      $('fLinkTexto').value = g?.linkTexto ?? '';
+      $('fConteudo').value = g?.conteudo ?? '';
+      $('fPublicado').checked = g?.publicado ?? false;
+      $('statusEnvio').textContent = '';
+      atualizarVerPublico();
+      salvoComo = JSON.stringify(lerFormulario());
+
+      $('vistaLista').hidden = true;
+      $('vistaEditor').hidden = false;
+      history.replaceState(null, '', g ? `?id=${g.id}` : '?novo=1');
+      atualizarContadores();
+      atualizarPrevia(true);
+      window.scrollTo(0, 0);
+      $('fTitulo').focus();
+    }
+
+    function fecharEditor() {
+      if (alterado() && !confirm('Descartar as alterações não salvas?')) return;
+      $('vistaEditor').hidden = true;
+      $('vistaLista').hidden = false;
+      history.replaceState(null, '', location.pathname);
+      editando = null;
+    }
+
+    function atualizarVerPublico() {
+      const btn = $('verPublicoBtn');
+      btn.hidden = !(editando?.publicado);
+      if (editando) btn.href = `/guias/${editando.slug}`;
+    }
+
+    function atualizarContadores() {
+      $('resumoConta').textContent = $('fResumo').value.length;
+      const capa = $('fCapa').value.trim();
+      const mini = $('capaMini');
+      if (capa && imagemOk(capa)) { mini.src = capa; mini.hidden = false; } else { mini.hidden = true; mini.removeAttribute('src'); }
+      $('slugHint').style.color = editando?.publicado && $('fSlug').value.trim() !== editando.slug ? 'var(--color-danger)' : '';
+    }
+
+    $('fTitulo').addEventListener('input', () => { if (!slugManual) $('fSlug').value = gerarSlug($('fTitulo').value); });
+    $('fSlug').addEventListener('input', () => { slugManual = true; });
+    $('fSlug').addEventListener('blur', () => { $('fSlug').value = gerarSlug($('fSlug').value); atualizarContadores(); });
+    campos.forEach(id => $(id).addEventListener('input', () => { atualizarContadores(); agendarPrevia(); }));
+    $('fCategoria').addEventListener('change', agendarPrevia);
+
+    // Prévia renderizada pelo servidor (mesmo Markdown da página pública).
+    let timerPrevia = null;
+    let ultimaPrevia = 0;
+    function agendarPrevia() {
+      clearTimeout(timerPrevia);
+      timerPrevia = setTimeout(() => atualizarPrevia(), 400);
+    }
+
+    async function atualizarPrevia() {
+      const f = lerFormulario();
+      const pedido = ++ultimaPrevia;
+      let corpo = '<p class="sub">O conteúdo aparece aqui.</p>';
+      let info = '';
+      if (f.conteudo.trim()) {
+        try {
+          const r = await saFetch('/superadmin/guias/previa', { method: 'POST', body: JSON.stringify({ conteudo: f.conteudo }) });
+          if (pedido !== ultimaPrevia) return;
+          corpo = r.html;
+          info = `${r.minutosLeitura} min de leitura`;
+        } catch (e) {
+          if (pedido !== ultimaPrevia) return;
+          corpo = `<p style="color:var(--color-danger)">Não foi possível gerar a prévia: ${esc(e.message)}</p>`;
+        }
+      }
+      $('previaInfo').textContent = info;
+      $('previa').innerHTML = `
+        <div class="sub" style="text-transform:uppercase;font-weight:600;letter-spacing:.06em">${esc(nomeCategoria(f.categoria))}</div>
+        <h1 class="pv-titulo">${esc(f.titulo || 'Título do guia')}</h1>
+        <p class="pv-resumo">${esc(f.resumo || 'Resumo do guia.')}</p>
+        ${f.capaUrl && imagemOk(f.capaUrl) ? `<img class="pv-capa" src="${esc(f.capaUrl)}" alt="">` : ''}
+        ${corpo}`;
+    }
+
+    // ── Barra de formatação ─────────────────────────────────────────────────
+
+    const area = $('fConteudo');
+
+    function substituirSelecao(fn) {
+      const { selectionStart: ini, selectionEnd: fim, value } = area;
+      const { texto, selIni, selFim } = fn(value.slice(ini, fim));
+      area.focus();
+      area.setRangeText(texto, ini, fim, 'end');
+      if (selIni != null) area.setSelectionRange(ini + selIni, ini + selFim);
+      area.dispatchEvent(new Event('input'));
+    }
+
+    // Prefixa cada linha selecionada (ou a linha do cursor) — títulos, listas, citações.
+    function prefixarLinhas(prefixo) {
+      const v = area.value;
+      const ini = v.lastIndexOf('\n', area.selectionStart - 1) + 1;
+      let fim = v.indexOf('\n', area.selectionEnd);
+      if (fim === -1) fim = v.length;
+      const linhas = v.slice(ini, fim).split('\n');
+      const novo = linhas.map((l, i) => (typeof prefixo === 'function' ? prefixo(i) : prefixo) + l.replace(/^(#{1,6}\s+|[-*]\s+|\d+\.\s+|>\s?)/, '')).join('\n');
+      area.focus();
+      area.setRangeText(novo, ini, fim, 'end');
+      area.dispatchEvent(new Event('input'));
+    }
+
+    const envolver = (antes, depois, exemplo) => substituirSelecao(sel => {
+      const t = sel || exemplo;
+      return { texto: antes + t + depois, selIni: antes.length, selFim: antes.length + t.length };
+    });
+
+    document.querySelector('.barra').addEventListener('click', e => {
+      const fmt = e.target.closest('button[data-fmt]')?.dataset.fmt;
+      if (!fmt) return;
+      switch (fmt) {
+        case 'h2': prefixarLinhas('## '); break;
+        case 'h3': prefixarLinhas('### '); break;
+        case 'b': envolver('**', '**', 'texto em negrito'); break;
+        case 'i': envolver('*', '*', 'texto em itálico'); break;
+        case 'ul': prefixarLinhas('- '); break;
+        case 'ol': prefixarLinhas(i => `${i + 1}. `); break;
+        case 'quote': prefixarLinhas('> '); break;
+        case 'link': {
+          const url = prompt('Endereço do link (https://... ou /pages/...):');
+          if (url) envolver('[', `](${url.trim()})`, 'texto do link');
+          break;
+        }
+      }
+    });
+
+    area.addEventListener('keydown', e => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key === 'b') { e.preventDefault(); envolver('**', '**', 'texto em negrito'); }
+      if (e.key === 'i') { e.preventDefault(); envolver('*', '*', 'texto em itálico'); }
+    });
+
+    // ── Imagens ─────────────────────────────────────────────────────────────
+
+    async function enviarImagem(arquivo) {
+      const form = new FormData();
+      form.append('arquivo', arquivo);
+      const res = await fetch('/api/superadmin/guias/imagens', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: form,
+      });
+      const corpo = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(corpo.message || `HTTP ${res.status}`);
+      return corpo.url;
+    }
+
+    const descricaoDe = nome => nome.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').replace(/[\[\]]/g, '').trim() || 'imagem';
+
+    // Insere um marcador no cursor e troca pela imagem quando o upload termina, para o texto
+    // digitado enquanto envia não se perder.
+    async function inserirImagens(arquivos) {
+      const imagens = [...arquivos].filter(a => a.type.startsWith('image/'));
+      if (!imagens.length) return;
+      for (const arquivo of imagens) {
+        const marcador = `![Enviando ${descricaoDe(arquivo.name)}…]()`;
+        substituirSelecao(() => ({ texto: `\n${marcador}\n` }));
+        $('statusEnvio').textContent = `Enviando ${arquivo.name}…`;
+        try {
+          const url = await enviarImagem(arquivo);
+          area.value = area.value.replace(marcador, `![${descricaoDe(arquivo.name)}](${url})`);
+          $('statusEnvio').textContent = 'Imagem enviada. Troque o texto entre [ ] por uma descrição da imagem (acessibilidade e Google).';
+        } catch (e) {
+          area.value = area.value.replace(`\n${marcador}\n`, '\n');
+          $('statusEnvio').textContent = `Não foi possível enviar ${arquivo.name}: ${e.message}`;
+        }
+        area.dispatchEvent(new Event('input'));
+      }
+    }
+
+    $('imagemBtn').addEventListener('click', () => $('arquivoImagem').click());
+    $('arquivoImagem').addEventListener('change', e => { inserirImagens(e.target.files); e.target.value = ''; });
+    area.addEventListener('paste', e => {
+      const arquivos = [...(e.clipboardData?.files ?? [])];
+      if (arquivos.some(a => a.type.startsWith('image/'))) { e.preventDefault(); inserirImagens(arquivos); }
+    });
+    area.addEventListener('dragover', e => { if ([...e.dataTransfer.types].includes('Files')) { e.preventDefault(); area.classList.add('arrastando'); } });
+    area.addEventListener('dragleave', () => area.classList.remove('arrastando'));
+    area.addEventListener('drop', e => {
+      area.classList.remove('arrastando');
+      if (!e.dataTransfer.files.length) return;
+      e.preventDefault();
+      area.focus();
+      inserirImagens(e.dataTransfer.files);
+    });
+
+    $('capaBtn').addEventListener('click', () => $('arquivoCapa').click());
+    $('arquivoCapa').addEventListener('change', async e => {
+      const arquivo = e.target.files[0];
+      e.target.value = '';
+      if (!arquivo) return;
+      const btn = $('capaBtn');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      try {
+        $('fCapa').value = await enviarImagem(arquivo);
+        $('fCapa').dispatchEvent(new Event('input'));
+      } catch (err) {
+        alert('Não foi possível enviar a capa: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar';
+      }
+    });
+
+    // ── Salvar ──────────────────────────────────────────────────────────────
+
+    $('salvarBtn').addEventListener('click', async () => {
+      const erroEl = $('formError');
+      erroEl.hidden = true;
+      const erro = msg => { erroEl.textContent = msg; erroEl.hidden = false; };
+      const payload = lerFormulario();
+
+      if (!payload.titulo) return erro('Informe o título.');
+      if (!payload.resumo) return erro('Informe o resumo.');
+      if (!payload.conteudo.trim()) return erro('Escreva o conteúdo do guia.');
+      if (area.value.includes('![Enviando ')) return erro('Aguarde o envio das imagens terminar.');
+      if (payload.capaUrl && !imagemOk(payload.capaUrl)) return erro('A capa deve ser um caminho do site ou uma URL https.');
+      if (payload.linkUrl && !caminhoLocal(payload.linkUrl)) return erro('O link do botão deve ser um caminho do sistema, ex: /pages/processos.html.');
+      if (editando?.publicado && payload.slug && payload.slug !== editando.slug
+          && !confirm(`O guia já está publicado em /guias/${editando.slug}. Trocar o endereço quebra links já compartilhados. Continuar?`)) return;
+
+      const btn = $('salvarBtn');
+      btn.disabled = true;
+      try {
+        const salvo = editando
+          ? await saFetch(`/superadmin/guias/${editando.id}`, { method: 'PUT', body: JSON.stringify(payload) })
+          : await saFetch('/superadmin/guias', { method: 'POST', body: JSON.stringify(payload) });
+        editando = salvo;
+        slugManual = true;
+        $('fSlug').value = salvo.slug;
+        $('editorTitulo').textContent = 'Editar guia';
+        history.replaceState(null, '', `?id=${salvo.id}`);
+        salvoComo = JSON.stringify(lerFormulario());
+        atualizarVerPublico();
+        atualizarContadores();
+        $('statusEnvio').textContent = salvo.publicado ? 'Salvo e publicado.' : 'Rascunho salvo.';
+        carregar();
+      } catch (e) {
+        erro(e.message || 'Erro ao salvar.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    $('novoBtn').addEventListener('click', () => abrirEditor(null));
+    $('voltarBtn').addEventListener('click', fecharEditor);
+    $('cancelarBtn').addEventListener('click', fecharEditor);
+    window.addEventListener('beforeunload', e => { if (alterado()) e.preventDefault(); });
+
+    // ── Exclusão ────────────────────────────────────────────────────────────
+
+    const fecharDelete = () => $('deleteOverlay').classList.remove('open');
+    $('deleteClose').addEventListener('click', fecharDelete);
+    $('deleteCancelBtn').addEventListener('click', fecharDelete);
+    $('deleteConfirmBtn').addEventListener('click', async () => {
+      if (!deletingId) return;
+      try {
+        await saFetch(`/superadmin/guias/${deletingId}`, { method: 'DELETE' });
+        fecharDelete();
+        await carregar();
+      } catch (e) {
+        alert('Erro: ' + e.message);
+      }
+    });
+
+    // ?id= reabre o guia (recarregar a página não perde o lugar); ?novo=1 abre um em branco.
+    await carregar();
+    const params = new URLSearchParams(location.search);
+    const inicial = params.get('id') && guias.find(g => g.id === params.get('id'));
+    if (inicial) abrirEditor(inicial);
+    else if (params.has('novo')) abrirEditor(null);
+  </script>
+</body>
+</html>

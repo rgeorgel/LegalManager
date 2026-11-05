@@ -10,6 +10,7 @@ const PUBLIC_PAGES = [
   '/termos.html',
   '/privacidade.html',
   '/lp-facebook.html',
+  '/guias', // Central Causify (HTML gerado em GuiasController)
 ];
 
 for (const pagePath of PUBLIC_PAGES) {

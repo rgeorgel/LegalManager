@@ -389,6 +389,92 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("AreasAtuacao");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.Artigo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CapaUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Conteudo")
+                        .IsRequired()
+                        .HasMaxLength(100000)
+                        .HasColumnType("character varying(100000)");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LinkTexto")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("Publicado")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublicadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Resumo")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("Publicado", "PublicadoEm");
+
+                    b.ToTable("Artigos");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.ArtigoCurtida", b =>
+                {
+                    b.Property<Guid>("ArtigoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ArtigoId", "UsuarioId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("ArtigosCurtidas");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Atendimento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3995,6 +4081,23 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.ArtigoCurtida", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Artigo", "Artigo")
+                        .WithMany("Curtidas")
+                        .HasForeignKey("ArtigoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Artigo");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Atendimento", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
@@ -4872,6 +4975,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.Artigo", b =>
+                {
+                    b.Navigation("Curtidas");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Contato", b =>
