@@ -527,6 +527,9 @@ public class GuiasPublicosTests
         Assert.Contains("Neste guia", html);
         Assert.Contains("href=\"#primeiro\"", html);
         Assert.Contains("data-logado=\"/pages/honorarios-contratos.html\"", html);
+        // Sem sessão o botão passa pelo login e volta para a tela; o cadastro fica no link abaixo.
+        Assert.Contains("id=\"ctaGuia\" href=\"/login.html?redirect=%2Fpages%2Fhonorarios-contratos.html\"", html);
+        Assert.Contains("<a href=\"/register.html\">Crie grátis</a>", html);
         Assert.Contains("id=\"contadorUtil\">1<", html);
         // Mesma categoria antes das outras; rascunho nunca.
         Assert.True(html.IndexOf("Mesma categoria", StringComparison.Ordinal) < html.IndexOf("Outra categoria", StringComparison.Ordinal));

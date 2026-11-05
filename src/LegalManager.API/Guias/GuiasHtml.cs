@@ -126,15 +126,17 @@ public static class GuiasHtml
             """);
         sb.Append("</section>");
 
-        // "Abrir no Causify" quando o guia aponta uma tela; quem não tem conta vê o cadastro
-        // (o script troca o destino conforme a sessão).
+        // "Abrir no Causify" quando o guia aponta uma tela. Sem sessão nesta aba (o login fica no
+        // sessionStorage) o botão passa pelo login e volta para a tela; quem não tem conta usa o
+        // link de cadastro abaixo. Com sessão, o script aponta direto para a tela.
         sb.Append("<section class=\"cta-box\">");
         if (a.LinkUrl != null)
         {
+            var entrar = "/login.html?redirect=" + Uri.EscapeDataString(a.LinkUrl);
             sb.Append("<h2>Experimente no Causify</h2>");
             sb.Append($"<p>Abra a tela e siga o passo a passo deste guia.</p>");
-            sb.Append($"""<a class="btn btn-primary" id="ctaGuia" href="/register.html" data-logado="{H(a.LinkUrl)}">{H(a.LinkTexto ?? "Abrir no Causify")}</a>""");
-            sb.Append("<p class=\"cta-sub\" id=\"ctaSub\">Ainda não tem conta? O cadastro é grátis.</p>");
+            sb.Append($"""<a class="btn btn-primary" id="ctaGuia" href="{H(entrar)}" data-logado="{H(a.LinkUrl)}">{H(a.LinkTexto ?? "Abrir no Causify")}</a>""");
+            sb.Append("<p class=\"cta-sub\" id=\"ctaSub\">Ainda não tem conta? <a href=\"/register.html\">Crie grátis</a></p>");
         }
         else
         {
@@ -433,6 +435,7 @@ public static class GuiasHtml
         .cta-box h2 { font-size:1.4rem; font-weight:800; margin-bottom:.5rem; }
         .cta-box p { color:var(--text-muted); margin-bottom:1.25rem; }
         .cta-box .cta-sub { margin:1rem 0 0; font-size:.85rem; }
+        .cta-box .cta-sub a { color:var(--gold-light); font-weight:600; }
         .cta-box .cta-sub:empty { display:none; }
         .related { max-width:720px; margin:0 auto; padding:2rem 1.25rem 3rem; }
         .related h2 { font-size:.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:1rem; }
