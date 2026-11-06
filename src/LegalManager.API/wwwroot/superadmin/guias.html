@@ -31,6 +31,14 @@
     .action-btn.danger:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
     .actions { white-space: nowrap; display: flex; gap: 4px; flex-wrap: wrap; }
     .hint { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; max-width: 900px; }
+    .lista-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .contagem { font-size: 13px; color: var(--color-text-muted); }
+    .vazio { text-align: center; color: var(--color-text-muted); padding: 32px; border: 1px dashed var(--color-border); border-radius: 12px; }
+    /* Alternador lista/blocos — mesmo padrão de Tarefas, Contatos e Processos */
+    .view-toggle { display: flex; gap: 4px; align-items: center; }
+    .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-bg); color: var(--color-text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
+    .view-btn:hover { border-color: var(--color-primary); }
+    .view-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 
     /* Editor */
     .editor[hidden], .lista[hidden] { display: none; }
@@ -112,23 +120,14 @@
           entra na conta pode marcar como <strong>útil</strong>. Use para mostrar funcionalidades passo a
           passo, com imagens. Rascunhos não aparecem. Não use dados reais de clientes nas capturas de tela.
         </p>
-        <div style="overflow-x:auto">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Guia</th>
-                <th>Categoria</th>
-                <th>Publicado em</th>
-                <th>Útil</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Carregando...</td></tr>
-            </tbody>
-          </table>
+        <div class="lista-barra">
+          <span class="contagem" id="contagem"></span>
+          <div class="view-toggle">
+            <button type="button" class="view-btn" id="viewLista" title="Visualização em lista" aria-label="Visualização em lista">☰</button>
+            <button type="button" class="view-btn" id="viewBlocos" title="Visualização em blocos" aria-label="Visualização em blocos">⊞</button>
+          </div>
         </div>
+        <div id="conteudo"><div class="vazio">Carregando...</div></div>
       </section>
 
       <!-- ── Editor ──────────────────────────────────────────────────────── -->
@@ -251,6 +250,7 @@
     import { saFetch } from '/superadmin/js/superAdminApi.js';
     import { enviarImagem, markdownDe } from '/superadmin/js/imagensApi.js';
     import { escolherImagem } from '/superadmin/js/imagensSeletor.js';
+    import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
 
     initAdminLayout();
 
@@ -274,6 +274,17 @@
 
     // ── Lista ───────────────────────────────────────────────────────────────
 
+    // Visualização (lista/blocos), lembrada neste navegador.
+    const VIEW_KEY = 'superadmin.guias.view';
+    let view = (() => { try { return localStorage.getItem(VIEW_KEY) === 'blocos' ? 'blocos' : 'lista'; } catch { return 'lista'; } })();
+    function trocarView(nova) {
+      view = nova;
+      try { localStorage.setItem(VIEW_KEY, view); } catch { }
+      renderLista();
+    }
+    $('viewLista').addEventListener('click', () => trocarView('lista'));
+    $('viewBlocos').addEventListener('click', () => trocarView('blocos'));
+
     async function carregar() {
       try {
         [guias, categorias] = await Promise.all([
@@ -285,32 +296,76 @@
         }
         renderLista();
       } catch (e) {
-        $('tableBody').innerHTML = `<tr><td colspan="6" style="color:var(--color-danger);padding:16px">Erro: ${esc(e.message)}</td></tr>`;
+        $('conteudo').innerHTML = `<div class="vazio" style="color:var(--color-danger)">Erro: ${esc(e.message)}</div>`;
       }
     }
 
+    const statusHtml = g => g.publicado
+      ? '<span class="badge badge-green">Publicado</span>'
+      : '<span class="badge badge-gray">Rascunho</span>';
+
+    // Card: abre o editor (não há página de detalhe); as ações ficam no menu ⋮.
+    const cardGuia = g => cardEntidade({
+      abrivel: true,
+      titulo: g.titulo,
+      estado: g.publicado ? 'ok' : 'muted',
+      dados: { id: g.id },
+      statusHtml: `${statusHtml(g)}<button type="button" class="ent-card-menu" data-menu-guia="${esc(g.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações do guia ${esc(g.titulo)}">⋮</button>`,
+      tagsHtml: [
+        `<span class="badge badge-blue">${esc(nomeCategoria(g.categoria))}</span>`,
+        `<span class="sub ent-encolhe" title="/guias/${esc(g.slug)}">/guias/${esc(g.slug)}</span>`,
+      ],
+      descricao: g.resumo || '',
+      numeros: [
+        { rotulo: 'Útil', valor: String(g.curtidas || 0) },
+        { rotulo: 'Publicado em', valor: g.publicadoEm ? fmtData(g.publicadoEm) : '—' },
+        { rotulo: 'Atualizado em', valor: fmtData(g.atualizadoEm || g.criadoEm) },
+      ],
+    });
+
     function renderLista() {
+      $('viewLista').classList.toggle('active', view === 'lista');
+      $('viewBlocos').classList.toggle('active', view === 'blocos');
+      const publicados = guias.filter(g => g.publicado).length;
+      $('contagem').textContent = guias.length
+        ? `${guias.length} guia${guias.length > 1 ? 's' : ''} · ${publicados} publicado${publicados === 1 ? '' : 's'}`
+        : '';
+
       if (guias.length === 0) {
-        $('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--color-text-muted);padding:24px">Nenhum guia ainda. Comece por uma funcionalidade que gera muita dúvida no suporte.</td></tr>';
+        $('conteudo').innerHTML = '<div class="vazio">Nenhum guia ainda. Comece por uma funcionalidade que gera muita dúvida no suporte.</div>';
         return;
       }
-      $('tableBody').innerHTML = guias.map(g => `
-        <tr>
-          <td>
-            <div class="titulo">${esc(g.titulo)}</div>
-            <div class="sub">/guias/${esc(g.slug)}</div>
-          </td>
-          <td>${esc(nomeCategoria(g.categoria))}</td>
-          <td>${g.publicadoEm ? fmtData(g.publicadoEm) : '<span class="sub">—</span>'}</td>
-          <td>${g.curtidas || '<span class="sub">0</span>'}</td>
-          <td>${g.publicado ? '<span class="badge badge-green">Publicado</span>' : '<span class="badge badge-gray">Rascunho</span>'}</td>
-          <td class="actions">
-            <button class="action-btn" data-acao="editar" data-id="${g.id}">Editar</button>
-            ${g.publicado ? `<a class="action-btn" href="/guias/${esc(g.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : ''}
-            <button class="action-btn" data-acao="alternar" data-id="${g.id}">${g.publicado ? 'Despublicar' : 'Publicar'}</button>
-            <button class="action-btn danger" data-acao="excluir" data-id="${g.id}">Excluir</button>
-          </td>
-        </tr>`).join('');
+
+      if (view === 'blocos') {
+        $('conteudo').innerHTML = `<div class="ent-grid">${guias.map(cardGuia).join('')}</div>`;
+        return;
+      }
+
+      $('conteudo').innerHTML = `
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr><th>Guia</th><th>Categoria</th><th>Publicado em</th><th>Útil</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody>${guias.map(g => `
+              <tr>
+                <td>
+                  <div class="titulo">${esc(g.titulo)}</div>
+                  <div class="sub">/guias/${esc(g.slug)}</div>
+                </td>
+                <td>${esc(nomeCategoria(g.categoria))}</td>
+                <td>${g.publicadoEm ? fmtData(g.publicadoEm) : '<span class="sub">—</span>'}</td>
+                <td>${g.curtidas || '<span class="sub">0</span>'}</td>
+                <td>${statusHtml(g)}</td>
+                <td class="actions">
+                  <button class="action-btn" data-acao="editar" data-id="${g.id}">Editar</button>
+                  ${g.publicado ? `<a class="action-btn" href="/guias/${esc(g.slug)}" target="_blank" rel="noopener">Ver ↗</a>` : ''}
+                  <button class="action-btn" data-acao="alternar" data-id="${g.id}">${g.publicado ? 'Despublicar' : 'Publicar'}</button>
+                  <button class="action-btn danger" data-acao="excluir" data-id="${g.id}">Excluir</button>
+                </td>
+              </tr>`).join('')}</tbody>
+          </table>
+        </div>`;
     }
 
     const payloadDe = g => ({
@@ -318,29 +373,49 @@
       capaUrl: g.capaUrl, linkUrl: g.linkUrl, linkTexto: g.linkTexto, publicado: g.publicado,
     });
 
-    $('tableBody').addEventListener('click', async e => {
+    async function alternarPublicacao(g, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        await saFetch(`/superadmin/guias/${g.id}`, { method: 'PUT', body: JSON.stringify({ ...payloadDe(g), publicado: !g.publicado }) });
+        await carregar();
+      } catch (err) {
+        alert('Erro: ' + err.message);
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function pedirExclusao(g) {
+      deletingId = g.id;
+      $('deleteTitulo').textContent = g.titulo;
+      $('deleteOverlay').classList.add('open');
+    }
+
+    ativarCardsClicaveis($('conteudo'), {
+      abrir: card => { const g = guias.find(x => x.id === card.dataset.id); if (g) abrirEditor(g); },
+    });
+
+    $('conteudo').addEventListener('click', e => {
+      const menu = e.target.closest('[data-menu-guia]');
+      if (menu) {
+        const g = guias.find(x => x.id === menu.dataset.menuGuia);
+        if (!g) return;
+        abrirMenuCard(menu, [
+          { icone: '✏️', rotulo: 'Editar', acao: () => abrirEditor(g) },
+          g.publicado && { icone: '↗', rotulo: 'Ver página', acao: () => window.open(`/guias/${encodeURIComponent(g.slug)}`, '_blank', 'noopener') },
+          { icone: g.publicado ? '⏸' : '▶', rotulo: g.publicado ? 'Despublicar' : 'Publicar', acao: () => alternarPublicacao(g) },
+          { icone: '🗑️', rotulo: 'Excluir', perigo: true, acao: () => pedirExclusao(g) },
+        ]);
+        return;
+      }
+
       const btn = e.target.closest('button[data-acao]');
       if (!btn) return;
       const g = guias.find(x => x.id === btn.dataset.id);
       if (!g) return;
-
       switch (btn.dataset.acao) {
         case 'editar': abrirEditor(g); break;
-        case 'alternar':
-          btn.disabled = true;
-          try {
-            await saFetch(`/superadmin/guias/${g.id}`, { method: 'PUT', body: JSON.stringify({ ...payloadDe(g), publicado: !g.publicado }) });
-            await carregar();
-          } catch (err) {
-            alert('Erro: ' + err.message);
-            btn.disabled = false;
-          }
-          break;
-        case 'excluir':
-          deletingId = g.id;
-          $('deleteTitulo').textContent = g.titulo;
-          $('deleteOverlay').classList.add('open');
-          break;
+        case 'alternar': alternarPublicacao(g, btn); break;
+        case 'excluir': pedirExclusao(g); break;
       }
     });
 
