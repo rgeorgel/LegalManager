@@ -1,16 +1,18 @@
 using LegalManager.Application.DTOs.Modelos;
 using LegalManager.Application.Interfaces;
+using LegalManager.Domain;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace LegalManager.API.Controllers;
 
 [ApiController]
 [Route("api/modelos")]
 [Authorize]
-public class ModelosController : ControllerBase
+public class ModelosController : ControllerBase, IActionFilter
 {
     private readonly IModeloDocumentoService _service;
     private readonly ITenantContext _tenantContext;
@@ -20,6 +22,17 @@ public class ModelosController : ControllerBase
         _service = service;
         _tenantContext = tenantContext;
     }
+
+    // Vale para todas as rotas: a tela esconde a aba Modelos no Free, mas a API também precisa barrar.
+    [NonAction]
+    public void OnActionExecuting(ActionExecutingContext context)
+    {
+        if (!PlanoRestricoes.PermiteModelosDocumentos(_tenantContext.Plano))
+            context.Result = StatusCode(402, new { message = "Modelos de documentos disponíveis a partir do plano Plus." });
+    }
+
+    [NonAction]
+    public void OnActionExecuted(ActionExecutedContext context) { }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ModeloDocumentoDto>>> GetAll(CancellationToken ct = default)
