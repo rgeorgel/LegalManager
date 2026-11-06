@@ -48,10 +48,30 @@ function irParaLogin() {
 
 // ── Header e CTA ────────────────────────────────────────────────────────────
 
+// Menu do celular (hambúrguer), como na home: abre/fecha e fecha ao escolher um link ou com Esc.
+const btnMenu = $('btnMenu');
+const menuCelular = $('menuCelular');
+function abrirMenu(abrir) {
+  menuCelular.classList.toggle('open', abrir);
+  btnMenu.classList.toggle('active', abrir);
+  btnMenu.setAttribute('aria-expanded', String(abrir));
+  btnMenu.setAttribute('aria-label', abrir ? 'Fechar menu' : 'Abrir menu');
+}
+if (btnMenu && menuCelular) {
+  btnMenu.addEventListener('click', () => abrirMenu(!menuCelular.classList.contains('open')));
+  menuCelular.addEventListener('click', e => { if (e.target.closest('a')) abrirMenu(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && menuCelular.classList.contains('open')) { abrirMenu(false); btnMenu.focus(); }
+  });
+}
+
 const logado = isLoggedIn();
 if (logado) {
+  const abrirCausify = '<a href="/pages/dashboard.html" class="btn btn-primary">Abrir o Causify</a>';
   const cta = $('navCta');
-  if (cta) cta.innerHTML = '<a href="/pages/dashboard.html" class="btn btn-primary">Abrir o Causify</a>';
+  if (cta) cta.innerHTML = abrirCausify;
+  const menuCta = $('menuCta');
+  if (menuCta) menuCta.innerHTML = abrirCausify;
 
   const ctaGuia = $('ctaGuia');
   if (ctaGuia?.dataset.logado) ctaGuia.href = ctaGuia.dataset.logado;
