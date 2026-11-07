@@ -44,9 +44,9 @@ test('logout limpa sessão e redireciona para login', async ({ page }) => {
   await page.click('[type=submit]');
   await expect(page).toHaveURL(/dashboard\.html/, { timeout: 10_000 });
 
-  // Logout
-  const logoutBtn = page.locator('#logoutBtn');
-  await logoutBtn.click();
+  // Logout — no desktop o "Sair" fica no menu da conta (iniciais no cabeçalho).
+  await page.locator('#menuConta .topnav-perfil').click();
+  await page.locator('#menuConta [data-acao="sair"]').click();
 
   // Deve voltar para login e sessionStorage deve estar limpo
   await expect(page).toHaveURL(/login\.html/, { timeout: 10_000 });

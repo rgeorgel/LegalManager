@@ -171,6 +171,51 @@ public class UsuariosControllerTests
         var result = await controller.GetMe();
         Assert.IsType<OkObjectResult>(result);
     }
+
+    [Theory]
+    [InlineData("lateral")]
+    [InlineData("superior")]
+    public async Task SalvarMenuLayout_Valido_Persiste(string layout)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Me", Email = "me@me.com", UserName = "me@me.com", Ativo = true, CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(tenantId, userId).Object);
+
+        Assert.IsType<NoContentResult>(await controller.SalvarMenuLayout(new MenuLayoutDto(layout), CancellationToken.None));
+        Assert.Equal(layout, (await ctx.Users.FindAsync(userId))!.MenuLayout);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Superior")]
+    [InlineData("topo")]
+    public async Task SalvarMenuLayout_Invalido_RetornaBadRequest(string? layout)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Me", Email = "me@me.com", UserName = "me@me.com", Ativo = true, CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(tenantId, userId).Object);
+
+        Assert.IsType<BadRequestObjectResult>(await controller.SalvarMenuLayout(new MenuLayoutDto(layout), CancellationToken.None));
+        Assert.Null((await ctx.Users.FindAsync(userId))!.MenuLayout);
+    }
+
+    [Fact]
+    public async Task SalvarMenuLayout_UsuarioInexistente_RetornaNotFound()
+    {
+        using var ctx = CreateContext();
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(Guid.NewGuid(), Guid.NewGuid()).Object);
+
+        Assert.IsType<NotFoundResult>(await controller.SalvarMenuLayout(new MenuLayoutDto("superior"), CancellationToken.None));
+    }
 }
 
 // ─── TarefasController ────────────────────────────────────────────────────────

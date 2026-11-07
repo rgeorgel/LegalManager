@@ -73,6 +73,21 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Posição do menu de navegação escolhida pelo usuário ("lateral" ou "superior").</summary>
+    [HttpPut("me/menu-layout")]
+    public async Task<IActionResult> SalvarMenuLayout([FromBody] MenuLayoutDto dto, CancellationToken ct)
+    {
+        if (dto.Layout is not ("lateral" or "superior"))
+            return BadRequest(new { message = "Layout deve ser \"lateral\" ou \"superior\"." });
+
+        var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
+        if (usuario == null) return NotFound();
+
+        usuario.MenuLayout = dto.Layout;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
     {
@@ -96,3 +111,5 @@ public class UsuariosController : ControllerBase
 }
 
 public record AlterarPerfilDto(string Perfil);
+
+public record MenuLayoutDto(string? Layout);

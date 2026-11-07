@@ -42,7 +42,9 @@ public record UsuarioInfoDto(
     // pages/dashboard.html decidir o redirecionamento sem esperar outra requisição.
     string? DashboardVersao = null,
     // Id do mascote do assistente (ver wwwroot/js/mascotes.js); null = padrão.
-    string? AssistenteMascote = null
+    string? AssistenteMascote = null,
+    // "lateral" | "superior" | null (padrão = lateral). Lido por wwwroot/js/layout.js.
+    string? MenuLayout = null
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

@@ -56,6 +56,11 @@ async function injectAdmin(ctx: BrowserContext, s: AdminSession) {
   // addInitScript roda em CADA navegação. Para não sobrescrever mudanças
   // feitas pelo próprio usuário (ex.: tema salvo em /pages/tema.html),
   // só populamos sessionStorage na primeira carga de cada contexto.
+  // Convite "Experimente o menu no topo" (js/menu-superior.js): marcado como visto para não
+  // surgir por cima da tela no meio dos testes nem entrar nos screenshots.
+  await ctx.addInitScript(() => {
+    try { localStorage.setItem('menu_convite_visto', '1'); } catch { /* storage bloqueado */ }
+  });
   await ctx.addInitScript(
     ({ at, rt, user }) => {
       if (sessionStorage.getItem('access_token')) return;

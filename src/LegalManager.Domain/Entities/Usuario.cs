@@ -33,6 +33,10 @@ public class Usuario : IdentityUser<Guid>
     // em AssistenteController.Mascotes). Null = padrão do frontend (MASCOTE_PADRAO).
     public string? AssistenteMascote { get; set; }
 
+    // Onde fica o menu de navegação do portal: "lateral" (barra à esquerda) | "superior" (menu no
+    // topo, fixo ao rolar). Null = lateral. Escolhido em Configurações → Aparência.
+    public string? MenuLayout { get; set; }
+
     // Última vez que o usuário abriu o painel de novidades (UTC). Novidades publicadas depois
     // disso contam como não lidas; null = nunca abriu (conta a partir de CriadoEm).
     public DateTime? NovidadesVistasEm { get; set; }

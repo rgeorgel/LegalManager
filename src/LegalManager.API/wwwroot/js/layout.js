@@ -8,6 +8,11 @@ import { initImportacaoBar } from './importacao-bar.js';
 import { injectNovidadesButton } from './novidades.js';
 import { injectAssistente } from './assistente.js';
 import { injectSuporteButton } from './suporte.js';
+import {
+  getMenuLayout, setMenuLayout, montarMenuSuperior, removerMenuSuperior, agendarConviteMenuSuperior,
+  montarMenuConta, atualizarMenuConta,
+} from './menu-superior.js';
+import { trackEvent } from './analytics.js';
 
 import { esc } from './utils.js';
 const NAV_GROUPS = [
@@ -90,6 +95,11 @@ export function initLayout() {
 
   const user = getUser();
 
+  // Variação "menu superior" (Configurações → Aparência): liga a classe o quanto antes para a
+  // barra lateral não aparecer e sumir. Sem a escolha, o layout padrão não muda em nada.
+  const menuSuperior = getMenuLayout() === 'superior';
+  if (menuSuperior) document.body.classList.add('menu-superior');
+
   applyTenantTheme(getStoredTheme() || user?.tema);
 
   document.querySelector('.header-user-name').textContent = user?.nome ?? '';
@@ -98,6 +108,16 @@ export function initLayout() {
   document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
 
   injectSidebarNav();
+  if (menuSuperior) injectMenuSuperior();
+  // Iniciais com o menu da conta (nos dois layouts; só aparece no desktop).
+  montarMenuConta({ usuario: user, aoTrocarLayout: trocarMenuLayout });
+  if (!menuSuperior) agendarConviteMenuSuperior({
+    aoExperimentar: () => trocarMenuLayout('superior', 'convite'),
+    aoRecusar: async () => {
+      await setMenuLayout('lateral');
+      trackEvent('menu_layout_convite_recusado');
+    },
+  });
   injectBottomNav();
   setupMobileMenu();
   injectNotificationBell();
@@ -181,14 +201,63 @@ function injectImpersonationBanner() {
   document.getElementById('endImpersonationBtn')?.addEventListener('click', () => logout());
 }
 
+/** Regra de plano de um item do menu (a mesma na barra lateral e no menu superior). */
+function estadoBloqueio(item, plano) {
+  // pro:true = requer Pro (bloqueia Free e Plus)
+  // plus:true = requer Plus (bloqueia apenas Free)
+  const free = plano === 'Free';
+  const plus = plano === 'Plus';
+  const lockedPro = !!item.pro && (free || plus);
+  const lockedPlus = !!item.plus && free;
+  return {
+    locked: lockedPro || lockedPlus,
+    badgeText: lockedPro ? 'PRO' : 'PLUS',
+    upgradeTarget: lockedPro ? 'Pro' : 'Plus',
+  };
+}
+
+function injectMenuSuperior() {
+  const plano = getPlano();
+  montarMenuSuperior({
+    atual: window.location.pathname,
+    aoBloqueado: upgrade => showUpgradeToast(upgrade),
+    grupos: NAV_GROUPS.map(g => ({
+      label: g.label,
+      items: g.items.map(item => {
+        const { locked, badgeText, upgradeTarget } = estadoBloqueio(item, plano);
+        return { href: item.href, label: item.label, bloqueado: locked, upgrade: upgradeTarget, selo: badgeText };
+      }),
+    })),
+  });
+}
+
+/**
+ * Salva a posição do menu na conta e aplica na página atual. Rejeita (sem mudar nada) se a API
+ * falhar. Avisa quem estiver ouvindo (ex.: os botões de Configurações → Aparência).
+ */
+export async function trocarMenuLayout(layout, origem) {
+  const de = getMenuLayout();
+  await setMenuLayout(layout);
+  aplicarMenuLayout(layout);
+  trackEvent('menu_layout_alterado', { de, para: layout, origem });
+  window.dispatchEvent(new CustomEvent('menu-layout:alterado', { detail: { layout } }));
+}
+
+/** Troca a posição do menu na página atual, sem recarregar (usado por Configurações → Aparência). */
+export function aplicarMenuLayout(layout) {
+  const superior = layout === 'superior';
+  document.body.classList.toggle('menu-superior', superior);
+  if (superior) injectMenuSuperior();
+  else removerMenuSuperior();
+  atualizarMenuConta(superior ? 'superior' : 'lateral');
+}
+
 function injectSidebarNav() {
   const navEl = document.querySelector('.sidebar-nav');
   if (!navEl) return;
 
   const current = window.location.pathname;
   const plano = getPlano();
-  const free = plano === 'Free';
-  const plus = plano === 'Plus';
 
   let collapsedGroups = {};
   try {
@@ -200,13 +269,7 @@ function injectSidebarNav() {
     const groupId = 'grp-' + group.label.toLowerCase().replace(/\s+/g, '-');
 
     const itemsHtml = group.items.map(item => {
-      // pro:true = requer Pro (bloqueia Free e Plus)
-      // plus:true = requer Plus (bloqueia apenas Free)
-      const lockedPro = item.pro && (free || plus);
-      const lockedPlus = item.plus && free;
-      const locked = lockedPro || lockedPlus;
-      const badgeText = lockedPro ? 'PRO' : 'PLUS';
-      const upgradeTarget = lockedPro ? 'Pro' : 'Plus';
+      const { locked, badgeText, upgradeTarget } = estadoBloqueio(item, plano);
       const activeClass = item.href === current ? ' class="active"' : '';
       const badge = locked ? ` <span style="background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;vertical-align:middle">${badgeText}</span>` : '';
       if (locked) {

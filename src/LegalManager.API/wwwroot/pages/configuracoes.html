@@ -61,6 +61,29 @@
     .progress-bar { height:6px; background:#e5e7eb; border-radius:3px; margin-top:8px; overflow:hidden; }
     .progress-bar-fill { height:100%; background:var(--color-primary); border-radius:3px; transition:.3s; }
 
+    /* Aparência → posição do menu (js/menu-superior.js) */
+    .menu-opcoes { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,260px)); gap:12px; }
+    .menu-opcao { display:block; position:relative; border:2px solid var(--color-border); border-radius:10px; padding:12px; cursor:pointer; background:var(--color-surface); transition:border-color .15s, box-shadow .15s; }
+    .menu-opcao:hover { border-color:color-mix(in srgb, var(--color-primary) 45%, var(--color-border)); }
+    .menu-opcao:has(input:checked) { border-color:var(--color-primary); box-shadow:0 0 0 3px var(--color-primary-light); }
+    .menu-opcao:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }
+    .menu-opcao input { position:absolute; opacity:0; pointer-events:none; }
+    .menu-opcao-previa { display:grid; height:84px; border:1px solid var(--color-border); border-radius:6px; overflow:hidden; margin-bottom:10px; background:var(--color-bg); }
+    .menu-opcao-previa i { display:block; }
+    .menu-opcao-previa .p-topo { background:var(--color-surface); border-bottom:1px solid var(--color-border); }
+    .menu-opcao-previa .p-menu { background:var(--color-sidebar); }
+    .menu-opcao-previa .p-corpo { background:repeating-linear-gradient(180deg, transparent 0 10px, color-mix(in srgb, var(--color-text) 8%, transparent) 10px 16px) 8px 8px / calc(100% - 16px) 100% no-repeat; }
+    .previa-lateral { grid-template-columns:28% 1fr; grid-template-rows:14px 1fr; }
+    .previa-lateral .p-topo { grid-column:1 / -1; }
+    .previa-superior { grid-template-rows:16px 1fr; }
+    .previa-superior .p-menu { display:none; }
+    .previa-superior .p-topo { background:
+      linear-gradient(var(--color-primary), var(--color-primary)) 26% 50% / 12% 6px no-repeat,
+      linear-gradient(color-mix(in srgb, var(--color-text) 22%, transparent), color-mix(in srgb, var(--color-text) 22%, transparent)) 58% 50% / 36% 4px no-repeat,
+      var(--color-surface); }
+    .menu-opcao-titulo { font-weight:600; font-size:14px; }
+    .menu-opcao-desc { font-size:12px; color:var(--color-text-muted); margin-top:2px; line-height:1.4; }
+
     .danger-zone { border-color: var(--color-danger); border-width: 2px; background: #fef2f2; }
     .danger-zone-title { color: var(--color-danger); border-bottom-color: #fecaca; }
     .danger-zone-callout { padding:14px 16px; border-radius:8px; font-size:14px; line-height:1.5; margin-bottom:16px; }
@@ -160,6 +183,30 @@
           <div id="perfilMsg" class="alert" style="display:none"></div>
           <button type="submit" class="btn btn-primary">Salvar alterações</button>
         </form>
+      </div>
+
+      <!-- Aparência — posição do menu de navegação (por usuário) -->
+      <div class="config-section" id="aparenciaSection">
+        <div class="config-section-title">Aparência</div>
+        <p style="font-size:14px;color:var(--color-text-muted);margin-bottom:14px">
+          Onde fica o menu de navegação. A escolha vale só para você, em qualquer dispositivo.
+          No celular o menu continua na barra inferior.
+        </p>
+        <div class="menu-opcoes" role="radiogroup" aria-label="Posição do menu">
+          <label class="menu-opcao">
+            <input type="radio" name="menuLayout" value="lateral">
+            <span class="menu-opcao-previa previa-lateral" aria-hidden="true"><i class="p-topo"></i><i class="p-menu"></i><i class="p-corpo"></i></span>
+            <span class="menu-opcao-titulo">Barra lateral</span>
+            <span class="menu-opcao-desc" style="display:block">Menu à esquerda, com os grupos recolhíveis. Padrão.</span>
+          </label>
+          <label class="menu-opcao">
+            <input type="radio" name="menuLayout" value="superior">
+            <span class="menu-opcao-previa previa-superior" aria-hidden="true"><i class="p-topo"></i><i class="p-menu"></i><i class="p-corpo"></i></span>
+            <span class="menu-opcao-titulo">Menu superior</span>
+            <span class="menu-opcao-desc" style="display:block">Menu no topo, sempre visível ao rolar. Mais espaço para o conteúdo.</span>
+          </label>
+        </div>
+        <div id="menuLayoutMsg" class="alert" style="display:none;margin-top:12px"></div>
       </div>
 
       <!-- Alterar senha -->
@@ -487,7 +534,8 @@
 
 <script type="module">
 import { esc } from '/js/utils.js';
-  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { initLayout, isPlanoFree, trocarMenuLayout } from '/js/layout.js';
+  import { getMenuLayout } from '/js/menu-superior.js';
   import { apiFetch, clearSession } from '/js/api.js';
   import { getUser } from '/js/auth.js';
   import { mascaraCpfCnpj } from '/js/mascaras.js';
@@ -495,6 +543,33 @@ import { esc } from '/js/utils.js';
 
   initLayout();
   montarMfa(document.getElementById('mfaSecao'), apiFetch);
+  montarAparencia();
+
+  // Aparência: troca a posição do menu na hora e salva na conta; se a API falhar, nada muda.
+  function montarAparencia() {
+    const radios = document.querySelectorAll('input[name="menuLayout"]');
+    const msg = document.getElementById('menuLayoutMsg');
+    const marcar = (layout) => radios.forEach(r => { r.checked = r.value === layout; });
+    marcar(getMenuLayout());
+    // Troca feita por outro caminho (menu da conta, convite) nesta mesma página.
+    window.addEventListener('menu-layout:alterado', e => marcar(e.detail.layout));
+    radios.forEach(r => r.addEventListener('change', async () => {
+      if (!r.checked) return;
+      const anterior = getMenuLayout();
+      if (r.value === anterior) return;
+      msg.style.display = 'none';
+      try {
+        await trocarMenuLayout(r.value, 'configuracoes');
+        msg.className = 'alert alert-success';
+        msg.textContent = r.value === 'superior' ? 'Menu superior ativado.' : 'Barra lateral ativada.';
+      } catch {
+        marcar(anterior);
+        msg.className = 'alert alert-error';
+        msg.textContent = 'Não foi possível salvar a preferência. Tente novamente.';
+      }
+      msg.style.display = '';
+    }));
+  }
 
   // ============================================================
   // TAB SWITCHING
