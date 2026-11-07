@@ -121,7 +121,9 @@ public class PortalClienteController : ControllerBase
         if (processo == null)
             return NotFound();
 
-        var documentos = await _documentoService.GetByProcessoAsync(processoId, ct);
+        var documentos = (await _documentoService.GetByProcessoAsync(processoId, ct)).ToList();
+        // Observações são anotações internas do escritório: o cliente não vê.
+        foreach (var d in documentos) d.Observacoes = null;
         return Ok(documentos);
     }
 

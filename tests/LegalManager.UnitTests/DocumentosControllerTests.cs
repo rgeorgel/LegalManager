@@ -238,4 +238,75 @@ public class DocumentosControllerTests
 
         Assert.IsType<BadRequestObjectResult>(result.Result);
     }
+
+    [Fact]
+    public async Task Atualizar_DevolveODocumentoAtualizado()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        var id = Guid.NewGuid();
+        var dto = new AtualizarDocumentoDto("Novo nome", "Obs", TipoDocumento.Prova);
+        service.Setup(s => s.AtualizarAsync(id, dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DocumentoDto { Id = id, Nome = "Novo nome.pdf", Observacoes = "Obs" });
+
+        var ok = Assert.IsType<OkObjectResult>((await controller.Atualizar(id, dto)).Result);
+        Assert.Equal("Novo nome.pdf", Assert.IsType<DocumentoDto>(ok.Value).Nome);
+    }
+
+    [Fact]
+    public async Task Atualizar_NaoEncontrado_Devolve404()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<AtualizarDocumentoDto>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new KeyNotFoundException());
+
+        var r = await controller.Atualizar(Guid.NewGuid(), new AtualizarDocumentoDto("x", null, TipoDocumento.Outro));
+        Assert.IsType<NotFoundResult>(r.Result);
+    }
+
+    [Fact]
+    public async Task Atualizar_NomeInvalido_Devolve400()
+    {
+        var service = CreateMockService();
+        var controller = new DocumentosController(service.Object, CreateTenantContext(Guid.NewGuid(), Guid.NewGuid()));
+        service.Setup(s => s.AtualizarAsync(It.IsAny<Guid>(), It.IsAny<AtualizarDocumentoDto>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentException("Informe o nome do documento."));
+
+        var r = await controller.Atualizar(Guid.NewGuid(), new AtualizarDocumentoDto(" ", null, TipoDocumento.Outro));
+        Assert.IsType<BadRequestObjectResult>(r.Result);
+    }
+
+    [Fact]
+    public async Task PortalCliente_Documentos_NaoExpoemObservacoes()
+    {
+        var contatoId = Guid.NewGuid();
+        var tenantId = Guid.NewGuid();
+        var processoId = Guid.NewGuid();
+        var portal = new Mock<IPortalClienteService>();
+        portal.Setup(p => p.GetProcessoAsync(processoId, contatoId, tenantId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new LegalManager.Application.DTOs.PortalCliente.MeuProcessoDto(
+                processoId, "0000000-00.2026.8.26.0000", null, null, default, default, default, default, 0, DateTime.UtcNow));
+        var docs = CreateMockService();
+        docs.Setup(s => s.GetByProcessoAsync(processoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([new DocumentoDto { Id = Guid.NewGuid(), Nome = "a.pdf", Observacoes = "nota interna" }]);
+        var controller = new PortalClienteController(portal.Object, docs.Object, CreateTenantContext(tenantId, Guid.NewGuid()))
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+                    [
+                        new System.Security.Claims.Claim("contatoId", contatoId.ToString()),
+                        new System.Security.Claims.Claim("tenantId", tenantId.ToString())
+                    ], "test"))
+                }
+            }
+        };
+
+        var ok = Assert.IsType<OkObjectResult>((await controller.GetDocumentos(processoId, default)).Result);
+        var doc = Assert.Single((IEnumerable<DocumentoDto>)ok.Value!);
+        Assert.Null(doc.Observacoes);
+    }
 }

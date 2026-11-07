@@ -807,4 +807,69 @@ public class DocumentoServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.GerarZipAsync([grande.Id], new MemoryStream()));
     }
+
+    [Theory]
+    [InlineData("Petição inicial", "Petição inicial.pdf")]
+    [InlineData("  Petição inicial.PDF  ", "Petição inicial.pdf")]
+    [InlineData("Petição inicial.docx", "Petição inicial.docx.pdf")]
+    public async Task Atualizar_MantemAExtensaoOriginal(string novoNome, string esperado)
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var doc = NovoDoc(tenant.Id, "scan_001.pdf");
+        ctx.Documentos.Add(doc);
+        await ctx.SaveChangesAsync();
+
+        var dto = await service.AtualizarAsync(doc.Id, new AtualizarDocumentoDto(novoNome, null, TipoDocumento.Outro));
+
+        Assert.Equal(esperado, dto.Nome);
+        Assert.Equal(esperado, (await ctx.Documentos.FindAsync(doc.Id))!.Nome);
+    }
+
+    [Fact]
+    public async Task Atualizar_GravaObservacoesETipo()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var doc = NovoDoc(tenant.Id, "contrato.pdf");
+        ctx.Documentos.Add(doc);
+        await ctx.SaveChangesAsync();
+
+        var dto = await service.AtualizarAsync(doc.Id,
+            new AtualizarDocumentoDto("contrato.pdf", "  Assinado pelas duas partes.  ", TipoDocumento.Contrato));
+
+        Assert.Equal("Assinado pelas duas partes.", dto.Observacoes);
+        Assert.Equal(TipoDocumento.Contrato, dto.Tipo);
+
+        dto = await service.AtualizarAsync(doc.Id, new AtualizarDocumentoDto("contrato.pdf", "   ", TipoDocumento.Contrato));
+        Assert.Null(dto.Observacoes);
+    }
+
+    [Fact]
+    public async Task Atualizar_NomeVazio_Recusa()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var doc = NovoDoc(tenant.Id, "contrato.pdf");
+        ctx.Documentos.Add(doc);
+        await ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.AtualizarAsync(doc.Id, new AtualizarDocumentoDto(" .pdf ", null, TipoDocumento.Outro)));
+        Assert.Equal("contrato.pdf", (await ctx.Documentos.FindAsync(doc.Id))!.Nome);
+    }
+
+    [Fact]
+    public async Task Atualizar_DocumentoDeOutroEscritorio_NaoEncontra()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+        var alheio = NovoDoc(Guid.NewGuid(), "alheio.pdf");
+        ctx.Documentos.Add(alheio);
+        await ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+            service.AtualizarAsync(alheio.Id, new AtualizarDocumentoDto("meu", "x", TipoDocumento.Outro)));
+        Assert.Equal("alheio.pdf", (await ctx.Documentos.FindAsync(alheio.Id))!.Nome);
+    }
 }

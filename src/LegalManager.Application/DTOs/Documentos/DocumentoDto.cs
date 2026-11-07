@@ -13,6 +13,7 @@ public class DocumentoDto
     public Guid? ModeloId { get; set; }
     public string? NomeModelo { get; set; }
     public string Nome { get; set; } = string.Empty;
+    public string? Observacoes { get; set; }
     public string ContentType { get; set; } = string.Empty;
     public long TamanhoBytes { get; set; }
     public string TamanhoFormatado => DocumentoHelpers.FormatFileSize(TamanhoBytes);
@@ -21,6 +22,16 @@ public class DocumentoDto
     public string? UrlDownload { get; set; }
     public Guid? PastaId { get; set; }
     public string? PastaNome { get; set; }
+}
+
+// Edição no painel do documento: nome, tipo e observações (anotações internas).
+public record AtualizarDocumentoDto(
+    [Required, MaxLength(AtualizarDocumentoDto.MaxNome)] string Nome,
+    [MaxLength(AtualizarDocumentoDto.MaxObservacoes)] string? Observacoes,
+    TipoDocumento Tipo)
+{
+    public const int MaxNome = 255;
+    public const int MaxObservacoes = 4000;
 }
 
 public class DocumentoUploadDto

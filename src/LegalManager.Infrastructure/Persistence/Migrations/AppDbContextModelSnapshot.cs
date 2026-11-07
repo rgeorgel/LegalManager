@@ -1311,6 +1311,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
                     b.Property<Guid?>("PastaId")
                         .HasColumnType("uuid");
 

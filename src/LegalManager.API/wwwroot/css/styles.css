@@ -809,6 +809,9 @@ body.com-widgets-laterais .main-content {
   box-shadow: 0 4px 14px rgba(15, 23, 42, .10);
 }
 
+.ent-card-capa { position: relative; margin: -14px -14px 12px; height: 150px; overflow: hidden;
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-text-muted) 8%, var(--color-surface)); }
 .ent-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .ent-card-titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ent-card-titulo a { color: inherit; }

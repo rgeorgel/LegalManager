@@ -76,8 +76,16 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 
 - Clicável sem página nem URL (modelo de documento → modal "Usar"): `abrivel: true` + `abrir` em
   `ativarCardsClicaveis`; o card recebe foco e abre com Enter.
+- Capa no topo do card (miniatura, de borda a borda, altura fixa): `capaHtml`. Referência: Documentos
+  (`capaDocumento` + `observarCapas` de `js/doc-miniaturas.js`, que gera a 1ª página do PDF com o
+  pdf.js em `js/vendor/pdfjs` só quando o card aparece, e guarda a miniatura no Cache Storage).
 - Entidade sem detalhe (publicação): sem `href` — o card não é clicável. Conteúdo longo (texto,
   formulário da sugestão da IA) em `corpoHtml`; numa coluna, não em `.ent-grid`.
+
+Documentos abre o arquivo num painel lateral (`#docPainel`) em vez de modal: a lista continua
+visível, J/K ou ↑/↓ navegam na ordem da tela, nome/tipo/observações salvam sozinhos
+(`PUT /api/documentos/{id}`) e o aberto fica na URL (`?doc=`). Observações são internas — o
+portal do cliente as apaga do `DocumentoDto`.
 
 Já migradas: Honorários Contratos, Processos, Contatos, Tarefas (visão em blocos; as listas e o
 kanban seguem com marcação própria), Publicações e Documentos (arquivos em blocos e Modelos; a

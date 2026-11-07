@@ -28,6 +28,7 @@ public class DocumentoService : IDocumentoService
         var doc = await _context.Documentos
             .Include(d => d.Processo)
             .Include(d => d.Cliente)
+            .Include(d => d.Pasta)
             .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct);
 
         return doc == null ? null : MapToDto(doc);
@@ -178,6 +179,35 @@ public class DocumentoService : IDocumentoService
         await _context.SaveChangesAsync(ct);
     }
 
+    public async Task<DocumentoDto> AtualizarAsync(Guid id, AtualizarDocumentoDto dto, CancellationToken ct = default)
+    {
+        var documento = await _context.Documentos
+            .Include(d => d.Processo)
+            .Include(d => d.Cliente)
+            .Include(d => d.Pasta)
+            .FirstOrDefaultAsync(d => d.Id == id && d.TenantId == _tenantContext.TenantId, ct)
+            ?? throw new KeyNotFoundException("Documento não encontrado.");
+
+        documento.Nome = NomeComExtensao(dto.Nome, documento.Nome);
+        documento.Observacoes = string.IsNullOrWhiteSpace(dto.Observacoes) ? null : dto.Observacoes.Trim();
+        documento.Tipo = dto.Tipo;
+        await _context.SaveChangesAsync(ct);
+        return MapToDto(documento);
+    }
+
+    // O nome vira o nome do arquivo no download: mantém a extensão original mesmo que o
+    // usuário a apague ou troque (".pdf" renomeado para ".docx" não abriria).
+    private static string NomeComExtensao(string novo, string atual)
+    {
+        var nome = (novo ?? string.Empty).Trim();
+        var ext = Path.GetExtension(atual);
+        if (!string.IsNullOrEmpty(ext) && nome.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+            nome = nome[..^ext.Length].TrimEnd();
+        if (nome.Length == 0)
+            throw new ArgumentException("Informe o nome do documento.");
+        return nome + ext;
+    }
+
     // A pasta precisa ser de documentos e do mesmo escritório.
     private async Task ValidarPastaAsync(Guid? pastaId, CancellationToken ct)
     {
@@ -291,6 +321,7 @@ public class DocumentoService : IDocumentoService
         NomeCliente = d.Cliente?.Nome,
         ModeloId = d.ModeloId,
         Nome = d.Nome,
+        Observacoes = d.Observacoes,
         ContentType = d.ContentType,
         TamanhoBytes = d.TamanhoBytes,
         Tipo = d.Tipo,

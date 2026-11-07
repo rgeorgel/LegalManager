@@ -36,6 +36,17 @@ public class DocumentosController : ControllerBase
         return result == null ? NotFound() : Ok(result);
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<DocumentoDto>> Atualizar(Guid id, [FromBody] AtualizarDocumentoDto dto, CancellationToken ct = default)
+    {
+        try
+        {
+            return Ok(await _service.AtualizarAsync(id, dto, ct));
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+        catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
     [HttpPatch("{id:guid}/pasta")]
     public async Task<IActionResult> UpdatePasta(Guid id, [FromBody] UpdateDocumentoPastaDto dto, CancellationToken ct = default)
     {

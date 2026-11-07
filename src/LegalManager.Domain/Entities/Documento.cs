@@ -11,6 +11,8 @@ public class Documento
     public Guid? ContratoId { get; set; }
     public Guid? ModeloId { get; set; }
     public string Nome { get; set; } = string.Empty;
+    /// <summary>Anotações internas do escritório (não aparecem no portal do cliente).</summary>
+    public string? Observacoes { get; set; }
     public string ObjectKey { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long TamanhoBytes { get; set; }

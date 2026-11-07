@@ -234,6 +234,90 @@
     /* Upload: estilos em /css/upload-fila.css */
     .up-campos .nova-pasta-inline { margin:-6px 0 14px; }
 
+
+    /* ── Lista: linha inteira abre o painel; item aberto em destaque ── */
+    .docs-list .doc-item { cursor:pointer; }
+    .docs-list .doc-item:focus-visible { outline:2px solid var(--color-primary); outline-offset:-2px; }
+    .doc-obs { font-size:12px; color:var(--color-text-muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .doc-item.doc-atual, .doc-item.doc-atual:hover { background:color-mix(in srgb, var(--color-primary) 9%, var(--color-surface)) !important; box-shadow:inset 3px 0 0 var(--color-primary); }
+    .ent-card.doc-atual { border-color:var(--color-primary); box-shadow:0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent); }
+    #docsContainer.ent-grid { grid-template-columns:repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+
+    /* ── Capa (miniatura) do card ── */
+    .doc-capa { position:absolute; inset:0; display:grid; place-items:center; }
+    .doc-capa img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; opacity:0; transition:opacity .35s ease, transform .35s ease; }
+    .doc-capa.com-imagem img { opacity:1; }
+    .doc-capa.com-imagem .doc-capa-ext { opacity:0; }
+    .ent-card:hover .doc-capa.com-imagem img { transform:scale(1.03); }
+    .doc-capa-ext { font-size:13px; font-weight:700; letter-spacing:.04em; color:#fff; padding:8px 12px; border-radius:8px; background:var(--color-text-muted); transition:opacity .2s; }
+    .doc-capa.carregando::after { content:''; position:absolute; inset:0; background:linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--color-surface) 55%, transparent) 50%, transparent 70%); background-size:200% 100%; animation:dp-brilho 1.2s linear infinite; }
+    @keyframes dp-brilho { from { background-position:150% 0; } to { background-position:-50% 0; } }
+    .fam-pdf .doc-capa-ext, .fam-pdf .dp-sem-icone { background:#dc2626; }
+    .fam-word .doc-capa-ext, .fam-word .dp-sem-icone { background:#2563eb; }
+    .fam-planilha .doc-capa-ext, .fam-planilha .dp-sem-icone { background:#059669; }
+    .fam-imagem .doc-capa-ext, .fam-imagem .dp-sem-icone { background:#9333ea; }
+
+    /* ── Painel do documento (entra pela direita; a lista continua visível) ── */
+    :root { --dp-largura:min(560px, 40vw); --dp-direita:0px; }
+    body.com-widgets-laterais { --dp-direita:var(--widgets-laterais-largura, 54px); }
+    .dp { position:fixed; top:var(--dp-topo, 0px); right:var(--dp-direita); bottom:0; width:var(--dp-largura); z-index:900; display:flex; flex-direction:column;
+      background:var(--color-surface); color:var(--color-text); border-left:1px solid var(--color-border); box-shadow:-12px 0 32px -16px rgba(0,0,0,.25);
+      transform:translateX(calc(100% + var(--dp-direita))); visibility:hidden; transition:transform .26s cubic-bezier(.2,.8,.3,1), visibility 0s .26s; }
+    .dp.aberto { transform:none; visibility:visible; transition:transform .26s cubic-bezier(.2,.8,.3,1), visibility 0s; }
+    @media (min-width: 1100px) {
+      .main-content { transition:padding-right .26s cubic-bezier(.2,.8,.3,1); }
+      body.dp-aberto .main-content { padding-right:calc(var(--dp-largura) + var(--dp-direita) + 24px); }
+    }
+    .dp-topo { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px 8px 12px; border-bottom:1px solid var(--color-border); flex-shrink:0; }
+    .dp-nav, .dp-acoes { display:flex; align-items:center; gap:2px; }
+    .dp-btn { width:34px; height:34px; display:grid; place-items:center; border:none; border-radius:8px; background:transparent; color:var(--color-text-muted); cursor:pointer; font-size:16px; }
+    .dp-btn:hover:not(:disabled) { background:color-mix(in srgb, var(--color-text-muted) 12%, transparent); color:var(--color-text); }
+    .dp-btn:disabled { opacity:.35; cursor:default; }
+    .dp-btn svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .dp-pos { font-size:12px; color:var(--color-text-muted); margin-left:6px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .dp-corpo { flex:1; min-height:0; overflow-y:auto; }
+    .dp-previa { position:relative; height:clamp(300px, 58vh, 900px); background:color-mix(in srgb, var(--color-text-muted) 10%, var(--color-surface)); border-bottom:1px solid var(--color-border); overflow:hidden; }
+    .dp-previa > * { position:absolute; inset:0; }
+    .dp-previa iframe { width:100%; height:100%; border:0; background:#fff; }
+    .dp-previa .dp-img { display:grid; place-items:center; padding:16px; overflow:auto; }
+    .dp-previa .dp-img img { max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 4px 16px rgba(0,0,0,.15); }
+    .dp-previa .dp-entra { animation:dp-entra .22s ease; }
+    @keyframes dp-entra { from { opacity:0; transform:translateY(6px); } }
+    .dp-carregando { display:grid; place-items:center; }
+    .dp-carregando img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:blur(6px) saturate(.8); opacity:.55; transform:scale(1.04); }
+    .dp-girando { position:relative; width:34px; height:34px; border-radius:50%; border:3px solid color-mix(in srgb, var(--color-primary) 25%, transparent); border-top-color:var(--color-primary); animation:spin .8s linear infinite; }
+    .dp-sem-previa { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:24px; color:var(--color-text-muted); font-size:14px; }
+    .dp-sem-icone { font-size:15px; font-weight:700; letter-spacing:.04em; color:#fff; padding:14px 18px; border-radius:12px; background:var(--color-text-muted); }
+
+    .dp-form { padding:16px 18px 20px; display:flex; flex-direction:column; gap:14px; }
+    .dp-nome-linha { display:flex; align-items:baseline; gap:2px; min-width:0; }
+    .dp-nome { flex:0 1 auto; min-width:60px; max-width:100%; field-sizing:content; font:inherit; font-size:18px; font-weight:600; color:var(--color-text); border:1px solid transparent; border-radius:6px; padding:4px 6px; margin-left:-7px; background:transparent; }
+    .dp-nome:hover { border-color:var(--color-border); }
+    .dp-nome:focus { outline:none; border-color:var(--color-primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent); }
+    .dp-ext { font-size:16px; color:var(--color-text-muted); flex-shrink:0; }
+    .dp-salvo { font-size:12px; color:var(--color-text-muted); min-height:16px; margin-top:-12px; transition:color .2s; }
+    .dp-salvo.ok { color:var(--color-success); }
+    .dp-salvo.erro { color:var(--color-danger); }
+    .dp-campo { display:flex; flex-direction:column; gap:6px; margin:0; }
+    .dp-campo > span { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--color-text-muted); }
+    .dp-obs { font:inherit; font-size:14px; min-height:84px; resize:vertical; line-height:1.45; field-sizing:content; max-height:320px; }
+    .dp-info { display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 16px; margin:4px 0 0; font-size:13px; }
+    .dp-info dt { color:var(--color-text-muted); }
+    .dp-info dd { margin:0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .dp-dica { flex-shrink:0; display:flex; flex-wrap:wrap; gap:4px 14px; justify-content:center; padding:8px 12px; border-top:1px solid var(--color-border); font-size:11px; color:var(--color-text-muted); }
+    .dp-dica span { white-space:nowrap; }
+    .dp-dica kbd { font:inherit; font-size:10px; padding:0 5px; border:1px solid var(--color-border); border-bottom-width:2px; border-radius:4px; background:var(--color-bg); }
+
+    @media (max-width: 768px) {
+      .dp { top:0; right:0; width:100%; z-index:1050; }
+      .dp-previa { height:52vh; }
+      .dp-dica { display:none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dp, .dp.aberto, .main-content { transition:none !important; }
+      .dp-previa .dp-entra, .doc-capa.carregando::after { animation:none; }
+    }
+
     /* ── Mobile (<= 768px) ─────────────────────────── */
     @media (max-width: 768px) {
       .folder-layout { flex-direction: column; gap: 12px; }
@@ -427,6 +511,48 @@
     </div>
   </main>
 </div>
+
+<!-- ===== Painel do documento (visualizar, renomear, observações; J/K navega) ===== -->
+<aside class="dp" id="docPainel" aria-label="Documento" aria-hidden="true">
+  <div class="dp-topo">
+    <div class="dp-nav">
+      <button type="button" class="dp-btn" id="dpAnterior" title="Anterior (K ou ↑)" aria-label="Documento anterior"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+      <button type="button" class="dp-btn" id="dpProximo" title="Próximo (J ou ↓)" aria-label="Próximo documento"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      <span class="dp-pos" id="dpPos"></span>
+    </div>
+    <div class="dp-acoes">
+      <button type="button" class="dp-btn" id="dpTelaCheia" title="Tela cheia" aria-label="Abrir em tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button type="button" class="dp-btn" id="dpBaixar" title="Baixar" aria-label="Baixar"><svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
+      <button type="button" class="dp-btn" id="dpMenu" title="Mais ações" aria-label="Mais ações" aria-haspopup="menu" aria-expanded="false">⋮</button>
+      <button type="button" class="dp-btn" id="dpFechar" title="Fechar (Esc)" aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </div>
+  <div class="dp-corpo">
+    <div class="dp-previa" id="dpPrevia"></div>
+    <form class="dp-form" id="dpForm" autocomplete="off">
+      <div class="dp-nome-linha">
+        <input type="text" id="dpNome" class="dp-nome" maxlength="250" aria-label="Nome do documento" title="Clique para renomear">
+        <span class="dp-ext" id="dpExt"></span>
+      </div>
+      <div class="dp-salvo" id="dpSalvo" aria-live="polite"></div>
+      <label class="dp-campo"><span>Tipo</span>
+        <select id="dpTipo" class="form-control">
+          <option value="Peticao">Petição</option>
+          <option value="Decisao">Decisão</option>
+          <option value="Contrato">Contrato</option>
+          <option value="Prova">Prova</option>
+          <option value="Modelo">Modelo</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </label>
+      <label class="dp-campo"><span>Observações</span>
+        <textarea id="dpObs" class="form-control dp-obs" maxlength="4000" placeholder="Anotações internas do escritório — o cliente não vê."></textarea>
+      </label>
+      <dl class="dp-info" id="dpInfo"></dl>
+    </form>
+  </div>
+  <div class="dp-dica"><span><kbd>J</kbd> <kbd>K</kbd> ou <kbd>↑</kbd> <kbd>↓</kbd> navegar</span><span><kbd>Esc</kbd> fechar</span><span>Alterações salvas automaticamente</span></div>
+</aside>
 
 <!-- ===== MODAL: Upload de Documento ===== -->
 <div class="modal-overlay" id="modalUpload">
@@ -777,13 +903,14 @@
 
 <script type="module">
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
-import { apiFetch } from '/js/api.js';
+import { apiFetch, apiDownload } from '/js/api.js';
 import { contatoPerfilUrl } from '/js/contato-nav.js';
 import { esc } from '/js/utils.js';
 import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
 import { createContatoPicker } from '/js/contato-picker.js';
 import { createProcessoPicker } from '/js/processo-picker.js';
 import { createUploadFila, formatarTamanho, extensao } from '/js/upload-fila.js';
+import { temMiniatura, miniaturaPronta, observarCapas } from '/js/doc-miniaturas.js';
 import {
   VARIAVEIS_SUGERIDAS, MODELOS_EXEMPLO, extrairVariaveis, contarVariaveis, aplicarVariaveis, previewHtml,
   rotuloVariavel, normalizarNomeVariavel, valoresDoProcesso, valoresAutomaticos, imprimirTexto, baixarWord, arquivoWord,
@@ -1449,16 +1576,24 @@ function renderDocs(items) {
   if (currentView === 'blocos') {
     container.innerHTML = items.map(cardDocumento).join('');
     atualizarSelecao();
+    observarCapasDocs();
+    painelAposRender();
     return;
   }
-  container.innerHTML = items.map(d => {
+  container.innerHTML = items.map(linhaDocumento).join('');
+  atualizarSelecao();
+  painelAposRender();
+}
+
+function linhaDocumento(d) {
     const origem = getOrigemLabel(d);
     return `
-    <div class="doc-item" data-id="${esc(d.id)}">
+    <div class="doc-item" data-id="${esc(d.id)}" tabindex="0">
       <input type="checkbox" class="doc-check" value="${esc(d.id)}" aria-label="Selecionar ${esc(d.nome)}">
       <div class="doc-icon" aria-hidden="true">${iconeArquivo(d.nome)}</div>
       <div class="doc-info">
         <button type="button" class="doc-nome" data-action="ver" title="${esc(d.nome)}">${esc(d.nome)}</button>
+        ${d.observacoes ? `<div class="doc-obs" title="${esc(d.observacoes)}">📝 ${esc(d.observacoes)}</div>` : ''}
         <div class="doc-meta">
           ${tipoBadge(d.tipo)}
           <span>${esc(d.tamanhoFormatado)}</span>
@@ -1474,8 +1609,6 @@ function renderDocs(items) {
         <button type="button" class="doc-acao perigo" data-action="excluir" title="Excluir" aria-label="Excluir">🗑️</button>
       </div>
     </div>`;
-  }).join('');
-  atualizarSelecao();
 }
 
 // Card de entidade do sistema (js/cards.js) para a visão em blocos.
@@ -1484,10 +1617,11 @@ function cardDocumento(d) {
     abrivel: true,
     titulo: d.nome,
     dados: { id: d.id },
-    prefixoHtml: `<input type="checkbox" class="doc-check" value="${esc(d.id)}" aria-label="Selecionar ${esc(d.nome)}">`
-      + `<span class="doc-icone-mini" aria-hidden="true">${iconeArquivo(d.nome)}</span>`,
+    capaHtml: capaDocumento(d),
+    prefixoHtml: `<input type="checkbox" class="doc-check" value="${esc(d.id)}" aria-label="Selecionar ${esc(d.nome)}">`,
     statusHtml: `<button type="button" class="ent-card-menu" data-menu-doc="${esc(d.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações para ${esc(d.nome)}">⋮</button>`,
     tagsHtml: [tipoBadge(d.tipo)],
+    descricao: d.observacoes || '',
     campos: [
       { rotulo: 'Origem', valorHtml: getOrigemLabel(d), dica: d.numeroProcesso || d.nomeCliente },
       { rotulo: 'Pasta', valor: d.pastaNome || 'Raiz' },
@@ -1506,6 +1640,7 @@ function applyFilters() {
   const origem = document.getElementById('filtOrigem').value;
   if (busca) filtered = filtered.filter(d =>
     d.nome.toLowerCase().includes(busca) ||
+    (d.observacoes && d.observacoes.toLowerCase().includes(busca)) ||
     (d.numeroProcesso && d.numeroProcesso.toLowerCase().includes(busca)) ||
     (d.nomeCliente && d.nomeCliente.toLowerCase().includes(busca))
   );
@@ -1524,10 +1659,18 @@ function applyFilters() {
 );
 
 function viewDoc(id) {
+  abrirPainel(id);
+}
+
+// Tela cheia (a partir do painel): reaproveita o arquivo já baixado.
+async function viewDocTelaCheia(id) {
   const doc = documentos.find(d => d.id === id);
   if (!doc) return;
-  const token = sessionStorage.getItem('access_token');
-  openPdfModal(`/api/documentos/${id}/file`, doc.nome, token);
+  try {
+    const blob = await obterBlob(id);
+    if (!PREVIEW_TIPOS.includes(blob.type)) throw new Error('pré-visualização disponível só para PDF e imagens. Use o Download.');
+    mostrarTelaCheia(URL.createObjectURL(new Blob([blob], { type: blob.type })), doc.nome);
+  } catch (err) { showDocAlert('Erro ao carregar documento: ' + err.message); }
 }
 
 async function downloadDoc(id) {
@@ -1536,6 +1679,389 @@ async function downloadDoc(id) {
     const a = document.createElement('a');
     a.href = url; a.download = ''; a.target = '_blank'; a.click();
   } catch (err) { showDocAlert(err.message); }
+}
+
+// ── Arquivos (blob com o token; cache pequeno para navegar rápido) ──
+// O painel e as capas dos cards usam o mesmo cache: abrir um documento cuja capa acabou de ser
+// gerada não baixa o arquivo de novo. Guarda no máximo ~80 MB; o mais antigo sai primeiro.
+const blobsCache = new Map(); // id → Promise<Blob>
+const blobsTamanho = new Map();
+const BLOBS_MAX_BYTES = 80 * 1024 * 1024;
+
+function obterBlob(id) {
+  if (blobsCache.has(id)) {
+    const p = blobsCache.get(id);
+    blobsCache.delete(id); blobsCache.set(id, p); // vira o mais recente
+    return p;
+  }
+  const p = apiDownload(`/documentos/${id}/file`).then(r => r.blob);
+  blobsCache.set(id, p);
+  p.then(b => {
+    blobsTamanho.set(id, b.size);
+    let total = [...blobsTamanho.values()].reduce((s, n) => s + n, 0);
+    for (const antigo of blobsCache.keys()) {
+      if (total <= BLOBS_MAX_BYTES || antigo === id) break;
+      total -= blobsTamanho.get(antigo) || 0;
+      blobsCache.delete(antigo); blobsTamanho.delete(antigo);
+    }
+  }).catch(() => { blobsCache.delete(id); });
+  return p;
+}
+
+const FAMILIAS_EXT = { pdf: ['pdf'], word: ['doc', 'docx', 'odt', 'rtf', 'txt'], planilha: ['xls', 'xlsx', 'ods', 'csv'], imagem: ['png', 'jpg', 'jpeg', 'webp', 'gif'] };
+function familiaDoc(nome) {
+  const ext = extensao(nome);
+  return Object.keys(FAMILIAS_EXT).find(f => FAMILIAS_EXT[f].includes(ext)) || 'outro';
+}
+function rotuloExt(nome) { return (extensao(nome) || 'arq').slice(0, 4).toUpperCase(); }
+
+// Capa do card: ícone do tipo; a miniatura entra por cima quando fica pronta.
+function capaDocumento(d) {
+  const pronta = miniaturaPronta(d.id);
+  const img = pronta ? `<img src="${esc(pronta)}" alt="">` : '';
+  const observar = temMiniatura(d) ? ` data-capa-id="${esc(d.id)}"` : '';
+  return `<div class="doc-capa fam-${familiaDoc(d.nome)}${pronta ? ' com-imagem' : ''}"${observar}>${img}<span class="doc-capa-ext">${esc(rotuloExt(d.nome))}</span></div>`;
+}
+
+// ============================================================
+// PAINEL DO DOCUMENTO — entra pela direita, a lista continua visível.
+// J/K ou ↑/↓ navegam pela lista na ordem da tela (com filtros); Esc fecha.
+// Nome, tipo e observações salvam sozinhos (ao parar de digitar, ao sair do campo e antes de
+// trocar de documento). O documento aberto fica na URL (?doc=) — recarregar volta para ele.
+// ============================================================
+const painel = document.getElementById('docPainel');
+const dpNome = document.getElementById('dpNome');
+const dpObs = document.getElementById('dpObs');
+const dpTipo = document.getElementById('dpTipo');
+const dpSalvo = document.getElementById('dpSalvo');
+let painelId = null;
+let painelIndice = -1;     // posição na lista visível (para seguir em frente se o atual sumir)
+let painelCarga = 0;       // descarta prévias que chegam depois de trocar de documento
+let painelBlobUrl = null;
+let salvarTimer = null;
+let salvando = null;       // Promise do salvamento em curso
+let pendente = false;
+let painelPastaId = null;  // pasta em que o painel foi aberto (trocar de pasta fecha)
+
+function painelAberto() { return painel.classList.contains('aberto'); }
+
+function posicionarPainel() {
+  // Começa abaixo do cabeçalho (e da faixa de impersonação), sem cobrir o "Sair".
+  const topo = document.querySelector('.main-content')?.getBoundingClientRect().top ?? 0;
+  painel.style.setProperty('--dp-topo', `${Math.max(0, Math.round(topo))}px`);
+}
+
+async function abrirPainel(id, { foco = false } = {}) {
+  const doc = documentos.find(d => d.id === id);
+  if (!doc) return;
+  if (painelId && painelId !== id) await salvarAgora();
+  painelId = id;
+  painelPastaId = currentPastaId;
+  painelIndice = docsVisiveis.findIndex(d => d.id === id);
+  const abrindo = !painelAberto();
+  if (abrindo) {
+    posicionarPainel();
+    painel.classList.add('aberto');
+    painel.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('dp-aberto');
+  }
+  preencherPainel(doc);
+  marcarAtual();
+  // A lista muda de largura enquanto o painel entra: rola até o item de novo no fim da animação.
+  if (abrindo) setTimeout(marcarAtual, 300);
+  atualizarUrlDoc(id);
+  carregarPrevia(doc);
+  if (foco) painel.querySelector('#dpProximo').focus({ preventScroll: true });
+}
+
+async function fecharPainel() {
+  if (!painelAberto()) return;
+  await salvarAgora();
+  painel.classList.remove('aberto');
+  painel.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('dp-aberto');
+  const id = painelId;
+  painelId = null;
+  painelCarga++;
+  setTimeout(() => { if (!painelAberto()) document.getElementById('dpPrevia').innerHTML = ''; }, 300);
+  if (painelBlobUrl) { URL.revokeObjectURL(painelBlobUrl); painelBlobUrl = null; }
+  marcarAtual();
+  atualizarUrlDoc(null);
+  // Volta o foco para o item na lista (teclado continua de onde parou).
+  document.querySelector(`#docsContainer [data-id="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
+}
+
+function navegar(passo) {
+  if (!docsVisiveis.length) return;
+  let i = docsVisiveis.findIndex(d => d.id === painelId);
+  if (i < 0) i = Math.min(Math.max(painelIndice, 0), docsVisiveis.length - 1) - (passo > 0 ? 1 : 0);
+  const alvo = docsVisiveis[i + passo];
+  if (alvo) abrirPainel(alvo.id);
+}
+
+function marcarAtual() {
+  document.querySelectorAll('#docsContainer .doc-atual').forEach(el => el.classList.remove('doc-atual'));
+  if (!painelId) return;
+  const el = document.querySelector(`#docsContainer [data-id="${CSS.escape(painelId)}"]`);
+  if (!el) return;
+  el.classList.add('doc-atual');
+  el.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+function atualizarUrlDoc(id) {
+  const url = new URL(location.href);
+  if (id) {
+    url.searchParams.set('doc', id);
+    const doc = documentos.find(d => d.id === id);
+    if (doc?.pastaId) url.searchParams.set('pasta', doc.pastaId); else url.searchParams.delete('pasta');
+  } else {
+    url.searchParams.delete('doc');
+    url.searchParams.delete('pasta');
+  }
+  history.replaceState(history.state, '', url);
+}
+
+function nomeBase(nome) {
+  const ext = extensao(nome);
+  return ext ? nome.slice(0, -(ext.length + 1)) : nome;
+}
+
+function preencherPainel(doc) {
+  const ext = extensao(doc.nome);
+  dpNome.value = nomeBase(doc.nome);
+  dpNome.size = Math.max(6, dpNome.value.length); // sem field-sizing: largura pelo texto
+  document.getElementById('dpExt').textContent = ext ? `.${ext}` : '';
+  dpTipo.value = doc.tipo;
+  dpObs.value = doc.observacoes || '';
+  mostrarSalvo('');
+  const i = docsVisiveis.findIndex(d => d.id === doc.id);
+  document.getElementById('dpPos').textContent = i >= 0 ? `${i + 1} de ${docsVisiveis.length}` : '';
+  document.getElementById('dpAnterior').disabled = i <= 0;
+  document.getElementById('dpProximo').disabled = i < 0 || i >= docsVisiveis.length - 1;
+  const linhas = [
+    ['Processo', doc.processoId ? `<a href="/pages/processo-detalhe.html?id=${esc(doc.processoId)}">${esc(doc.numeroProcesso || 'Abrir processo')}</a>` : '—'],
+    ['Cliente', doc.clienteId ? `<a href="${contatoPerfilUrl(doc.clienteId)}">${esc(doc.nomeCliente || 'Abrir cliente')}</a>` : '—'],
+    ['Pasta', esc(doc.pastaNome || 'Raiz')],
+    ['Tamanho', esc(doc.tamanhoFormatado)],
+    ['Enviado em', esc(new Date(doc.criadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }))],
+  ];
+  document.getElementById('dpInfo').innerHTML = linhas.map(([t, v]) => `<dt>${t}</dt><dd>${v}</dd>`).join('');
+}
+
+async function carregarPrevia(doc) {
+  const carga = ++painelCarga;
+  const previa = document.getElementById('dpPrevia');
+  if (painelBlobUrl) { URL.revokeObjectURL(painelBlobUrl); painelBlobUrl = null; }
+  const fam = familiaDoc(doc.nome);
+  const semPrevia = msg => {
+    previa.innerHTML = `<div class="dp-sem-previa fam-${fam} dp-entra">
+      <span class="dp-sem-icone">${esc(rotuloExt(doc.nome))}</span>
+      <span>${esc(msg)}</span>
+      <button type="button" class="btn btn-secondary btn-sm" data-dp-baixar>Baixar arquivo</button></div>`;
+  };
+  if (!PREVIEW_TIPOS.includes(doc.contentType)) {
+    semPrevia('Pré-visualização disponível para PDF e imagens.');
+    return;
+  }
+  const capa = miniaturaPronta(doc.id);
+  previa.innerHTML = `<div class="dp-carregando">${capa ? `<img src="${esc(capa)}" alt="">` : ''}<span class="dp-girando" aria-label="Carregando"></span></div>`;
+  try {
+    const blob = await obterBlob(doc.id);
+    if (carga !== painelCarga) return;
+    // O blob: herda a origem do app — só PDF e imagem podem ser exibidos (um HTML disfarçado
+    // de PDF rodaria como página do Causify).
+    if (!blob.size || !PREVIEW_TIPOS.includes(blob.type)) { semPrevia('Pré-visualização indisponível para este arquivo.'); return; }
+    painelBlobUrl = URL.createObjectURL(new Blob([blob], { type: blob.type }));
+    if (blob.type === 'application/pdf') {
+      previa.innerHTML = `<iframe class="dp-entra" title="${esc(doc.nome)}" src="${painelBlobUrl}#view=FitH&navpanes=0"></iframe>`;
+    } else {
+      previa.innerHTML = `<div class="dp-img dp-entra"><img src="${painelBlobUrl}" alt="${esc(doc.nome)}"></div>`;
+    }
+    preCarregarVizinhos();
+  } catch (err) {
+    if (carga === painelCarga) semPrevia(`Não foi possível carregar: ${err.message}`);
+  }
+}
+
+// Baixa o anterior e o próximo em segundo plano (só os pequenos) para o J/K ser instantâneo.
+function preCarregarVizinhos() {
+  const i = docsVisiveis.findIndex(d => d.id === painelId);
+  [docsVisiveis[i + 1], docsVisiveis[i - 1]].forEach(d => {
+    if (d && PREVIEW_TIPOS.includes(d.contentType) && d.tamanhoBytes <= 10 * 1024 * 1024) obterBlob(d.id).catch(() => {});
+  });
+}
+
+// ── Salvamento automático ──
+function mostrarSalvo(texto, classe = '') {
+  dpSalvo.textContent = texto;
+  dpSalvo.className = `dp-salvo ${classe}`;
+}
+
+function agendarSalvar(atraso = 700) {
+  pendente = true;
+  mostrarSalvo('Alterações não salvas…');
+  clearTimeout(salvarTimer);
+  salvarTimer = setTimeout(salvarAgora, atraso);
+}
+
+async function salvarAgora() {
+  clearTimeout(salvarTimer);
+  if (salvando) await salvando;
+  if (!pendente || !painelId) return;
+  const doc = documentos.find(d => d.id === painelId);
+  if (!doc) { pendente = false; return; }
+  const base = dpNome.value.trim();
+  if (!base) { mostrarSalvo('Informe o nome do documento.', 'erro'); return; }
+  const ext = extensao(doc.nome);
+  const corpo = { nome: ext ? `${base}.${ext}` : base, observacoes: dpObs.value.trim() || null, tipo: dpTipo.value };
+  pendente = false;
+  mostrarSalvo('Salvando…');
+  salvando = apiFetch(`/documentos/${doc.id}`, { method: 'PUT', body: JSON.stringify(corpo) })
+    .then(atualizado => {
+      Object.assign(doc, atualizado);
+      if (painelId === doc.id) mostrarSalvo('✓ Salvo', 'ok');
+      atualizarItemNaLista(doc);
+    })
+    .catch(err => {
+      pendente = true;
+      if (painelId === doc.id) mostrarSalvo(`Não foi possível salvar: ${err.message}`, 'erro');
+    })
+    .finally(() => { salvando = null; });
+  return salvando;
+}
+
+// Troca só a linha/card do documento (sem refazer a lista — mantém rolagem e foco).
+function atualizarItemNaLista(doc) {
+  const el = document.querySelector(`#docsContainer [data-id="${CSS.escape(doc.id)}"]`);
+  if (!el) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = currentView === 'blocos' ? cardDocumento(doc) : linhaDocumento(doc);
+  const novo = tmp.firstElementChild;
+  el.replaceWith(novo);
+  novo.classList.toggle('doc-atual', doc.id === painelId);
+  const cb = novo.querySelector('.doc-check');
+  if (cb) { cb.checked = selectedDocs.has(doc.id); novo.classList.toggle('selected', cb.checked); }
+  if (currentView === 'blocos') observarCapasDocs();
+}
+
+dpNome.addEventListener('input', () => agendarSalvar());
+dpObs.addEventListener('input', () => agendarSalvar(900));
+dpTipo.addEventListener('change', () => agendarSalvar(0));
+[dpNome, dpObs].forEach(c => c.addEventListener('blur', () => { if (pendente) salvarAgora(); }));
+dpNome.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); dpNome.blur(); } });
+document.getElementById('dpForm').addEventListener('submit', e => e.preventDefault());
+
+document.getElementById('dpAnterior').addEventListener('click', () => navegar(-1));
+document.getElementById('dpProximo').addEventListener('click', () => navegar(1));
+document.getElementById('dpFechar').addEventListener('click', fecharPainel);
+document.getElementById('dpBaixar').addEventListener('click', () => painelId && downloadDoc(painelId));
+document.getElementById('dpPrevia').addEventListener('click', e => {
+  if (e.target.closest('[data-dp-baixar]') && painelId) downloadDoc(painelId);
+});
+document.getElementById('dpTelaCheia').addEventListener('click', () => {
+  const doc = documentos.find(d => d.id === painelId);
+  if (!doc) return;
+  if (painelBlobUrl) mostrarTelaCheia(painelBlobUrl, doc.nome);
+  else viewDocTelaCheia(doc.id);
+});
+document.getElementById('dpMenu').addEventListener('click', e => {
+  const id = painelId;
+  if (!id) return;
+  abrirMenuCard(e.currentTarget, [
+    { icone: '📂', rotulo: 'Mover para pasta', acao: () => openMoverDocsModal([id]) },
+    { icone: '🗑️', rotulo: 'Excluir', perigo: true, acao: () => excluirDocs([id]) },
+  ]);
+});
+['resize', 'scroll'].forEach(ev => window.addEventListener(ev, () => { if (painelAberto()) posicionarPainel(); }, { passive: true }));
+window.addEventListener('beforeunload', e => { if (pendente) { salvarAgora(); e.preventDefault(); } });
+
+// Teclado. Em captura: roda antes do Esc da tela cheia, para não fechar os dois de uma vez.
+document.addEventListener('keydown', e => {
+  if (!painelAberto() || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (pdfModal.classList.contains('open') || document.querySelector('.modal-overlay.open') || document.querySelector('.ent-menu')) return;
+  const emCampo = e.target.closest?.('input, textarea, select, [contenteditable="true"]');
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (emCampo) e.target.blur(); else fecharPainel();
+    return;
+  }
+  if (emCampo) return;
+  if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowDown') { e.preventDefault(); navegar(1); }
+  else if (e.key === 'k' || e.key === 'K' || e.key === 'ArrowUp') { e.preventDefault(); navegar(-1); }
+}, true);
+
+// Na lista: a linha inteira abre o painel; Enter na linha focada também.
+document.getElementById('docsContainer').addEventListener('click', e => {
+  const linha = e.target.closest('.docs-list .doc-item');
+  if (!linha || e.target.closest('a, button, input, label, select')) return;
+  if (String(window.getSelection?.() ?? '').length) return;
+  abrirPainel(linha.dataset.id);
+});
+document.getElementById('docsContainer').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches?.('.docs-list .doc-item')) return;
+  e.preventDefault();
+  abrirPainel(e.target.dataset.id);
+});
+
+function observarCapasDocs() {
+  observarCapas(document.getElementById('docsContainer'), {
+    buscar: id => documentos.find(d => d.id === id),
+    obterBlob,
+  });
+}
+
+// Depois de recarregar a lista (filtro, pasta, exclusão): mantém o painel no documento ou,
+// se ele saiu da lista, abre o que ficou no lugar dele.
+function painelAposRender() {
+  if (!painelAberto()) return;
+  if (currentPastaId !== painelPastaId) { pendente = false; fecharPainel(); return; }
+  if (docsVisiveis.some(d => d.id === painelId)) {
+    const doc = documentos.find(d => d.id === painelId);
+    const i = docsVisiveis.findIndex(d => d.id === painelId);
+    painelIndice = i;
+    document.getElementById('dpPos').textContent = `${i + 1} de ${docsVisiveis.length}`;
+    document.getElementById('dpAnterior').disabled = i <= 0;
+    document.getElementById('dpProximo').disabled = i >= docsVisiveis.length - 1;
+    if (doc && !pendente && document.activeElement !== dpNome && document.activeElement !== dpObs) preencherInfoSemCampos(doc);
+    marcarAtual();
+    return;
+  }
+  if (!documentos.some(d => d.id === painelId)) {
+    // Excluído ou movido para outra pasta: segue para o vizinho.
+    const proximo = docsVisiveis[Math.min(painelIndice, docsVisiveis.length - 1)];
+    pendente = false;
+    if (proximo) abrirPainel(proximo.id); else fecharPainel();
+  } else {
+    marcarAtual(); // escondido pelo filtro: o painel continua, a navegação recomeça do vizinho
+    document.getElementById('dpPos').textContent = 'fora do filtro';
+  }
+}
+
+function preencherInfoSemCampos(doc) {
+  const nome = dpNome.value, obs = dpObs.value, tipo = dpTipo.value;
+  preencherPainel(doc);
+  dpNome.value = nome; dpObs.value = obs; dpTipo.value = tipo;
+}
+
+// Link direto (?doc=&pasta=): entra na pasta do documento e abre o painel nele.
+async function abrirDocDaUrl() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('doc');
+  if (!id) return;
+  if (!documentos.some(d => d.id === id)) {
+    let pastaId = params.get('pasta');
+    if (!pastaId) {
+      try { pastaId = (await apiFetch(`/documentos/${id}`))?.pastaId || null; } catch { pastaId = null; }
+    }
+    if (pastaId && pastaId !== currentPastaId) {
+      currentPastaId = pastaId;
+      document.querySelectorAll('.folder-item, .folder-root-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.folder-item[data-id="${CSS.escape(pastaId)}"]`)?.classList.add('active');
+      await loadDocumentos();
+    }
+  }
+  if (documentos.some(d => d.id === id)) abrirPainel(id);
+  else atualizarUrlDoc(null);
 }
 
 // ── Upload (modal com fila de arquivos) ────────────────────────
@@ -1725,49 +2251,33 @@ document.addEventListener('paste', e => {
 // PDF modal
 const pdfModal = document.getElementById('pdfModal');
 let currentPdfUrl = '';
+let currentPdfNome = 'documento';
 
 const PREVIEW_TIPOS = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-
-function openPdfModal(fileUrl, nome, token = '') {
-  const container = document.getElementById('pdfContainer');
-  container.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:100%;width:100%;flex-direction:column;gap:12px;color:#fff;position:absolute;top:0;left:0;z-index:5">
-      <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite"></div>
-      <span>Carregando documento...</span>
-    </div>
-    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
-  currentPdfUrl = fileUrl;
-  document.getElementById('pdfTitle').textContent = nome || 'Documento';
-  pdfModal.classList.add('open');
-
-  fetch(fileUrl, token ? { headers: { 'Authorization': `Bearer ${token}` } } : {})
-    .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.blob(); })
-    .then(blob => {
-      if (blob.size === 0) throw new Error('Documento vazio');
-      // O blob: herda a origem do app — só PDF e imagem podem ser exibidos aqui. Qualquer
-      // outro tipo (ex.: HTML enviado como .pdf) rodaria como página dentro do Causify.
-      if (!PREVIEW_TIPOS.includes(blob.type)) throw new Error('pré-visualização disponível só para PDF e imagens. Use o Download.');
-      const blobUrl = URL.createObjectURL(new Blob([blob], { type: blob.type }));
-      container.innerHTML = '';
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;background:#fff;';
-      iframe.src = blobUrl;
-      container.appendChild(iframe);
-    })
-    .catch(err => {
-      showDocAlert('Erro ao carregar documento: ' + err.message);
-      pdfModal.classList.remove('open');
-    });
-}
 
 document.getElementById('pdfClose').addEventListener('click', () => {
   pdfModal.classList.remove('open');
   document.getElementById('pdfContainer').innerHTML = '';
 });
 
+function mostrarTelaCheia(blobUrl, nome) {
+  const container = document.getElementById('pdfContainer');
+  currentPdfUrl = blobUrl;
+  currentPdfNome = nome || 'documento';
+  document.getElementById('pdfTitle').textContent = nome || 'Documento';
+  container.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;background:#fff;';
+  iframe.src = blobUrl;
+  container.appendChild(iframe);
+  pdfModal.classList.add('open');
+}
+
 document.getElementById('pdfDownloadBtn').addEventListener('click', () => {
   const a = document.createElement('a');
-  a.href = currentPdfUrl; a.target = '_blank'; a.click();
+  a.href = currentPdfUrl; a.target = '_blank';
+  if (currentPdfUrl.startsWith('blob:')) a.download = currentPdfNome;
+  a.click();
 });
 
 pdfModal.addEventListener('click', e => {
@@ -2413,7 +2923,8 @@ setupFolderEvents();
 setupDocSelection();
 await loadPastas();
 await loadCota();
-loadDocumentos();
+await loadDocumentos();
+abrirDocDaUrl();
 </script>
 </body>
 </html>

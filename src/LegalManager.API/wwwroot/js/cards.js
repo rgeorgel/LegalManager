@@ -31,6 +31,8 @@ const ESTADOS = new Set(['ok', 'danger', 'warn', 'info', 'muted']);
  * @param {string} [o.estado]      Cor da borda esquerda: ok | danger | warn | info | muted.
  * @param {string} [o.classe]      Classes extras no card (ex.: "favorito").
  * @param {Object<string,string>} [o.dados]  Atributos data-* do card (ex.: { id } → data-id).
+ * @param {string} [o.capaHtml]    Faixa de imagem no topo do card, de borda a borda (ex.: miniatura
+ *                                 do documento). Altura fixa (.ent-card-capa) para alinhar vizinhos.
  * @param {string} [o.prefixoHtml] Antes do título (ex.: caixa de seleção para ações em massa).
  * @param {string} [o.statusHtml]  Selo à direita do título (ex.: badge de status). Um menu de
  *                                 ações (⋮, classe "ent-card-menu") vai aqui, não no rodapé.
@@ -63,6 +65,7 @@ export function cardEntidade(o) {
     ? Math.max(0, Math.min(100, meta.progresso)) : null;
   return `
     <div class="ent-card${estado}${classe}"${o.href ? ` data-href="${esc(o.href)}"` : o.abrivel ? ' data-abrir="1" tabindex="0"' : ''}${dados}>
+      ${o.capaHtml ? `<div class="ent-card-capa">${o.capaHtml}</div>` : ''}
       <div class="ent-card-top">
         ${o.prefixoHtml ? `<div class="ent-card-prefixo">${o.prefixoHtml}</div>` : ''}
         <div class="ent-card-titulo${o.tituloMono ? ' is-mono' : ''}${o.tituloCompleto ? ' is-completo' : ''}">${o.href ? `<a href="${esc(o.href)}" title="${esc(o.titulo)}">${esc(o.titulo)}</a>` : `<span title="${esc(o.titulo)}">${esc(o.titulo)}</span>`}</div>

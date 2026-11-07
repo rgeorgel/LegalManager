@@ -1,3 +1,4 @@
+using LegalManager.Application.DTOs.Documentos;
 using LegalManager.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,6 +11,7 @@ public class DocumentoConfiguration : IEntityTypeConfiguration<Documento>
     {
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Nome).HasMaxLength(500).IsRequired();
+        builder.Property(d => d.Observacoes).HasMaxLength(AtualizarDocumentoDto.MaxObservacoes);
         builder.Property(d => d.ObjectKey).HasMaxLength(1000).IsRequired();
         builder.Property(d => d.ContentType).HasMaxLength(100).IsRequired();
         builder.Property(d => d.TamanhoBytes).IsRequired();
