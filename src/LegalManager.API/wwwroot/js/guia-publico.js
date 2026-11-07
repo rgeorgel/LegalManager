@@ -1,4 +1,5 @@
-// Páginas públicas da Central Causify (/guias, HTML gerado em GuiasHtml.cs). Sem login tudo
+// Páginas públicas da Central Causify (/guias, HTML gerado em GuiasHtml.cs) e do blog estático
+// (/blog, que só usa o menu do celular e o "Abrir o Causify" do header). Sem login tudo
 // funciona como página estática; com a sessão do portal (sessionStorage desta aba) o header
 // mostra "Abrir o Causify", o botão do guia leva direto à tela e o "Útil" passa a curtir.
 // Nada aqui redireciona sozinho: o login só é pedido quando a pessoa clica em "Útil".

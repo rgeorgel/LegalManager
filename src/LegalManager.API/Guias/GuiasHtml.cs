@@ -13,7 +13,8 @@ namespace LegalManager.API.Guias;
 // Páginas públicas da Central Causify (/guias), montadas no servidor para chegarem prontas
 // ao Google e ao preview de links (WhatsApp, LinkedIn). Visual da variante verde da home
 // (/home-verde.html): verde-escuro + creme + dourado, títulos com serifa. CSS inline — não
-// depende do styles.css do portal.
+// depende do styles.css do portal. O blog estático usa o mesmo visual em wwwroot/css/blog.css:
+// ao mudar os tokens aqui, mude lá também.
 // Tudo que vem do banco passa por H() (escape de HTML); o corpo do guia já sai seguro do
 // GuiaMarkdown.
 public static class GuiasHtml

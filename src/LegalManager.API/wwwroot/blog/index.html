@@ -101,147 +101,40 @@
   }
   </script>
 
-  <style>
-    :root {
-      --navy: #0f172a;
-      --navy-800: #1e293b;
-      --navy-700: #334155;
-      --gold: #f59e0b;
-      --gold-light: #fcd34d;
-      --text: #e2e8f0;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --card-bg: #1e293b;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--navy);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    a { color: var(--gold); text-decoration: none; }
-    a:hover { color: var(--gold-light); }
-
-    .nav {
-      position: sticky; top: 0; z-index: 50;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 2rem;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
-    }
-    .nav-logo { font-size: 1.15rem; font-weight: 700; color: var(--text); }
-    .nav-logo span { color: var(--gold); }
-    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
-    .nav-links a { color: var(--text-muted); font-size: 0.9rem; }
-    .nav-links a:hover { color: var(--text); }
-    .nav-cta { display: flex; gap: 0.5rem; }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 0.55rem 1.2rem; border-radius: 8px;
-      font-weight: 600; font-size: 0.9rem; text-decoration: none; border: none; cursor: pointer;
-    }
-    .btn-primary { background: linear-gradient(135deg, var(--gold), #d97706); color: #0f172a; }
-    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-    .btn-ghost:hover { color: var(--text); }
-
-    .wrap { max-width: 980px; margin: 0 auto; padding: 0 1.25rem; }
-
-    .hero {
-      padding: 5rem 1.25rem 3rem;
-      text-align: center;
-      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,158,11,0.10) 0%, transparent 70%);
-    }
-    .eyebrow {
-      display: inline-block;
-      background: rgba(245,158,11,0.1); color: var(--gold);
-      border: 1px solid rgba(245,158,11,0.3);
-      font-size: 0.75rem; font-weight: 700;
-      padding: 0.3rem 0.8rem; border-radius: 100px;
-      margin-bottom: 1rem; letter-spacing: 0.05em; text-transform: uppercase;
-    }
-    h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 800; line-height: 1.15;
-      letter-spacing: -0.02em; margin-bottom: 1rem;
-    }
-    h1 .hl { background: linear-gradient(135deg, var(--gold), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .lede { color: var(--text-muted); font-size: 1.1rem; max-width: 620px; margin: 0 auto; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.25rem;
-      padding: 2rem 1.25rem 5rem;
-      max-width: 1100px; margin: 0 auto;
-    }
-    .post-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.5rem;
-      transition: all 0.25s;
-      display: flex; flex-direction: column;
-    }
-    .post-card:hover {
-      border-color: rgba(245,158,11,0.4);
-      transform: translateY(-3px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .post-tag {
-      display: inline-block;
-      font-size: 0.7rem; font-weight: 700;
-      color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em;
-      margin-bottom: 0.5rem;
-    }
-    .post-card h2 {
-      font-size: 1.15rem; font-weight: 700; line-height: 1.3;
-      margin-bottom: 0.6rem;
-    }
-    .post-card h2 a { color: var(--text); }
-    .post-card h2 a:hover { color: var(--gold); }
-    .post-card p { color: var(--text-muted); font-size: 0.9rem; flex: 1; }
-    .post-meta {
-      display: flex; align-items: center; gap: 0.75rem;
-      margin-top: 1rem; padding-top: 1rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.8rem; color: var(--text-muted);
-    }
-    .post-meta .read { color: var(--gold); font-weight: 600; }
-
-    footer {
-      background: var(--navy);
-      border-top: 1px solid var(--border);
-      padding: 2rem 1.25rem;
-      text-align: center;
-      color: var(--text-muted); font-size: 0.85rem;
-    }
-    footer a { color: var(--text-muted); }
-    footer a:hover { color: var(--text); }
-
-    @media (max-width: 600px) {
-      .nav { padding: 0.75rem 1rem; }
-      .nav-links { display: none; }
-      .hero { padding: 3.5rem 1rem 2rem; }
-    }
-  </style>
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
 </head>
 <body>
 
 <nav class="nav" aria-label="Navegação principal">
-  <a href="/" class="nav-logo" style="text-decoration:none">Causify<span>.</span></a>
-  <div class="nav-links">
-    <a href="/#funcionalidades">Funcionalidades</a>
-    <a href="/#planos">Planos</a>
-    <a href="/#faq">FAQ</a>
-  </div>
-  <div class="nav-cta">
-    <a href="/login.html" class="btn btn-ghost">Entrar</a>
-    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
 
 <header class="hero">
   <div class="eyebrow">Blog Causify</div>
@@ -249,7 +142,7 @@
   <p class="lede">Guias práticos, comparativos e táticas para advogados que querem organizar o escritório, cobrar honorários com segurança e nunca mais perder um prazo.</p>
 </header>
 
-<main>
+<main class="wrap">
   <div class="grid">
 
     <article class="post-card">
@@ -301,9 +194,11 @@
 </main>
 
 <footer>
-  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
-  <p style="margin-top:0.5rem; font-size:0.75rem">© 2026 Causify. Todos os direitos reservados.</p>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
 </footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
 
 </body>
 </html>
