@@ -50,6 +50,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Detalhe do Processo</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/upload-fila.css">
   <style>
     .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
     .info-item label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); display:block; margin-bottom:4px; }
@@ -747,48 +748,65 @@
   </div>
 </div>
 
-<!-- Modal Documento -->
+<!-- Modal Documento (fila de upload: js/upload-fila.js + css/upload-fila.css) -->
 <div class="modal-overlay" id="modalDocumento">
-  <div class="modal" style="max-width:440px">
+  <div class="modal up-modal">
     <div class="modal-header">
-      <span class="modal-title">Adicionar Documento</span>
-      <button class="modal-close" id="docClose">✕</button>
+      <div>
+        <span class="modal-title">Enviar documentos</span>
+        <div class="up-subtitulo" id="docDestino"></div>
+      </div>
+      <button class="modal-close" id="docClose" aria-label="Fechar">✕</button>
     </div>
     <div class="modal-body">
       <div id="docAlert" class="alert" style="display:none"></div>
-      <form id="docForm">
-        <div class="form-group">
-          <label>Arquivo *</label>
-          <input type="file" id="docFile" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.rtf,.txt,.csv,.png,.jpg,.jpeg,.webp" required>
+      <form id="docForm" novalidate>
+        <div class="up-zona" id="docZona" tabindex="0" role="button" aria-label="Escolher arquivos para enviar">
+          <input type="file" id="docFile" multiple hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.rtf,.txt,.csv,.png,.jpg,.jpeg,.webp">
+          <div class="up-zona-icone" aria-hidden="true">
+            <svg viewBox="0 0 48 48"><path class="up-nuvem" d="M14 34h-1.5a8.5 8.5 0 0 1-1.6-16.85A12 12 0 0 1 34.3 14.6 9.75 9.75 0 0 1 35.5 34H34"/><g class="up-seta"><path d="M24 40V23"/><path d="M17.5 29.5 24 23l6.5 6.5"/></g></svg>
+          </div>
+          <div class="up-zona-texto">
+            <div class="up-zona-titulo"><strong>Arraste os arquivos aqui</strong> <span class="up-zona-ou">ou</span> <span class="up-link">escolha no computador</span></div>
+            <div class="up-zona-titulo up-zona-toque"><span class="up-link">Toque para escolher arquivos</span></div>
+            <div class="up-zona-dica">PDF, Word, Excel, imagens e texto · até 100 MB cada · vários de uma vez<span class="up-so-desktop"> · <kbd>Ctrl</kbd>+<kbd>V</kbd> cola da área de transferência</span></div>
+            <div class="up-zona-solte">Solte para adicionar</div>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Nome do Documento</label>
-          <input type="text" id="docNome" class="form-control" placeholder="Ex: Petição Inicial - Réplica">
-          <small style="color:var(--color-text-muted);font-size:12px">Deixe em branco para usar o nome original do arquivo</small>
-        </div>
-        <div class="form-group">
-          <label>Tipo de Documento *</label>
-          <select id="docTipo" class="form-control" required>
-            <option value="Peticao">Petição</option>
-            <option value="Decisao">Decisão</option>
-            <option value="Contrato">Contrato</option>
-            <option value="Prova">Prova</option>
-            <option value="Modelo">Modelo</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </div>
+        <ul class="up-lista" id="docLista" aria-live="polite"></ul>
+        <div class="up-resumo" id="docResumo" hidden></div>
+
+        <fieldset class="up-campos" id="docCampos">
+          <legend class="up-legenda">Aplicar a todos os arquivos</legend>
+          <div class="form-group">
+            <label for="docTipo">Tipo de documento *</label>
+            <select id="docTipo" class="form-control" required>
+              <option value="Peticao">Petição</option>
+              <option value="Decisao">Decisão</option>
+              <option value="Contrato">Contrato</option>
+              <option value="Prova">Prova</option>
+              <option value="Modelo">Modelo</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+          <small class="up-zona-dica" style="display:block;margin-top:-6px">Para renomear, clique no nome do arquivo na lista.</small>
+        </fieldset>
       </form>
-      <div id="docProgress" style="display:none;margin-top:16px">
-        <div style="background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden">
-          <div id="docProgressBar" style="height:100%;background:var(--color-primary);width:0%;transition:width 0.2s"></div>
-        </div>
-        <div style="font-size:12px;color:var(--color-text-muted);margin-top:4px;text-align:center" id="docProgressText">Enviando...</div>
-      </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer up-rodape">
+      <div class="up-rodape-info" id="docRodapeInfo"></div>
       <button class="btn btn-secondary" id="docCancelar">Cancelar</button>
-      <button class="btn btn-primary" id="docEnviar">Enviar</button>
+      <button class="btn btn-primary up-btn-enviar" id="docEnviar" disabled>Enviar</button>
     </div>
+  </div>
+</div>
+
+<!-- Soltar arquivos em qualquer lugar da aba Documentos abre o upload -->
+<div class="up-tela-drop" id="docTelaDrop" aria-hidden="true">
+  <div class="up-tela-drop-caixa">
+    <svg viewBox="0 0 48 48"><path class="up-nuvem" d="M14 34h-1.5a8.5 8.5 0 0 1-1.6-16.85A12 12 0 0 1 34.3 14.6 9.75 9.75 0 0 1 35.5 34H34"/><g class="up-seta"><path d="M24 40V23"/><path d="M17.5 29.5 24 23l6.5 6.5"/></g></svg>
+    <strong>Solte para anexar ao processo</strong>
+    <span id="docTelaDropDestino"></span>
   </div>
 </div>
 
@@ -1007,6 +1025,7 @@ import { dataParede, esc } from '/js/utils.js';
 import { aplicarVariaveis, carregarTimbre, imprimirTexto, rotuloVariavel, timbreCarregado, valoresAutomaticos, valoresDoProcesso } from '/js/modelos.js';
 import { initLayout, isPlanoFree, showUpgradeToast } from '/js/layout.js';
 import { apiFetch } from '/js/api.js';
+import { createUploadFila, formatarTamanho, extensao } from '/js/upload-fila.js';
 import { createContatoPicker, cadastrarContatoRapido } from '/js/contato-picker.js';
 import { gerarPeca, getCreditos, gerarResumoProcesso, obterResumoProcesso, listarResumosProcesso, setResumoVisivelCliente } from '/js/ia.js';
 import { getProcesso, getAndamentos, updateProcesso, addAndamento, updateAndamento, deleteAndamento, setFavorito, encerrarProcesso } from '/js/processos.js';
@@ -1872,14 +1891,85 @@ window.downloadDoc = async id => {
 };
 
 // Upload Documento
-function openDocModal() {
-  document.getElementById('docForm').reset();
-  document.getElementById('docAlert').style.display = 'none';
-  document.getElementById('docProgress').style.display = 'none';
-  document.getElementById('modalDocumento').classList.add('open');
+// Fila de upload compartilhada com a página Documentos: arrastar e soltar, vários arquivos,
+// renomear na lista, progresso por arquivo. Todos vão para este processo.
+const modalDocumento = document.getElementById('modalDocumento');
+const docEnviar = document.getElementById('docEnviar');
+const docAlert = document.getElementById('docAlert');
+let docRodada = { total: 0, okAntes: 0 };
+let docFechamento = null;
+
+const docFila = createUploadFila({
+  zona: document.getElementById('docZona'),
+  input: document.getElementById('docFile'),
+  lista: document.getElementById('docLista'),
+  aoMudar: atualizarTelaDoc,
+});
+
+const pluralDoc = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+function atualizarTelaDoc(e = docFila.estado()) {
+  document.getElementById('docDestino').textContent = processo?.numeroCNJ ? `Processo ${processo.numeroCNJ}` : '';
+  document.getElementById('docCampos').disabled = e.fase === 'enviando';
+  document.getElementById('docCancelar').textContent = e.fase === 'fim' ? 'Fechar' : 'Cancelar';
+
+  const resumo = document.getElementById('docResumo');
+  resumo.hidden = e.total === 0 || e.fase !== 'selecao';
+  if (!resumo.hidden) {
+    resumo.innerHTML = `<span>${pluralDoc(e.prontos, 'arquivo pronto', 'arquivos prontos')} · ${formatarTamanho(e.bytesProntos)}</span>`
+      + (e.invalidos ? `<span class="up-aviso">⚠ ${pluralDoc(e.invalidos, 'arquivo não será enviado', 'arquivos não serão enviados')}</span>` : '');
+  }
+
+  const info = document.getElementById('docRodapeInfo');
+  docEnviar.classList.remove('concluido');
+  if (e.fase === 'enviando') {
+    info.innerHTML = `<div class="up-geral"><span>${e.ok - docRodada.okAntes} de ${docRodada.total}</span>
+      <div class="up-geral-barra"><div class="up-geral-fill" style="width:${e.progressoGeral}%"></div></div>
+      <span>${e.progressoGeral}%</span></div>`;
+    docEnviar.disabled = true;
+    docEnviar.innerHTML = '<span class="spinner" style="width:14px;height:14px;vertical-align:-2px"></span> Enviando…';
+    return;
+  }
+  info.textContent = '';
+  if (e.fase === 'fim' && e.erros === 0 && e.ok > 0) {
+    docEnviar.disabled = true;
+    docEnviar.classList.add('concluido');
+    docEnviar.textContent = '✓ Concluído';
+    return;
+  }
+  docEnviar.disabled = e.prontos === 0;
+  docEnviar.textContent = e.fase === 'fim' && e.erros
+    ? `Tentar de novo (${e.prontos})`
+    : e.prontos > 1 ? `Enviar ${e.prontos} arquivos` : 'Enviar';
 }
 
-document.getElementById('btnAddDocumentoTab').addEventListener('click', openDocModal);
+function openDocModal() {
+  clearTimeout(docFechamento);
+  docFila.limpar();
+  document.getElementById('docForm').reset();
+  docAlert.style.display = 'none';
+  atualizarTelaDoc();
+  modalDocumento.classList.add('open');
+}
+
+function fecharDocModal() {
+  const e = docFila.estado();
+  if (e.fase === 'enviando' && !confirm('Há arquivos sendo enviados. Cancelar o envio dos que faltam?')) return;
+  clearTimeout(docFechamento);
+  docFila.limpar();
+  modalDocumento.classList.remove('open');
+  if (e.fase === 'enviando' && e.ok > docRodada.okAntes) aposUploadDoc();
+}
+
+function aposUploadDoc() {
+  loadDocumentos();
+  loadDocumentosBadge?.();
+}
+
+document.getElementById('btnAddDocumentoTab').addEventListener('click', () => {
+  openDocModal();
+  document.getElementById('docZona').focus();
+});
 
 // Gerar Documento com Modelo
 let gmModelos = [];
@@ -2346,61 +2436,79 @@ document.addEventListener('keydown', e => {
 });
 
 [document.getElementById('docClose'), document.getElementById('docCancelar')].forEach(el =>
-  el.addEventListener('click', () => document.getElementById('modalDocumento').classList.remove('open')));
+  el.addEventListener('click', fecharDocModal));
 
-document.getElementById('docEnviar').addEventListener('click', async () => {
-  const fileInput = document.getElementById('docFile');
-  const file = fileInput.files[0];
-  if (!file) {
-    const alertEl = document.getElementById('docAlert');
-    alertEl.textContent = 'Selecione um arquivo.';
-    alertEl.className = 'alert alert-error';
-    alertEl.style.display = 'block';
-    return;
-  }
-
-  const btn = document.getElementById('docEnviar');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-  document.getElementById('docAlert').style.display = 'none';
-  document.getElementById('docProgress').style.display = 'block';
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('tipo', document.getElementById('docTipo').value);
-  formData.append('processoId', processoId);
-  const docNome = document.getElementById('docNome').value.trim();
-  if (docNome) formData.append('nome', docNome);
-
-  const token = sessionStorage.getItem('access_token');
-  try {
-    const res = await fetch('/api/documentos/upload', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    });
-
-    if (!res.ok) {
-      let err = `HTTP ${res.status}`;
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        const b = await res.json();
-        err = b.message || b.title || err;
-      }
-      throw new Error(err);
-    }
-
-    document.getElementById('modalDocumento').classList.remove('open');
-    showAlert('Documento enviado.', 'success');
-    await loadDocumentos();
-  } catch (err) {
-    const alertEl = document.getElementById('docAlert');
-    alertEl.textContent = err.message;
-    alertEl.className = 'alert alert-error';
-    alertEl.style.display = 'block';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Enviar';
+docEnviar.addEventListener('click', async () => {
+  const antes = docFila.estado();
+  if (antes.fase === 'enviando' || !antes.prontos) return;
+  docAlert.style.display = 'none';
+  docRodada = { total: antes.prontos, okAntes: antes.ok };
+  const fim = await docFila.enviar({ tipo: document.getElementById('docTipo').value, processoId });
+  if (fim.fase !== 'fim') return; // fechado no meio — fecharDocModal já atualizou
+  const enviados = fim.ok - docRodada.okAntes;
+  if (enviados) aposUploadDoc();
+  if (fim.erros === 0) {
+    docFechamento = setTimeout(() => {
+      modalDocumento.classList.remove('open');
+      docFila.limpar();
+      showAlert(enviados === 1 ? 'Documento enviado.' : `${enviados} documentos enviados.`, 'success');
+    }, 1100);
+  } else {
+    docAlert.textContent = `${pluralDoc(fim.erros, 'arquivo não foi enviado', 'arquivos não foram enviados')}`
+      + (enviados ? ` (${pluralDoc(enviados, 'enviado', 'enviados')} com sucesso)` : '')
+      + '. Veja o motivo em cada um e tente de novo.';
+    docAlert.className = 'alert alert-error';
+    docAlert.style.display = 'block';
   }
 });
+
+// Colar (Ctrl/⌘+V) arquivos ou prints com o modal aberto.
+document.addEventListener('paste', e => {
+  if (!modalDocumento.classList.contains('open')) return;
+  const arquivos = [...(e.clipboardData?.files || [])];
+  if (!arquivos.length) return;
+  e.preventDefault();
+  const hora = new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-');
+  docFila.adicionar(arquivos.map((f, i) => /^image\.\w+$/i.test(f.name)
+    ? new File([f], `Imagem colada ${hora}${arquivos.length > 1 ? `-${i + 1}` : ''}.${extensao(f.name)}`, { type: f.type })
+    : f));
+});
+
+// Arrastar arquivos para a aba Documentos abre o upload já com eles.
+(() => {
+  const tela = document.getElementById('docTelaDrop');
+  const temArquivos = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  const podeSoltar = () => document.getElementById('tab-documentos').classList.contains('active')
+    && !document.querySelector('.modal-overlay.open:not(#modalDocumento), .pdf-modal-overlay.open');
+  let profundidade = 0;
+  const esconder = () => { profundidade = 0; tela.classList.remove('ativa'); };
+
+  window.addEventListener('dragenter', e => {
+    if (!temArquivos(e) || modalDocumento.classList.contains('open') || !podeSoltar()) return;
+    if (++profundidade === 1) {
+      document.getElementById('docTelaDropDestino').textContent = processo?.numeroCNJ ? `Processo ${processo.numeroCNJ}` : '';
+      tela.classList.add('ativa');
+    }
+  });
+  window.addEventListener('dragleave', e => { if (temArquivos(e) && --profundidade <= 0) esconder(); });
+  window.addEventListener('dragover', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault(); // sem isso o navegador abre o arquivo e sai da página
+    e.dataTransfer.dropEffect = modalDocumento.classList.contains('open') || podeSoltar() ? 'copy' : 'none';
+  });
+  window.addEventListener('drop', e => {
+    if (!temArquivos(e)) return;
+    const jaTratado = e.defaultPrevented; // soltou na zona do modal
+    e.preventDefault();
+    esconder();
+    if (jaTratado) return;
+    const arquivos = [...e.dataTransfer.files];
+    if (modalDocumento.classList.contains('open')) { docFila.adicionar(arquivos); return; }
+    if (!podeSoltar()) return;
+    openDocModal();
+    docFila.adicionar(arquivos);
+  });
+})();
 
 async function loadDocumentosBadge() {
   const tabBadge = document.getElementById('tabCountDocumentos');

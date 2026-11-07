@@ -106,6 +106,7 @@
   -webkit-mask:radial-gradient(circle, transparent 8px, #000 8.5px); mask:radial-gradient(circle, transparent 8px, #000 8.5px); transition:background .2s; }
 
 .up-resumo { margin-top:10px; font-size:12px; color:var(--color-text-muted); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.up-resumo[hidden] { display:none; }
 .up-resumo .up-aviso { color:var(--color-warning); }
 
 .up-campos { border:none; padding:0; margin:18px 0 0; min-width:0; transition:opacity .2s; }
