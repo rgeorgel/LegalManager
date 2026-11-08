@@ -83,6 +83,8 @@
     .a2-chip.off i { background:transparent; box-shadow:inset 0 0 0 1.5px var(--c); }
     .a2-chip.liga.on { border-color:var(--color-primary); background:color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); }
     .a2-filtros .esp { flex:1; }
+    .a2-filtros .rot { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); margin-left:6px; }
+    .a2-chip.sem-cor i { background:transparent; box-shadow:inset 0 0 0 1.5px var(--color-text-muted); }
 
     .a2-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:16px; box-shadow:var(--shadow-md); overflow:hidden; }
     .a2-vazio { padding:40px 16px; text-align:center; color:var(--color-text-muted); }
@@ -127,10 +129,14 @@
     .a2-ev.curto .h { margin:0; flex:0 100 auto; min-width:0; }
     .a2-ev.editavel { cursor:grab; }
     .a2-ev.passado { opacity:.62; }
-    .a2-ev.tarefa { border-left-style:solid; background:color-mix(in srgb, var(--c) 10%, var(--color-surface));
-      outline:1px dashed color-mix(in srgb, var(--c) 55%, transparent); outline-offset:-1px; }
-    .a2-ev.atrasada { --c: var(--color-danger) !important; }
-    .a2-ev.prevista, .a2-pill.prevista, .a2-bar.prevista, .a2-li.prevista { opacity:.55; }
+    /* Tarefa: a cor escolhida pelo usuário é a informação — mesma força da cor do evento; o que
+       distingue é a bandeira ⚑ e a borda esquerda mais grossa. Atrasada não troca a cor: ganha um
+       ponto vermelho e o horário em vermelho. */
+    .a2-ev.tarefa, .a2-pill.tarefa, .a2-li.tarefa { border-left-width:5px; }
+    .a2-ev.atrasada::after { content:''; position:absolute; top:5px; right:5px; width:8px; height:8px; border-radius:50%;
+      background:var(--color-danger); box-shadow:0 0 0 2px var(--color-surface); }
+    .a2-ev.atrasada .h, .a2-pill.atrasada .h, .a2-bar.atrasada .h, .a2-li.atrasada .h { color:var(--color-danger) !important; font-weight:700; }
+    .a2-ev.prevista, .a2-pill.prevista, .a2-bar.prevista, .a2-li.prevista { opacity:.55; outline:1px dashed color-mix(in srgb, var(--c) 70%, transparent); outline-offset:-1px; }
     .a2-flag { color:var(--c); margin-right:3px; }
     .a2-ev .alca { position:absolute; left:0; right:0; bottom:0; height:8px; cursor:ns-resize; }
     .a2-ev .alca::after { content:''; position:absolute; left:50%; bottom:2px; width:18px; height:3px; margin-left:-9px; border-radius:2px;
@@ -156,7 +162,6 @@
     .a2-pill { display:flex; gap:5px; align-items:baseline; font-size:11.5px; line-height:1.3; padding:2px 6px; border-radius:6px; margin-top:3px; cursor:pointer;
       background:color-mix(in srgb, var(--c) 15%, var(--color-surface)); border-left:3px solid var(--c); white-space:nowrap; overflow:hidden; }
     .a2-pill.editavel { cursor:grab; }
-    .a2-pill.atrasada { --c: var(--color-danger) !important; }
     .a2-pill .h { color:var(--color-text-muted); font-variant-numeric:tabular-nums; flex-shrink:0; }
     .a2-pill .t { overflow:hidden; text-overflow:ellipsis; font-weight:600; }
     .a2-mais { display:block; margin-top:3px; font-size:11px; font-weight:600; color:var(--color-text-muted) !important; background:none; border:none; cursor:pointer; padding:2px 4px; }
@@ -196,8 +201,7 @@
     .a2-bar.editavel { cursor:grab; }
     .a2-bar .h { color:var(--color-text-muted); font-variant-numeric:tabular-nums; flex-shrink:0; font-size:11px; }
     .a2-bar .t { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
-    .a2-bar.tarefa { background:var(--color-surface); border-style:dashed; }
-    .a2-bar.atrasada { --c: var(--color-danger) !important; }
+    .a2-bar.tarefa { border-left:5px solid var(--c); }
     .a2-losango { width:9px; height:9px; flex-shrink:0; transform:rotate(45deg); background:var(--c); border-radius:2px; }
 
     /* ── Lista ────────────────────────────────────────────── */
@@ -207,7 +211,6 @@
     .a2-li { display:flex; gap:12px; align-items:center; padding:10px 12px; border-radius:10px; cursor:pointer; margin-bottom:6px;
       background:color-mix(in srgb, var(--c) 9%, var(--color-surface)); border-left:3px solid var(--c); }
     .a2-li:hover { background:color-mix(in srgb, var(--c) 15%, var(--color-surface)); }
-    .a2-li.atrasada { --c: var(--color-danger) !important; }
     .a2-li .h { width:92px; flex-shrink:0; font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums; }
     .a2-li .t { font-weight:600; font-size:14px; }
     .a2-li .m { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
@@ -226,6 +229,7 @@
     .a2-pop dt { color:var(--color-text-muted); text-align:center; }
     .a2-pop dd { margin:0; min-width:0; overflow-wrap:anywhere; }
     .a2-pop .alerta { color:var(--color-danger); font-weight:600; }
+    .a2-pop-cor { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--c); margin-right:6px; vertical-align:-1px; }
     .a2-pop-acoes { display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; }
 
     /* ── Aviso (toast) e atalhos ──────────────────────────── */

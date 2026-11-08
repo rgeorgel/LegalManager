@@ -6,6 +6,7 @@
 import { initLayout } from './layout.js';
 import { apiFetch, getUser } from './api.js';
 import { esc, dataParede, isoLocal, abrirNovoPelaUrl } from './utils.js';
+import { CORES_TAREFA, SEM_COR, corValida } from './cores-tarefa.js';
 
 initLayout();
 
@@ -41,6 +42,7 @@ let pendingAbrirId = _params.get('abrirId');
 let itens = [];
 let seqCarga = 0;
 const ocultos = new Set(lerPref('ocultos', []));
+const ocultosCor = new Set(lerPref('ocultosCor', [])); // cores de tarefa escondidas (SEM_COR = sem cor)
 let soMeus = lerPref('soMeus', false);
 let agruparPor = lerPref('agrupar', 'responsavel');
 
@@ -114,7 +116,18 @@ function fimVisual(it) {
   return addMin(it.ini, it.tarefa ? 30 : 60);
 }
 
-const visiveis = () => itens.filter(it => it.ini && !ocultos.has(it.tipo));
+// Cor escolhida na tarefa, ou SEM_COR. Sem cor, o backend manda um cinza padrão (CoresTarefa
+// PadraoAgenda/PadraoPrevista), que não está na paleta: conta como "sem cor".
+const CINZAS_PADRAO = ['#6b7280', '#9ca3af'];
+// Nome da cor para pessoas: o da paleta; cor gravada fora dela (versões antigas, importação) = "Outra cor".
+const rotuloCor = k => k === SEM_COR ? 'Sem cor' : (CORES_TAREFA.find(c => c.valor === k)?.nome ?? 'Outra cor');
+
+function chaveCor(it) {
+  const c = corValida(it.cor);
+  return c && !CINZAS_PADRAO.includes(c) ? c : SEM_COR;
+}
+
+const visiveis = () => itens.filter(it => it.ini && !ocultos.has(it.tipo) && !(it.tarefa && ocultosCor.has(chaveCor(it))));
 const itemDe = el => itens.find(it => String(it.k) === el?.dataset.k);
 
 function faixaHora(it) {
@@ -222,6 +235,7 @@ function marcarView() {
 }
 
 function corDoTipo(tipo) {
+  if (tipo === 'Tarefa') return '#6b7280'; // tarefas têm a cor de cada uma (ver filtro de cores)
   const it = itens.find(i => i.tipo === tipo && !i.prevista);
   return it ? corItem(it) : '#9ca3af';
 }
@@ -234,12 +248,23 @@ function renderFiltros() {
       aria-pressed="${!ocultos.has(t)}" title="Mostrar/ocultar · Alt+clique mostra só este">
       <i></i>${esc(TIPO_LABEL[t])} <span class="n">${contagem[t]}</span>
     </button>`).join('');
+  // Cores das tarefas: legenda e filtro (mesmos nomes da tela de Tarefas). Só com tarefas à vista.
+  const tarefas = ocultos.has('Tarefa') ? [] : itens.filter(i => i.tarefa);
+  const porCor = new Map();
+  tarefas.forEach(i => { const k = chaveCor(i); porCor.set(k, (porCor.get(k) ?? 0) + 1); });
+  const ordem = [...CORES_TAREFA.map(c => c.valor), ...[...porCor.keys()].filter(k => k !== SEM_COR && !CORES_TAREFA.some(c => c.valor === k)), SEM_COR];
+  const cores = tarefas.length ? ordem.filter(k => porCor.has(k) || ocultosCor.has(k)).map(k => `
+    <button type="button" class="a2-chip${k === SEM_COR ? ' sem-cor' : ''}${ocultosCor.has(k) ? ' off' : ''}" data-cor="${esc(k)}"
+      style="--c:${k === SEM_COR ? '#6b7280' : esc(k)}" aria-pressed="${!ocultosCor.has(k)}" title="Tarefas: mostrar/ocultar esta cor · Alt+clique mostra só esta">
+      <i></i>${esc(rotuloCor(k))} <span class="n">${porCor.get(k) ?? 0}</span>
+    </button>`).join('') : '';
+  const blocoCores = cores ? `<span class="rot">⚑ Cores</span>${cores}` : '';
   const agrupar = view === 'itinerario' ? `
     <div class="a2-seg" role="group" aria-label="Faixas">
       <button type="button" data-agrupar="responsavel" class="${agruparPor !== 'tipo' ? 'ativo' : ''}">Por responsável</button>
       <button type="button" data-agrupar="tipo" class="${agruparPor === 'tipo' ? 'ativo' : ''}">Por tipo</button>
     </div>` : '';
-  el.innerHTML = `${chips}<span class="esp"></span>${agrupar}
+  el.innerHTML = `${chips}${blocoCores}<span class="esp"></span>${agrupar}
     <button type="button" class="a2-chip liga${soMeus ? ' on' : ''}" id="a2SoMeus" aria-pressed="${soMeus}">👤 Só os meus</button>`;
 }
 
@@ -765,7 +790,7 @@ const pop = document.getElementById('a2Pop');
 
 function abrirPopover(it, ancora) {
   if (!it) return;
-  pop.style.setProperty('--c', it.atrasada ? 'var(--color-danger)' : corItem(it));
+  pop.style.setProperty('--c', corItem(it));
   document.getElementById('a2PopTipo').textContent = it.prevista ? 'Recorrente · prevista' : it.tarefa ? 'Prazo / tarefa' : (TIPO_LABEL[it.tipo] ?? it.tipo);
   document.getElementById('a2PopTitulo').textContent = it.titulo;
 
@@ -773,6 +798,7 @@ function abrirPopover(it, ancora) {
   const linhas = [
     ['🗓', `${esc(dataTxt)} · ${esc(faixaHora(it))}`],
     it.atrasada && ['⚠️', '<span class="alerta">Prazo vencido</span>'],
+    it.tarefa && ['🎨', chaveCor(it) === SEM_COR ? 'Sem cor' : `<span class="a2-pop-cor"></span>${esc(rotuloCor(chaveCor(it)))}`],
     it.tarefa && it.fim && ['⏱', `Prazo às ${hm(it.ini)} · ${duracaoTxt((it.fim - it.ini) / 60000)} reservados na agenda`],
     it.prevista && ['🔁', 'Será criada quando a anterior vencer'],
     it.local && ['📍', esc(it.local)],
@@ -1018,6 +1044,18 @@ document.getElementById('a2Filtros').addEventListener('click', e => {
     else if (ocultos.has(tipo)) ocultos.delete(tipo);
     else ocultos.add(tipo);
     gravarPref('ocultos', [...ocultos]);
+    render();
+    return;
+  }
+  const cor = e.target.closest('[data-cor]')?.dataset.cor;
+  if (cor) {
+    if (e.altKey) {
+      const presentes = new Set(itens.filter(i => i.tarefa).map(chaveCor));
+      presentes.forEach(k => (k === cor ? ocultosCor.delete(k) : ocultosCor.add(k)));
+      ocultosCor.delete(cor);
+    } else if (ocultosCor.has(cor)) ocultosCor.delete(cor);
+    else ocultosCor.add(cor);
+    gravarPref('ocultosCor', [...ocultosCor]);
     render();
     return;
   }
