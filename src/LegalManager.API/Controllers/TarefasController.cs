@@ -148,6 +148,20 @@ public class TarefasController : ControllerBase
         }
     }
 
+    // Arrastar/esticar a tarefa na agenda: só prazo e duração (o PUT exige o formulário inteiro).
+    [HttpPatch("{id:guid}/agenda")]
+    public async Task<ActionResult<ReagendarTarefaResultadoDto>> Reagendar(Guid id, [FromBody] ReagendarTarefaDto dto, CancellationToken ct)
+    {
+        try
+        {
+            var existing = await _service.GetByIdAsync(id, ct);
+            var result = await _service.ReagendarAsync(id, dto, ct);
+            await _audit.LogAsync(_tenantContext.CreateEntry(AuditActions.Update, AuditEntities.Tarefa, id, existing, result, HttpContext.GetClientIpAddress()), ct);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException) { return NotFound(); }
+    }
+
     [HttpPatch("{id:guid}/mover")]
     public async Task<IActionResult> MoverKanban(Guid id, [FromBody] MoverKanbanDto dto, CancellationToken ct)
     {

@@ -13,6 +13,9 @@ public class Tarefa
     public Guid? ResponsavelId { get; set; }
     public Guid CriadoPorId { get; set; }
     public DateTime? Prazo { get; set; }
+    /// <summary>Tempo reservado na agenda a partir do Prazo (bloco de Prazo até Prazo + duração);
+    /// null = sem duração (a agenda desenha um bloco curto).</summary>
+    public int? DuracaoMinutos { get; set; }
     public DateTime? DataInicio { get; set; }
     public int? QuantidadeDias { get; set; }
     public TipoCalculo? TipoCalculo { get; set; }

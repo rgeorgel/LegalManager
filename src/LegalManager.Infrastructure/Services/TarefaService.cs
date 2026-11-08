@@ -403,6 +403,32 @@ public class TarefaService : ITarefaService
         return serie is null ? dto : dto with { Recorrencia = RecorrenciaTarefas.ParaDto(serie) };
     }
 
+    public async Task<ReagendarTarefaResultadoDto> ReagendarAsync(Guid id, ReagendarTarefaDto dto, CancellationToken ct = default)
+    {
+        var tarefa = await _context.Tarefas
+            .FirstOrDefaultAsync(t => t.TenantId == _tenantContext.TenantId && t.Id == id, ct)
+            ?? throw new KeyNotFoundException("Tarefa não encontrada.");
+
+        // Prazo calculado pela contagem (início + dias) é refeito a cada edição (UpdateAsync): mudou o
+        // dia aqui, a contagem sai — senão a próxima edição devolveria o prazo para a data antiga.
+        var contagemDesligada = tarefa.QuantidadeDias.HasValue && tarefa.DataInicio.HasValue
+            && tarefa.Prazo?.Date != dto.Prazo.Date;
+        if (contagemDesligada)
+        {
+            tarefa.DataInicio = null;
+            tarefa.QuantidadeDias = null;
+            tarefa.TipoCalculo = null;
+        }
+
+        tarefa.Prazo = dto.Prazo;
+        if (dto.DuracaoMinutos.HasValue)
+            tarefa.DuracaoMinutos = Math.Clamp(dto.DuracaoMinutos.Value, TarefaDuracao.MinimoMinutos, TarefaDuracao.MaximoMinutos);
+        tarefa.AtualizadoEm = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+
+        return new ReagendarTarefaResultadoDto(tarefa.Prazo.Value, tarefa.DuracaoMinutos, contagemDesligada);
+    }
+
     public async Task MoverKanbanAsync(Guid id, Guid tenantId, StatusTarefa novoStatus, CancellationToken ct = default)
     {
         var tarefa = await _context.Tarefas

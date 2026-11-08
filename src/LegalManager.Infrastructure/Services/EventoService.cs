@@ -180,8 +180,9 @@ public class EventoService : IEventoService
         if (filtro.ProcessoId.HasValue)
             tarefasQuery = tarefasQuery.Where(t => t.ProcessoId == filtro.ProcessoId.Value);
 
-        var tarefas = await tarefasQuery
-            .Select(t => new AgendaItemDto(
+        // Tarefa com duração vira um bloco de Prazo até Prazo + duração (o fim é calculado em memória).
+        var tarefasComDuracao = await tarefasQuery
+            .Select(t => new { Item = new AgendaItemDto(
                 t.Id,
                 t.Titulo,
                 "Tarefa",
@@ -195,8 +196,11 @@ public class EventoService : IEventoService
                 t.RecorrenciaId,
                 false,
                 null
-            ))
+            ), t.DuracaoMinutos })
             .ToListAsync(ct);
+        var tarefas = tarefasComDuracao
+            .Select(x => x.DuracaoMinutos is int min ? x.Item with { DataHoraFim = x.Item.DataHora.AddMinutes(min) } : x.Item)
+            .ToList();
 
         var previstas = filtro.IncluirPrevistas
             ? await PrevistasRecorrenciaAsync(filtro, tenantId, ct)

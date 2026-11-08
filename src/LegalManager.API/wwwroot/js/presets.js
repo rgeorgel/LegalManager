@@ -185,14 +185,6 @@ export const PRESETS = [
       .searchable-select-list li:hover { background-color: #334155 !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #fff !important; }
 
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #1e293b !important; }
-      .semana-header { background-color: #0f172a !important; color: #cbd5e1 !important; border-color: #334155 !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #fff !important; }
-      .hora-label { color: #94a3b8 !important; border-color: #334155 !important; }
-      .agenda-item { background-color: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
-      .agenda-item:active { background-color: #0f172a !important; }
-
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }
       .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
@@ -453,14 +445,6 @@ export const PRESETS = [
       .searchable-select-list li:hover { background-color: #44475a !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #fff !important; }
 
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #282a36 !important; }
-      .semana-header { background-color: #21222c !important; color: #bd93f9 !important; border-color: #44475a !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #fff !important; }
-      .hora-label { color: #6272a4 !important; border-color: #44475a !important; }
-      .agenda-item { background-color: #282a36 !important; color: #f8f8f2 !important; border-color: #44475a !important; }
-      .agenda-item:active { background-color: #21222c !important; }
-
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }
       .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
@@ -623,14 +607,6 @@ export const PRESETS = [
       .searchable-select-list { background-color: #120a24 !important; color: #e8f4ff !important; border-color: #2d1b4e !important; }
       .searchable-select-list li:hover { background-color: #2d1b4e !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #05010f !important; }
-
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #120a24 !important; }
-      .semana-header { background-color: #05010f !important; color: #c9b8ff !important; border-color: #2d1b4e !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #05010f !important; }
-      .hora-label { color: #9a8cc9 !important; border-color: #2d1b4e !important; }
-      .agenda-item { background-color: #120a24 !important; color: #e8f4ff !important; border-color: #2d1b4e !important; }
-      .agenda-item:active { background-color: #05010f !important; }
 
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }
@@ -866,14 +842,6 @@ export const PRESETS = [
       .searchable-select-list li:hover { background-color: #3d1f66 !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #fff !important; }
 
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #241242 !important; }
-      .semana-header { background-color: #170a2e !important; color: #c4b5fd !important; border-color: #3d1f66 !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #fff !important; }
-      .hora-label { color: #a78bca !important; border-color: #3d1f66 !important; }
-      .agenda-item { background-color: #241242 !important; color: #f3e8ff !important; border-color: #3d1f66 !important; }
-      .agenda-item:active { background-color: #170a2e !important; }
-
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }
       .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
@@ -1067,14 +1035,6 @@ export const PRESETS = [
       .searchable-select-list li:hover { background-color: #154019 !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #04140a !important; }
 
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #0a0f0a !important; }
-      .semana-header { background-color: #000000 !important; color: #8fd696 !important; border-color: #154019 !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #04140a !important; }
-      .hora-label { color: #5a9a60 !important; border-color: #154019 !important; }
-      .agenda-item { background-color: #0a0f0a !important; color: #d5ffd8 !important; border-color: #154019 !important; }
-      .agenda-item:active { background-color: #000000 !important; }
-
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }
       .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
@@ -1265,14 +1225,6 @@ export const PRESETS = [
       .searchable-select-list { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
       .searchable-select-list li:hover { background-color: #3a3344 !important; }
       .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: #fff !important; }
-
-      /* ── Agenda ──────────────────────────────────────────────── */
-      .semana-grid { background-color: #1d1924 !important; }
-      .semana-header { background-color: #141118 !important; color: #c4b5fd !important; border-color: #3a3344 !important; }
-      .semana-header.hoje { background-color: var(--color-primary) !important; color: #fff !important; }
-      .hora-label { color: #b9b0c7 !important; border-color: #3a3344 !important; }
-      .agenda-item { background-color: #1d1924 !important; color: #f3eefb !important; border-color: #3a3344 !important; }
-      .agenda-item:active { background-color: #141118 !important; }
 
       /* ── Botões precisam herdar cor (fix Alertas e outros com texto preto) ─── */
       button { color: inherit !important; }

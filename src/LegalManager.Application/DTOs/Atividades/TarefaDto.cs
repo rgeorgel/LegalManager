@@ -24,6 +24,27 @@ public record CreateTarefaDto(
     string? Cor = null
 );
 
+/// <summary>
+/// Reagendar pela agenda (arrastar/esticar): novo prazo e, opcionalmente, a duração em minutos
+/// (null mantém a atual).
+/// </summary>
+public record ReagendarTarefaDto(
+    [Required] DateTime Prazo,
+    [Range(TarefaDuracao.MinimoMinutos, TarefaDuracao.MaximoMinutos)] int? DuracaoMinutos = null
+);
+
+/// <summary>
+/// ContagemDesligada: o prazo vinha da contagem (data de início + dias) e mudou de dia — a
+/// contagem foi apagada para a próxima edição não recalcular e desfazer a mudança.
+/// </summary>
+public record ReagendarTarefaResultadoDto(DateTime Prazo, int? DuracaoMinutos, bool ContagemDesligada);
+
+public static class TarefaDuracao
+{
+    public const int MinimoMinutos = 5;
+    public const int MaximoMinutos = 24 * 60;
+}
+
 public record UpdateTarefaDto(
     [Required, MaxLength(300)] string Titulo,
     string? Descricao,

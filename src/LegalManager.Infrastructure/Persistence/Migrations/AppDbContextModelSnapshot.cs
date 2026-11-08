@@ -3387,6 +3387,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<int?>("DuracaoMinutos")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("Prazo")
                         .HasColumnType("timestamp with time zone");
 
