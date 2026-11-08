@@ -320,11 +320,13 @@ document.getElementById('tarefasList').addEventListener('click', e => {
 });
 
 // Status, prioridade e tipo: seleção múltipla (nada marcado = todos). Criados aqui, antes do
-// primeiro uso; o onChange chama loadTarefas, que é hoisted.
+// primeiro uso; o onChange chama loadTarefas, que é hoisted. Status começa em pendentes e em
+// andamento (o dia a dia); concluídas/canceladas aparecem ao marcá-las ou limpar o filtro.
 const opcoes = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 const TIPO_LABEL = { Tarefa: 'Tarefas', Prazo: 'Prazos' };
 const filtStatus = createMultiSelect(document.getElementById('filtStatus'), {
-  placeholder: 'Todos os status', plural: 'status', options: opcoes(STATUS_LABEL), onChange: () => loadTarefas(1)
+  placeholder: 'Todos os status', plural: 'status', options: opcoes(STATUS_LABEL),
+  values: ['Pendente', 'EmAndamento'], onChange: () => loadTarefas(1)
 });
 const filtPrioridade = createMultiSelect(document.getElementById('filtPrioridade'), {
   placeholder: 'Todas as prioridades', plural: 'prioridades', options: opcoes(PRIORIDADE_LABEL), onChange: () => loadTarefas(1)
@@ -338,6 +340,10 @@ const filtCor = createMultiSelect(document.getElementById('filtCor'), {
 estilizarFiltroCor(document.getElementById('filtCor'));
 
 function getFilters() {
+  // O período das encerradas só importa se o filtro de status deixa concluídas/canceladas passarem.
+  const status = filtStatus.getValues();
+  document.getElementById('filtDiasEncerradas').hidden =
+    status.length > 0 && !status.some(v => v === 'Concluida' || v === 'Cancelada');
   return {
     busca: document.getElementById('filtBusca').value.trim(),
     status: filtStatus.getValues(),
