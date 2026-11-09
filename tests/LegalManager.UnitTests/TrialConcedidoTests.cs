@@ -168,6 +168,99 @@ public class TrialConcedidoTests
     }
 
     [Fact]
+    public async Task ConcederTrialPlus_TenantEmTrialBoasVindas_SomaDiasAoPrazoAtual()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var expiraAtual = DateTime.UtcNow.AddDays(5);
+        var concedidoEm = DateTime.UtcNow.AddDays(-10);
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Nome = "Boas-vindas",
+            Plano = PlanoTipo.Plus,
+            Status = StatusTenant.Trial,
+            CriadoEm = concedidoEm,
+            TrialExpiraEm = expiraAtual,
+            TrialConcedidoEm = concedidoEm,
+            TrialConcedidoDias = 15,
+            TrialConcedidoMotivo = "Trial automático de boas-vindas (cadastro Free)"
+        });
+        await ctx.SaveChangesAsync();
+        var superAdminId = Guid.NewGuid();
+        var controller = CreateController(ctx, superAdminId, out var auditMock);
+
+        var result = await controller.ConcederTrialPlus(tenantId, new ConcederTrialPlusDto(30, "Pediu mais tempo"), CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result);
+        var atualizado = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Plus, atualizado!.Plano);
+        Assert.Equal(StatusTenant.Trial, atualizado.Status);
+        Assert.Equal(expiraAtual.AddDays(30), atualizado.TrialExpiraEm);
+        Assert.Equal(45, atualizado.TrialConcedidoDias);
+        Assert.Equal(concedidoEm, atualizado.TrialConcedidoEm);
+        Assert.Equal(superAdminId, atualizado.TrialConcedidoPorId);
+        Assert.Equal("Pediu mais tempo", atualizado.TrialConcedidoMotivo);
+        auditMock.Verify(a => a.LogAsync(It.Is<AuditLogEntry>(e =>
+            e.Acao == "trial-plus-concedido" && e.UsuarioId == superAdminId), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConcederTrialPlus_TenantEmTrialDePlanoPago_MantemPlanoEBilling()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Nome = "Trial Pro",
+            Plano = PlanoTipo.Pro,
+            Status = StatusTenant.Trial,
+            CriadoEm = DateTime.UtcNow.AddDays(-3),
+            TrialExpiraEm = DateTime.UtcNow.AddDays(7),
+            StripeSubscriptionId = "sub_abc",
+            TrialConcedidoMotivo = null
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, Guid.NewGuid(), out _);
+
+        var result = await controller.ConcederTrialPlus(tenantId, new ConcederTrialPlusDto(15, null), CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result);
+        var atualizado = await ctx.Tenants.FindAsync(tenantId);
+        Assert.Equal(PlanoTipo.Pro, atualizado!.Plano);
+        Assert.Equal("sub_abc", atualizado.StripeSubscriptionId);
+        Assert.Equal(15, atualizado.TrialConcedidoDias);
+        Assert.NotNull(atualizado.TrialConcedidoEm);
+        Assert.InRange((atualizado.TrialExpiraEm!.Value - DateTime.UtcNow).TotalDays, 21, 23);
+    }
+
+    [Fact]
+    public async Task ConcederTrialPlus_TrialJaVencido_ContaAPartirDeAgora()
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        ctx.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Nome = "Vencido",
+            Plano = PlanoTipo.Plus,
+            Status = StatusTenant.Trial,
+            CriadoEm = DateTime.UtcNow.AddDays(-20),
+            TrialExpiraEm = DateTime.UtcNow.AddHours(-2),
+            TrialConcedidoMotivo = "Original"
+        });
+        await ctx.SaveChangesAsync();
+        var controller = CreateController(ctx, Guid.NewGuid(), out _);
+
+        await controller.ConcederTrialPlus(tenantId, new ConcederTrialPlusDto(15, null), CancellationToken.None);
+
+        var atualizado = await ctx.Tenants.FindAsync(tenantId);
+        Assert.InRange((atualizado!.TrialExpiraEm!.Value - DateTime.UtcNow).TotalDays, 14.9, 15.1);
+        Assert.Equal("Original", atualizado.TrialConcedidoMotivo);
+    }
+
+    [Fact]
     public async Task ConcederTrialPlus_TenantCancelado_RetornaBadRequest()
     {
         using var ctx = CreateContext();

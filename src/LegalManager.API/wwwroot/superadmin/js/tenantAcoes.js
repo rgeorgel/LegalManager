@@ -4,6 +4,7 @@
 // funções chamadas pelos botões (openPlano, openStatus, openExportModal, openImportModal,
 // openDeleteModal).
 import { saFetch } from '/superadmin/js/superAdminApi.js';
+import { fmtDate } from '/superadmin/js/tenantFormat.js';
 import { exportarTenant, importarTenant, excluirTenant, formatarResultadoImport } from '/superadmin/js/tenantData.js';
 
 const MODAIS_HTML = `
@@ -36,13 +37,13 @@ const MODAIS_HTML = `
 
       <div id="trialBlock" style="display:none;margin-top:24px;padding-top:20px;border-top:1px dashed var(--color-border)">
         <div style="font-size:13px;font-weight:600;color:var(--color-text);margin-bottom:4px;display:flex;align-items:center;gap:6px">
-          <span>🎁</span><span>Conceder Trial Plus</span>
+          <span>🎁</span><span id="trialTitulo">Conceder Trial Plus</span>
         </div>
-        <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:12px">
+        <div id="trialDescricao" style="font-size:12px;color:var(--color-text-muted);margin-bottom:12px">
           Libera o plano Plus temporariamente. Após o prazo, o tenant volta automaticamente para o plano Free.
         </div>
         <div class="form-group">
-          <label class="form-label">Duração do trial</label>
+          <label class="form-label" id="trialDiasLabel">Duração do trial</label>
           <select id="trialDias" class="form-control">
             <option value="15">15 dias</option>
             <option value="30" selected>30 dias</option>
@@ -293,16 +294,27 @@ export function initTenantAcoes({ onAlterado = () => {}, onExcluido = () => {} }
 
 
 
-  window.openPlano = function(id, planoAtual, periodoAtual, statusAtual) {
+  // Free ativo recebe um Trial Plus novo; quem já está em trial (o de boas-vindas do cadastro
+  // ou um concedido antes) pode tê-lo estendido — os dias somam ao prazo atual.
+  let estendendoTrial = false;
+
+  window.openPlano = function(id, planoAtual, periodoAtual, statusAtual, trialExpiraEm) {
     currentTenantId = id;
     document.getElementById('novoPlano').value = planoAtual;
     document.getElementById('periodoBilling').value = periodoAtual || '';
     const trialBlock = document.getElementById('trialBlock');
-    const isFreeActive = planoAtual === 'Free' && statusAtual === 'Ativo';
-    trialBlock.style.display = isFreeActive ? '' : 'none';
-    if (isFreeActive) {
+    estendendoTrial = statusAtual === 'Trial';
+    const podeTrial = estendendoTrial || (planoAtual === 'Free' && statusAtual === 'Ativo');
+    trialBlock.style.display = podeTrial ? '' : 'none';
+    if (podeTrial) {
       document.getElementById('trialDias').value = '30';
       document.getElementById('trialMotivo').value = '';
+      document.getElementById('trialTitulo').textContent = estendendoTrial ? 'Estender trial' : 'Conceder Trial Plus';
+      document.getElementById('trialDiasLabel').textContent = estendendoTrial ? 'Dias a mais' : 'Duração do trial';
+      document.getElementById('saveTrialBtn').textContent = estendendoTrial ? 'Estender trial' : 'Conceder Trial Plus';
+      document.getElementById('trialDescricao').textContent = estendendoTrial
+        ? `Soma os dias ao prazo atual do trial${trialExpiraEm ? ` (expira em ${fmtDate(trialExpiraEm)})` : ''}. Após o novo prazo, o tenant volta automaticamente para o plano Free.`
+        : 'Libera o plano Plus temporariamente. Após o prazo, o tenant volta automaticamente para o plano Free.';
     }
     openModal('planoModal');
   };
@@ -331,7 +343,10 @@ export function initTenantAcoes({ onAlterado = () => {}, onExcluido = () => {} }
     const btn = document.getElementById('saveTrialBtn');
     const dias = parseInt(document.getElementById('trialDias').value, 10);
     const motivo = document.getElementById('trialMotivo').value.trim() || null;
-    if (!confirm(`Conceder Trial Plus de ${dias} dias para este tenant? O plano voltará automaticamente para Free após o prazo.`)) return;
+    const pergunta = estendendoTrial
+      ? `Estender o trial deste tenant em ${dias} dias? O plano voltará automaticamente para Free após o novo prazo.`
+      : `Conceder Trial Plus de ${dias} dias para este tenant? O plano voltará automaticamente para Free após o prazo.`;
+    if (!confirm(pergunta)) return;
     btn.disabled = true;
     try {
       await saFetch(`/superadmin/tenants/${currentTenantId}/trial-plus`, {

@@ -340,7 +340,9 @@ public sealed class TenantTimelineService(AppDbContext db)
                 TimelineAcoes.PlanoExpirado => (Velho("Motivo") == "trial" ? $"Trial expirou: {Velho("Plano")} → Free" : $"Plano expirou: {Velho("Plano")} → Free", null),
                 TimelineAcoes.PlanoAlterado => ($"Plano alterado pelo superadmin: {Velho("Plano")} → {Novo("Plano")}", null),
                 TimelineAcoes.StatusAlterado => ($"Status alterado pelo superadmin: {Velho("Status")} → {Novo("Status")}", null),
-                TimelineAcoes.TrialPlusConcedido => ($"Trial Plus de {Novo("Dias")} dias concedido", LerCampo(a.DadosNovos, "Motivo")),
+                TimelineAcoes.TrialPlusConcedido => (Novo("Estendido") == "true"
+                    ? $"Trial estendido em {Novo("Dias")} dias pelo superadmin"
+                    : $"Trial Plus de {Novo("Dias")} dias concedido", LerCampo(a.DadosNovos, "Motivo")),
                 "EXPORT" => ("Dados exportados pelo superadmin", null),
                 "IMPORT" => ("Dados importados pelo superadmin", null),
                 AuditActions.ImpersonationStart => ($"Superadmin entrou como {Novo("UsuarioAlvo")}", null),

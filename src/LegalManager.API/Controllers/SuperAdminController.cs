@@ -627,8 +627,12 @@ public class SuperAdminController(
         var tenant = await db.Tenants.FindAsync([id], ct);
         if (tenant == null || tenant.Id == SystemTenantId) return NotFound();
 
-        if (tenant.Plano != PlanoTipo.Free)
-            return BadRequest(new { message = "Trial Plus só pode ser concedido a tenants no plano Free." });
+        // Em trial (o de boas-vindas do cadastro, um já concedido aqui ou o de cadastro em plano
+        // pago): estende o trial atual somando os dias ao prazo. Fora dele, só o Free ativo recebe.
+        var estender = tenant.Status == StatusTenant.Trial;
+
+        if (!estender && tenant.Plano != PlanoTipo.Free)
+            return BadRequest(new { message = "Trial Plus só pode ser concedido a tenants no plano Free ou em trial." });
 
         if (tenant.Status is StatusTenant.Cancelado or StatusTenant.Suspenso)
             return BadRequest(new { message = "Tenant não está ativo." });
@@ -640,26 +644,40 @@ public class SuperAdminController(
         var agora = DateTime.UtcNow;
         var planoAnterior = tenant.Plano;
         var statusAnterior = tenant.Status;
+        var expiraAnterior = tenant.TrialExpiraEm;
         var motivo = string.IsNullOrWhiteSpace(dto.Motivo) ? null : dto.Motivo.Trim();
 
-        tenant.Plano = PlanoTipo.Plus;
-        tenant.Status = StatusTenant.Trial;
-        tenant.TrialExpiraEm = agora.AddDays(dto.Dias);
-        tenant.TrialConcedidoPorId = adminGuid;
-        tenant.TrialConcedidoEm = agora;
-        tenant.TrialConcedidoDias = dto.Dias;
-        tenant.TrialConcedidoMotivo = motivo;
-        tenant.PlanoExpiraEm = null;
-        tenant.AbacatePayBillingId = null;
-        tenant.StripeSubscriptionId = null;
-        tenant.PeriodoBilling = null;
-        tenant.BillingCycleStart = null;
+        if (estender)
+        {
+            var partida = tenant.TrialExpiraEm is { } expira && expira > agora ? expira : agora;
+            if (tenant.Plano == PlanoTipo.Free) tenant.Plano = PlanoTipo.Plus;
+            tenant.TrialExpiraEm = partida.AddDays(dto.Dias);
+            tenant.TrialConcedidoPorId = adminGuid;
+            tenant.TrialConcedidoEm ??= agora;
+            tenant.TrialConcedidoDias = (tenant.TrialConcedidoDias ?? 0) + dto.Dias;
+            tenant.TrialConcedidoMotivo = motivo ?? tenant.TrialConcedidoMotivo;
+        }
+        else
+        {
+            tenant.Plano = PlanoTipo.Plus;
+            tenant.Status = StatusTenant.Trial;
+            tenant.TrialExpiraEm = agora.AddDays(dto.Dias);
+            tenant.TrialConcedidoPorId = adminGuid;
+            tenant.TrialConcedidoEm = agora;
+            tenant.TrialConcedidoDias = dto.Dias;
+            tenant.TrialConcedidoMotivo = motivo;
+            tenant.PlanoExpiraEm = null;
+            tenant.AbacatePayBillingId = null;
+            tenant.StripeSubscriptionId = null;
+            tenant.PeriodoBilling = null;
+            tenant.BillingCycleStart = null;
+        }
 
         await audit.LogAsync(new AuditLogEntry(
             tenant.Id, adminGuid, TimelineAcoes.TrialPlusConcedido, "Tenant",
             tenant.Id.ToString(),
-            new { PlanoAnterior = planoAnterior.ToString(), StatusAnterior = statusAnterior.ToString() },
-            new { Dias = dto.Dias, TrialExpiraEm = tenant.TrialExpiraEm, Motivo = motivo },
+            new { PlanoAnterior = planoAnterior.ToString(), StatusAnterior = statusAnterior.ToString(), TrialExpiraEm = expiraAnterior },
+            new { Dias = dto.Dias, TrialExpiraEm = tenant.TrialExpiraEm, Motivo = motivo, Estendido = estender },
             HttpContext.Connection.RemoteIpAddress?.ToString()), ct);
 
         await db.SaveChangesAsync(ct);

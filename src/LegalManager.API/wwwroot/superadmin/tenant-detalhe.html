@@ -233,7 +233,7 @@
         <span title="${fmtDateTime(t.ultimoAcessoEm)}">Último acesso ${daysAgo(t.ultimoAcessoEm)}</span>`;
       const nome = aspas(t.nome);
       document.getElementById('tenantAcoes').innerHTML = `
-        <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}')">Plano</button>
+        <button class="action-btn" onclick="openPlano('${t.id}','${t.plano}','${t.periodoBilling ?? ''}','${t.status}','${t.trialExpiraEm ?? ''}')">Plano</button>
         <button class="action-btn" onclick="openStatus('${t.id}','${t.status}')">Status</button>
         <button class="action-btn" onclick="openExportModal('${t.id}','${nome}')" title="Baixar JSON com todos os dados deste tenant">Exportar</button>
         <button class="action-btn danger" onclick="openImportModal('${t.id}','${nome}')" title="Substituir todos os dados deste tenant pelo conteúdo de um arquivo JSON exportado">Importar</button>
