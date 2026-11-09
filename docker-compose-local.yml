@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      # Obrigatória só quando a API usa este container (ver ConnectionStrings__DefaultConnection na api).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-legalmanager}
+    ports:
+      - "${POSTGRES_PORT:-6632}:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-legalmanager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  escavador-mock:
+    image: wiremock/wiremock:3x-alpine
+    profiles: ["mock"]
+    volumes:
+      - ./mocks/wiremock:/home/wiremock
+    ports:
+      - "8888:8080"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/LegalManager.API/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-6600}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      # DB_CONNECTION_STRING definida → banco externo (ex.: Neon); suba com `up -d --no-deps api`
+      # para não iniciar o container postgres. Senão, usa o container postgres abaixo.
+      ConnectionStrings__DefaultConnection: >-
+        ${DB_CONNECTION_STRING:-Host=postgres;Port=5432;
+        Database=${POSTGRES_DB:-legalmanager};
+        Username=${POSTGRES_USER:-postgres};
+        Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD (ou DB_CONNECTION_STRING para banco externo)}}
+      Jwt__Key: ${JWT_KEY:?JWT_KEY is required}
+      Jwt__Issuer: ${JWT_ISSUER:-LegalManager}
+      Jwt__Audience: ${JWT_AUDIENCE:-LegalManagerUsers}
+      App__FrontendUrl: ${APP_FRONTEND_URL:-http://localhost:6600}
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Resend__ApiToken: ${RESEND_API_TOKEN:-}
+      Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@legalmanager.com.br}
+      Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}
+      Hangfire__DashboardUser: ${HANGFIRE_DASHBOARD_USER:-admin}
+      Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:?HANGFIRE_DASHBOARD_PASSWORD is required}
+      Hangfire__Desabilitado: ${HANGFIRE_DESABILITADO:-false}
+      OciStorage__Namespace: ${OCI_NAMESPACE:-}
+      OciStorage__Region: ${OCI_REGION:-sa-saopaulo-1}
+      OciStorage__BucketName: ${OCI_BUCKET_NAME:-legal-manager-docs}
+      OciStorage__AccessKey: ${OCI_ACCESS_KEY:-}
+      OciStorage__SecretKey: ${OCI_SECRET_KEY:-}
+      Stripe__ApiKey: ${STRIPE_API_KEY:-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      IA__Provider: ${IA_PROVIDER:-Anthropic}
+      IA__ApiKey: ${IA_API_KEY:-}
+      IA__Model: ${IA_MODEL:-claude-3-5-sonnet-latest}
+      IA__BaseUrl: ${IA_BASE_URL:-}
+      IA__TimeoutSeconds: ${IA_TIMEOUT_SECONDS:-90}
+      IA__TimeoutBackgroundSeconds: ${IA_TIMEOUT_BACKGROUND_SECONDS:-240}
+      IA__ReasoningEffort: ${IA_REASONING_EFFORT:-}
+      # Assistente de IA (opcional): sem ASSISTENTE_PROVIDER, reaproveita a configuração IA__*.
+      Assistente__Provider: ${ASSISTENTE_PROVIDER:-}
+      Assistente__ApiKey: ${ASSISTENTE_API_KEY:-}
+      Assistente__Model: ${ASSISTENTE_MODEL:-}
+      Assistente__BaseUrl: ${ASSISTENTE_BASE_URL:-}
+      Assistente__ReasoningEffort: ${ASSISTENTE_REASONING_EFFORT:-}
+      DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
+      DataJud__ApiKey: ${DATAJUD_API_KEY:-}
+      Escavador__UseMock: ${ESCAVADOR_USE_MOCK:-false}
+      Escavador__BaseUrl: ${ESCAVADOR_BASE_URL:-https://api.escavador.com}
+      Escavador__ApiToken: ${ESCAVADOR_API_TOKEN:-}
+      Escavador__CallbackSecret: ${ESCAVADOR_CALLBACK_SECRET:-}
+      SuperAdmin__Email: ${SUPERADMIN_EMAIL:-superadmin@causify.internal}
+      SuperAdmin__Password: ${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD is required}
+      Logfire__Enabled: ${LOGFIRE_ENABLED:-false}
+      Logfire__Token: ${LOGFIRE_TOKEN:-}
+      Logfire__Endpoint: ${LOGFIRE_ENDPOINT:-https://logfire-us.pydantic.dev/v1/logs}
+      Logfire__ServiceName: ${LOGFIRE_SERVICE_NAME:-causify-api}
+      Logfire__ServiceVersion: ${LOGFIRE_SERVICE_VERSION:-1.0.0}
+      # Publicidade do Adsterra (só plano Free) — desligada por padrão; ver .env.example.
+      Adsterra__Enabled: ${ADSTERRA_ENABLED:-false}
+      Adsterra__BannerHost: ${ADSTERRA_BANNER_HOST:-}
+      Adsterra__Banners__300x250: ${ADSTERRA_BANNER_300X250:-}
+      Adsterra__Banners__728x90: ${ADSTERRA_BANNER_728X90:-}
+      Adsterra__Banners__468x60: ${ADSTERRA_BANNER_468X60:-}
+      Adsterra__Banners__320x50: ${ADSTERRA_BANNER_320X50:-}
+      Adsterra__NativeScriptUrl: ${ADSTERRA_NATIVE_SCRIPT:-}
+      Adsterra__FrameOrigin: ${ADSTERRA_FRAME_ORIGIN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
