@@ -13,14 +13,11 @@ Disallow: /cliente/*
 Disallow: /parceiro/*
 Disallow: /pages/*
 Disallow: /superadmin/*
-Disallow: /js/*
 
-# Landing page de campanha paga (não indexar)
-Disallow: /lp-facebook.html
-
-# Variantes de teste A/B da página inicial (não indexar)
-Disallow: /home-clara.html
-Disallow: /home-verde.html
+# Landing pages de campanha (lp-*.html) e variantes A/B da home (home-*.html) NÃO ficam
+# bloqueadas aqui: elas têm <meta name="robots" content="noindex">, e o Google só lê o noindex
+# se puder rastrear a página. Bloqueadas, a URL podia ser indexada sem conteúdo.
+# O mesmo vale para /js/: o Google precisa dos scripts para renderizar as páginas.
 
 # LLMs discovery
 Allow: /llms.txt

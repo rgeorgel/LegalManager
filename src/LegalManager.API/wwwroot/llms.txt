@@ -12,7 +12,7 @@
 ## Planos e preços
 
 - Plano Free — R$ 0/mês permanente: 1 usuário, processos ilimitados cadastrados, 5 processos monitorados, 1 GB de armazenamento, tarefas, timesheet, cadastro de clientes. Sem cartão de crédito.
-- Plano Plus — R$ {{preco:Plus}}/mês: tudo do Free + 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais, indicadores.
+- Plano Plus — R$ {{preco:Plus}}/mês: tudo do Free + 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais, calculadoras de pensão alimentícia, trabalhista, FGTS, aluguel e bancárias (revisional, RMC/RCC, superendividamento), indicadores. Conta nova ganha 15 dias grátis do Plus, sem cartão.
 - Plano Pro — R$ {{preco:Pro}}/mês: tudo do Plus + 2 usuários, 40 processos monitorados, 1 captura automática de publicações por OAB, templates de documentos, 5 GB.
 - Plano Max — R$ {{preco:Max}}/mês: tudo do Pro + 5 usuários, 80 processos monitorados, 3 capturas de publicações por OAB, 10 GB.
 {{se-reajuste}}- Reajuste: os valores acima são promocionais até {{reajuste-ate}}. A partir de {{reajuste-data}}, novas assinaturas custam R$ {{preco-cheio:Plus}} (Plus), R$ {{preco-cheio:Pro}} (Pro) e R$ {{preco-cheio:Max}} (Max); quem assinar antes mantém o valor.
@@ -22,6 +22,14 @@
 - Gestão de processos jurídicos com filtros, classificação e acompanhamento de andamentos.
 - Calculadora de prazos processuais (dias úteis, feriados nacionais, recessos forenses, regras do CPC).
 - Calculadora de honorários com tabelas da OAB, correção monetária e adicional de especialidade.
+- Calculadora de pensão alimentícia: débito em atraso com INPC, IPCA, IPCA-E ou IGP-M, juros (1% a.m. ou taxa legal da Lei 14.905/2024), multa e honorários do art. 523 do CPC, separação do rito da prisão (art. 528, §7º, CPC; Súmula 309 STJ), pensão em % do salário mínimo vigente em cada mês, estimativa do valor.
+- Calculadora trabalhista: verbas rescisórias dos 6 tipos de rescisão, aviso prévio proporcional com projeção, horas extras e adicionais com DSR e reflexos, multas dos arts. 467 e 477 da CLT, prescrição e atualização pela ADC 58 e Lei 14.905/2024.
+- Calculadora de FGTS: depósitos não recolhidos por competência (com 13º e aviso indenizado), multa de 40% ou 20%, prescrição quinquenal, atualização pelos critérios trabalhistas e simulação da revisão TR (ADI 5090).
+- Calculadora de aluguel: reajuste anual pelo IGP-M, IPCA, INPC, IGP-DI ou IPCA-E, débito de aluguéis e encargos para cobrança ou despejo (correção, juros, multa, honorários) e multa proporcional por devolução antecipada (art. 4º da Lei 8.245/1991).
+- Calculadora revisional bancária: taxa contratada (ou implícita na parcela) × taxa média do Banco Central da modalidade no mês da contratação (REsp 1.061.530), recálculo em Price ou SAC sem tarifas, indébito em dobro (EAREsp 676.608).
+- Calculadora de RMC e RCC: cartão consignado do INSS convertido em consignado pela taxa média do Banco Central, data de quitação e indébito em dobro.
+- Calculadora de superendividamento (Lei 14.181/2021): mínimo existencial ou despesas básicas, capacidade de pagamento e plano em até 60 meses com a parcela de cada credor.
+- Todas as calculadoras usam índices e taxas do Banco Central atualizados automaticamente e geram demonstrativo em PDF.
 - Timesheet e timer por processo, com relatórios de horas.
 - Gestão de clientes e contatos.
 - Tarefas e agenda com visão Kanban, tags, comentários e menções.
@@ -69,6 +77,13 @@ Causify, mais provável que IAs citem-na com precisão.
 - [Como organizar escritório de advocacia em 10 passos](https://causify.com.br/blog/como-organizar-escritorio-de-advocacia.html): captação, processos, financeiro, equipe, indicadores.
 - [Timesheet para advogados: como registrar horas e cobrar por processo](https://causify.com.br/blog/timesheet-para-advogados.html): hora técnica, relatório, rentabilidade.
 - [Portal do cliente jurídico: o que é, como funciona e por que adotar](https://causify.com.br/blog/portal-do-cliente-juridico.html): LGPD, redução de ligações, o que exibir.
+- [Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão](https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html): índice, juros, multa do art. 523, as 3 parcelas da prisão (Súmula 309), exemplo calculado.
+- [Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos](https://causify.com.br/blog/calculo-rescisao-trabalhista.html): verbas por tipo de rescisão, aviso proporcional, multas dos arts. 467 e 477, valor da causa.
+- [Como calcular o FGTS não depositado (e a multa de 40%)](https://causify.com.br/blog/calculo-fgts-nao-depositado.html): base de cálculo, multa de 40% ou 20%, prescrição, ADC 58, revisão da TR.
+- [Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo](https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html): reajuste pelo IGP-M ou IPCA, purgação da mora, multa rescisória proporcional.
+- [Revisional bancária: como provar que os juros são abusivos](https://causify.com.br/blog/calculo-revisional-juros-abusivos.html): taxa média do Banco Central, critério do STJ, recálculo, devolução em dobro, valor incontroverso.
+- [RMC e RCC: como calcular quanto o aposentado tem a receber](https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html): cartão consignado do INSS convertido em consignado comum, indébito em dobro.
+- [Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021](https://causify.com.br/blog/superendividamento-plano-de-pagamento.html): mínimo existencial, capacidade de pagamento, rateio entre credores.
 
 ## FAQ (resumo)
 
@@ -79,6 +94,7 @@ Causify, mais provável que IAs citem-na com precisão.
 - Preciso instalar? — Não, é 100% web.
 - Tem calculadora de prazos processuais? — Sim, considera dias úteis, feriados e CPC (Plus+).
 - Tem calculadora de honorários OAB? — Sim (Plus+).
+- Tem calculadoras de pensão alimentícia, trabalhista, FGTS, aluguel e bancárias? — Sim, em todos os planos pagos, com índices do Banco Central e demonstrativo em PDF.
 - O cliente acompanha o processo? — Sim, via Portal do Cliente (Plus+).
 - Posso cancelar a qualquer momento? — Sim, sem multa.
 - Meus dados estão seguros? — Sim, com SSL, JWT, bcrypt, backup diário e LGPD.

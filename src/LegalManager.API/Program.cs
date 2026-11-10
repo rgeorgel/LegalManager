@@ -402,6 +402,9 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
+// http → https permanente (308 mantém o método do POST); o padrão do ASP.NET é 307, temporário.
+builder.Services.AddHttpsRedirection(options => options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect);
+
 builder.Services.AddHsts(options =>
 {
     options.MaxAge = TimeSpan.FromDays(365);
@@ -507,28 +510,33 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// www.causify.com.br → causify.com.br (301): um host só, sem conteúdo duplicado no Google.
+app.Use(async (ctx, next) =>
+{
+    if (RedirecionamentosCanonicos.DestinoSemWww(ctx.Request) is { } destino)
+    {
+        ctx.Response.Redirect(destino, permanent: true);
+        return;
+    }
+    await next();
+});
+
+var assetVersioning = new AssetVersioning(app.Environment, app.Configuration);
+
+// "/blog/" → "/blog/index.html" (301), antes do UseDefaultFiles servir a mesma página em duas URLs.
 app.Use(async (ctx, next) =>
 {
     var path = ctx.Request.Path.Value;
-    if (!string.IsNullOrEmpty(path) && path.EndsWith('/') && path != "/")
+    if (path is { Length: > 1 } && path.EndsWith('/') && assetVersioning.DestinoCanonico(path) is { } destino)
     {
-        var wwwroot = ctx.RequestServices.GetService<Microsoft.Extensions.Hosting.IHostEnvironment>()?.ContentRootPath;
-        if (!string.IsNullOrEmpty(wwwroot))
-        {
-            var indexPath = System.IO.Path.Combine(wwwroot, "wwwroot", path.TrimStart('/'), "index.html");
-            if (System.IO.File.Exists(indexPath))
-            {
-                ctx.Response.Redirect(path + "index.html", permanent: false);
-                return;
-            }
-        }
+        ctx.Response.Redirect(destino + ctx.Request.QueryString, permanent: true);
+        return;
     }
     await next();
 });
 
 app.UseHttpsRedirection();
 app.UseCors();
-var assetVersioning = new AssetVersioning(app.Environment, app.Configuration);
 app.Use((ctx, next) => assetVersioning.RemoverPrefixo(ctx, next));
 app.UseDefaultFiles();
 app.Use((ctx, next) => assetVersioning.ServirHtml(ctx, next));

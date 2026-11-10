@@ -94,14 +94,115 @@ public class AssetVersioningTests : IDisposable
     }
 
     [Fact]
-    public async Task Fallback_ServeIndexReescrito()
+    public async Task Fallback_RotaInexistente_Retorna404ComPaginaDeErro()
+    {
+        Escrever("404.html", "<html><head></head><body>nao encontrada</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/qualquer/rota", ifNoneMatch: "\"etag-antigo\"");
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status404NotFound, ctx.Response.StatusCode);
+        Assert.Contains("nao encontrada", Corpo(ctx));
+        Assert.DoesNotContain("home", Corpo(ctx));
+    }
+
+    [Fact]
+    public async Task Fallback_Raiz_ServeAHome()
+    {
+        Escrever("404.html", "<html><body>nao encontrada</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/");
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status200OK, ctx.Response.StatusCode);
+        Assert.Contains("home", Corpo(ctx));
+        Assert.Contains("type=\"importmap\"", Corpo(ctx));
+    }
+
+    [Fact]
+    public async Task Fallback_SemPagina404_Retorna404Vazio()
     {
         var av = Criar();
         var ctx = Requisicao("/qualquer/rota");
 
         await av.ServirFallback(ctx);
 
-        Assert.Contains("type=\"importmap\"", Corpo(ctx));
+        Assert.Equal(StatusCodes.Status404NotFound, ctx.Response.StatusCode);
+        Assert.Equal("", Corpo(ctx));
+    }
+
+    [Fact]
+    public async Task Fallback_Api_Retorna404SemHtml()
+    {
+        Escrever("404.html", "<html><body>nao encontrada</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/api/nao-existe");
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status404NotFound, ctx.Response.StatusCode);
+        Assert.Equal("", Corpo(ctx));
+    }
+
+    [Fact]
+    public async Task Fallback_SemExtensao_RedirecionaPermanenteParaHtml()
+    {
+        Escrever("blog/post.html", "<html><body>post</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/blog/post");
+        ctx.Request.QueryString = new QueryString("?utm_source=x");
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status301MovedPermanently, ctx.Response.StatusCode);
+        Assert.Equal("/blog/post.html?utm_source=x", ctx.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
+    public async Task Fallback_PastaComIndex_RedirecionaParaIndex()
+    {
+        Escrever("blog/index.html", "<html><body>blog</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/blog");
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status301MovedPermanently, ctx.Response.StatusCode);
+        Assert.Equal("/blog/index.html", ctx.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
+    public async Task Fallback_Post_NaoRedireciona()
+    {
+        Escrever("blog/post.html", "<html><body>post</body></html>");
+        var av = Criar();
+        var ctx = Requisicao("/blog/post");
+        ctx.Request.Method = "POST";
+
+        await av.ServirFallback(ctx);
+
+        Assert.Equal(StatusCodes.Status404NotFound, ctx.Response.StatusCode);
+        Assert.Equal("", Corpo(ctx));
+    }
+
+    [Theory]
+    [InlineData("/blog/", "/blog/index.html")]
+    [InlineData("/blog", "/blog/index.html")]
+    [InlineData("/blog/post", "/blog/post.html")]
+    [InlineData("/", null)]
+    [InlineData("/blog/post/", null)]
+    [InlineData("/nao-existe", null)]
+    [InlineData("//blog", null)]
+    [InlineData("/api/blog", null)]
+    public void DestinoCanonico_ApontaParaArquivoExistente(string path, string? esperado)
+    {
+        Escrever("blog/index.html", "blog");
+        Escrever("blog/post.html", "post");
+        Escrever("api/blog.html", "nao deve redirecionar");
+
+        Assert.Equal(esperado, Criar().DestinoCanonico(path));
     }
 
     [Fact]

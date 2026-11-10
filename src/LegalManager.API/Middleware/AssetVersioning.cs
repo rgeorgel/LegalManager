@@ -116,11 +116,49 @@ public sealed class AssetVersioning
         await next();
     }
 
-    /// <summary>Fallback de SPA (substitui MapFallbackToFile).</summary>
+    /// <summary>
+    /// Rotas sem arquivo (MapFallback). O site não é SPA: cada tela é um .html. Antes, qualquer URL
+    /// desconhecida devolvia a home com 200, e o Google via dezenas de cópias da página inicial
+    /// (soft 404). Agora: "/blog" e "/blog/post" redirecionam (301) para o arquivo que existe; o resto
+    /// responde 404 com a página 404.html (API inexistente: 404 sem corpo).
+    /// </summary>
     public async Task ServirFallback(HttpContext ctx)
     {
-        if (!await TentarServirHtml(ctx, "/index.html"))
-            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+        var path = ctx.Request.Path.Value is { Length: > 0 } p ? p : "/";
+        var leitura = HttpMethods.IsGet(ctx.Request.Method) || HttpMethods.IsHead(ctx.Request.Method);
+        // A raiz também cai aqui: com o fallback já escolhido como endpoint, o UseDefaultFiles não
+        // reescreve "/" para "/index.html".
+        if (leitura && path == "/" && await TentarServirHtml(ctx, "/index.html")) return;
+        if (leitura && DestinoCanonico(path) is { } destino)
+        {
+            ctx.Response.Redirect(destino + ctx.Request.QueryString, permanent: true);
+            return;
+        }
+
+        ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+        if (!leitura || path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)) return;
+        // Página de erro não participa de cache condicional: sem isso um 304 trocaria o 404.
+        ctx.Request.Headers.Remove("If-None-Match");
+        await TentarServirHtml(ctx, PaginaNaoEncontrada);
+    }
+
+    public const string PaginaNaoEncontrada = "/404.html";
+
+    /// <summary>
+    /// Endereço canônico de uma rota sem extensão: "/blog" ou "/blog/" → "/blog/index.html" (pasta com
+    /// index.html); "/blog/post" → "/blog/post.html". Null quando não há arquivo correspondente.
+    /// </summary>
+    public string? DestinoCanonico(string path)
+    {
+        if (string.IsNullOrEmpty(path) || path == "/" || path.StartsWith("//", StringComparison.Ordinal)
+            || path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var pasta = path.TrimEnd('/');
+        if (pasta.Length == 0) return null;
+        if (_arquivos.GetFileInfo(pasta + "/index.html").Exists) return pasta + "/index.html";
+        if (!path.EndsWith('/') && _arquivos.GetFileInfo(path + ".html").Exists) return path + ".html";
+        return null;
     }
 
     /// <summary>OnPrepareResponse do UseStaticFiles.</summary>
