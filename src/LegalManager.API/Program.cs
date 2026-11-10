@@ -312,6 +312,8 @@ builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
     o.ApiToken = builder.Configuration["Resend:ApiToken"] ?? "");
 builder.Services.AddTransient<IResend, ResendClient>();
+// Usado só quando Smtp:Host está definido (teste/local com Mailpit) — ver EmailService.EnviarAsync.
+builder.Services.AddTransient<ISmtpEnvioEmail, SmtpEnvioEmail>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 
 builder.Services.AddHttpClient("Stripe", client =>

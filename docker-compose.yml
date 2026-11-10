@@ -49,6 +49,10 @@ services:
       Resend__ApiToken: ${RESEND_API_TOKEN:-}
       Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@legalmanager.com.br}
       Resend__FromName: ${RESEND_FROM_NAME:-LegalManager}
+      # SMTP_HOST definido → e-mails vão para esse servidor SMTP (ex.: Mailpit) em vez do Resend.
+      # Deixe vazio em produção.
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-1025}
       Hangfire__DashboardUser: ${HANGFIRE_DASHBOARD_USER:-admin}
       Hangfire__DashboardPassword: ${HANGFIRE_DASHBOARD_PASSWORD:?HANGFIRE_DASHBOARD_PASSWORD is required}
       Hangfire__Desabilitado: ${HANGFIRE_DESABILITADO:-false}

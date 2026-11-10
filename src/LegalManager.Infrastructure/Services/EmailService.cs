@@ -17,12 +17,15 @@ public class EmailService : IEmailService
     private readonly IResend _resend;
     private readonly IConfiguration _config;
     private readonly ILogger<EmailService> _logger;
+    private readonly ISmtpEnvioEmail? _smtp;
 
-    public EmailService(IResend resend, IConfiguration config, ILogger<EmailService> logger)
+    public EmailService(IResend resend, IConfiguration config, ILogger<EmailService> logger,
+        ISmtpEnvioEmail? smtp = null)
     {
         _resend = resend;
         _config = config;
         _logger = logger;
+        _smtp = smtp;
     }
 
     private EmailMessage CriarMensagem(string para, string assunto, string htmlBody)
@@ -37,6 +40,24 @@ public class EmailService : IEmailService
 
     private async Task EnviarAsync(EmailMessage msg)
     {
+        // Smtp:Host definido (teste/local) → tudo vai para o servidor SMTP (ex.: Mailpit), nunca para o Resend.
+        var smtpHost = _config["Smtp:Host"];
+        if (_smtp is not null && !string.IsNullOrWhiteSpace(smtpHost))
+        {
+            try
+            {
+                await _smtp.EnviarAsync(msg);
+                _logger.LogInformation("Email enviado via SMTP {Host} para={Para} assunto={Assunto}",
+                    smtpHost, string.Join(",", msg.To), msg.Subject);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Falha ao enviar email via SMTP {Host} para={Para} assunto={Assunto}",
+                    smtpHost, string.Join(",", msg.To), msg.Subject);
+            }
+            return;
+        }
+
         var apiToken = _config["Resend:ApiToken"];
         if (string.IsNullOrWhiteSpace(apiToken))
         {
