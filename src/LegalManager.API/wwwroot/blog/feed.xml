@@ -7,12 +7,82 @@
     <description>Guias práticos sobre gestão de escritório de advocacia, prazos processuais, honorários OAB e tecnologia jurídica para advogados brasileiros.</description>
     <language>pt-BR</language>
     <copyright>© 2026 Causify. Todos os direitos reservados.</copyright>
-    <lastBuildDate>Sun, 21 Jun 2026 10:00:00 -0300</lastBuildDate>
+    <lastBuildDate>Tue, 10 Nov 2026 09:00:00 -0300</lastBuildDate>
     <image>
       <url>https://causify.com.br/images/causify-og.png</url>
       <title>Blog Causify</title>
       <link>https://causify.com.br/blog/</link>
     </image>
+
+    <item>
+      <title>Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão</title>
+      <link>https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito de Família</category>
+      <description>Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-pensao-alimenticia.png" type="image/png" length="156210" />
+    </item>
+
+    <item>
+      <title>Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos</title>
+      <link>https://causify.com.br/blog/calculo-rescisao-trabalhista.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-rescisao-trabalhista.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito do Trabalho</category>
+      <description>Verbas de cada tipo de rescisão, aviso proporcional, horas extras com reflexos e o valor da causa, num exemplo completo.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-trabalhista-rescisao.png" type="image/png" length="233268" />
+    </item>
+
+    <item>
+      <title>Como calcular o FGTS não depositado (e a multa de 40%) na reclamação trabalhista</title>
+      <link>https://causify.com.br/blog/calculo-fgts-nao-depositado.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-fgts-nao-depositado.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito do Trabalho</category>
+      <description>Base de cálculo, multa de 40% ou 20%, prescrição e atualização: o FGTS não depositado calculado competência por competência.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-fgts.png" type="image/png" length="225387" />
+    </item>
+
+    <item>
+      <title>Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo</title>
+      <link>https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito Imobiliário</category>
+      <description>Reajuste pelo IGP-M ou IPCA, débito para cobrança ou despejo e multa por devolução antecipada, num exemplo completo.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-aluguel.png" type="image/png" length="224974" />
+    </item>
+
+    <item>
+      <title>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</title>
+      <link>https://causify.com.br/blog/calculo-revisional-juros-abusivos.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-revisional-juros-abusivos.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito Bancário</category>
+      <description>Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-revisional-bancaria.png" type="image/png" length="246923" />
+    </item>
+
+    <item>
+      <title>RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado</title>
+      <link>https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito Bancário</category>
+      <description>O saque do cartão tratado como consignado comum: quando a dívida teria acabado e quanto foi descontado a mais.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-rmc-rcc.png" type="image/png" length="169128" />
+    </item>
+
+    <item>
+      <title>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</title>
+      <link>https://causify.com.br/blog/superendividamento-plano-de-pagamento.html</link>
+      <guid isPermaLink="true">https://causify.com.br/blog/superendividamento-plano-de-pagamento.html</guid>
+      <pubDate>Tue, 10 Nov 2026 09:00:00 -0300</pubDate>
+      <category>Direito do Consumidor</category>
+      <description>Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.</description>
+      <enclosure url="https://causify.com.br/images/blog/calculadoras/og-calculadora-superendividamento.png" type="image/png" length="189189" />
+    </item>
 
     <item>
       <title>Como calcular prazos processuais no Brasil: guia completo 2026</title>

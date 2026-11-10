@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RMC e RCC no INSS: como calcular a restituição | Causify</title>
+  <meta name="description" content="Por que o desconto da RMC e da RCC não acaba, como converter o saque em empréstimo consignado pela taxa média do Banco Central e calcular o indébito em dobro.">
+  <meta name="keywords" content="cálculo RMC, calculadora RMC RCC, cartão de crédito consignado INSS, reserva de margem consignável, ação RMC aposentado, restituição em dobro RMC, taxa média consignado INSS, cartão consignado de benefício">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html">
+  <meta property="og:title" content="RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado">
+  <meta property="og:description" content="O saque do cartão tratado como consignado comum: quando a dívida teria acabado e quanto foi descontado a mais.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-rmc-rcc.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resultado da calculadora de RMC do Causify mostrando a quitação como consignado e o valor a restituir">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito Bancário">
+  <meta property="article:tag" content="RMC">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado">
+  <meta name="twitter:description" content="O saque do cartão tratado como consignado comum: quando a dívida teria acabado e quanto foi descontado a mais.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-rmc-rcc.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado",
+  "description": "Por que o desconto da RMC e da RCC não acaba, como converter o saque em empréstimo consignado pela taxa média do Banco Central e calcular o indébito em dobro.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-rmc-rcc.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-rmc-rcc-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-rmc-rcc-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-rmc-rcc-uso.gif"
+  ],
+  "articleSection": "Direito Bancário",
+  "keywords": "cálculo RMC, calculadora RMC RCC, cartão de crédito consignado INSS, reserva de margem consignável, ação RMC aposentado, restituição em dobro RMC, taxa média consignado INSS, cartão consignado de benefício",
+  "wordCount": 1573,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Cartão de crédito consignado"
+    },
+    {
+      "@type": "Thing",
+      "name": "Reserva de Margem Consignável (RMC)"
+    },
+    {
+      "@type": "Thing",
+      "name": "Cartão consignado de benefício (RCC)"
+    },
+    {
+      "@type": "Thing",
+      "name": "Aposentados e pensionistas do INSS"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 6º, III"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 42"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 52"
+    },
+    {
+      "@type": "Legislation",
+      "name": "EAREsp 676.608/RS (STJ)"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 10.820/2003"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "RMC e RCC",
+      "item": "https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "O que é RMC e RCC no extrato do INSS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "RMC é a Reserva de Margem Consignável usada pelo cartão de crédito consignado; RCC é a reserva do cartão consignado de benefício. Cada uma ocupa até 5% do benefício e aparece no extrato de empréstimos do Meu INSS."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Por que o desconto da RMC nunca termina?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Porque o desconto no benefício paga só o mínimo da fatura. O restante vira saldo rotativo, com juros de cartão de crédito, e a dívida se renova todo mês. Muitos aposentados acreditavam ter contratado um empréstimo com número fixo de parcelas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Qual a tese mais comum nas ações de RMC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Falha no dever de informação (arts. 6º, III, e 52 do CDC): o consumidor quis um empréstimo consignado e recebeu um cartão. O pedido usual é converter a operação em consignado comum pela taxa média do Banco Central, restituir o que foi descontado a mais e, conforme o caso, indenizar danos morais. O tratamento varia entre tribunais, e alguns têm tese fixada em IRDR, por isso vale conferir a do seu estado."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A restituição dos descontos da RMC é em dobro?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Para os descontos feitos depois de 30/03/2021, a tendência é a devolução em dobro, pelo entendimento do STJ no EAREsp 676.608/RS. Para os anteriores, em regra a devolução é simples, salvo má-fé comprovada."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Os danos morais são automáticos nas ações de RMC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não. Há tribunais que reconhecem dano presumido pelo desconto indevido em verba alimentar e outros que exigem prova de prejuízo concreto. Por isso a calculadora trata os danos morais como um valor à parte, que você informa."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quais documentos pedir ao cliente numa ação de RMC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "O extrato de empréstimos consignados do Meu INSS, o histórico de créditos do benefício, as faturas do cartão (se ele recebeu), o contrato e o comprovante do valor que caiu na conta."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "RMC e RCC — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora de RMC e RCC: converte o saque do cartão consignado do INSS em empréstimo consignado pela taxa média do Banco Central, encontra a data em que a dívida estaria quitada e calcula o indébito simples ou em dobro, com correção, juros e danos morais, e demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>RMC e RCC</span></nav>
+      <h1>RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>8 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>A aposentada pegou R$ 3.000 "emprestados" em 2019. Desde então, todo mês caem R$ 120 do benefício. Sete anos depois, os descontos continuam, e ninguém no banco sabe dizer quando acabam. No extrato do Meu INSS aparece a sigla <strong>RMC</strong>, e ela nunca recebeu um cartão de crédito na vida.</p>
+    <p>Esse é o roteiro da maioria das ações de cartão consignado. A tese jurídica já está bem desenhada nos tribunais. O que costuma travar o advogado é a conta: quanto ela já pagou a mais, e desde quando?</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>Para calcular o que o aposentado tem a receber numa ação de RMC ou RCC, trate o saque do cartão como se fosse um <strong>empréstimo consignado comum</strong>, pela taxa média do Banco Central para consignado do INSS no mês da contratação. Aplique cada desconto do benefício como parcela desse empréstimo até a dívida zerar. Tudo o que foi descontado depois disso é indébito: restituição em dobro para descontos após 30/03/2021 (EAREsp 676.608/RS), com correção e juros, e os danos morais à parte, se o tribunal os reconhecer.</p>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#o-que-e">RMC e RCC: o que são</a></li>
+        <li><a href="#problema">Por que o desconto não acaba</a></li>
+        <li><a href="#tese">A tese e o pedido</a></li>
+        <li><a href="#calculo">O cálculo, passo a passo</a></li>
+        <li><a href="#exemplo">Exemplo: R$ 3.000 sacados em 2019</a></li>
+        <li><a href="#documentos">Documentos para pedir ao cliente</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="o-que-e">RMC e RCC: o que são</h2>
+    <p>A margem consignável do benefício do INSS é dividida em pedaços. Além da parte dos empréstimos consignados, existem duas reservas de cartão, de até 5% cada:</p>
+    <ul>
+      <li><strong>RMC (Reserva de Margem Consignável)</strong>: usada pelo cartão de crédito consignado;</li>
+      <li><strong>RCC (Reserva de Cartão Consignado)</strong>: usada pelo cartão consignado de benefício, modalidade mais recente.</li>
+    </ul>
+    <p>Nas duas, o banco desconta do benefício um valor mensal fixo, que paga o <strong>mínimo da fatura</strong>. É aí que começa o problema.</p>
+
+    <h2 id="problema">Por que o desconto não acaba</h2>
+    <p>Quando o aposentado faz um "saque" no cartão, o valor cai na conta como se fosse empréstimo. Mas a dívida segue as regras do cartão de crédito: o desconto mensal paga o mínimo, o restante vai para o rotativo, com juros de cartão, e a fatura do mês seguinte já nasce maior. Em muitos casos o desconto mal cobre os juros, e o saldo nunca cai.</p>
+    <p>O consumidor, em geral, achou que estava contratando um consignado com 36, 48 ou 72 parcelas. Não recebeu o cartão, não recebeu fatura, não sabia que existia rotativo.</p>
+
+    <h2 id="tese">A tese e o pedido</h2>
+    <p>A linha mais comum é a falha no dever de informação (arts. 6º, III, e 52 do CDC): o consumidor quis um empréstimo e recebeu outro produto, muito mais caro, sem entender o que assinava. Os pedidos normalmente são:</p>
+    <ol>
+      <li>converter a operação em empréstimo consignado comum, pela taxa média do Banco Central;</li>
+      <li>declarar quitada a dívida a partir do ponto em que os descontos já teriam pago esse empréstimo;</li>
+      <li>restituir o que foi descontado depois disso, em dobro quando cabível;</li>
+      <li>cancelar a reserva de margem e, conforme o caso, indenizar danos morais.</li>
+    </ol>
+    <p>O tratamento varia bastante entre tribunais. Alguns fixaram tese em IRDR; outros exigem prova mais robusta do vício de consentimento, especialmente quando há fatura enviada e uso do cartão em compras. Vale conferir a posição da sua corte antes de montar a inicial.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-rmc-rcc-formulario.png" alt="Calculadora de RMC e RCC do Causify: saque de R$ 3.000 em julho de 2019 e 87 descontos mensais de R$ 120 no benefício, de agosto de 2019 a outubro de 2026" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Escolha RMC ou RCC, informe o saque e os descontos. Deixando a taxa em branco, a calculadora usa a média do consignado INSS do mês da contratação.</figcaption>
+    </figure>
+
+    <h2 id="calculo">O cálculo, passo a passo</h2>
+    <ol>
+      <li><strong>Taxa de referência.</strong> A taxa média do Banco Central para crédito consignado de aposentados e pensionistas do INSS, no mês do saque. Se o tribunal fixar outra, use a fixada.</li>
+      <li><strong>Amortização mês a mês.</strong> Comece com o valor liberado como saldo. A cada desconto, calcule os juros do mês pela taxa de referência e abata o restante do saldo.</li>
+      <li><strong>Data da quitação.</strong> O mês em que o saldo zera é quando a dívida estaria paga se fosse um consignado comum. O excesso desse último desconto já é indébito.</li>
+      <li><strong>Indébito.</strong> Todo desconto depois da quitação, integralmente.</li>
+      <li><strong>Dobro.</strong> Para descontos após 30/03/2021, pela modulação do EAREsp 676.608/RS. Antes, simples, salvo má-fé.</li>
+      <li><strong>Atualização.</strong> Correção e juros de cada desconto indevido até a data do cálculo.</li>
+      <li><strong>Danos morais</strong>, como valor separado.</li>
+    </ol>
+    <p>Feito à mão, o passo 2 vira uma tabela de 80, 90 linhas. É exatamente o tipo de conta que a calculadora resolve em um segundo.</p>
+
+    <div class="cta-inline">
+      <p><strong>Tem um cliente com RMC agora?</strong> Descubra em dois minutos quando a dívida teria acabado e quanto foi descontado a mais.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rmc-rcc-cartao-consignado-inss-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="exemplo">Exemplo: R$ 3.000 sacados em 2019</h2>
+    <p>Saque de <strong>R$ 3.000,00</strong> em 10/07/2019, com descontos de <strong>R$ 120,00</strong> todo dia 5, de agosto de 2019 a outubro de 2026: 87 descontos, R$ 10.440,00 no total. Cálculo em 10/11/2026, correção pelo INPC, juros de 1% ao mês, devolução em dobro e R$ 5.000,00 de danos morais.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-rmc-rcc-uso.gif" alt="Animação da calculadora de RMC do Causify: preenchimento do saque e dos descontos e resultado com a data de quitação como consignado" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>Preenchimento do caso e o resultado: a calculadora encontra o mês em que a dívida teria sido quitada como consignado.</figcaption>
+    </figure>
+
+    <p>A taxa média do consignado INSS em julho de 2019 foi de 1,80% ao mês. Com ela, os R$ 3.000,00 estariam <strong>quitados em 34 descontos, em 05/05/2022</strong>. Tudo o que veio depois é indébito:</p>
+    <ul>
+      <li>Total descontado: R$ 10.440,00</li>
+      <li>Pago a mais: <strong>R$ 6.418,40</strong></li>
+      <li>A restituir em dobro: R$ 12.836,80</li>
+      <li>Restituição atualizada: <strong>R$ 18.066,22</strong></li>
+      <li>Com danos morais: <strong>R$ 23.066,22</strong></li>
+    </ul>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-rmc-rcc-resultado.png" alt="Resultado da calculadora de RMC: dívida quitada como consignado em 34 descontos, R$ 6.418,40 pagos a mais e R$ 23.066,22 com restituição em dobro atualizada e danos morais" width="1024" height="844" loading="lazy" decoding="async">
+      <figcaption>A tabela mostra a evolução do saldo como empréstimo consignado: juros do mês, amortização e, a partir da quitação, o indébito de cada desconto.</figcaption>
+    </figure>
+
+    <p>Um detalhe sobre prescrição: os descontos começaram em 2019, mas o indébito só começa em maio de 2022, quando a dívida já estaria paga. Antes disso, cada desconto amortizou um empréstimo legítimo. Isso costuma tirar do caminho boa parte da discussão sobre prazo, que de outra forma tomaria metade da contestação.</p>
+
+    <div class="cta-box">
+      <h3>RMC e RCC calculadas com a taxa média do mês</h3>
+      <p>A taxa média do consignado INSS vem do Banco Central e se atualiza sozinha. Você informa o saque e os descontos e recebe a data de quitação, o indébito em dobro e o demonstrativo em PDF.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rmc-rcc-cartao-consignado-inss-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="documentos">Documentos para pedir ao cliente</h2>
+    <ul>
+      <li><strong>Extrato de empréstimos consignados</strong> do Meu INSS: mostra a reserva (RMC ou RCC), o banco e a data de inclusão.</li>
+      <li><strong>Histórico de créditos (HISCRE)</strong>: confirma cada desconto, mês a mês. Se o valor mudou em algum período, ajuste na tabela da calculadora.</li>
+      <li><strong>Extrato bancário</strong> do mês do saque, para provar o valor que efetivamente caiu na conta.</li>
+      <li>Contrato e faturas, se houver. A ausência de faturas também é prova.</li>
+    </ul>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>O que é RMC e RCC no extrato do INSS?</h3>
+    <p>RMC é a Reserva de Margem Consignável usada pelo cartão de crédito consignado; RCC é a reserva do cartão consignado de benefício. Cada uma ocupa até 5% do benefício e aparece no extrato de empréstimos do Meu INSS.</p>
+
+    <h3>Por que o desconto da RMC nunca termina?</h3>
+    <p>Porque o desconto no benefício paga só o mínimo da fatura. O restante vira saldo rotativo, com juros de cartão de crédito, e a dívida se renova todo mês. Muitos aposentados acreditavam ter contratado um empréstimo com número fixo de parcelas.</p>
+
+    <h3>Qual a tese mais comum nas ações de RMC?</h3>
+    <p>Falha no dever de informação (arts. 6º, III, e 52 do CDC): o consumidor quis um empréstimo consignado e recebeu um cartão. O pedido usual é converter a operação em consignado comum pela taxa média do Banco Central, restituir o que foi descontado a mais e, conforme o caso, indenizar danos morais. O tratamento varia entre tribunais, e alguns têm tese fixada em IRDR, por isso vale conferir a do seu estado.</p>
+
+    <h3>A restituição dos descontos da RMC é em dobro?</h3>
+    <p>Para os descontos feitos depois de 30/03/2021, a tendência é a devolução em dobro, pelo entendimento do STJ no EAREsp 676.608/RS. Para os anteriores, em regra a devolução é simples, salvo má-fé comprovada.</p>
+
+    <h3>Os danos morais são automáticos nas ações de RMC?</h3>
+    <p>Não. Há tribunais que reconhecem dano presumido pelo desconto indevido em verba alimentar e outros que exigem prova de prejuízo concreto. Por isso a calculadora trata os danos morais como um valor à parte, que você informa.</p>
+
+    <h3>Quais documentos pedir ao cliente numa ação de RMC?</h3>
+    <p>O extrato de empréstimos consignados do Meu INSS, o histórico de créditos do benefício, as faturas do cartão (se ele recebeu), o contrato e o comprovante do valor que caiu na conta.</p>
+
+    <h2>Para fechar</h2>
+    <p>A ação de RMC é, no fundo, uma revisional com uma pergunta diferente: não "a taxa é abusiva?", mas "se fosse o produto que o cliente pediu, quando teria acabado?". Para contratos de empréstimo comuns com juros acima da média, siga para o guia da <a href="/blog/calculo-revisional-juros-abusivos.html">revisional bancária</a>. E se o aposentado tem várias dívidas comprometendo o benefício, o caminho pode ser o <a href="/blog/superendividamento-plano-de-pagamento.html">plano de pagamento do superendividamento</a>.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html" aria-current="page">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rmc-rcc-cartao-consignado-inss-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-fgts-nao-depositado.html"><strong>Como calcular o FGTS não depositado (e a multa de 40%) na reclamação trabalhista</strong><span>Base de cálculo, multa de 40% ou 20%, prescrição e atualização: o FGTS não depositado calculado competência por competência.</span></a>
+    <a class="related-item" href="/blog/calculo-revisional-juros-abusivos.html"><strong>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</strong><span>Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.</span></a>
+    <a class="related-item" href="/blog/superendividamento-plano-de-pagamento.html"><strong>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</strong><span>Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>

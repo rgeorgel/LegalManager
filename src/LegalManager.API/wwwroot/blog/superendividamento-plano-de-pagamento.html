@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Superendividamento: como calcular o plano de pagamento | Causify</title>
+  <meta name="description" content="Mínimo existencial, capacidade de pagamento, dívidas que ficam fora e o rateio entre credores em até 5 anos: o cálculo do plano de repactuação, com exemplo.">
+  <meta name="keywords" content="superendividamento, calculadora de superendividamento, plano de pagamento Lei 14.181, repactuação de dívidas, mínimo existencial, art. 104-A CDC, art. 104-B CDC, Lei do Superendividamento">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/superendividamento-plano-de-pagamento.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/superendividamento-plano-de-pagamento.html">
+  <meta property="og:title" content="Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021">
+  <meta property="og:description" content="Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-superendividamento.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Plano de pagamento calculado pela calculadora de superendividamento do Causify, com a parcela de cada credor">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito do Consumidor">
+  <meta property="article:tag" content="superendividamento">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021">
+  <meta name="twitter:description" content="Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-superendividamento.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021",
+  "description": "Mínimo existencial, capacidade de pagamento, dívidas que ficam fora e o rateio entre credores em até 5 anos: o cálculo do plano de repactuação, com exemplo.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/superendividamento-plano-de-pagamento.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-superendividamento.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-superendividamento-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-superendividamento-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-superendividamento-uso.gif"
+  ],
+  "articleSection": "Direito do Consumidor",
+  "keywords": "superendividamento, calculadora de superendividamento, plano de pagamento Lei 14.181, repactuação de dívidas, mínimo existencial, art. 104-A CDC, art. 104-B CDC, Lei do Superendividamento",
+  "wordCount": 1497,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Superendividamento"
+    },
+    {
+      "@type": "Thing",
+      "name": "Repactuação de dívidas"
+    },
+    {
+      "@type": "Thing",
+      "name": "Mínimo existencial"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "Lei 14.181/2021"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 54-A"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 104-A"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 104-B"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Decreto 11.150/2022"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Decreto 11.567/2023"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Superendividamento",
+      "item": "https://causify.com.br/blog/superendividamento-plano-de-pagamento.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Quem pode pedir a repactuação de dívidas por superendividamento?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A pessoa natural, de boa-fé, que não consegue pagar as dívidas de consumo exigíveis e vincendas sem comprometer o mínimo existencial (art. 54-A, §1º, do CDC). Empresas ficam de fora."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Qual é o valor do mínimo existencial?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "O Decreto 11.150/2022, alterado pelo Decreto 11.567/2023, fixou R$ 600. O valor é questionado no STF e muitos juízes olham as despesas básicas reais da família. Por isso a calculadora preserva o maior entre o mínimo existencial e as despesas básicas informadas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quais dívidas ficam fora do plano de pagamento?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "As contraídas com fraude ou má-fé, as de aquisição ou contratação de produtos e serviços de luxo de alto valor (art. 54-A, §3º), e as dívidas com garantia real, os financiamentos imobiliários e o crédito rural (art. 104-A, §1º, do CDC)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Qual o prazo máximo do plano de pagamento?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "5 anos, tanto no plano consensual (art. 104-A) quanto no judicial compulsório (art. 104-B, §4º). No compulsório, a primeira parcela vence em até 180 dias da homologação."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "O que acontece com o credor que falta à audiência de conciliação?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A dívida dele tem a exigibilidade suspensa, os encargos de mora são interrompidos e ele fica sujeito compulsoriamente ao plano, recebendo só depois dos credores que compareceram (art. 104-A, §2º, do CDC)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Precisa entrar na Justiça para repactuar as dívidas?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não necessariamente. A conciliação pode acontecer nos órgãos do Sistema Nacional de Defesa do Consumidor, como o Procon (art. 104-C do CDC), ou no CEJUSC. O processo judicial do art. 104-B entra quando não há acordo."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Superendividamento — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora de superendividamento: preserva o mínimo existencial ou as despesas básicas, apura a capacidade de pagamento e monta o plano de repactuação da Lei 14.181/2021 em até 60 meses, com a parcela de cada credor e demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>Superendividamento</span></nav>
+      <h1>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>7 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>A cliente ganha R$ 4.200 líquidos. Aluguel, mercado, luz, remédio e escola consomem R$ 2.900. As parcelas do cartão, do empréstimo pessoal e do crediário somam R$ 2.950. A conta não fecha há meses, e cada mês ela rola o que não pagou para o rotativo. Não é falta de vontade de pagar: é matemática.</p>
+    <p>Para esse cenário a Lei 14.181/2021 criou a repactuação de dívidas. A peça central do pedido é um <strong>plano de pagamento</strong>, e o plano é, antes de tudo, um cálculo.</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>O plano de pagamento do superendividamento parte da renda líquida, preserva o mínimo existencial (ou as despesas básicas reais, se forem maiores) e usa o que sobra como <strong>capacidade de pagamento</strong>. Essa capacidade é dividida entre os credores na proporção do saldo de cada um, em até 60 meses (arts. 104-A e 104-B do CDC). Ficam fora do plano as dívidas com garantia real, os financiamentos imobiliários, o crédito rural e as contraídas com fraude ou má-fé ou para bens de luxo de alto valor.</p>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#quem">Quem é superendividado para a lei</a></li>
+        <li><a href="#minimo">O mínimo existencial e a discussão sobre os R$ 600</a></li>
+        <li><a href="#fora">Dívidas que ficam fora do plano</a></li>
+        <li><a href="#calculo">Como se calcula o plano</a></li>
+        <li><a href="#exemplo">Exemplo: três credores, 36 parcelas</a></li>
+        <li><a href="#fases">Conciliação e plano compulsório</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="quem">Quem é superendividado para a lei</h2>
+    <p>O art. 54-A, §1º, do CDC define superendividamento como a impossibilidade manifesta de a pessoa natural, de boa-fé, pagar a totalidade de suas dívidas de consumo, exigíveis e vincendas, sem comprometer seu mínimo existencial. Quatro elementos, e todos importam na inicial:</p>
+    <ul>
+      <li><strong>pessoa natural</strong>, nunca empresa;</li>
+      <li><strong>boa-fé</strong>, que é presumida, mas some se a dívida foi feita para não ser paga;</li>
+      <li><strong>dívidas de consumo</strong>, incluindo as que ainda vão vencer;</li>
+      <li><strong>impossibilidade manifesta</strong> sem sacrificar o mínimo existencial.</li>
+    </ul>
+    <p>O último é o que o cálculo demonstra. A calculadora já começa por ele: compara as parcelas atuais com o que sobra da renda e diz, em vermelho, se o caso é de superendividamento.</p>
+
+    <h2 id="minimo">O mínimo existencial e a discussão sobre os R$ 600</h2>
+    <p>A lei deixou o valor do mínimo existencial para regulamento. O Decreto 11.150/2022 fixou 25% do salário mínimo da época (R$ 303), e o Decreto 11.567/2023 elevou para <strong>R$ 600</strong>. Os dois valores foram muito criticados: seiscentos reais não pagam o aluguel de ninguém. A constitucionalidade do decreto está sendo questionada no STF.</p>
+    <p>Na prática, muitos juízes olham para as <strong>despesas básicas concretas</strong> da família: moradia, alimentação, saúde, educação, transporte. Por isso a calculadora pede os dois números e preserva o maior. No nosso exemplo, as despesas básicas (R$ 2.900) estão muito acima dos R$ 600, e são elas que ficam protegidas.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-superendividamento-formulario.png" alt="Calculadora de superendividamento do Causify com renda de R$ 4.200, despesas básicas de R$ 2.900, mínimo existencial de R$ 600 e três dívidas de consumo" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Orçamento à esquerda e dívidas à direita. Cada dívida pode ser marcada como "fora do plano".</figcaption>
+    </figure>
+
+    <h2 id="fora">Dívidas que ficam fora do plano</h2>
+    <p>Nem toda dívida entra na repactuação. A lei exclui:</p>
+    <ul>
+      <li>dívidas contraídas mediante fraude ou má-fé, ou oriundas de contratos celebrados dolosamente com o propósito de não pagar (art. 54-A, §3º);</li>
+      <li>dívidas de aquisição ou contratação de produtos e serviços de luxo de alto valor (art. 54-A, §3º);</li>
+      <li>dívidas com garantia real, financiamentos imobiliários e crédito rural (art. 104-A, §1º).</li>
+    </ul>
+    <p>Na calculadora, essas dívidas entram com a caixa "fora do plano" marcada: aparecem no total de dívidas, mas não participam do rateio.</p>
+
+    <h2 id="calculo">Como se calcula o plano</h2>
+    <ol>
+      <li><strong>Renda líquida</strong> do núcleo familiar, já sem INSS, IR e descontos obrigatórios.</li>
+      <li><strong>Valor preservado</strong>: o maior entre o mínimo existencial e as despesas básicas.</li>
+      <li><strong>Capacidade de pagamento</strong> = renda − valor preservado. Se quiser, limite a parcela a um percentual da renda.</li>
+      <li><strong>Prazo</strong>: o necessário para pagar as dívidas repactuáveis com essa capacidade, até 60 meses.</li>
+      <li><strong>Rateio</strong>: cada credor recebe na proporção do seu saldo.</li>
+      <li><strong>Remanescente</strong>: se nem em 60 meses a capacidade cobre tudo, sobra um saldo, que é justamente o que se discute na negociação ou no plano compulsório.</li>
+    </ol>
+
+    <div class="cta-inline">
+      <p><strong>Leve o plano pronto para a audiência.</strong> Parcela por credor, prazo e percentual da renda num PDF.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=superendividamento-plano-de-pagamento-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="exemplo">Exemplo: três credores, 36 parcelas</h2>
+    <p>A cliente do início: renda líquida de <strong>R$ 4.200,00</strong> e despesas básicas de <strong>R$ 2.900,00</strong>. As dívidas:</p>
+    <table>
+      <thead><tr><th>Credor</th><th>Tipo</th><th>Saldo</th><th>Parcela atual</th></tr></thead>
+      <tbody>
+        <tr><td>Banco Alfa</td><td>Cartão de crédito</td><td>R$ 18.000,00</td><td>R$ 1.200,00</td></tr>
+        <tr><td>Banco Beta</td><td>Empréstimo pessoal</td><td>R$ 25.000,00</td><td>R$ 1.400,00</td></tr>
+        <tr><td>Loja Gama</td><td>Crediário</td><td>R$ 3.500,00</td><td>R$ 350,00</td></tr>
+        <tr><td colspan="2"><strong>Total</strong></td><td><strong>R$ 46.500,00</strong></td><td><strong>R$ 2.950,00</strong></td></tr>
+      </tbody>
+    </table>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-superendividamento-uso.gif" alt="Animação da calculadora de superendividamento do Causify: preenchimento da renda, das despesas e das três dívidas até o plano de pagamento" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>O orçamento e as três dívidas preenchidos, e o plano de pagamento montado.</figcaption>
+    </figure>
+
+    <p>As parcelas atuais consomem <strong>70,24% da renda</strong>, enquanto a capacidade de pagamento, depois de preservar R$ 2.900,00, é de <strong>R$ 1.300,00</strong>. Superendividamento caracterizado. O plano:</p>
+    <ul>
+      <li>Parcela total: <strong>R$ 1.291,67 por mês, em 36 parcelas</strong> (30,75% da renda)</li>
+      <li>Banco Alfa: R$ 500,00 por mês (38,71% do total)</li>
+      <li>Banco Beta: R$ 694,45 por mês (53,76%)</li>
+      <li>Loja Gama: R$ 97,22 por mês (7,53%)</li>
+    </ul>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-superendividamento-resultado.png" alt="Plano de pagamento: parcela de R$ 1.291,67 em 36 meses, capacidade de pagamento de R$ 1.300 e rateio entre Banco Alfa, Banco Beta e Loja Gama" width="1024" height="666" loading="lazy" decoding="async">
+      <figcaption>O quadro vermelho é o argumento da inicial: parcelas atuais × capacidade de pagamento. Abaixo, o rateio por credor.</figcaption>
+    </figure>
+
+    <p>A cliente sai de R$ 2.950,00 para R$ 1.291,67 por mês e quita o principal em três anos. Os credores recebem tudo o que emprestaram, sem os juros de rotativo que tornavam a dívida impagável. É esse equilíbrio que torna o plano defensável na audiência.</p>
+
+    <div class="cta-box">
+      <h3>O plano de pagamento em minutos, com PDF para a audiência</h3>
+      <p>Mínimo existencial ou despesas básicas, capacidade de pagamento, dívidas fora do plano e rateio por credor em até 60 meses.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=superendividamento-plano-de-pagamento-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="fases">Conciliação e plano compulsório</h2>
+    <p>O procedimento tem duas fases:</p>
+    <ol>
+      <li><strong>Conciliação (art. 104-A).</strong> O juiz chama todos os credores para uma audiência, e o consumidor apresenta a proposta de plano, com prazo máximo de 5 anos. O credor que não comparece sem justificativa tem a dívida com exigibilidade suspensa, os encargos de mora interrompidos e fica sujeito ao plano, recebendo depois dos que participaram (§2º). A conciliação também pode acontecer no Procon e nos demais órgãos do Sistema Nacional de Defesa do Consumidor (art. 104-C).</li>
+      <li><strong>Plano judicial compulsório (art. 104-B).</strong> Sem acordo com todos, o consumidor pode pedir a revisão e integração dos contratos e um plano compulsório para os credores que não aderiram. Esse plano assegura aos credores, no mínimo, o principal corrigido monetariamente, em parcelas mensais em até 5 anos, com a primeira em até 180 dias da homologação (§4º).</li>
+    </ol>
+    <p>Nas duas fases, a planilha é o centro da discussão. Credor nenhum aceita um plano que não consegue entender.</p>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>Quem pode pedir a repactuação de dívidas por superendividamento?</h3>
+    <p>A pessoa natural, de boa-fé, que não consegue pagar as dívidas de consumo exigíveis e vincendas sem comprometer o mínimo existencial (art. 54-A, §1º, do CDC). Empresas ficam de fora.</p>
+
+    <h3>Qual é o valor do mínimo existencial?</h3>
+    <p>O Decreto 11.150/2022, alterado pelo Decreto 11.567/2023, fixou R$ 600. O valor é questionado no STF e muitos juízes olham as despesas básicas reais da família. Por isso a calculadora preserva o maior entre o mínimo existencial e as despesas básicas informadas.</p>
+
+    <h3>Quais dívidas ficam fora do plano de pagamento?</h3>
+    <p>As contraídas com fraude ou má-fé, as de aquisição ou contratação de produtos e serviços de luxo de alto valor (art. 54-A, §3º), e as dívidas com garantia real, os financiamentos imobiliários e o crédito rural (art. 104-A, §1º, do CDC).</p>
+
+    <h3>Qual o prazo máximo do plano de pagamento?</h3>
+    <p>5 anos, tanto no plano consensual (art. 104-A) quanto no judicial compulsório (art. 104-B, §4º). No compulsório, a primeira parcela vence em até 180 dias da homologação.</p>
+
+    <h3>O que acontece com o credor que falta à audiência de conciliação?</h3>
+    <p>A dívida dele tem a exigibilidade suspensa, os encargos de mora são interrompidos e ele fica sujeito compulsoriamente ao plano, recebendo só depois dos credores que compareceram (art. 104-A, §2º, do CDC).</p>
+
+    <h3>Precisa entrar na Justiça para repactuar as dívidas?</h3>
+    <p>Não necessariamente. A conciliação pode acontecer nos órgãos do Sistema Nacional de Defesa do Consumidor, como o Procon (art. 104-C do CDC), ou no CEJUSC. O processo judicial do art. 104-B entra quando não há acordo.</p>
+
+    <h2>Para fechar</h2>
+    <p>Superendividamento é o tema em que o cálculo mais aproxima direito e realidade: não basta dizer que o cliente não consegue pagar, é preciso mostrar quanto ele consegue. Quando uma das dívidas tem juros muito acima do mercado, pode valer combinar o pedido com uma <a href="/blog/calculo-revisional-juros-abusivos.html">revisional</a>; e quando há cartão consignado no benefício, veja o guia de <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC</a>.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html" aria-current="page">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=superendividamento-plano-de-pagamento-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-pensao-alimenticia-atrasada.html"><strong>Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão</strong><span>Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.</span></a>
+    <a class="related-item" href="/blog/calculo-revisional-juros-abusivos.html"><strong>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</strong><span>Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.</span></a>
+    <a class="related-item" href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html"><strong>RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado</strong><span>O saque do cartão tratado como consignado comum: quando a dívida teria acabado e quanto foi descontado a mais.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>

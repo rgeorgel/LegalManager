@@ -104,6 +104,41 @@ a:focus-visible, button:focus-visible { outline:3px solid var(--focus); outline-
 .post-body .cta-box p { color:var(--hero-muted); margin-bottom:1.4rem; }
 .post-body .cta-box strong { color:var(--hero-heading); }
 
+.cta-acoes { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; }
+.btn-claro { background:transparent; color:var(--hero-heading); border-color:rgba(255,255,255,.35); }
+.btn-claro:hover { color:var(--hero-heading); border-color:var(--primary); transform:translateY(-1px); }
+.cta-nota { display:block; margin-top:1rem; font-size:.82rem; color:var(--hero-muted); }
+
+/* Resposta curta no topo do artigo (lida primeiro por pessoas e por buscadores com IA) */
+.resumo { background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:0 var(--radius-lg) var(--radius-lg) 0; padding:1.1rem 1.35rem; margin:0 0 2rem; }
+.resumo-titulo { font-size:.75rem; font-weight:700; color:var(--accent-text); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.4rem; }
+.post-body .resumo p { font-size:1rem; margin-bottom:.6rem; }
+.post-body .resumo ul { font-size:1rem; margin-bottom:0; }
+.post-body .resumo > :last-child { margin-bottom:0; }
+
+/* Sumário */
+.sumario { background:var(--bg-alt); border-radius:var(--radius-lg); padding:1rem 1.35rem; margin:0 0 2rem; }
+.sumario summary { cursor:pointer; font-weight:700; color:var(--heading); font-size:.95rem; }
+.post-body .sumario ol { margin:.75rem 0 0 1.25rem; font-size:.95rem; }
+.post-body .sumario li { margin-bottom:.3rem; }
+.post-body .sumario a { text-decoration:none; }
+
+/* Capturas de tela e GIFs da ferramenta */
+.post-fig { margin:1.75rem 0 2rem; }
+.post-fig img { display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--card-shadow); background:var(--surface); }
+.post-fig figcaption { font-size:.86rem; color:var(--muted); margin-top:.6rem; line-height:1.5; }
+
+/* Chamada discreta no meio do texto */
+.cta-inline { display:flex; gap:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--icon-bg); border:1px solid var(--badge-border); border-radius:var(--radius-lg); padding:1rem 1.25rem; margin:2rem 0; }
+.post-body .cta-inline p { margin:0; font-size:.98rem; flex:1 1 280px; }
+
+/* Lista das calculadoras (fim do artigo) */
+.calc-lista { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr)); gap:.6rem; margin:1.25rem 0 1.5rem; text-align:left; }
+.post-body .calc-lista a { display:block; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:var(--radius); padding:.65rem .8rem; color:var(--hero-heading); font-size:.9rem; font-weight:600; text-decoration:none; line-height:1.35; }
+.post-body .calc-lista a span { display:block; font-weight:400; font-size:.8rem; color:var(--hero-muted); }
+.post-body .calc-lista a:hover { border-color:var(--primary); }
+.post-body .calc-lista a[aria-current] { border-color:var(--primary); background:rgba(212,166,42,.12); }
+
 /* Continue lendo */
 .related { max-width:720px; margin:0 auto; padding:2rem 1.5rem 3rem; }
 .related h3 { font-family:inherit; font-size:.78rem; font-weight:700; color:var(--accent-text); text-transform:uppercase; letter-spacing:.12em; margin-bottom:1rem; }

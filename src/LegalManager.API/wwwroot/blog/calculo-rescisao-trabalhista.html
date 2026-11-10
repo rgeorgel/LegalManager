@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cálculo de rescisão trabalhista com exemplo | Causify</title>
+  <meta name="description" content="O que entra em cada tipo de rescisão, aviso prévio proporcional, multas dos arts. 467 e 477, horas extras com DSR e reflexos e como chegar ao valor da causa.">
+  <meta name="keywords" content="cálculo de rescisão trabalhista, calculadora trabalhista, verbas rescisórias, aviso prévio proporcional, cálculo de horas extras com reflexos, multa do art. 477, multa do art. 467, valor da causa trabalhista, liquidação de pedidos">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/calculo-rescisao-trabalhista.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/calculo-rescisao-trabalhista.html">
+  <meta property="og:title" content="Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos">
+  <meta property="og:description" content="Verbas de cada tipo de rescisão, aviso proporcional, horas extras com reflexos e o valor da causa, num exemplo completo.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-trabalhista-rescisao.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resultado da calculadora trabalhista do Causify com verbas rescisórias, horas extras, multas e honorários">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito do Trabalho">
+  <meta property="article:tag" content="cálculo trabalhista">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos">
+  <meta name="twitter:description" content="Verbas de cada tipo de rescisão, aviso proporcional, horas extras com reflexos e o valor da causa, num exemplo completo.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-trabalhista-rescisao.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos",
+  "description": "O que entra em cada tipo de rescisão, aviso prévio proporcional, multas dos arts. 467 e 477, horas extras com DSR e reflexos e como chegar ao valor da causa.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/calculo-rescisao-trabalhista.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-trabalhista-rescisao.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-trabalhista-rescisao-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-trabalhista-rescisao-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-trabalhista-rescisao-uso.gif"
+  ],
+  "articleSection": "Direito do Trabalho",
+  "keywords": "cálculo de rescisão trabalhista, calculadora trabalhista, verbas rescisórias, aviso prévio proporcional, cálculo de horas extras com reflexos, multa do art. 477, multa do art. 467, valor da causa trabalhista, liquidação de pedidos",
+  "wordCount": 1647,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Rescisão do contrato de trabalho"
+    },
+    {
+      "@type": "Thing",
+      "name": "Verbas rescisórias"
+    },
+    {
+      "@type": "Thing",
+      "name": "Horas extras"
+    },
+    {
+      "@type": "Thing",
+      "name": "Reclamação trabalhista"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "Consolidação das Leis do Trabalho, art. 467"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Consolidação das Leis do Trabalho, art. 477"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Consolidação das Leis do Trabalho, art. 484-A"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Consolidação das Leis do Trabalho, art. 791-A"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Consolidação das Leis do Trabalho, art. 840"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 12.506/2011"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Constituição Federal, art. 7º, XXIX"
+    },
+    {
+      "@type": "Legislation",
+      "name": "ADC 58 (STF)"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 14.905/2024"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Rescisão trabalhista",
+      "item": "https://causify.com.br/blog/calculo-rescisao-trabalhista.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Como calcular o aviso prévio proporcional?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "São 30 dias mais 3 dias por ano completo de serviço, até 90 dias (Lei 12.506/2011). Com 6 anos completos, o aviso é de 48 dias. O período do aviso, mesmo indenizado, conta como tempo de serviço e pode render mais um avo de 13º e de férias (art. 487, §1º, da CLT)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Qual o prazo para pagar as verbas rescisórias?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "10 dias contados do término do contrato (art. 477, §6º, da CLT). O atraso gera a multa do §8º, equivalente a um salário do empregado."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "O que é a multa do art. 467 da CLT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Se o empregador não pagar a parte incontroversa das verbas rescisórias na primeira audiência, paga essa parte com acréscimo de 50%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quem pede demissão recebe férias proporcionais?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sim, com o terço constitucional, mesmo com menos de um ano de casa (Súmula 261 do TST). Não recebe a multa de 40% do FGTS nem pode sacar o saldo."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Por que a petição inicial trabalhista precisa trazer os valores?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Desde a Reforma Trabalhista, o art. 840, §1º, da CLT exige pedido certo, determinado e com indicação do valor. O pedido sem valor pode ser extinto sem resolução do mérito (art. 840, §3º)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quanto são os honorários de sucumbência na Justiça do Trabalho?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Entre 5% e 15% sobre o valor que resultar da liquidação da sentença, do proveito econômico obtido ou, não sendo possível mensurá-lo, sobre o valor atualizado da causa (art. 791-A da CLT)."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Trabalhista — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora trabalhista: verbas rescisórias dos seis tipos de rescisão, aviso prévio proporcional, horas extras, adicional noturno, insalubridade e periculosidade com DSR e reflexos, multas dos arts. 467 e 477, prescrição e atualização pela ADC 58, com demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>Rescisão trabalhista</span></nav>
+      <h1>Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>8 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>Desde a Reforma Trabalhista, a inicial que pede "horas extras e reflexos, a apurar em liquidação" corre o risco de voltar com despacho de emenda ou de ser extinta. O art. 840, §1º, da CLT exige pedido certo, determinado e <strong>com valor</strong>. Na prática, isso transformou todo advogado trabalhista em liquidante: antes de distribuir, você precisa ter a rescisão inteira calculada, verba por verba.</p>
+
+    <p>Este guia passa pelo que entra em cada tipo de rescisão, pelas regras que mais geram erro (aviso proporcional, avos, reflexos) e termina com um caso completo, do contrato ao valor da causa.</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>O cálculo da rescisão trabalhista depende do tipo de desligamento. Na dispensa sem justa causa, o empregado recebe saldo de salário, aviso prévio (30 dias + 3 por ano completo, até 90), 13º proporcional, férias vencidas e proporcionais com 1/3, FGTS do mês e multa de 40%. Na reclamação, somam-se os pedidos (horas extras com DSR e reflexos, adicionais, multas dos arts. 467 e 477), respeitando a prescrição de 5 anos. Os valores são atualizados pelos critérios da ADC 58 do STF e da Lei 14.905/2024.</p>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#verbas-por-tipo">Verbas por tipo de rescisão</a></li>
+        <li><a href="#aviso">Aviso prévio proporcional e projeção</a></li>
+        <li><a href="#avos">13º e férias: a regra dos avos</a></li>
+        <li><a href="#horas-extras">Horas extras, DSR e reflexos</a></li>
+        <li><a href="#multas">Multas dos arts. 467 e 477</a></li>
+        <li><a href="#atualizacao">Prescrição e atualização (ADC 58)</a></li>
+        <li><a href="#exemplo">Exemplo completo</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="verbas-por-tipo">Verbas por tipo de rescisão</h2>
+
+    <p>É a primeira pergunta a fazer ao cliente, e a resposta muda quase tudo:</p>
+
+    <table>
+      <thead>
+        <tr><th>Verba</th><th>Sem justa causa / indireta</th><th>Pedido de demissão</th><th>Acordo (484-A)</th><th>Justa causa</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Saldo de salário</td><td>Sim</td><td>Sim</td><td>Sim</td><td>Sim</td></tr>
+        <tr><td>Aviso prévio indenizado</td><td>Sim</td><td>Não</td><td>Metade</td><td>Não</td></tr>
+        <tr><td>13º proporcional</td><td>Sim</td><td>Sim</td><td>Sim</td><td>Não</td></tr>
+        <tr><td>Férias vencidas + 1/3</td><td>Sim</td><td>Sim</td><td>Sim</td><td>Sim</td></tr>
+        <tr><td>Férias proporcionais + 1/3</td><td>Sim</td><td>Sim</td><td>Sim</td><td>Não</td></tr>
+        <tr><td>Multa do FGTS</td><td>40%</td><td>Não</td><td>20%</td><td>Não</td></tr>
+        <tr><td>Saque do FGTS</td><td>Sim</td><td>Não</td><td>Até 80%</td><td>Não</td></tr>
+      </tbody>
+    </table>
+
+    <p>A rescisão indireta (art. 483 da CLT) paga o mesmo que a dispensa sem justa causa. No término de contrato por prazo determinado, não há aviso nem multa de 40%, mas há 13º e férias proporcionais. A calculadora do Causify trabalha com esses seis cenários e ajusta as verbas sozinha quando você troca o tipo.</p>
+
+    <h2 id="aviso">Aviso prévio proporcional e projeção</h2>
+
+    <p>A Lei 12.506/2011 manda somar 3 dias por ano completo de serviço aos 30 dias básicos, até o teto de 90. Seis anos completos dão 48 dias.</p>
+    <p>O detalhe que muda o valor final está no art. 487, §1º, da CLT: o período do aviso, mesmo indenizado, <strong>integra o tempo de serviço</strong>. Ou seja, a data de saída é projetada para frente, e essa projeção pode render mais um avo de 13º e de férias. Esquecer a projeção é o erro mais comum nas rescisões feitas pelo próprio empregador, e uma diferença fácil de cobrar.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-trabalhista-rescisao-formulario.png" alt="Formulário da calculadora trabalhista do Causify com admissão, saída, tipo de rescisão, aviso prévio de 48 dias e pedidos da reclamação" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Ao informar admissão e saída, a calculadora já mostra o aviso proporcional (48 dias, 6 anos completos) e projeta a data de saída.</figcaption>
+    </figure>
+
+    <h2 id="avos">13º e férias: a regra dos avos</h2>
+    <p>Cada mês trabalhado vale 1/12. A fração igual ou superior a 15 dias conta como mês inteiro. Com a projeção do aviso, quem saiu em 30 de setembro e tem 48 dias de aviso vai até 17 de novembro: são 11/12 de 13º, porque novembro teve 17 dias.</p>
+    <p>Para as férias, conta-se a partir do aniversário do contrato (o período aquisitivo), não do ano civil. Férias vencidas e não gozadas no prazo de 12 meses depois do período aquisitivo são pagas em dobro (art. 137 da CLT).</p>
+
+    <h2 id="horas-extras">Horas extras, DSR e reflexos</h2>
+    <p>É normalmente o pedido mais pesado da reclamação e o que mais tem conta. O caminho:</p>
+    <ol>
+      <li><strong>Valor da hora</strong>: salário ÷ divisor (220 para 44 horas semanais).</li>
+      <li><strong>Hora extra</strong>: valor da hora × (1 + adicional). O mínimo constitucional é 50% (art. 7º, XVI); normas coletivas costumam prever mais.</li>
+      <li><strong>DSR</strong>: as horas extras habituais refletem no descanso semanal remunerado (Súmula 172 do TST). Por mês: valor das extras ÷ dias úteis × domingos e feriados.</li>
+      <li><strong>Reflexos</strong> em 13º, férias + 1/3, aviso prévio e FGTS + 40%.</li>
+    </ol>
+    <p>E tudo isso limitado aos 5 anos anteriores ao ajuizamento. Fazer à mão mês a mês para cinco anos é onde a planilha vira um monstro de 60 linhas e fórmulas quebradas. A calculadora usa a média informada e o último salário em todo o período, o que basta para o valor da causa; na liquidação, os cartões de ponto mandam.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-trabalhista-rescisao-uso.gif" alt="Animação do preenchimento da calculadora trabalhista do Causify: contrato, tipo de rescisão, salário, horas extras e multas, até o resultado" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>O caso do exemplo sendo preenchido: dispensa sem justa causa, 20 horas extras por mês e multa do art. 477.</figcaption>
+    </figure>
+
+    <h2 id="multas">Multas dos arts. 467 e 477</h2>
+    <ul>
+      <li><strong>Art. 477, §8º</strong>: verbas rescisórias pagas depois de 10 dias do fim do contrato geram multa de um salário.</li>
+      <li><strong>Art. 467</strong>: se a parte incontroversa das verbas rescisórias não for paga na primeira audiência, ela é devida com acréscimo de 50%.</li>
+    </ul>
+    <p>As duas são independentes e podem ser pedidas juntas.</p>
+
+    <h2 id="atualizacao">Prescrição e atualização (ADC 58)</h2>
+    <p>A prescrição trabalhista tem duas camadas (art. 7º, XXIX, da Constituição): a ação deve ser proposta em até 2 anos do fim do contrato, e alcança só os 5 anos anteriores ao ajuizamento. A calculadora corta os pedidos mensais na data certa e avisa no resultado.</p>
+    <p>Na atualização, depois da ADC 58 do STF e da Lei 14.905/2024, o critério adotado pelo TST é, em resumo: IPCA-E e juros da TR na fase pré-judicial; Selic a partir do ajuizamento até agosto de 2024; e, desde setembro de 2024, IPCA mais juros pela taxa legal. Os índices vêm do Banco Central e são atualizados automaticamente.</p>
+
+    <div class="cta-inline">
+      <p><strong>Cansou de conferir planilha de rescisão?</strong> Monte o cálculo da inicial com valor por pedido, pronto para o art. 840.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rescisao-trabalhista-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="exemplo">Exemplo completo</h2>
+    <p>Empregado admitido em 03/02/2020 e dispensado sem justa causa em 30/09/2026. Último salário de <strong>R$ 3.800,00</strong>, um período de férias vencidas, média de 20 horas extras por mês com adicional de 50%, rescisórias pagas com atraso (multa do art. 477) e honorários de 10%. Ação ajuizada em 20/10/2026, cálculo em 10/11/2026.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-trabalhista-rescisao-resultado.png" alt="Resultado da calculadora trabalhista: total atualizado de R$ 105.275,59, com verbas rescisórias, horas extras, multas e honorários discriminados e memória de cálculo de cada verba" width="1024" height="844" loading="lazy" decoding="async">
+      <figcaption>Cada verba tem a memória de cálculo ao lado (ex.: "48 dias, 6 anos completos", "11/12 × R$ 3.800,00"), que é o que o juiz e a parte contrária vão conferir.</figcaption>
+    </figure>
+
+    <table>
+      <thead><tr><th>Grupo</th><th>Valor atualizado</th></tr></thead>
+      <tbody>
+        <tr><td>Verbas rescisórias (saldo, aviso de 48 dias, 13º 11/12, férias, FGTS e multa de 40%)</td><td>R$ 35.045,62</td></tr>
+        <tr><td>Horas extras com DSR, reflexos, FGTS e multa</td><td>R$ 56.818,80</td></tr>
+        <tr><td>Multa do art. 477, §8º</td><td>R$ 3.840,66</td></tr>
+        <tr><td>Honorários de sucumbência (10%)</td><td>R$ 9.570,51</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>R$ 105.275,59</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p>O valor nominal, que serve de valor da causa, ficou em <strong>R$ 88.114,70</strong>. Repare que os pedidos mensais começam em 20/10/2021: é a prescrição quinquenal contada do ajuizamento. Repare também no aviso: a calculadora apurou 48 dias e projetou a saída até 17/11/2026, o que deu 11/12 de 13º e 10/12 de férias proporcionais.</p>
+    <p>Sem o extrato do FGTS, a multa de 40% foi estimada sobre 8% da remuneração no período. Com o saldo para fins rescisórios em mãos, basta informar no campo e o número fica exato. Para os casos em que o problema é justamente o FGTS que não foi depositado, veja o guia de <a href="/blog/calculo-fgts-nao-depositado.html">cálculo de FGTS não depositado</a>.</p>
+
+    <div class="cta-box">
+      <h3>Rescisão calculada, PDF anexado, inicial distribuída</h3>
+      <p>Seis tipos de rescisão, adicionais com DSR e reflexos, prescrição automática e atualização pela ADC 58. O demonstrativo sai em PDF com a memória de cada verba.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rescisao-trabalhista-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>Como calcular o aviso prévio proporcional?</h3>
+    <p>São 30 dias mais 3 dias por ano completo de serviço, até 90 dias (Lei 12.506/2011). Com 6 anos completos, o aviso é de 48 dias. O período do aviso, mesmo indenizado, conta como tempo de serviço e pode render mais um avo de 13º e de férias (art. 487, §1º, da CLT).</p>
+
+    <h3>Qual o prazo para pagar as verbas rescisórias?</h3>
+    <p>10 dias contados do término do contrato (art. 477, §6º, da CLT). O atraso gera a multa do §8º, equivalente a um salário do empregado.</p>
+
+    <h3>O que é a multa do art. 467 da CLT?</h3>
+    <p>Se o empregador não pagar a parte incontroversa das verbas rescisórias na primeira audiência, paga essa parte com acréscimo de 50%.</p>
+
+    <h3>Quem pede demissão recebe férias proporcionais?</h3>
+    <p>Sim, com o terço constitucional, mesmo com menos de um ano de casa (Súmula 261 do TST). Não recebe a multa de 40% do FGTS nem pode sacar o saldo.</p>
+
+    <h3>Por que a petição inicial trabalhista precisa trazer os valores?</h3>
+    <p>Desde a Reforma Trabalhista, o art. 840, §1º, da CLT exige pedido certo, determinado e com indicação do valor. O pedido sem valor pode ser extinto sem resolução do mérito (art. 840, §3º).</p>
+
+    <h3>Quanto são os honorários de sucumbência na Justiça do Trabalho?</h3>
+    <p>Entre 5% e 15% sobre o valor que resultar da liquidação da sentença, do proveito econômico obtido ou, não sendo possível mensurá-lo, sobre o valor atualizado da causa (art. 791-A da CLT).</p>
+
+    <h2>Para fechar</h2>
+    <p>Rescisão errada raramente é erro de conta; quase sempre é premissa esquecida: a projeção do aviso, o avo que fechou com 15 dias, o reflexo que ninguém lembrou. Ter as regras embutidas na ferramenta deixa você livre para o que importa, que é a prova. Se o caso envolve FGTS atrasado, continue no <a href="/blog/calculo-fgts-nao-depositado.html">guia de FGTS não depositado</a>.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html" aria-current="page">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-rescisao-trabalhista-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-pensao-alimenticia-atrasada.html"><strong>Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão</strong><span>Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.</span></a>
+    <a class="related-item" href="/blog/calculo-fgts-nao-depositado.html"><strong>Como calcular o FGTS não depositado (e a multa de 40%) na reclamação trabalhista</strong><span>Base de cálculo, multa de 40% ou 20%, prescrição e atualização: o FGTS não depositado calculado competência por competência.</span></a>
+    <a class="related-item" href="/blog/calculo-revisional-juros-abusivos.html"><strong>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</strong><span>Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>

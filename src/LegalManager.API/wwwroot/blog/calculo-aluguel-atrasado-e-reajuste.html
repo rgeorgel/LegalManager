@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cálculo de aluguel atrasado e reajuste pelo IGP-M | Causify</title>
+  <meta name="description" content="Reajuste anual pelo IGP-M ou IPCA, débito de aluguéis e encargos com correção, juros, multa e honorários, e a multa proporcional da Lei do Inquilinato. Com exemplo.">
+  <meta name="keywords" content="cálculo de aluguel atrasado, calculadora de aluguel, reajuste de aluguel IGP-M, reajuste de aluguel IPCA, ação de despejo por falta de pagamento, purgação da mora, multa rescisória aluguel proporcional, Lei do Inquilinato">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html">
+  <meta property="og:title" content="Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo">
+  <meta property="og:description" content="Reajuste pelo IGP-M ou IPCA, débito para cobrança ou despejo e multa por devolução antecipada, num exemplo completo.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-aluguel.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resultado da calculadora de aluguel do Causify com débito de aluguéis e encargos corrigido pelo IGP-M">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito Imobiliário">
+  <meta property="article:tag" content="cálculo de aluguel">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo">
+  <meta name="twitter:description" content="Reajuste pelo IGP-M ou IPCA, débito para cobrança ou despejo e multa por devolução antecipada, num exemplo completo.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-aluguel.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo",
+  "description": "Reajuste anual pelo IGP-M ou IPCA, débito de aluguéis e encargos com correção, juros, multa e honorários, e a multa proporcional da Lei do Inquilinato. Com exemplo.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-aluguel.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-reajuste.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-uso.gif"
+  ],
+  "articleSection": "Direito Imobiliário",
+  "keywords": "cálculo de aluguel atrasado, calculadora de aluguel, reajuste de aluguel IGP-M, reajuste de aluguel IPCA, ação de despejo por falta de pagamento, purgação da mora, multa rescisória aluguel proporcional, Lei do Inquilinato",
+  "wordCount": 1507,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Locação de imóvel urbano"
+    },
+    {
+      "@type": "Thing",
+      "name": "Reajuste de aluguel"
+    },
+    {
+      "@type": "Thing",
+      "name": "Ação de despejo"
+    },
+    {
+      "@type": "Thing",
+      "name": "Ação de cobrança de aluguéis"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "Lei 8.245/1991 (Lei do Inquilinato), art. 4º"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 8.245/1991, art. 62"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 10.192/2001, art. 2º"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 14.905/2024"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Aluguel",
+      "item": "https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Posso reajustar o aluguel mais de uma vez por ano?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não. A Lei 10.192/2001 (art. 2º, §1º) considera nula a cláusula de reajuste com periodicidade inferior a um ano."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "E se o IGP-M acumulado der negativo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Depende do contrato. Muitos dizem que o aluguel não será reduzido; outros aplicam o índice nos dois sentidos. Sem cláusula, o tema é discutido nos tribunais. Na calculadora, você escolhe entre manter o valor ou aplicar a deflação."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A multa por atraso no aluguel pode ser de 10%?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pode. Segundo a jurisprudência do STJ, o Código de Defesa do Consumidor, que limita a multa a 2%, não se aplica à locação regida pela Lei 8.245/1991. Vale o que o contrato fixou, e 10% é o mais comum."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quanto o inquilino paga se devolver o imóvel antes do prazo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A multa prevista no contrato, proporcional ao tempo que faltava (art. 4º da Lei 8.245/1991). Fica dispensado se a devolução decorrer de transferência pelo empregador para outra localidade, com aviso por escrito de pelo menos 30 dias."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "O que o inquilino precisa pagar para evitar o despejo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Para purgar a mora, deposita os aluguéis e acessórios vencidos, as multas contratuais exigíveis, os juros, as custas e os honorários do advogado do locador, de 10% sobre o montante devido se o contrato não disser outra coisa (art. 62, II, da Lei 8.245/1991)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Condomínio e IPTU entram no débito?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Entram quando o contrato os transferiu ao inquilino: as despesas ordinárias de condomínio são dele por lei (art. 23, XII) e o IPTU, quando o contrato prevê (art. 22, VIII, da Lei 8.245/1991). Na calculadora, esses valores vão no campo de encargos mensais."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Aluguel — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora de aluguel: reajuste pelo IGP-M, IPCA, INPC, IGP-DI ou IPCA-E, débito de aluguéis e encargos com correção, juros, multa moratória e honorários para cobrança ou despejo, e multa proporcional por devolução antecipada, com demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>Aluguel</span></nav>
+      <h1>Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>8 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>Em ação de despejo por falta de pagamento, o cálculo não é detalhe: é a peça que diz ao inquilino quanto ele precisa depositar para purgar a mora. Se o número estiver errado para cima, a defesa ganha argumento; se estiver errado para baixo, o locador recebe menos do que devia e o processo acaba ali. E o erro mais comum começa antes da cobrança, no <strong>reajuste</strong>: muita planilha cobra o aluguel de hoje sobre meses em que o valor ainda era outro.</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>Para calcular aluguel atrasado:</p>
+      <ol>
+        <li>Descubra o aluguel vigente em cada mês, aplicando o reajuste anual previsto no contrato (IGP-M, IPCA ou outro) no aniversário da locação.</li>
+        <li>Some os encargos que o contrato transfere ao inquilino (condomínio, IPTU) e desconte os pagamentos parciais.</li>
+        <li>Corrija cada parcela do vencimento até a data do cálculo, aplique juros de mora e a multa moratória do contrato (geralmente 10%).</li>
+        <li>Acrescente os honorários: na purgação da mora do despejo, são 10% sobre o montante, se o contrato não disser outra coisa (art. 62, II, "d", da Lei 8.245/1991).</li>
+      </ol>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#reajuste">Reajuste: o aluguel que vale em cada mês</a></li>
+        <li><a href="#deflacao">E quando o IGP-M fica negativo?</a></li>
+        <li><a href="#debito">Débito para cobrança ou despejo</a></li>
+        <li><a href="#exemplo">Exemplo: sete meses de aluguel atrasado</a></li>
+        <li><a href="#purgacao">Purgação da mora: o que o inquilino precisa depositar</a></li>
+        <li><a href="#multa-rescisoria">Multa por devolução antecipada</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="reajuste">Reajuste: o aluguel que vale em cada mês</h2>
+    <p>O reajuste segue o contrato: índice e data. Duas regras limitam a liberdade das partes:</p>
+    <ul>
+      <li><strong>Periodicidade mínima de um ano.</strong> A Lei 10.192/2001 (art. 2º, §1º) considera nula a cláusula de reajuste em prazo menor.</li>
+      <li><strong>Índice acumulado do período anterior.</strong> Num contrato que começou em março, o reajuste de março usa o índice acumulado de março do ano anterior a fevereiro, porque o índice de março ainda nem saiu.</li>
+    </ul>
+    <p>O IGP-M ainda é o mais comum em contratos residenciais, mas desde a disparada de 2020 e 2021 muita gente migrou para o IPCA. A calculadora aceita IGP-M, IPCA, INPC, IGP-DI e IPCA-E, todos buscados no Banco Central.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-aluguel-reajuste.png" alt="Aba de reajuste da calculadora de aluguel do Causify: aluguel de R$ 2.500 reajustado pelo IGP-M para R$ 2.711,11, com o índice acumulado negativo de 2026 sem redução" width="1024" height="479" loading="lazy" decoding="async">
+      <figcaption>Contrato de março de 2024, R$ 2.500,00, reajuste anual pelo IGP-M: +8,44% em 2025 e −2,66% em 2026, quando o aluguel foi mantido.</figcaption>
+    </figure>
+
+    <h2 id="deflacao">E quando o IGP-M fica negativo?</h2>
+    <p>Acontece mais do que se imagina, como no exemplo acima. Os contratos costumam seguir um destes caminhos:</p>
+    <ul>
+      <li>cláusula dizendo que o aluguel não será reduzido em caso de índice negativo;</li>
+      <li>cláusula aplicando o índice em qualquer direção;</li>
+      <li>silêncio, que gera discussão.</li>
+    </ul>
+    <p>Na calculadora, a opção "não reduzir o aluguel quando o índice acumulado for negativo" vem marcada. Desmarque se o contrato aplicar a deflação.</p>
+
+    <h2 id="debito">Débito para cobrança ou despejo</h2>
+    <p>Com o aluguel de cada mês definido, o débito sai parcela por parcela:</p>
+    <table>
+      <thead><tr><th>Componente</th><th>Como entra</th></tr></thead>
+      <tbody>
+        <tr><td>Aluguel do mês</td><td>Já reajustado conforme o contrato</td></tr>
+        <tr><td>Encargos</td><td>Condomínio, IPTU e outros que o contrato transfere ao inquilino</td></tr>
+        <tr><td>Pagamentos parciais</td><td>Abatem a própria parcela</td></tr>
+        <tr><td>Correção monetária</td><td>Do vencimento até a data do cálculo, pelo índice escolhido</td></tr>
+        <tr><td>Juros de mora</td><td>1% ao mês, taxa legal da Lei 14.905/2024 ou a taxa do contrato</td></tr>
+        <tr><td>Multa moratória</td><td>A do contrato, em geral 10%, sobre o valor corrigido</td></tr>
+        <tr><td>Honorários</td><td>Sobre o montante</td></tr>
+      </tbody>
+    </table>
+    <p>Sobre a multa de 10%: o limite de 2% do Código de Defesa do Consumidor não vale aqui. O STJ entende que a locação regida pela Lei 8.245/1991 não é relação de consumo.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-aluguel-formulario.png" alt="Calculadora de aluguel do Causify com o contrato de locação no topo e as parcelas de abril a outubro de 2026 já com o aluguel reajustado e encargos de R$ 450" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Os dados do contrato ficam no topo e valem para as três abas. As parcelas já saem com o aluguel reajustado de cada mês.</figcaption>
+    </figure>
+
+    <h2 id="exemplo">Exemplo: sete meses de aluguel atrasado</h2>
+    <p>O mesmo contrato do reajuste: início em 01/03/2024, aluguel inicial de R$ 2.500,00, IGP-M anual. O inquilino parou de pagar em abril de 2026 e não pagou nada até outubro. Os encargos (condomínio e IPTU) somam R$ 450,00 por mês. Cálculo em 10/11/2026, juros de 1% ao mês, multa de 10% e honorários de 10%.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-aluguel-uso.gif" alt="Animação da calculadora de aluguel do Causify: preenchimento do contrato, geração das parcelas em atraso e cálculo do débito" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>Do contrato ao débito: as parcelas saem com o aluguel reajustado e os encargos, e o resultado aparece com a memória por parcela.</figcaption>
+    </figure>
+
+    <ul>
+      <li>Saldo nominal: R$ 22.127,77 (7 × R$ 3.161,11)</li>
+      <li>Correção pelo IGP-M: R$ 534,28</li>
+      <li>Juros: R$ 908,39</li>
+      <li>Multa moratória: R$ 2.266,22</li>
+      <li>Honorários: R$ 2.583,67</li>
+      <li><strong>Total do débito: R$ 28.420,33</strong></li>
+    </ul>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-aluguel-resultado.png" alt="Resultado da calculadora de aluguel: débito de R$ 28.420,33 com correção pelo IGP-M, juros de 1% ao mês, multa moratória e honorários, parcela por parcela" width="1024" height="683" loading="lazy" decoding="async">
+      <figcaption>Cada parcela com o próprio fator de correção, juros e multa. É o demonstrativo que acompanha a inicial (art. 62, I, da Lei 8.245/1991).</figcaption>
+    </figure>
+
+    <p>Repare que o aluguel de 2026 continua R$ 2.711,11: o reajuste de março de 2026 seria negativo e o contrato manda manter o valor. Uma planilha que aplicasse a deflação cobraria menos do que o devido; uma que usasse o aluguel "de tabela" atualizado até hoje cobraria mais.</p>
+
+    <div class="cta-box">
+      <h3>Débito de aluguéis pronto para a inicial</h3>
+      <p>Reajuste automático pelo índice do contrato, encargos, pagamentos parciais, correção, juros, multa e honorários, com demonstrativo em PDF.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-aluguel-atrasado-e-reajuste-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="purgacao">Purgação da mora: o que o inquilino precisa depositar</h2>
+    <p>Citado na ação de despejo por falta de pagamento, o inquilino pode evitar a rescisão depositando em 15 dias o valor calculado (art. 62, II, da Lei 8.245/1991), que inclui:</p>
+    <ul>
+      <li>os aluguéis e acessórios vencidos até a data do pagamento;</li>
+      <li>as multas ou penalidades contratuais exigíveis;</li>
+      <li>os juros de mora;</li>
+      <li>as custas e os honorários do advogado do locador, de 10% sobre o montante devido se o contrato não fixar outro valor.</li>
+    </ul>
+    <p>Esse direito não pode ser usado se o inquilino já purgou a mora nos 24 meses anteriores (parágrafo único do art. 62). E, se o contrato não tem garantia, o locador pode pedir o despejo liminar, depositando caução de três aluguéis (art. 59, §1º, IX).</p>
+
+    <div class="cta-inline">
+      <p><strong>O débito muda a cada mês que passa.</strong> Atualize o cálculo na data do depósito em segundos, sem refazer planilha.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-aluguel-atrasado-e-reajuste-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="multa-rescisoria">Multa por devolução antecipada</h2>
+    <p>Durante o prazo do contrato, o locador não pode retomar o imóvel, mas o inquilino pode devolvê-lo pagando a multa pactuada, <strong>proporcional ao tempo que faltava</strong> (art. 4º da Lei 8.245/1991). A conta:</p>
+    <p><code>multa proporcional = multa do contrato × meses que faltavam ÷ prazo total</code></p>
+    <p>Num contrato de 30 meses com multa de três aluguéis de R$ 2.500,00 (R$ 7.500,00), o inquilino que sai com 18 meses cumpridos deixa 12 por cumprir: R$ 7.500,00 × 12 ÷ 30 = <strong>R$ 3.000,00</strong>.</p>
+    <p>Ele fica dispensado da multa se a mudança decorrer de transferência pelo empregador para outra localidade, com aviso por escrito de pelo menos 30 dias. A aba "Multa rescisória" da calculadora faz essa conta pela data de entrega das chaves e tem a opção da transferência.</p>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>Posso reajustar o aluguel mais de uma vez por ano?</h3>
+    <p>Não. A Lei 10.192/2001 (art. 2º, §1º) considera nula a cláusula de reajuste com periodicidade inferior a um ano.</p>
+
+    <h3>E se o IGP-M acumulado der negativo?</h3>
+    <p>Depende do contrato. Muitos dizem que o aluguel não será reduzido; outros aplicam o índice nos dois sentidos. Sem cláusula, o tema é discutido nos tribunais. Na calculadora, você escolhe entre manter o valor ou aplicar a deflação.</p>
+
+    <h3>A multa por atraso no aluguel pode ser de 10%?</h3>
+    <p>Pode. Segundo a jurisprudência do STJ, o Código de Defesa do Consumidor, que limita a multa a 2%, não se aplica à locação regida pela Lei 8.245/1991. Vale o que o contrato fixou, e 10% é o mais comum.</p>
+
+    <h3>Quanto o inquilino paga se devolver o imóvel antes do prazo?</h3>
+    <p>A multa prevista no contrato, proporcional ao tempo que faltava (art. 4º da Lei 8.245/1991). Fica dispensado se a devolução decorrer de transferência pelo empregador para outra localidade, com aviso por escrito de pelo menos 30 dias.</p>
+
+    <h3>O que o inquilino precisa pagar para evitar o despejo?</h3>
+    <p>Para purgar a mora, deposita os aluguéis e acessórios vencidos, as multas contratuais exigíveis, os juros, as custas e os honorários do advogado do locador, de 10% sobre o montante devido se o contrato não disser outra coisa (art. 62, II, da Lei 8.245/1991).</p>
+
+    <h3>Condomínio e IPTU entram no débito?</h3>
+    <p>Entram quando o contrato os transferiu ao inquilino: as despesas ordinárias de condomínio são dele por lei (art. 23, XII) e o IPTU, quando o contrato prevê (art. 22, VIII, da Lei 8.245/1991). Na calculadora, esses valores vão no campo de encargos mensais.</p>
+
+    <h2>Para fechar</h2>
+    <p>O débito locatício tem uma armadilha que outros cálculos não têm: o valor da parcela muda ao longo do tempo por causa do reajuste. Resolvido isso, o resto segue a mesma lógica da <a href="/blog/calculo-pensao-alimenticia-atrasada.html">pensão alimentícia atrasada</a>: parcela por parcela, cada uma com sua correção e seus juros.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html" aria-current="page">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-aluguel-atrasado-e-reajuste-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-pensao-alimenticia-atrasada.html"><strong>Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão</strong><span>Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.</span></a>
+    <a class="related-item" href="/blog/calculo-revisional-juros-abusivos.html"><strong>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</strong><span>Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.</span></a>
+    <a class="related-item" href="/blog/superendividamento-plano-de-pagamento.html"><strong>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</strong><span>Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cálculo de pensão alimentícia atrasada, passo a passo | Causify</title>
+  <meta name="description" content="Como atualizar o débito de pensão alimentícia em atraso: índice de correção, juros, multa do art. 523, as 3 parcelas da prisão (Súmula 309) e um exemplo real.">
+  <meta name="keywords" content="cálculo de pensão alimentícia atrasada, calculadora de pensão alimentícia, pensão atrasada correção e juros, execução de alimentos, rito da prisão, Súmula 309 STJ, art. 528 CPC, pensão em salário mínimo">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html">
+  <meta property="og:title" content="Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão">
+  <meta property="og:description" content="Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-pensao-alimenticia.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resultado da calculadora de pensão alimentícia do Causify com o débito separado entre rito da prisão e rito da penhora">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito de Família">
+  <meta property="article:tag" content="pensão alimentícia">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão">
+  <meta name="twitter:description" content="Índice, juros, multa e a separação das 3 parcelas da prisão, com um exemplo calculado do início ao fim.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-pensao-alimenticia.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão",
+  "description": "Como atualizar o débito de pensão alimentícia em atraso: índice de correção, juros, multa do art. 523, as 3 parcelas da prisão (Súmula 309) e um exemplo real.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-pensao-alimenticia.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-estimativa.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-uso.gif"
+  ],
+  "articleSection": "Direito de Família",
+  "keywords": "cálculo de pensão alimentícia atrasada, calculadora de pensão alimentícia, pensão atrasada correção e juros, execução de alimentos, rito da prisão, Súmula 309 STJ, art. 528 CPC, pensão em salário mínimo",
+  "wordCount": 1879,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Pensão alimentícia"
+    },
+    {
+      "@type": "Thing",
+      "name": "Execução de alimentos"
+    },
+    {
+      "@type": "Thing",
+      "name": "Cálculo judicial"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "Código de Processo Civil, art. 523"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Processo Civil, art. 528"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Súmula 309 do STJ"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código Civil, art. 389"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código Civil, art. 397"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código Civil, art. 1.694"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Lei 14.905/2024"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Pensão alimentícia",
+      "item": "https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Quantas parcelas atrasadas autorizam a prisão do devedor de alimentos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A prisão civil cobre as três prestações anteriores ao ajuizamento da execução e as que vencerem no curso do processo (art. 528, §7º, do CPC e Súmula 309 do STJ). As parcelas mais antigas são cobradas pelo rito da penhora."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Qual índice usar para corrigir pensão alimentícia atrasada?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Primeiro, o índice que estiver no título (sentença ou acordo). Se ele for omisso, a Lei 14.905/2024 passou a indicar o IPCA como índice supletivo (art. 389, parágrafo único, do Código Civil). Antes dela, o INPC era o mais usado em alimentos, e muitos títulos antigos o preveem. Vale conferir também a tabela prática do seu tribunal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Os juros da pensão atrasada contam desde quando?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Em regra, desde o vencimento de cada parcela, porque a obrigação tem data certa (mora ex re , art. 397 do Código Civil). Se o título fixar os juros a partir da citação, siga o título."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Pensão alimentícia atrasada prescreve?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A cobrança de prestações alimentares vencidas prescreve em 2 anos, contados de cada vencimento (art. 206, §2º, do Código Civil). Mas a prescrição não corre contra absolutamente incapazes (art. 198, I) nem entre ascendentes e descendentes durante o poder familiar (art. 197, II). Enquanto o filho é menor e está sob o poder familiar do devedor, o prazo nem começa."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Como calcular pensão fixada em percentual do salário mínimo?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cada parcela usa o salário mínimo vigente no mês do vencimento, não o de hoje. Uma pensão de 30% do mínimo vencida em 2025 vale 30% do mínimo de 2025. A partir daí, a parcela é corrigida e recebe juros como qualquer outra."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A multa de 10% do art. 523 do CPC vale na execução de alimentos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Só no rito da penhora (art. 528, §8º, do CPC). No rito da prisão, a multa não incide."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pensão alimentícia — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora de pensão alimentícia em atraso: correção por INPC, IPCA, IPCA-E ou IGP-M, juros, multa e honorários do art. 523 do CPC, separação do rito da prisão (Súmula 309 do STJ) e demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>Pensão alimentícia</span></nav>
+      <h1>Cálculo de pensão alimentícia atrasada: correção, juros e rito da prisão</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>9 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>A cena é conhecida: a mãe chega ao escritório com um caderno onde anotou cada mês que o pai deixou de pagar, alguns depósitos pela metade, um Pix "por conta" em março. Antes de pensar em petição, você precisa de um número. E não qualquer número: o juiz vai mandar o executado pagar <em>aquele</em> valor em três dias, sob pena de prisão. Se a conta estiver inflada, a defesa aponta excesso; se estiver baixa, quem perde é a criança.</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>Para calcular pensão alimentícia atrasada, cada parcela vencida é tratada sozinha:</p>
+      <ul>
+        <li>valor devido no mês (fixo ou o percentual do salário mínimo daquele mês), menos o que foi pago;</li>
+        <li>correção monetária do vencimento até a data do cálculo, pelo índice do título (INPC é o mais comum em alimentos; sem previsão, o IPCA, pela Lei 14.905/2024);</li>
+        <li>juros de mora desde cada vencimento (1% ao mês ou a taxa legal, conforme o título);</li>
+        <li>no rito da penhora, multa de 10% e honorários de 10% (art. 523, §1º, do CPC);</li>
+        <li>separação das três últimas parcelas antes do ajuizamento, que vão para o rito da prisão (Súmula 309 do STJ).</li>
+      </ul>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#o-que-entra">O que entra no cálculo</a></li>
+        <li><a href="#indice">Qual índice de correção usar</a></li>
+        <li><a href="#juros">Juros: 1% ao mês ou taxa legal?</a></li>
+        <li><a href="#prisao-penhora">Rito da prisão × rito da penhora</a></li>
+        <li><a href="#exemplo">Exemplo: 12 meses de pensão atrasada</a></li>
+        <li><a href="#armadilhas">Cinco erros comuns na planilha</a></li>
+        <li><a href="#estimar">E quando o valor da pensão ainda não foi fixado?</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="o-que-entra">O que entra no cálculo</h2>
+
+    <p>A conta é simples na teoria e chata na prática, porque cada mês tem a própria história. Para cada parcela em atraso você precisa de:</p>
+    <ol>
+      <li><strong>Valor devido no mês.</strong> Se a pensão é fixa, é o valor do título. Se é percentual do salário mínimo, é o percentual sobre o mínimo vigente <em>naquele mês</em>. Se incide sobre o 13º, dezembro tem uma parcela a mais.</li>
+      <li><strong>Pagamentos parciais.</strong> O depósito de R$ 500 numa pensão de R$ 1.200 abate a parcela daquele mês, não some na conta.</li>
+      <li><strong>Correção monetária</strong> do vencimento até a data do cálculo.</li>
+      <li><strong>Juros de mora</strong> sobre o valor corrigido.</li>
+      <li><strong>Multa e honorários</strong>, quando o rito for o da penhora.</li>
+    </ol>
+    <p>Somar tudo em uma linha só e corrigir "do primeiro atraso até hoje" é o atalho que mais gera impugnação. Parcela de novembro do ano passado e parcela do mês passado não podem ter o mesmo fator de correção.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-pensao-alimenticia-formulario.png" alt="Calculadora de pensão alimentícia do Causify com pensão fixa de R$ 1.200 e 12 parcelas em atraso listadas mês a mês" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Na calculadora de pensão do Causify, você informa a primeira e a última parcela em atraso e a lista mês a mês aparece pronta para ajustar valores diferentes e pagamentos parciais.</figcaption>
+    </figure>
+
+    <h2 id="indice">Qual índice de correção usar</h2>
+
+    <p>A ordem de preferência é: o que diz o título, depois a tabela do tribunal, depois a lei.</p>
+    <ul>
+      <li><strong>INPC</strong>: é o índice tradicional em alimentos e aparece na maioria das sentenças e acordos. Mede a inflação das famílias de renda mais baixa, o que tem lógica para uma verba de subsistência.</li>
+      <li><strong>IPCA</strong>: desde a Lei 14.905/2024, é o índice que o Código Civil manda aplicar quando nada foi convencionado nem existe lei específica (art. 389, parágrafo único).</li>
+      <li><strong>IPCA-E e IGP-M</strong>: aparecem em títulos mais antigos ou em tabelas de alguns tribunais.</li>
+    </ul>
+    <p>Um detalhe que pega muita gente: o índice do último mês costuma não ter saído ainda quando você faz a conta. O IBGE divulga o INPC por volta do dia 10 do mês seguinte. A calculadora avisa quando isso acontece e considera 0% nesse mês, em vez de inventar um número.</p>
+
+    <h2 id="juros">Juros: 1% ao mês ou taxa legal?</h2>
+
+    <p>Pensão tem dia certo para pagar, então o devedor está em mora desde cada vencimento, sem precisar ser notificado (art. 397 do Código Civil). Os juros correm, em regra, de cada vencimento.</p>
+    <p>Sobre a taxa, existem dois cenários:</p>
+    <ul>
+      <li>títulos que fixaram <strong>1% ao mês</strong>, o padrão por décadas;</li>
+      <li>a <strong>taxa legal</strong> da Lei 14.905/2024 (Selic menos IPCA, art. 406 do Código Civil), para o que não estiver convencionado.</li>
+    </ul>
+    <p>Na dúvida, faça as duas contas e veja a diferença. Em períodos curtos ela é pequena; em débitos de anos, pode mudar o valor da execução de forma relevante. E se o título disser que os juros contam da citação, siga o título: a calculadora tem a opção.</p>
+
+    <h2 id="prisao-penhora">Rito da prisão × rito da penhora</h2>
+
+    <p>Aqui mora a parte estratégica. O art. 528, §7º, do CPC, que positivou a Súmula 309 do STJ, diz que a prisão civil só pode ser decretada pelas <strong>três prestações anteriores ao ajuizamento</strong> e pelas que vencerem no curso do processo. O resto do débito segue pelo rito da penhora (art. 528, §8º).</p>
+
+    <table>
+      <thead>
+        <tr><th></th><th>Rito da prisão</th><th>Rito da penhora</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Parcelas</td><td>3 anteriores ao ajuizamento + as que vencerem</td><td>As mais antigas</td></tr>
+        <tr><td>Prazo para pagar</td><td>3 dias (art. 528, caput)</td><td>15 dias (art. 523)</td></tr>
+        <tr><td>Multa de 10% (art. 523, §1º)</td><td>Não incide</td><td>Incide</td></tr>
+        <tr><td>Consequência</td><td>Prisão de 1 a 3 meses</td><td>Penhora de bens</td></tr>
+      </tbody>
+    </table>
+
+    <p>Na prática, muitos colegas ajuízam duas execuções, ou um pedido com dois capítulos, e cada uma precisa do próprio demonstrativo. Fazer essa separação à mão é onde a planilha costuma quebrar: a multa entra onde não devia, ou as três parcelas são contadas a partir da data errada.</p>
+
+    <div class="cta-inline">
+      <p><strong>Quer ver a separação acontecendo?</strong> A calculadora divide o débito entre os dois ritos com um clique e gera um PDF para cada petição.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-pensao-alimenticia-atrasada-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="exemplo">Exemplo: 12 meses de pensão atrasada</h2>
+
+    <p>Vamos a um caso com números. Pensão fixa de <strong>R$ 1.200,00</strong>, vencimento todo dia 10, e nada pago de novembro de 2025 a outubro de 2026. Cálculo feito em 10/11/2026, com INPC, juros de 1% ao mês, multa e honorários de 10%, e a separação dos ritos ligada.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-pensao-alimenticia-uso.gif" alt="Animação mostrando o preenchimento da calculadora de pensão alimentícia do Causify até o resultado do débito" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>O caso do exemplo do começo ao fim: valor, período, multa, honorários e separação dos ritos.</figcaption>
+    </figure>
+
+    <p>O resultado:</p>
+    <ul>
+      <li>Saldo nominal: R$ 14.400,00 (12 × R$ 1.200,00)</li>
+      <li>Correção pelo INPC: R$ 299,57</li>
+      <li>Juros: R$ 963,03</li>
+      <li><strong>Rito da prisão</strong> (agosto, setembro e outubro de 2026): <strong>R$ 4.057,01</strong>, já com honorários e sem multa</li>
+      <li><strong>Rito da penhora</strong> (as 9 parcelas anteriores): <strong>R$ 14.369,29</strong>, com multa de R$ 1.197,44 e honorários</li>
+      <li>Total geral: <strong>R$ 18.426,30</strong></li>
+    </ul>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-pensao-alimenticia-resultado.png" alt="Resultado da calculadora de pensão: total de R$ 18.426,30 com o débito separado entre rito da prisão e rito da penhora e a memória de cálculo de cada parcela" width="1024" height="844" loading="lazy" decoding="async">
+      <figcaption>Cada linha mostra o fator de correção, o percentual de juros e o rito da parcela. É essa memória que vai para o PDF anexado à execução.</figcaption>
+    </figure>
+
+    <p>Repare em duas coisas. A parcela de novembro de 2025 acumula 12% de juros e a de outubro de 2026, só 1%: é por isso que corrigir tudo "a partir do primeiro atraso" erra o valor. E a multa aparece apenas no bloco da penhora, como manda o §8º do art. 528.</p>
+
+    <div class="cta-box">
+      <h3>Faça esse cálculo em dois minutos</h3>
+      <p>INPC, IPCA, IPCA-E, IGP-M e salário mínimo vêm do Banco Central e se atualizam sozinhos. Você preenche o caso, ajusta os pagamentos parciais e baixa o demonstrativo em PDF.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-pensao-alimenticia-atrasada-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="armadilhas">Cinco erros comuns na planilha</h2>
+    <ol>
+      <li><strong>Usar o salário mínimo de hoje em parcelas antigas.</strong> Se a pensão é 30% do mínimo, a parcela de 2025 é 30% do mínimo de 2025. O reajuste do mínimo não é correção monetária.</li>
+      <li><strong>Esquecer o 13º.</strong> Quando o título manda a pensão incidir sobre o 13º salário, dezembro tem duas parcelas.</li>
+      <li><strong>Ignorar pagamentos parciais.</strong> Cobrar o valor cheio de um mês em que houve depósito parcial é excesso de execução na certa.</li>
+      <li><strong>Multa no rito da prisão.</strong> Não incide. Coloque só no capítulo da penhora.</li>
+      <li><strong>Contar as três parcelas a partir do cálculo, e não do ajuizamento.</strong> Se a execução já foi ajuizada e você está atualizando a conta, as três parcelas são as anteriores à data da distribuição, e as que venceram depois entram no rito da prisão também.</li>
+    </ol>
+
+    <h2 id="estimar">E quando o valor da pensão ainda não foi fixado?</h2>
+
+    <p>Não existe percentual fixo em lei. O Código Civil manda equilibrar a necessidade de quem recebe com a possibilidade de quem paga (art. 1.694, §1º). Os 30% da renda líquida viraram referência de mercado, mas é só isso: referência.</p>
+    <p>Para a conversa inicial com o cliente, ou para fundamentar uma proposta de acordo, a aba <strong>Estimar valor</strong> faz a conta pelo percentual, mostra quanto isso representa no ano (com 13º) e em salários mínimos, e divide as despesas dos filhos entre os genitores na proporção da renda de cada um.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-pensao-alimenticia-estimativa.png" alt="Aba Estimar valor da calculadora de pensão: 30% de uma renda de R$ 5.200 resulta em R$ 1.560 por mês, com divisão proporcional das despesas entre os genitores" width="1024" height="723" loading="lazy" decoding="async">
+      <figcaption>Estimativa com renda líquida de R$ 5.200, dois filhos e despesas de R$ 2.400 divididas pela renda de cada genitor.</figcaption>
+    </figure>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>Quantas parcelas atrasadas autorizam a prisão do devedor de alimentos?</h3>
+    <p>A prisão civil cobre as três prestações anteriores ao ajuizamento da execução e as que vencerem no curso do processo (art. 528, §7º, do CPC e Súmula 309 do STJ). As parcelas mais antigas são cobradas pelo rito da penhora.</p>
+
+    <h3>Qual índice usar para corrigir pensão alimentícia atrasada?</h3>
+    <p>Primeiro, o índice que estiver no título (sentença ou acordo). Se ele for omisso, a Lei 14.905/2024 passou a indicar o IPCA como índice supletivo (art. 389, parágrafo único, do Código Civil). Antes dela, o INPC era o mais usado em alimentos, e muitos títulos antigos o preveem. Vale conferir também a tabela prática do seu tribunal.</p>
+
+    <h3>Os juros da pensão atrasada contam desde quando?</h3>
+    <p>Em regra, desde o vencimento de cada parcela, porque a obrigação tem data certa (mora <em>ex re</em>, art. 397 do Código Civil). Se o título fixar os juros a partir da citação, siga o título.</p>
+
+    <h3>Pensão alimentícia atrasada prescreve?</h3>
+    <p>A cobrança de prestações alimentares vencidas prescreve em 2 anos, contados de cada vencimento (art. 206, §2º, do Código Civil). Mas a prescrição não corre contra absolutamente incapazes (art. 198, I) nem entre ascendentes e descendentes durante o poder familiar (art. 197, II). Enquanto o filho é menor e está sob o poder familiar do devedor, o prazo nem começa.</p>
+
+    <h3>Como calcular pensão fixada em percentual do salário mínimo?</h3>
+    <p>Cada parcela usa o salário mínimo vigente no mês do vencimento, não o de hoje. Uma pensão de 30% do mínimo vencida em 2025 vale 30% do mínimo de 2025. A partir daí, a parcela é corrigida e recebe juros como qualquer outra.</p>
+
+    <h3>A multa de 10% do art. 523 do CPC vale na execução de alimentos?</h3>
+    <p>Só no rito da penhora (art. 528, §8º, do CPC). No rito da prisão, a multa não incide.</p>
+
+    <h2>Para fechar</h2>
+    <p>Cálculo de alimentos parece aritmética de calculadora de celular até a defesa impugnar. Separar parcela por parcela, usar o índice certo e dividir os ritos é o que faz a execução andar sem incidente. Se este conteúdo ajudou, vale ler também sobre <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">débito de aluguéis</a>, que segue a mesma lógica de correção por parcela, e sobre <a href="/blog/superendividamento-plano-de-pagamento.html">superendividamento</a>, tema que aparece muito quando o alimentante também está afundado em dívidas.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html" aria-current="page">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-pensao-alimenticia-atrasada-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-rescisao-trabalhista.html"><strong>Cálculo de rescisão trabalhista: verbas por tipo de demissão, horas extras e reflexos</strong><span>Verbas de cada tipo de rescisão, aviso proporcional, horas extras com reflexos e o valor da causa, num exemplo completo.</span></a>
+    <a class="related-item" href="/blog/calculo-aluguel-atrasado-e-reajuste.html"><strong>Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo</strong><span>Reajuste pelo IGP-M ou IPCA, débito para cobrança ou despejo e multa por devolução antecipada, num exemplo completo.</span></a>
+    <a class="related-item" href="/blog/superendividamento-plano-de-pagamento.html"><strong>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</strong><span>Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>

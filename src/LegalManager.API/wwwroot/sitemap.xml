@@ -67,14 +67,14 @@
   <!-- Blog -->
   <url>
     <loc>https://causify.com.br/blog/</loc>
-    <lastmod>2026-06-21</lastmod>
+    <lastmod>2026-11-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/"/>
   </url>
   <url>
     <loc>https://causify.com.br/blog/index.html</loc>
-    <lastmod>2026-06-21</lastmod>
+    <lastmod>2026-11-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/index.html"/>
@@ -113,5 +113,70 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/portal-do-cliente-juridico.html"/>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-pensao-alimenticia-atrasada.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-estimativa.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-pensao-alimenticia-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-rescisao-trabalhista.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-rescisao-trabalhista.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-trabalhista-rescisao-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-trabalhista-rescisao-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-fgts-nao-depositado.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-fgts-nao-depositado.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-fgts-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-fgts-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-aluguel-atrasado-e-reajuste.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-reajuste.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-aluguel-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-revisional-juros-abusivos.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-revisional-juros-abusivos.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-revisional-bancaria-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-revisional-bancaria-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-rmc-rcc-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-rmc-rcc-resultado.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://causify.com.br/blog/superendividamento-plano-de-pagamento.html</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/blog/superendividamento-plano-de-pagamento.html"/>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-superendividamento-formulario.png</image:loc></image:image>
+    <image:image><image:loc>https://causify.com.br/images/blog/calculadoras/calculadora-superendividamento-resultado.png</image:loc></image:image>
   </url>
 </urlset>

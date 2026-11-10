@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revisional bancária: como calcular juros abusivos | Causify</title>
+  <meta name="description" content="Como comparar a taxa do contrato com a taxa média do Banco Central, o critério do STJ (REsp 1.061.530), recalcular as parcelas e apurar a devolução em dobro.">
+  <meta name="keywords" content="cálculo revisional de juros, calculadora revisional, juros abusivos, taxa média de juros Banco Central, ação revisional de financiamento de veículo, REsp 1.061.530, devolução em dobro EAREsp 676.608, valor incontroverso art. 330 CPC">
+  <meta name="author" content="Equipe Causify">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://causify.com.br/blog/calculo-revisional-juros-abusivos.html">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://causify.com.br/blog/calculo-revisional-juros-abusivos.html">
+  <meta property="og:title" content="Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber">
+  <meta property="og:description" content="Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.">
+  <meta property="og:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-revisional-bancaria.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resultado da calculadora revisional do Causify apontando taxa abusiva em financiamento de veículo">
+  <meta property="og:site_name" content="Causify">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="article:published_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:modified_time" content="2026-11-10T09:00:00-03:00">
+  <meta property="article:section" content="Direito Bancário">
+  <meta property="article:tag" content="revisional bancária">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber">
+  <meta name="twitter:description" content="Taxa contratada × taxa média do Banco Central, recálculo em Price ou SAC e o indébito em dobro, num contrato de veículo.">
+  <meta name="twitter:image" content="https://causify.com.br/images/blog/calculadoras/og-calculadora-revisional-bancaria.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate" type="application/rss+xml" title="Blog Causify" href="https://causify.com.br/blog/feed.xml">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber",
+  "description": "Como comparar a taxa do contrato com a taxa média do Banco Central, o critério do STJ (REsp 1.061.530), recalcular as parcelas e apurar a devolução em dobro.",
+  "datePublished": "2026-11-10T09:00:00-03:00",
+  "dateModified": "2026-11-10T09:00:00-03:00",
+  "inLanguage": "pt-BR",
+  "author": {
+    "@type": "Organization",
+    "name": "Equipe Causify",
+    "url": "https://causify.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://causify.com.br/images/causify-logo-transparente.png"
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://causify.com.br/blog/calculo-revisional-juros-abusivos.html"
+  },
+  "image": [
+    "https://causify.com.br/images/blog/calculadoras/og-calculadora-revisional-bancaria.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-revisional-bancaria-formulario.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-revisional-bancaria-resultado.png",
+    "https://causify.com.br/images/blog/calculadoras/calculadora-revisional-bancaria-uso.gif"
+  ],
+  "articleSection": "Direito Bancário",
+  "keywords": "cálculo revisional de juros, calculadora revisional, juros abusivos, taxa média de juros Banco Central, ação revisional de financiamento de veículo, REsp 1.061.530, devolução em dobro EAREsp 676.608, valor incontroverso art. 330 CPC",
+  "wordCount": 1711,
+  "about": [
+    {
+      "@type": "Thing",
+      "name": "Ação revisional de contrato bancário"
+    },
+    {
+      "@type": "Thing",
+      "name": "Juros abusivos"
+    },
+    {
+      "@type": "Thing",
+      "name": "Taxa média de juros do Banco Central"
+    }
+  ],
+  "mentions": [
+    {
+      "@type": "Legislation",
+      "name": "REsp 1.061.530/RS (STJ, repetitivo)"
+    },
+    {
+      "@type": "Legislation",
+      "name": "EAREsp 676.608/RS (STJ)"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Defesa do Consumidor, art. 42"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Código de Processo Civil, art. 330, §2º"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Súmula 539 do STJ"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Súmula 541 do STJ"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Súmula 565 do STJ"
+    },
+    {
+      "@type": "Legislation",
+      "name": "Súmula 566 do STJ"
+    }
+  ],
+  "isPartOf": {
+    "@type": "Blog",
+    "name": "Blog Causify",
+    "url": "https://causify.com.br/blog/"
+  }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://causify.com.br/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://causify.com.br/blog/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "Revisional bancária",
+      "item": "https://causify.com.br/blog/calculo-revisional-juros-abusivos.html"
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Juros acima de 12% ao ano são abusivos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não por si só. No REsp 1.061.530/RS, julgado como repetitivo, o STJ fixou que a taxa acima de 12% ao ano não indica abusividade sozinha. É preciso demonstrar, caso a caso, que ela se distancia muito da média de mercado."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quantas vezes acima da média a taxa precisa estar para ser abusiva?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A lei não diz. Muitos julgados tratam como abusiva a taxa uma vez e meia acima da média do Banco Central para a mesma modalidade e mês; outros só reconhecem com o dobro ou o triplo. O melhor é mostrar a relação exata e os precedentes do seu tribunal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Onde encontrar a taxa média de juros do Banco Central?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No Sistema Gerenciador de Séries Temporais (SGS) do Banco Central, com uma série por modalidade de crédito e um valor por mês. A calculadora do Causify busca essas séries sozinha e usa o mês da contratação."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A devolução do que foi pago a mais é em dobro?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Para cobranças feitas depois de 30/03/2021, a devolução em dobro (art. 42, parágrafo único, do CDC) independe de má-fé quando a cobrança contraria a boa-fé objetiva, conforme o EAREsp 676.608/RS da Corte Especial do STJ. Antes dessa data, em regra a devolução é simples, salvo má-fé comprovada."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A petição da revisional precisa indicar o valor incontroverso?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sim. O art. 330, §2º, do CPC exige que o autor discrimine as obrigações que quer discutir e quantifique o valor incontroverso, sob pena de inépcia. Esse valor continua sendo pago no tempo e modo contratados (§3º)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Capitalização de juros é ilegal?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não, se estiver pactuada. A Súmula 539 do STJ admite a capitalização com periodicidade inferior à anual nos contratos bancários celebrados a partir de 31/03/2000, desde que expressamente pactuada, e a Súmula 541 considera suficiente a previsão de taxa anual superior ao duodécuplo da mensal."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Revisional bancária — Causify",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Software jurídico",
+  "operatingSystem": "Web",
+  "description": "Calculadora revisional bancária: compara a taxa contratada (ou implícita na parcela) com a taxa média do Banco Central da modalidade no mês da contratação, recalcula as parcelas em Price ou SAC sem tarifas e apura o pago a mais com devolução em dobro, com demonstrativo em PDF.",
+  "url": "https://causify.com.br/",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "description": "15 dias grátis do plano Plus; depois, incluída em todos os planos pagos."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Causify",
+    "url": "https://causify.com.br"
+  }
+}
+  </script>
+
+  <meta name="theme-color" content="#0d3b2e">
+  <link rel="apple-touch-icon" href="/images/causify-logo-transparente.png">
+  <link rel="stylesheet" href="/css/blog.css">
+</head>
+<body>
+
+<nav class="nav" aria-label="Navegação principal">
+  <div class="nav-in">
+    <a class="nav-logo" href="/"><img src="/images/causify-logo-transparente.png" alt="Causify — Gestão Jurídica Inteligente" width="120" height="46"></a>
+    <div class="nav-links">
+      <a href="/#funcionalidades">Funcionalidades</a>
+      <a href="/#planos">Planos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/blog/index.html" aria-current="page">Blog</a>
+    </div>
+    <div class="nav-cta" id="navCta">
+      <a href="/login.html" class="btn btn-ghost">Entrar</a>
+      <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+    </div>
+    <button type="button" class="hamburger" id="btnMenu" aria-label="Abrir menu" aria-controls="menuCelular" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="menuCelular">
+  <a href="/#funcionalidades">Funcionalidades</a>
+  <a href="/#planos">Planos</a>
+  <a href="/#faq">FAQ</a>
+  <a href="/blog/index.html" aria-current="page">Blog</a>
+  <div id="menuCta">
+    <a href="/login.html">Entrar</a>
+    <a href="/register.html" class="btn btn-primary">Começar grátis</a>
+  </div>
+</div>
+
+<article>
+  <header class="post-header">
+    <div class="post-header-in">
+      <nav class="trilha" aria-label="Você está em"><a href="/blog/index.html">Blog</a><span aria-hidden="true">›</span><span>Revisional bancária</span></nav>
+      <h1>Revisional bancária: como provar que os juros são abusivos e quanto o cliente tem a receber</h1>
+      <div class="post-meta">
+        <span><time datetime="2026-11-10T09:00:00-03:00">10 nov 2026</time></span>
+        <span>9 min de leitura</span>
+        <span>Por Equipe Causify</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="post-body">
+
+    <p>"Doutor, eu pago R$ 2.400 por mês num carro de R$ 60 mil e ainda devo quase tudo." Quem atende direito bancário ouve isso toda semana. A pergunta que decide se vale entrar com a revisional não é se os juros são altos (quase sempre são), mas se são <strong>abusivos</strong> no sentido que o STJ dá à palavra. E isso só se responde com conta.</p>
+
+    <div class="resumo">
+      <div class="resumo-titulo">Resposta curta</div>
+      <p>Pelo REsp 1.061.530/RS (repetitivo do STJ), juros acima de 12% ao ano não são abusivos por si só: é preciso compará-los com a <strong>taxa média de mercado</strong> divulgada pelo Banco Central para a mesma modalidade, no mês da contratação. Muitos tribunais consideram abusiva a taxa que passa de uma vez e meia essa média. Constatada a abusividade, as parcelas são recalculadas pela taxa média (sem tarifas indevidas), a diferença paga é restituída, em dobro para cobranças após 30/03/2021 (EAREsp 676.608/RS), e o saldo devedor é reduzido. A petição precisa indicar o valor incontroverso (art. 330, §2º, do CPC).</p>
+    </div>
+
+    <details class="sumario" open>
+      <summary>Neste guia</summary>
+      <ol>
+        <li><a href="#criterio">O critério do STJ para juros abusivos</a></li>
+        <li><a href="#taxa-media">Onde está a taxa média (e por que o mês importa)</a></li>
+        <li><a href="#taxa-implicita">Quando o contrato não mostra a taxa</a></li>
+        <li><a href="#recalculo">O recálculo e o que entra na restituição</a></li>
+        <li><a href="#exemplo">Exemplo: financiamento de veículo</a></li>
+        <li><a href="#incontroverso">O valor incontroverso do art. 330</a></li>
+        <li><a href="#perguntas-frequentes">Perguntas frequentes</a></li>
+      </ol>
+    </details>
+
+    <h2 id="criterio">O critério do STJ para juros abusivos</h2>
+    <p>O ponto de partida é o REsp 1.061.530/RS, julgado em 2008 como recurso repetitivo. Dele saem as premissas que guiam a revisional até hoje:</p>
+    <ul>
+      <li>instituições financeiras não se sujeitam ao limite de 12% ao ano da Lei de Usura;</li>
+      <li>a taxa acima de 12% ao ano, sozinha, não prova abuso;</li>
+      <li>a revisão é admitida em situações excepcionais, quando a abusividade fica cabalmente demonstrada diante das peculiaridades do caso;</li>
+      <li>a referência para medir isso é a taxa média de mercado do Banco Central.</li>
+    </ul>
+    <p>Quanto acima da média é "abusivo"? A lei não diz. O próprio acórdão do repetitivo menciona precedentes que consideraram abusivas taxas de uma vez e meia, o dobro ou o triplo da média. Na prática, <strong>1,5 vez a média</strong> virou a régua mais usada nas petições e em boa parte dos tribunais estaduais, mas há câmaras que exigem mais. A calculadora mostra a relação exata (por exemplo, 1,54 vez) para você argumentar com os precedentes da sua corte.</p>
+
+    <h2 id="taxa-media">Onde está a taxa média (e por que o mês importa)</h2>
+    <p>O Banco Central publica no SGS (Sistema Gerenciador de Séries Temporais) uma série de taxa média por modalidade: crédito pessoal não consignado, consignado do INSS, consignado de servidores, consignado privado, financiamento de veículos, cheque especial e outras. É uma série mensal.</p>
+    <p>Dois cuidados:</p>
+    <ol>
+      <li><strong>A modalidade certa.</strong> Comparar um financiamento de veículo com a média do crédito pessoal infla a diferença e é a primeira coisa que o banco contesta.</li>
+      <li><strong>O mês da contratação.</strong> A taxa média de hoje não serve para um contrato de 2023. A Selic subiu e desceu muito nesse tempo, e a média acompanha.</li>
+    </ol>
+    <p>A calculadora do Causify busca essas séries no Banco Central e escolhe sozinha o mês da contratação.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-revisional-bancaria-formulario.png" alt="Formulário da calculadora revisional do Causify: financiamento de veículos de R$ 60.000 em 48 parcelas a 3,2% ao mês, 30 parcelas pagas e R$ 1.800 de tarifas a excluir" width="1280" height="800" loading="lazy" decoding="async">
+      <figcaption>Modalidade, datas, valor financiado, prazo e taxa. Do lado direito, as parcelas já pagas, as tarifas a excluir e a devolução em dobro.</figcaption>
+    </figure>
+
+    <h2 id="taxa-implicita">Quando o contrato não mostra a taxa</h2>
+    <p>Às vezes o cliente só tem o carnê, ou o contrato traz uma taxa que não fecha com a parcela. Nesses casos, a taxa real pode ser extraída da própria parcela: com valor financiado, prazo e parcela na tabela Price, existe uma única taxa que fecha a conta. Basta preencher o campo "ou parcela" em vez da taxa.</p>
+    <p>Essa diferença entre a taxa anunciada e a implícita costuma esconder tarifas e seguros embutidos no valor financiado, que é o próximo assunto.</p>
+
+    <h2 id="recalculo">O recálculo e o que entra na restituição</h2>
+    <p>Reconhecida a abusividade, o contrato é refeito:</p>
+    <ul>
+      <li><strong>Taxa do recálculo</strong>: a média do Banco Central do mês, ou outra que você informar.</li>
+      <li><strong>Tarifas excluídas</strong>: o valor financiado perde as tarifas que você contestar. Alguns parâmetros do STJ: TAC e TEC só valem em contratos até 30/04/2008 (Súmulas 565 e 566); o seguro prestamista sem liberdade de escolha da seguradora é venda casada (Tema 972); tarifas de registro e avaliação do bem precisam de serviço efetivamente prestado (Tema 958).</li>
+      <li><strong>Mesmo sistema de amortização</strong>: Price com Price, SAC com SAC.</li>
+    </ul>
+    <p>A diferença entre a parcela contratada e a revisada, em cada parcela paga, é o indébito. Ele é corrigido e recebe juros. Para cobranças posteriores a 30/03/2021, a devolução em dobro do art. 42 do CDC independe de má-fé, conforme a modulação do EAREsp 676.608/RS. As parcelas que ainda vão vencer simplesmente ficam menores, e o saldo devedor cai.</p>
+    <p>Sobre capitalização: ela não é ilegal se estiver pactuada. A Súmula 539 do STJ a admite nos contratos posteriores a 31/03/2000, e a Súmula 541 diz que basta a taxa anual ser maior que doze vezes a mensal. Brigar contra a capitalização prevista no contrato costuma ser perda de tempo; brigar contra a taxa, não.</p>
+
+    <div class="cta-inline">
+      <p><strong>Antes de aceitar o caso, faça a conta.</strong> Em dois minutos você sabe se a taxa passa da média e quanto o cliente pode receber.</p>
+      <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-revisional-juros-abusivos-topo" class="btn btn-primary">Testar grátis</a>
+    </div>
+
+    <h2 id="exemplo">Exemplo: financiamento de veículo</h2>
+    <p>Contrato de financiamento de veículo assinado em 15/05/2023: <strong>R$ 60.000,00</strong> em 48 parcelas pela Price, taxa de <strong>3,20% ao mês</strong> (45,93% ao ano), primeira parcela em 15/06/2023. O cliente pagou 30 parcelas e quer discutir R$ 1.800,00 de tarifas embutidas. Cálculo em 10/11/2026.</p>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-revisional-bancaria-uso.gif" alt="Animação da calculadora revisional do Causify: escolha da modalidade, preenchimento do contrato e resultado indicando taxa abusiva" width="720" height="554" loading="lazy" decoding="async">
+      <figcaption>Preenchimento do contrato até o resultado: a calculadora compara a taxa com a média de 05/2023 e recalcula as 48 parcelas.</figcaption>
+    </figure>
+
+    <p>A taxa média do Banco Central para financiamento de veículos em maio de 2023 foi de 2,08% ao mês. A contratada é <strong>1,54 vez</strong> essa média, acima do limite de 1,5 (3,12% ao mês). Recalculando pela média e sem as tarifas:</p>
+    <ul>
+      <li>Parcela contratada: R$ 2.463,06. Parcela revisada: R$ 1.928,45. Diferença: R$ 534,61 por mês.</li>
+      <li>Pago a mais nas 30 parcelas: <strong>R$ 16.038,30</strong></li>
+      <li>A restituir, em dobro e atualizado: <strong>R$ 44.584,22</strong></li>
+      <li>Redução nas 18 parcelas que faltam: R$ 9.622,98</li>
+      <li>Saldo devedor revisado: R$ 28.709,00</li>
+    </ul>
+
+    <figure class="post-fig">
+      <img src="/images/blog/calculadoras/calculadora-revisional-bancaria-resultado.png" alt="Resultado da calculadora revisional: taxa abusiva de 3,20% ao mês, 1,54 vez a média de 2,08% do Banco Central, com R$ 44.584,22 a restituir e tabela parcela por parcela" width="1024" height="844" loading="lazy" decoding="async">
+      <figcaption>O quadro vermelho resume o argumento central da inicial. A tabela mostra cada parcela contratada e revisada, a situação (paga, em dobro ou a vencer) e a atualização.</figcaption>
+    </figure>
+
+    <p>Repare que o caso está no limite: 1,54 vez a média. Numa câmara que só reconhece abuso a partir do dobro, a tese não passa. É por isso que vale olhar o número antes de prometer qualquer coisa ao cliente.</p>
+
+    <div class="cta-box">
+      <h3>Revisional com a taxa média certa, sem caçar série no SGS</h3>
+      <p>Seis modalidades com as taxas médias do Banco Central atualizadas sozinhas, recálculo em Price ou SAC, tarifas excluídas e indébito em dobro. Demonstrativo em PDF para a inicial.</p>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-revisional-juros-abusivos-meio" class="btn btn-primary">Criar conta e testar 15 dias grátis</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos</a>
+      </div>
+    </div>
+
+    <h2 id="incontroverso">O valor incontroverso do art. 330</h2>
+    <p>O CPC trata a revisional de contrato bancário de forma específica: a inicial precisa discriminar as obrigações que o autor quer discutir e <strong>quantificar o valor incontroverso</strong>, sob pena de inépcia (art. 330, §2º). E esse valor continua sendo pago no tempo e modo contratados (§3º).</p>
+    <p>Na prática, o valor incontroverso é a parcela revisada. No exemplo, R$ 1.928,45. É o número que o cliente continua pagando enquanto o processo corre, e o que você pode pedir para depositar em juízo. Sem ele, a inicial volta.</p>
+
+    <h2 id="perguntas-frequentes">Perguntas frequentes</h2>
+
+    <h3>Juros acima de 12% ao ano são abusivos?</h3>
+    <p>Não por si só. No REsp 1.061.530/RS, julgado como repetitivo, o STJ fixou que a taxa acima de 12% ao ano não indica abusividade sozinha. É preciso demonstrar, caso a caso, que ela se distancia muito da média de mercado.</p>
+
+    <h3>Quantas vezes acima da média a taxa precisa estar para ser abusiva?</h3>
+    <p>A lei não diz. Muitos julgados tratam como abusiva a taxa uma vez e meia acima da média do Banco Central para a mesma modalidade e mês; outros só reconhecem com o dobro ou o triplo. O melhor é mostrar a relação exata e os precedentes do seu tribunal.</p>
+
+    <h3>Onde encontrar a taxa média de juros do Banco Central?</h3>
+    <p>No Sistema Gerenciador de Séries Temporais (SGS) do Banco Central, com uma série por modalidade de crédito e um valor por mês. A calculadora do Causify busca essas séries sozinha e usa o mês da contratação.</p>
+
+    <h3>A devolução do que foi pago a mais é em dobro?</h3>
+    <p>Para cobranças feitas depois de 30/03/2021, a devolução em dobro (art. 42, parágrafo único, do CDC) independe de má-fé quando a cobrança contraria a boa-fé objetiva, conforme o EAREsp 676.608/RS da Corte Especial do STJ. Antes dessa data, em regra a devolução é simples, salvo má-fé comprovada.</p>
+
+    <h3>A petição da revisional precisa indicar o valor incontroverso?</h3>
+    <p>Sim. O art. 330, §2º, do CPC exige que o autor discrimine as obrigações que quer discutir e quantifique o valor incontroverso, sob pena de inépcia. Esse valor continua sendo pago no tempo e modo contratados (§3º).</p>
+
+    <h3>Capitalização de juros é ilegal?</h3>
+    <p>Não, se estiver pactuada. A Súmula 539 do STJ admite a capitalização com periodicidade inferior à anual nos contratos bancários celebrados a partir de 31/03/2000, desde que expressamente pactuada, e a Súmula 541 considera suficiente a previsão de taxa anual superior ao duodécuplo da mensal.</p>
+
+    <h2>Para fechar</h2>
+    <p>A revisional bem-sucedida começa na triagem: modalidade certa, mês certo, relação com a média e tarifas que realmente podem ser contestadas. Com isso em mãos, a inicial praticamente se escreve. Para os casos de aposentados com desconto de cartão no benefício, a lógica é parecida, mas com outra conta: veja o guia de <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC</a>. E quando o problema não é um contrato, mas o conjunto das dívidas, o caminho é o <a href="/blog/superendividamento-plano-de-pagamento.html">superendividamento</a>.</p>
+
+    <div class="cta-box">
+      <h3>As calculadoras jurídicas do Causify</h3>
+      <p>Sete calculadoras com índices do Banco Central atualizados sozinhos e demonstrativo em PDF, no mesmo sistema em que você controla processos, prazos e honorários.</p>
+      <div class="calc-lista">
+        <a href="/blog/calculo-pensao-alimenticia-atrasada.html">Pensão alimentícia<span>Débito em atraso e rito da prisão</span></a>
+        <a href="/blog/calculo-rescisao-trabalhista.html">Trabalhista<span>Rescisão, horas extras e reflexos</span></a>
+        <a href="/blog/calculo-fgts-nao-depositado.html">FGTS<span>Depósitos não feitos e multa de 40%</span></a>
+        <a href="/blog/calculo-aluguel-atrasado-e-reajuste.html">Aluguel<span>Reajuste, débito e multa rescisória</span></a>
+        <a href="/blog/calculo-revisional-juros-abusivos.html" aria-current="page">Revisional bancária<span>Juros × taxa média do BC</span></a>
+        <a href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html">RMC e RCC<span>Cartão consignado do INSS</span></a>
+        <a href="/blog/superendividamento-plano-de-pagamento.html">Superendividamento<span>Plano da Lei 14.181/2021</span></a>
+      </div>
+      <div class="cta-acoes">
+        <a href="/register.html?utm_source=blog&amp;utm_medium=artigo&amp;utm_campaign=calculadoras&amp;utm_content=calculo-revisional-juros-abusivos-final" class="btn btn-primary">Testar grátis por 15 dias</a>
+        <a href="/#planos" class="btn btn-claro">Ver planos e assinar</a>
+      </div>
+      <span class="cta-nota">A conta nova começa com 15 dias do plano Plus, sem cartão. As calculadoras ficam em todos os planos pagos.</span>
+    </div>
+
+  </div>
+</article>
+
+<aside class="related">
+  <h3>Continue lendo</h3>
+  <div class="related-list">
+    <a class="related-item" href="/blog/calculo-aluguel-atrasado-e-reajuste.html"><strong>Aluguel atrasado e reajuste: como calcular o débito para cobrança ou despejo</strong><span>Reajuste pelo IGP-M ou IPCA, débito para cobrança ou despejo e multa por devolução antecipada, num exemplo completo.</span></a>
+    <a class="related-item" href="/blog/calculo-rmc-rcc-cartao-consignado-inss.html"><strong>RMC e RCC: como calcular quanto o aposentado tem a receber do cartão consignado</strong><span>O saque do cartão tratado como consignado comum: quando a dívida teria acabado e quanto foi descontado a mais.</span></a>
+    <a class="related-item" href="/blog/superendividamento-plano-de-pagamento.html"><strong>Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021</strong><span>Mínimo existencial, capacidade de pagamento e rateio entre credores em até 60 meses, com um exemplo de três dívidas.</span></a>
+  </div>
+</aside>
+
+<footer>
+  <p>⚖️ <a href="/">Causify</a> &nbsp;·&nbsp; <a href="/blog/index.html">Blog</a> &nbsp;·&nbsp; <a href="/login.html">Entrar</a> &nbsp;·&nbsp; <a href="/register.html">Cadastrar</a> &nbsp;·&nbsp; <a href="/termos.html">Termos</a> &nbsp;·&nbsp; <a href="/privacidade.html">Privacidade</a></p>
+  <p class="copy">© Causify. Todos os direitos reservados.</p>
+</footer>
+
+<script type="module" src="/js/guia-publico.js"></script>
+
+</body>
+</html>
