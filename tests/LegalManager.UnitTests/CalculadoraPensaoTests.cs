@@ -455,12 +455,12 @@ public class IndicesCorrecaoJobTests
     {
         var sm = url.Contains("sgs.1619/");
         if (url.Contains("ultimos/12"))
-            return sm ? """[{"data":"01/02/2000","valor":"151.00"}]"""
-                      : $$"""[{"data":"01/03/2000","valor":"0.30"},{"data":"01/02/2000","valor":"{{valorFev}}"}]""";
-        if (!url.Contains("dataInicial=01/01/2000")) return "[]";
+            return sm ? """[{"data":"01/02/1999","valor":"151.00"}]"""
+                      : $$"""[{"data":"01/03/1999","valor":"0.30"},{"data":"01/02/1999","valor":"{{valorFev}}"}]""";
+        if (!url.Contains($"dataInicial=01/01/{IndicesCorrecaoJob.AnoInicioHistorico}")) return "[]";
         // Fora de ordem, como a série da Selic vem do BCB.
-        return sm ? """[{"data":"01/02/2000","valor":"151.00"},{"data":"01/01/2000","valor":"136.00"}]"""
-                  : """[{"data":"01/02/2000","valor":"0.20"},{"data":"01/01/2000","valor":"0.61"}]""";
+        return sm ? """[{"data":"01/02/1999","valor":"151.00"},{"data":"01/01/1999","valor":"136.00"}]"""
+                  : """[{"data":"01/02/1999","valor":"0.20"},{"data":"01/01/1999","valor":"0.61"}]""";
     }
 
     [Fact]
@@ -478,7 +478,7 @@ public class IndicesCorrecaoJobTests
         Assert.All(handler.Urls, u => Assert.Contains("dataInicial=", u));
         foreach (var (_, tipo) in IndicesCorrecaoJob.Series)
         {
-            var jan = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == tipo && i.Ano == 2000 && i.Mes == 1);
+            var jan = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == tipo && i.Ano == 1999 && i.Mes == 1);
             Assert.Equal(0.0061m, jan.Valor);
         }
         Assert.Equal(151m, (await db.SalariosMinimos.SingleAsync(s => s.Mes == 2)).Valor);
@@ -487,7 +487,7 @@ public class IndicesCorrecaoJobTests
         var incremental = new BcbFake(u => Responder(u, valorFev: "0.25"));
         await Job(db, incremental).ExecutarAsync();
         Assert.All(incremental.Urls, u => Assert.Contains("ultimos/12", u));
-        var fev = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == TipoIndice.INPC && i.Ano == 2000 && i.Mes == 2);
+        var fev = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == TipoIndice.INPC && i.Ano == 1999 && i.Mes == 2);
         Assert.Equal(0.0025m, fev.Valor); // revisão regravada
         Assert.True(await db.IndicesCorrecaoMonetaria.AnyAsync(i => i.Tipo == TipoIndice.SELIC && i.Mes == 3));
         Assert.Equal(2, await db.SalariosMinimos.CountAsync());
@@ -510,7 +510,7 @@ public class IndicesCorrecaoJobTests
     {
         var db = Db();
         foreach (var (_, tipo) in IndicesCorrecaoJob.Series)
-            db.IndicesCorrecaoMonetaria.Add(new IndiceCorrecaoMonetaria { Id = Guid.NewGuid(), Tipo = tipo, Ano = 2000, Mes = 1, Fonte = "BCB" });
+            db.IndicesCorrecaoMonetaria.Add(new IndiceCorrecaoMonetaria { Id = Guid.NewGuid(), Tipo = tipo, Ano = 1999, Mes = 1, Fonte = "BCB" });
         await db.SaveChangesAsync();
         Assert.True(await IndicesCorrecaoJob.PrecisaCargaHistoricaAsync(db));
     }

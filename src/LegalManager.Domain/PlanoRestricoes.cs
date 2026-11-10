@@ -45,6 +45,8 @@ public static class PlanoRestricoes
     public static bool PermiteCalculadoraPrazos(PlanoTipo plano) => plano != PlanoTipo.Free;
     // Calculadora de pensão alimentícia (família): todos os planos pagos.
     public static bool PermiteCalculadoraPensao(PlanoTipo plano) => plano != PlanoTipo.Free;
+    // Calculadoras trabalhista e de FGTS: todos os planos pagos.
+    public static bool PermiteCalculadorasTrabalhistas(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteBuscaExternaProcesso(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermitePortalCliente(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteCapturacaoPublicacoes(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;

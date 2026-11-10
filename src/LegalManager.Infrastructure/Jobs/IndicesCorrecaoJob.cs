@@ -17,8 +17,8 @@ namespace LegalManager.Infrastructure.Jobs;
 /// </summary>
 public class IndicesCorrecaoJob
 {
-    /// <summary>Primeiro ano guardado: cobre execuções de alimentos e correções antigas.</summary>
-    public const int AnoInicioHistorico = 2000;
+    /// <summary>Primeiro ano guardado: cobre a revisão do FGTS (desde jan/1999), execuções de alimentos e correções antigas.</summary>
+    public const int AnoInicioHistorico = 1999;
 
     public const int SerieSalarioMinimo = 1619;
 
@@ -29,6 +29,7 @@ public class IndicesCorrecaoJob
         (10764, TipoIndice.TJSP), // IPCA-E — base da Tabela Prática TJSP desde jan/2021
         (188, TipoIndice.INPC),
         (4390, TipoIndice.SELIC), // Selic acumulada no mês (% a.m.) — taxa legal da Lei 14.905/2024
+        (7811, TipoIndice.TR),    // TR do 1º dia do mês (% a.m.) — FGTS e juros trabalhistas pré-judiciais (art. 39 da Lei 8.177)
     ];
 
     private const string Fonte = "BCB";

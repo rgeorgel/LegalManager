@@ -94,12 +94,20 @@ async function refreshTokenIfNeeded() {
 
 /**
  * Baixa um arquivo da API (CSV, PDF...) com o token da sessão, renovando-o se preciso.
+ * `options.method`/`options.body` para gerar o arquivo por POST (o body é serializado em JSON).
  * Retorna { blob, nomeArquivo } — o nome vem do Content-Disposition do servidor.
  * Em erro, lança Error com a mensagem do backend e a propriedade `status` (ex.: 402 = plano).
  */
-export async function apiDownload(path) {
+export async function apiDownload(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const body = options.body == null || typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
   const doFetch = () => fetch(`${API_BASE}${path}`, {
-    headers: getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}
+    method,
+    body,
+    headers: {
+      ...(body != null ? { 'Content-Type': 'application/json' } : {}),
+      ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}),
+    },
   });
 
   let res = await doFetch();
@@ -119,14 +127,14 @@ export async function apiDownload(path) {
     try { msg = (await res.json()).message || ''; } catch {}
     const err = new Error(msg || `HTTP ${res.status}`);
     err.status = res.status;
-    trackApiCall('api', 'GET', path, { ok: false, error: err, status: res.status });
+    trackApiCall('api', method, path, { ok: false, error: err, status: res.status });
     throw err;
   }
 
   const disposition = res.headers.get('content-disposition') || '';
   const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition) || /filename="?([^";]+)"?/i.exec(disposition);
   const nomeArquivo = match ? decodeURIComponent(match[1]) : 'download';
-  trackApiCall('api', 'GET', path, { ok: true });
+  trackApiCall('api', method, path, { ok: true });
   return { blob: await res.blob(), nomeArquivo };
 }
 

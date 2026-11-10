@@ -214,7 +214,7 @@
   </script>
 <!-- SEO -->
   <meta name="description" content="Causify é o software de gestão jurídica para advogados brasileiros. Controle processos, prazos processuais, clientes, honorários e timesheet em um só lugar. Plano Free para sempre.">
-  <meta name="keywords" content="software de gestão jurídica, software para advogado, gestão de escritório de advocacia, controle de processos jurídicos, calculadora de prazos processuais, calculadora de honorários OAB, calculadora de pensão alimentícia, cálculo de pensão atrasada, CRM para advogados, sistema jurídico, software jurídico brasileiro, portal do cliente advogado">
+  <meta name="keywords" content="software de gestão jurídica, software para advogado, gestão de escritório de advocacia, controle de processos jurídicos, calculadora de prazos processuais, calculadora de honorários OAB, calculadora de pensão alimentícia, cálculo de pensão atrasada, calculadora trabalhista, cálculo de rescisão, calculadora de FGTS, CRM para advogados, sistema jurídico, software jurídico brasileiro, portal do cliente advogado">
   <meta name="author" content="Causify">
   <meta name="robots" content="index, follow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -320,7 +320,7 @@
     "operatingSystem": "Web (Chrome, Firefox, Safari, Edge)",
     "applicationCategory": "BusinessApplication",
     "applicationSubCategory": "Legal Practice Management Software",
-    "description": "Software de gestão jurídica em nuvem para advogados brasileiros. Inclui gestão de processos, controle de prazos processuais, calculadoras de honorários OAB e de pensão alimentícia, timesheet, tarefas Kanban, controle financeiro, portal do cliente e relatórios.",
+    "description": "Software de gestão jurídica em nuvem para advogados brasileiros. Inclui gestão de processos, controle de prazos processuais, calculadoras de honorários OAB, pensão alimentícia, trabalhista e FGTS, timesheet, tarefas Kanban, controle financeiro, portal do cliente e relatórios.",
     "url": "https://causify.com.br",
     "screenshot": "https://causify.com.br/images/causify-og.png",
     "softwareVersion": "2.0",
@@ -338,6 +338,8 @@
       "Controle de prazos processuais com dias úteis e feriados",
       "Calculadora de honorários com tabelas OAB",
       "Calculadora de pensão alimentícia com correção, juros e rito da prisão",
+      "Calculadora trabalhista: verbas rescisórias, horas extras e reflexos com atualização pela ADC 58",
+      "Calculadora de FGTS: depósitos não recolhidos, multa de 40% e revisão TR × INPC",
       "Timesheet e timer por processo",
       "Gestão de clientes e contatos",
       "Tarefas e agenda com visão Kanban",
@@ -423,6 +425,14 @@
       },
       {
         "@type": "Question",
+        "name": "O Causify tem calculadora trabalhista e de FGTS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim. A calculadora trabalhista do Causify calcula as verbas rescisórias de todos os tipos de rescisão (sem justa causa, pedido de demissão, justa causa, acordo do art. 484-A, rescisão indireta e término de contrato), com aviso prévio proporcional, e os pedidos da reclamação: horas extras, adicional noturno, insalubridade e periculosidade com DSR e reflexos, e as multas dos arts. 467 e 477 da CLT. A de FGTS calcula os depósitos não recolhidos mês a mês com a multa de 40% ou 20% e simula a revisão TR × INPC. Os valores são atualizados pela ADC 58 do STF e pela Lei 14.905/2024, e o demonstrativo sai em PDF. Disponível em todos os planos pagos."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "O cliente consegue acompanhar o processo pelo Causify?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -497,7 +507,7 @@
     "@context": "https://schema.org",
     "@type": "Product",
     "name": "Causify Plus",
-    "description": "Plano Plus do Causify: 1 usuário, 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais e calculadora de pensão alimentícia.",
+    "description": "Plano Plus do Causify: 1 usuário, 20 processos monitorados, portal do cliente, controle financeiro, Kanban, calculadora de honorários OAB, calculadora de prazos processuais e calculadoras de pensão alimentícia, trabalhista e de FGTS.",
     "brand": { "@type": "Brand", "name": "Causify" },
     "sku": "CAUSIFY-PLUS",
     "offers": {
@@ -1449,8 +1459,8 @@
 
     <div class="feature-card feature-destaque">
       <div class="feature-icon icon-green">👨‍👧</div>
-      <h3>Calculadora de Pensão Alimentícia <span class="feature-novo">Novo</span></h3>
-      <p>Atualize pensão em atraso com INPC, IPCA-E ou IGP-M, juros, multa e honorários. Salário mínimo e índices do Banco Central atualizados automaticamente, rito da prisão separado e demonstrativo em PDF.</p>
+      <h3>Calculadoras de Pensão, Trabalhista e FGTS <span class="feature-novo">Novo</span></h3>
+      <p><strong>Pensão alimentícia:</strong> débito em atraso com correção, juros, multa e rito da prisão separado. <strong>Trabalhista:</strong> verbas rescisórias de todos os tipos de rescisão, horas extras, adicionais com DSR e reflexos e multas dos arts. 467 e 477. <strong>FGTS:</strong> depósitos não recolhidos com multa de 40% e simulação da revisão TR × INPC. Atualização pela ADC 58 e Lei 14.905/2024, índices e salário mínimo do Banco Central atualizados automaticamente e demonstrativo em PDF.</p>
     </div>
 
   </div>
@@ -1497,6 +1507,7 @@
         <li><span class="cross">✗</span> Calculadora de honorários</li>
         <li><span class="cross">✗</span> Calculadora de prazos</li>
         <li><span class="cross">✗</span> Calculadora de pensão alimentícia</li>
+        <li><span class="cross">✗</span> Calculadoras trabalhista e de FGTS</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="cross">✗</span> Controle financeiro por processo</li>
@@ -1540,6 +1551,7 @@
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
         <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
+        <li><span class="check">✓</span> Calculadoras trabalhista e de FGTS</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -1582,6 +1594,7 @@
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
         <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
+        <li><span class="check">✓</span> Calculadoras trabalhista e de FGTS</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -1623,6 +1636,7 @@
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
         <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
+        <li><span class="check">✓</span> Calculadoras trabalhista e de FGTS</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -1722,6 +1736,11 @@
     <details class="faq-item">
       <summary>Tem calculadora de pensão alimentícia?</summary>
       <div class="faq-answer">Sim. A calculadora de pensão do Causify atualiza débitos de alimentos em atraso com INPC, IPCA-E, IPCA ou IGP-M, juros de mora de 1% ao mês ou pela taxa legal (Selic − IPCA, Lei 14.905/2024), multa e honorários do art. 523 do CPC, e separa as três últimas parcelas para o rito da prisão (Súmula 309 do STJ). Pensões fixadas em salário mínimo usam o valor vigente em cada mês. Os índices e o salário mínimo são atualizados automaticamente pelo Banco Central, e o demonstrativo sai em PDF. Disponível em todos os planos pagos.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Tem calculadora trabalhista e de FGTS?</summary>
+      <div class="faq-answer">Sim. A calculadora trabalhista do Causify calcula as verbas rescisórias de todos os tipos de rescisão (sem justa causa, pedido de demissão, justa causa, acordo do art. 484-A, rescisão indireta e término de contrato), com aviso prévio proporcional, e os pedidos da reclamação: horas extras, adicional noturno, insalubridade e periculosidade com DSR e reflexos, e as multas dos arts. 467 e 477 da CLT. A de FGTS calcula os depósitos não recolhidos mês a mês com a multa de 40% ou 20% e simula a revisão TR × INPC. Os valores são atualizados pela ADC 58 do STF e pela Lei 14.905/2024, e o demonstrativo sai em PDF. Disponível em todos os planos pagos.</div>
     </details>
 
     <details class="faq-item">

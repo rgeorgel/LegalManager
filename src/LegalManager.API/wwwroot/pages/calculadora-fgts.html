@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de FGTS</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de FGTS</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">🏦</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Calcule o FGTS não depositado mês a mês com a multa de 40% ou 20% e a atualização trabalhista (ADC 58 e Lei 14.905/2024), ou simule a revisão TR × INPC desde 1999. Índices atualizados automaticamente e demonstrativo em PDF.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="fgFonte">Carregando índices do Banco Central…</p>
+
+      <div class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="devido" role="tab" aria-selected="true">FGTS devido</button>
+        <button class="tab-btn" data-tab="revisao" role="tab" aria-selected="false">Revisão TR × INPC (ADI 5090)</button>
+      </div>
+
+      <!-- ── FGTS devido ─────────────────────────────────────────────── -->
+      <div class="tab-content active" id="tab-devido">
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Contrato</div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="fgAdmissao">Admissão</label><input type="date" id="fgAdmissao"></div>
+                <div class="pc-field"><label for="fgSaida">Saída</label><input type="date" id="fgSaida"></div>
+              </div>
+              <div class="pc-field">
+                <label for="fgSalario">Remuneração mensal (R$)</label>
+                <input type="number" id="fgSalario" min="0" step="0.01" placeholder="Ex: 3.000,00">
+                <div class="pc-hint">Salário e parcelas habituais que integram o FGTS (horas extras, adicionais, comissões). Ajuste mês a mês na tabela.</div>
+              </div>
+              <label class="pc-check"><input type="checkbox" id="fg13" checked> <span>Incluir o 13º salário (por avos)</span></label>
+              <div class="pc-field">
+                <label for="fgAviso">Aviso prévio indenizado (dias) <span class="pc-opcional">— 0 se não houver</span></label>
+                <input type="number" id="fgAviso" min="0" max="90" value="0" style="max-width:110px">
+                <div class="pc-hint" id="fgAvisoHint">FGTS incide sobre o aviso indenizado (Súmula 305 do TST).</div>
+              </div>
+              <button class="btn btn-secondary" id="fgGerar" style="width:100%">Gerar competências</button>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Multa rescisória</div>
+              <div class="pc-field">
+                <label for="fgMulta">Rescisão</label>
+                <select id="fgMulta">
+                  <option value="40">Sem justa causa ou rescisão indireta — 40%</option>
+                  <option value="20">Acordo (art. 484-A) — 20%</option>
+                  <option value="0">Sem multa (pedido de demissão, justa causa…)</option>
+                </select>
+              </div>
+              <div class="pc-field">
+                <label for="fgSaldo">Saldo para fins rescisórios (R$) <span class="pc-opcional">— do extrato</span></label>
+                <input type="number" id="fgSaldo" min="0" step="0.01">
+                <div class="pc-hint">Vazio: a multa usa a soma dos depósitos devidos, sem o rendimento da conta.</div>
+              </div>
+              <div class="pc-field">
+                <label for="fgMultaPaga">Multa já paga (R$) <span class="pc-opcional">— opcional</span></label>
+                <input type="number" id="fgMultaPaga" min="0" step="0.01">
+              </div>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Atualização</div>
+              <div class="pc-field"><label for="fgData">Data do cálculo</label><input type="date" id="fgData"></div>
+              <div class="pc-field">
+                <label for="fgCriterio">Critério</label>
+                <select id="fgCriterio">
+                  <option value="Adc58">ADC 58 e Lei 14.905/2024 (TST)</option>
+                  <option value="Nenhum">Sem atualização</option>
+                </select>
+                <div class="pc-hint">IPCA-E + TR até o ajuizamento; depois Selic até ago/2024 e IPCA + taxa legal desde set/2024.</div>
+              </div>
+              <div class="pc-field">
+                <label for="fgAjuizamento">Data do ajuizamento <span class="pc-opcional">— opcional</span></label>
+                <input type="date" id="fgAjuizamento">
+              </div>
+              <label class="pc-check"><input type="checkbox" id="fgPrescricao"> <span>Só os últimos 5 anos antes do ajuizamento (prescrição quinquenal, STF ARE 709.212)</span></label>
+
+              <details>
+                <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+                <div style="margin-top:12px">
+                  <div class="pc-field"><label for="fgProcesso">Processo</label><input type="text" id="fgProcesso" maxlength="60"></div>
+                  <div class="pc-field"><label for="fgReclamante">Reclamante</label><input type="text" id="fgReclamante" maxlength="200"></div>
+                  <div class="pc-field"><label for="fgReclamada">Reclamada</label><input type="text" id="fgReclamada" maxlength="200"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-head">
+                <div class="pc-card-title">Competências</div>
+                <span class="pc-hint" id="fgResumo" style="margin:0"></span>
+              </div>
+              <div id="fgVazio" class="pc-vazio">Informe admissão, saída e remuneração e clique em <strong>Gerar competências</strong>.<br>Depois ajuste a remuneração de cada mês e o que foi depositado (veja no extrato do FGTS).</div>
+              <div id="fgTabelaWrap" style="display:none">
+                <div class="pc-mini-acoes">
+                  <button type="button" id="fgNadaDepositado">Nada foi depositado</button>
+                  <button type="button" id="fgTudoDepositado">Tudo depositado (depois zere os meses em falta)</button>
+                </div>
+                <div class="pc-scroll">
+                  <table class="pc-tabela">
+                    <thead><tr><th>Competência</th><th>Descrição</th><th class="num">Remuneração (R$)</th><th class="num">Depositado (R$)</th><th></th></tr></thead>
+                    <tbody id="fgBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div style="margin-top:16px"><button class="btn btn-primary" id="fgCalcular" style="width:100%">Calcular FGTS devido</button></div>
+              <div id="fgErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-card" id="fgResultado" style="display:none;margin-top:20px">
+          <div class="pc-card-head">
+            <div class="pc-card-title">Resultado</div>
+            <div class="pc-acoes">
+              <button class="btn btn-secondary btn-sm" id="fgCopiar">Copiar tabela</button>
+              <button class="btn btn-primary btn-sm" id="fgPdf">Baixar PDF</button>
+            </div>
+          </div>
+          <div class="pc-total" id="fgTotal">—</div>
+          <div class="pc-total-sub" id="fgTotalSub"></div>
+          <div class="pc-stats" id="fgStats"></div>
+          <div class="pc-avisos" id="fgAvisos" style="display:none"></div>
+          <div class="table-wrapper">
+            <table class="pc-tabela">
+              <thead><tr><th>Competência</th><th>Descrição</th><th class="num">Remuneração</th><th class="num">FGTS devido</th><th class="num">Depositado</th><th class="num">Diferença</th><th class="num">Fator</th><th class="num">Juros %</th><th class="num">Juros</th><th class="num">Total</th></tr></thead>
+              <tbody id="fgResBody"></tbody>
+            </table>
+          </div>
+          <p class="pc-nota">FGTS devido = 8% da remuneração de cada competência (inclusive 13º e aviso prévio indenizado), menos o depositado. Cada diferença é exigível no mês seguinte à competência; a multa, 10 dias após a rescisão. Atualização pela convenção de mês cheio, juros simples sobre o valor corrigido. Fontes: Banco Central do Brasil (SGS).</p>
+        </div>
+      </div>
+
+      <!-- ── Revisão (ADI 5090) ──────────────────────────────────────── -->
+      <div class="tab-content" id="tab-revisao">
+        <div class="pc-alerta">
+          <strong>Atenção:</strong> o STF julgou a ADI 5090 em 12/06/2024 e decidiu que a remuneração do FGTS (TR + 3% ao ano + distribuição de lucros) deve garantir ao menos o IPCA — <strong>com efeitos apenas a partir da decisão</strong>, sem pagamento de diferenças passadas. Use esta simulação como estudo ou para casos específicos.
+        </div>
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Período e depósitos</div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="rvInicio">De</label><input type="month" id="rvInicio" value="1999-01"></div>
+                <div class="pc-field"><label for="rvFim">Até</label><input type="month" id="rvFim" value="2013-12"></div>
+              </div>
+              <div class="pc-field">
+                <label for="rvDeposito">Depósito mensal (R$)</label>
+                <input type="number" id="rvDeposito" min="0" step="0.01" placeholder="Ex: 240,00 (8% de R$ 3.000)">
+                <div class="pc-hint">Preenche todos os meses; ajuste depósitos e saques mês a mês conforme o extrato.</div>
+              </div>
+              <div class="pc-field">
+                <label for="rvSaldoInicial">Saldo no início do período (R$)</label>
+                <input type="number" id="rvSaldoInicial" min="0" step="0.01" value="0">
+              </div>
+              <button class="btn btn-secondary" id="rvGerar" style="width:100%">Gerar meses</button>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Comparação</div>
+              <div class="pc-field">
+                <label for="rvIndice">Índice no lugar da TR</label>
+                <select id="rvIndice">
+                  <option value="INPC">INPC (IBGE)</option>
+                  <option value="IPCAE">IPCA-E (IBGE)</option>
+                  <option value="IPCA">IPCA (IBGE)</option>
+                </select>
+              </div>
+              <div class="pc-field">
+                <label for="rvJuros">Juros da conta (% ao ano)</label>
+                <input type="number" id="rvJuros" min="0" max="100" step="0.01" value="3" style="max-width:110px">
+              </div>
+              <div class="pc-field"><label for="rvData">Data do cálculo</label><input type="date" id="rvData"></div>
+              <div class="pc-field"><label for="rvTitular">Titular da conta <span class="pc-opcional">— para o PDF</span></label><input type="text" id="rvTitular" maxlength="200"></div>
+            </div>
+          </div>
+
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-head">
+                <div class="pc-card-title">Extrato</div>
+                <span class="pc-hint" id="rvResumo" style="margin:0"></span>
+              </div>
+              <div id="rvVazio" class="pc-vazio">Escolha o período e clique em <strong>Gerar meses</strong>.</div>
+              <div id="rvTabelaWrap" style="display:none">
+                <div class="pc-scroll">
+                  <table class="pc-tabela">
+                    <thead><tr><th>Competência</th><th class="num">Depósito (R$)</th><th class="num">Saque (R$)</th></tr></thead>
+                    <tbody id="rvBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div style="margin-top:16px"><button class="btn btn-primary" id="rvCalcular" style="width:100%">Calcular revisão</button></div>
+              <div id="rvErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-card" id="rvResultado" style="display:none;margin-top:20px">
+          <div class="pc-card-head">
+            <div class="pc-card-title">Resultado</div>
+            <div class="pc-acoes">
+              <button class="btn btn-secondary btn-sm" id="rvCopiar">Copiar tabela</button>
+              <button class="btn btn-primary btn-sm" id="rvPdf">Baixar PDF</button>
+            </div>
+          </div>
+          <div class="pc-total" id="rvTotal">—</div>
+          <div class="pc-total-sub" id="rvTotalSub"></div>
+          <div class="pc-stats" id="rvStats"></div>
+          <div class="pc-avisos" id="rvAvisos" style="display:none"></div>
+          <div class="table-wrapper pc-scroll">
+            <table class="pc-tabela">
+              <thead><tr><th>Competência</th><th class="num">Depósito</th><th class="num">Saque</th><th class="num">TR %</th><th class="num" id="rvColIndice">Índice %</th><th class="num">Saldo com TR</th><th class="num">Saldo revisado</th><th class="num">Diferença</th></tr></thead>
+              <tbody id="rvResBody"></tbody>
+            </table>
+          </div>
+          <p class="pc-nota">Em cada mês o saldo anterior rende (1 + taxa) × (1 + juros mensais) e depois entram o depósito e o saque do mês. O saldo com TR reproduz a remuneração da conta; o revisado troca a TR pelo índice escolhido. A diferença no fim do período é atualizada pelo mesmo índice + juros até a data do cálculo.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, fmt4, fmt6, pad, fmtData, hojeIso, numero, mesesEntre, stat, htmlFonteIndices, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+
+  let competencias = []; // { ano, mes, tipo, remuneracao, depositado }
+  let movimentos = [];   // { ano, mes, deposito, saque }
+  let ultimoDevido = null, ultimaRevisao = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('fgData').value = hojeIso();
+    $('rvData').value = hojeIso();
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-nav .tab-btn').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn); });
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${btn.dataset.tab}`));
+    }));
+
+    $('fgGerar').addEventListener('click', gerarCompetencias);
+    $('fgNadaDepositado').addEventListener('click', () => { competencias.forEach(c => { c.depositado = 0; }); renderCompetencias(); });
+    $('fgTudoDepositado').addEventListener('click', () => { competencias.forEach(c => { c.depositado = Math.round(c.remuneracao * 8) / 100; }); renderCompetencias(); });
+    $('fgCalcular').addEventListener('click', calcularDevido);
+    $('fgPdf').addEventListener('click', () => pdf('/fgts/devido/pdf', ultimoDevido, $('fgPdf'), 'fgErr'));
+    $('fgCopiar').addEventListener('click', copiarDevido);
+    ['fgAdmissao', 'fgSaida'].forEach(id => $(id).addEventListener('change', sugerirAviso));
+
+    $('rvGerar').addEventListener('click', gerarMovimentos);
+    $('rvCalcular').addEventListener('click', calcularRevisao);
+    $('rvPdf').addEventListener('click', () => pdf('/fgts/revisao/pdf', ultimaRevisao, $('rvPdf'), 'rvErr'));
+    $('rvCopiar').addEventListener('click', copiarRevisao);
+
+    try {
+      const dados = await apiFetch('/trabalhista/indices');
+      $('fgFonte').innerHTML = htmlFonteIndices(dados.indices, dados.salariosMinimos);
+    } catch (err) {
+      $('fgFonte').textContent = err.message || 'Não foi possível carregar os índices.';
+    }
+  }
+
+  const erro = (id, msg) => { $(id).textContent = msg; $(id).style.display = msg ? '' : 'none'; };
+
+  // ── FGTS devido ────────────────────────────────────────────────────
+  function sugerirAviso() {
+    const a = $('fgAdmissao').value, s = $('fgSaida').value;
+    if (!a || !s || s < a) return;
+    const [ya, ma, da] = a.split('-').map(Number), [ys, ms, ds] = s.split('-').map(Number);
+    let anos = ys - ya;
+    if (ms < ma || (ms === ma && ds < da)) anos--;
+    const dias = Math.min(90, 30 + 3 * Math.max(0, anos));
+    $('fgAvisoHint').textContent = `Dispensa sem justa causa: ${dias} dias (${Math.max(0, anos)} anos completos, Lei 12.506/2011). FGTS incide sobre o aviso indenizado (Súmula 305 do TST).`;
+  }
+
+  async function gerarCompetencias() {
+    erro('fgErr', '');
+    const salario = numero($('fgSalario'));
+    if (!$('fgAdmissao').value || !$('fgSaida').value || !salario) { erro('fgErr', 'Informe admissão, saída e remuneração.'); return; }
+    try {
+      const lista = await apiFetch('/fgts/competencias', {
+        method: 'POST',
+        body: JSON.stringify({
+          admissao: $('fgAdmissao').value, saida: $('fgSaida').value, salario,
+          incluir13: $('fg13').checked, diasAvisoIndenizado: parseInt($('fgAviso').value, 10) || 0,
+        }),
+      });
+      competencias = lista.map(c => ({ ...c }));
+      renderCompetencias();
+    } catch (err) {
+      erro('fgErr', err.message || 'Erro ao gerar as competências.');
+    }
+  }
+
+  const rotuloTipo = c => c.tipo === '13' ? `13º salário ${c.ano}` : c.tipo === 'aviso' ? 'Aviso prévio indenizado' : 'Remuneração';
+
+  function renderCompetencias() {
+    const vazio = competencias.length === 0;
+    $('fgVazio').style.display = vazio ? '' : 'none';
+    $('fgTabelaWrap').style.display = vazio ? 'none' : '';
+    $('fgBody').innerHTML = competencias.map((c, i) => `<tr data-i="${i}">
+      <td>${pad(c.mes)}/${c.ano}</td><td>${esc(rotuloTipo(c))}</td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="remuneracao" value="${c.remuneracao}" aria-label="Remuneração ${pad(c.mes)}/${c.ano}"></td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="depositado" value="${c.depositado || ''}" placeholder="0,00" aria-label="Depositado ${pad(c.mes)}/${c.ano}"></td>
+      <td><button type="button" class="pc-remover" title="Remover" aria-label="Remover ${pad(c.mes)}/${c.ano}">×</button></td>
+    </tr>`).join('');
+    $('fgBody').querySelectorAll('tr').forEach(tr => {
+      const c = competencias[Number(tr.dataset.i)];
+      tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { c[inp.dataset.campo] = numero(inp) ?? 0; resumoDevido(); }));
+      tr.querySelector('.pc-remover').addEventListener('click', () => { competencias.splice(competencias.indexOf(c), 1); renderCompetencias(); });
+    });
+    resumoDevido();
+  }
+
+  function resumoDevido() {
+    if (!competencias.length) { $('fgResumo').textContent = ''; return; }
+    const devido = competencias.reduce((s, c) => s + c.remuneracao * 0.08, 0);
+    const dep = competencias.reduce((s, c) => s + (c.depositado || 0), 0);
+    $('fgResumo').textContent = `${competencias.length} competências · FGTS devido ${brl(devido)} · depositado ${brl(dep)}`;
+  }
+
+  function payloadDevido() {
+    const saida = $('fgSaida').value;
+    return {
+      dataCalculo: $('fgData').value,
+      competencias: competencias.map(c => ({ ano: c.ano, mes: c.mes, remuneracao: c.remuneracao || 0, depositado: c.depositado || 0, tipo: c.tipo })),
+      multaPercentual: Number($('fgMulta').value),
+      saldoParaFinsRescisorios: numero($('fgSaldo')),
+      multaJaPaga: numero($('fgMultaPaga')) ?? 0,
+      dataRescisao: saida || null,
+      atualizacao: $('fgCriterio').value,
+      dataAjuizamento: $('fgAjuizamento').value || null,
+      limitarPrescricao: $('fgPrescricao').checked,
+      processo: $('fgProcesso').value.trim() || null,
+      reclamante: $('fgReclamante').value.trim() || null,
+      reclamada: $('fgReclamada').value.trim() || null,
+    };
+  }
+
+  async function calcularDevido() {
+    erro('fgErr', '');
+    if (!competencias.length) { erro('fgErr', 'Gere as competências do contrato primeiro.'); return; }
+    if (!$('fgData').value) { erro('fgErr', 'Informe a data do cálculo.'); return; }
+    const payload = payloadDevido();
+    const btn = $('fgCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/fgts/devido', { method: 'POST', body: JSON.stringify(payload) });
+      ultimoDevido = { payload, r };
+      renderDevido(r);
+      trackEvent('calculadora_fgts_devido', { competencias: payload.competencias.length, multa: payload.multaPercentual, atualizacao: payload.atualizacao });
+    } catch (err) {
+      erro('fgErr', err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular FGTS devido';
+    }
+  }
+
+  function avisos(id, lista) {
+    $(id).style.display = lista.length ? '' : 'none';
+    $(id).innerHTML = `<ul style="margin:0;padding:0">${lista.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+  }
+
+  function renderDevido(r) {
+    $('fgResultado').style.display = '';
+    $('fgTotal').textContent = brl(r.total);
+    $('fgTotalSub').textContent = `Atualizado até ${fmtData(ultimoDevido.payload.dataCalculo)} · ${r.atualizacao}`;
+    $('fgStats').innerHTML = [
+      stat('Diferenças de depósito', brl(r.diferencas)),
+      stat('Diferenças atualizadas', brl(r.diferencasAtualizadas)),
+      stat('Multa rescisória', brl(r.multa)),
+      stat('Multa atualizada', brl(r.multaAtualizada)),
+      stat('Depositado', brl(r.totalDepositado)),
+    ].join('');
+    avisos('fgAvisos', r.avisos);
+    $('fgResBody').innerHTML = r.linhas.map(l => `<tr class="${l.prescrita ? 'pc-prescrita' : ''}">
+      <td>${l.competencia}</td><td>${esc(l.descricao)}${l.prescrita ? ' (prescrita)' : ''}</td>
+      <td class="num">${fmt2.format(l.remuneracao)}</td><td class="num">${fmt2.format(l.devido)}</td>
+      <td class="num">${l.depositado ? fmt2.format(l.depositado) : '—'}</td><td class="num">${fmt2.format(l.diferenca)}</td>
+      <td class="num">${fmt6.format(l.fatorCorrecao)}</td><td class="num">${fmt2.format(l.jurosPercentual)}%</td>
+      <td class="num">${fmt2.format(l.juros)}</td><td class="num"><strong>${fmt2.format(l.total)}</strong></td>
+    </tr>`).join('') + `<tr class="pc-subtotal"><td colspan="5">Multa rescisória (${fmt2.format(ultimoDevido.payload.multaPercentual)}% sobre ${brl(r.baseMulta)})</td>
+      <td class="num">${fmt2.format(r.multa)}</td><td colspan="3"></td><td class="num"><strong>${fmt2.format(r.multaAtualizada)}</strong></td></tr>`;
+    $('fgResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiarDevido() {
+    if (!ultimoDevido) return;
+    const r = ultimoDevido.r;
+    const linhas = [['Competência', 'Descrição', 'Remuneração', 'FGTS devido', 'Depositado', 'Diferença', 'Fator', 'Juros %', 'Juros', 'Total'],
+      ...r.linhas.map(l => [l.competencia, l.descricao + (l.prescrita ? ' (prescrita)' : ''), fmt2.format(l.remuneracao), fmt2.format(l.devido),
+        fmt2.format(l.depositado), fmt2.format(l.diferenca), fmt6.format(l.fatorCorrecao), fmt2.format(l.jurosPercentual), fmt2.format(l.juros), fmt2.format(l.total)]),
+      [], ['Multa rescisória', '', '', '', '', fmt2.format(r.multa), '', '', '', fmt2.format(r.multaAtualizada)],
+      ['Total', '', '', '', '', '', '', '', '', fmt2.format(r.total)]];
+    try { await copiarTsv(linhas, $('fgCopiar')); } catch { erro('fgErr', 'Não foi possível copiar. Use o PDF.'); }
+  }
+
+  async function pdf(path, ultimo, botao, idErro) {
+    if (!ultimo) return;
+    try {
+      await baixarPdf(path, ultimo.payload, botao);
+      trackEvent('calculadora_fgts_pdf', { path });
+    } catch (err) {
+      erro(idErro, err.message || 'Erro ao gerar o PDF.');
+    }
+  }
+
+  // ── Revisão ────────────────────────────────────────────────────────
+  function gerarMovimentos() {
+    erro('rvErr', '');
+    const meses = mesesEntre($('rvInicio').value, $('rvFim').value, 600);
+    if (!meses.length) { erro('rvErr', 'Informe um período válido.'); return; }
+    const deposito = numero($('rvDeposito')) ?? 0;
+    // O depósito padrão vale para todos os meses; saques já digitados são mantidos.
+    const saques = new Map(movimentos.map(m => [`${m.ano}-${m.mes}`, m.saque]));
+    movimentos = meses.map(({ ano, mes }) => ({ ano, mes, deposito, saque: saques.get(`${ano}-${mes}`) ?? 0 }));
+    renderMovimentos();
+  }
+
+  function renderMovimentos() {
+    const vazio = movimentos.length === 0;
+    $('rvVazio').style.display = vazio ? '' : 'none';
+    $('rvTabelaWrap').style.display = vazio ? 'none' : '';
+    $('rvBody').innerHTML = movimentos.map((m, i) => `<tr data-i="${i}">
+      <td>${pad(m.mes)}/${m.ano}</td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="deposito" value="${m.deposito || ''}" placeholder="0,00" aria-label="Depósito ${pad(m.mes)}/${m.ano}"></td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="saque" value="${m.saque || ''}" placeholder="0,00" aria-label="Saque ${pad(m.mes)}/${m.ano}"></td>
+    </tr>`).join('');
+    $('rvBody').querySelectorAll('tr').forEach(tr => {
+      const m = movimentos[Number(tr.dataset.i)];
+      tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { m[inp.dataset.campo] = numero(inp) ?? 0; resumoRevisao(); }));
+    });
+    resumoRevisao();
+  }
+
+  function resumoRevisao() {
+    const dep = movimentos.reduce((s, m) => s + (m.deposito || 0), 0);
+    const saq = movimentos.reduce((s, m) => s + (m.saque || 0), 0);
+    $('rvResumo').textContent = movimentos.length ? `${movimentos.length} meses · depósitos ${brl(dep)}${saq ? ` · saques ${brl(saq)}` : ''}` : '';
+  }
+
+  async function calcularRevisao() {
+    erro('rvErr', '');
+    if (!movimentos.length) { erro('rvErr', 'Gere os meses do período primeiro.'); return; }
+    const payload = {
+      dataCalculo: $('rvData').value,
+      movimentos: movimentos.map(m => ({ ano: m.ano, mes: m.mes, deposito: m.deposito || 0, saque: m.saque || 0 })),
+      indice: $('rvIndice').value,
+      saldoInicial: numero($('rvSaldoInicial')) ?? 0,
+      jurosAnuais: numero($('rvJuros')) ?? 3,
+      titular: $('rvTitular').value.trim() || null,
+    };
+    const btn = $('rvCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/fgts/revisao', { method: 'POST', body: JSON.stringify(payload) });
+      ultimaRevisao = { payload, r };
+      renderRevisao(r);
+      trackEvent('calculadora_fgts_revisao', { meses: payload.movimentos.length, indice: payload.indice });
+    } catch (err) {
+      erro('rvErr', err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular revisão';
+    }
+  }
+
+  function renderRevisao(r) {
+    $('rvResultado').style.display = '';
+    $('rvTotal').textContent = brl(r.diferencaAtualizada);
+    $('rvTotalSub').textContent = `Diferença atualizada até ${fmtData(ultimaRevisao.payload.dataCalculo)} · TR × ${r.indice}`;
+    $('rvColIndice').textContent = `${r.indice.replace(/ \(.*\)/, '')} %`;
+    $('rvStats').innerHTML = [
+      stat('Saldo com TR', brl(r.saldoTr)),
+      stat('Saldo revisado', brl(r.saldoRevisado)),
+      stat('Diferença no período', brl(r.diferencaNoPeriodo)),
+      stat('Fator até o cálculo', fmt6.format(r.fatorAteCalculo)),
+    ].join('');
+    avisos('rvAvisos', r.avisos);
+    $('rvResBody').innerHTML = r.linhas.map(l => `<tr>
+      <td>${l.competencia}</td><td class="num">${fmt2.format(l.deposito)}</td><td class="num">${l.saque ? fmt2.format(l.saque) : '—'}</td>
+      <td class="num">${fmt4.format(l.tr)}</td><td class="num">${fmt4.format(l.indice)}</td>
+      <td class="num">${fmt2.format(l.saldoTr)}</td><td class="num">${fmt2.format(l.saldoRevisado)}</td><td class="num"><strong>${fmt2.format(l.diferenca)}</strong></td>
+    </tr>`).join('');
+    $('rvResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiarRevisao() {
+    if (!ultimaRevisao) return;
+    const r = ultimaRevisao.r;
+    const linhas = [['Competência', 'Depósito', 'Saque', 'TR %', 'Índice %', 'Saldo com TR', 'Saldo revisado', 'Diferença'],
+      ...r.linhas.map(l => [l.competencia, fmt2.format(l.deposito), fmt2.format(l.saque), fmt4.format(l.tr), fmt4.format(l.indice),
+        fmt2.format(l.saldoTr), fmt2.format(l.saldoRevisado), fmt2.format(l.diferenca)]),
+      [], ['Diferença atualizada', '', '', '', '', '', '', fmt2.format(r.diferencaAtualizada)]];
+    try { await copiarTsv(linhas, $('rvCopiar')); } catch { erro('rvErr', 'Não foi possível copiar. Use o PDF.'); }
+  }
+</script>
+</body>
+</html>

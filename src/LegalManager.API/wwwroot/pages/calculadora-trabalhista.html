@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora Trabalhista</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora Trabalhista</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">👷</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Calcule verbas rescisórias de todos os tipos de rescisão e os pedidos da reclamação — horas extras, adicional noturno, insalubridade e periculosidade com DSR e reflexos, multas dos arts. 467 e 477 — com atualização pela ADC 58 e Lei 14.905/2024 e demonstrativo em PDF.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="tbFonte">Carregando índices do Banco Central…</p>
+
+      <div class="pc-grid">
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Contrato</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbAdmissao">Admissão</label><input type="date" id="tbAdmissao"></div>
+              <div class="pc-field"><label for="tbSaida">Saída (último dia)</label><input type="date" id="tbSaida"></div>
+            </div>
+            <div class="pc-field">
+              <label for="tbRescisao">Tipo de rescisão</label>
+              <select id="tbRescisao">
+                <option value="SemJustaCausa">Dispensa sem justa causa</option>
+                <option value="RescisaoIndireta">Rescisão indireta (art. 483)</option>
+                <option value="PedidoDemissao">Pedido de demissão</option>
+                <option value="Acordo">Acordo (art. 484-A)</option>
+                <option value="JustaCausa">Dispensa por justa causa</option>
+                <option value="TerminoContrato">Término de contrato por prazo determinado</option>
+              </select>
+            </div>
+            <div class="pc-field" id="tbCampoAviso">
+              <label for="tbAviso">Aviso prévio</label>
+              <select id="tbAviso">
+                <option value="Indenizado">Indenizado</option>
+                <option value="Trabalhado">Trabalhado</option>
+              </select>
+              <div class="pc-hint" id="tbAvisoHint"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbSalario">Último salário (R$)</label><input type="number" id="tbSalario" min="0" step="0.01" placeholder="Ex: 3.000,00"></div>
+              <div class="pc-field"><label for="tbVariaveis">Média de variáveis (R$)</label><input type="number" id="tbVariaveis" min="0" step="0.01" placeholder="Comissões…"></div>
+            </div>
+
+            <div class="pc-sep"></div>
+            <div class="pc-card-title">Férias e FGTS</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbFeriasVencidas">Férias vencidas (períodos)</label><input type="number" id="tbFeriasVencidas" min="0" max="10" value="0"></div>
+              <div class="pc-field"><label for="tbFeriasDobro">Delas, em dobro</label><input type="number" id="tbFeriasDobro" min="0" max="10" value="0"></div>
+            </div>
+            <div class="pc-hint" style="margin:-8px 0 14px">Em dobro: períodos não concedidos no prazo de 12 meses (art. 137 da CLT).</div>
+            <div class="pc-field">
+              <label for="tbSaldoFgts">Saldo do FGTS para fins rescisórios (R$) <span class="pc-opcional">— do extrato</span></label>
+              <input type="number" id="tbSaldoFgts" min="0" step="0.01">
+              <div class="pc-hint">Vazio: estimado em 8% da remuneração no contrato, só para a multa de 40%/20%.</div>
+            </div>
+            <div class="pc-field">
+              <label for="tbPagos">Valores já recebidos na rescisão (R$) <span class="pc-opcional">— abatidos</span></label>
+              <input type="number" id="tbPagos" min="0" step="0.01">
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Pedidos da reclamação <span class="pc-opcional" style="text-transform:none;letter-spacing:0">— preencha só o que for pedir</span></div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbHe">Horas extras por mês (média)</label><input type="number" id="tbHe" min="0" max="400" step="0.5" placeholder="Ex: 20"></div>
+              <div class="pc-field"><label for="tbHeAdic">Adicional (%)</label><input type="number" id="tbHeAdic" min="0" max="300" value="50"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbDivisor">Divisor</label><input type="number" id="tbDivisor" min="1" max="400" value="220"></div>
+              <div class="pc-field"><label for="tbNoturnas">Horas noturnas por mês</label><input type="number" id="tbNoturnas" min="0" max="400" step="0.5" placeholder="22h às 5h"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbNotAdic">Adicional noturno (%)</label><input type="number" id="tbNotAdic" min="0" max="300" value="20"></div>
+              <div class="pc-field">
+                <label for="tbInsal">Insalubridade</label>
+                <select id="tbInsal">
+                  <option value="0">Não</option>
+                  <option value="10">Grau mínimo — 10%</option>
+                  <option value="20">Grau médio — 20%</option>
+                  <option value="40">Grau máximo — 40%</option>
+                </select>
+              </div>
+            </div>
+            <label class="pc-check"><input type="checkbox" id="tbReduzida" checked> <span>Hora noturna reduzida (52'30") — converte as horas noturnas × 8/7</span></label>
+            <label class="pc-check"><input type="checkbox" id="tbPericulosidade"> <span>Adicional de periculosidade (30% do salário)</span></label>
+            <div class="pc-hint" style="margin:-4px 0 12px">Os pedidos mensais usam a mesma média e o último salário em todo o período, com DSR e reflexos em 13º, férias + 1/3, aviso e FGTS + multa.</div>
+
+            <div class="pc-sep"></div>
+            <label class="pc-check"><input type="checkbox" id="tbMulta477"> <span>Multa do art. 477, §8º (atraso no pagamento das rescisórias) — 1 salário</span></label>
+            <label class="pc-check"><input type="checkbox" id="tbMulta467"> <span>Multa do art. 467 (rescisórias incontroversas não pagas na audiência) — 50%</span></label>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbDanoMoral">Danos morais (R$)</label><input type="number" id="tbDanoMoral" min="0" step="0.01"></div>
+              <div class="pc-field"><label for="tbHonorarios">Honorários (%)</label><input type="number" id="tbHonorarios" min="0" max="100" step="0.5" placeholder="5 a 15 (art. 791-A)"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbOutrosDesc">Outro pedido</label><input type="text" id="tbOutrosDesc" maxlength="120" placeholder="Ex: Vale-transporte"></div>
+              <div class="pc-field"><label for="tbOutros">Valor (R$)</label><input type="number" id="tbOutros" min="0" step="0.01"></div>
+            </div>
+
+            <div class="pc-sep"></div>
+            <div class="pc-card-title">Atualização</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="tbData">Data do cálculo</label><input type="date" id="tbData"></div>
+              <div class="pc-field"><label for="tbAjuizamento">Ajuizamento <span class="pc-opcional">— opcional</span></label><input type="date" id="tbAjuizamento"></div>
+            </div>
+            <div class="pc-field">
+              <label for="tbCriterio">Critério</label>
+              <select id="tbCriterio">
+                <option value="Adc58">ADC 58 e Lei 14.905/2024 (TST)</option>
+                <option value="Nenhum">Sem atualização (valor da causa nominal)</option>
+              </select>
+              <div class="pc-hint">IPCA-E + TR até o ajuizamento; depois Selic até ago/2024 e IPCA + taxa legal (Selic − IPCA) desde set/2024.</div>
+            </div>
+            <label class="pc-check"><input type="checkbox" id="tbPrescricao" checked> <span>Limitar os pedidos mensais aos 5 anos anteriores ao ajuizamento (prescrição quinquenal)</span></label>
+
+            <details>
+              <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+              <div style="margin-top:12px">
+                <div class="pc-field"><label for="tbProcesso">Processo</label><input type="text" id="tbProcesso" maxlength="60"></div>
+                <div class="pc-field"><label for="tbReclamante">Reclamante</label><input type="text" id="tbReclamante" maxlength="200"></div>
+                <div class="pc-field"><label for="tbReclamada">Reclamada</label><input type="text" id="tbReclamada" maxlength="200"></div>
+              </div>
+            </details>
+
+            <div style="margin-top:16px"><button class="btn btn-primary" id="tbCalcular" style="width:100%">Calcular</button></div>
+            <div id="tbErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pc-card" id="tbResultado" style="display:none;margin-top:20px">
+        <div class="pc-card-head">
+          <div class="pc-card-title">Resultado</div>
+          <div class="pc-acoes">
+            <button class="btn btn-secondary btn-sm" id="tbCopiar">Copiar tabela</button>
+            <button class="btn btn-primary btn-sm" id="tbPdf">Baixar PDF</button>
+          </div>
+        </div>
+        <div class="pc-total" id="tbTotal">—</div>
+        <div class="pc-total-sub" id="tbTotalSub"></div>
+        <p class="pc-info" id="tbInfo"></p>
+        <div class="pc-stats" id="tbStats"></div>
+        <div class="pc-avisos" id="tbAvisos" style="display:none"></div>
+        <div class="table-wrapper">
+          <table class="pc-tabela">
+            <thead><tr><th>Verba</th><th>Memória de cálculo</th><th class="num">Valor</th><th class="num">Correção</th><th class="num">Juros</th><th class="num">Total</th></tr></thead>
+            <tbody id="tbResBody"></tbody>
+          </table>
+        </div>
+        <details class="pc-detalhes" id="tbMesesBox" style="display:none">
+          <summary>Memória mensal dos pedidos</summary>
+          <div class="table-wrapper pc-scroll">
+            <table class="pc-tabela">
+              <thead><tr><th>Competência</th><th class="num">Horas extras</th><th class="num">DSR HE</th><th class="num">Ad. noturno</th><th class="num">DSR noturno</th><th class="num">Insalubridade</th><th class="num">Periculosidade</th></tr></thead>
+              <tbody id="tbMesesBody"></tbody>
+            </table>
+          </div>
+        </details>
+        <p class="pc-nota">Valores brutos, sem descontos de INSS e IRRF. DSR pelos domingos e feriados nacionais do mês; reflexos em 13º e férias + 1/3 pelo duodécimo e em aviso prévio pela média dos últimos 12 meses. Parcelas mensais exigíveis no mês seguinte; rescisórias e reflexos, 10 dias após a saída. Estimativa para a inicial — confira com os documentos do contrato.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, fmtData, hojeIso, numero, stat, htmlFonteIndices, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+  let ultimo = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('tbData').value = hojeIso();
+    ['tbRescisao', 'tbAdmissao', 'tbSaida'].forEach(id => $(id).addEventListener('change', ajustarAviso));
+    ajustarAviso();
+    $('tbCalcular').addEventListener('click', calcular);
+    $('tbPdf').addEventListener('click', pdf);
+    $('tbCopiar').addEventListener('click', copiar);
+    try {
+      const dados = await apiFetch('/trabalhista/indices');
+      $('tbFonte').innerHTML = htmlFonteIndices(dados.indices.filter(i => i.indice !== 'INPC'), dados.salariosMinimos);
+    } catch (err) {
+      $('tbFonte').textContent = err.message || 'Não foi possível carregar os índices.';
+    }
+  }
+
+  function anosCompletos() {
+    const a = $('tbAdmissao').value, s = $('tbSaida').value;
+    if (!a || !s || s < a) return null;
+    const [ya, ma, da] = a.split('-').map(Number), [ys, ms, ds] = s.split('-').map(Number);
+    let anos = ys - ya;
+    if (ms < ma || (ms === ma && ds < da)) anos--;
+    return Math.max(0, anos);
+  }
+
+  // As opções de aviso dependem da rescisão: no pedido de demissão o aviso é do empregado.
+  function ajustarAviso() {
+    const r = $('tbRescisao').value;
+    const sel = $('tbAviso');
+    const atual = sel.value;
+    const opcoes = r === 'PedidoDemissao'
+      ? [['Trabalhado', 'Cumprido pelo empregado'], ['NaoCumprido', 'Não cumprido (desconto de 30 dias)'], ['Indenizado', 'Dispensado pelo empregador']]
+      : [['Indenizado', 'Indenizado'], ['Trabalhado', 'Trabalhado']];
+    sel.innerHTML = opcoes.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+    if (opcoes.some(([v]) => v === atual)) sel.value = atual;
+    $('tbCampoAviso').style.display = ['JustaCausa', 'TerminoContrato'].includes(r) ? 'none' : '';
+    const anos = anosCompletos();
+    const dias = anos == null ? null : Math.min(90, 30 + 3 * anos);
+    $('tbAvisoHint').textContent = r === 'PedidoDemissao' ? 'O aviso do empregado é de 30 dias.'
+      : dias == null ? 'Aviso proporcional: 30 dias + 3 por ano completo, até 90 (Lei 12.506/2011).'
+      : `${dias} dias (${anos} ${anos === 1 ? 'ano completo' : 'anos completos'})${r === 'Acordo' ? ` — no acordo, metade: ${Math.floor(dias / 2)} dias` : ''}.`;
+  }
+
+  function payload() {
+    return {
+      admissao: $('tbAdmissao').value, saida: $('tbSaida').value, rescisao: $('tbRescisao').value,
+      aviso: $('tbAviso').value, salario: numero($('tbSalario')), mediaVariaveis: numero($('tbVariaveis')) ?? 0,
+      feriasVencidas: parseInt($('tbFeriasVencidas').value, 10) || 0, feriasVencidasEmDobro: parseInt($('tbFeriasDobro').value, 10) || 0,
+      saldoFgts: numero($('tbSaldoFgts')), valoresPagos: numero($('tbPagos')) ?? 0,
+      horasExtrasMes: numero($('tbHe')) ?? 0, adicionalHoraExtra: numero($('tbHeAdic')) ?? 50, divisor: parseInt($('tbDivisor').value, 10) || 220,
+      horasNoturnasMes: numero($('tbNoturnas')) ?? 0, adicionalNoturno: numero($('tbNotAdic')) ?? 20, horaNoturnaReduzida: $('tbReduzida').checked,
+      insalubridadeGrau: Number($('tbInsal').value), periculosidade: $('tbPericulosidade').checked,
+      multa477: $('tbMulta477').checked, multa467: $('tbMulta467').checked,
+      danoMoral: numero($('tbDanoMoral')) ?? 0, outrosPedidos: numero($('tbOutros')) ?? 0, outrosDescricao: $('tbOutrosDesc').value.trim() || null,
+      honorariosPercentual: numero($('tbHonorarios')) ?? 0, limitarPrescricao: $('tbPrescricao').checked,
+      dataCalculo: $('tbData').value, dataAjuizamento: $('tbAjuizamento').value || null, atualizacao: $('tbCriterio').value,
+      processo: $('tbProcesso').value.trim() || null, reclamante: $('tbReclamante').value.trim() || null, reclamada: $('tbReclamada').value.trim() || null,
+    };
+  }
+
+  const erro = msg => { $('tbErr').textContent = msg; $('tbErr').style.display = msg ? '' : 'none'; };
+
+  async function calcular() {
+    erro('');
+    const p = payload();
+    if (!p.admissao || !p.saida || !p.salario || !p.dataCalculo) { erro('Informe admissão, saída, último salário e a data do cálculo.'); return; }
+    const btn = $('tbCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/trabalhista/calcular', { method: 'POST', body: JSON.stringify(p) });
+      ultimo = { payload: p, r };
+      render(r);
+      trackEvent('calculadora_trabalhista_calculada', {
+        rescisao: p.rescisao, horas_extras: p.horasExtrasMes > 0, noturno: p.horasNoturnasMes > 0,
+        insalubridade: p.insalubridadeGrau > 0, periculosidade: p.periculosidade, atualizacao: p.atualizacao,
+      });
+    } catch (err) {
+      erro(err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular';
+    }
+  }
+
+  function render(r) {
+    $('tbResultado').style.display = '';
+    $('tbTotal').textContent = brl(r.totalGeral);
+    $('tbTotalSub').textContent = `Atualizado até ${fmtData(ultimo.payload.dataCalculo)} · ${r.atualizacao}`;
+    const partes = [`${r.anosServico} ${r.anosServico === 1 ? 'ano completo' : 'anos completos'}`];
+    if (r.diasAvisoIndenizados) partes.push(`aviso indenizado de ${r.diasAvisoIndenizados} dias, projeção até ${fmtData(r.dataProjetada)}`);
+    if (r.inicioPedidos) partes.push(`pedidos mensais desde ${fmtData(r.inicioPedidos)}`);
+    $('tbInfo').textContent = partes.join(' · ');
+    $('tbStats').innerHTML = [
+      stat('Valor nominal (valor da causa)', brl(r.totalNominal)),
+      stat('Total atualizado', brl(r.totalAtualizado)),
+      ...r.grupos.map(g => stat(g.grupo, brl(g.total))),
+      r.honorarios ? stat('Honorários', brl(r.honorarios)) : '',
+    ].join('');
+    $('tbAvisos').style.display = r.avisos.length ? '' : 'none';
+    $('tbAvisos').innerHTML = `<ul style="margin:0;padding:0">${r.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+
+    const porGrupo = new Map();
+    r.verbas.forEach(v => { if (!porGrupo.has(v.grupo)) porGrupo.set(v.grupo, []); porGrupo.get(v.grupo).push(v); });
+    const soma = (lista, campo) => lista.reduce((s, v) => s + v[campo], 0);
+    $('tbResBody').innerHTML = [...porGrupo.entries()].map(([grupo, lista]) => `
+      <tr class="pc-grupo"><td colspan="6">${esc(grupo)}</td></tr>
+      ${lista.map(v => `<tr>
+        <td>${esc(v.descricao)}</td><td class="pc-memoria">${esc(v.memoria)}</td>
+        <td class="num">${fmt2.format(v.valor)}</td><td class="num">${fmt2.format(v.correcao)}</td>
+        <td class="num">${fmt2.format(v.juros)}</td><td class="num"><strong>${fmt2.format(v.total)}</strong></td>
+      </tr>`).join('')}
+      <tr class="pc-subtotal"><td colspan="2">Subtotal</td><td class="num">${fmt2.format(soma(lista, 'valor'))}</td>
+        <td class="num">${fmt2.format(soma(lista, 'correcao'))}</td><td class="num">${fmt2.format(soma(lista, 'juros'))}</td>
+        <td class="num">${fmt2.format(soma(lista, 'total'))}</td></tr>`).join('') +
+      (r.honorarios ? `<tr class="pc-subtotal"><td colspan="5">Honorários sucumbenciais (${fmt2.format(ultimo.payload.honorariosPercentual)}%)</td><td class="num">${fmt2.format(r.honorarios)}</td></tr>` : '') +
+      `<tr class="pc-subtotal"><td colspan="2">Total</td><td class="num">${fmt2.format(r.totalNominal)}</td><td colspan="2"></td><td class="num">${fmt2.format(r.totalGeral)}</td></tr>`;
+
+    $('tbMesesBox').style.display = r.meses.length ? '' : 'none';
+    $('tbMesesBody').innerHTML = r.meses.map(m => `<tr><td>${m.competencia}</td>
+      ${[m.horasExtras, m.dsrHorasExtras, m.noturno, m.dsrNoturno, m.insalubridade, m.periculosidade].map(v => `<td class="num">${v ? fmt2.format(v) : '—'}</td>`).join('')}</tr>`).join('');
+    $('tbResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function pdf() {
+    if (!ultimo) return;
+    try {
+      await baixarPdf('/trabalhista/pdf', ultimo.payload, $('tbPdf'));
+      trackEvent('calculadora_trabalhista_pdf');
+    } catch (err) {
+      erro(err.message || 'Erro ao gerar o PDF.');
+    }
+  }
+
+  async function copiar() {
+    if (!ultimo) return;
+    const r = ultimo.r;
+    const linhas = [['Grupo', 'Verba', 'Memória', 'Valor', 'Correção', 'Juros', 'Total'],
+      ...r.verbas.map(v => [v.grupo, v.descricao, v.memoria, fmt2.format(v.valor), fmt2.format(v.correcao), fmt2.format(v.juros), fmt2.format(v.total)]),
+      [], ['Total', '', '', fmt2.format(r.totalNominal), '', '', fmt2.format(r.totalAtualizado)],
+      ['Honorários', '', '', '', '', '', fmt2.format(r.honorarios)], ['Total geral', '', '', '', '', '', fmt2.format(r.totalGeral)]];
+    try { await copiarTsv(linhas, $('tbCopiar')); } catch { erro('Não foi possível copiar. Use o PDF.'); }
+  }
+</script>
+</body>
+</html>
