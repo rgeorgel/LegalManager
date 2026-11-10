@@ -55,6 +55,7 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<HonorarioCalculo> HonorariosCalculos => Set<HonorarioCalculo>();
     public DbSet<IndiceCorrecaoMonetaria> IndicesCorrecaoMonetaria => Set<IndiceCorrecaoMonetaria>();
     public DbSet<ConfiguracaoCalculadora> ConfiguracoesCalculadora => Set<ConfiguracaoCalculadora>();
+    public DbSet<SalarioMinimo> SalariosMinimos => Set<SalarioMinimo>();
     public DbSet<Feriado> Feriados => Set<Feriado>();
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
     public DbSet<ResumoProcesso> ResumosProcesso => Set<ResumoProcesso>();

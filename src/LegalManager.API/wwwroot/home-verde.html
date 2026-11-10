@@ -265,6 +265,8 @@
     .tab-panel .browser img.inteira { aspect-ratio: auto; } /* mostra o print completo, sem corte */
 
     /* FUNCIONALIDADES */
+    .feature-destaque { grid-column: 1 / -1; }
+    .feature-novo { display: inline-block; margin-left: .4rem; padding: .1rem .5rem; border-radius: 999px; font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; background: rgba(201,168,76,.18); border: 1px solid rgba(201,168,76,.55); }
     .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
     .feature-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
@@ -501,7 +503,7 @@
     <div class="tab-panel" role="tabpanel" id="panel-hon" aria-labelledby="tab-hon" hidden>
       <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
         <img src="/images/calculadora_honorarios_1.png" alt="Calculadora de honorários advocatícios" loading="lazy" width="2036" height="1909"></div>
-      <p>Honorários pelas tabelas da OAB, com correção monetária e adicional de especialidade.</p>
+      <p>Honorários pelas tabelas da OAB, com correção monetária e adicional de especialidade. E também a calculadora de pensão alimentícia em atraso, com índices do Banco Central.</p>
     </div>
     <div class="tab-panel" role="tabpanel" id="panel-fin" aria-labelledby="tab-fin" hidden>
       <div class="browser"><div class="browser-bar" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -593,6 +595,12 @@
       <p>Ofereça ao seu cliente uma área exclusiva para acompanhar andamentos, documentos e prazos dos próprios processos.</p>
     </div>
 
+    <div class="feature-card feature-destaque reveal">
+      <div class="feature-icon" aria-hidden="true">👨‍👧</div>
+      <h3>Calculadora de Pensão Alimentícia <span class="feature-novo">Novo</span></h3>
+      <p>Atualize pensão em atraso com INPC, IPCA-E ou IGP-M, juros, multa e honorários. Salário mínimo e índices do Banco Central atualizados automaticamente, rito da prisão separado e demonstrativo em PDF.</p>
+    </div>
+
   </div>
   </div>
 </section>
@@ -636,6 +644,7 @@
         <li class="off"><span class="cross">✗</span> Gestão Kanban</li>
         <li class="off"><span class="cross">✗</span> Calculadora de honorários</li>
         <li class="off"><span class="cross">✗</span> Calculadora de prazos</li>
+        <li class="off"><span class="cross">✗</span> Calculadora de pensão alimentícia</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li class="off"><span class="cross">✗</span> Controle financeiro por processo</li>
@@ -678,6 +687,7 @@
         <li><span class="check">✓</span> Gestão Kanban</li>
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
+        <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -719,6 +729,7 @@
         <li><span class="check">✓</span> Gestão Kanban</li>
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
+        <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -759,6 +770,7 @@
         <li><span class="check">✓</span> Gestão Kanban</li>
         <li><span class="check">✓</span> Calculadora de honorários</li>
         <li><span class="check">✓</span> Calculadora de prazos</li>
+        <li><span class="check">✓</span> Calculadora de pensão alimentícia</li>
 
         <li class="section-sep">Financeiro e Relatórios</li>
         <li><span class="check">✓</span> Controle financeiro por processo</li>
@@ -849,6 +861,11 @@
     <details class="faq-item">
       <summary>Como funciona a calculadora de honorários?</summary>
       <div class="faq-answer">A calculadora de honorários do Causify utiliza as tabelas da OAB, índices de correção monetária e adicional de especialidade configurável, ajudando o advogado a precificar serviços com critérios objetivos.</div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Tem calculadora de pensão alimentícia?</summary>
+      <div class="faq-answer">Sim. A calculadora de pensão do Causify atualiza débitos de alimentos em atraso com INPC, IPCA-E, IPCA ou IGP-M, juros de mora de 1% ao mês ou pela taxa legal (Selic − IPCA, Lei 14.905/2024), multa e honorários do art. 523 do CPC, e separa as três últimas parcelas para o rito da prisão (Súmula 309 do STJ). Pensões fixadas em salário mínimo usam o valor vigente em cada mês. Os índices e o salário mínimo são atualizados automaticamente pelo Banco Central, e o demonstrativo sai em PDF. Disponível em todos os planos pagos.</div>
     </details>
 
     <details class="faq-item">

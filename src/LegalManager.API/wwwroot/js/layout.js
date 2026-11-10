@@ -52,6 +52,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/pages/honorarios.html',          label: '⚖️ Honorários' },
       { href: '/pages/calculadora-prazos.html',  label: '📅 Calculadora de Prazos', plus: true },
+      { href: '/pages/calculadora-pensao.html',  label: '👨‍👧 Pensão Alimentícia', plus: true },
     ],
   },
   {

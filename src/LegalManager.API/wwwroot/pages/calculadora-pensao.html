@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de Pensão Alimentícia</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .pc-grid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 20px; align-items: start; }
+    @media (max-width: 960px) { .pc-grid { grid-template-columns: minmax(0, 1fr); } }
+    .pc-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+    .pc-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 20px; min-width: 0; }
+    .pc-card-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 16px; }
+    .pc-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pc-card-head .pc-card-title { margin-bottom: 0; }
+    .pc-sep { border-top: 1px solid var(--color-border); margin: 16px 0; }
+
+    .pc-field { margin-bottom: 14px; }
+    .pc-field > label, .pc-label { display: block; font-size: 12px; font-weight: 500; color: var(--color-text-muted); margin-bottom: 5px; }
+    .pc-field input:not([type=checkbox]):not([type=radio]), .pc-field select {
+      width: 100%; height: 38px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius);
+      font-size: 14px; background: var(--color-background); color: var(--color-text); box-sizing: border-box;
+    }
+    .pc-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+    .pc-hint { font-size: 12px; color: var(--color-text-muted); margin-top: 4px; line-height: 1.4; }
+    .pc-opcional { font-weight: 400; color: var(--color-text-muted); }
+    .pc-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; margin-bottom: 10px; line-height: 1.4; }
+    .pc-check input { margin-top: 3px; flex-shrink: 0; }
+
+    .pc-seg { display: flex; gap: 8px; }
+    .pc-seg button {
+      flex: 1; padding: 8px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-background);
+      color: var(--color-text-muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: .15s; text-align: center;
+    }
+    .pc-seg button.on { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+    .pc-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pc-chips button { padding: 3px 10px; border-radius: 100px; border: 1px solid var(--color-border); background: var(--color-background); color: var(--color-text-muted); font-size: 12px; cursor: pointer; }
+    .pc-chips button.on { border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+
+    .pc-fonte { font-size: 12px; color: var(--color-text-muted); margin: -8px 0 18px; line-height: 1.5; }
+
+    .pc-tabela { width: 100%; font-size: 13px; }
+    .pc-tabela th, .pc-tabela td { padding: 7px 8px; white-space: nowrap; }
+    .pc-tabela thead th { font-size: 11px; }
+    .pc-tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pc-tabela input { width: 110px; height: 32px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-background); color: var(--color-text); text-align: right; }
+    .pc-tabela tfoot td { font-weight: 600; border-top: 1px solid var(--color-border); }
+    .pc-scroll { max-height: 440px; overflow: auto; border: 1px solid var(--color-border); border-radius: var(--radius); }
+    .pc-scroll thead th { position: sticky; top: 0; z-index: 1; }
+    .pc-remover { background: none; border: none; color: var(--color-text-muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+    .pc-remover:hover { color: var(--color-danger); background: var(--color-bg); }
+    .pc-avulsa { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; align-items: end; }
+    .pc-avulsa input { height: 36px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-background); color: var(--color-text); width: 100%; box-sizing: border-box; }
+    .pc-vazio { padding: 40px 20px; text-align: center; color: var(--color-text-muted); font-size: 14px; }
+
+    .pc-total { font-size: 30px; font-weight: 700; color: var(--color-primary); line-height: 1.1; }
+    .pc-total-sub { font-size: 13px; color: var(--color-text-muted); margin: 4px 0 16px; }
+    .pc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .pc-stat { background: var(--color-background); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+    .pc-stat-label { font-size: 11px; color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .pc-stat-value { font-size: 17px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .pc-ritos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 640px) { .pc-ritos { grid-template-columns: 1fr; } }
+    .pc-rito { border: 1px solid var(--color-border); border-left: 3px solid var(--color-primary); border-radius: 8px; padding: 12px 14px; }
+    .pc-rito.penhora { border-left-color: var(--color-text-muted); }
+    .pc-rito h3 { font-size: 14px; margin: 0 0 2px; }
+    .pc-rito p { font-size: 12px; color: var(--color-text-muted); margin: 0 0 8px; }
+    .pc-rito-linha { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+    .pc-rito-linha.total { font-weight: 700; border-top: 1px solid var(--color-border); margin-top: 4px; padding-top: 6px; }
+    .pc-avisos { border: 1px solid var(--color-border); background: var(--color-background); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--color-text-muted); }
+    .pc-avisos li { margin: 2px 0 2px 16px; }
+    .pc-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .pc-est-valor { font-size: 34px; font-weight: 700; color: var(--color-primary); }
+    .pc-nota { font-size: 12px; color: var(--color-text-muted); line-height: 1.55; margin-top: 18px; }
+
+    .pc-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 30px; text-align: center; gap: 12px; }
+    .pc-gate-icon { font-size: 48px; }
+    .pc-gate h2 { font-size: 20px; font-weight: 700; margin: 0; }
+    .pc-gate p { font-size: 14px; color: var(--color-text-muted); margin: 0; max-width: 520px; }
+  </style>
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de Pensão Alimentícia</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">👨‍👧</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Atualize débitos de pensão em atraso com INPC, IPCA-E, IPCA ou IGP-M, juros de mora, multa e honorários, separe as parcelas do rito da prisão e gere o demonstrativo em PDF. O salário mínimo e os índices são atualizados automaticamente.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="pcFonte">Carregando índices do Banco Central…</p>
+
+      <div class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="debito" role="tab" aria-selected="true">Débito em atraso</button>
+        <button class="tab-btn" data-tab="estimativa" role="tab" aria-selected="false">Estimar valor</button>
+      </div>
+
+      <!-- ── Débito em atraso ─────────────────────────────────────────── -->
+      <div class="tab-content active" id="tab-debito">
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Pensão fixada</div>
+              <div class="pc-field">
+                <div class="pc-seg" id="pcForma">
+                  <button type="button" class="on" data-forma="ValorFixo">Valor fixo</button>
+                  <button type="button" data-forma="SalarioMinimo">% do salário mínimo</button>
+                </div>
+              </div>
+              <div class="pc-field" id="pcCampoValor">
+                <label for="pcValor">Valor mensal (R$)</label>
+                <input type="number" id="pcValor" min="0" step="0.01" placeholder="Ex: 800,00">
+              </div>
+              <div class="pc-field" id="pcCampoPct" style="display:none">
+                <label for="pcPct">Percentual do salário mínimo (%)</label>
+                <input type="number" id="pcPct" min="0" max="1000" step="0.01" placeholder="Ex: 30">
+                <div class="pc-hint" id="pcPctHint">Cada parcela usa o salário mínimo vigente no mês do vencimento.</div>
+              </div>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Parcelas em atraso</div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="pcInicio">Primeira</label><input type="month" id="pcInicio"></div>
+                <div class="pc-field"><label for="pcFim">Última</label><input type="month" id="pcFim"></div>
+              </div>
+              <div class="pc-field">
+                <label for="pcDia">Dia do vencimento</label>
+                <input type="number" id="pcDia" min="1" max="31" value="10" style="max-width:110px">
+              </div>
+              <label class="pc-check"><input type="checkbox" id="pc13"> <span>Incluir a 13ª parcela em dezembro (quando a pensão incide sobre o 13º)</span></label>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Atualização</div>
+              <div class="pc-field">
+                <label for="pcData">Data do cálculo</label>
+                <input type="date" id="pcData">
+              </div>
+              <div class="pc-field">
+                <label for="pcIndice">Correção monetária</label>
+                <select id="pcIndice">
+                  <option value="INPC">INPC (IBGE)</option>
+                  <option value="IPCAE">IPCA-E (IBGE)</option>
+                  <option value="IPCA">IPCA (IBGE)</option>
+                  <option value="IGPM">IGP-M (FGV)</option>
+                  <option value="Nenhum">Sem correção</option>
+                </select>
+                <div class="pc-hint">INPC é o mais usado em alimentos; confira o índice fixado no título ou na tabela do tribunal.</div>
+              </div>
+              <div class="pc-field">
+                <label for="pcJuros">Juros de mora</label>
+                <select id="pcJuros">
+                  <option value="UmPorCentoAoMes">1% ao mês</option>
+                  <option value="TaxaLegal">Taxa legal — Selic − IPCA (Lei 14.905/2024)</option>
+                  <option value="Personalizado">Outra taxa mensal</option>
+                  <option value="Nenhum">Sem juros</option>
+                </select>
+                <div class="pc-hint" id="pcJurosHint"></div>
+              </div>
+              <div class="pc-field" id="pcCampoJurosPct" style="display:none">
+                <label for="pcJurosPct">Taxa de juros (% ao mês)</label>
+                <input type="number" id="pcJurosPct" min="0" max="100" step="0.01" placeholder="Ex: 0,5">
+              </div>
+              <label class="pc-check"><input type="checkbox" id="pcCitacaoChk"> <span>Juros a partir da citação (padrão: de cada vencimento)</span></label>
+              <div class="pc-field" id="pcCampoCitacao" style="display:none">
+                <label for="pcCitacao">Data da citação</label>
+                <input type="date" id="pcCitacao">
+              </div>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Execução</div>
+              <label class="pc-check"><input type="checkbox" id="pcMulta"> <span>Multa de 10% (art. 523, §1º, do CPC)</span></label>
+              <div class="pc-field">
+                <label for="pcHonorarios">Honorários advocatícios (%) <span class="pc-opcional">— opcional</span></label>
+                <input type="number" id="pcHonorarios" min="0" max="100" step="0.01" placeholder="Ex: 10">
+              </div>
+              <label class="pc-check"><input type="checkbox" id="pcRitos"> <span>Separar o rito da prisão: as 3 parcelas anteriores ao ajuizamento e as que vencerem no curso do processo (art. 528, §7º, do CPC e Súmula 309 do STJ)</span></label>
+              <div class="pc-field" id="pcCampoAjuizamento" style="display:none">
+                <label for="pcAjuizamento">Data do ajuizamento <span class="pc-opcional">— vazio: a data do cálculo</span></label>
+                <input type="date" id="pcAjuizamento">
+                <div class="pc-hint">A multa do art. 523 só entra no rito da penhora (art. 528, §8º).</div>
+              </div>
+
+              <details>
+                <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+                <div style="margin-top:12px">
+                  <div class="pc-field"><label for="pcProcesso">Processo</label><input type="text" id="pcProcesso" maxlength="60" placeholder="0000000-00.0000.0.00.0000"></div>
+                  <div class="pc-field"><label for="pcAlimentando">Alimentando(a)</label><input type="text" id="pcAlimentando" maxlength="200"></div>
+                  <div class="pc-field"><label for="pcAlimentante">Alimentante</label><input type="text" id="pcAlimentante" maxlength="200"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-head">
+                <div class="pc-card-title">Parcelas</div>
+                <span class="pc-hint" id="pcResumoParcelas" style="margin:0"></span>
+              </div>
+              <div id="pcParcelasVazio" class="pc-vazio">Informe a primeira e a última parcela em atraso para gerar a lista.<br>Depois ajuste valores diferentes e pagamentos parciais em cada mês.</div>
+              <div id="pcParcelasWrap" style="display:none">
+                <div class="pc-scroll">
+                  <table class="pc-tabela">
+                    <thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Valor devido (R$)</th><th class="num">Pago (R$)</th><th></th></tr></thead>
+                    <tbody id="pcParcelasBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="pc-avulsa">
+                <div><label class="pc-label" for="pcAvData">Parcela avulsa</label><input type="date" id="pcAvData"></div>
+                <div><label class="pc-label" for="pcAvDesc">Descrição</label><input type="text" id="pcAvDesc" maxlength="60" placeholder="Ex: Despesa escolar"></div>
+                <div><label class="pc-label" for="pcAvValor">Valor (R$)</label><input type="number" id="pcAvValor" min="0" step="0.01"></div>
+                <button type="button" class="btn btn-secondary btn-sm" id="pcAvAdd">+ Adicionar</button>
+              </div>
+              <div style="margin-top:16px">
+                <button class="btn btn-primary" id="pcCalcular" style="width:100%">Calcular débito</button>
+              </div>
+              <div id="pcErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+            </div>
+
+          </div>
+        </div>
+        <div class="pc-card" id="pcResultado" style="display:none;margin-top:20px">
+          <div class="pc-card-head">
+            <div class="pc-card-title">Resultado</div>
+            <div class="pc-acoes">
+              <button class="btn btn-secondary btn-sm" id="pcCopiar">Copiar tabela</button>
+              <button class="btn btn-primary btn-sm" id="pcPdf">Baixar PDF</button>
+            </div>
+          </div>
+          <div class="pc-total" id="pcTotal">—</div>
+          <div class="pc-total-sub" id="pcTotalSub"></div>
+          <div class="pc-stats" id="pcStats"></div>
+          <div class="pc-ritos" id="pcRitosBox" style="display:none"></div>
+          <div class="pc-avisos" id="pcAvisos" style="display:none"></div>
+          <div class="table-wrapper">
+            <table class="pc-tabela">
+              <thead id="pcResHead"></thead>
+              <tbody id="pcResBody"></tbody>
+            </table>
+          </div>
+          <p class="pc-nota">Cada parcela é corrigida pelos índices mensais do mês do vencimento até o mês anterior ao do cálculo e recebe juros simples sobre o valor corrigido no mesmo período. Pagamentos parciais abatem a própria parcela. Fontes: Banco Central do Brasil (SGS). Cálculo de apoio — confira com o título executivo.</p>
+        </div>
+      </div>
+
+      <!-- ── Estimativa ──────────────────────────────────────────────── -->
+      <div class="tab-content" id="tab-estimativa">
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Base de cálculo</div>
+              <div class="pc-field">
+                <div class="pc-seg" id="peBase">
+                  <button type="button" class="on" data-base="renda">Renda do alimentante</button>
+                  <button type="button" data-base="sm">Salário mínimo</button>
+                </div>
+              </div>
+              <div class="pc-field" id="peCampoRenda">
+                <label for="peRenda">Renda líquida mensal (R$)</label>
+                <input type="number" id="peRenda" min="0" step="0.01" placeholder="Ex: 4.000,00">
+                <div class="pc-hint">Salário bruto menos descontos obrigatórios (INSS, IR), ou o rendimento comprovado.</div>
+              </div>
+              <div class="pc-field">
+                <label for="pePct">Percentual (%)</label>
+                <input type="number" id="pePct" min="0" max="100" step="0.5" value="30">
+                <div class="pc-chips" id="peChips">
+                  <button type="button" data-pct="15">15%</button><button type="button" data-pct="20">20%</button>
+                  <button type="button" data-pct="25">25%</button><button type="button" data-pct="30" class="on">30%</button>
+                  <button type="button" data-pct="33">33%</button>
+                </div>
+              </div>
+              <div class="pc-field">
+                <label for="peFilhos">Número de filhos</label>
+                <select id="peFilhos"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+              </div>
+              <label class="pc-check"><input type="checkbox" id="pe13" checked> <span>Incide sobre o 13º salário (13 parcelas no ano)</span></label>
+            </div>
+
+            <div class="pc-card">
+              <div class="pc-card-title">Divisão entre os genitores <span class="pc-opcional" style="text-transform:none;letter-spacing:0">— opcional</span></div>
+              <div class="pc-field">
+                <label for="peNecessidades">Despesas mensais do(s) filho(s) (R$)</label>
+                <input type="number" id="peNecessidades" min="0" step="0.01" placeholder="Escola, saúde, alimentação, moradia…">
+              </div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="peRendaA">Renda do alimentante</label><input type="number" id="peRendaA" min="0" step="0.01"></div>
+                <div class="pc-field"><label for="peRendaB">Renda do outro genitor</label><input type="number" id="peRendaB" min="0" step="0.01"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Estimativa</div>
+              <div class="pc-est-valor" id="peValor">R$ 0,00</div>
+              <div class="pc-total-sub" id="peValorSub">por mês</div>
+              <div class="pc-stats" id="peStats"></div>
+              <div id="peDivisao" style="display:none">
+                <div class="pc-sep"></div>
+                <div class="pc-card-title">Divisão proporcional às rendas</div>
+                <div class="pc-stats" id="peDivisaoStats"></div>
+              </div>
+              <p class="pc-nota">Não existe percentual fixo em lei: o valor segue o binômio necessidade de quem recebe e possibilidade de quem paga (arts. 1.694, §1º, e 1.699 do Código Civil). Os percentuais acima são uma referência de mercado — a decisão judicial ou o acordo podem fixar outro valor. Com mais de um filho, o rateio é ilustrativo: o total não muda com o número de filhos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl, isoLocal } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+
+  initLayout();
+
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  const NUM = (casas) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
+  const fmt2 = NUM(2), fmt6 = NUM(6);
+  const fmtData = iso => { const [a, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${a}`; };
+  const numero = el => { const v = parseFloat(el.value); return Number.isFinite(v) ? v : null; };
+  const arred = v => Math.round((v + Number.EPSILON) * 100) / 100;
+
+  let dados = { indices: [], salariosMinimos: [] };
+  let forma = 'ValorFixo';
+  // { chave, vencimento 'YYYY-MM-DD', descricao, valorDevido: number|null, valorPago: number, avulsa }
+  let parcelas = [];
+  let ultimo = null; // { payload, resultado }
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('pcData').value = isoLocal(new Date()).slice(0, 10);
+    ligarAbas();
+    ligarDebito();
+    ligarEstimativa();
+    try {
+      dados = await apiFetch('/pensao/indices');
+    } catch (err) {
+      $('pcFonte').textContent = err.message || 'Não foi possível carregar os índices.';
+      return;
+    }
+    mostrarFonte();
+    atualizarSugestoes();
+    calcularEstimativa();
+  }
+
+  // ── Índices e salário mínimo ───────────────────────────────────────
+  function smVigente() {
+    const hoje = isoLocal(new Date()).slice(0, 7);
+    return smEm(hoje + '-01');
+  }
+  function smEm(iso) {
+    const [a, m] = iso.split('-').map(Number);
+    let valor = null;
+    for (const s of dados.salariosMinimos) {
+      if (s.ano > a || (s.ano === a && s.mes > m)) break;
+      valor = s.valor;
+    }
+    return valor;
+  }
+  function mostrarFonte() {
+    const ate = i => i.ano ? `${pad(i.mes)}/${i.ano}` : 'sem dados';
+    const partes = dados.indices.filter(i => i.indice !== 'SELIC').map(i => `${i.nome.replace(/ \(.*\)/, '')} até ${ate(i)}`);
+    const sm = smVigente();
+    $('pcFonte').innerHTML = `Atualizados automaticamente pelo Banco Central: ${esc(partes.join(' · '))}` +
+      (sm ? ` · salário mínimo vigente <strong>${esc(brl(sm))}</strong>` : '');
+    for (const opt of $('pcIndice').options) {
+      const i = dados.indices.find(x => x.indice === opt.value);
+      if (i?.ano) opt.textContent = `${i.nome} — até ${ate(i)}`;
+    }
+    $('pcPctHint').textContent = sm
+      ? `Cada parcela usa o salário mínimo vigente no mês do vencimento (hoje ${brl(sm)}).`
+      : 'Cada parcela usa o salário mínimo vigente no mês do vencimento.';
+    $('peBase').querySelector('[data-base="sm"]').textContent = sm ? `Salário mínimo (${brl(sm)})` : 'Salário mínimo';
+  }
+
+  function ligarAbas() {
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-nav .tab-btn').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn); });
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${btn.dataset.tab}`));
+    }));
+  }
+
+  // ── Débito em atraso ───────────────────────────────────────────────
+  function ligarDebito() {
+    $('pcForma').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+      forma = btn.dataset.forma;
+      $('pcForma').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+      $('pcCampoValor').style.display = forma === 'ValorFixo' ? '' : 'none';
+      $('pcCampoPct').style.display = forma === 'SalarioMinimo' ? '' : 'none';
+      atualizarSugestoes();
+    }));
+    ['pcValor', 'pcPct'].forEach(id => $(id).addEventListener('input', atualizarSugestoes));
+    ['pcInicio', 'pcFim', 'pcDia', 'pc13'].forEach(id => $(id).addEventListener('change', gerarParcelas));
+
+    const hintJuros = {
+      UmPorCentoAoMes: 'Juros simples de 1% ao mês desde cada vencimento (mora automática em alimentos).',
+      TaxaLegal: '1% ao mês até ago/2024; desde set/2024, Selic menos IPCA, nunca negativa (art. 406 do CC).',
+      Personalizado: 'Juros simples na taxa mensal informada.',
+      Nenhum: '',
+    };
+    const onJuros = () => {
+      const v = $('pcJuros').value;
+      $('pcCampoJurosPct').style.display = v === 'Personalizado' ? '' : 'none';
+      $('pcJurosHint').textContent = hintJuros[v];
+    };
+    $('pcJuros').addEventListener('change', onJuros);
+    onJuros();
+    $('pcCitacaoChk').addEventListener('change', () => { $('pcCampoCitacao').style.display = $('pcCitacaoChk').checked ? '' : 'none'; });
+    $('pcRitos').addEventListener('change', () => { $('pcCampoAjuizamento').style.display = $('pcRitos').checked ? '' : 'none'; });
+
+    $('pcAvAdd').addEventListener('click', adicionarAvulsa);
+    $('pcCalcular').addEventListener('click', calcular);
+    $('pcPdf').addEventListener('click', baixarPdf);
+    $('pcCopiar').addEventListener('click', copiarTabela);
+  }
+
+  function valorSugerido(p) {
+    if (forma === 'SalarioMinimo') {
+      const pct = numero($('pcPct'));
+      const sm = smEm(p.vencimento);
+      return pct && sm ? arred(sm * pct / 100) : null;
+    }
+    return numero($('pcValor'));
+  }
+
+  function gerarParcelas() {
+    const ini = $('pcInicio').value, fim = $('pcFim').value;
+    const avulsas = parcelas.filter(p => p.avulsa);
+    if (!ini || !fim || fim < ini) {
+      parcelas = avulsas;
+      renderParcelas();
+      return;
+    }
+    const dia = Math.min(31, Math.max(1, parseInt($('pcDia').value, 10) || 10));
+    const com13 = $('pc13').checked;
+    const antigas = new Map(parcelas.map(p => [p.chave, p]));
+    const novas = [];
+    let [a, m] = ini.split('-').map(Number);
+    const [af, mf] = fim.split('-').map(Number);
+    const nova = (chave, descricao) => {
+      const ultimoDia = new Date(a, m, 0).getDate();
+      const old = antigas.get(chave);
+      novas.push({
+        chave, descricao, avulsa: false,
+        vencimento: `${a}-${pad(m)}-${pad(Math.min(dia, ultimoDia))}`,
+        valorDevido: old?.valorDevido ?? null, valorPago: old?.valorPago ?? 0,
+      });
+    };
+    while ((a < af || (a === af && m <= mf)) && novas.length < 600) {
+      nova(`${a}-${pad(m)}`, `${pad(m)}/${a}`);
+      if (com13 && m === 12) nova(`13-${a}`, `13ª/${a}`);
+      if (++m > 12) { m = 1; a++; }
+    }
+    parcelas = [...novas, ...avulsas].sort((x, y) => x.vencimento.localeCompare(y.vencimento));
+    renderParcelas();
+  }
+
+  function adicionarAvulsa() {
+    const data = $('pcAvData').value, valor = numero($('pcAvValor'));
+    if (!data || !valor) { mostrarErro('Informe o vencimento e o valor da parcela avulsa.'); return; }
+    esconderErro();
+    parcelas.push({
+      chave: `av-${Date.now()}`, avulsa: true, vencimento: data,
+      descricao: $('pcAvDesc').value.trim() || 'Avulsa', valorDevido: valor, valorPago: 0,
+    });
+    parcelas.sort((x, y) => x.vencimento.localeCompare(y.vencimento));
+    $('pcAvData').value = ''; $('pcAvDesc').value = ''; $('pcAvValor').value = '';
+    renderParcelas();
+  }
+
+  function renderParcelas() {
+    const vazio = parcelas.length === 0;
+    $('pcParcelasVazio').style.display = vazio ? '' : 'none';
+    $('pcParcelasWrap').style.display = vazio ? 'none' : '';
+    $('pcParcelasBody').innerHTML = parcelas.map((p, i) => {
+      const sug = valorSugerido(p);
+      return `<tr data-i="${i}">
+        <td>${esc(p.descricao)}</td>
+        <td>${fmtData(p.vencimento)}</td>
+        <td class="num"><input type="number" min="0" step="0.01" data-campo="valorDevido" aria-label="Valor devido ${esc(p.descricao)}"
+          value="${p.valorDevido ?? ''}" placeholder="${sug != null ? fmt2.format(sug) : ''}"></td>
+        <td class="num"><input type="number" min="0" step="0.01" data-campo="valorPago" aria-label="Valor pago ${esc(p.descricao)}"
+          value="${p.valorPago || ''}" placeholder="0,00"></td>
+        <td><button type="button" class="pc-remover" title="Remover parcela" aria-label="Remover ${esc(p.descricao)}">×</button></td>
+      </tr>`;
+    }).join('');
+    $('pcParcelasBody').querySelectorAll('tr').forEach(tr => {
+      const p = parcelas[Number(tr.dataset.i)];
+      tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
+        const v = numero(inp);
+        if (inp.dataset.campo === 'valorDevido') p.valorDevido = v;
+        else p.valorPago = v ?? 0;
+        atualizarResumoParcelas();
+      }));
+      tr.querySelector('.pc-remover').addEventListener('click', () => {
+        parcelas.splice(parcelas.indexOf(p), 1);
+        renderParcelas();
+      });
+    });
+    atualizarResumoParcelas();
+  }
+
+  function atualizarSugestoes() {
+    $('pcParcelasBody').querySelectorAll('tr').forEach(tr => {
+      const sug = valorSugerido(parcelas[Number(tr.dataset.i)]);
+      tr.querySelector('[data-campo="valorDevido"]').placeholder = sug != null ? fmt2.format(sug) : '';
+    });
+    atualizarResumoParcelas();
+  }
+
+  function atualizarResumoParcelas() {
+    if (parcelas.length === 0) { $('pcResumoParcelas').textContent = ''; return; }
+    let devido = 0, pago = 0;
+    for (const p of parcelas) {
+      devido += p.valorDevido ?? valorSugerido(p) ?? 0;
+      pago += p.valorPago || 0;
+    }
+    $('pcResumoParcelas').textContent =
+      `${parcelas.length} ${parcelas.length === 1 ? 'parcela' : 'parcelas'} · devido ${brl(devido)}${pago ? ` · pago ${brl(pago)}` : ''}`;
+  }
+
+  function montarPayload() {
+    return {
+      dataCalculo: $('pcData').value,
+      forma,
+      valorFixo: forma === 'ValorFixo' ? numero($('pcValor')) : null,
+      percentualSalarioMinimo: forma === 'SalarioMinimo' ? numero($('pcPct')) : null,
+      indice: $('pcIndice').value,
+      juros: $('pcJuros').value,
+      jurosPercentualMensal: $('pcJuros').value === 'Personalizado' ? numero($('pcJurosPct')) : null,
+      dataCitacao: $('pcCitacaoChk').checked && $('pcCitacao').value ? $('pcCitacao').value : null,
+      multaPercentual: $('pcMulta').checked ? 10 : 0,
+      honorariosPercentual: numero($('pcHonorarios')) ?? 0,
+      separarRitos: $('pcRitos').checked,
+      dataAjuizamento: $('pcRitos').checked && $('pcAjuizamento').value ? $('pcAjuizamento').value : null,
+      processo: $('pcProcesso').value.trim() || null,
+      alimentando: $('pcAlimentando').value.trim() || null,
+      alimentante: $('pcAlimentante').value.trim() || null,
+      parcelas: parcelas.map(p => ({
+        vencimento: p.vencimento, valorDevido: p.valorDevido, valorPago: p.valorPago || 0, descricao: p.descricao,
+      })),
+    };
+  }
+
+  function mostrarErro(msg) { $('pcErr').textContent = msg; $('pcErr').style.display = ''; }
+  function esconderErro() { $('pcErr').style.display = 'none'; }
+
+  async function calcular() {
+    esconderErro();
+    if (!$('pcData').value) { mostrarErro('Informe a data do cálculo.'); return; }
+    if (parcelas.length === 0) { mostrarErro('Gere as parcelas em atraso (primeira e última) ou adicione uma parcela avulsa.'); return; }
+    const payload = montarPayload();
+    const btn = $('pcCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const resultado = await apiFetch('/pensao/calcular', { method: 'POST', body: JSON.stringify(payload) });
+      ultimo = { payload, resultado };
+      renderResultado(resultado, payload);
+      trackEvent('calculadora_pensao_calculada', {
+        forma: payload.forma, indice: payload.indice, juros: payload.juros,
+        parcelas: payload.parcelas.length, separar_ritos: payload.separarRitos,
+      });
+    } catch (err) {
+      mostrarErro(err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular débito';
+    }
+  }
+
+  function stat(rotulo, valor, extra = '') {
+    return `<div class="pc-stat"><div class="pc-stat-label">${esc(rotulo)}</div><div class="pc-stat-value" title="${esc(valor)}"${extra}>${esc(valor)}</div></div>`;
+  }
+
+  function blocoRito(classe, titulo, desc, t) {
+    const linha = (r, v, cls = '') => `<div class="pc-rito-linha ${cls}"><span>${esc(r)}</span><span>${esc(brl(v))}</span></div>`;
+    return `<div class="pc-rito ${classe}">
+      <h3>${esc(titulo)}</h3><p>${esc(desc)} · ${t.parcelas} ${t.parcelas === 1 ? 'parcela' : 'parcelas'}</p>
+      ${linha('Saldo nominal', t.saldo)}${linha('Correção', t.correcao)}${linha('Juros', t.juros)}
+      ${t.multa ? linha('Multa', t.multa) : ''}${t.honorarios ? linha('Honorários', t.honorarios) : ''}
+      ${linha('Total', t.total, 'total')}
+    </div>`;
+  }
+
+  function renderResultado(r, payload) {
+    const t = r.totais;
+    $('pcResultado').style.display = '';
+    $('pcTotal').textContent = brl(t.total);
+    $('pcTotalSub').textContent = `Atualizado até ${fmtData(r.dataCalculo)} · ${r.indice} · ${r.juros}`;
+    $('pcStats').innerHTML = [
+      stat('Parcelas em aberto', String(t.parcelas)),
+      stat('Saldo nominal', brl(t.saldo)),
+      stat('Correção', brl(t.correcao)),
+      stat('Juros', brl(t.juros)),
+      t.multa ? stat('Multa', brl(t.multa)) : '',
+      t.honorarios ? stat('Honorários', brl(t.honorarios)) : '',
+    ].join('');
+
+    if (r.prisao && r.penhora) {
+      $('pcRitosBox').style.display = '';
+      $('pcRitosBox').innerHTML =
+        blocoRito('', 'Rito da prisão', 'Art. 528, §3º, do CPC', r.prisao) +
+        blocoRito('penhora', 'Rito da penhora', 'Art. 528, §8º, do CPC', r.penhora);
+    } else {
+      $('pcRitosBox').style.display = 'none';
+    }
+
+    if (r.avisos.length) {
+      $('pcAvisos').style.display = '';
+      $('pcAvisos').innerHTML = `<ul style="margin:0;padding:0">${r.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+    } else {
+      $('pcAvisos').style.display = 'none';
+    }
+
+    const comSm = r.linhas.some(l => l.salarioMinimo != null);
+    const comRito = payload.separarRitos;
+    $('pcResHead').innerHTML = `<tr><th>Parcela</th><th>Vencimento</th>${comSm ? '<th class="num">Sal. mínimo</th>' : ''}
+      <th class="num">Devido</th><th class="num">Pago</th><th class="num">Saldo</th><th class="num">Fator</th>
+      <th class="num">Corrigido</th><th class="num">Juros %</th><th class="num">Juros</th><th class="num">Total</th>${comRito ? '<th>Rito</th>' : ''}</tr>`;
+    $('pcResBody').innerHTML = r.linhas.map(l => `<tr>
+      <td>${esc(l.descricao)}</td><td>${fmtData(l.vencimento)}</td>
+      ${comSm ? `<td class="num">${l.salarioMinimo != null ? fmt2.format(l.salarioMinimo) : '—'}</td>` : ''}
+      <td class="num">${fmt2.format(l.valorDevido)}</td><td class="num">${l.valorPago ? fmt2.format(l.valorPago) : '—'}</td>
+      <td class="num">${fmt2.format(l.saldo)}</td><td class="num">${fmt6.format(l.fatorCorrecao)}</td>
+      <td class="num">${fmt2.format(l.valorCorrigido)}</td><td class="num">${fmt2.format(l.jurosPercentual)}%</td>
+      <td class="num">${fmt2.format(l.juros)}</td><td class="num"><strong>${fmt2.format(l.total)}</strong></td>
+      ${comRito ? `<td>${l.rito === 'prisao' ? '<span class="badge badge-blue">Prisão</span>' : l.rito === 'penhora' ? '<span class="badge badge-gray">Penhora</span>' : '—'}</td>` : ''}
+    </tr>`).join('');
+    $('pcResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function baixarPdf() {
+    if (!ultimo) return;
+    const btn = $('pcPdf');
+    btn.disabled = true; btn.textContent = 'Gerando…';
+    try {
+      const res = await fetch('/api/pensao/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('access_token')}` },
+        body: JSON.stringify(ultimo.payload),
+      });
+      if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.json()).message || ''; } catch {}
+        throw new Error(msg || (res.status === 401 ? 'Sessão expirada. Entre de novo.' : 'Erro ao gerar o PDF.'));
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `calculo-pensao-${ultimo.payload.dataCalculo}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      trackEvent('calculadora_pensao_pdf');
+    } catch (err) {
+      mostrarErro(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Baixar PDF';
+    }
+  }
+
+  async function copiarTabela() {
+    if (!ultimo) return;
+    const r = ultimo.resultado;
+    const cab = ['Parcela', 'Vencimento', 'Salário mínimo', 'Devido', 'Pago', 'Saldo', 'Fator', 'Corrigido', 'Juros %', 'Juros', 'Total', 'Rito'];
+    const linhas = r.linhas.map(l => [
+      l.descricao, fmtData(l.vencimento), l.salarioMinimo != null ? fmt2.format(l.salarioMinimo) : '',
+      fmt2.format(l.valorDevido), fmt2.format(l.valorPago), fmt2.format(l.saldo), fmt6.format(l.fatorCorrecao),
+      fmt2.format(l.valorCorrigido), fmt2.format(l.jurosPercentual), fmt2.format(l.juros), fmt2.format(l.total),
+      l.rito === 'prisao' ? 'Prisão' : l.rito === 'penhora' ? 'Penhora' : '',
+    ]);
+    const tsv = [cab, ...linhas, [], ['Total do débito', '', '', '', '', '', '', '', '', '', fmt2.format(r.totais.total)]]
+      .map(c => c.join('\t')).join('\n');
+    try {
+      await navigator.clipboard.writeText(tsv);
+      $('pcCopiar').textContent = 'Copiado!';
+      setTimeout(() => { $('pcCopiar').textContent = 'Copiar tabela'; }, 1800);
+    } catch {
+      mostrarErro('Não foi possível copiar. Use o PDF.');
+    }
+  }
+
+  // ── Estimativa ─────────────────────────────────────────────────────
+  let base = 'renda';
+  function ligarEstimativa() {
+    $('peBase').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+      base = btn.dataset.base;
+      $('peBase').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+      $('peCampoRenda').style.display = base === 'renda' ? '' : 'none';
+      calcularEstimativa();
+    }));
+    $('peChips').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+      $('pePct').value = btn.dataset.pct;
+      calcularEstimativa();
+    }));
+    ['peRenda', 'pePct', 'peFilhos', 'pe13', 'peNecessidades', 'peRendaA', 'peRendaB']
+      .forEach(id => $(id).addEventListener('input', calcularEstimativa));
+  }
+
+  function calcularEstimativa() {
+    const sm = smVigente();
+    const baseValor = base === 'sm' ? sm : numero($('peRenda'));
+    const pct = numero($('pePct')) ?? 0;
+    const filhos = parseInt($('peFilhos').value, 10) || 1;
+    $('peChips').querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.pct) === pct));
+
+    const mensal = baseValor ? arred(baseValor * pct / 100) : 0;
+    const parcelasAno = $('pe13').checked ? 13 : 12;
+    $('peValor').textContent = brl(mensal);
+    $('peValorSub').textContent = baseValor
+      ? `por mês · ${fmt2.format(pct)}% de ${brl(baseValor)}`
+      : (base === 'sm' ? 'salário mínimo indisponível' : 'informe a renda líquida');
+    $('peStats').innerHTML = [
+      stat(filhos > 1 ? `Por filho (${filhos})` : 'Por filho', brl(arred(mensal / filhos))),
+      stat(`No ano (${parcelasAno}×)`, brl(arred(mensal * parcelasAno))),
+      sm ? stat('Em salários mínimos', `${fmt2.format(mensal / sm * 100)}% do SM`) : '',
+    ].join('');
+
+    const nec = numero($('peNecessidades')), ra = numero($('peRendaA')), rb = numero($('peRendaB'));
+    if (nec && ra != null && rb != null && ra + rb > 0) {
+      const pa = ra / (ra + rb);
+      $('peDivisao').style.display = '';
+      $('peDivisaoStats').innerHTML = [
+        stat(`Alimentante (${fmt2.format(pa * 100)}%)`, brl(arred(nec * pa))),
+        stat(`Outro genitor (${fmt2.format((1 - pa) * 100)}%)`, brl(arred(nec * (1 - pa)))),
+      ].join('');
+    } else {
+      $('peDivisao').style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>

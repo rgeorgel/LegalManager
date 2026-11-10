@@ -3305,6 +3305,37 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("ResumosProcesso");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.SalarioMinimo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Mes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Ano", "Mes")
+                        .IsUnique();
+
+                    b.ToTable("SalariosMinimos", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
                 {
                     b.Property<Guid>("Id")

@@ -436,10 +436,8 @@ using (var scope = app.Services.CreateScope())
 
     await SeedSuperAdminAsync(scope.ServiceProvider, builder.Configuration);
 
-    // Enfileira job se algum dos 3 índices estiver ausente
-    var tiposPresentes = await db.IndicesCorrecaoMonetaria
-        .Select(i => i.Tipo).Distinct().CountAsync();
-    if (tiposPresentes < 3)
+    // Enfileira a carga do histórico dos índices e do salário mínimo se faltar alguma série
+    if (await IndicesCorrecaoJob.PrecisaCargaHistoricaAsync(db))
     {
         var jobClient = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
         jobClient.Enqueue<IndicesCorrecaoJob>(job => job.ExecutarAsync());
