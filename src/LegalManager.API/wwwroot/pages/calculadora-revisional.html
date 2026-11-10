@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora Revisional</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora Revisional</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">🏦</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Compare a taxa do contrato com a taxa média do Banco Central na data da contratação, veja se é abusiva pelo critério do STJ (1,5 vez a média), recalcule as parcelas em Price ou SAC e apure o que foi pago a mais, com devolução em dobro e demonstrativo em PDF.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="rvFonte">Carregando taxas médias do Banco Central…</p>
+      <div class="pc-grid">
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Contrato</div>
+            <div class="pc-field">
+              <label for="rvModalidade">Modalidade</label>
+              <select id="rvModalidade">
+                <option value="PessoalNaoConsignado">Crédito pessoal não consignado</option>
+                <option value="Veiculo">Financiamento de veículos</option>
+                <option value="ConsignadoINSS">Consignado — aposentados e pensionistas do INSS</option>
+                <option value="ConsignadoPublico">Consignado — servidores públicos</option>
+                <option value="ConsignadoPrivado">Consignado — trabalhadores do setor privado</option>
+                <option value="ChequeEspecial">Cheque especial</option>
+              </select>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rvData">Contratação</label><input type="date" id="rvData"></div>
+              <div class="pc-field"><label for="rvPrimeiro">1º vencimento</label><input type="date" id="rvPrimeiro"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rvValor">Valor financiado (R$)</label><input type="number" id="rvValor" min="0" step="0.01"></div>
+              <div class="pc-field"><label for="rvPrazo">Prazo (parcelas)</label><input type="number" id="rvPrazo" min="1" max="600"></div>
+            </div>
+            <div class="pc-hint" style="margin:-6px 0 12px">Valor financiado = valor liberado + IOF + tarifas financiadas (sem entrada).</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rvTaxa">Taxa contratada (% a.m.)</label><input type="number" id="rvTaxa" min="0" max="100" step="0.0001"></div>
+              <div class="pc-field"><label for="rvParcela">ou parcela (R$)</label><input type="number" id="rvParcela" min="0" step="0.01"></div>
+            </div>
+            <div class="pc-hint" style="margin:-6px 0 12px">Sem a taxa, usamos a taxa implícita na parcela (Price).</div>
+            <div class="pc-field">
+              <label for="rvSistema">Sistema de amortização</label>
+              <select id="rvSistema"><option value="Price">Price (parcelas iguais)</option><option value="SAC">SAC (parcelas decrescentes)</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Revisão</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rvPagas">Parcelas pagas</label><input type="number" id="rvPagas" min="0" max="600" value="0"></div>
+              <div class="pc-field"><label for="rvTarifas">Tarifas a excluir (R$)</label><input type="number" id="rvTarifas" min="0" step="0.01" placeholder="TAC, seguro…"></div>
+            </div>
+            <div class="pc-field">
+              <label for="rvTaxaRevisada">Taxa do recálculo (% a.m.) <span class="pc-opcional">— vazio: a taxa média se a contratada for abusiva</span></label>
+              <input type="number" id="rvTaxaRevisada" min="0" max="100" step="0.0001">
+            </div>
+            <label class="pc-check"><input type="checkbox" id="rvDobro" checked> <span>Devolução em dobro das parcelas pagas após 30/03/2021 (art. 42, parágrafo único, do CDC; EAREsp 676.608/STJ)</span></label>
+            <div class="pc-sep"></div>
+            <div class="pc-card-title">Atualização</div>
+            <div class="pc-field"><label for="rvCalculo">Data do cálculo</label><input type="date" id="rvCalculo"></div>
+              <div class="pc-field">
+                <label for="rvCorrecao">Correção das diferenças</label>
+                <select id="rvCorrecao">
+                  <option value="INPC">INPC (IBGE)</option>
+                  <option value="IPCA">IPCA (IBGE)</option>
+                  <option value="IPCAE">IPCA-E (IBGE)</option>
+                  <option value="IGPM">IGP-M (FGV)</option>
+                  <option value="Nenhum">Sem correção</option>
+                </select>
+              </div>
+              <div class="pc-field">
+                <label for="rvJuros">Juros de mora</label>
+                <select id="rvJuros">
+                  <option value="UmPorCentoAoMes">1% ao mês</option>
+                  <option value="TaxaLegal">Taxa legal — Selic − IPCA (Lei 14.905/2024)</option>
+                  <option value="Nenhum">Sem juros</option>
+                </select>
+              </div>
+            <details>
+              <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+              <div style="margin-top:12px">
+                <div class="pc-field"><label for="rvProcesso">Processo</label><input type="text" id="rvProcesso" maxlength="60"></div>
+                <div class="pc-field"><label for="rvContratante">Contratante</label><input type="text" id="rvContratante" maxlength="200"></div>
+                <div class="pc-field"><label for="rvInstituicao">Instituição financeira</label><input type="text" id="rvInstituicao" maxlength="200"></div>
+                <div class="pc-field"><label for="rvContrato">Nº do contrato</label><input type="text" id="rvContrato" maxlength="60"></div>
+              </div>
+            </details>
+            <div style="margin-top:16px"><button class="btn btn-primary" id="rvCalcular" style="width:100%">Calcular revisão</button></div>
+            <div id="rvErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pc-card" id="rvResultado" style="display:none;margin-top:20px">
+        <div class="pc-card-head">
+          <div class="pc-card-title">Resultado</div>
+          <div class="pc-acoes">
+            <button class="btn btn-secondary btn-sm" id="rvCopiar">Copiar tabela</button>
+            <button class="btn btn-primary btn-sm" id="rvPdf">Baixar PDF</button>
+          </div>
+        </div>
+        <div class="pc-veredito" id="rvVeredito"></div>
+        <div class="pc-stats" id="rvStats"></div>
+        <div class="pc-avisos" id="rvAvisos" style="display:none"></div>
+        <div class="table-wrapper pc-scroll">
+          <table class="pc-tabela">
+            <thead><tr><th>Nº</th><th>Vencimento</th><th class="num">Contratada</th><th class="num">Revisada</th><th class="num">Diferença</th><th>Situação</th><th class="num">A restituir</th><th class="num">Fator</th><th class="num">Juros</th><th class="num">Total</th></tr></thead>
+            <tbody id="rvBody"></tbody>
+          </table>
+        </div>
+        <p class="pc-nota">Parcelas recalculadas pelo mesmo sistema de amortização com a taxa do recálculo sobre o valor financiado sem as tarifas excluídas. Abusividade pelo critério do STJ (REsp 1.061.530/RS): taxa acima de 1,5 vez a média de mercado da modalidade no mês da contratação. Fontes: Banco Central do Brasil (SGS).</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, fmt4, fmt6, fmtData, hojeIso, numero, stat, pad, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+  let ultimo = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('rvCalculo').value = hojeIso();
+    $('rvData').addEventListener('change', () => {
+      if (!$('rvData').value || $('rvPrimeiro').value) return;
+      const d = new Date(`${$('rvData').value}T12:00:00`);
+      d.setMonth(d.getMonth() + 1);
+      $('rvPrimeiro').value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    });
+    $('rvCalcular').addEventListener('click', calcular);
+    $('rvPdf').addEventListener('click', async () => {
+      if (!ultimo) return;
+      try { await baixarPdf('/bancario/revisional/pdf', ultimo.payload, $('rvPdf')); trackEvent('calculadora_revisional_pdf'); }
+      catch (err) { erro(err.message || 'Erro ao gerar o PDF.'); }
+    });
+    $('rvCopiar').addEventListener('click', copiar);
+    try {
+      const lista = await apiFetch('/bancario/indices');
+      $('rvFonte').textContent = 'Taxas médias de juros do Banco Central, atualizadas automaticamente: ' +
+        lista.map(i => `${i.nome.replace('Crédito consignado — ', 'Consignado ')} até ${i.ano ? `${pad(i.mes)}/${i.ano}` : 'sem dados'}`).join(' · ');
+    } catch (err) {
+      $('rvFonte').textContent = err.message || 'Não foi possível carregar as taxas médias.';
+    }
+  }
+
+  const erro = msg => { $('rvErr').textContent = msg; $('rvErr').style.display = msg ? '' : 'none'; };
+
+  async function calcular() {
+    erro('');
+    const payload = {
+      modalidade: $('rvModalidade').value, dataContratacao: $('rvData').value, valorFinanciado: numero($('rvValor')),
+      prazo: parseInt($('rvPrazo').value, 10) || 0, dataCalculo: $('rvCalculo').value,
+      taxaContratadaMensal: numero($('rvTaxa')), valorParcela: numero($('rvParcela')), sistema: $('rvSistema').value,
+      primeiroVencimento: $('rvPrimeiro').value || null, parcelasPagas: parseInt($('rvPagas').value, 10) || 0,
+      tarifasExcluidas: numero($('rvTarifas')) ?? 0, taxaRevisadaMensal: numero($('rvTaxaRevisada')),
+      repeticaoEmDobro: $('rvDobro').checked, correcao: $('rvCorrecao').value, juros: $('rvJuros').value,
+      processo: $('rvProcesso').value.trim() || null, contratante: $('rvContratante').value.trim() || null,
+      instituicao: $('rvInstituicao').value.trim() || null, contrato: $('rvContrato').value.trim() || null,
+    };
+    if (!payload.dataContratacao || !payload.valorFinanciado || !payload.prazo) { erro('Informe a contratação, o valor financiado e o prazo.'); return; }
+    const btn = $('rvCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/bancario/revisional', { method: 'POST', body: JSON.stringify(payload) });
+      ultimo = { payload, r };
+      render(r);
+      trackEvent('calculadora_revisional_calculada', { modalidade: payload.modalidade, sistema: payload.sistema, abusiva: r.abusiva });
+    } catch (err) {
+      erro(err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular revisão';
+    }
+  }
+
+  function render(r) {
+    $('rvResultado').style.display = '';
+    const v = $('rvVeredito');
+    if (r.taxaMedia == null) {
+      v.className = 'pc-veredito';
+      v.innerHTML = `<strong>Sem taxa média para comparar</strong><span>${esc(r.modalidade)} — o recálculo usa a taxa informada.</span>`;
+    } else {
+      v.className = `pc-veredito ${r.abusiva ? 'alerta' : 'ok'}`;
+      v.innerHTML = `<strong>${r.abusiva ? 'Taxa abusiva' : 'Taxa dentro do critério do STJ'}</strong>
+        <span>Contratada ${fmt4.format(r.taxaContratada)}% a.m.${r.taxaImplicita ? ' (implícita na parcela)' : ''} = ${fmt2.format(r.razaoMedia)} × a média de
+        ${fmt4.format(r.taxaMedia)}% a.m. (${esc(r.competenciaTaxaMedia)}) · limite de ${fmt4.format(r.limiteAbusividade)}% a.m. · ${esc(r.modalidade)}</span>`;
+    }
+    $('rvStats').innerHTML = [
+      stat('A restituir atualizado', brl(r.restituicaoAtualizada)),
+      stat('Pago a mais', brl(r.pagoAMais)),
+      stat('Redução a vencer', brl(r.economiaAVencer)),
+      stat('Saldo devedor revisado', brl(r.saldoDevedorRevisado)),
+      stat('Taxa do recálculo', `${fmt4.format(r.taxaRevisada)}% a.m.`),
+      stat('Taxa contratada (a.a.)', `${fmt2.format(r.taxaContratadaAnual)}%`),
+    ].join('');
+    $('rvAvisos').style.display = r.avisos.length ? '' : 'none';
+    $('rvAvisos').innerHTML = `<ul style="margin:0;padding:0">${r.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+    $('rvBody').innerHTML = r.linhas.map(l => `<tr class="${l.paga ? 'pc-paga' : ''}">
+      <td>${l.numero}</td><td>${fmtData(l.vencimento)}</td><td class="num">${fmt2.format(l.parcelaOriginal)}</td>
+      <td class="num">${fmt2.format(l.parcelaRevisada)}</td><td class="num">${fmt2.format(l.diferenca)}</td>
+      <td>${l.paga ? (l.emDobro ? '<span class="badge badge-red">Paga · dobro</span>' : '<span class="badge badge-blue">Paga</span>') : '<span class="badge badge-gray">A vencer</span>'}</td>
+      <td class="num">${l.restituir ? fmt2.format(l.restituir) : '—'}</td><td class="num">${l.paga ? fmt6.format(l.fatorCorrecao) : '—'}</td>
+      <td class="num">${l.juros ? fmt2.format(l.juros) : '—'}</td><td class="num"><strong>${l.total ? fmt2.format(l.total) : '—'}</strong></td>
+    </tr>`).join('');
+    $('rvResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiar() {
+    if (!ultimo) return;
+    const r = ultimo.r;
+    const linhas = [['Nº', 'Vencimento', 'Contratada', 'Revisada', 'Diferença', 'Situação', 'A restituir', 'Fator', 'Juros', 'Total'],
+      ...r.linhas.map(l => [l.numero, fmtData(l.vencimento), fmt2.format(l.parcelaOriginal), fmt2.format(l.parcelaRevisada), fmt2.format(l.diferenca),
+        l.paga ? (l.emDobro ? 'Paga (dobro)' : 'Paga') : 'A vencer', fmt2.format(l.restituir), fmt6.format(l.fatorCorrecao), fmt2.format(l.juros), fmt2.format(l.total)]),
+      [], ['A restituir atualizado', '', '', '', '', '', '', '', '', fmt2.format(r.restituicaoAtualizada)]];
+    try { await copiarTsv(linhas, $('rvCopiar')); } catch { erro('Não foi possível copiar. Use o PDF.'); }
+  }
+</script>
+</body>
+</html>

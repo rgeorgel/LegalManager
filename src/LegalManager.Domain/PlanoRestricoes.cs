@@ -49,6 +49,8 @@ public static class PlanoRestricoes
     public static bool PermiteCalculadorasTrabalhistas(PlanoTipo plano) => plano != PlanoTipo.Free;
     // Calculadora de aluguel (imobiliário): todos os planos pagos.
     public static bool PermiteCalculadoraAluguel(PlanoTipo plano) => plano != PlanoTipo.Free;
+    // Calculadoras bancárias (revisional, RMC/RCC, superendividamento): todos os planos pagos.
+    public static bool PermiteCalculadorasBancarias(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteBuscaExternaProcesso(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermitePortalCliente(PlanoTipo plano) => plano != PlanoTipo.Free;
     public static bool PermiteCapturacaoPublicacoes(PlanoTipo plano) => plano is PlanoTipo.Pro or PlanoTipo.Max or PlanoTipo.Enterprise;

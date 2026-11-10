@@ -97,3 +97,16 @@ details.pc-detalhes > summary { cursor: pointer; font-size: 13px; color: var(--c
 
 /* Linha de campos que ocupa a largura do cartão (ex.: dados do contrato de locação) */
 .pc-linha { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+
+/* Veredito do cálculo (ex.: taxa abusiva, superendividamento) */
+.pc-veredito { border: 1px solid var(--color-border); border-left: 4px solid var(--color-text-muted); border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 16px; background: var(--color-surface); }
+.pc-veredito strong { display: block; font-size: 15px; margin-bottom: 2px; }
+.pc-veredito span { font-size: 13px; color: var(--color-text-muted); }
+.pc-veredito.alerta { border-left-color: var(--color-danger); }
+.pc-veredito.alerta strong { color: var(--color-danger); }
+.pc-veredito.ok { border-left-color: var(--color-success); }
+.pc-veredito.ok strong { color: var(--color-success); }
+.pc-tabela tr.pc-paga td { background: var(--color-bg); }
+.pc-tabela input[type=text] { width: 160px; text-align: left; }
+.pc-tabela input[type=checkbox] { width: auto; height: auto; }

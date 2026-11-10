@@ -56,6 +56,9 @@ const NAV_GROUPS = [
       { href: '/pages/calculadora-trabalhista.html', label: '👷 Trabalhista', plus: true },
       { href: '/pages/calculadora-fgts.html',    label: '🏦 FGTS', plus: true },
       { href: '/pages/calculadora-aluguel.html', label: '🏠 Aluguel', plus: true },
+      { href: '/pages/calculadora-revisional.html', label: '🏦 Revisional Bancária', plus: true },
+      { href: '/pages/calculadora-rmc.html',     label: '💳 RMC e RCC (INSS)', plus: true },
+      { href: '/pages/calculadora-superendividamento.html', label: '📉 Superendividamento', plus: true },
     ],
   },
   {

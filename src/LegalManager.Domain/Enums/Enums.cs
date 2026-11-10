@@ -74,7 +74,8 @@ public enum TipoDocumento { Peticao, Decisao, Contrato, Prova, Modelo, Outro }
 // TJSP = IPCA-E (base da Tabela Prática TJSP). INPC e SELIC entraram com a calculadora de pensão;
 // SELIC é a taxa mensal acumulada (série 4390), usada na taxa legal de juros (Lei 14.905/2024).
 // TR (série 7811, do 1º dia do mês) entrou com as calculadoras trabalhista e de FGTS; IGPDI (série 190), com a de aluguel.
-public enum TipoIndice { IPCA, IGPM, TJSP, INPC, SELIC, TR, IGPDI }
+// Tx*: taxas médias mensais de juros do BCB por modalidade (pessoa física, recursos livres) — revisional e RMC/RCC.
+public enum TipoIndice { IPCA, IGPM, TJSP, INPC, SELIC, TR, IGPDI, TxCheque, TxPessoal, TxPrivado, TxPublico, TxINSS, TxVeiculo }
 
 public enum FormaPagamentoContrato { AVista = 1, Parcelado = 2, EntradaParcelado = 3 }
 

@@ -95,10 +95,8 @@ public class AluguelController(AppDbContext db, ITenantContext tenantContext) : 
     private Task<SeriesMensais> SeriesDebitoAsync(CalcularDebitoAluguelDto dto, CancellationToken ct)
     {
         var primeira = dto.Parcelas.Min(p => p.Vencimento);
-        var tipos = new List<TipoIndice>();
-        if (CalculadoraAluguel.TipoDoIndice(dto.IndiceCorrecao) is { } t) tipos.Add(t);
-        if (dto.Juros == JurosPensao.TaxaLegal) tipos.AddRange([TipoIndice.SELIC, TipoIndice.IPCA]);
-        return SeriesMensais.CarregarAsync(db, (primeira.Year, primeira.Month), tipos, false, ct);
+        return SeriesMensais.CarregarAsync(db, (primeira.Year, primeira.Month),
+            AtualizacaoCivel.TiposNecessarios(dto.IndiceCorrecao, dto.Juros), false, ct);
     }
 
     private async Task<IActionResult> PdfAsync(DemonstrativoPdf demonstrativo, string prefixo, DateOnly data, IWebHostEnvironment env, CancellationToken ct)

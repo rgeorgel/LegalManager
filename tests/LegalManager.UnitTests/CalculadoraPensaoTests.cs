@@ -428,16 +428,18 @@ public class PensaoControllerTests
 
 public class IndicesCorrecaoJobTests
 {
-    private sealed class BcbFake(Func<string, string> responder) : HttpMessageHandler
+    // Resposta null = 404 do SGS ("Value(s) not found"), como numa janela sem dados.
+    private sealed class BcbFake(Func<string, string?> responder) : HttpMessageHandler
     {
         public List<string> Urls { get; } = [];
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             var url = request.RequestUri!.ToString();
             Urls.Add(url);
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            var corpo = responder(url);
+            return Task.FromResult(new HttpResponseMessage(corpo is null ? HttpStatusCode.NotFound : HttpStatusCode.OK)
             {
-                Content = new StringContent(responder(url), Encoding.UTF8, "application/json")
+                Content = new StringContent(corpo ?? """{"erro":{"statusCode":404}}""", Encoding.UTF8, "application/json")
             });
         }
     }
@@ -451,16 +453,20 @@ public class IndicesCorrecaoJobTests
         return new IndicesCorrecaoJob(db, factory.Object, NullLogger<IndicesCorrecaoJob>.Instance);
     }
 
-    private static string Responder(string url, string valorFev = "0.50")
+    private static int AnoInicio(string url) =>
+        IndicesCorrecaoJob.Series.FirstOrDefault(x => url.Contains($"sgs.{x.Codigo}/"))?.AnoInicio ?? IndicesCorrecaoJob.AnoInicioHistorico;
+
+    private static string? Responder(string url, string valorFev = "0.50")
     {
         var sm = url.Contains("sgs.1619/");
+        var ano = AnoInicio(url);
         if (url.Contains("ultimos/12"))
-            return sm ? """[{"data":"01/02/1999","valor":"151.00"}]"""
-                      : $$"""[{"data":"01/03/1999","valor":"0.30"},{"data":"01/02/1999","valor":"{{valorFev}}"}]""";
-        if (!url.Contains($"dataInicial=01/01/{IndicesCorrecaoJob.AnoInicioHistorico}")) return "[]";
+            return sm ? $$"""[{"data":"01/02/{{ano}}","valor":"151.00"}]"""
+                      : $$"""[{"data":"01/03/{{ano}}","valor":"0.30"},{"data":"01/02/{{ano}}","valor":"{{valorFev}}"}]""";
+        if (!url.Contains($"dataInicial=01/01/{ano}")) return null; // demais janelas: 404
         // Fora de ordem, como a série da Selic vem do BCB.
-        return sm ? """[{"data":"01/02/1999","valor":"151.00"},{"data":"01/01/1999","valor":"136.00"}]"""
-                  : """[{"data":"01/02/1999","valor":"0.20"},{"data":"01/01/1999","valor":"0.61"}]""";
+        return sm ? $$"""[{"data":"01/02/{{ano}}","valor":"151.00"},{"data":"01/01/{{ano}}","valor":"136.00"}]"""
+                  : $$"""[{"data":"01/02/{{ano}}","valor":"0.20"},{"data":"01/01/{{ano}}","valor":"0.61"}]""";
     }
 
     [Fact]
@@ -472,13 +478,13 @@ public class IndicesCorrecaoJobTests
         var handler = new BcbFake(u => Responder(u));
         await Job(db, handler).ExecutarAsync();
 
-        var series = IndicesCorrecaoJob.Series.Count + 1;
-        var janelas = (DateTime.UtcNow.Year - IndicesCorrecaoJob.AnoInicioHistorico) / 10 + 1;
-        Assert.Equal(series * janelas, handler.Urls.Count);
+        int Janelas(int inicio) => (DateTime.UtcNow.Year - inicio) / 10 + 1;
+        var esperadas = IndicesCorrecaoJob.Series.Sum(x => Janelas(x.AnoInicio)) + Janelas(IndicesCorrecaoJob.AnoInicioHistorico);
+        Assert.Equal(esperadas, handler.Urls.Count);
         Assert.All(handler.Urls, u => Assert.Contains("dataInicial=", u));
-        foreach (var (_, tipo) in IndicesCorrecaoJob.Series)
+        foreach (var serie in IndicesCorrecaoJob.Series)
         {
-            var jan = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == tipo && i.Ano == 1999 && i.Mes == 1);
+            var jan = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == serie.Tipo && i.Ano == serie.AnoInicio && i.Mes == 1);
             Assert.Equal(0.0061m, jan.Valor);
         }
         Assert.Equal(151m, (await db.SalariosMinimos.SingleAsync(s => s.Mes == 2)).Valor);
@@ -489,7 +495,7 @@ public class IndicesCorrecaoJobTests
         Assert.All(incremental.Urls, u => Assert.Contains("ultimos/12", u));
         var fev = await db.IndicesCorrecaoMonetaria.SingleAsync(i => i.Tipo == TipoIndice.INPC && i.Ano == 1999 && i.Mes == 2);
         Assert.Equal(0.0025m, fev.Valor); // revisão regravada
-        Assert.True(await db.IndicesCorrecaoMonetaria.AnyAsync(i => i.Tipo == TipoIndice.SELIC && i.Mes == 3));
+        Assert.True(await db.IndicesCorrecaoMonetaria.AnyAsync(i => i.Tipo == TipoIndice.TxINSS && i.Ano == 2011 && i.Mes == 3));
         Assert.Equal(2, await db.SalariosMinimos.CountAsync());
     }
 
@@ -509,8 +515,8 @@ public class IndicesCorrecaoJobTests
     public async Task SemSalarioMinimo_PrecisaCarga()
     {
         var db = Db();
-        foreach (var (_, tipo) in IndicesCorrecaoJob.Series)
-            db.IndicesCorrecaoMonetaria.Add(new IndiceCorrecaoMonetaria { Id = Guid.NewGuid(), Tipo = tipo, Ano = 1999, Mes = 1, Fonte = "BCB" });
+        foreach (var serie in IndicesCorrecaoJob.Series)
+            db.IndicesCorrecaoMonetaria.Add(new IndiceCorrecaoMonetaria { Id = Guid.NewGuid(), Tipo = serie.Tipo, Ano = serie.AnoInicio, Mes = 1, Fonte = "BCB" });
         await db.SaveChangesAsync();
         Assert.True(await IndicesCorrecaoJob.PrecisaCargaHistoricaAsync(db));
     }

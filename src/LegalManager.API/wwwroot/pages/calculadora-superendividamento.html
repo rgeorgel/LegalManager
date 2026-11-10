@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de Superendividamento</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de Superendividamento</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">📉</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Verifique se o cliente está superendividado (Lei 14.181/2021), preserve o mínimo existencial e monte o plano de pagamento em até 60 meses, com a parcela de cada credor e o demonstrativo em PDF para o pedido de repactuação.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <div class="pc-grid">
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Orçamento</div>
+            <div class="pc-field">
+              <label for="seRenda">Renda líquida mensal (R$)</label>
+              <input type="number" id="seRenda" min="0" step="0.01">
+              <div class="pc-hint">Renda do núcleo familiar, já descontados INSS, IR e consignações obrigatórias.</div>
+            </div>
+            <div class="pc-field">
+              <label for="seDespesas">Despesas básicas mensais (R$)</label>
+              <input type="number" id="seDespesas" min="0" step="0.01" placeholder="Moradia, alimentação, saúde, educação…">
+            </div>
+            <div class="pc-field">
+              <label for="seMinimo">Mínimo existencial (R$)</label>
+              <input type="number" id="seMinimo" min="0" step="0.01" value="600">
+              <div class="pc-hint">Decreto 11.150/2022 com a redação do Decreto 11.567/2023: R$ 600,00. Preserva-se o maior entre ele e as despesas básicas.</div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="sePrazo">Prazo máximo (meses)</label><input type="number" id="sePrazo" min="1" max="60" value="60"></div>
+              <div class="pc-field"><label for="seTeto">Teto da parcela (% renda)</label><input type="number" id="seTeto" min="1" max="100" placeholder="opcional"></div>
+            </div>
+            <details>
+              <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+              <div style="margin-top:12px">
+                <div class="pc-field"><label for="seProcesso">Processo</label><input type="text" id="seProcesso" maxlength="60"></div>
+                <div class="pc-field"><label for="seConsumidor">Consumidor(a)</label><input type="text" id="seConsumidor" maxlength="200"></div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-head">
+              <div class="pc-card-title">Dívidas</div>
+              <button type="button" class="btn btn-secondary btn-sm" id="seAdd">+ Adicionar dívida</button>
+            </div>
+            <div class="table-wrapper">
+              <table class="pc-tabela">
+                <thead><tr><th>Credor</th><th>Tipo</th><th class="num">Saldo devedor (R$)</th><th class="num">Parcela atual (R$)</th><th title="Garantia real, financiamento imobiliário ou crédito rural">Fora do plano</th><th></th></tr></thead>
+                <tbody id="seBody"></tbody>
+              </table>
+            </div>
+            <div class="pc-hint" style="margin-top:8px">Marque "Fora do plano" nas dívidas com garantia real, financiamento imobiliário ou crédito rural (art. 104-A, §1º, do CDC).</div>
+            <div style="margin-top:16px"><button class="btn btn-primary" id="seCalcular" style="width:100%">Montar plano de pagamento</button></div>
+            <div id="seErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pc-card" id="seResultado" style="display:none;margin-top:20px">
+        <div class="pc-card-head">
+          <div class="pc-card-title">Plano de pagamento</div>
+          <div class="pc-acoes">
+            <button class="btn btn-secondary btn-sm" id="seCopiar">Copiar tabela</button>
+            <button class="btn btn-primary btn-sm" id="sePdf">Baixar PDF</button>
+          </div>
+        </div>
+        <div class="pc-veredito" id="seVeredito"></div>
+        <div class="pc-total" id="seParcela">—</div>
+        <div class="pc-total-sub" id="seParcelaSub"></div>
+        <div class="pc-stats" id="seStats"></div>
+        <div class="pc-avisos" id="seAvisos" style="display:none"></div>
+        <div class="table-wrapper">
+          <table class="pc-tabela">
+            <thead><tr><th>Credor</th><th>Tipo</th><th class="num">Saldo</th><th class="num">Participação</th><th class="num">Parcela atual</th><th class="num">Parcela no plano</th><th class="num">Total no plano</th><th class="num">Remanescente</th></tr></thead>
+            <tbody id="seResBody"></tbody>
+          </table>
+        </div>
+        <p class="pc-nota">Lei 14.181/2021 (arts. 54-A e 104-A a 104-C do CDC). A parcela do plano usa a renda que sobra depois de preservar o mínimo existencial (ou as despesas básicas, se maiores), até o teto informado, e é dividida entre os credores na proporção do saldo de cada um.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, numero, stat, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+  let dividas = [{ credor: '', tipo: '', saldo: null, parcelaAtual: null, excluida: false }];
+  let ultimo = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  function init() {
+    render();
+    $('seAdd').addEventListener('click', () => { dividas.push({ credor: '', tipo: '', saldo: null, parcelaAtual: null, excluida: false }); render(); });
+    $('seCalcular').addEventListener('click', calcular);
+    $('sePdf').addEventListener('click', async () => {
+      if (!ultimo) return;
+      try { await baixarPdf('/bancario/superendividamento/pdf', ultimo.payload, $('sePdf')); trackEvent('calculadora_superendividamento_pdf'); }
+      catch (err) { erro(err.message || 'Erro ao gerar o PDF.'); }
+    });
+    $('seCopiar').addEventListener('click', copiar);
+  }
+
+  const erro = msg => { $('seErr').textContent = msg; $('seErr').style.display = msg ? '' : 'none'; };
+
+  function render() {
+    $('seBody').innerHTML = dividas.map((d, i) => `<tr data-i="${i}">
+      <td><input type="text" data-campo="credor" value="${esc(d.credor)}" placeholder="Banco, loja…" aria-label="Credor ${i + 1}"></td>
+      <td><input type="text" data-campo="tipo" value="${esc(d.tipo)}" placeholder="Cartão, empréstimo…" aria-label="Tipo ${i + 1}" style="width:130px"></td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="saldo" value="${d.saldo ?? ''}" aria-label="Saldo ${i + 1}"></td>
+      <td class="num"><input type="number" min="0" step="0.01" data-campo="parcelaAtual" value="${d.parcelaAtual ?? ''}" aria-label="Parcela atual ${i + 1}"></td>
+      <td style="text-align:center"><input type="checkbox" data-campo="excluida" ${d.excluida ? 'checked' : ''} aria-label="Fora do plano ${i + 1}"></td>
+      <td><button type="button" class="pc-remover" title="Remover" aria-label="Remover dívida ${i + 1}">×</button></td>
+    </tr>`).join('');
+    $('seBody').querySelectorAll('tr').forEach(tr => {
+      const d = dividas[Number(tr.dataset.i)];
+      tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
+        const c = inp.dataset.campo;
+        d[c] = inp.type === 'checkbox' ? inp.checked : inp.type === 'number' ? numero(inp) : inp.value;
+      }));
+      tr.querySelector('.pc-remover').addEventListener('click', () => { dividas.splice(dividas.indexOf(d), 1); if (!dividas.length) dividas.push({ credor: '', tipo: '', saldo: null, parcelaAtual: null, excluida: false }); render(); });
+    });
+  }
+
+  async function calcular() {
+    erro('');
+    const renda = numero($('seRenda'));
+    if (renda == null) { erro('Informe a renda líquida mensal.'); return; }
+    const lista = dividas.filter(d => d.credor.trim() || d.saldo);
+    if (!lista.length) { erro('Inclua ao menos uma dívida.'); return; }
+    const payload = {
+      rendaLiquida: renda, minimoExistencial: numero($('seMinimo')) ?? 600, despesasBasicas: numero($('seDespesas')) ?? 0,
+      prazoMaximoMeses: parseInt($('sePrazo').value, 10) || 60, comprometimentoMaximoPercentual: numero($('seTeto')),
+      dividas: lista.map(d => ({ credor: d.credor.trim(), tipo: d.tipo.trim() || null, saldo: d.saldo ?? 0, parcelaAtual: d.parcelaAtual ?? 0, excluida: d.excluida })),
+      processo: $('seProcesso').value.trim() || null, consumidor: $('seConsumidor').value.trim() || null,
+    };
+    const btn = $('seCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/bancario/superendividamento', { method: 'POST', body: JSON.stringify(payload) });
+      ultimo = { payload, r };
+      mostrar(r);
+      trackEvent('calculadora_superendividamento_calculada', { dividas: payload.dividas.length, superendividado: r.superendividado, cabe: r.cabeNoPrazo });
+    } catch (err) {
+      erro(err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Montar plano de pagamento';
+    }
+  }
+
+  function mostrar(r) {
+    $('seResultado').style.display = '';
+    const v = $('seVeredito');
+    v.className = `pc-veredito ${r.superendividado ? 'alerta' : 'ok'}`;
+    v.innerHTML = r.superendividado
+      ? `<strong>Superendividamento</strong><span>As parcelas atuais (${brl(r.totalParcelasAtuais)}, ${fmt2.format(r.comprometimentoAtual)}% da renda) passam da capacidade de pagamento de ${brl(r.capacidadePagamento)} depois de preservar ${brl(r.valorPreservado)} (art. 54-A, §1º, do CDC).</span>`
+      : `<strong>As parcelas atuais cabem no orçamento</strong><span>${brl(r.totalParcelasAtuais)} (${fmt2.format(r.comprometimentoAtual)}% da renda) dentro da capacidade de ${brl(r.capacidadePagamento)}, preservando ${brl(r.valorPreservado)}.</span>`;
+    $('seParcela').textContent = r.mesesPlano ? brl(r.parcelaPlano) : 'Sem capacidade de pagamento';
+    $('seParcelaSub').textContent = r.mesesPlano
+      ? `por mês, em ${r.mesesPlano} ${r.mesesPlano === 1 ? 'parcela' : 'parcelas'} · ${fmt2.format(r.comprometimentoPlano)}% da renda${r.cabeNoPrazo ? '' : ` · ${brl(r.remanescente)} ficam fora do plano`}`
+      : 'a renda não cobre o valor preservado';
+    $('seStats').innerHTML = [
+      stat('Dívidas repactuáveis', brl(r.totalRepactuavel)),
+      stat('Total de dívidas', brl(r.totalDividas)),
+      stat('Valor preservado', brl(r.valorPreservado)),
+      stat('Capacidade de pagamento', brl(r.capacidadePagamento)),
+      stat('Remanescente', brl(r.remanescente)),
+    ].join('');
+    $('seAvisos').style.display = r.avisos.length ? '' : 'none';
+    $('seAvisos').innerHTML = `<ul style="margin:0;padding:0">${r.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+    $('seResBody').innerHTML = r.credores.map(c => `<tr class="${c.excluida ? 'pc-prescrita' : ''}">
+      <td>${esc(c.credor)}</td><td>${esc(c.tipo ?? '')}${c.excluida ? ' (fora do plano)' : ''}</td>
+      <td class="num">${fmt2.format(c.saldo)}</td><td class="num">${c.excluida ? '—' : fmt2.format(c.participacao) + '%'}</td>
+      <td class="num">${fmt2.format(c.parcelaAtual)}</td><td class="num"><strong>${fmt2.format(c.parcelaPlano)}</strong></td>
+      <td class="num">${fmt2.format(c.totalPlano)}</td><td class="num">${fmt2.format(c.remanescente)}</td>
+    </tr>`).join('');
+    $('seResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiar() {
+    if (!ultimo) return;
+    const r = ultimo.r;
+    const linhas = [['Credor', 'Tipo', 'Saldo', 'Participação %', 'Parcela atual', 'Parcela no plano', 'Total no plano', 'Remanescente'],
+      ...r.credores.map(c => [c.credor, (c.tipo ?? '') + (c.excluida ? ' (fora do plano)' : ''), fmt2.format(c.saldo), fmt2.format(c.participacao),
+        fmt2.format(c.parcelaAtual), fmt2.format(c.parcelaPlano), fmt2.format(c.totalPlano), fmt2.format(c.remanescente)]),
+      [], ['Parcela mensal do plano', '', '', '', '', fmt2.format(r.parcelaPlano), `${r.mesesPlano} meses`, fmt2.format(r.remanescente)]];
+    try { await copiarTsv(linhas, $('seCopiar')); } catch { erro('Não foi possível copiar. Use o PDF.'); }
+  }
+</script>
+</body>
+</html>

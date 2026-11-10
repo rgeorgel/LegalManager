@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de RMC e RCC</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de RMC e RCC</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">💳</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Converta o cartão consignado (RMC/RCC) descontado do benefício do INSS em empréstimo consignado comum pela taxa média do Banco Central, descubra quando ele estaria quitado e quanto foi pago a mais — com devolução em dobro, correção, juros e danos morais.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="rmFonte">Carregando a taxa média do consignado INSS…</p>
+      <div class="pc-grid">
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-title">Cartão consignado</div>
+            <div class="pc-field">
+              <div class="pc-seg" id="rmTipo">
+                <button type="button" class="on" data-tipo="RMC">RMC — cartão de crédito</button>
+                <button type="button" data-tipo="RCC">RCC — cartão benefício</button>
+              </div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rmData">Contratação / saque</label><input type="date" id="rmData"></div>
+              <div class="pc-field"><label for="rmValor">Valor liberado (R$)</label><input type="number" id="rmValor" min="0" step="0.01"></div>
+            </div>
+            <div class="pc-field">
+              <label for="rmTaxa">Taxa do empréstimo (% a.m.) <span class="pc-opcional">— vazio: taxa média do BCB</span></label>
+              <input type="number" id="rmTaxa" min="0" max="100" step="0.0001">
+              <div class="pc-hint">Taxa média do crédito consignado para aposentados e pensionistas do INSS no mês da contratação.</div>
+            </div>
+
+            <div class="pc-sep"></div>
+            <div class="pc-card-title">Descontos no benefício</div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rmPrimeiro">Primeiro desconto</label><input type="month" id="rmPrimeiro"></div>
+              <div class="pc-field"><label for="rmUltimo">Último desconto</label><input type="month" id="rmUltimo"></div>
+            </div>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rmDia">Dia do desconto</label><input type="number" id="rmDia" min="1" max="31" value="5"></div>
+              <div class="pc-field"><label for="rmMensal">Valor mensal (R$)</label><input type="number" id="rmMensal" min="0" step="0.01"></div>
+            </div>
+            <div class="pc-hint" style="margin:-6px 0 12px">Veja o histórico de créditos (HISCRE) do INSS; ajuste os meses diferentes na tabela.</div>
+            <button class="btn btn-secondary" id="rmGerar" style="width:100%">Gerar descontos</button>
+          </div>
+        </div>
+
+        <div class="pc-col">
+          <div class="pc-card">
+            <div class="pc-card-head">
+              <div class="pc-card-title">Descontos</div>
+              <span class="pc-hint" id="rmResumo" style="margin:0"></span>
+            </div>
+            <div id="rmVazio" class="pc-vazio">Informe o período e o valor dos descontos e clique em <strong>Gerar descontos</strong>.</div>
+            <div id="rmTabelaWrap" style="display:none">
+              <div class="pc-scroll">
+                <table class="pc-tabela">
+                  <thead><tr><th>Data</th><th class="num">Desconto (R$)</th><th></th></tr></thead>
+                  <tbody id="rmBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="pc-sep"></div>
+            <label class="pc-check"><input type="checkbox" id="rmDobro" checked> <span>Devolução em dobro dos descontos após 30/03/2021 (art. 42, parágrafo único, do CDC; EAREsp 676.608/STJ)</span></label>
+            <div class="pc-row">
+              <div class="pc-field"><label for="rmCalculo">Data do cálculo</label><input type="date" id="rmCalculo"></div>
+              <div class="pc-field"><label for="rmDanos">Danos morais (R$)</label><input type="number" id="rmDanos" min="0" step="0.01"></div>
+            </div>
+            <div class="pc-field">
+              <label for="rmCorrecao">Correção das diferenças</label>
+              <select id="rmCorrecao">
+                <option value="INPC">INPC (IBGE)</option>
+                <option value="IPCA">IPCA (IBGE)</option>
+                <option value="IPCAE">IPCA-E (IBGE)</option>
+                <option value="IGPM">IGP-M (FGV)</option>
+                <option value="Nenhum">Sem correção</option>
+              </select>
+              </div>
+            <div class="pc-field">
+              <label for="rmJuros">Juros de mora</label>
+              <select id="rmJuros">
+                <option value="UmPorCentoAoMes">1% ao mês</option>
+                <option value="TaxaLegal">Taxa legal — Selic − IPCA (Lei 14.905/2024)</option>
+                <option value="Nenhum">Sem juros</option>
+              </select>
+              </div>
+            <details>
+              <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+              <div style="margin-top:12px">
+                <div class="pc-field"><label for="rmProcesso">Processo</label><input type="text" id="rmProcesso" maxlength="60"></div>
+                <div class="pc-field"><label for="rmBeneficiario">Beneficiário(a)</label><input type="text" id="rmBeneficiario" maxlength="200"></div>
+                <div class="pc-field"><label for="rmBeneficio">Nº do benefício</label><input type="text" id="rmBeneficio" maxlength="30"></div>
+                <div class="pc-field"><label for="rmBanco">Banco</label><input type="text" id="rmBanco" maxlength="200"></div>
+              </div>
+            </details>
+            <div style="margin-top:16px"><button class="btn btn-primary" id="rmCalcular" style="width:100%">Calcular</button></div>
+            <div id="rmErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pc-card" id="rmResultado" style="display:none;margin-top:20px">
+        <div class="pc-card-head">
+          <div class="pc-card-title">Resultado</div>
+          <div class="pc-acoes">
+            <button class="btn btn-secondary btn-sm" id="rmCopiar">Copiar tabela</button>
+            <button class="btn btn-primary btn-sm" id="rmPdf">Baixar PDF</button>
+          </div>
+        </div>
+        <div class="pc-veredito" id="rmVeredito"></div>
+        <div class="pc-total" id="rmTotal">—</div>
+        <div class="pc-total-sub" id="rmTotalSub"></div>
+        <div class="pc-stats" id="rmStats"></div>
+        <div class="pc-avisos" id="rmAvisos" style="display:none"></div>
+        <div class="table-wrapper pc-scroll">
+          <table class="pc-tabela">
+            <thead><tr><th>Data</th><th class="num">Desconto</th><th class="num">Juros do mês</th><th class="num">Amortização</th><th class="num">Saldo</th><th class="num">Indébito</th><th class="num">A restituir</th><th class="num">Fator</th><th class="num">Juros</th><th class="num">Total</th></tr></thead>
+            <tbody id="rmResBody"></tbody>
+          </table>
+        </div>
+        <p class="pc-nota">O saque do cartão é tratado como empréstimo consignado comum: o saldo rende juros compostos mês a mês pela taxa indicada e cada desconto amortiza; o que é descontado depois da quitação é indébito, atualizado desde cada desconto.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, fmt4, fmt6, fmtData, hojeIso, numero, stat, pad, mesesEntre, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+  let tipo = 'RMC';
+  let descontos = []; // { data, valor }
+  let ultimo = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('rmCalculo').value = hojeIso();
+    $('rmTipo').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      tipo = b.dataset.tipo;
+      $('rmTipo').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    }));
+    $('rmGerar').addEventListener('click', gerar);
+    $('rmCalcular').addEventListener('click', calcular);
+    $('rmPdf').addEventListener('click', async () => {
+      if (!ultimo) return;
+      try { await baixarPdf('/bancario/rmc/pdf', ultimo.payload, $('rmPdf')); trackEvent('calculadora_rmc_pdf'); }
+      catch (err) { erro(err.message || 'Erro ao gerar o PDF.'); }
+    });
+    $('rmCopiar').addEventListener('click', copiar);
+    try {
+      const lista = await apiFetch('/bancario/indices');
+      const inss = lista.find(i => i.indice === 'ConsignadoINSS');
+      $('rmFonte').textContent = `Taxa média do consignado INSS (Banco Central), atualizada automaticamente: até ${inss?.ano ? `${pad(inss.mes)}/${inss.ano}` : 'sem dados'}.`;
+    } catch (err) {
+      $('rmFonte').textContent = err.message || 'Não foi possível carregar a taxa média.';
+    }
+  }
+
+  const erro = msg => { $('rmErr').textContent = msg; $('rmErr').style.display = msg ? '' : 'none'; };
+
+  function gerar() {
+    erro('');
+    const meses = mesesEntre($('rmPrimeiro').value, $('rmUltimo').value, 600);
+    const valor = numero($('rmMensal'));
+    if (!meses.length || !valor) { erro('Informe o primeiro e o último desconto e o valor mensal.'); return; }
+    const dia = Math.min(31, Math.max(1, parseInt($('rmDia').value, 10) || 5));
+    descontos = meses.map(({ ano, mes }) => ({ data: `${ano}-${pad(mes)}-${pad(Math.min(dia, new Date(ano, mes, 0).getDate()))}`, valor }));
+    render();
+  }
+
+  function render() {
+    const vazio = !descontos.length;
+    $('rmVazio').style.display = vazio ? '' : 'none';
+    $('rmTabelaWrap').style.display = vazio ? 'none' : '';
+    $('rmBody').innerHTML = descontos.map((d, i) => `<tr data-i="${i}"><td>${fmtData(d.data)}</td>
+      <td class="num"><input type="number" min="0" step="0.01" value="${d.valor}" aria-label="Desconto ${fmtData(d.data)}"></td>
+      <td><button type="button" class="pc-remover" title="Remover" aria-label="Remover ${fmtData(d.data)}">×</button></td></tr>`).join('');
+    $('rmBody').querySelectorAll('tr').forEach(tr => {
+      const d = descontos[Number(tr.dataset.i)];
+      tr.querySelector('input').addEventListener('input', e => { d.valor = numero(e.target) ?? 0; resumo(); });
+      tr.querySelector('.pc-remover').addEventListener('click', () => { descontos.splice(descontos.indexOf(d), 1); render(); });
+    });
+    resumo();
+  }
+
+  function resumo() {
+    $('rmResumo').textContent = descontos.length ? `${descontos.length} descontos · ${brl(descontos.reduce((s, d) => s + (d.valor || 0), 0))}` : '';
+  }
+
+  async function calcular() {
+    erro('');
+    if (!$('rmData').value || !numero($('rmValor'))) { erro('Informe a data da contratação e o valor liberado.'); return; }
+    if (!descontos.length) { erro('Gere os descontos do benefício.'); return; }
+    const payload = {
+      tipo, dataContratacao: $('rmData').value, valorLiberado: numero($('rmValor')),
+      descontos: descontos.map(d => ({ data: d.data, valor: d.valor || 0 })), dataCalculo: $('rmCalculo').value,
+      taxaMensal: numero($('rmTaxa')), repeticaoEmDobro: $('rmDobro').checked,
+      correcao: $('rmCorrecao').value, juros: $('rmJuros').value, danosMorais: numero($('rmDanos')) ?? 0,
+      processo: $('rmProcesso').value.trim() || null, beneficiario: $('rmBeneficiario').value.trim() || null,
+      beneficio: $('rmBeneficio').value.trim() || null, banco: $('rmBanco').value.trim() || null,
+    };
+    const btn = $('rmCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/bancario/rmc', { method: 'POST', body: JSON.stringify(payload) });
+      ultimo = { payload, r };
+      mostrar(r);
+      trackEvent('calculadora_rmc_calculada', { tipo, descontos: payload.descontos.length, quitado: r.parcelasParaQuitar != null });
+    } catch (err) {
+      erro(err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular';
+    }
+  }
+
+  function mostrar(r) {
+    $('rmResultado').style.display = '';
+    const v = $('rmVeredito');
+    v.className = `pc-veredito ${r.parcelasParaQuitar ? 'alerta' : ''}`;
+    v.innerHTML = r.parcelasParaQuitar
+      ? `<strong>Como consignado, estaria quitado em ${r.parcelasParaQuitar} descontos (${fmtData(r.dataQuitacao)})</strong><span>Taxa de ${fmt4.format(r.taxaAplicada)}% a.m. — ${esc(r.taxaFonte)}.</span>`
+      : `<strong>Ainda não estaria quitado</strong><span>Saldo como consignado: ${brl(r.saldoDevedorRemanescente)} · taxa de ${fmt4.format(r.taxaAplicada)}% a.m. — ${esc(r.taxaFonte)}.</span>`;
+    $('rmTotal').textContent = brl(r.total);
+    $('rmTotalSub').textContent = `Restituição atualizada${r.danosMorais ? ' + danos morais' : ''} · ${r.atualizacao}`;
+    $('rmStats').innerHTML = [
+      stat('Total descontado', brl(r.totalDescontado)),
+      stat('Pago a mais', brl(r.pagoAMais)),
+      stat('A restituir', brl(r.restituicao)),
+      stat('Restituição atualizada', brl(r.restituicaoAtualizada)),
+      r.danosMorais ? stat('Danos morais', brl(r.danosMorais)) : '',
+    ].join('');
+    $('rmAvisos').style.display = r.avisos.length ? '' : 'none';
+    $('rmAvisos').innerHTML = `<ul style="margin:0;padding:0">${r.avisos.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+    $('rmResBody').innerHTML = r.linhas.map(l => `<tr class="${l.indebito ? 'pc-paga' : ''}">
+      <td>${fmtData(l.data)}</td><td class="num">${fmt2.format(l.desconto)}</td><td class="num">${fmt2.format(l.jurosMes)}</td>
+      <td class="num">${fmt2.format(l.amortizacao)}</td><td class="num">${fmt2.format(l.saldo)}</td>
+      <td class="num">${l.indebito ? fmt2.format(l.indebito) : '—'}</td>
+      <td class="num">${l.restituir ? fmt2.format(l.restituir) + (l.emDobro ? ' <span class="badge badge-red">2×</span>' : '') : '—'}</td>
+      <td class="num">${l.restituir ? fmt6.format(l.fatorCorrecao) : '—'}</td><td class="num">${l.juros ? fmt2.format(l.juros) : '—'}</td>
+      <td class="num"><strong>${l.total ? fmt2.format(l.total) : '—'}</strong></td>
+    </tr>`).join('');
+    $('rmResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiar() {
+    if (!ultimo) return;
+    const r = ultimo.r;
+    const linhas = [['Data', 'Desconto', 'Juros do mês', 'Amortização', 'Saldo', 'Indébito', 'A restituir', 'Fator', 'Juros', 'Total'],
+      ...r.linhas.map(l => [fmtData(l.data), fmt2.format(l.desconto), fmt2.format(l.jurosMes), fmt2.format(l.amortizacao), fmt2.format(l.saldo),
+        fmt2.format(l.indebito), fmt2.format(l.restituir), fmt6.format(l.fatorCorrecao), fmt2.format(l.juros), fmt2.format(l.total)]),
+      [], ['Total', '', '', '', '', '', '', '', '', fmt2.format(r.total)]];
+    try { await copiarTsv(linhas, $('rmCopiar')); } catch { erro('Não foi possível copiar. Use o PDF.'); }
+  }
+</script>
+</body>
+</html>

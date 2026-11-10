@@ -14,7 +14,6 @@ namespace LegalManager.Infrastructure.Services.Trabalhista;
 public static class CalculadoraAluguel
 {
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
-    public static readonly (int Ano, int Mes) InicioTaxaLegal = (2024, 9);
 
     public static TipoIndice? TipoDoIndice(IndiceAluguel indice) => indice switch
     {
@@ -133,20 +132,11 @@ public static class CalculadoraAluguel
         return null;
     }
 
-    public static string DescricaoJuros(CalcularDebitoAluguelDto dto) => dto.Juros switch
-    {
-        JurosPensao.UmPorCentoAoMes => "1% ao mês (juros simples)",
-        JurosPensao.TaxaLegal => "Taxa legal: 1% ao mês até ago/2024 e Selic − IPCA desde set/2024 (Lei 14.905/2024)",
-        JurosPensao.Personalizado => $"{(dto.JurosPercentualMensal ?? 0).ToString("0.####", PtBr)}% ao mês (juros simples)",
-        _ => "Sem juros de mora"
-    };
+    public static string DescricaoJuros(CalcularDebitoAluguelDto dto) => AtualizacaoCivel.DescricaoJuros(dto.Juros, dto.JurosPercentualMensal);
 
     public static ResultadoDebitoAluguelDto CalcularDebito(CalcularDebitoAluguelDto dto, SeriesMensais series)
     {
-        var tipo = TipoDoIndice(dto.IndiceCorrecao);
-        var fim = (dto.DataCalculo.Year, dto.DataCalculo.Month);
-        var faltaIndice = new SortedSet<(int, int)>();
-        var faltaJuros = new SortedSet<(int, int)>();
+        var atualizacao = new AtualizacaoCivel(dto.IndiceCorrecao, dto.Juros, dto.JurosPercentualMensal, dto.DataCalculo, series);
         var pagoAMaior = new List<DateOnly>();
         var linhas = new List<LinhaDebitoAluguelDto>();
 
@@ -155,38 +145,13 @@ public static class CalculadoraAluguel
             var devido = p.Aluguel + p.Encargos;
             if (p.ValorPago > devido) pagoAMaior.Add(p.Vencimento);
             var saldo = Math.Max(0, devido - p.ValorPago);
-            var inicio = (p.Vencimento.Year, p.Vencimento.Month);
-
-            var fator = 1m;
-            var taxaJuros = 0m;
-            foreach (var m in AtualizacaoTrabalhista.Meses(inicio, fim))
-            {
-                if (tipo is not null)
-                {
-                    if (series.Taxa(tipo.Value, m, out var t)) fator *= 1 + t;
-                    else faltaIndice.Add(m);
-                }
-                taxaJuros += dto.Juros switch
-                {
-                    JurosPensao.UmPorCentoAoMes => 0.01m,
-                    JurosPensao.Personalizado => (dto.JurosPercentualMensal ?? 0) / 100m,
-                    JurosPensao.TaxaLegal when m.CompareTo(InicioTaxaLegal) < 0 => 0.01m,
-                    JurosPensao.TaxaLegal => series.Taxa(TipoIndice.SELIC, m, out var selic) && series.Taxa(TipoIndice.IPCA, m, out var ipca)
-                        ? Math.Max(0, selic - ipca)
-                        : Falta(faltaJuros, m),
-                    _ => 0
-                };
-            }
-            fator = Math.Round(Math.Max(1, fator), 6, MidpointRounding.AwayFromZero);
-            taxaJuros = Math.Round(taxaJuros, 6, MidpointRounding.AwayFromZero);
-            var corrigido = Arredondar(saldo * fator);
-            var juros = Arredondar(corrigido * taxaJuros);
-            var multa = Arredondar(corrigido * dto.MultaMoratoria / 100m);
+            var a = atualizacao.Atualizar(saldo, p.Vencimento);
+            var multa = Arredondar(a.Corrigido * dto.MultaMoratoria / 100m);
 
             linhas.Add(new LinhaDebitoAluguelDto(p.Vencimento,
                 string.IsNullOrWhiteSpace(p.Descricao) ? p.Vencimento.ToString("MM/yyyy", PtBr) : p.Descricao.Trim(),
-                p.Aluguel, p.Encargos, p.ValorPago, saldo, fator, corrigido, Math.Round(taxaJuros * 100, 4), juros, multa,
-                corrigido + juros + multa));
+                p.Aluguel, p.Encargos, p.ValorPago, saldo, a.FatorCorrecao, a.Corrigido, a.JurosPercentual, a.Juros, multa,
+                a.Corrigido + a.Juros + multa));
         }
 
         var saldoTotal = linhas.Sum(l => l.Saldo);
@@ -194,11 +159,7 @@ public static class CalculadoraAluguel
         var subtotal = linhas.Sum(l => l.Total);
         var honorarios = Arredondar(subtotal * dto.HonorariosPercentual / 100m);
 
-        var avisos = new List<string>();
-        if (faltaIndice.Count > 0)
-            avisos.Add($"{NomeIndice(dto.IndiceCorrecao)} ainda não publicado para {Lista(faltaIndice)} — considerado 0% nesses meses.");
-        if (faltaJuros.Count > 0)
-            avisos.Add($"Selic/IPCA ainda não publicados para {Lista(faltaJuros)} — taxa legal considerada 0% nesses meses.");
+        var avisos = atualizacao.Avisos().ToList();
         if (pagoAMaior.Count > 0)
             avisos.Add($"Pagamento acima do valor devido em {string.Join(", ", pagoAMaior.Select(d => d.ToString("MM/yyyy", PtBr)))} — o excedente não foi compensado em outras parcelas.");
         if (dto.MultaMoratoria > 10)
@@ -209,7 +170,6 @@ public static class CalculadoraAluguel
             NomeIndice(dto.IndiceCorrecao), DescricaoJuros(dto), avisos);
     }
 
-    private static decimal Falta(SortedSet<(int, int)> set, (int, int) mes) { set.Add(mes); return 0; }
     private static string Lista(IEnumerable<(int Ano, int Mes)> meses) => string.Join(", ", meses.Select(m => $"{m.Mes:00}/{m.Ano}"));
     private static decimal Arredondar(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
 }
