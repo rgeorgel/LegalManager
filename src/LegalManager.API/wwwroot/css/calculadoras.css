@@ -94,3 +94,6 @@ details.pc-detalhes > summary { cursor: pointer; font-size: 13px; color: var(--c
   .pc-stat { padding: 8px 10px; }
   .pc-stat-value { font-size: 14px; }
 }
+
+/* Linha de campos que ocupa a largura do cartão (ex.: dados do contrato de locação) */
+.pc-linha { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }

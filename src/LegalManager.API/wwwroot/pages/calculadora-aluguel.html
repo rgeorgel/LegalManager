@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-Z40PJ2FYE2';
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-Z40PJ2FYE2');
+    }
+  </script>
+  <!-- Meta Pixel -- only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2569880286763335');
+      fbq('track', 'PageView');
+    }
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2569880286763335&ev=PageView&noscript=1"
+  /></noscript>
+<link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Calculadora de Aluguel</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/calculadoras.css">
+<script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Calculadora de Aluguel</h1>
+    </div>
+
+    <div id="planGate" style="display:none" class="card pc-gate">
+      <div class="pc-gate-icon">🏠</div>
+      <h2>Disponível nos planos pagos</h2>
+      <p>Reajuste o aluguel pelo IGP-M, IPCA, INPC ou IGP-DI, calcule o débito de aluguéis e encargos em atraso para cobrança ou despejo — com correção, juros, multa moratória e honorários — e a multa proporcional por devolução antecipada. Índices atualizados automaticamente e demonstrativo em PDF.</p>
+      <a href="/pages/assinatura.html" class="btn btn-primary" style="margin-top:8px">Ver planos</a>
+    </div>
+
+    <div id="mainContent" style="display:none">
+      <p class="pc-fonte" id="alFonte">Carregando índices do Banco Central…</p>
+
+      <div class="pc-card" style="margin-bottom:20px">
+        <div class="pc-card-title">Contrato de locação</div>
+        <div class="pc-linha">
+          <div class="pc-field"><label for="alInicio">Início do contrato</label><input type="date" id="alInicio"></div>
+          <div class="pc-field"><label for="alValor">Aluguel inicial (R$)</label><input type="number" id="alValor" min="0" step="0.01" placeholder="Ex: 2.000,00"></div>
+          <div class="pc-field">
+            <label for="alIndice">Índice de reajuste</label>
+            <select id="alIndice">
+              <option value="IGPM">IGP-M (FGV)</option>
+              <option value="IPCA">IPCA (IBGE)</option>
+              <option value="INPC">INPC (IBGE)</option>
+              <option value="IGPDI">IGP-DI (FGV)</option>
+              <option value="IPCAE">IPCA-E (IBGE)</option>
+              <option value="Nenhum">Sem reajuste</option>
+            </select>
+          </div>
+          <div class="pc-field">
+            <label for="alPeriodicidade">Periodicidade</label>
+            <select id="alPeriodicidade">
+              <option value="12">Anual</option>
+              <option value="6">Semestral</option>
+              <option value="3">Trimestral</option>
+            </select>
+          </div>
+        </div>
+        <label class="pc-check" style="margin-bottom:0"><input type="checkbox" id="alNaoReduzir" checked> <span>Não reduzir o aluguel quando o índice acumulado for negativo</span></label>
+      </div>
+
+      <div class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="debito" role="tab" aria-selected="true">Débito de aluguéis</button>
+        <button class="tab-btn" data-tab="reajuste" role="tab" aria-selected="false">Reajuste</button>
+        <button class="tab-btn" data-tab="multa" role="tab" aria-selected="false">Multa rescisória</button>
+      </div>
+
+      <!-- ── Débito ─────────────────────────────────────────────────── -->
+      <div class="tab-content active" id="tab-debito">
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Aluguéis em atraso</div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="alPrimeiro">Primeiro mês</label><input type="month" id="alPrimeiro"></div>
+                <div class="pc-field"><label for="alUltimo">Último mês</label><input type="month" id="alUltimo"></div>
+              </div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="alDia">Dia do vencimento</label><input type="number" id="alDia" min="1" max="31" value="10"></div>
+                <div class="pc-field"><label for="alEncargos">Encargos/mês (R$)</label><input type="number" id="alEncargos" min="0" step="0.01" placeholder="Condomínio, IPTU"></div>
+              </div>
+              <div class="pc-hint" style="margin:-6px 0 12px">O aluguel de cada mês já sai reajustado pelo índice e pela periodicidade do contrato.</div>
+              <button class="btn btn-secondary" id="alGerar" style="width:100%">Gerar parcelas</button>
+
+              <div class="pc-sep"></div>
+              <div class="pc-card-title">Atualização da dívida</div>
+              <div class="pc-field"><label for="alData">Data do cálculo</label><input type="date" id="alData"></div>
+              <div class="pc-field">
+                <label for="alCorrecao">Correção monetária</label>
+                <select id="alCorrecao">
+                  <option value="IGPM">IGP-M (FGV)</option>
+                  <option value="IPCA">IPCA (IBGE)</option>
+                  <option value="INPC">INPC (IBGE)</option>
+                  <option value="IGPDI">IGP-DI (FGV)</option>
+                  <option value="IPCAE">IPCA-E (IBGE)</option>
+                  <option value="Nenhum">Sem correção</option>
+                </select>
+                <div class="pc-hint">O índice do contrato; se ele for omisso, o IPCA (art. 389, parágrafo único, do CC).</div>
+              </div>
+              <div class="pc-field">
+                <label for="alJuros">Juros de mora</label>
+                <select id="alJuros">
+                  <option value="UmPorCentoAoMes">1% ao mês</option>
+                  <option value="TaxaLegal">Taxa legal — Selic − IPCA (Lei 14.905/2024)</option>
+                  <option value="Personalizado">Outra taxa mensal</option>
+                  <option value="Nenhum">Sem juros</option>
+                </select>
+              </div>
+              <div class="pc-field" id="alCampoJurosPct" style="display:none">
+                <label for="alJurosPct">Taxa de juros (% ao mês)</label>
+                <input type="number" id="alJurosPct" min="0" max="100" step="0.01">
+              </div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="alMulta">Multa moratória (%)</label><input type="number" id="alMulta" min="0" max="100" step="0.5" value="10"></div>
+                <div class="pc-field"><label for="alHonorarios">Honorários (%)</label><input type="number" id="alHonorarios" min="0" max="100" step="0.5" placeholder="Ex: 10"></div>
+              </div>
+              <div class="pc-hint" style="margin:-6px 0 12px">No despejo por falta de pagamento, 10% de honorários se o contrato for omisso (art. 62, II, "d", da Lei 8.245/91).</div>
+
+              <details>
+                <summary style="cursor:pointer;font-size:13px;color:var(--color-text-muted)">Identificação no PDF <span class="pc-opcional">— opcional</span></summary>
+                <div style="margin-top:12px">
+                  <div class="pc-field"><label for="alProcesso">Processo</label><input type="text" id="alProcesso" maxlength="60"></div>
+                  <div class="pc-field"><label for="alLocador">Locador</label><input type="text" id="alLocador" maxlength="200"></div>
+                  <div class="pc-field"><label for="alLocatario">Locatário</label><input type="text" id="alLocatario" maxlength="200"></div>
+                  <div class="pc-field"><label for="alImovel">Imóvel</label><input type="text" id="alImovel" maxlength="300"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-head">
+                <div class="pc-card-title">Parcelas</div>
+                <span class="pc-hint" id="alResumo" style="margin:0"></span>
+              </div>
+              <div id="alVazio" class="pc-vazio">Preencha o contrato e o período em atraso e clique em <strong>Gerar parcelas</strong>.<br>Depois ajuste valores e pagamentos parciais em cada mês.</div>
+              <div id="alTabelaWrap" style="display:none">
+                <div class="pc-scroll">
+                  <table class="pc-tabela">
+                    <thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Aluguel (R$)</th><th class="num">Encargos (R$)</th><th class="num">Pago (R$)</th><th></th></tr></thead>
+                    <tbody id="alBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div style="margin-top:16px"><button class="btn btn-primary" id="alCalcular" style="width:100%">Calcular débito</button></div>
+              <div id="alErr" class="alert alert-error" style="display:none;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pc-card" id="alResultado" style="display:none;margin-top:20px">
+          <div class="pc-card-head">
+            <div class="pc-card-title">Resultado</div>
+            <div class="pc-acoes">
+              <button class="btn btn-secondary btn-sm" id="alCopiar">Copiar tabela</button>
+              <button class="btn btn-primary btn-sm" id="alPdf">Baixar PDF</button>
+            </div>
+          </div>
+          <div class="pc-total" id="alTotal">—</div>
+          <div class="pc-total-sub" id="alTotalSub"></div>
+          <div class="pc-stats" id="alStats"></div>
+          <div class="pc-avisos" id="alAvisos" style="display:none"></div>
+          <div class="table-wrapper">
+            <table class="pc-tabela">
+              <thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Aluguel</th><th class="num">Encargos</th><th class="num">Pago</th><th class="num">Saldo</th><th class="num">Fator</th><th class="num">Corrigido</th><th class="num">Juros %</th><th class="num">Juros</th><th class="num">Multa</th><th class="num">Total</th></tr></thead>
+              <tbody id="alResBody"></tbody>
+            </table>
+          </div>
+          <p class="pc-nota">Cada parcela (aluguel + encargos − pagamentos) é corrigida pelos índices do mês do vencimento até o mês anterior ao do cálculo; juros simples e multa moratória sobre o valor corrigido; honorários sobre o montante. Fontes: Banco Central do Brasil (SGS). Confira com o contrato de locação.</p>
+        </div>
+      </div>
+
+      <!-- ── Reajuste ───────────────────────────────────────────────── -->
+      <div class="tab-content" id="tab-reajuste">
+        <div class="pc-card">
+          <div class="pc-card-head">
+            <div class="pc-card-title">Evolução do aluguel</div>
+            <div class="pc-acoes" style="align-items:flex-end">
+              <div class="pc-field" style="margin:0"><label for="rjAte">Até</label><input type="date" id="rjAte"></div>
+              <button class="btn btn-primary btn-sm" id="rjCalcular">Calcular reajustes</button>
+            </div>
+          </div>
+          <div id="rjErr" class="alert alert-error" style="display:none;margin-bottom:12px"></div>
+          <div id="rjVazio" class="pc-vazio">Preencha o contrato acima e clique em <strong>Calcular reajustes</strong>.</div>
+          <div id="rjResultado" style="display:none">
+            <div class="pc-total" id="rjValor">—</div>
+            <div class="pc-total-sub" id="rjSub"></div>
+            <div class="pc-avisos" id="rjAvisos" style="display:none"></div>
+            <div class="table-wrapper">
+              <table class="pc-tabela">
+                <thead><tr><th>Reajuste em</th><th>Período do índice</th><th class="num">Índice acumulado</th><th class="num">Aluguel anterior</th><th class="num">Aluguel reajustado</th></tr></thead>
+                <tbody id="rjBody"></tbody>
+              </table>
+            </div>
+            <div class="pc-acoes" style="margin-top:14px">
+              <button class="btn btn-secondary btn-sm" id="rjCopiar">Copiar tabela</button>
+              <button class="btn btn-primary btn-sm" id="rjPdf">Baixar PDF</button>
+            </div>
+            <p class="pc-nota">Reajuste no aniversário do contrato pelo índice acumulado nos meses do período anterior (ex.: contrato de março, reajuste anual em março pelo acumulado de março a fevereiro).</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Multa rescisória ───────────────────────────────────────── -->
+      <div class="tab-content" id="tab-multa">
+        <div class="pc-grid">
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Devolução antecipada do imóvel</div>
+              <div class="pc-field">
+                <label for="mtAluguel">Aluguel atual (R$)</label>
+                <input type="number" id="mtAluguel" min="0" step="0.01">
+                <div class="pc-hint" id="mtAluguelHint">Use a aba Reajuste para obter o aluguel vigente.</div>
+              </div>
+              <div class="pc-row">
+                <div class="pc-field"><label for="mtMultas">Multa do contrato (aluguéis)</label><input type="number" id="mtMultas" min="0" step="0.5" value="3"></div>
+                <div class="pc-field"><label for="mtPrazo">Prazo do contrato (meses)</label><input type="number" id="mtPrazo" min="1" max="600" value="30"></div>
+              </div>
+              <div class="pc-field">
+                <label for="mtDevolucao">Data da devolução das chaves</label>
+                <input type="date" id="mtDevolucao">
+              </div>
+              <label class="pc-check"><input type="checkbox" id="mtTransferencia"> <span>Locatário transferido pelo empregador para outra localidade (dispensado da multa com aviso de 30 dias — art. 4º, parágrafo único)</span></label>
+            </div>
+          </div>
+          <div class="pc-col">
+            <div class="pc-card">
+              <div class="pc-card-title">Multa proporcional (art. 4º da Lei 8.245/91)</div>
+              <div class="pc-est-valor" id="mtValor">R$ 0,00</div>
+              <div class="pc-total-sub" id="mtSub">preencha os dados ao lado</div>
+              <div class="pc-stats" id="mtStats"></div>
+              <p class="pc-nota">Na devolução antes do fim do prazo, o locatário paga a multa pactuada proporcionalmente ao período de cumprimento do contrato: multa × (meses restantes ÷ prazo). Meses cumpridos contam pelos meses completos mais os dias restantes ÷ 30, desde o início do contrato.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+  import { esc, brl } from '/js/utils.js';
+  import { initLayout, isPlanoFree } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { trackEvent } from '/js/analytics.js';
+  import { fmt2, fmt4, fmt6, fmtData, hojeIso, numero, stat, pad, baixarPdf, copiarTsv } from '/js/calculadoras.js';
+
+  initLayout();
+  const $ = id => document.getElementById(id);
+
+  let parcelas = []; // { vencimento, aluguel, encargos, valorPago, descricao }
+  let ultimoDebito = null, ultimoReajuste = null;
+
+  if (isPlanoFree()) {
+    $('planGate').style.display = '';
+  } else {
+    $('mainContent').style.display = '';
+    init();
+  }
+
+  async function init() {
+    $('alData').value = hojeIso();
+    $('rjAte').value = hojeIso();
+    $('mtDevolucao').value = hojeIso();
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-nav .tab-btn').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', b === btn); });
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${btn.dataset.tab}`));
+    }));
+    // A dívida, por padrão, corrige pelo mesmo índice do contrato.
+    $('alIndice').addEventListener('change', () => { $('alCorrecao').value = $('alIndice').value; });
+    $('alJuros').addEventListener('change', () => { $('alCampoJurosPct').style.display = $('alJuros').value === 'Personalizado' ? '' : 'none'; });
+
+    $('alGerar').addEventListener('click', gerarParcelas);
+    $('alCalcular').addEventListener('click', calcularDebito);
+    $('alPdf').addEventListener('click', () => pdf('/aluguel/debito/pdf', ultimoDebito, $('alPdf'), 'alErr'));
+    $('alCopiar').addEventListener('click', copiarDebito);
+    $('rjCalcular').addEventListener('click', calcularReajuste);
+    $('rjPdf').addEventListener('click', () => pdf('/aluguel/reajuste/pdf', ultimoReajuste, $('rjPdf'), 'rjErr'));
+    $('rjCopiar').addEventListener('click', copiarReajuste);
+    ['mtAluguel', 'mtMultas', 'mtPrazo', 'mtDevolucao', 'mtTransferencia', 'alInicio'].forEach(id => $(id).addEventListener('input', calcularMulta));
+    calcularMulta();
+
+    try {
+      const indices = await apiFetch('/aluguel/indices');
+      $('alFonte').textContent = 'Índices atualizados automaticamente pelo Banco Central: ' +
+        indices.map(i => `${i.nome} até ${i.ano ? `${pad(i.mes)}/${i.ano}` : 'sem dados'}`).join(' · ');
+    } catch (err) {
+      $('alFonte').textContent = err.message || 'Não foi possível carregar os índices.';
+    }
+  }
+
+  const erro = (id, msg) => { $(id).textContent = msg; $(id).style.display = msg ? '' : 'none'; };
+
+  function contrato() {
+    return {
+      inicioContrato: $('alInicio').value, valorInicial: numero($('alValor')),
+      indice: $('alIndice').value, periodicidadeMeses: Number($('alPeriodicidade').value), naoReduzir: $('alNaoReduzir').checked,
+    };
+  }
+  const contratoValido = c => c.inicioContrato && c.valorInicial > 0;
+
+  // ── Débito ─────────────────────────────────────────────────────────
+  async function gerarParcelas() {
+    erro('alErr', '');
+    const c = contrato();
+    if (!contratoValido(c)) { erro('alErr', 'Informe o início do contrato e o aluguel inicial.'); return; }
+    if (!$('alPrimeiro').value || !$('alUltimo').value) { erro('alErr', 'Informe o primeiro e o último mês em atraso.'); return; }
+    try {
+      parcelas = await apiFetch('/aluguel/parcelas', {
+        method: 'POST',
+        body: JSON.stringify({
+          contrato: c, primeiroMes: `${$('alPrimeiro').value}-01`, ultimoMes: `${$('alUltimo').value}-01`,
+          diaVencimento: parseInt($('alDia').value, 10) || 10, encargos: numero($('alEncargos')) ?? 0,
+        }),
+      });
+      renderParcelas();
+    } catch (err) {
+      erro('alErr', err.message || 'Erro ao gerar as parcelas.');
+    }
+  }
+
+  function renderParcelas() {
+    const vazio = parcelas.length === 0;
+    $('alVazio').style.display = vazio ? '' : 'none';
+    $('alTabelaWrap').style.display = vazio ? 'none' : '';
+    const campo = (p, nome, valor) => `<td class="num"><input type="number" min="0" step="0.01" data-campo="${nome}" value="${valor || ''}" placeholder="0,00" aria-label="${nome} ${esc(p.descricao)}"></td>`;
+    $('alBody').innerHTML = parcelas.map((p, i) => `<tr data-i="${i}">
+      <td>${esc(p.descricao)}</td><td>${fmtData(p.vencimento)}</td>
+      ${campo(p, 'aluguel', p.aluguel)}${campo(p, 'encargos', p.encargos)}${campo(p, 'valorPago', p.valorPago)}
+      <td><button type="button" class="pc-remover" title="Remover" aria-label="Remover ${esc(p.descricao)}">×</button></td>
+    </tr>`).join('');
+    $('alBody').querySelectorAll('tr').forEach(tr => {
+      const p = parcelas[Number(tr.dataset.i)];
+      tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { p[inp.dataset.campo] = numero(inp) ?? 0; resumo(); }));
+      tr.querySelector('.pc-remover').addEventListener('click', () => { parcelas.splice(parcelas.indexOf(p), 1); renderParcelas(); });
+    });
+    resumo();
+  }
+
+  function resumo() {
+    if (!parcelas.length) { $('alResumo').textContent = ''; return; }
+    const devido = parcelas.reduce((s, p) => s + (p.aluguel || 0) + (p.encargos || 0), 0);
+    const pago = parcelas.reduce((s, p) => s + (p.valorPago || 0), 0);
+    $('alResumo').textContent = `${parcelas.length} parcelas · devido ${brl(devido)}${pago ? ` · pago ${brl(pago)}` : ''}`;
+  }
+
+  async function calcularDebito() {
+    erro('alErr', '');
+    if (!parcelas.length) { erro('alErr', 'Gere as parcelas em atraso primeiro.'); return; }
+    const payload = {
+      dataCalculo: $('alData').value,
+      parcelas: parcelas.map(p => ({ vencimento: p.vencimento, aluguel: p.aluguel || 0, encargos: p.encargos || 0, valorPago: p.valorPago || 0, descricao: p.descricao })),
+      indiceCorrecao: $('alCorrecao').value, juros: $('alJuros').value,
+      jurosPercentualMensal: $('alJuros').value === 'Personalizado' ? numero($('alJurosPct')) : null,
+      multaMoratoria: numero($('alMulta')) ?? 0, honorariosPercentual: numero($('alHonorarios')) ?? 0,
+      processo: $('alProcesso').value.trim() || null, locador: $('alLocador').value.trim() || null,
+      locatario: $('alLocatario').value.trim() || null, imovel: $('alImovel').value.trim() || null,
+    };
+    const btn = $('alCalcular');
+    btn.disabled = true; btn.textContent = 'Calculando…';
+    try {
+      const r = await apiFetch('/aluguel/debito', { method: 'POST', body: JSON.stringify(payload) });
+      ultimoDebito = { payload, r };
+      renderDebito(r);
+      trackEvent('calculadora_aluguel_debito', { parcelas: payload.parcelas.length, indice: payload.indiceCorrecao, juros: payload.juros });
+    } catch (err) {
+      erro('alErr', err.message || 'Erro ao calcular.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Calcular débito';
+    }
+  }
+
+  function avisos(id, lista) {
+    $(id).style.display = lista.length ? '' : 'none';
+    $(id).innerHTML = `<ul style="margin:0;padding:0">${lista.map(a => `<li>${esc(a)}</li>`).join('')}</ul>`;
+  }
+
+  function renderDebito(r) {
+    $('alResultado').style.display = '';
+    $('alTotal').textContent = brl(r.total);
+    $('alTotalSub').textContent = `Atualizado até ${fmtData(ultimoDebito.payload.dataCalculo)} · ${r.indice} · ${r.jurosDescricao}`;
+    $('alStats').innerHTML = [
+      stat('Parcelas em aberto', String(r.parcelas)),
+      stat('Saldo nominal', brl(r.saldo)),
+      stat('Correção', brl(r.correcao)),
+      stat('Juros', brl(r.juros)),
+      stat('Multa moratória', brl(r.multa)),
+      r.honorarios ? stat('Honorários', brl(r.honorarios)) : '',
+    ].join('');
+    avisos('alAvisos', r.avisos);
+    $('alResBody').innerHTML = r.linhas.map(l => `<tr>
+      <td>${esc(l.descricao)}</td><td>${fmtData(l.vencimento)}</td>
+      <td class="num">${fmt2.format(l.aluguel)}</td><td class="num">${l.encargos ? fmt2.format(l.encargos) : '—'}</td>
+      <td class="num">${l.valorPago ? fmt2.format(l.valorPago) : '—'}</td><td class="num">${fmt2.format(l.saldo)}</td>
+      <td class="num">${fmt6.format(l.fatorCorrecao)}</td><td class="num">${fmt2.format(l.corrigido)}</td>
+      <td class="num">${fmt2.format(l.jurosPercentual)}%</td><td class="num">${fmt2.format(l.juros)}</td>
+      <td class="num">${fmt2.format(l.multa)}</td><td class="num"><strong>${fmt2.format(l.total)}</strong></td>
+    </tr>`).join('') +
+      (r.honorarios ? `<tr class="pc-subtotal"><td colspan="11">Honorários (${fmt2.format(ultimoDebito.payload.honorariosPercentual)}% sobre o montante)</td><td class="num">${fmt2.format(r.honorarios)}</td></tr>` : '') +
+      `<tr class="pc-subtotal"><td colspan="11">Total do débito</td><td class="num">${fmt2.format(r.total)}</td></tr>`;
+    $('alResultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function copiarDebito() {
+    if (!ultimoDebito) return;
+    const r = ultimoDebito.r;
+    const linhas = [['Parcela', 'Vencimento', 'Aluguel', 'Encargos', 'Pago', 'Saldo', 'Fator', 'Corrigido', 'Juros %', 'Juros', 'Multa', 'Total'],
+      ...r.linhas.map(l => [l.descricao, fmtData(l.vencimento), fmt2.format(l.aluguel), fmt2.format(l.encargos), fmt2.format(l.valorPago),
+        fmt2.format(l.saldo), fmt6.format(l.fatorCorrecao), fmt2.format(l.corrigido), fmt2.format(l.jurosPercentual), fmt2.format(l.juros),
+        fmt2.format(l.multa), fmt2.format(l.total)]),
+      [], ['Honorários', '', '', '', '', '', '', '', '', '', '', fmt2.format(r.honorarios)],
+      ['Total do débito', '', '', '', '', '', '', '', '', '', '', fmt2.format(r.total)]];
+    try { await copiarTsv(linhas, $('alCopiar')); } catch { erro('alErr', 'Não foi possível copiar. Use o PDF.'); }
+  }
+
+  async function pdf(path, ultimo, botao, idErro) {
+    if (!ultimo) return;
+    try {
+      await baixarPdf(path, ultimo.payload, botao);
+      trackEvent('calculadora_aluguel_pdf', { path });
+    } catch (err) {
+      erro(idErro, err.message || 'Erro ao gerar o PDF.');
+    }
+  }
+
+  // ── Reajuste ───────────────────────────────────────────────────────
+  async function calcularReajuste() {
+    erro('rjErr', '');
+    const c = contrato();
+    if (!contratoValido(c)) { erro('rjErr', 'Informe o início do contrato e o aluguel inicial.'); return; }
+    const payload = { contrato: c, ate: $('rjAte').value || hojeIso() };
+    try {
+      const r = await apiFetch('/aluguel/reajuste', { method: 'POST', body: JSON.stringify(payload) });
+      ultimoReajuste = { payload, r };
+      $('rjVazio').style.display = 'none';
+      $('rjResultado').style.display = '';
+      $('rjValor').textContent = brl(r.valorAtual);
+      $('rjSub').textContent = `Aluguel vigente em ${fmtData(payload.ate)} · ${r.indice} · próximo reajuste em ${fmtData(r.proximoReajuste)}`;
+      avisos('rjAvisos', r.avisos);
+      $('rjBody').innerHTML = r.reajustes.length
+        ? r.reajustes.map(l => `<tr><td>${fmtData(l.data)}</td><td>${esc(l.periodo)}${l.estimado ? ' <span class="badge badge-gray">parcial</span>' : ''}</td>
+            <td class="num">${fmt4.format(l.indiceAcumulado)}%</td><td class="num">${brl(l.valorAnterior)}</td><td class="num"><strong>${brl(l.valorNovo)}</strong></td></tr>`).join('')
+        : `<tr><td colspan="5" style="color:var(--color-text-muted)">Nenhum reajuste até esta data.</td></tr>`;
+      $('mtAluguel').value = r.valorAtual;
+      $('mtAluguelHint').textContent = `Preenchido com o aluguel vigente calculado na aba Reajuste (${brl(r.valorAtual)}).`;
+      calcularMulta();
+      trackEvent('calculadora_aluguel_reajuste', { indice: c.indice, periodicidade: c.periodicidadeMeses, reajustes: r.reajustes.length });
+    } catch (err) {
+      erro('rjErr', err.message || 'Erro ao calcular.');
+    }
+  }
+
+  async function copiarReajuste() {
+    if (!ultimoReajuste) return;
+    const r = ultimoReajuste.r;
+    const linhas = [['Reajuste em', 'Período do índice', 'Índice acumulado %', 'Aluguel anterior', 'Aluguel reajustado'],
+      ...r.reajustes.map(l => [fmtData(l.data), l.periodo, fmt4.format(l.indiceAcumulado), fmt2.format(l.valorAnterior), fmt2.format(l.valorNovo)])];
+    try { await copiarTsv(linhas, $('rjCopiar')); } catch { erro('rjErr', 'Não foi possível copiar. Use o PDF.'); }
+  }
+
+  // ── Multa rescisória (art. 4º da Lei 8.245/91) ─────────────────────
+  function mesesCumpridos(inicioIso, fimIso) {
+    const [ya, ma, da] = inicioIso.split('-').map(Number);
+    const [yf, mf, df] = fimIso.split('-').map(Number);
+    let meses = (yf - ya) * 12 + (mf - ma);
+    if (df < da) meses--;
+    const base = new Date(ya, ma - 1 + meses, da);
+    const dias = Math.round((new Date(yf, mf - 1, df) - base) / 86_400_000);
+    return Math.max(0, meses + dias / 30);
+  }
+
+  function calcularMulta() {
+    const aluguel = numero($('mtAluguel')), multas = numero($('mtMultas')) ?? 0, prazo = numero($('mtPrazo'));
+    const inicio = $('alInicio').value, devolucao = $('mtDevolucao').value;
+    if (!aluguel || !prazo || !inicio || !devolucao) {
+      $('mtValor').textContent = brl(0);
+      $('mtSub').textContent = 'informe o início do contrato (acima), o aluguel atual, a multa e o prazo';
+      $('mtStats').innerHTML = '';
+      return;
+    }
+    const cumpridos = Math.min(prazo, mesesCumpridos(inicio, devolucao));
+    const restantes = Math.max(0, prazo - cumpridos);
+    const cheia = aluguel * multas;
+    const valor = $('mtTransferencia').checked ? 0 : Math.round(cheia * restantes / prazo * 100) / 100;
+    $('mtValor').textContent = brl(valor);
+    $('mtSub').textContent = $('mtTransferencia').checked
+      ? 'Dispensado: transferência pelo empregador, com aviso de 30 dias (art. 4º, parágrafo único).'
+      : restantes === 0 ? 'Prazo cumprido — sem multa.' : `${fmt2.format(multas)} aluguéis × ${fmt2.format(restantes)} meses restantes ÷ ${fmt2.format(prazo)} meses`;
+    $('mtStats').innerHTML = [
+      stat('Multa integral', brl(cheia)),
+      stat('Meses cumpridos', fmt2.format(cumpridos)),
+      stat('Meses restantes', fmt2.format(restantes)),
+    ].join('');
+  }
+</script>
+</body>
+</html>

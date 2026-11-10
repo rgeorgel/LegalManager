@@ -30,6 +30,7 @@ public class IndicesCorrecaoJob
         (188, TipoIndice.INPC),
         (4390, TipoIndice.SELIC), // Selic acumulada no mês (% a.m.) — taxa legal da Lei 14.905/2024
         (7811, TipoIndice.TR),    // TR do 1º dia do mês (% a.m.) — FGTS e juros trabalhistas pré-judiciais (art. 39 da Lei 8.177)
+        (190, TipoIndice.IGPDI),  // IGP-DI (FGV) — reajuste de aluguel
     ];
 
     private const string Fonte = "BCB";

@@ -55,6 +55,7 @@ const NAV_GROUPS = [
       { href: '/pages/calculadora-pensao.html',  label: '👨‍👧 Pensão Alimentícia', plus: true },
       { href: '/pages/calculadora-trabalhista.html', label: '👷 Trabalhista', plus: true },
       { href: '/pages/calculadora-fgts.html',    label: '🏦 FGTS', plus: true },
+      { href: '/pages/calculadora-aluguel.html', label: '🏠 Aluguel', plus: true },
     ],
   },
   {
