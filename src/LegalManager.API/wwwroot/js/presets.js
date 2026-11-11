@@ -1837,6 +1837,165 @@ export const PRESETS = [
     `.trim(),
   },
   {
+    id: 'porcelana-marinho',
+    name: 'Porcelana Marinho',
+    description: 'Versão clara do Grafite Lima: vidro fosco claro, azul-marinho e números em fonte mono',
+    dark: false,
+    primaryColor: '#1d3b6f',
+    sidebarColor: '#111a2c',
+    accentColor: '#ff5b3a',
+    layoutMode: 'default',
+    // Mesma linguagem do Grafite Lima (vidro com filete de luz, barra lateral
+    // flutuante, pílulas, números mono, brilho difuso no fundo, borda de
+    // estado), no claro: porcelana fria, marinho no lugar do lima e coral
+    // só nos alertas.
+    customCss: `
+      :root {
+        --color-bg: #eef0f3; --color-surface: #ffffff; --color-text: #131722;
+        --color-text-muted: #697080; --color-border: #e3e6ec;
+        --color-primary-light: #e7edf7 !important;
+        --color-danger: #d9432a; --color-success: #15803d; --color-warning: #b45309;
+        --radius: 16px;
+        --shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(19,23,34,0.04), 0 16px 34px -24px rgba(19,35,70,0.35);
+        --shadow-md: inset 0 1px 0 #fff, 0 2px 4px rgba(19,23,34,0.05), 0 22px 44px -22px rgba(19,35,70,0.4);
+        --pm-vidro: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,249,251,0.9) 100%);
+        --pm-borda: rgba(19,35,70,0.08);
+        --pm-poco: #f3f4f7;
+        --pm-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+      }
+      body {
+        background:
+          radial-gradient(1100px 640px at 100% -10%, rgba(29,59,111,0.09), transparent 62%),
+          radial-gradient(900px 640px at -5% 110%, rgba(255,91,58,0.06), transparent 60%),
+          #eef0f3 !important;
+        background-attachment: fixed !important;
+      }
+      .header {
+        background: rgba(246,247,249,0.72) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+        border-bottom: 1px solid var(--pm-borda) !important; box-shadow: none !important;
+      }
+      .page-title { font-weight: 600; letter-spacing: -0.02em; }
+
+      /* Cards de vidro claro: gradiente branco + filete de luz + contorno fino */
+      .card, .stat-card, .config-section, .form-section, .theme-card, .preset-card, .hp-card, .ci,
+      .processo-card, .notif-card, .ent-card, .d2-card, .d2-kpi, .modal-content, .modal-card, .topnav-painel {
+        background-image: var(--pm-vidro) !important;
+        border-color: var(--pm-borda) !important;
+        border-radius: 22px !important;
+        box-shadow: var(--shadow) !important;
+      }
+      .ent-card { border-left-color: rgba(19,35,70,0.14) !important; }
+      .ent-card.is-ok { border-left-color: #16a34a !important; }
+      .ent-card.is-danger { border-left-color: #e5533a !important; }
+      .ent-card.is-warn { border-left-color: #d97706 !important; }
+      .ent-card.is-info { border-left-color: var(--color-primary) !important; }
+      .ent-card.is-muted { border-left-color: #a3a9b6 !important; }
+      .ent-card-capa { border-radius: 21px 21px 0 0 !important; }
+      .ent-card:is([data-href], [data-abrir]):hover, .processo-card:hover, .d2-kpi:hover, .preset-card:hover {
+        border-top-color: rgba(29,59,111,0.3) !important; border-right-color: rgba(29,59,111,0.3) !important;
+        border-bottom-color: rgba(29,59,111,0.3) !important; box-shadow: var(--shadow-md) !important;
+      }
+      .d2 { --d2-radius: 22px; }
+      .d2-card.d2-calc {
+        background-image: radial-gradient(420px 220px at 100% 0%, rgba(255,255,255,0.14), transparent 70%) !important;
+        border-color: transparent !important; box-shadow: 0 18px 40px -20px rgba(29,59,111,0.65) !important;
+      }
+      .d2-calc .d2-seg { background: rgba(255,255,255,0.12); }
+      .d2-calc input { background: rgba(255,255,255,0.96); border-radius: 12px; }
+      .d2-calc-btn { background: #fff !important; color: var(--color-primary) !important; border-radius: 999px !important; }
+      .d2-calc-btn:hover { background: #e7edf7 !important; }
+      .d2-item { background: var(--pm-poco) !important; border-color: transparent !important; border-radius: 16px !important; }
+
+      /* Números em fonte mono, em marinho */
+      .stat-card-value, .d2-kpi-value, .kpi-value, .ent-card-num-val, .hp-card .val, .hp-evo-val, .uso-card-value {
+        font-family: var(--pm-mono) !important; font-weight: 500 !important; letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat-card-value, .d2-kpi-value, .kpi-value, .uso-card-value { color: var(--color-primary) !important; }
+      .uso-card { background: var(--pm-poco) !important; border-color: transparent !important; border-radius: 18px !important; }
+      .ent-card-prog { background: #e6e9ef !important; }
+      .ent-card-prog > span { background: linear-gradient(90deg, #4a6fa8, var(--color-primary)) !important; box-shadow: 0 0 8px rgba(29,59,111,0.3); }
+
+      /* Barra lateral flutuante (só no desktop; no celular ela vira gaveta) */
+      .sidebar { background: linear-gradient(180deg, #16223a 0%, #0d1526 100%) !important; }
+      @media (min-width: 769px) {
+        body:not(.menu-superior) .sidebar {
+          margin: 14px 0 14px 14px; padding: 12px 10px; border-radius: 28px;
+          border: 1px solid rgba(255,255,255,0.06);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 24px 48px -26px rgba(13,21,38,0.75);
+        }
+        body:not(.menu-superior) .main-content { padding-left: 28px; }
+      }
+      .sidebar-nav li a {
+        border-left: none !important; border-radius: 14px; margin: 2px 0; padding-left: 14px; color: #a9b3c6;
+        transition: background .15s, color .15s;
+      }
+      .nav-group-items li a { padding-left: 26px; }
+      .sidebar-nav li a:hover { background: rgba(255,255,255,0.06) !important; color: #fff !important; }
+      .sidebar-nav li a.active {
+        background: rgba(120,160,230,0.16) !important; color: #fff !important; font-weight: 600;
+        box-shadow: inset 0 0 0 1px rgba(150,185,245,0.22);
+      }
+      .nav-group-header { border-left: none !important; border-radius: 12px; color: rgba(255,255,255,0.38); padding-left: 14px; }
+      .nav-group-header:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.65); }
+
+      /* Menu superior e menu inferior do celular */
+      body.menu-superior .header { background: rgba(246,247,249,0.72) !important; }
+      .topnav-botao.ativo, .topnav-botao.ativo:hover {
+        background: rgba(29,59,111,0.08); color: var(--color-primary) !important; box-shadow: inset 0 0 0 1px rgba(29,59,111,0.14);
+      }
+      .bottom-nav {
+        background: rgba(255,255,255,0.85) !important; border-top-color: var(--pm-borda) !important;
+        -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+      }
+
+      /* Botões em pílula; primário marinho com brilho suave */
+      .btn { border-radius: 999px !important; font-weight: 600; }
+      .btn-primary { border: none !important; box-shadow: 0 8px 20px -10px rgba(29,59,111,0.7); }
+      .btn-primary:hover { background: #26498a !important; box-shadow: 0 10px 26px -8px rgba(29,59,111,0.7); }
+      .btn-secondary { background: rgba(255,255,255,0.8); border-color: rgba(19,35,70,0.12); }
+      .btn-secondary:hover { background: #fff; }
+      .btn-danger { background: rgba(229,83,58,0.1) !important; color: #c2391f !important; border: 1px solid rgba(229,83,58,0.3) !important; }
+      .btn-danger:hover { background: rgba(229,83,58,0.16) !important; }
+      .filter-tab, .view-btn, .fav-filter, .badge, .d2-chip, .tab-count { border-radius: 999px !important; }
+
+      /* Selos translúcidos */
+      .badge-green, .badge-ok, .status-ativo { background: rgba(22,163,74,0.1) !important; color: #15803d !important; }
+      .badge-red, .badge-err, .status-encerrado { background: rgba(229,83,58,0.1) !important; color: #c2391f !important; }
+      .badge-yellow, .badge-warn, .status-suspenso { background: rgba(217,119,6,0.11) !important; color: #a1500a !important; }
+      .badge-blue, .badge-proc { background: rgba(29,59,111,0.08) !important; color: var(--color-primary) !important; }
+      .badge-gray, .badge-muted, .status-arquivado { background: rgba(19,35,70,0.06) !important; color: #5b6272 !important; }
+
+      /* Campos: poço claro, foco com halo marinho */
+      .form-control, .filter-bar select, .filter-bar input {
+        background-color: var(--pm-poco) !important; border-color: transparent !important; border-radius: 14px !important;
+      }
+      .form-control:focus, .filter-bar select:focus, .filter-bar input:focus {
+        background-color: #fff !important; border-color: rgba(29,59,111,0.45) !important;
+        box-shadow: 0 0 0 3px rgba(29,59,111,0.12) !important; outline: none;
+      }
+
+      /* Tabelas transparentes sobre o vidro */
+      .table, table, table thead th { background-color: transparent !important; }
+      table thead th {
+        color: #8a909d !important; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+        border-bottom-color: var(--pm-borda) !important;
+      }
+      table td { border-color: rgba(19,35,70,0.06) !important; }
+      table tbody tr:hover { background-color: rgba(29,59,111,0.03) !important; }
+
+      .modal-overlay { background-color: rgba(19,23,34,0.35) !important; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+      .modal-content, .modal-card { border-radius: 26px !important; }
+      ::selection { background: rgba(29,59,111,0.16); }
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cfd3db; border-radius: 10px; border: 2px solid #eef0f3; }
+      ::-webkit-scrollbar-thumb:hover { background: #aeb4bf; }
+      @media (prefers-reduced-motion: reduce) { .sidebar-nav li a { transition: none !important; } }
+    `.trim(),
+  },
+  {
     id: 'ocean',
     name: 'Ocean',
     description: 'Azul profundo e turquesa',
