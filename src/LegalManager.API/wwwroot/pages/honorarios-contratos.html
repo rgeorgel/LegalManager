@@ -20,22 +20,53 @@
   <title>Causify — Honorários Contratos</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    .hp-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:18px; }
-    .hp-card { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+    .hp-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin-bottom:14px; }
+    .hp-card { background:var(--color-surface, #fff); border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
     .hp-card .lbl { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); }
-    .hp-card .val { font-size:20px; font-weight:700; margin-top:6px; }
-    .hp-card .sub { font-size:12px; color:var(--color-text-muted); margin-top:2px; }
+    /* KPIs compactos: menos respiro e número menor que o dos cards de gráfico. */
+    .hp-kpi .hp-card { padding:9px 12px; }
+    .hp-kpi .hp-card .lbl { font-size:10px; }
+    .hp-kpi .hp-card .val { font-size:16px; font-weight:700; margin-top:3px; line-height:1.25; }
+    .hp-kpi .hp-card .sub { font-size:11px; color:var(--color-text-muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    @media (max-width:520px) { .hp-kpi { grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; } }
 
-    .hp-evo { display:flex; align-items:flex-end; gap:6px; height:140px; padding:10px 0 22px; border-bottom:1px solid var(--color-border); }
-    .hp-evo-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; }
-    .hp-evo-bar { width:100%; max-width:42px; min-height:4px; background:linear-gradient(180deg,#E4C878,#C9A84C); border-radius:5px 5px 0 0; }
-    .hp-evo-lbl { font-size:11px; color:var(--color-text-muted); font-weight:600; margin-top:5px; }
-    .hp-evo-val { font-size:10px; color:var(--color-text-muted); }
+    /* Evolução (barras com grade e eixo Y) e Meta (anel) lado a lado; no celular, um embaixo do outro. */
+    .hp-graficos { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px; margin-bottom:14px; }
+    .hp-graficos > .hp-card { display:flex; flex-direction:column; }
+    @media (max-width:900px) { .hp-graficos { grid-template-columns:minmax(0,1fr); } }
 
-    .hp-meta-bar { height:24px; background:var(--color-border); border-radius:7px; overflow:hidden; position:relative; margin-top:8px; }
-    .hp-meta-fill { height:100%; background:linear-gradient(90deg,#059669,#10b981); border-radius:6px; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; transition:width .4s; }
-    .hp-meta-fill.pending { background:linear-gradient(90deg,#C9A84C,#E2C06A); }
-    .hp-meta-pct { font-size:11px; font-weight:700; color:#fff; }
+    .hp-evo-wrap { container-type:inline-size; }
+    .hp-evo { display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-rows:170px auto; column-gap:8px; margin-top:14px; }
+    .hp-evo-val .curto { display:none; }
+    /* Gráfico estreito (celular, tela média): valor das barras abreviado ("1,2 mil") para não encavalar. */
+    @container (max-width:480px) { .hp-evo-val .cheio { display:none; } .hp-evo-val .curto { display:inline; } }
+    .hp-evo-y { position:relative; grid-row:1; grid-column:1; min-width:34px; }
+    .hp-evo-y span { position:absolute; right:0; transform:translateY(50%); font-size:10px; color:var(--color-text-muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .hp-evo-plot { position:relative; grid-row:1; grid-column:2; display:flex; align-items:flex-end; gap:6px; }
+    .hp-evo-grid { position:absolute; left:0; right:0; height:0; border-top:1px dashed var(--color-border); pointer-events:none; }
+    .hp-evo-grid.base { border-top-style:solid; }
+    .hp-evo-col { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+    .hp-evo-bar { width:100%; max-width:38px; background:linear-gradient(180deg,#E4C878,#C9A84C); border-radius:4px 4px 0 0; position:relative; z-index:1; }
+    .hp-evo-val { font-size:10px; color:var(--color-text-muted); margin-bottom:3px; white-space:nowrap; font-variant-numeric:tabular-nums; position:relative; z-index:1; }
+    .hp-evo-x { grid-row:2; grid-column:2; display:flex; gap:6px; margin-top:5px; }
+    .hp-evo-x span { flex:1; text-align:center; font-size:11px; color:var(--color-text-muted); font-weight:600; }
+
+    .hp-meta { flex:1; display:flex; align-items:center; justify-content:center; gap:22px; flex-wrap:wrap; margin-top:14px; }
+    .hp-meta-anel { position:relative; width:170px; height:170px; flex:none; }
+    .hp-meta-anel svg { width:100%; height:100%; transform:rotate(-90deg); }
+    .hp-meta-anel .trilho { stroke:var(--color-border); }
+    .hp-meta-anel .arco { stroke:#C9A84C; transition:stroke-dashoffset .5s; }
+    .hp-meta-anel.ok .arco { stroke:#059669; }
+    .hp-meta-centro { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .hp-meta-centro .pct { font-size:30px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; }
+    .hp-meta-centro .rot { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .hp-meta-leg { display:flex; flex-direction:column; gap:10px; min-width:0; }
+    .hp-meta-leg .item { display:flex; flex-direction:column; }
+    .hp-meta-leg .item .k { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--color-text-muted); display:flex; align-items:center; gap:6px; }
+    .hp-meta-leg .item .v { font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; }
+    .hp-meta-leg .dot { width:9px; height:9px; border-radius:50%; flex:none; }
+    .hp-meta-leg .falta .v { color:#b45309; font-size:20px; }
+    .hp-meta-leg .falta.ok .v { color:#059669; }
 
     .badge-sm { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; }
     .badge-ok { background:#d1fae5; color:#059669; }
@@ -118,16 +149,15 @@
 
       <div id="dashTiles" class="hp-kpi"></div>
 
-      <div class="hp-card" style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="hp-graficos">
+        <div class="hp-card">
           <div class="lbl">📊 Evolução de Pagamentos (6 meses)</div>
+          <div id="dashEvo" class="hp-evo-wrap"></div>
         </div>
-        <div id="dashEvo"></div>
-      </div>
-
-      <div class="hp-card" style="margin-bottom:14px">
-        <div class="lbl">🎯 Meta Mensal</div>
-        <div id="dashMeta"></div>
+        <div class="hp-card">
+          <div class="lbl">🎯 Meta do Mês</div>
+          <div id="dashMeta"></div>
+        </div>
       </div>
 
       <div class="hp-card" style="margin-bottom:14px" id="dashInadimplentesCard">
@@ -242,47 +272,93 @@
       renderInadimplentes(pick(d, 'inadimplentes', []) ?? []);
     }
 
+    // Escala "redonda" do eixo Y: ~4 faixas de 1/2/2,5/5 × 10ⁿ, com folga acima da maior barra
+    // para o rótulo de valor caber dentro do gráfico.
+    function escalaY(max) {
+      if (!(max > 0)) return { topo: 1000, passo: 250 };
+      const bruto = max / 4;
+      const mag = Math.pow(10, Math.floor(Math.log10(bruto)));
+      const passo = [1, 2, 2.5, 5, 10].map(f => f * mag).find(p => p >= bruto);
+      let topo = Math.ceil(max / passo) * passo;
+      if (max / topo > 0.88) topo += passo;
+      return { topo, passo };
+    }
+    const fmtEixo = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+
     function renderEvolucao(meses) {
       const el = document.getElementById('dashEvo');
-      const max = Math.max(...meses.map(m => pick(m, 'total', 0)), 1);
       if (!meses.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--color-text-muted)">—</div>'; return; }
-      el.innerHTML = `<div class="hp-evo">` + meses.map(m => {
-        const total = pick(m, 'total', 0);
-        const h = Math.max((total / max) * 100, total > 0 ? 4 : 0);
+      const totais = meses.map(m => pick(m, 'total', 0) || 0);
+      const { topo, passo } = escalaY(Math.max(...totais));
+      const pctDe = (v) => (v / topo) * 100;
+
+      let marcas = '', linhas = '';
+      for (let v = 0; v <= topo + passo / 2; v += passo) {
+        const b = pctDe(v).toFixed(2);
+        marcas += `<span style="bottom:${b}%">${v === 0 ? '0' : fmtEixo.format(v)}</span>`;
+        linhas += `<div class="hp-evo-grid${v === 0 ? ' base' : ''}" style="bottom:${b}%"></div>`;
+      }
+      const colunas = meses.map((m, i) => {
+        const total = totais[i];
+        const h = total > 0 ? Math.max(pctDe(total), 1.5) : 0;
+        const rotulo = escapeHtml(pick(m, 'label', ''));
         return `
-          <div class="hp-evo-col">
-            <div class="hp-evo-val">${total > 0 ? brl(total).replace('R$', '').trim() : ''}</div>
+          <div class="hp-evo-col" title="${rotulo}: ${escapeHtml(brl(total))}">
+            ${total > 0 ? `<div class="hp-evo-val"><span class="cheio">${brl(total).replace('R$', '').trim()}</span><span class="curto">${fmtEixo.format(total)}</span></div>` : ''}
             <div class="hp-evo-bar" style="height:${h}%"></div>
-            <div class="hp-evo-lbl">${escapeHtml(pick(m, 'label', ''))}</div>
-          </div>
-        `;
-      }).join('') + `</div>`;
+          </div>`;
+      }).join('');
+      el.innerHTML = `
+        <div class="hp-evo">
+          <div class="hp-evo-y" aria-hidden="true">${marcas}</div>
+          <div class="hp-evo-plot">${linhas}${colunas}</div>
+          <div class="hp-evo-x">${meses.map(m => `<span>${escapeHtml(pick(m, 'label', ''))}</span>`).join('')}</div>
+        </div>`;
     }
 
+    // Meta do mês como anel: a parte preenchida é o recebido, o trilho vazio é o que falta.
     function renderMeta(d) {
       const el = document.getElementById('dashMeta');
       const meta = d.metaMensal;
       const rec = d.alcancadoMes ?? 0;
       if (!meta || meta <= 0) {
-        el.innerHTML = `<div style="padding:10px;color:var(--color-text-muted);font-size:13px">Defina uma meta em <a href="/pages/honorarios-config.html">Configurações</a> para acompanhar.</div>`;
+        el.innerHTML = `<div class="hp-meta"><div style="padding:10px;color:var(--color-text-muted);font-size:13px;text-align:center">Defina uma meta em <a href="/pages/honorarios-config.html">Configurações</a> para acompanhar.</div></div>`;
         return;
       }
-      const pct = Math.min((rec / meta) * 100, 100);
-      const reached = rec >= meta;
+      const pctReal = (rec / meta) * 100;
+      const pct = Math.min(Math.max(pctReal, 0), 100);
+      const atingida = rec >= meta;
+      const r = 72, circ = 2 * Math.PI * r;
+      const cor = atingida ? '#059669' : '#C9A84C';
       el.innerHTML = `
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-          <span>Meta: <b>${brl(meta)}</b></span>
-          <span>Atual: <b style="color:${reached ? '#059669' : '#b45309'}">${brl(rec)}</b> (${pct.toFixed(0)}%)</span>
-        </div>
-        <div class="hp-meta-bar">
-          <div class="hp-meta-fill ${reached ? '' : 'pending'}" style="width:${pct}%">
-            ${pct > 12 ? `<span class="hp-meta-pct">${pct.toFixed(0)}%</span>` : ''}
+        <div class="hp-meta">
+          <div class="hp-meta-anel${atingida ? ' ok' : ''}" role="img"
+               aria-label="${pctReal.toFixed(0)}% da meta de ${escapeHtml(brl(meta))}">
+            <svg viewBox="0 0 170 170">
+              <circle class="trilho" cx="85" cy="85" r="${r}" fill="none" stroke-width="16"/>
+              ${pct > 0 ? `<circle class="arco" cx="85" cy="85" r="${r}" fill="none" stroke-width="16" stroke-linecap="round"
+                stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${(circ * (1 - pct / 100)).toFixed(2)}"/>` : ''}
+            </svg>
+            <div class="hp-meta-centro">
+              <div class="pct" style="color:${cor}">${pctReal.toFixed(0)}%</div>
+              <div class="rot">${atingida ? '✅ atingida' : 'da meta'}</div>
+            </div>
           </div>
-        </div>
-        <div style="font-size:12px;color:var(--color-text-muted);margin-top:6px;text-align:right">
-          ${reached ? '✅ Meta atingida!' : `Faltam <b>${brl(meta - rec)}</b> para atingir a meta`}
-        </div>
-      `;
+          <div class="hp-meta-leg">
+            <div class="item falta${atingida ? ' ok' : ''}">
+              <span class="k">${rec > meta ? 'Acima da meta' : 'Falta'}</span>
+              <span class="v">${brl(Math.abs(meta - rec))}</span>
+            </div>
+            <div class="item">
+              <span class="k"><span class="dot" style="background:${cor}"></span>Recebido</span>
+              <span class="v">${brl(rec)}</span>
+            </div>
+            <div class="item">
+              <span class="k"><span class="dot" style="background:var(--color-border)"></span>Meta</span>
+              <span class="v">${brl(meta)}</span>
+            </div>
+          </div>
+        </div>`;
     }
 
     function renderInadimplentes(items) {
