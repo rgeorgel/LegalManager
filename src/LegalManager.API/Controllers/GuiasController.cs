@@ -23,10 +23,9 @@ public class GuiasController(AppDbContext db, IStorageService storage, IConfigur
     // URL pública do site (canonical, og:url, sitemap). Mesma config dos links dos e-mails.
     private string UrlBase => (config["App:FrontendUrl"] ?? "https://causify.com.br").TrimEnd('/');
 
-    // Pré-lançamento: enquanto Guias:Lancado não for true, as páginas abrem por link direto
-    // (para revisar o conteúdo), mas saem com noindex e o sitemap responde 404 — nada leva o
-    // Google até elas. No lançamento: Guias__Lancado=true, link "Guias" no menu da home/blog
-    // e "Sitemap: .../guias/sitemap.xml" no robots.txt.
+    // Lançada em nov/2026 (Guias:Lancado = true no appsettings): páginas indexáveis, sitemap no
+    // robots.txt e link "Guias" no menu da home e do blog. Com Guias__Lancado=false (ex.: voltar
+    // a esconder) as páginas seguem abrindo por link direto, mas com noindex e sem sitemap.
     private bool Lancado => config.GetValue("Guias:Lancado", false);
 
     [HttpGet("/guias")]

@@ -85,6 +85,10 @@ Causify, mais provável que IAs citem-na com precisão.
 - [RMC e RCC: como calcular quanto o aposentado tem a receber](https://causify.com.br/blog/calculo-rmc-rcc-cartao-consignado-inss.html): cartão consignado do INSS convertido em consignado comum, indébito em dobro.
 - [Superendividamento: como calcular o plano de pagamento da Lei 14.181/2021](https://causify.com.br/blog/superendividamento-plano-de-pagamento.html): mínimo existencial, capacidade de pagamento, rateio entre credores.
 
+## Guias
+
+- [Central de Guias do Causify](https://causify.com.br/guias): passo a passo de cada funcionalidade do sistema (processos, prazos, honorários, portal do cliente, documentos, inteligência artificial), com imagens. Lista de guias publicados em https://causify.com.br/guias/sitemap.xml.
+
 ## FAQ (resumo)
 
 - Quanto custa o Causify? — Free (R$ 0), Plus (R$ {{preco:Plus}}/mês), Pro (R$ {{preco:Pro}}/mês), Max (R$ {{preco:Max}}/mês).{{se-reajuste}} Promocional até {{reajuste-ate}}; a partir de {{reajuste-data}}: R$ {{preco-cheio:Plus}}, R$ {{preco-cheio:Pro}} e R$ {{preco-cheio:Max}}.{{/se-reajuste}}

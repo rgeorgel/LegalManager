@@ -3,6 +3,7 @@ Allow: /
 
 # Sitemap
 Sitemap: https://causify.com.br/sitemap.xml
+Sitemap: https://causify.com.br/guias/sitemap.xml
 
 # Crawl-delay para evitar sobrecarga
 Crawl-delay: 1
