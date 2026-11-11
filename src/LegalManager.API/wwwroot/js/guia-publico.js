@@ -3,7 +3,7 @@
 // funciona como página estática; com a sessão do portal (sessionStorage desta aba) o header
 // mostra "Abrir o Causify", o botão do guia leva direto à tela e o "Útil" passa a curtir.
 // Nada aqui redireciona sozinho: o login só é pedido quando a pessoa clica em "Útil".
-import { isLoggedIn, setSession } from './api.js';
+import { isLoggedIn, refreshTokenIfNeeded } from './api.js';
 
 const script = document.currentScript || document.querySelector('script[src$="/js/guia-publico.js"]');
 const slug = script?.dataset.slug;
@@ -13,23 +13,7 @@ function token() {
   try { return sessionStorage.getItem('access_token'); } catch { return null; }
 }
 
-async function renovarSessao() {
-  let rt = null;
-  try { rt = sessionStorage.getItem('refresh_token'); } catch { /* sem storage */ }
-  if (!rt) return false;
-  try {
-    const res = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: rt }),
-    });
-    if (!res.ok) return false;
-    setSession(await res.json());
-    return true;
-  } catch {
-    return false;
-  }
-}
+const renovarSessao = refreshTokenIfNeeded;
 
 // fetch com o token da aba; renova uma vez no 401. Devolve null se não houver sessão válida.
 async function chamar(path, method = 'GET') {

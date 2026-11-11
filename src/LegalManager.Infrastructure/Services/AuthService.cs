@@ -135,7 +135,7 @@ public class AuthService : IAuthService
         if (usuario.TwoFactorEnabled)
             throw new MfaNecessarioException(GerarMfaToken(usuario));
 
-        return await ConcluirLoginAsync(usuario, ct);
+        return await ConcluirLoginAsync(usuario, dto.Lembrar, ct);
     }
 
     /// <summary>Segunda etapa do login: código do app autenticador ou código de recuperação.</summary>
@@ -165,7 +165,7 @@ public class AuthService : IAuthService
         }
 
         await _userManager.ResetAccessFailedCountAsync(usuario);
-        return await ConcluirLoginAsync(usuario, ct);
+        return await ConcluirLoginAsync(usuario, dto.Lembrar, ct);
     }
 
     private const string MensagemBloqueio =
@@ -191,7 +191,7 @@ public class AuthService : IAuthService
             await _userManager.ResetAccessFailedCountAsync(usuario);
     }
 
-    private async Task<AuthResponseDto> ConcluirLoginAsync(Usuario usuario, CancellationToken ct)
+    private async Task<AuthResponseDto> ConcluirLoginAsync(Usuario usuario, bool lembrar, CancellationToken ct)
     {
         var tenant = await _context.Tenants.FindAsync([usuario.TenantId], ct)
             ?? throw new InvalidOperationException("Tenant não encontrado.");
@@ -201,7 +201,7 @@ public class AuthService : IAuthService
         usuario.UltimoAcessoEm = DateTime.UtcNow;
         await _userManager.UpdateAsync(usuario);
 
-        return await GerarAuthResponseAsync(usuario, tenant, ct);
+        return await GerarAuthResponseAsync(usuario, tenant, ct, lembrar: lembrar);
     }
 
     public async Task<AuthResponseDto> GoogleLoginAsync(GoogleLoginDto dto, CancellationToken ct = default)
@@ -250,7 +250,7 @@ public class AuthService : IAuthService
         if (!usuario.EmailConfirmed) usuario.EmailConfirmed = true;
         await _userManager.UpdateAsync(usuario);
 
-        return await GerarAuthResponseAsync(usuario, tenant, ct);
+        return await GerarAuthResponseAsync(usuario, tenant, ct, lembrar: dto.Lembrar);
     }
 
     public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
@@ -281,7 +281,10 @@ public class AuthService : IAuthService
             token.Usuario.UltimoAcessoEm = DateTime.UtcNow;
         }
 
-        return await GerarAuthResponseAsync(token.Usuario, tenant!, ct, token.ImpersonadoPorId, impersonadoPorNome);
+        // Sessão "lembrar de mim": o novo refresh herda o vencimento do anterior — 12h contadas
+        // do login, não da última renovação.
+        return await GerarAuthResponseAsync(token.Usuario, tenant!, ct, token.ImpersonadoPorId, impersonadoPorNome,
+            lembrar: token.Lembrar, lembrarAte: token.Lembrar ? token.ExpiresAt : null);
     }
 
     public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
@@ -405,15 +408,28 @@ public class AuthService : IAuthService
         return await GerarAuthResponseAsync(targetUser, tenant, ct, superAdminId, superAdminNome);
     }
 
+    /// <summary>
+    /// "Lembrar de mim" no login: a sessão sobrevive ao fechar o navegador (o frontend a guarda no
+    /// localStorage) e vale por este tempo a partir do login, sem renovar — depois disso, senha de novo.
+    /// </summary>
+    public static readonly TimeSpan DuracaoLembrar = TimeSpan.FromHours(12);
+
     private async Task<AuthResponseDto> GerarAuthResponseAsync(
         Usuario usuario, Tenant tenant, CancellationToken ct,
-        Guid? impersonadoPorId = null, string? impersonadoPorNome = null)
+        Guid? impersonadoPorId = null, string? impersonadoPorNome = null,
+        bool lembrar = false, DateTime? lembrarAte = null)
     {
+        var agora = DateTime.UtcNow;
+        lembrar = lembrar && !impersonadoPorId.HasValue;
+        var refreshExpiraEm = impersonadoPorId.HasValue ? agora.AddMinutes(30)
+            : lembrar ? lembrarAte ?? agora.Add(DuracaoLembrar)
+            : agora.AddDays(7);
         var accessTokenTtl = impersonadoPorId.HasValue ? TimeSpan.FromMinutes(15) : TimeSpan.FromHours(1);
-        var refreshTokenTtl = impersonadoPorId.HasValue ? TimeSpan.FromMinutes(30) : TimeSpan.FromDays(7);
+        // O access token não passa do fim da sessão lembrada.
+        if (lembrar && refreshExpiraEm - agora < accessTokenTtl) accessTokenTtl = refreshExpiraEm - agora;
 
         var accessToken = GerarJwt(usuario, tenant, impersonadoPorId, impersonadoPorNome, accessTokenTtl);
-        var refreshToken = await CriarRefreshTokenAsync(usuario.Id, ct, impersonadoPorId, refreshTokenTtl);
+        var refreshToken = await CriarRefreshTokenAsync(usuario.Id, refreshExpiraEm, lembrar, ct, impersonadoPorId);
 
         var tema = new TenantThemeDto(
             tenant.PrimaryColor,
@@ -550,16 +566,17 @@ public class AuthService : IAuthService
     }
 
     private async Task<RefreshToken> CriarRefreshTokenAsync(
-        Guid usuarioId, CancellationToken ct, Guid? impersonadoPorId = null, TimeSpan? ttl = null)
+        Guid usuarioId, DateTime expiraEm, bool lembrar, CancellationToken ct, Guid? impersonadoPorId = null)
     {
         var token = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UsuarioId = usuarioId,
             Token = GenerateSecureToken(),
-            ExpiresAt = DateTime.UtcNow.Add(ttl ?? TimeSpan.FromDays(7)),
+            ExpiresAt = expiraEm,
             CriadoEm = DateTime.UtcNow,
-            ImpersonadoPorId = impersonadoPorId
+            ImpersonadoPorId = impersonadoPorId,
+            Lembrar = lembrar
         };
 
         _context.RefreshTokens.Add(token);

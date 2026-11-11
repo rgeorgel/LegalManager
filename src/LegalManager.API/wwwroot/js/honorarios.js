@@ -1,4 +1,4 @@
-import { apiFetch } from './api.js';
+import { apiFetch, clearSession } from './api.js';
 
 import { esc as escapeHtml } from './utils.js';
 const FORMATTERS = {
@@ -165,8 +165,7 @@ export async function abrirExtratoPdf(id) {
     return;
   }
   if (resp.status === 401) {
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
+    clearSession();
     const back = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = `/login.html?redirect=${back}`;
     return;

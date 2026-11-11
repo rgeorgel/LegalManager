@@ -5,7 +5,9 @@ namespace LegalManager.Application.DTOs.Auth;
 
 public record LoginDto(
     [Required, EmailAddress] string Email,
-    [Required] string Senha
+    [Required] string Senha,
+    // "Lembrar de mim": sessão de 12h que sobrevive ao fechar o navegador.
+    bool Lembrar = false
 );
 
 public record GoogleLoginDto(
@@ -18,7 +20,8 @@ public record GoogleLoginDto(
     string? Fbclid = null,
     string? Gclid = null,
     // Só vale quando o login cria a conta (e-mail ainda sem cadastro).
-    string? CodigoParceiro = null
+    string? CodigoParceiro = null,
+    bool Lembrar = false
 );
 
 public record AuthResponseDto(

@@ -9,6 +9,8 @@ public class RefreshToken
     public bool Revogado { get; set; }
     public DateTime CriadoEm { get; set; }
     public Guid? ImpersonadoPorId { get; set; }
+    /// <summary>Sessão "lembrar de mim": ExpiresAt é absoluto (12h do login) e passa igual na rotação.</summary>
+    public bool Lembrar { get; set; }
 
     public Usuario Usuario { get; set; } = null!;
     public Usuario? ImpersonadoPor { get; set; }

@@ -5,7 +5,9 @@ namespace LegalManager.Application.DTOs.Auth;
 /// <summary>2ª etapa do login: o mfaToken veio da 1ª etapa; código do app ou de recuperação.</summary>
 public record VerificarMfaDto(
     [Required] string MfaToken,
-    [Required] string Codigo
+    [Required] string Codigo,
+    // Repete o "lembrar de mim" marcado na 1ª etapa (o MfaToken não o carrega).
+    bool Lembrar = false
 );
 
 // TemSenha = false: conta só com login Google, que não passa pelo MFA (o aviso do painel some).

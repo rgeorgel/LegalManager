@@ -6,7 +6,70 @@ function getToken() {
   return sessionStorage.getItem('access_token');
 }
 
-export function setSession(data) {
+// "Lembrar de mim": a sessão de trabalho continua no sessionStorage (é dali que todas as
+// páginas leem), e uma cópia fica no localStorage para sobreviver ao fechar o navegador e
+// valer em outras abas. Expira junto com o refresh token (12h do login, ver
+// AuthService.DuracaoLembrar) — depois disso a cópia é descartada e o login pede a senha.
+const SESSAO_LEMBRADA = 'sessao_lembrada';
+
+function lerSessaoLembrada() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSAO_LEMBRADA) || 'null');
+    if (s?.refreshToken && Date.parse(s.expiraEm) > Date.now()) return s;
+    if (s) localStorage.removeItem(SESSAO_LEMBRADA);
+  } catch {}
+  return null;
+}
+
+function gravarSessaoLembrada(data) {
+  try {
+    localStorage.setItem(SESSAO_LEMBRADA, JSON.stringify({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      usuario: data.usuario,
+      expiraEm: data.expiresAt,
+    }));
+  } catch {}
+}
+
+function esquecerSessaoLembrada() {
+  try { localStorage.removeItem(SESSAO_LEMBRADA); } catch {}
+}
+
+// Aba nova (ou navegador reaberto) sem sessão própria: retoma a sessão lembrada. Roda na
+// avaliação do módulo, antes de qualquer isLoggedIn() da página. O access token pode já ter
+// vencido — o 1º 401 renova com o refresh token, como em qualquer aba.
+function restaurarSessaoLembrada() {
+  try {
+    if (sessionStorage.getItem('access_token')) return;
+    const s = lerSessaoLembrada();
+    if (!s) return;
+    sessionStorage.setItem('access_token', s.accessToken);
+    sessionStorage.setItem('refresh_token', s.refreshToken);
+    sessionStorage.setItem('user', JSON.stringify(s.usuario));
+    if (s.usuario?.tema !== undefined) sessionStorage.setItem('tenant_theme', JSON.stringify(s.usuario.tema));
+  } catch {}
+}
+
+/** Refresh token mais recente: o da sessão lembrada, se houver (outra aba pode tê-lo renovado). */
+export function getRefreshToken() {
+  return lerSessaoLembrada()?.refreshToken || sessionStorage.getItem('refresh_token');
+}
+
+/**
+ * Grava a sessão devolvida pelo login/refresh. `lembrar`: true no login com "Lembrar de mim"
+ * marcado, false no login sem ele; omitido (refresh, impersonação...) mantém o que já estava.
+ */
+export function setSession(data, { lembrar } = {}) {
+  if (lembrar === true) gravarSessaoLembrada(data);
+  else if (lembrar === false) esquecerSessaoLembrada();
+  // Renovação da própria sessão lembrada (o vencimento vem igual do servidor). Outro usuário
+  // (convite, cadastro) não herda a cópia — e ela é descartada.
+  else if (lerSessaoLembrada()) {
+    if (lerSessaoLembrada().usuario?.id === data.usuario?.id) gravarSessaoLembrada(data);
+    else esquecerSessaoLembrada();
+  }
+
   sessionStorage.setItem('access_token', data.accessToken);
   sessionStorage.setItem('refresh_token', data.refreshToken);
   sessionStorage.setItem('user', JSON.stringify(data.usuario));
@@ -29,6 +92,7 @@ export function clearSession() {
   sessionStorage.removeItem('refresh_token');
   sessionStorage.removeItem('user');
   sessionStorage.removeItem('tenant_theme');
+  esquecerSessaoLembrada();
   resetIdentity();
 }
 
@@ -57,6 +121,7 @@ export function consumeImpersonationHandoff() {
 // já esteja em sessionStorage antes de qualquer verificação isLoggedIn() feita pela página
 // que importa este módulo — inclusive checagens inline que rodam antes de initLayout().
 consumeImpersonationHandoff();
+restaurarSessaoLembrada();
 
 export function getImpersonationInfo() {
   const token = getToken();
@@ -70,8 +135,8 @@ export function getImpersonationInfo() {
   }
 }
 
-async function refreshTokenIfNeeded() {
-  const rt = sessionStorage.getItem('refresh_token');
+export async function refreshTokenIfNeeded() {
+  const rt = getRefreshToken();
   if (!rt) return false;
   try {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
@@ -88,6 +153,10 @@ async function refreshTokenIfNeeded() {
       setSession(data);
       return true;
     }
+    // Sessão lembrada: outra aba pode ter renovado (e revogado) o mesmo refresh token ao mesmo
+    // tempo — se ele mudou no localStorage, tenta de novo com o novo.
+    const novo = lerSessaoLembrada()?.refreshToken;
+    if (novo && novo !== rt) return refreshTokenIfNeeded();
   } catch {}
   return false;
 }

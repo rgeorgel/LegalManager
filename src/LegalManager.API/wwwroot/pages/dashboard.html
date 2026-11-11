@@ -8,7 +8,9 @@
     // Roda antes de qualquer render para não piscar a página nova. Não redireciona
     // durante um tour guiado, cujos passos apontam para /pages/dashboard.html.
     try {
-      var u = JSON.parse(sessionStorage.getItem('user') || 'null');
+      // Aba nova com "lembrar de mim": a sessão só é restaurada pelo api.js, depois daqui.
+      var u = JSON.parse(sessionStorage.getItem('user') || 'null')
+        || (JSON.parse(localStorage.getItem('sessao_lembrada') || 'null') || {}).usuario;
       var versao = (u && u.dashboardVersao) || localStorage.getItem('dashboard_versao');
       if (versao === 'classico' && !sessionStorage.getItem('tour_active'))
         location.replace('/pages/dashboard-classico.html' + location.search);

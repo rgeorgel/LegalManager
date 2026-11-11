@@ -89,6 +89,10 @@
             <label for="senha">Senha</label>
             <input type="password" id="senha" placeholder="••••••••" required autocomplete="current-password">
           </div>
+          <label class="lf-lembrar" title="Mantém você conectado neste navegador por 12 horas, mesmo fechando a janela. Não marque em computador compartilhado.">
+            <input type="checkbox" id="lembrar">
+            <span>Lembrar de mim por 12 horas</span>
+          </label>
           <button type="submit" class="lf-botao" id="submitBtn">Entrar</button>
         </form>
 
@@ -147,6 +151,14 @@
     const alert = document.getElementById('alert');
     const btn = document.getElementById('submitBtn');
 
+    // "Lembrar de mim" vale também para o Google. A última escolha fica marcada da próxima vez.
+    const lembrarEl = document.getElementById('lembrar');
+    try { lembrarEl.checked = localStorage.getItem('login_lembrar') === '1'; } catch {}
+    lembrarEl.addEventListener('change', () => {
+      try { localStorage.setItem('login_lembrar', lembrarEl.checked ? '1' : '0'); } catch {}
+    });
+    const lembrar = () => lembrarEl.checked;
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('contaExcluida') === '1') {
       alert.className = 'alert alert-success';
@@ -163,7 +175,8 @@
       try {
         const data = await login(
           document.getElementById('email').value,
-          document.getElementById('senha').value
+          document.getElementById('senha').value,
+          lembrar()
         );
         if (data.mfaNecessario) {
           mostrarEtapaMfa(data.mfaToken);
@@ -199,7 +212,7 @@
       mfaBtn.disabled = true;
       mfaBtn.innerHTML = '<span class="spinner"></span> Verificando...';
       try {
-        await verificarMfa(mfaToken, document.getElementById('mfaCodigo').value.trim());
+        await verificarMfa(mfaToken, document.getElementById('mfaCodigo').value.trim(), lembrar());
         window.location.href = getSafeRedirect();
       } catch (err) {
         alert.textContent = err.message;
@@ -215,7 +228,7 @@
     window.handleGoogleCredential = async (response) => {
       alert.style.display = 'none';
       try {
-        await loginWithGoogle(response.credential);
+        await loginWithGoogle(response.credential, {}, lembrar());
         window.location.href = getSafeRedirect();
       } catch (err) {
         alert.textContent = err.message;

@@ -73,6 +73,9 @@
   transition: border-color .2s, box-shadow .2s, background .2s;
 }
 .lf-campo input:focus { border-color: #4f7f75; background: #fff; box-shadow: 0 0 0 3px rgba(79,127,117,.15); }
+.lf-lembrar { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--lf-texto-suave); cursor: pointer; user-select: none; }
+.lf-lembrar input { width: 17px; height: 17px; margin: 0; accent-color: var(--lf-verde); cursor: pointer; }
+.lf-lembrar input:focus-visible { outline: 2px solid var(--lf-verde); outline-offset: 2px; }
 .lf-botao {
   display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
   background: var(--lf-verde); color: #fff; border: 0; border-radius: 10px; padding: 13px;

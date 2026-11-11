@@ -3146,6 +3146,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ImpersonadoPorId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Lembrar")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("Revogado")
                         .HasColumnType("boolean");
 

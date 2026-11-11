@@ -1,13 +1,13 @@
-import { apiFetch, setSession, clearSession, isLoggedIn, getUser } from './api.js';
+import { apiFetch, setSession, clearSession, isLoggedIn, getUser, getRefreshToken } from './api.js';
 import { trackEvent } from './analytics.js';
 
-export async function login(email, senha) {
+export async function login(email, senha, lembrar = false) {
   // Usa fetch direto (não apiFetch) para evitar que 401 cause redirect
   // antes do catch block do formulário exibir o erro
   const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha }),
+    body: JSON.stringify({ email, senha, lembrar }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -21,17 +21,17 @@ export async function login(email, senha) {
     trackEvent('login_mfa_required');
     return data;
   }
-  setSession(data);
-  trackEvent('login_succeeded', { method: 'password' });
+  setSession(data, { lembrar });
+  trackEvent('login_succeeded', { method: 'password', lembrar });
   return data;
 }
 
 // 2ª etapa do login com MFA: código do app autenticador ou código de recuperação.
-export async function verificarMfa(mfaToken, codigo) {
+export async function verificarMfa(mfaToken, codigo, lembrar = false) {
   const res = await fetch('/api/auth/mfa', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mfaToken, codigo }),
+    body: JSON.stringify({ mfaToken, codigo, lembrar }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -39,12 +39,12 @@ export async function verificarMfa(mfaToken, codigo) {
     throw new Error(body.message || body.title || 'Código inválido.');
   }
   const data = await res.json();
-  setSession(data);
-  trackEvent('login_succeeded', { method: 'password_mfa' });
+  setSession(data, { lembrar });
+  trackEvent('login_succeeded', { method: 'password_mfa', lembrar });
   return data;
 }
 
-export async function loginWithGoogle(idToken, attribution = {}) {
+export async function loginWithGoogle(idToken, attribution = {}, lembrar = false) {
   // attribution (utmSource, gclid, referrer, etc. — ver utm.js) só é usado
   // quando o botão do Google está na página de cadastro, para não perder a
   // atribuição de marketing quando o e-mail ainda não tem conta e um tenant
@@ -56,7 +56,7 @@ export async function loginWithGoogle(idToken, attribution = {}) {
   const res = await fetch('/api/auth/google', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken, ...attribution }),
+    body: JSON.stringify({ idToken, ...attribution, lembrar }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -64,8 +64,8 @@ export async function loginWithGoogle(idToken, attribution = {}) {
     throw new Error(body.message || body.title || 'Não foi possível entrar com o Google.');
   }
   const data = await res.json();
-  setSession(data);
-  trackEvent('login_succeeded', { method: 'google' });
+  setSession(data, { lembrar });
+  trackEvent('login_succeeded', { method: 'google', lembrar });
   return data;
 }
 
@@ -80,7 +80,7 @@ export async function register(payload) {
 }
 
 export async function logout() {
-  const rt = sessionStorage.getItem('refresh_token');
+  const rt = getRefreshToken();
   trackEvent('logout');
   try {
     await apiFetch('/auth/logout', {
