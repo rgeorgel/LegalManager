@@ -1700,6 +1700,143 @@ export const PRESETS = [
     `.trim(),
   },
   {
+    id: 'lavanda',
+    name: 'Lavanda',
+    description: 'Fundo lavanda, cards brancos flutuantes e índigo vibrante nos destaques',
+    dark: false,
+    primaryColor: '#4a3df0',
+    sidebarColor: '#ffffff',
+    accentColor: '#8b84ff',
+    layoutMode: 'default',
+    // Fundo lavanda azulado com cards brancos que flutuam (sombra azulada,
+    // sem contorno), tipografia leve com números grandes, selos lilás e
+    // índigo cheio só no que está selecionado (pílulas). O 1º indicador vira
+    // card índigo com um círculo mais claro; a barra lateral é um card branco.
+    customCss: `
+      :root {
+        --color-bg: #cdd8f3; --color-surface: #f5f7fd; --color-text: #1d1f33;
+        --color-text-muted: #80869f; --color-border: #e7e9f4;
+        --color-primary-light: #ecebff !important;
+        --radius: 14px;
+        --shadow: 0 1px 2px rgba(40,50,120,0.04), 0 12px 30px -20px rgba(50,60,150,0.22);
+        --shadow-md: 0 2px 4px rgba(40,50,120,0.05), 0 20px 44px -18px rgba(50,60,150,0.34);
+        --lv-lilas: #ecebff; --lv-poco: #e9edf8;
+      }
+      body {
+        background:
+          radial-gradient(900px 600px at 85% 0%, rgba(255,255,255,0.45), transparent 60%),
+          #cdd8f3 !important;
+        background-attachment: fixed !important;
+      }
+      .header { background: transparent !important; border-bottom: none !important; box-shadow: none !important; }
+      .page-title { font-size: 26px; font-weight: 500; letter-spacing: -0.03em; }
+      .card-title, .ent-card-titulo, .d2-card-title { font-weight: 500 !important; letter-spacing: -0.01em; }
+
+      /* Cards brancos flutuantes */
+      .card, .config-section, .form-section, .hp-card, .ci, .d2-card, .stat-card, .d2-kpi, .notif-card,
+      .processo-card, .theme-card, .preset-card {
+        border-radius: 24px !important; border-color: transparent !important; box-shadow: var(--shadow) !important;
+      }
+      .ent-card {
+        border-radius: 24px !important; box-shadow: var(--shadow) !important; border-left-width: 3px !important;
+        border-top-color: transparent !important; border-right-color: transparent !important; border-bottom-color: transparent !important;
+        transition: transform .18s ease, box-shadow .18s ease !important;
+      }
+      .ent-card.is-info { border-left-color: var(--color-primary) !important; }
+      .ent-card:is([data-href], [data-abrir]):hover {
+        transform: translateY(-3px); box-shadow: var(--shadow-md) !important;
+        border-top-color: transparent !important; border-right-color: transparent !important; border-bottom-color: transparent !important;
+      }
+      .ent-card-capa { border-radius: 23px 23px 0 0 !important; }
+      .ent-card-prog { height: 3px !important; background: #e6e8f5 !important; }
+      .ent-card-prog > span { background: var(--color-primary) !important; }
+      .d2 { --d2-radius: 24px; }
+      .uso-card { background: var(--lv-poco) !important; border: none !important; border-radius: 18px !important; }
+      .modal-content, .modal-card { border-radius: 28px !important; border: none !important; }
+
+      /* Números grandes e leves; rótulos minúsculos espaçados */
+      .stat-card-value, .d2-kpi-value, .uso-card-value { font-weight: 500 !important; letter-spacing: -0.04em; }
+      .stat-card-value, .d2-kpi-value { color: var(--color-text) !important; }
+      .ent-card-num-val { font-weight: 600 !important; }
+      .stat-card-label, .d2-kpi-label, .uso-card-label, .hp-card .lbl, .ent-card-campo-lbl, .ent-card-num-lbl {
+        text-transform: uppercase; font-size: 10px !important; font-weight: 600; letter-spacing: .14em;
+      }
+
+      .stat-card, .d2-kpi { background: var(--color-surface) !important; }
+
+      /* Destaque: 1º indicador em índigo com um círculo mais claro */
+      .stat-card:first-child, .d2-kpis > a.d2-kpi:first-of-type {
+        background:
+          radial-gradient(circle at 92% -10%, rgba(255,255,255,0.16) 0 42%, transparent 42.5%),
+          linear-gradient(135deg, #5649f6 0%, #3a2fd8 100%) !important;
+        color: #fff !important; box-shadow: 0 18px 36px -18px rgba(74,61,240,0.7) !important;
+      }
+      .stat-card:first-child .stat-card-value, .d2-kpis > a.d2-kpi:first-of-type .d2-kpi-value { color: #fff !important; }
+      .stat-card:first-child .stat-card-label, .d2-kpis > a.d2-kpi:first-of-type :is(.d2-kpi-label, .d2-kpi-sub) { color: rgba(255,255,255,0.72) !important; }
+
+      /* Dia selecionado do dashboard: pílula vertical índigo */
+      .d2-day { width: 100%; max-width: 46px; margin-inline: auto; padding: 10px 0 !important; border-radius: 999px !important; }
+      .d2-day.selected { background: var(--color-primary) !important; box-shadow: 0 10px 20px -10px rgba(74,61,240,0.8); }
+      .d2-day.selected .d2-day-num { background: transparent !important; color: #fff !important; }
+      .d2-day.selected .d2-day-dow { color: rgba(255,255,255,0.75) !important; }
+      .d2-day.selected .d2-day-dot { background: #fff !important; }
+
+      /* Barra lateral: card branco flutuante, item ativo em pílula índigo */
+      .sidebar { background: var(--color-surface) !important; }
+      @media (min-width: 769px) {
+        body:not(.menu-superior) .sidebar { margin: 4px 0 16px 16px; padding: 14px 10px; border-radius: 26px; box-shadow: var(--shadow); }
+        body:not(.menu-superior) .main-content { padding-left: 28px; }
+      }
+      .sidebar-nav li a { border-left: none !important; border-radius: 999px; margin: 2px 0; padding-left: 16px; color: #4a4f66; }
+      .nav-group-items li a { padding-left: 28px; }
+      .sidebar-nav li a:hover { background: var(--lv-poco) !important; color: var(--color-text) !important; }
+      .sidebar-nav li a.active {
+        background: var(--color-primary) !important; color: #fff !important; font-weight: 600;
+        box-shadow: 0 10px 20px -12px rgba(74,61,240,0.8);
+      }
+      .nav-group-header { border-left: none !important; border-radius: 999px; padding-left: 16px; color: #a3a8bf; }
+      .nav-group-header:hover { background: var(--lv-poco); color: #6b7088; }
+
+      /* Menu superior e barra inferior do celular */
+      body.menu-superior .header { background: color-mix(in srgb, #cdd8f3 80%, transparent) !important; }
+      body.menu-superior .topnav-lista {
+        background: rgba(245,247,253,0.72); border: 1px solid rgba(255,255,255,0.7); border-radius: 999px; padding: 4px;
+        -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 8px 24px -16px rgba(50,60,150,0.35);
+      }
+      body.menu-superior.topnav-2linhas .topnav { border-top: none; padding: 4px 0 10px; }
+      .topnav-botao { color: #4a4f66 !important; }
+      .topnav-botao:hover, .topnav-grupo.aberto > .topnav-botao { background: rgba(74,61,240,0.08); color: var(--color-text) !important; }
+      .topnav-botao.ativo, .topnav-botao.ativo:hover {
+        background: var(--color-primary); color: #fff !important; box-shadow: 0 8px 18px -10px rgba(74,61,240,0.8);
+      }
+      .topnav-painel { border-radius: 22px; border-color: transparent; }
+      @media (max-width: 768px) {
+        .bottom-nav {
+          left: 10px; right: 10px; bottom: 10px; border-radius: 999px; border: none;
+          box-shadow: 0 14px 30px -12px rgba(50,60,150,0.45);
+        }
+        .bottom-nav-item { border-radius: 999px; }
+        .bottom-nav-item.active { color: #fff; background: var(--color-primary); margin: 6px 2px; }
+      }
+
+      /* Botões, selos lilás e campos */
+      .btn, .filter-tab, .view-btn, .fav-filter, .badge, .d2-chip, .tab-count { border-radius: 999px !important; }
+      .btn { font-weight: 500; }
+      .btn-primary { box-shadow: 0 10px 22px -12px rgba(74,61,240,0.85); }
+      .btn-primary:hover { background: #3a2fd8 !important; }
+      .btn-secondary { background: var(--color-surface); border-color: #dfe3f1; }
+      .badge { font-weight: 500; letter-spacing: .01em; }
+      .badge-blue, .badge-purple { background: var(--lv-lilas); color: #4a3df0; }
+      .form-control { border-radius: 12px !important; background: var(--lv-poco); border-color: transparent; }
+      .form-control:focus { background: var(--color-surface); border-color: var(--color-primary) !important; box-shadow: 0 0 0 4px rgba(74,61,240,0.14) !important; outline: none; }
+      table thead th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .12em; color: var(--color-text-muted); background: var(--lv-poco) !important; }
+      .tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+
+      ::selection { background: rgba(74,61,240,0.18); }
+      @media (prefers-reduced-motion: reduce) { .ent-card { transition: none !important; } .ent-card:hover { transform: none !important; } }
+    `.trim(),
+  },
+  {
     id: 'ocean',
     name: 'Ocean',
     description: 'Azul profundo e turquesa',
