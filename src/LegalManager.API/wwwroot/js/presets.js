@@ -1558,6 +1558,148 @@ export const PRESETS = [
     `.trim(),
   },
   {
+    id: 'encaixe',
+    name: 'Encaixe',
+    description: 'Claro e ousado: cards com recorte encaixado, blocos pretos e roxo vibrante',
+    dark: false,
+    primaryColor: '#7c3aed',
+    sidebarColor: '#0d0d0f',
+    accentColor: '#a78bfa',
+    layoutMode: 'default',
+    // Cinza claro com cards brancos bem arredondados. Os cards clicáveis e os
+    // indicadores ganham um recorte no canto superior direito (cantos côncavos,
+    // desenhado só com gradientes no ::before, na cor do fundo --vv-encaixe)
+    // com um botão redondo ↗ encaixado (::after). O 1º indicador vira bloco
+    // preto de destaque; barra lateral e menus são pílulas pretas.
+    customCss: `
+      :root {
+        --color-bg: #e9e9ee; --color-surface: #ffffff; --color-text: #0f0f12;
+        --color-text-muted: #6e6e78; --color-border: #e3e3ea;
+        --color-primary-light: #efe7ff !important;
+        --radius: 14px;
+        --shadow: 0 1px 2px rgba(15,15,20,0.04), 0 12px 30px -20px rgba(15,15,20,0.25);
+        --shadow-md: 0 2px 4px rgba(15,15,20,0.05), 0 18px 40px -20px rgba(15,15,20,0.3);
+        --vv-preto: #0d0d0f;
+        --vv-encaixe: var(--color-bg);
+        --vv-n: 46px; --vv-r: 14px;
+      }
+      body { background: #e9e9ee !important; }
+      .header { background: #e9e9ee !important; border-bottom: none !important; box-shadow: none !important; }
+      .page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.035em; }
+      .page-title::after { content: '.'; color: var(--color-primary); }
+
+      /* Cards brancos, sem contorno, cantos generosos */
+      .card, .config-section, .form-section, .hp-card, .ci, .d2-card, .stat-card, .d2-kpi, .notif-card,
+      .processo-card, .theme-card, .preset-card, .uso-card {
+        border-radius: 26px !important; border-color: transparent !important; box-shadow: var(--shadow) !important;
+      }
+      .ent-card {
+        border-radius: 26px !important; box-shadow: var(--shadow) !important;
+        border-top-color: transparent !important; border-right-color: transparent !important; border-bottom-color: transparent !important;
+      }
+      .ent-card.is-info { border-left-color: var(--color-primary) !important; }
+      .ent-card-capa { border-radius: 25px 25px 0 0 !important; }
+      .d2 { --d2-radius: 26px; }
+      .uso-card { background: #f4f4f7 !important; box-shadow: none !important; }
+      .modal-content, .modal-card { border-radius: 30px !important; border: none !important; }
+      /* Dentro de um card o recorte precisa da cor do card, não da página */
+      .card, .config-section, .form-section, .modal-content, .modal-card, .d2-card, .hp-card { --vv-encaixe: var(--color-surface); }
+
+      /* ── O encaixe: recorte com cantos côncavos + botão ↗ ── */
+      /* Sombra só rente à borda: a difusa escureceria o fundo em volta do recorte */
+      :is(.ent-card[data-href], .ent-card[data-abrir], .stat-card, .d2-kpi:not(.d2-kpi-atalhos)) {
+        position: relative; box-shadow: 0 1px 2px rgba(15,15,20,0.06) !important;
+      }
+      :is(.ent-card[data-href], .ent-card[data-abrir], .stat-card, .d2-kpi:not(.d2-kpi-atalhos))::before {
+        content: ''; position: absolute; top: -1px; right: -1px; z-index: 3; pointer-events: none;
+        width: calc(var(--vv-n) + var(--vv-r)); height: calc(var(--vv-n) + var(--vv-r));
+        background:
+          radial-gradient(circle at 0 100%, transparent calc(var(--vv-r) - .5px), var(--vv-encaixe) var(--vv-r)) 0 0 / var(--vv-r) var(--vv-r) no-repeat,
+          linear-gradient(var(--vv-encaixe), var(--vv-encaixe)) right 0 top 0 / calc(var(--vv-n) - var(--vv-r)) var(--vv-n) no-repeat,
+          linear-gradient(var(--vv-encaixe), var(--vv-encaixe)) var(--vv-r) 0 / var(--vv-r) calc(var(--vv-n) - var(--vv-r)) no-repeat,
+          radial-gradient(circle at 100% 0, var(--vv-encaixe) calc(var(--vv-r) - .5px), transparent var(--vv-r)) var(--vv-r) calc(var(--vv-n) - var(--vv-r)) / var(--vv-r) var(--vv-r) no-repeat,
+          radial-gradient(circle at 0 100%, transparent calc(var(--vv-r) - .5px), var(--vv-encaixe) var(--vv-r)) right 0 bottom 0 / var(--vv-r) var(--vv-r) no-repeat;
+      }
+      :is(.ent-card[data-href], .ent-card[data-abrir], .stat-card, .d2-kpi:not(.d2-kpi-atalhos))::after {
+        content: '↗'; position: absolute; top: 3px; right: 3px; z-index: 4; pointer-events: none;
+        width: calc(var(--vv-n) - 8px); height: calc(var(--vv-n) - 8px); border-radius: 50%;
+        display: grid; place-items: center; font-size: 17px; font-weight: 700; line-height: 1;
+        background: var(--color-primary); color: #fff;
+        box-shadow: 0 6px 16px -8px rgba(124,58,237,0.7);
+        transition: transform .2s ease;
+      }
+      .ent-grid > .ent-card:nth-child(even)::after, .stat-card:nth-child(even)::after, .d2-kpi:nth-child(odd)::after {
+        background: var(--vv-preto); box-shadow: 0 6px 16px -8px rgba(0,0,0,0.6);
+      }
+      :is(.ent-card[data-href], .ent-card[data-abrir], .stat-card, .d2-kpi):hover::after { transform: rotate(45deg); }
+      /* O status do card recua para não ficar debaixo do recorte */
+      :is(.ent-card[data-href], .ent-card[data-abrir]) .ent-card-top { padding-right: 34px; }
+      .ent-card-capa ~ .ent-card-top { padding-right: 0 !important; }
+      :is(.stat-card, .d2-kpi) :is(.stat-card-label, .d2-kpi-label) { padding-right: 40px; }
+
+      /* Bloco preto de destaque: o 1º indicador */
+      .stat-card:first-child, .d2-kpis > a.d2-kpi:first-of-type { background: var(--vv-preto) !important; color: #fff !important; }
+      .stat-card:first-child :is(.stat-card-value), .d2-kpis > a.d2-kpi:first-of-type .d2-kpi-value { color: #fff !important; }
+      .stat-card:first-child .stat-card-label, .d2-kpis > a.d2-kpi:first-of-type :is(.d2-kpi-label, .d2-kpi-sub) { color: #a1a1aa !important; }
+      .stat-card:first-child::after, .d2-kpis > a.d2-kpi:first-of-type::after { background: var(--color-primary) !important; }
+
+      /* Rótulos pequenos e espaçados, números pesados */
+      .stat-card-label, .d2-kpi-label, .uso-card-label, .hp-card .lbl {
+        text-transform: uppercase; font-size: 10.5px !important; font-weight: 600; letter-spacing: .12em;
+      }
+      .stat-card-value, .d2-kpi-value, .uso-card-value, .ent-card-num-val { font-weight: 800 !important; letter-spacing: -0.03em; }
+      .stat-card-value, .d2-kpi-value { color: var(--color-text) !important; }
+      .ent-card-prog { background: #ececf1 !important; }
+      .ent-card-prog > span { background: linear-gradient(90deg, #a78bfa, var(--color-primary)) !important; }
+
+      /* Barra lateral: pílula preta flutuante, item ativo em pílula branca */
+      .sidebar { background: var(--vv-preto) !important; }
+      @media (min-width: 769px) {
+        body:not(.menu-superior) .sidebar { margin: 4px 0 16px 16px; padding: 14px 10px; border-radius: 30px; }
+        body:not(.menu-superior) .main-content { padding-left: 28px; }
+      }
+      .sidebar-nav li a { border-left: none !important; border-radius: 999px; margin: 2px 0; padding-left: 16px; color: #b4b4bd; }
+      .nav-group-items li a { padding-left: 28px; }
+      .sidebar-nav li a:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+      .sidebar-nav li a.active { background: #fff !important; color: var(--vv-preto) !important; font-weight: 700; }
+      .nav-group-header { border-left: none !important; border-radius: 999px; padding-left: 16px; color: rgba(255,255,255,0.35); }
+
+      /* Menu superior: barra preta em pílula; celular: barra inferior flutuante */
+      body.menu-superior .header { background: color-mix(in srgb, #e9e9ee 86%, transparent) !important; }
+      body.menu-superior .topnav { background: var(--vv-preto); border-radius: 999px; padding: 5px; }
+      body.menu-superior.topnav-2linhas .topnav { margin: 2px 0 10px; flex-basis: 100%; border-top: none; }
+      .topnav-botao { color: #a1a1aa !important; }
+      .topnav-botao:hover, .topnav-grupo.aberto > .topnav-botao { background: rgba(255,255,255,0.1); color: #fff !important; }
+      .topnav-botao.ativo, .topnav-botao.ativo:hover { background: #fff; color: var(--vv-preto) !important; }
+      .topnav-painel { border-radius: 22px; border-color: transparent; }
+      @media (max-width: 768px) {
+        .bottom-nav {
+          left: 10px; right: 10px; bottom: 10px; border-radius: 999px; border: none;
+          background: var(--vv-preto) !important; box-shadow: 0 14px 30px -12px rgba(0,0,0,0.55);
+        }
+        .bottom-nav-item { color: #a1a1aa; border-radius: 999px; }
+        .bottom-nav-item.active { color: var(--vv-preto); background: #fff; margin: 6px 2px; }
+      }
+
+      /* Botões e selos em pílula */
+      .btn, .filter-tab, .view-btn, .fav-filter, .badge, .d2-chip, .tab-count { border-radius: 999px !important; }
+      .btn { font-weight: 600; }
+      .btn-primary { box-shadow: 0 10px 22px -12px rgba(124,58,237,0.8); }
+      .btn-primary:hover { background: #6d28d9 !important; }
+      .btn-secondary { background: #fff; border-color: #e3e3ea; }
+      .badge-blue { background: #efe7ff; color: #6d28d9; }
+      .badge { font-weight: 700; letter-spacing: .04em; }
+
+      /* Campos e tabelas */
+      .form-control { border-radius: 14px !important; border-color: #e3e3ea; }
+      .form-control:focus { border-color: var(--color-primary) !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.14) !important; outline: none; }
+      table thead th { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--color-text-muted); }
+
+      ::selection { background: rgba(124,58,237,0.2); }
+      @media (prefers-reduced-motion: reduce) { :is(.ent-card, .stat-card, .d2-kpi)::after { transition: none !important; } }
+    `.trim(),
+  },
+  {
     id: 'ocean',
     name: 'Ocean',
     description: 'Azul profundo e turquesa',
