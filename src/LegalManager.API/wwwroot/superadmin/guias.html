@@ -38,7 +38,7 @@
     .view-toggle { display: flex; gap: 4px; align-items: center; }
     .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-bg); color: var(--color-text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
     .view-btn:hover { border-color: var(--color-primary); }
-    .view-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .view-btn.active { background:var(--color-primary) !important; color: var(--color-on-primary, #fff) !important; border-color:var(--color-primary) !important; }
 
     /* Editor */
     .editor[hidden], .lista[hidden] { display: none; }

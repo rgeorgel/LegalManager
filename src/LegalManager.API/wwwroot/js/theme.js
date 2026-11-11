@@ -42,6 +42,21 @@ function mix(hex, withHex, weight) {
   );
 }
 
+function luminancia({ r, g, b }) {
+  const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+// Texto sobre fundo var(--color-primary): branco, a não ser que a primária seja tão clara que o
+// branco fique ilegível (contraste < 2:1 — lima, ciano, verde neon, amarelo). Calculado aqui, e não
+// só no customCss, porque o customCss é uma cópia salva no escritório e não muda com o preset.
+function textoSobrePrimaria(primary) {
+  const rgb = hexToRgb(primary);
+  if (!rgb) return '#fff';
+  const contrasteBranco = 1.05 / (luminancia(rgb) + 0.05);
+  return contrasteBranco < 2 ? '#141414' : '#fff';
+}
+
 function shadeForPrimary(primary) {
   return {
     dark: mix(primary, '#000000', 0.18),
@@ -86,6 +101,7 @@ export function applyTenantTheme(theme) {
     r.setProperty('--color-primary', primary);
     r.setProperty('--color-primary-dark', shades.dark);
     r.setProperty('--color-primary-light', shades.light);
+    r.setProperty('--color-on-primary', textoSobrePrimaria(primary));
   }
 
   if (sidebar) {
@@ -139,7 +155,7 @@ export function applyTenantTheme(theme) {
 
 export function resetTenantTheme() {
   const r = document.documentElement.style;
-  ['--color-primary', '--color-primary-dark', '--color-primary-light', '--color-sidebar', '--color-sidebar-text', '--color-sidebar-active', '--color-accent']
+  ['--color-primary', '--color-primary-dark', '--color-primary-light', '--color-on-primary', '--color-sidebar', '--color-sidebar-text', '--color-sidebar-active', '--color-accent']
     .forEach(v => r.removeProperty(v));
   // Restaura a logo padrão apropriada para o tema que ficou aplicado.
   // Depois de limpar customCss o bg volta ao default (claro), então

@@ -66,7 +66,7 @@
     .view-toggle { display: flex; gap: 4px; align-items: center; }
     .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
     .view-btn:hover { background: var(--color-bg); }
-    .view-btn.active { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+    .view-btn.active { background:var(--color-primary) !important; color: var(--color-on-primary, #fff) !important; border-color:var(--color-primary) !important; }
     /* Visão em blocos */
     .tenants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
     .tenant-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -87,7 +87,7 @@
     .paginacao-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; margin-top: 20px; }
     .paginacao-bar .pagination { margin-top: 0; flex-wrap: wrap; gap: 4px; }
     .paginacao-bar .pagination button { padding: 6px 12px; min-width: 36px; min-height: 36px; }
-    .paginacao-bar .pagination button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .paginacao-bar .pagination button.active { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border-color: var(--color-primary); }
     .paginacao-bar .pagination .reticencias { padding: 6px 4px; color: var(--color-text-muted); }
     .paginacao-info { font-size: 13px; color: var(--color-text-muted); }
     .paginacao-tamanho { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-muted); margin: 0; }
@@ -96,7 +96,7 @@
     .filtros-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; background: var(--color-surface); color: var(--color-text); cursor: pointer; }
     .filtros-btn:hover { background: var(--color-bg); }
     .filtros-btn[aria-expanded="true"] { border-color: var(--color-primary); color: var(--color-primary); }
-    .filtros-btn .filtros-count { background: var(--color-primary); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 600; padding: 0 7px; line-height: 18px; }
+    .filtros-btn .filtros-count { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border-radius: 999px; font-size: 11px; font-weight: 600; padding: 0 7px; line-height: 18px; }
     .filtros-painel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 14px 16px; margin: -4px 0 16px; display: flex; flex-direction: column; gap: 12px; }
     .filtros-painel[hidden], .filtros-count[hidden], .filtros-limpar[hidden] { display: none; }
     .filtros-topo { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }

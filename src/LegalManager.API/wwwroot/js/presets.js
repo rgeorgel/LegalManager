@@ -88,6 +88,89 @@ function brutalCss(o) {
       }`.trim();
 }
 
+/**
+ * Base de tema escuro completo (a mesma estratégia do Escuro/Dracula/Matrix:
+ * superfícies, textos, selos, modais e os #fff fixos das páginas), gerada a
+ * partir de uma paleta para não copiar o bloco inteiro em cada tema novo.
+ *
+ * - bg / surface / hover: fundo da página, dos cards e do hover/selecionado
+ * - text / muted / placeholder / border
+ * - onPrimary: texto sobre fundo var(--color-primary) (aba ativa, item selecionado)
+ * - ok / err / warn / info / roxo / neutro: [fundo, texto] dos selos de status
+ * - kanban: [pendente, andamento, concluída]
+ */
+function darkCss(p) {
+  const s = (sel, [bg, fg]) => `${sel} { background-color: ${bg} !important; color: ${fg} !important; }`;
+  const sup = `background-color: ${p.surface} !important; color: ${p.text} !important; border-color: ${p.border} !important;`;
+  return `
+      :root {
+        --color-bg: ${p.bg}; --color-surface: ${p.surface}; --color-text: ${p.text};
+        --color-text-muted: ${p.muted}; --color-border: ${p.border};
+        --color-primary-light: ${p.primaryLight} !important;
+        --color-on-primary: ${p.onPrimary};
+        --color-sidebar-text: ${p.sidebarText} !important;
+        --hc-navy-text: var(--color-primary);
+        --kanban-pendente: ${p.kanban[0]}; --kanban-andamento: ${p.kanban[1]}; --kanban-concluida: ${p.kanban[2]};
+      }
+      body { background: ${p.bg} !important; color: ${p.text} !important; }
+      .header { background: ${p.surface} !important; border-bottom-color: ${p.border} !important; }
+      .header-user, .auth-subtitle, label, .form-label, .lbl, .modal label, .modal .form-label { color: ${p.muted} !important; }
+      .theme-card, .stat-card, .config-section, .form-section, .form-control, textarea, .preset-card,
+      .table, table, table thead th, .card, .alert, .hp-card, .ci, .processo-card, .notif-card,
+      .filter-bar select, .filter-bar input, .search-btn, .view-btn, .searchable-select-list,
+      .row-menu-dropdown, #folderCtxMenu, .process-preview.loading,
+      .modal, .modal-card, .modal-content, .pdf-modal-content, .modal-overlay > div, [id$="modal"] > div,
+      div[style*="background:var(--color-surface)"], div[style*="background:#fff"], div[style*="background: #fff"],
+      div[style*="background:white"], div[style*="background: white"] { ${sup} }
+      .btn-secondary { background-color: transparent !important; color: ${p.text} !important; border-color: ${p.border} !important; }
+      .btn-secondary:hover, .search-btn:hover, .view-btn:hover, .searchable-select-list li:hover,
+      .row-menu-dropdown div:hover, #folderCtxMenu div:hover { background-color: ${p.hover} !important; }
+      .row-menu-dropdown div, .row-menu-dropdown button, #folderCtxMenu div, #folderCtxMenu button { background-color: transparent !important; color: ${p.text} !important; }
+      table tbody tr:hover { background-color: ${p.hover} !important; }
+      .stat-card-value, div[style*="color:#1a56db"], div[style*="color:var(--color-primary)"] { color: var(--color-primary) !important; }
+      hr, .card-divider, .hp-meta-bar { border-color: ${p.border} !important; }
+      .card-divider, .hp-meta-bar { background-color: ${p.border} !important; }
+      .hp-card .lbl, .hp-card .sub, .hp-evo-lbl, .hp-evo-val, .ci-sub, .ci-nums .cl, .notif-card .notif-msg, .notif-time,
+      .logo-preview .empty { color: ${p.muted} !important; }
+      .notif-card .notif-title, .modal-header, .modal-title, .modal-close { color: ${p.text} !important; }
+      .notif-card.unread .notif-title { color: #fff !important; }
+      .processo-card:hover { border-color: var(--color-primary) !important; }
+      .logo-preview { background: ${p.bg} !important; border-color: ${p.border} !important; }
+      .modal-overlay { background-color: ${p.overlay} !important; }
+      .searchable-select-list li.selected { background-color: var(--color-primary) !important; color: ${p.onPrimary} !important; }
+
+      button { color: inherit !important; }
+      .filter-tab, .tab-btn, .view-btn { color: var(--color-text-muted) !important; }
+      .filter-tab.active, .tab-btn.active { color: ${p.onPrimary} !important; }
+      /* Selecionados com fundo primário: "button { color: inherit !important }" acima venceria a página */
+      .view-btn.active { background-color: var(--color-primary) !important; border-color: var(--color-primary) !important; }
+      .view-btn.active, .pc-seg button.on, .cp-tipo-btn.on, .sort-chip.active, .pagination button.active,
+      .page-btn.active, .page-btn:hover:not(:disabled), .filtro.ativo, .d2-seg button.active,
+      .billing-opt.active { color: ${p.onPrimary} !important; }
+      .filter-tab:hover, .tab-btn:hover { color: var(--color-primary) !important; }
+      .filter-tab .tab-count { background-color: rgba(255,255,255,0.12) !important; color: inherit !important; }
+      .filter-tab.active .tab-count { background-color: rgba(0,0,0,0.18) !important; }
+
+      input, select, textarea, button { color-scheme: dark; }
+      ::placeholder, input::placeholder, textarea::placeholder { color: ${p.placeholder} !important; }
+      select option { background-color: ${p.surface} !important; color: ${p.text} !important; }
+
+      ${s('.badge-ok, .badge-green, .status-ativo', p.ok)}
+      ${s('.badge-err, .badge-red, .status-encerrado', p.err)}
+      ${s('.badge-warn, .badge-yellow, .status-suspenso', p.warn)}
+      ${s('.badge-blue, .badge-proc', p.info)}
+      ${s('.badge-purple', p.roxo)}
+      ${s('.badge-gray, .badge-muted, .status-arquivado', p.neutro)}
+      .process-preview.encontrado { background: ${p.ok[0]} !important; border-color: ${p.ok[1]} !important; color: ${p.ok[1]} !important; }
+      .process-preview.nao-encontrado { background: ${p.warn[0]} !important; border-color: ${p.warn[1]} !important; color: ${p.warn[1]} !important; }
+      ${s('.tipo-peticao', p.info)}
+      ${s('.tipo-decisao', p.warn)}
+      ${s('.tipo-contrato', p.ok)}
+      ${s('.tipo-prova', p.err)}
+      ${s('.tipo-modelo', p.roxo)}
+      ${s('.tipo-outro', p.neutro)}`;
+}
+
 export const PRESETS = [
   {
     id: 'default',
@@ -1309,6 +1392,169 @@ export const PRESETS = [
         navBg: '#ff5fa2', navFg: '#141118',
         highlight: '#ffd23f', highlightFg: '#141118',
       })}
+    `.trim(),
+  },
+  {
+    id: 'grafite-lima',
+    name: 'Grafite Lima',
+    description: 'Vidro fosco grafite, verde-lima e coral, números em fonte mono',
+    dark: true,
+    primaryColor: '#c6f05b',
+    sidebarColor: '#181818',
+    accentColor: '#ff5b3a',
+    layoutMode: 'default',
+    // Inspirado em painéis esportivos: grafite quase preto com brilho difuso
+    // lima/coral no fundo, cards de vidro fosco com cantos bem arredondados e
+    // filete de luz no topo, barra lateral flutuante, pílulas e números em
+    // fonte mono. A primária é lima clara: texto escuro (#141414) sobre ela.
+    customCss: `${darkCss({
+      bg: '#121212', surface: '#1b1b1b', hover: '#242424', border: '#2b2b2b',
+      text: '#ededea', muted: '#8f8d88', placeholder: '#5f5d59', sidebarText: '#a4a29d',
+      primaryLight: '#262e12', onPrimary: '#141414', overlay: 'rgba(6,6,6,0.72)',
+      ok: ['rgba(198,240,91,0.13)', '#c6f05b'], err: ['rgba(255,91,58,0.14)', '#ff7a5c'],
+      warn: ['rgba(245,184,74,0.14)', '#f5b84a'], info: ['rgba(125,211,252,0.12)', '#8fd3f7'],
+      roxo: ['rgba(196,181,253,0.13)', '#c4b5fd'], neutro: ['rgba(255,255,255,0.07)', '#b3b1ac'],
+      kanban: ['#ff7a5c', '#f5b84a', '#c6f05b'],
+    })}
+
+      /* ── Grafite Lima: vidro fosco, pílulas e números mono ── */
+      :root {
+        --radius: 16px;
+        --shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 16px 36px -22px rgba(0,0,0,0.9);
+        --shadow-md: inset 0 1px 0 rgba(255,255,255,0.06), 0 22px 44px -20px rgba(0,0,0,0.9);
+        --color-danger: #ff6a4d; --color-success: #a8d93f; --color-warning: #f5b84a;
+        --color-primary-dark: #b3e04a !important;
+        --gl-vidro: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.015) 100%);
+        --gl-borda: rgba(255,255,255,0.075);
+        --gl-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+      }
+      body {
+        background:
+          radial-gradient(1100px 640px at 100% -10%, rgba(198,240,91,0.065), transparent 62%),
+          radial-gradient(900px 640px at -5% 110%, rgba(255,91,58,0.075), transparent 60%),
+          #121212 !important;
+        background-attachment: fixed !important;
+      }
+      .header {
+        background: rgba(20,20,20,0.72) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
+        border-bottom: 1px solid rgba(255,255,255,0.06) !important; box-shadow: none !important;
+      }
+      .page-title { font-weight: 600; letter-spacing: -0.015em; }
+
+      /* Cards de vidro: gradiente translúcido por cima da superfície + filete de luz */
+      .card, .stat-card, .config-section, .form-section, .theme-card, .preset-card, .hp-card, .ci,
+      .processo-card, .notif-card, .ent-card, .d2-card, .d2-kpi, .modal-content, .modal-card, .topnav-painel {
+        background-image: var(--gl-vidro) !important;
+        border-color: var(--gl-borda) !important;
+        border-radius: 22px !important;
+        box-shadow: var(--shadow) !important;
+      }
+      .ent-card { border-left-color: rgba(255,255,255,0.12) !important; }
+      .ent-card.is-ok { border-left-color: #c6f05b !important; }
+      .ent-card.is-danger { border-left-color: #ff6a4d !important; }
+      .ent-card.is-warn { border-left-color: #f5b84a !important; }
+      .ent-card.is-info { border-left-color: #8fd3f7 !important; }
+      .ent-card.is-muted { border-left-color: #55534f !important; }
+      .ent-card-capa { border-radius: 21px 21px 0 0 !important; }
+      .ent-card:is([data-href], [data-abrir]):hover, .processo-card:hover, .d2-kpi:hover, .preset-card:hover {
+        border-top-color: rgba(198,240,91,0.4) !important; border-right-color: rgba(198,240,91,0.4) !important;
+        border-bottom-color: rgba(198,240,91,0.4) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 18px 40px -18px rgba(198,240,91,0.22) !important;
+      }
+      .d2.d2-dark {
+        --d2-radius: 22px; --d2-red: #ff7a5c; --d2-red-bg: rgba(255,91,58,0.14);
+        --d2-amber: #f5b84a; --d2-amber-bg: rgba(245,184,74,0.14);
+        --d2-green: #c6f05b; --d2-green-bg: rgba(198,240,91,0.13);
+        --d2-fill: var(--color-primary); --d2-on-fill: #141414; --d2-on-primary: #141414;
+      }
+      .d2-item { background: rgba(255,255,255,0.025) !important; border-color: rgba(255,255,255,0.06) !important; border-radius: 16px !important; }
+
+      /* Números: fonte mono, como os indicadores das referências */
+      .stat-card-value, .d2-kpi-value, .kpi-value, .ent-card-num-val, .hp-card .val, .hp-evo-val, .uso-card-value {
+        font-family: var(--gl-mono) !important; font-weight: 500 !important; letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat-card-value, .d2-kpi-value, .kpi-value { color: var(--color-primary) !important; }
+      .uso-card { background: rgba(255,255,255,0.03) !important; border-color: var(--gl-borda) !important; border-radius: 18px !important; }
+      .ent-card-prog { background: rgba(255,255,255,0.08) !important; }
+      .ent-card-prog > span { background: linear-gradient(90deg, #8fbf2a, #c6f05b) !important; box-shadow: 0 0 10px rgba(198,240,91,0.45); }
+
+      /* Barra lateral flutuante (só no desktop; no celular ela vira gaveta) */
+      .sidebar { background: linear-gradient(180deg, #1c1c1c 0%, #151515 100%) !important; }
+      @media (min-width: 769px) {
+        body:not(.menu-superior) .sidebar {
+          margin: 14px 0 14px 14px; padding: 12px 10px; border-radius: 28px;
+          border: 1px solid var(--gl-borda);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 24px 48px -26px rgba(0,0,0,0.95);
+        }
+        body:not(.menu-superior) .main-content { padding-left: 28px; }
+      }
+      .sidebar-nav li a {
+        border-left: none !important; border-radius: 14px; margin: 2px 0; padding-left: 14px;
+        transition: background .15s, color .15s;
+      }
+      .nav-group-items li a { padding-left: 26px; }
+      .sidebar-nav li a:hover { background: rgba(255,255,255,0.05) !important; color: #ededea !important; }
+      .sidebar-nav li a.active {
+        background: rgba(198,240,91,0.13) !important; color: #c6f05b !important; font-weight: 600;
+        box-shadow: inset 0 0 0 1px rgba(198,240,91,0.16);
+      }
+      .nav-group-header { border-left: none !important; border-radius: 12px; color: rgba(255,255,255,0.32); padding-left: 14px; }
+      .nav-group-header:hover { background: rgba(255,255,255,0.04); }
+
+      /* Menu superior e menu inferior do celular */
+      body.menu-superior .header { background: rgba(18,18,18,0.7) !important; }
+      .topnav-item:hover .topnav-item-ico, .topnav-item.active .topnav-item-ico { color: #141414 !important; }
+      .bottom-nav {
+        background: rgba(22,22,22,0.85) !important; border-top-color: rgba(255,255,255,0.06) !important;
+        -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+      }
+
+      /* Botões em pílula; primário lima com brilho */
+      .btn { border-radius: 999px !important; font-weight: 600; }
+      .btn-primary {
+        background: var(--color-primary) !important; color: #141414 !important; border: none !important;
+        box-shadow: 0 8px 22px -10px rgba(198,240,91,0.6);
+      }
+      .btn-primary:hover { background: #d3f77a !important; box-shadow: 0 10px 28px -8px rgba(198,240,91,0.7); }
+      .btn-secondary { background-color: rgba(255,255,255,0.04) !important; border-color: rgba(255,255,255,0.1) !important; }
+      .btn-secondary:hover { background-color: rgba(255,255,255,0.08) !important; }
+      .btn-danger { background: rgba(255,91,58,0.14) !important; color: #ff7a5c !important; border: 1px solid rgba(255,91,58,0.35) !important; }
+      .btn-danger:hover { background: rgba(255,91,58,0.22) !important; }
+      [style*="background:var(--color-primary)"], [style*="background: var(--color-primary)"],
+      [style*="background-color:var(--color-primary)"], .view-btn.active, .filter-tab.active { color: #141414 !important; }
+      .filter-tab, .view-btn, .fav-filter, .badge, .d2-chip, .tab-count { border-radius: 999px !important; }
+      .fav-filter[aria-pressed="true"] {
+        background: rgba(245,184,74,0.14) !important; border-color: rgba(245,184,74,0.5) !important; color: #f5b84a !important;
+      }
+      .tab-btn.active { color: var(--color-primary) !important; }
+
+      /* Campos: poço escuro, foco com halo lima */
+      .form-control, .filter-bar select, .filter-bar input, .searchable-select-list {
+        background-color: #151515 !important; border-color: rgba(255,255,255,0.09) !important; border-radius: 14px !important;
+      }
+      .form-control:focus, .filter-bar select:focus, .filter-bar input:focus {
+        border-color: rgba(198,240,91,0.55) !important; box-shadow: 0 0 0 3px rgba(198,240,91,0.14) !important; outline: none;
+      }
+
+      /* Tabelas transparentes sobre o vidro */
+      .table, table, table thead th { background-color: transparent !important; }
+      table thead th {
+        color: #8f8d88 !important; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+        border-bottom-color: rgba(255,255,255,0.07) !important;
+      }
+      table td { border-color: rgba(255,255,255,0.05) !important; }
+      table tbody tr:hover { background-color: rgba(255,255,255,0.03) !important; }
+
+      .modal-overlay { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+      .modal-content, .modal-card { border-radius: 26px !important; }
+      ::selection { background: rgba(198,240,91,0.32); color: #fff; }
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 10px; border: 2px solid #121212; }
+      ::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+      @media (prefers-reduced-motion: reduce) { .sidebar-nav li a { transition: none !important; } }
     `.trim(),
   },
   {

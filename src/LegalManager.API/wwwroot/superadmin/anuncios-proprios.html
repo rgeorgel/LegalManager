@@ -40,7 +40,7 @@
     .view-toggle { display: flex; gap: 4px; align-items: center; }
     .view-btn { width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius); background: #f3f4f6; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: .2s; }
     .view-btn:hover { background: #e5e7eb; }
-    .view-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .view-btn.active { background:var(--color-primary) !important; color: var(--color-on-primary, #fff) !important; border-color:var(--color-primary) !important; }
     /* Cards: cada um já é a pré-visualização do anúncio como o cliente vê */
     .anuncios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
     @media (max-width: 768px) { .anuncios-grid { grid-template-columns: 1fr; } }

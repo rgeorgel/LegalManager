@@ -245,7 +245,7 @@ function injectStyles() {
       font-size: 12px; font-weight: 600; border-radius: 6px; padding: 6px 14px; cursor: pointer; border: 1px solid transparent;
     }
     .pw-btn:disabled { opacity: .6; cursor: default; }
-    .pw-btn-send { background: var(--color-primary); color: #fff !important; }
+    .pw-btn-send { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; }
     .pw-btn-send:hover:not(:disabled) { filter: brightness(1.08); }
     .pw-btn-secondary { background: none; border-color: var(--color-border); color: var(--color-text-muted) !important; }
     .pw-btn-secondary:hover { background: var(--color-bg); }

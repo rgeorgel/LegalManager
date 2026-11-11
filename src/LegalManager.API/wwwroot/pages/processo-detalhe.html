@@ -84,7 +84,7 @@
     .tab-content { display:none; }
     .tab-content.active { display:block; }
     .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; }
-    .tab-badge.count { background:var(--color-primary); color:#fff; }
+    .tab-badge.count { background:var(--color-primary); color: var(--color-on-primary, #fff) !important; }
     .tp-baixa   { background:#f0fdf4; color:#16a34a; }
     .tp-media   { background:#fefce8; color:#ca8a04; }
     .tp-alta    { background:#fff7ed; color:#ea580c; }
@@ -938,8 +938,8 @@
     </div>
     <div class="modal-body">
       <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--color-border);padding-bottom:12px">
-        <button class="btn btn-sm" id="tabResumoAtual" style="display:none;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;background:var(--color-primary);color:#fff;font-size:13px">Último Resumo</button>
-        <button class="btn btn-secondary btn-sm" id="tabResumoHistorico" style="font-size:13px;background:var(--color-primary);color:#fff;border-color:var(--color-primary)">Histórico</button>
+        <button class="btn btn-sm" id="tabResumoAtual" style="display:none;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;background:var(--color-primary);color: var(--color-on-primary, #fff) !important;font-size:13px">Último Resumo</button>
+        <button class="btn btn-secondary btn-sm" id="tabResumoHistorico" style="font-size:13px;background:var(--color-primary);color: var(--color-on-primary, #fff) !important;border-color:var(--color-primary)">Histórico</button>
       </div>
 
       <!-- Painel: Resumo Atual -->

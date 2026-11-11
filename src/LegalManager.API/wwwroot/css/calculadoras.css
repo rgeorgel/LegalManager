@@ -27,7 +27,7 @@
   flex: 1; padding: 8px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface);
   color: var(--color-text-muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: .15s; text-align: center;
 }
-.pc-seg button.on { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+.pc-seg button.on { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary, #fff) !important; }
 .pc-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .pc-chips button { padding: 3px 10px; border-radius: 100px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text-muted); font-size: 12px; cursor: pointer; }
 .pc-chips button.on { border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }

@@ -41,7 +41,7 @@ const STYLES = `
     color:var(--color-text-muted, #6b7280); margin-bottom:4px; }
   .novidade-tag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:100px;
     letter-spacing:.04em; text-transform:uppercase; }
-  .novidade-tag.nova { background:var(--color-primary, #1a56db); color:#fff; }
+  .novidade-tag.nova { background:var(--color-primary, #1a56db); color: var(--color-on-primary, #fff) !important; }
   .novidade-tag.plano { background:#f59e0b; color:#0f172a; }
   .novidade-titulo { font-size:14px; font-weight:600; margin:0 0 6px; }
   .novidade-img { display:block; width:100%; border-radius:8px; margin:8px 0;

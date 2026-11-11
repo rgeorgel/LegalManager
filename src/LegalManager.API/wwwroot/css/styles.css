@@ -2,6 +2,7 @@
   --color-primary: #1a56db;
   --color-primary-dark: #1240ab;
   --color-primary-light: #e8f0fe;
+  --color-on-primary: #fff; /* texto sobre fundo var(--color-primary); temas com primária clara trocam */
   --color-danger: #e02424;
   --color-success: #057a55;
   --color-warning: #c27803;
@@ -53,7 +54,7 @@ a:active { opacity: 0.7; }
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary { background: var(--color-primary); color: var(--color-on-primary, #fff); }
 .btn-primary:hover { background: var(--color-primary-dark); }
 .btn-primary:active { background: var(--color-primary-dark); transform: scale(0.98); }
 .btn-secondary { background: #fff; color: var(--color-text); border: 1px solid var(--color-border); }
@@ -494,7 +495,7 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .pagination button:active { transform: scale(0.95); }
 .pagination button:hover:not(:disabled):not(.active) { background: var(--color-bg); }
-.pagination button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.pagination button.active { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border-color: var(--color-primary); }
 .pagination button:disabled { opacity: 0.4; cursor: default; }
 
 /* ── Alert ───────────────────────────────────────────── */
@@ -1044,7 +1045,7 @@ body.com-widgets-laterais .main-content {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .topnav-item:hover .topnav-item-ico,
-.topnav-item.active .topnav-item-ico { background: var(--color-primary); color: #fff; }
+.topnav-item.active .topnav-item-ico { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; }
 .topnav-item.bloqueado .topnav-item-ico { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text-muted); }
 .topnav-ico { width: 18px; height: 18px; }
 .topnav-item-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 1px; }

@@ -189,7 +189,7 @@ const CSS = `
 #modalTarefa .rep-dias { display:flex; gap:4px; flex-wrap:wrap; }
 #modalTarefa .rep-dias label { display:inline-flex; align-items:center; justify-content:center; min-width:40px; padding:4px 8px; border:1px solid var(--color-border); border-radius:999px; font-size:12px; cursor:pointer; user-select:none; }
 #modalTarefa .rep-dias input { position:absolute; opacity:0; pointer-events:none; }
-#modalTarefa .rep-dias label:has(input:checked) { background:var(--color-primary); border-color:var(--color-primary); color:#fff; }
+#modalTarefa .rep-dias label:has(input:checked) { background:var(--color-primary); border-color:var(--color-primary); color: var(--color-on-primary, #fff) !important; }
 #modalTarefa .rep-dias label:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }
 #modalTarefa .rep-hint { font-size:12px; color:var(--color-text-muted); margin-top:6px; }
 #modalTarefa .rep-hint:empty { display:none; }

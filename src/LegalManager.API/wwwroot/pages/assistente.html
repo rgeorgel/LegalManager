@@ -58,7 +58,7 @@
     .mascote-card[aria-checked="true"] { border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary); }
     .mascote-card[aria-checked="true"]::after {
       content: "✓"; position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 50%;
-      background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 700; line-height: 20px;
+      background: var(--color-primary); color: var(--color-on-primary, #fff) !important; font-size: 12px; font-weight: 700; line-height: 20px;
     }
     .mascote-card:disabled { cursor: progress; opacity: .7; }
     .mascote-card-arte { width: 72px; height: 72px; }

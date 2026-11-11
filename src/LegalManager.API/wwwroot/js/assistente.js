@@ -713,7 +713,7 @@ function injectStyles() {
     .asx-paywall-card ul { text-align: left; font-size: 12.5px; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
     .asx-paywall-cta {
       margin-top: 6px; display: block; align-self: stretch; text-decoration: none; font-weight: 700; font-size: 14px;
-      background: var(--color-primary); color: #fff !important; padding: 10px 14px; border-radius: 8px;
+      background: var(--color-primary); color: var(--color-on-primary, #fff) !important; padding: 10px 14px; border-radius: 8px;
     }
     .asx-paywall-cta:hover { background: var(--color-primary-dark); }
     /* Maximizado: ocupa quase a tela toda (respostas com tabelas grandes). */
@@ -743,7 +743,7 @@ function injectStyles() {
     .asx-icon-btn:disabled { opacity: .4; cursor: default; }
     .asx-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--color-bg); }
     .asx-msg { max-width: 92%; font-size: 13.5px; line-height: 1.5; padding: 9px 12px; border-radius: 12px; overflow-wrap: anywhere; }
-    .asx-user { align-self: flex-end; background: var(--color-primary); color: #fff; border-bottom-right-radius: 4px; }
+    .asx-user { align-self: flex-end; background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border-bottom-right-radius: 4px; }
     .asx-bot { align-self: flex-start; background: var(--color-surface); border: 1px solid var(--color-border); border-bottom-left-radius: 4px; }
     .asx-erro { border-color: var(--color-danger); color: var(--color-danger); }
     .asx-md p { margin: 0 0 6px; } .asx-md p:last-child { margin-bottom: 0; }
@@ -767,7 +767,7 @@ function injectStyles() {
     .asx-acao-botoes { display: flex; gap: 8px; margin-top: 8px; }
     .asx-acao-botoes button { border-radius: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
     .asx-acao-botoes button:disabled { opacity: .6; cursor: default; }
-    .asx-acao-ok { background: var(--color-primary); color: #fff !important; border: 1px solid var(--color-primary); }
+    .asx-acao-ok { background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border: 1px solid var(--color-primary); }
     .asx-acao-ok:hover:not(:disabled) { background: var(--color-primary-dark); }
     .asx-acao-nao { background: var(--color-surface); color: var(--color-text) !important; border: 1px solid var(--color-border); }
     .asx-acao-status { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
@@ -816,7 +816,7 @@ function injectStyles() {
     }
     .asx-form textarea:focus { outline: none; border-color: var(--color-primary); }
     .asx-send {
-      border: none; background: var(--color-primary); color: #fff !important; border-radius: 8px;
+      border: none; background: var(--color-primary); color: var(--color-on-primary, #fff) !important; border-radius: 8px;
       width: 38px; height: 38px; cursor: pointer; font-size: 15px; flex-shrink: 0;
     }
     .asx-send:disabled { opacity: .5; cursor: default; }
