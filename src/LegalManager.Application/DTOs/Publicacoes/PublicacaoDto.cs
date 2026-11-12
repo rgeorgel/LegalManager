@@ -49,7 +49,8 @@ public record TriagemPublicacaoDto(
 /// agenda. Campos vazios usam a sugestão; <see cref="Data"/> é hora "de parede".
 /// </summary>
 public record AceitarTriagemDto(
-    [property: System.ComponentModel.DataAnnotations.MaxLength(300)] string? Titulo,
+    // No parâmetro, não em [property:] — no record o ASP.NET recusa a validação na propriedade (500 na hora do bind).
+    [System.ComponentModel.DataAnnotations.MaxLength(300)] string? Titulo,
     DateTime? Data,
     Guid? ResponsavelId,
     bool CriarEvento = false
