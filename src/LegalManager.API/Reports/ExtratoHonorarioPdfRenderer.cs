@@ -122,13 +122,14 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 tab.ColumnsDefinition(cols =>
                 {
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(1);
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(2);
+                    // Status cabe "Em Atraso"/"Cancelado" em negrito numa linha só.
+                    cols.RelativeColumn(1.3f); // Parc.
+                    cols.RelativeColumn(1.8f); // Vencimento
+                    cols.RelativeColumn(2);    // Valor
+                    cols.RelativeColumn(1.9f); // Juros/Multa
+                    cols.RelativeColumn(2);    // Status
+                    cols.RelativeColumn(1.8f); // Pago em
+                    cols.RelativeColumn(2.2f); // Total
                 });
                 tab.Header(h =>
                 {
