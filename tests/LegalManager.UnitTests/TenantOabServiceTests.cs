@@ -6,6 +6,10 @@ using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.Infrastructure.Services;
 using LegalManager.UnitTests.TestHelpers;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
+using LegalManager.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -19,6 +23,7 @@ public class TenantOabServiceTests
         .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Mock<IEscavadorService> _escavador = new();
+    private readonly Mock<IBackgroundJobClient> _jobs = new();
     private long _proximoMonitoramento = 100;
 
     public TenantOabServiceTests()
@@ -33,7 +38,7 @@ public class TenantOabServiceTests
         var t = new Mock<ITenantContext>();
         t.Setup(x => x.TenantId).Returns(_tenantId);
         t.Setup(x => x.Plano).Returns(plano);
-        return new TenantOabService(_db, t.Object, _escavador.Object, FakeConsultaExternaLogService.Instance, NullLogger<TenantOabService>.Instance);
+        return new TenantOabService(_db, t.Object, _escavador.Object, FakeConsultaExternaLogService.Instance, _jobs.Object, NullLogger<TenantOabService>.Instance);
     }
 
     [Fact]
@@ -49,6 +54,18 @@ public class TenantOabServiceTests
 
         var lista = await Service().ListarAsync();
         Assert.Single(lista);
+    }
+
+    [Fact]
+    public async Task Criar_EnfileiraImportacaoDoHistorico()
+    {
+        await Service().CriarAsync(new CriarTenantOabRequest(null, "SP", "123456", "Ana"));
+
+        _jobs.Verify(j => j.Create(
+            It.Is<Job>(job => job.Type == typeof(ImportarHistoricoOabJob) && job.Method.Name == nameof(ImportarHistoricoOabJob.ExecutarAsync)),
+            It.IsAny<EnqueuedState>()), Times.Once);
+        var oab = await _db.TenantOabs.SingleAsync();
+        Assert.Null(oab.HistoricoImportadoEm);
     }
 
     [Theory]

@@ -190,7 +190,7 @@ public class EscavadorCallbackProcessor
         };
     }
 
-    private static TipoPublicacao InferirTipoPublicacao(string? tipo, string? conteudo)
+    internal static TipoPublicacao InferirTipoPublicacao(string? tipo, string? conteudo)
     {
         var texto = (tipo + " " + conteudo)?.ToLowerInvariant() ?? "";
         return texto switch

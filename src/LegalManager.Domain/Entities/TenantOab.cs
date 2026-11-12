@@ -17,6 +17,12 @@ public class TenantOab
     public DateTime? UltimoSyncEm { get; set; }
     public string? SyncError { get; set; }
 
+    /// <summary>
+    /// Quando a busca retroativa (30 dias antes do cadastro) foi feita. Null = pendente: o
+    /// ImportarHistoricoOabJob pega a OAB. Feita uma vez por OAB — a consulta é paga.
+    /// </summary>
+    public DateTime? HistoricoImportadoEm { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
     public Usuario? User { get; set; }
 }

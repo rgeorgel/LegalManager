@@ -65,7 +65,8 @@ public record EscavadorMovimentacaoDto(
 );
 
 /// <summary>
-/// Slim publication record returned by the OAB search endpoint.
+/// Trecho de Diário Oficial devolvido pela busca de publicações por OAB (GET /api/v1/busca, qo=d).
+/// <c>Snippet</c> é o texto do trecho (sem HTML); <c>NumeroCnj</c> é extraído desse texto, quando há.
 /// </summary>
 public record EscavadorPublicacaoDto(
     long Id,
@@ -75,7 +76,9 @@ public record EscavadorPublicacaoDto(
     string? Diario,
     string? Snippet,
     string? LinkPdf,
-    string? JsonBruto
+    string? JsonBruto,
+    string? DiarioSigla = null,
+    string? Link = null
 );
 
 public enum TipoEscavadorBusca { OAB, CPFCNPJ }
@@ -129,10 +132,17 @@ public interface IEscavadorService
         string numeroCNJ, DateTime? desde, int pagina = 1, CancellationToken ct = default);
 
     /// <summary>
-    /// Search publications by OAB + UF in a date range. Used by the "minha caixa" feature.
+    /// Uma página de trechos de Diários Oficiais que citam a OAB, com data entre <paramref name="de"/>
+    /// e <paramref name="ate"/>. O Escavador não tem busca de publicações por OAB com período: usa a
+    /// busca textual em diários (GET /api/v1/busca, qo=d, mais recentes primeiro) com as mesmas
+    /// variações de OAB (e o nome, quando há) do monitoramento, e filtra as datas aqui.
+    /// <c>TemMais</c> só é true enquanto a página ainda não passou de <paramref name="de"/>.
+    /// Consulta paga (custo no header Creditos-Utilizados). Lança em caso de falha — terminar em
+    /// silêncio faria a importação do histórico achar que não havia nada.
     /// </summary>
     Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
-        string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default);
+        string oab, string uf, DateTime de, DateTime ate, int pagina = 1,
+        string? nomeAdvogado = null, CancellationToken ct = default);
 
     /// <summary>
     /// Cria um Monitoramento TERMO no Escavador para monitorar publicações de uma OAB.

@@ -77,7 +77,7 @@ public class EscavadorPublicacoesController : ControllerBase
                 var pagina = await _consultaLog.RegistrarAsync(
                     "Escavador", "BuscaPublicacoesPorOab", "Minha Caixa de Publicações — Busca por OAB",
                     new { oab = o.Numero, uf = o.Uf, de = deDate, ate = ateDate },
-                    () => _escavador.BuscarPublicacoesPorOabAsync(o.Numero, o.Uf, deDate, ateDate, 1, ct),
+                    () => _escavador.BuscarPublicacoesPorOabAsync(o.Numero, o.Uf, deDate, ateDate, 1, ct: ct),
                     r => (r.Data.Count, r.Data.Select(p => new { p.NumeroCnj, p.Data, p.Diario, p.Snippet })),
                     ct: ct);
                 return pagina.Data.Select(p => new

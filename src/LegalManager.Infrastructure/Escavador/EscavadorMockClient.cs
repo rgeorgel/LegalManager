@@ -205,7 +205,8 @@ public class EscavadorMockClient : IEscavadorService
     }
 
     public Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
-        string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
+        string oab, string uf, DateTime de, DateTime ate, int pagina = 1,
+        string? nomeAdvogado = null, CancellationToken ct = default)
     {
         _logger.LogWarning("[Escavador MOCK] BuscarPublicacoesPorOabAsync {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
             uf, oab, de, ate);
@@ -223,8 +224,10 @@ public class EscavadorMockClient : IEscavadorService
                 Data: data,
                 Diario: "DJe",
                 Snippet: $"Publicação OAB #{i + 1}",
-                LinkPdf: $"https://api.escavador.com/api/v1/diarios/140/pdf/pagina/{i + 1}/baixar",
-                JsonBruto: "{}"
+                LinkPdf: null,
+                JsonBruto: null,
+                DiarioSigla: "DJSP",
+                Link: $"https://www.escavador.com/diarios/140/pagina/{i + 1}"
             ));
         }
         var result = new EscavadorPagedResult<EscavadorPublicacaoDto>(items, items.Count, 1, 1, false);

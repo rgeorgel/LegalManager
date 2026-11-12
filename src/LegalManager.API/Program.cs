@@ -197,6 +197,7 @@ builder.Services.AddScoped<ImportacaoProcessosJob>();
 builder.Services.AddScoped<ResumoProcessoJob>();
 builder.Services.AddScoped<ReprocessarSituacaoNaFonteJob>();
 builder.Services.AddScoped<TriagemPublicacoesJob>();
+builder.Services.AddScoped<ImportarHistoricoOabJob>();
 builder.Services.AddScoped<ITriagemPublicacaoService, TriagemPublicacaoService>();
 builder.Services.AddScoped<PublicacaoMapper>();
 builder.Services.AddScoped<NotificadorAndamentos>();
@@ -697,6 +698,13 @@ static void RegistrarJobsRecorrentes(IConfiguration config)
         "publicacao-triagem-ia",
         job => job.ExecutarAsync(),
         "*/5 * * * *");
+
+    // Histórico de 30 dias por OAB: o cadastro já enfileira; este recorrente pega as pendentes
+    // (OABs anteriores ao job, falhas do Escavador, OAB reativada que nunca importou).
+    RecurringJob.AddOrUpdate<ImportarHistoricoOabJob>(
+        "oab-historico-publicacoes",
+        job => job.ExecutarAsync(),
+        "20 * * * *");
 
     // Sync de OABs com Escavador (retry de monitoramentos não criados)
     if (config.GetValue<bool>("Escavador:OabSyncEnabled", true))

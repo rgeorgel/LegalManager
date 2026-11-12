@@ -131,4 +131,100 @@ public class EscavadorHttpClientTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
             throw new HttpRequestException("connection reset");
     }
+
+    // ── Busca de publicações por OAB (GET /api/v1/busca, qo=d) ─────────────────────────────
+    // Shape dos itens conforme api.escavador.com/v1/docs/busca (tipo_resultado "Diario").
+
+    private const string BuscaJson = """
+    {
+      "paginator": { "total": 130, "total_pages": 3, "current_page": 1, "per_page": 60 },
+      "links": { "prev": null, "next": "https://api.escavador.com/api/v1/busca?page=2" },
+      "items": [
+        { "id": 501, "diario_id": 9, "numero_pagina": 12, "diario_sigla": "DJSP", "diario_nome": "Diário de Justiça do Estado de São Paulo",
+          "diario_data": "2026-11-10", "texto": "Processo 0001234-56.2026.8.26.0100 &mdash; <em>Ana Advogada</em> (OAB/SP 123456)",
+          "link": "https://www.escavador.com/diarios/9/DJSP/pagina/12", "tipo_resultado": "Diario" },
+        { "id": 502, "diario_sigla": "DJSP", "diario_data": "2026-10-20", "texto": "Intimação", "tipo_resultado": "Diario" },
+        { "id": 7, "nome": "Ana Advogada", "tipo_resultado": "Pessoa" },
+        { "id": 503, "diario_sigla": "DJSP", "diario_data": "2026-09-30", "texto": "Antiga", "tipo_resultado": "Diario" }
+      ]
+    }
+    """;
+
+    [Fact]
+    public async Task BuscarPublicacoesPorOab_MontaBuscaEmDiariosEFiltraOPeriodo()
+    {
+        var (client, handler) = CreateClient(BuscaJson);
+
+        var r = await client.BuscarPublicacoesPorOabAsync("123456", "sp",
+            new DateTime(2026, 10, 13), new DateTime(2026, 11, 12), 1, "Ana Advogada");
+
+        var query = Uri.UnescapeDataString(handler.LastRequestUri!.Query);
+        Assert.Equal("/api/v1/busca", handler.LastRequestUri!.AbsolutePath);
+        Assert.Contains("qo=d", query);
+        Assert.Contains("qs=d", query);
+        Assert.Contains("utilizar_operadores_logicos=1", query);
+        Assert.Contains("q=(\"123456/SP\" OR \"OAB/SP 123456\" OR \"OAB 123456/SP\") AND \"Ana Advogada\"", query);
+
+        // 30/09 fica fora do período; o item "Pessoa" não é trecho de diário.
+        Assert.Equal(["busca-501", "busca-502"], r.Data.Select(x => x.Uuid));
+        var p = r.Data[0];
+        Assert.Equal(new DateTime(2026, 11, 10), p.Data);
+        Assert.Equal("0001234-56.2026.8.26.0100", p.NumeroCnj);
+        Assert.Equal("Processo 0001234-56.2026.8.26.0100 — Ana Advogada (OAB/SP 123456)", p.Snippet);
+        Assert.Equal("Diário de Justiça do Estado de São Paulo", p.Diario);
+        Assert.Equal("DJSP", p.DiarioSigla);
+        Assert.Equal("https://www.escavador.com/diarios/9/DJSP/pagina/12", p.Link);
+        // A página já chegou antes de "de": não precisa da próxima.
+        Assert.False(r.TemProxima);
+    }
+
+    [Fact]
+    public async Task BuscarPublicacoesPorOab_PaginaInteiraNoPeriodo_TemProxima()
+    {
+        var (client, _) = CreateClient(BuscaJson);
+
+        var r = await client.BuscarPublicacoesPorOabAsync("123456", "SP",
+            new DateTime(2026, 9, 1), new DateTime(2026, 11, 12));
+
+        Assert.Equal(3, r.Data.Count);
+        Assert.True(r.TemProxima);
+    }
+
+    [Fact]
+    public async Task BuscarPublicacoesPorOab_SemNome_SoAsVariacoesDaOab()
+    {
+        var (client, handler) = CreateClient("""{ "items": [] }""");
+
+        var r = await client.BuscarPublicacoesPorOabAsync("123456", "SP", DateTime.Today.AddDays(-30), DateTime.Today);
+
+        Assert.DoesNotContain(" AND ", Uri.UnescapeDataString(handler.LastRequestUri!.Query));
+        Assert.Empty(r.Data);
+        Assert.False(r.TemProxima);
+    }
+
+    [Fact]
+    public async Task BuscarPublicacoesPorOab_ErroHttp_Lanca()
+    {
+        var (client, _) = CreateClient("""{ "error": "Você não possui saldo em crédito da API." }""", HttpStatusCode.PaymentRequired);
+
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(() =>
+            client.BuscarPublicacoesPorOabAsync("123456", "SP", DateTime.Today.AddDays(-30), DateTime.Today));
+        Assert.Equal(HttpStatusCode.PaymentRequired, ex.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("2026-11-10", 2026, 11, 10)]
+    [InlineData("2026-11-10 08:00:00", 2026, 11, 10)]
+    [InlineData("10/11/2026", 2026, 11, 10)]
+    public void LerDataDiario_FormatosAceitos(string valor, int ano, int mes, int dia)
+    {
+        Assert.Equal(new DateTime(ano, mes, dia), EscavadorHttpClient.LerDataDiario(valor));
+    }
+
+    [Fact]
+    public void LerDataDiario_Invalida_Null()
+    {
+        Assert.Null(EscavadorHttpClient.LerDataDiario("ontem"));
+        Assert.Null(EscavadorHttpClient.LerDataDiario(null));
+    }
 }

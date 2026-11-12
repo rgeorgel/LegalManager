@@ -3646,6 +3646,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<long?>("EscavadorMonitoramentoId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("HistoricoImportadoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)

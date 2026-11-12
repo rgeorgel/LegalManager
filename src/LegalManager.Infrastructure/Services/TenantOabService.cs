@@ -4,7 +4,9 @@ using LegalManager.Domain;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
+using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -23,6 +25,7 @@ public class TenantOabService : ITenantOabService
     private readonly ITenantContext _tenant;
     private readonly IEscavadorService _escavador;
     private readonly IConsultaExternaLogService _consultaLog;
+    private readonly IBackgroundJobClient _jobs;
     private readonly ILogger<TenantOabService> _logger;
 
     public TenantOabService(
@@ -30,12 +33,14 @@ public class TenantOabService : ITenantOabService
         ITenantContext tenant,
         IEscavadorService escavador,
         IConsultaExternaLogService consultaLog,
+        IBackgroundJobClient jobs,
         ILogger<TenantOabService> logger)
     {
         _context = context;
         _tenant = tenant;
         _escavador = escavador;
         _consultaLog = consultaLog;
+        _jobs = jobs;
         _logger = logger;
     }
 
@@ -79,6 +84,9 @@ public class TenantOabService : ITenantOabService
 
         // Sync remoto (best-effort: falha não derruba o cadastro local)
         await SincronizarRemotoAsync(oab);
+
+        // Publicações dos 30 dias anteriores ao cadastro (o monitoramento só traz as novas).
+        _jobs.Enqueue<ImportarHistoricoOabJob>(j => j.ExecutarAsync());
 
         _logger.LogInformation("[TenantOab] Criada OAB {Uf}/{Numero} para tenant {TenantId}", uf, numero, _tenant.TenantId);
         return ToDto(oab);

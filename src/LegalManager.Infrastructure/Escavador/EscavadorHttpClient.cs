@@ -281,17 +281,118 @@ public class EscavadorHttpClient : IEscavadorService
         }
     }
 
+    /// <summary>Itens por página da busca em diários (o default da API é 20).</summary>
+    internal const int LimiteBuscaDiarios = 60;
+
     public async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> BuscarPublicacoesPorOabAsync(
-        string oab, string uf, DateTime de, DateTime ate, int pagina = 1, CancellationToken ct = default)
+        string oab, string uf, DateTime de, DateTime ate, int pagina = 1,
+        string? nomeAdvogado = null, CancellationToken ct = default)
     {
         using var activity = Telemetry.Escavador.StartActivity(nameof(BuscarPublicacoesPorOabAsync));
         activity?.SetTag("escavador.oab", oab);
         activity?.SetTag("escavador.uf", uf);
-        _logger.LogInformation("[Escavador] Buscando publicacoes OAB {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd}",
-            uf, oab, de, ate);
-        var url = $"/api/v1/oab/{Uri.EscapeDataString(uf.ToUpperInvariant())}/{Uri.EscapeDataString(oab)}/publicacoes" +
-                  $"?de={de.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&ate={ate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&page={pagina}";
-        return await FetchPublicacoesPaged(url, ct);
+        _logger.LogInformation("[Escavador] Buscando publicacoes OAB {Uf}/{Oab} de={De:yyyy-MM-dd} ate={Ate:yyyy-MM-dd} pagina={Pagina}",
+            uf, oab, de, ate, pagina);
+
+        var q = TermoBuscaOab(oab, uf, nomeAdvogado);
+        var url = $"/api/v1/busca?q={Uri.EscapeDataString(q)}&qo=d&qs=d&utilizar_operadores_logicos=1" +
+                  $"&limit={LimiteBuscaDiarios}&page={pagina}";
+        var resp = await _http.GetAsync(url, ct);
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        if (resp.Headers.TryGetValues("Creditos-Utilizados", out var creditos))
+            _logger.LogInformation("[Escavador] Busca em diários OAB {Uf}/{Oab} pagina={Pagina}: {Creditos} centavos",
+                uf, oab, pagina, creditos.FirstOrDefault());
+        if (!resp.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"Escavador respondeu {(int)resp.StatusCode} na busca em diários: {(json.Length > 300 ? json[..300] : json)}",
+                null, resp.StatusCode);
+
+        var corpo = JsonSerializer.Deserialize<BuscaResponse>(json, JsonOpts)
+                    ?? throw new HttpRequestException("Escavador devolveu corpo vazio na busca em diários.");
+        var trechos = (corpo.Items ?? [])
+            .Where(i => i.TipoResultado is null || i.TipoResultado.Equals("Diario", StringComparison.OrdinalIgnoreCase))
+            .Select(i => (Item: i, Data: LerDataDiario(i.DiarioData)))
+            .ToList();
+
+        var deDia = de.Date;
+        var ateDia = ate.Date;
+        var dentro = trechos
+            .Where(t => t.Data is { } d && d >= deDia && d <= ateDia)
+            .Select(t => MapTrecho(t.Item, t.Data!.Value))
+            .ToList();
+
+        // Mais recentes primeiro: a página seguinte só interessa se esta ainda não passou de "de".
+        // Sem nenhuma data legível não dá para saber onde parar — para aqui em vez de varrer tudo.
+        var datas = trechos.Where(t => t.Data.HasValue).Select(t => t.Data!.Value).ToList();
+        var paginaAtual = corpo.Paginator?.CurrentPage ?? pagina;
+        var ultimaPagina = corpo.Paginator?.TotalPages ?? paginaAtual;
+        var temProxima = (corpo.Links?.Next != null || paginaAtual < ultimaPagina)
+                         && datas.Count > 0 && datas.Min() >= deDia;
+        if (trechos.Count > 0 && datas.Count == 0)
+            _logger.LogWarning("[Escavador] Busca em diários sem diario_data legível (OAB {Uf}/{Oab}) — parando a paginação.", uf, oab);
+
+        return new EscavadorPagedResult<EscavadorPublicacaoDto>(
+            dentro, corpo.Paginator?.Total ?? dentro.Count, paginaAtual, ultimaPagina, temProxima);
+    }
+
+    /// <summary>
+    /// As mesmas formas da OAB que o monitoramento procura (máx. 3 aceitas por ele), para a busca
+    /// retroativa achar o que o monitoramento acharia.
+    /// </summary>
+    internal static string[] VariacoesOab(string numero, string uf)
+    {
+        var ufUpper = (uf ?? "").ToUpperInvariant();
+        return [$"{numero}/{ufUpper}", $"OAB/{ufUpper} {numero}", $"OAB {numero}/{ufUpper}"];
+    }
+
+    /// <summary>("123/SP" OR "OAB/SP 123" OR ...) AND "Nome" — o nome faz o papel do termo auxiliar do monitoramento.</summary>
+    internal static string TermoBuscaOab(string numero, string uf, string? nomeAdvogado)
+    {
+        static string Aspas(string t) => "\"" + t.Replace("\"", "") + "\"";
+        var oab = "(" + string.Join(" OR ", VariacoesOab(numero, uf).Select(Aspas)) + ")";
+        return string.IsNullOrWhiteSpace(nomeAdvogado) ? oab : $"{oab} AND {Aspas(nomeAdvogado.Trim())}";
+    }
+
+    private static readonly string[] FormatosDataDiario =
+        ["yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-ddTHH:mm:ss", "dd/MM/yyyy", "dd/MM/yyyy HH:mm:ss"];
+
+    internal static DateTime? LerDataDiario(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor)) return null;
+        var v = valor.Trim();
+        if (DateTime.TryParseExact(v, FormatosDataDiario, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
+            return d.Date;
+        return DateTime.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) ? d.Date : null;
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex CnjRegex =
+        new(@"\b\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}\b", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static EscavadorPublicacaoDto MapTrecho(BuscaItem i, DateTime data)
+    {
+        var texto = TextoSemHtml(i.Texto);
+        var chave = i.Id > 0
+            ? $"busca-{i.Id}"
+            : $"busca-{i.DiarioId}-{i.NumeroPagina}-{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(Encoding.UTF8.GetBytes(texto ?? "")))[..12]}";
+        return new EscavadorPublicacaoDto(
+            Id: i.Id,
+            Uuid: chave,
+            NumeroCnj: texto is null ? null : CnjRegex.Match(texto) is { Success: true } m ? m.Value : null,
+            Data: data,
+            Diario: i.DiarioNome ?? i.DiarioSigla,
+            Snippet: texto,
+            LinkPdf: null,
+            JsonBruto: null,
+            DiarioSigla: i.DiarioSigla,
+            Link: i.Link ?? i.LinkApi);
+    }
+
+    private static string? TextoSemHtml(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return null;
+        var semTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
+        var texto = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(semTags, @"\s+", " ")).Trim();
+        return texto.Length == 0 ? null : texto;
     }
 
     private async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> FetchMovimentacoesPaged(
@@ -368,41 +469,11 @@ public class EscavadorHttpClient : IEscavadorService
         return new EscavadorPagedResult<EscavadorMovimentacaoDto>(all, all.Count, 1, 1, false);
     }
 
-    private async Task<EscavadorPagedResult<EscavadorPublicacaoDto>> FetchPublicacoesPaged(
-        string url, CancellationToken ct)
-    {
-        try
-        {
-            var resp = await _http.GetAsync(url, ct);
-            if (!resp.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("[Escavador] {S} em GET {Url}", resp.StatusCode, url);
-                return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
-            }
-            var json = await resp.Content.ReadAsStringAsync(ct);
-            var wrapper = JsonSerializer.Deserialize<EscavadorListWrapper<PublicacaoData>>(json, JsonOpts);
-            if (wrapper == null) return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
-            var data = wrapper.Data?.Select(MapPublicacao).ToList() ?? [];
-            return new EscavadorPagedResult<EscavadorPublicacaoDto>(
-                data, data.Count, wrapper.Meta?.CurrentPage ?? 1, wrapper.Meta?.LastPage ?? 1,
-                (wrapper.Meta?.CurrentPage ?? 1) < (wrapper.Meta?.LastPage ?? 1));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[Escavador] Erro em GET {Url}", url);
-            return new EscavadorPagedResult<EscavadorPublicacaoDto>([], 0, 1, 1, false);
-        }
-    }
-
     private static EscavadorMovimentacaoDto MapMovimentacao(MovimentacaoData r, string jsonBruto) => new(
         r.Id, r.Uuid ?? string.Empty, r.Data,
         r.Conteudo, r.Snippet, r.Tipo, r.Diario,
         r.DiarioId, r.DiarioSigla, r.OrigemEstado,
         r.Link, r.LinkApi, r.LinkPdf, r.LinkPdfApi, r.NumeroCnj, jsonBruto);
-
-    private static EscavadorPublicacaoDto MapPublicacao(PublicacaoData r) => new(
-        r.Id, r.Uuid ?? string.Empty, r.NumeroCnj, r.Data ?? DateTime.UtcNow,
-        r.Diario, r.Snippet, r.LinkPdf, "{}");
 
     public async Task<EscavadorMonitoramentoDto?> CriarMonitoramentoOabAsync(
         string uf, string numero, string? nomeAdvogado, CancellationToken ct = default)
@@ -415,12 +486,7 @@ public class EscavadorHttpClient : IEscavadorService
         {
             var ufUpper = (uf ?? "").ToUpperInvariant();
             // Máximo 3 variações aceitas pela API. Priorizamos as formas mais comuns em diários.
-            var variacoes = new[]
-            {
-                $"{numero}/{ufUpper}",
-                $"OAB/{ufUpper} {numero}",
-                $"OAB {numero}/{ufUpper}"
-            };
+            var variacoes = VariacoesOab(numero, ufUpper);
 
             // termos_auxiliares filtra para garantir que a publicação realmente se refere
             // ao advogado certo (evita falsos positivos de OABs com mesmo número em UFs diferentes).
@@ -742,15 +808,37 @@ public class EscavadorHttpClient : IEscavadorService
         [JsonPropertyName("numero_cnj")] public string? NumeroCnj { get; set; }
     }
 
-    private sealed class PublicacaoData
+    private sealed class BuscaResponse
+    {
+        [JsonPropertyName("paginator")] public BuscaPaginator? Paginator { get; set; }
+        [JsonPropertyName("links")] public BuscaLinks? Links { get; set; }
+        [JsonPropertyName("items")] public List<BuscaItem>? Items { get; set; }
+    }
+
+    private sealed class BuscaPaginator
+    {
+        [JsonPropertyName("total")] public int? Total { get; set; }
+        [JsonPropertyName("total_pages")] public int? TotalPages { get; set; }
+        [JsonPropertyName("current_page")] public int? CurrentPage { get; set; }
+    }
+
+    private sealed class BuscaLinks
+    {
+        [JsonPropertyName("next")] public string? Next { get; set; }
+    }
+
+    private sealed class BuscaItem
     {
         [JsonPropertyName("id")] public long Id { get; set; }
-        [JsonPropertyName("uuid")] public string? Uuid { get; set; }
-        [JsonPropertyName("numero_cnj")] public string? NumeroCnj { get; set; }
-        [JsonPropertyName("data")] public DateTime? Data { get; set; }
-        [JsonPropertyName("diario")] public string? Diario { get; set; }
-        [JsonPropertyName("snippet")] public string? Snippet { get; set; }
-        [JsonPropertyName("link_pdf")] public string? LinkPdf { get; set; }
+        [JsonPropertyName("diario_id")] public long? DiarioId { get; set; }
+        [JsonPropertyName("numero_pagina")] public int? NumeroPagina { get; set; }
+        [JsonPropertyName("diario_sigla")] public string? DiarioSigla { get; set; }
+        [JsonPropertyName("diario_nome")] public string? DiarioNome { get; set; }
+        [JsonPropertyName("diario_data")] public string? DiarioData { get; set; }
+        [JsonPropertyName("texto")] public string? Texto { get; set; }
+        [JsonPropertyName("link")] public string? Link { get; set; }
+        [JsonPropertyName("link_api")] public string? LinkApi { get; set; }
+        [JsonPropertyName("tipo_resultado")] public string? TipoResultado { get; set; }
     }
 
     private sealed class MovimentacoesV2Response

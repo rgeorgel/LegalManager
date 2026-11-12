@@ -95,6 +95,27 @@ Operacional (não implementado, recomendado):
 
 ---
 
+### Histórico de 30 dias por OAB (implementado)
+
+O monitoramento por termo só traz publicações novas. Para cobrir o período anterior,
+`ImportarHistoricoOabJob` busca, **uma vez por OAB** (Pro+), os 30 dias anteriores ao cadastro —
+a janela que o monitoramento não cobre, então não duplica o que chega pelo webhook:
+
+```
+Cadastro da OAB → enfileira o job (e recorrente "oab-historico-publicacoes", :20 de cada hora,
+                  para as pendentes: TenantOab.HistoricoImportadoEm == null)
+  GET /api/v1/busca?q=("123456/SP" OR "OAB/SP 123456" OR "OAB 123456/SP") AND "Nome"
+                   &qo=d&qs=d&utilizar_operadores_logicos=1&limit=60&page=N
+  → mais recentes primeiro; pagina até passar da data inicial (teto: 10 páginas)
+  → filtra diario_data no período; grava Publicacao (UuidExterno "busca-{id}", sem notificação)
+```
+
+A API não tem busca de publicações por OAB com período (o antigo `/v1/oab/{uf}/{n}/publicacoes`
+não existe na documentação): usa a busca textual em diários, com as mesmas variações e o nome do
+monitoramento. Consulta paga, sem preço na tabela — o custo de cada página sai no header
+`Creditos-Utilizados` (logado) e cada página fica na auditoria de consultas externas. Falha deixa a
+OAB pendente para a próxima hora.
+
 ## 3. Custos
 
 ### Preços confirmados (`api.escavador.com/servicos`)
