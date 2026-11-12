@@ -91,6 +91,22 @@ public class EscavadorCallbacksTests
     }
 
     [Fact]
+    public async Task WebhookV2_ConteudoEmHtml_GravaTextoLimpo()
+    {
+        var (ctx, _) = await SeedAsync();
+        var json = NovaMovimentacaoJson.Replace(
+            "\"Pedido de Liminar/Antecipação de Tutela\"",
+            "\"<section><p align=\\\"center\\\">DESPACHO</p></section> <p>Cível -&gt; Conhecimento</p>\"");
+
+        await Processor(ctx).ProcessarAsync(EscavadorCallbackProcessor.Desserializar(json)!);
+
+        Assert.Equal("DESPACHO Cível -> Conhecimento", (await ctx.Andamentos.SingleAsync()).Descricao);
+        var publicacao = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal("DESPACHO Cível -> Conhecimento", publicacao.Conteudo);
+        Assert.DoesNotContain("<", publicacao.Snippet ?? "");
+    }
+
+    [Fact]
     public async Task WebhookV2_RepetidoOuJaImportadoPeloPolling_NaoDuplica()
     {
         var (ctx, _) = await SeedAsync();

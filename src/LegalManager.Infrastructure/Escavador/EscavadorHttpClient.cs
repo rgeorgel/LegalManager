@@ -387,13 +387,7 @@ public class EscavadorHttpClient : IEscavadorService
             Link: i.Link ?? i.LinkApi);
     }
 
-    private static string? TextoSemHtml(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return null;
-        var semTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
-        var texto = System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Replace(semTags, @"\s+", " ")).Trim();
-        return texto.Length == 0 ? null : texto;
-    }
+    private static string? TextoSemHtml(string? html) => Services.TextoHtml.ParaTexto(html);
 
     private async Task<EscavadorPagedResult<EscavadorMovimentacaoDto>> FetchMovimentacoesPaged(
         string url, CancellationToken ct)

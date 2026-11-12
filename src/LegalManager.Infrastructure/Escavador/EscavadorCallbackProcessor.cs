@@ -149,7 +149,7 @@ public class EscavadorCallbackProcessor
                 UsuarioId = destinatarioId,
                 Tipo = TipoNotificacao.NovoAndamento,
                 Titulo = titulo,
-                Mensagem = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : ResumirHtml(conteudo.ConteudoHtml),
+                Mensagem = Resumir(DescricaoDe(conteudo)),
                 Url = "/pages/publicacoes.html",
                 Lida = false,
                 CriadaEm = agora
@@ -160,7 +160,7 @@ public class EscavadorCallbackProcessor
     }
 
     private static string DescricaoDe(EscavadorMovimentacaoDto conteudo) =>
-        !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet! : TextoDoHtml(conteudo.ConteudoHtml);
+        TextoHtml.ParaTexto(conteudo.Snippet) ?? TextoHtml.ParaTexto(conteudo.ConteudoHtml) ?? "Atualização via Escavador";
 
     private static Publicacao MontarPublicacaoOab(
         TenantOab oab, string? numeroCNJ, EscavadorMovimentacaoDto conteudo, DateTime agora)
@@ -173,7 +173,7 @@ public class EscavadorCallbackProcessor
             NumeroCNJ = numeroCNJ,
             Diario = PublicacaoMapper.Cortar(conteudo.Diario ?? conteudo.DiarioSigla, 100) ?? "Diário Oficial",
             DataPublicacao = conteudo.Data ?? agora,
-            Conteudo = !string.IsNullOrWhiteSpace(conteudo.Snippet) ? conteudo.Snippet : "",
+            Conteudo = TextoHtml.ParaTexto(conteudo.Snippet) ?? TextoHtml.ParaTexto(conteudo.ConteudoHtml) ?? "",
             Tipo = InferirTipoPublicacao(conteudo.Tipo, conteudo.ConteudoHtml),
             Status = StatusPublicacao.Nova,
             Urgente = false,
@@ -184,7 +184,7 @@ public class EscavadorCallbackProcessor
             DiarioId = conteudo.DiarioId,
             DiarioSigla = PublicacaoMapper.Cortar(conteudo.DiarioSigla, 50),
             OrigemEstado = PublicacaoMapper.Cortar(conteudo.OrigemEstado, 2),
-            Snippet = PublicacaoMapper.Cortar(conteudo.Snippet, 1000),
+            Snippet = PublicacaoMapper.Cortar(TextoHtml.ParaTexto(conteudo.Snippet), 1000),
             Tribunal = PublicacaoMapper.Cortar(conteudo.DiarioSigla, 50),
             CapturaEm = agora
         };
@@ -332,18 +332,8 @@ public class EscavadorCallbackProcessor
     }
 
     // Andamento guarda o texto integral; a notificação só um resumo.
-    private static string TextoDoHtml(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return "Atualização via Escavador";
-        var noTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
-        return System.Text.RegularExpressions.Regex.Replace(noTags, @"\s+", " ").Trim();
-    }
-
-    private static string ResumirHtml(string? html)
-    {
-        var texto = TextoDoHtml(html);
-        return texto.Length > 500 ? texto[..500] + "…" : texto;
-    }
+    private static string Resumir(string texto) =>
+        texto.Length > 500 ? texto[..500] + "…" : texto;
 }
 
 // ─── Callback DTOs (V2 + V1 + legacy fallback) ───────────────────────────────

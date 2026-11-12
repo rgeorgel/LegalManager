@@ -431,6 +431,9 @@ using (var scope = app.Services.CreateScope())
           AND LENGTH("ChaveDedup") >= 43
         """);
 
+    var limpas = await LimpezaHtmlPublicacoes.ExecutarAsync(db);
+    if (limpas > 0) app.Logger.LogInformation("HTML removido de {Total} publicação(ões)/andamento(s)", limpas);
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     foreach (var role in new[] { "Admin", "Advogado", "Colaborador", "Cliente", "SuperAdmin" })
     {

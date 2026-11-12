@@ -513,13 +513,8 @@ public class ProcessosController : ControllerBase
     }
 
     // Texto integral (sem tags): a coluna Descricao não tem limite e a lista recolhe os longos com "ver mais".
-    private static string TextoDoConteudoEscavador(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return "Movimentação via Escavador";
-        var semTags = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
-        var compacto = System.Text.RegularExpressions.Regex.Replace(semTags, @"\s+", " ").Trim();
-        return compacto;
-    }
+    private static string TextoDoConteudoEscavador(string? html) =>
+        LegalManager.Infrastructure.Services.TextoHtml.ParaTexto(html) ?? "Movimentação via Escavador";
 
     private static TipoAndamento MapearTipoEscavador(string? tipo, string? conteudo)
     {

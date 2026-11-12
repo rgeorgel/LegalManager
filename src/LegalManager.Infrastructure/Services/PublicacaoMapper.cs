@@ -11,8 +11,6 @@ namespace LegalManager.Infrastructure.Services;
 /// </summary>
 public class PublicacaoMapper
 {
-    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled);
-
     public Publicacao Montar(Processo processo, EscavadorMovimentacaoDto mov, DateTime agora)
     {
         return new Publicacao
@@ -23,7 +21,7 @@ public class PublicacaoMapper
             NumeroCNJ = processo.NumeroCNJ,
             Diario = Cortar(mov.Diario ?? mov.DiarioSigla, 100) ?? "Diário Oficial",
             DataPublicacao = mov.Data ?? agora,
-            Conteudo = StripHtml(mov.ConteudoHtml) ?? mov.Snippet ?? string.Empty,
+            Conteudo = TextoHtml.ParaTexto(mov.ConteudoHtml) ?? TextoHtml.ParaTexto(mov.Snippet) ?? string.Empty,
             Tipo = InferirTipo(mov.Tipo, mov.ConteudoHtml),
             Status = StatusPublicacao.Nova,
             Urgente = false,
@@ -36,7 +34,7 @@ public class PublicacaoMapper
             OrigemEstado = Cortar(mov.OrigemEstado, 2),
             OrigemId = null,
             // No V2 o "snippet" é a publicação inteira; o texto completo fica em Conteudo.
-            Snippet = Cortar(mov.Snippet, 1000),
+            Snippet = Cortar(TextoHtml.ParaTexto(mov.Snippet), 1000),
             Tribunal = Cortar(ExtrairTribunal(processo.NumeroCNJ, mov.DiarioSigla), 50),
             CapturaEm = agora
         };
@@ -45,13 +43,6 @@ public class PublicacaoMapper
     // Limites das colunas (PublicacaoConfiguration): um valor maior derruba o SaveChanges no Postgres.
     public static string? Cortar(string? valor, int max) =>
         valor != null && valor.Length > max ? valor[..max] : valor;
-
-    private static string? StripHtml(string? html)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return null;
-        var noTags = HtmlTagRegex.Replace(html, " ");
-        return Regex.Replace(noTags, @"\s+", " ").Trim();
-    }
 
     private static TipoPublicacao InferirTipo(string? tipo, string? conteudo)
     {

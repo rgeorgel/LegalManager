@@ -6,6 +6,7 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Observability;
 using LegalManager.Infrastructure.Persistence;
+using LegalManager.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -135,7 +136,7 @@ public class DjeJob
                 NumeroCNJ = ExtrairNumeroProcesso(pub.Conteudo),
                 Diario = siglaTribunal,
                 DataPublicacao = pub.DataPublicacao,
-                Conteudo = pub.Conteudo,
+                Conteudo = TextoHtml.ParaTexto(pub.Conteudo) ?? "",
                 Tipo = tipo,
                 Status = StatusPublicacao.Nova,
                 Urgente = urgente,
