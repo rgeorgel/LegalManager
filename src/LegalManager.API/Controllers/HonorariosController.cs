@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using LegalManager.API.Reports;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
@@ -180,12 +181,14 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
     }
 
     [HttpPost("proposta/pdf")]
-    public IActionResult GerarPropostaPdf([FromBody] PropostaPdfDto dto, CancellationToken ct)
+    public IActionResult GerarPropostaPdf([FromBody] PropostaPdfDto dto, [FromServices] IWebHostEnvironment env, CancellationToken ct)
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
         var tenant = db.Tenants.FirstOrDefault(t => t.Id == tenantContext.TenantId);
         var nomeEscritorio = tenant?.Nome ?? "Escritório de Advocacia";
+        // O emoji ⚖️ virava um quadrado (o servidor não tem fonte de emoji): usa o logo, como os outros PDFs.
+        var logoBytes = PdfLogo.Carregar(tenant?.LogoUrl, env.WebRootPath);
         var corNavy = "#0f2744";
         var corGold = "#c9a84c";
 
@@ -199,11 +202,11 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                     page.Margin(50);
                     page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Segoe UI"));
 
-                    page.Header().Element(c => Container(c, nomeEscritorio, dto.Cliente ?? "[NOME DO CLIENTE]", dto.DataProposta, corNavy, corGold));
+                    page.Header().Element(c => Container(c, nomeEscritorio, logoBytes, dto.Cliente ?? "[NOME DO CLIENTE]", dto.DataProposta, corNavy, corGold));
                     page.Content().Element(c => ContainerContent(c, dto, corNavy, corGold));
                     page.Footer().AlignCenter().Text(x =>
                     {
-                        x.Span("Calculadora de Honorários — Tabela OAB/SP 2026 (CAASP | ESA | PREV)");
+                        x.Span("Calculadora de Honorários");
                         x.Span(" · ");
                         x.Span(dto.DataProposta);
                         x.Span(" · ");
@@ -222,21 +225,18 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
         }
     }
 
-    private static void Container(IContainer container, string nomeEscritorio, string cliente, string dataProposta, string corNavy, string corGold)
+    private static void Container(IContainer container, string nomeEscritorio, byte[]? logoBytes, string cliente, string dataProposta, string corNavy, string corGold)
     {
         container.Column(col =>
         {
             col.Item().Row(row =>
             {
-                row.RelativeItem().Column(c =>
+                row.RelativeItem().AlignMiddle().Column(c =>
                 {
-                    c.Item().Text("⚖️").FontSize(28);
+                    if (logoBytes != null)
+                        c.Item().Height(35).AlignLeft().Image(logoBytes).FitArea();
                 });
-                row.RelativeItem().AlignRight().Column(c =>
-                {
-                    c.Item().Text(nomeEscritorio).Bold().FontSize(14).FontColor(corNavy);
-                    c.Item().Text("Tabela OAB/SP 2026 (CAASP | ESA | PREV)").FontSize(9).FontColor("#5f5e5a");
-                });
+                row.RelativeItem().AlignMiddle().AlignRight().Text(nomeEscritorio).Bold().FontSize(14).FontColor(corNavy);
             });
             col.Item().PaddingTop(5).BorderBottom(1).BorderColor(corGold);
             col.Item().PaddingTop(8).AlignCenter().Text("PROPOSTA DE HONORÁRIOS ADVOCATÍCIOS").Bold().FontSize(13).FontColor(corNavy);
@@ -264,10 +264,12 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                 {
                     tab.ColumnsDefinition(cols =>
                     {
-                        cols.ConstantColumn(30);
+                        // Nº estreito e valor com largura fixa (cabe "R$ 999.999,99" numa linha);
+                        // o resto vai para o serviço, que é o texto mais longo.
+                        cols.ConstantColumn(22);
+                        cols.RelativeColumn(5);
                         cols.RelativeColumn(3);
-                        cols.RelativeColumn(2);
-                        cols.RelativeColumn(1);
+                        cols.ConstantColumn(85);
                     });
 
                     tab.Header(header =>
@@ -282,12 +284,13 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                     {
                         tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Numero.ToString()).FontSize(10);
                         tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Tipo).FontSize(10);
-                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text($"{item.ModeLabel} · {item.Area}").FontSize(10).FontColor("#5f5e5a");
+                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text($"{item.ModeLabel} · {item.Area}").FontSize(9).FontColor("#5f5e5a");
                         tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).AlignRight().Text(item.ValorFormatado).FontSize(10).Bold();
                     }
 
-                    tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).AlignRight().Text("Total").FontSize(10).Bold();
-                    tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).AlignRight().Text(dto.ValorFormatado).FontSize(10).Bold();
+                    // O total ocupa a linha inteira (antes caía nas duas primeiras colunas e "Total" quebrava no "#").
+                    tab.Cell().ColumnSpan(3).Background("#f4f3ef").Padding(5).Text("Total").FontSize(10).Bold();
+                    tab.Cell().Background("#f4f3ef").Padding(5).AlignRight().Text(dto.ValorFormatado).FontSize(10).Bold();
                 });
             }
             else
@@ -308,7 +311,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
 
             col.Item().PaddingTop(12).Text("HONORÁRIOS CONTRATUAIS").FontSize(8).Bold().FontColor("#888780");
             col.Item().PaddingTop(4).Text(
-                "Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026 (CAASP | ESA | PREV), aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto."
+                "Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026, aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto."
             );
 
             if (dto.IsMultiplos)

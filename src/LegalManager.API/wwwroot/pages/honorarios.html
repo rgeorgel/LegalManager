@@ -476,7 +476,6 @@
 
       <div class="page-header">
         <h1 class="page-title">💰 Calculadora de Honorários</h1>
-        <span style="font-size:12px;color:var(--color-text-muted)">Tabela OAB/SP 2026 (CAASP | ESA | PREV)</span>
       </div>
 
       <!-- Tabs -->
@@ -1005,7 +1004,7 @@
       </div>
       <div class="p-sec">
         <div class="p-label">Honorários Contratuais</div>
-        <p>Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026 (CAASP | ESA | PREV), aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto.</p>
+        <p>Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026, aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto.</p>
         <p style="margin-top:6px">O valor dos honorários contratuais é de <strong>${brl(r.adj)}</strong> (${hcValorExtenso(r.adj)})${r.act.p&&hcSt.val>0?`, correspondendo ao percentual de ${pct(r.act.p)} sobre o valor da causa de ${brl(hcSt.val)}, observado o valor mínimo tabela de ${brl(r.act.m)}`:""}.</p>
         ${hiNote}
       </div>
@@ -1087,7 +1086,6 @@
         </div>
         <div class="hc-proposta-firma">
           <h2>${hcNomeEscritorio()}</h2>
-          <p>Tabela OAB/SP 2026 (CAASP | ESA | PREV)</p>
         </div>
       </div>
       <div class="hc-proposta-titulo">Proposta de Honorários Advocatícios</div>
@@ -1109,7 +1107,7 @@
 
   function hcPropostaFooter(dataHoje){
     return`<div class="p-footer">
-        Calculadora de Honorários — Tabela OAB/SP 2026 (CAASP | ESA | PREV) · ${dataHoje}<br>
+        Calculadora de Honorários · ${dataHoje}<br>
         Documento gerado pelo sistema Causify · Uso interno
       </div>
     </div>`;

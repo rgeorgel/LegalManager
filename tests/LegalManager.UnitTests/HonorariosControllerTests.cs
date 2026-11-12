@@ -3,6 +3,7 @@ using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -25,6 +26,17 @@ public class HonorariosControllerTests
         var mock = new Mock<ITenantContext>();
         mock.Setup(t => t.TenantId).Returns(tenantId);
         mock.Setup(t => t.UserId).Returns(userId);
+        return mock.Object;
+    }
+
+    /// <summary>wwwroot real da API, para o PDF carregar o logo padrão do Causify.</summary>
+    private static IWebHostEnvironment Env()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "src", "LegalManager.API", "wwwroot")))
+            dir = dir.Parent;
+        var mock = new Mock<IWebHostEnvironment>();
+        mock.Setup(e => e.WebRootPath).Returns(dir == null ? null! : Path.Combine(dir.FullName, "src", "LegalManager.API", "wwwroot"));
         return mock.Object;
     }
 
@@ -389,7 +401,7 @@ public class HonorariosControllerTests
             DataProposta = "03/05/2026"
         };
 
-        var result = controller.GerarPropostaPdf(dto, default);
+        var result = controller.GerarPropostaPdf(dto, Env(), default);
 
         var fileResult = Assert.IsType<FileContentResult>(result);
         Assert.Equal("application/pdf", fileResult.ContentType);
@@ -432,7 +444,7 @@ public class HonorariosControllerTests
             }
         };
 
-        var result = controller.GerarPropostaPdf(dto, default);
+        var result = controller.GerarPropostaPdf(dto, Env(), default);
 
         var fileResult = Assert.IsType<FileContentResult>(result);
         Assert.NotEmpty(fileResult.FileContents);
@@ -466,7 +478,7 @@ public class HonorariosControllerTests
             DataProposta = "03/05/2026"
         };
 
-        var result = controller.GerarPropostaPdf(dto, default);
+        var result = controller.GerarPropostaPdf(dto, Env(), default);
 
         var fileResult = Assert.IsType<FileContentResult>(result);
         Assert.NotEmpty(fileResult.FileContents);
@@ -500,7 +512,7 @@ public class HonorariosControllerTests
             DataProposta = "03/05/2026"
         };
 
-        var result = controller.GerarPropostaPdf(dto, default);
+        var result = controller.GerarPropostaPdf(dto, Env(), default);
 
         var fileResult = Assert.IsType<FileContentResult>(result);
         Assert.NotEmpty(fileResult.FileContents);
