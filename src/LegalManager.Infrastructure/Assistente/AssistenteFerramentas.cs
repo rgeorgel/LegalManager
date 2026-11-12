@@ -43,7 +43,7 @@ public partial class AssistenteFerramentas
         _db = db;
         _tenant = tenant;
         _honorarios = honorarios;
-        _definicoes = [.. CriarDefinicoes(), .. DefinicoesDeAcao()];
+        _definicoes = [.. CriarDefinicoes(), DefinicaoAjuda(), .. DefinicoesDeAcao()];
     }
 
     private Guid TenantId => _tenant.TenantId;
@@ -1030,7 +1030,58 @@ public partial class AssistenteFerramentas
                 },
                 trecho = Cortar(string.IsNullOrWhiteSpace(p.Snippet) ? p.Conteudo : p.Snippet, 500)
             }),
-            link = "/pages/publicacoes.html"
+            link = "/pages/publicacoes.html",
+            // Lista vazia: diz POR QUE (sem OAB cadastrada, busca inicial pendente, erro, filtro) — sem isso o
+            // modelo pedia ao usuário o número do processo, quando faltava cadastrar a OAB.
+            captura = total == 0 ? await SituacaoCapturaAsync(ct) : null
+        };
+    }
+
+    public const string LinkOabs = "/pages/oabs.html";
+
+    private async Task<object> SituacaoCapturaAsync(CancellationToken ct)
+    {
+        _tz ??= await _db.DoTenantAsync(TenantId, ct);
+        var oabs = await _db.TenantOabs.AsNoTracking()
+            .Where(o => o.TenantId == TenantId && o.Ativo)
+            .OrderBy(o => o.CriadoEm)
+            .Select(o => new { o.Uf, o.Numero, o.Nome, o.CriadoEm, o.UltimoSyncEm, o.SyncError, o.HistoricoImportadoEm })
+            .ToListAsync(ct);
+        var noEscritorio = await _db.Publicacoes.CountAsync(p => p.TenantId == TenantId, ct);
+        var limite = PlanoRestricoes.MaxOabsMonitoradas(_tenant.Plano);
+
+        var orientacao = new List<string>();
+        if (oabs.Count == 0)
+            orientacao.Add("Nenhuma OAB está cadastrada para a captura. As publicações só começam a chegar depois que a OAB " +
+                $"do advogado é cadastrada em OABs Monitoradas ({LinkOabs}); o plano {_tenant.Plano} permite {limite}. " +
+                "Ao cadastrar, o sistema também busca as publicações dos 30 dias anteriores, e as novas chegam sozinhas.");
+        if (noEscritorio > 0)
+            orientacao.Add($"O escritório tem {noEscritorio} publicação(ões), mas nenhuma com os filtros usados: tente outro período ou sem filtros.");
+        foreach (var o in oabs.Where(o => !string.IsNullOrWhiteSpace(o.SyncError)))
+            orientacao.Add($"A sincronização da OAB {o.Numero}/{o.Uf} deu erro. Confira o número e a UF em OABs Monitoradas ({LinkOabs}) " +
+                "ou fale com o suporte.");
+        if (noEscritorio == 0 && oabs.Any(o => o.HistoricoImportadoEm is null))
+            orientacao.Add("A busca das publicações dos 30 dias anteriores ao cadastro da OAB ainda não terminou " +
+                "(roda logo após o cadastro e é tentada de novo a cada hora). Elas aparecem em Publicações assim que chegarem.");
+        if (orientacao.Count == 0)
+            orientacao.Add("A captura está ativa, mas não saiu nenhuma publicação para essas OABs desde 30 dias antes do cadastro. " +
+                "As novas chegam automaticamente.");
+
+        return new
+        {
+            oabsCadastradas = oabs.Select(o => new
+            {
+                oab = $"{o.Numero}/{o.Uf}",
+                nome = o.Nome,
+                cadastradaEm = DataHoraUtc(o.CriadoEm),
+                buscaDos30DiasAnteriores = o.HistoricoImportadoEm is null ? "pendente" : "concluída",
+                ultimaSincronizacao = DataHoraUtc(o.UltimoSyncEm),
+                erro = Cortar(o.SyncError, 200)
+            }),
+            limiteDeOabsDoPlano = limite,
+            publicacoesNoEscritorio = noEscritorio,
+            orientacao = string.Join(" ", orientacao),
+            linkOabs = LinkOabs
         };
     }
 

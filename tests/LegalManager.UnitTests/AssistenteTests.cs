@@ -185,6 +185,7 @@ public class AssistenteTests
         Assert.DoesNotContain("listar_publicacoes", plus);
         Assert.Contains("listar_publicacoes", pro);
         Assert.Contains("buscar_processos", free);
+        Assert.Contains("buscar_ajuda", free);
     }
 
     [Fact]
@@ -755,6 +756,25 @@ public class AssistenteTests
         Assert.Contains(hoje.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), llm.Sistemas[0]);
         Assert.Contains(hoje.ToString("MMMM", BrasiliaTime.PtBr), llm.Sistemas[0]);
         Assert.Contains("Esta semana:", llm.Sistemas[0]);
+    }
+
+    [Fact]
+    public async Task Perguntar_PromptTrazMapaDoSistemaELimitesDoPlano()
+    {
+        // Sem o mapa, o assistente não sabia que publicação só chega depois de cadastrar a OAB.
+        var (db, a, _) = SeedDoisTenants();
+        var tenant = Tenant(a, PlanoTipo.Pro);
+        var llm = new LlmFalso(new LlmResposta([new LlmTexto("ok")], 1, 1));
+        var svc = new AssistenteService(llm, Ferramentas(db, tenant), db, tenant, NullLogger<AssistenteService>.Instance);
+
+        await svc.PerguntarAsync(new AssistentePerguntaDto([new("user", "como vejo as publicações?")]));
+
+        var sistema = llm.Sistemas[0];
+        Assert.Contains("/pages/oabs.html", sistema);
+        Assert.Contains("Contratar o plano não basta", sistema);
+        Assert.Contains("2 usuário(s), 40 processos com andamentos monitorados, 1 OAB(s)", sistema);
+        Assert.Contains("buscar_ajuda", sistema);
+        Assert.Contains("orientacao", sistema);
     }
 
     [Theory]

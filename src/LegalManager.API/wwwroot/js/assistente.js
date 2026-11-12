@@ -47,6 +47,7 @@ const ROTULOS_FERRAMENTA = {
   listar_contratos_honorario: 'honorários',
   detalhar_contrato_honorario: 'honorários',
   listar_publicacoes: 'publicações',
+  buscar_ajuda: 'guias',
   atualizar_contato: 'contato',
   registrar_atendimento: 'contato',
   criar_tarefa: 'tarefas',

@@ -477,4 +477,192 @@ public class AssistenteFerramentasConsultasTests
         var r = await Executar("listar_publicacoes", new { status = "Lida" });
         Assert.Equal("Trecho", r.GetProperty("publicacoes")[0].GetProperty("trecho").GetString());
     }
+
+    [Fact]
+    public async Task ListarPublicacoes_ComResultado_SemDiagnosticoDaCaptura()
+    {
+        var r = await Executar("listar_publicacoes", new { });
+        Assert.Equal(2, r.GetProperty("total").GetInt32());
+        Assert.False(r.TryGetProperty("captura", out _));
+    }
+
+    private void SemPublicacoes()
+    {
+        _db.TriagensPublicacao.RemoveRange(_db.TriagensPublicacao);
+        _db.Publicacoes.RemoveRange(_db.Publicacoes);
+        _db.SaveChanges();
+    }
+
+    private TenantOab Oab(Guid tenantId, bool ativo = true, DateTime? historico = null, string? erro = null) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, Uf = "SP", Numero = "123456", Nome = "Ana Advogada", Ativo = ativo,
+        CriadoEm = DateTime.UtcNow.AddDays(-1), HistoricoImportadoEm = historico, SyncError = erro
+    };
+
+    [Fact]
+    public async Task ListarPublicacoes_SemOab_OrientaCadastrarAOab()
+    {
+        // O caso real: assinou o Pro, não cadastrou OAB e o assistente pediu o número do processo.
+        SemPublicacoes();
+        _db.TenantOabs.AddRange(Oab(_tenantId, ativo: false), Oab(_outroTenant, historico: DateTime.UtcNow));
+        _db.SaveChanges();
+
+        var c = (await Executar("listar_publicacoes", new { de = "2026-01-01", ate = "2026-12-31" })).GetProperty("captura");
+
+        Assert.Equal(0, c.GetProperty("oabsCadastradas").GetArrayLength());
+        Assert.Equal(1, c.GetProperty("limiteDeOabsDoPlano").GetInt32());
+        Assert.Equal(0, c.GetProperty("publicacoesNoEscritorio").GetInt32());
+        Assert.Equal("/pages/oabs.html", c.GetProperty("linkOabs").GetString());
+        var orientacao = c.GetProperty("orientacao").GetString()!;
+        Assert.Contains("Nenhuma OAB", orientacao);
+        Assert.Contains("/pages/oabs.html", orientacao);
+        Assert.Contains("30 dias", orientacao);
+    }
+
+    [Fact]
+    public async Task ListarPublicacoes_FiltroSemResultado_ApontaOsFiltros()
+    {
+        _db.TenantOabs.Add(Oab(_tenantId, historico: DateTime.UtcNow));
+        _db.SaveChanges();
+
+        var c = (await Executar("listar_publicacoes", new { de = D(_hoje.AddDays(30)) })).GetProperty("captura");
+
+        Assert.Equal(2, c.GetProperty("publicacoesNoEscritorio").GetInt32());
+        var orientacao = c.GetProperty("orientacao").GetString()!;
+        Assert.Contains("filtros", orientacao);
+        Assert.DoesNotContain("Nenhuma OAB", orientacao);
+    }
+
+    [Fact]
+    public async Task ListarPublicacoes_OabComBuscaPendenteEErro()
+    {
+        SemPublicacoes();
+        _db.TenantOabs.Add(Oab(_tenantId, erro: "OAB não encontrada no Escavador"));
+        _db.SaveChanges();
+
+        var c = (await Executar("listar_publicacoes", new { })).GetProperty("captura");
+
+        var oab = c.GetProperty("oabsCadastradas")[0];
+        Assert.Equal("123456/SP", oab.GetProperty("oab").GetString());
+        Assert.Equal("pendente", oab.GetProperty("buscaDos30DiasAnteriores").GetString());
+        Assert.Equal("OAB não encontrada no Escavador", oab.GetProperty("erro").GetString());
+        var orientacao = c.GetProperty("orientacao").GetString()!;
+        Assert.Contains("ainda não terminou", orientacao);
+        Assert.Contains("deu erro", orientacao);
+    }
+
+    [Fact]
+    public async Task ListarPublicacoes_OabEmDiaSemPublicacoes_DizQueChegamSozinhas()
+    {
+        SemPublicacoes();
+        _db.TenantOabs.Add(Oab(_tenantId, historico: DateTime.UtcNow));
+        _db.SaveChanges();
+
+        var c = (await Executar("listar_publicacoes", new { })).GetProperty("captura");
+
+        Assert.Equal("concluída", c.GetProperty("oabsCadastradas")[0].GetProperty("buscaDos30DiasAnteriores").GetString());
+        Assert.False(c.GetProperty("oabsCadastradas")[0].TryGetProperty("erro", out _));
+        var orientacao = c.GetProperty("orientacao").GetString()!;
+        Assert.Contains("chegam automaticamente", orientacao);
+        Assert.DoesNotContain("Nenhuma OAB", orientacao);
+    }
+
+    // ── Ajuda (guias) ────────────────────────────────────────────────────────
+
+    private void Guias()
+    {
+        _db.Artigos.AddRange(
+            new Artigo
+            {
+                Id = Guid.NewGuid(), Titulo = "Como capturar publicações pela OAB", Slug = "capturar-publicacoes-oab",
+                Resumo = "Cadastre a OAB e receba as intimações dos diários oficiais.", Categoria = "publicacoes",
+                Conteudo = "## Cadastrar a OAB\nAbra OABs Monitoradas e clique em Nova OAB.\n\n![Tela de OABs](/guias/img/oabs.png)",
+                LinkUrl = "/pages/oabs.html", LinkTexto = "Abrir OABs", Publicado = true, PublicadoEm = DateTime.UtcNow.AddDays(-5), CriadoEm = DateTime.UtcNow
+            },
+            new Artigo
+            {
+                Id = Guid.NewGuid(), Titulo = "Portal do cliente", Slug = "portal-do-cliente", Resumo = "Seu cliente acompanha o processo sozinho.",
+                Conteudo = "Libere o acesso no detalhe do contato. As publicações não aparecem para o cliente.", Categoria = "portal-do-cliente",
+                Publicado = true, PublicadoEm = DateTime.UtcNow.AddDays(-1), CriadoEm = DateTime.UtcNow
+            },
+            new Artigo
+            {
+                Id = Guid.NewGuid(), Titulo = "Rascunho: publicações", Slug = "rascunho-publicacoes", Resumo = "Publicação", Conteudo = "publicação",
+                Categoria = "publicacoes", Publicado = false, CriadoEm = DateTime.UtcNow
+            });
+        _db.SaveChanges();
+    }
+
+    [Fact]
+    public async Task BuscarAjuda_SemAcentoEPlural_TituloAntesDoConteudoEIgnoraRascunho()
+    {
+        Guias();
+        var r = await Executar("buscar_ajuda", new { texto = "Como faço para aparecer a publicacao?" }, PlanoTipo.Free);
+
+        Assert.Equal(2, r.GetProperty("total").GetInt32());
+        var g = r.GetProperty("guias")[0];
+        Assert.Equal("/guias/capturar-publicacoes-oab", g.GetProperty("link").GetString());
+        Assert.Equal("Publicações", g.GetProperty("categoria").GetString());
+        Assert.Equal("/pages/oabs.html", g.GetProperty("telaNoSistema").GetString());
+        Assert.Equal("Abrir OABs", g.GetProperty("botaoDaTela").GetString());
+        var conteudo = g.GetProperty("conteudo").GetString()!;
+        Assert.Contains("OABs Monitoradas", conteudo);
+        Assert.DoesNotContain("![", conteudo);
+        Assert.Equal("/guias/portal-do-cliente", r.GetProperty("guias")[1].GetProperty("link").GetString());
+    }
+
+    [Fact]
+    public async Task BuscarAjuda_FiltraCategoriaELimite()
+    {
+        Guias();
+        var porCategoria = await Executar("buscar_ajuda", new { texto = "publicações", categoria = "portal-do-cliente" });
+        Assert.Equal("/guias/portal-do-cliente", porCategoria.GetProperty("guias")[0].GetProperty("link").GetString());
+        Assert.Equal(1, porCategoria.GetProperty("total").GetInt32());
+
+        var limitado = await Executar("buscar_ajuda", new { texto = "publicações", limite = 1 });
+        Assert.Equal(1, limitado.GetProperty("total").GetInt32());
+    }
+
+    [Fact]
+    public async Task BuscarAjuda_SemGuia_OrientaNaoInventar()
+    {
+        Guias();
+        var r = await Executar("buscar_ajuda", new { texto = "criptomoeda" });
+        Assert.Equal(0, r.GetProperty("total").GetInt32());
+        Assert.Contains("sem inventar", r.GetProperty("orientacao").GetString());
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("""{"texto":"como para que"}""")]
+    public async Task BuscarAjuda_SemPalavrasChave_Erro(string args)
+    {
+        var (json, erro) = await Ferramentas().ExecutarAsync("buscar_ajuda", JsonDocument.Parse(args).RootElement, default);
+        Assert.True(erro, json);
+    }
+
+    [Fact]
+    public void Ajuda_RadicalJuntaFlexoes()
+    {
+        Assert.Equal(["public", "oab", "aparec"], AssistenteFerramentas.Termos("Publicações da OAB não aparecem"));
+        Assert.Equal(AssistenteFerramentas.Radical("prazo"), AssistenteFerramentas.Radical("prazos"));
+        Assert.Equal(AssistenteFerramentas.Radical("cadastrar"), AssistenteFerramentas.Radical("cadastro"));
+    }
+
+    [Fact]
+    public void Ajuda_Trechos_ConteudoCurtoInteiro_LongoPegaSecoesRelevantesNaOrdem()
+    {
+        var termos = AssistenteFerramentas.Termos("cadastrar OAB");
+        Assert.Equal("Texto curto.", AssistenteFerramentas.Trechos(termos, "Texto curto.", 100));
+
+        var longo = "## Introdução\n" + new string('a', 300) + "\n## Cadastrar a OAB\nCadastre a OAB aqui.\n"
+                    + "## Outros\n" + new string('b', 300) + "\n## Erros da OAB\nSe a OAB der erro, confira a UF.";
+        var t = AssistenteFerramentas.Trechos(termos, longo, 300);
+
+        Assert.True(t.Length <= 320, t);
+        Assert.Contains("Cadastre a OAB aqui.", t);
+        Assert.Contains("confira a UF", t);
+        Assert.DoesNotContain("bbbb", t);
+        Assert.True(t.IndexOf("Cadastre", StringComparison.Ordinal) < t.IndexOf("confira", StringComparison.Ordinal));
+    }
 }
