@@ -109,10 +109,9 @@ public class ImportarHistoricoOabJob(
         var cnjs = trechos.Where(t => t.NumeroCnj != null).Select(t => t.NumeroCnj!).Distinct().ToList();
         var processos = (await db.Processos
                 .Where(p => p.TenantId == oab.TenantId && cnjs.Contains(p.NumeroCNJ))
-                .Select(p => new { p.Id, p.NumeroCNJ })
                 .ToListAsync(ct))
             .GroupBy(p => p.NumeroCNJ)
-            .ToDictionary(g => g.Key, g => g.First().Id);
+            .ToDictionary(g => g.Key, g => g.First());
 
         // No dia do cadastro o monitoramento pode já ter trazido a mesma publicação, com outra chave.
         var jaCapturadasNoDia = (await db.Publicacoes
@@ -127,13 +126,15 @@ public class ImportarHistoricoOabJob(
         foreach (var t in trechos)
         {
             if (existentes.Contains(t.Uuid)) continue;
+            if (FiltroPublicacaoOab.EhDeOutraOab(t.Snippet, oab.Numero, oab.Uf, oab.Nome)) continue;
             if (t.Data.Date == ate && t.NumeroCnj != null && jaCapturadasNoDia.Contains(t.NumeroCnj)) continue;
 
-            db.Publicacoes.Add(new Publicacao
+            var processo = t.NumeroCnj != null && processos.TryGetValue(t.NumeroCnj, out var p) ? p : null;
+            var publicacao = new Publicacao
             {
                 Id = Guid.NewGuid(),
                 TenantId = oab.TenantId,
-                ProcessoId = t.NumeroCnj != null && processos.TryGetValue(t.NumeroCnj, out var processoId) ? processoId : null,
+                ProcessoId = processo?.Id,
                 NumeroCNJ = t.NumeroCnj,
                 Diario = PublicacaoMapper.Cortar(t.Diario ?? t.DiarioSigla, 100) ?? "Diário Oficial",
                 DataPublicacao = t.Data,
@@ -148,7 +149,14 @@ public class ImportarHistoricoOabJob(
                 Tribunal = PublicacaoMapper.Cortar(t.DiarioSigla, 50),
                 Snippet = PublicacaoMapper.Cortar(t.Snippet, 1000),
                 CapturaEm = agora
-            });
+            };
+            db.Publicacoes.Add(publicacao);
+            // A publicação também vira movimentação do processo (sem aviso: é antiga).
+            if (processo != null)
+            {
+                db.Andamentos.Add(AndamentoDePublicacao.Montar(publicacao, processo.Id, agora));
+                AndamentoDePublicacao.AtualizarUltimoAndamento(processo, publicacao.DataPublicacao);
+            }
             novas++;
         }
 

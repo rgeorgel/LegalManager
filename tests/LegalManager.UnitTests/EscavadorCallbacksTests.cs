@@ -106,6 +106,96 @@ public class EscavadorCallbacksTests
         Assert.DoesNotContain("<", publicacao.Snippet ?? "");
     }
 
+    private static async Task<(AppDbContext ctx, TenantOab oab)> SeedOabAsync(bool ativa = true)
+    {
+        var ctx = CreateContext();
+        var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        var oab = new TenantOab
+        {
+            Id = Guid.NewGuid(), TenantId = tenant.Id, Uf = "SP", Numero = "54731", Nome = "Ana Advogada",
+            Ativo = ativa, EscavadorMonitoramentoId = 900, CriadoEm = DateTime.UtcNow
+        };
+        ctx.Tenants.Add(tenant);
+        ctx.TenantOabs.Add(oab);
+        await ctx.SaveChangesAsync();
+        return (ctx, oab);
+    }
+
+    private static EscavadorCallbackWebhookPayload PayloadOab(string texto, string? cnj = null) => new()
+    {
+        Id = 31, Tipo = "diario", MonitoramentoId = 900,
+        Processo = cnj == null ? null : new EscavadorCallbackProcessoRef { NumeroProcesso = cnj },
+        Conteudo = new EscavadorCallbackConteudoRef { Descricao = texto, Data = new DateTime(2026, 11, 9) }
+    };
+
+    private static Processo NovoProcesso(Guid tenantId, bool monitorado = false) => new()
+    {
+        Id = Guid.NewGuid(), TenantId = tenantId, NumeroCNJ = Cnj, AreaDireito = AreaDireito.Civil,
+        Fase = FaseProcessual.Conhecimento, Status = StatusProcesso.Ativo, Monitorado = monitorado,
+        CriadoEm = DateTime.UtcNow
+    };
+
+    [Fact]
+    public async Task WebhookOab_ProcessoDoEscritorio_VinculaECriaMovimentacao()
+    {
+        var (ctx, oab) = await SeedOabAsync();
+        var processo = NovoProcesso(oab.TenantId);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+        var escavador = new Mock<IEscavadorService>();
+
+        await Processor(ctx, escavador.Object).ProcessarAsync(PayloadOab("Intimem-se as partes do despacho.", Cnj));
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(processo.Id, pub.ProcessoId);
+        var andamento = await ctx.Andamentos.SingleAsync();
+        Assert.Equal(processo.Id, andamento.ProcessoId);
+        Assert.Equal(new DateTime(2026, 11, 9), andamento.Data);
+        Assert.Equal(new DateTime(2026, 11, 9), (await ctx.Processos.SingleAsync()).UltimoAndamentoEm);
+        // Veio pela OAB: não liga monitoramento pago do processo.
+        escavador.Verify(e => e.CriarMonitoramentoAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task WebhookOab_MesmoCnjEmOutroEscritorio_FicaComODonoDaOab()
+    {
+        var (ctx, oab) = await SeedOabAsync();
+        var outroTenant = new Tenant { Id = Guid.NewGuid(), Nome = "Parte contrária", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        ctx.Tenants.Add(outroTenant);
+        ctx.Processos.Add(NovoProcesso(outroTenant.Id, monitorado: true));
+        await ctx.SaveChangesAsync();
+
+        await Processor(ctx).ProcessarAsync(PayloadOab("Intimem-se as partes.", Cnj));
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(oab.TenantId, pub.TenantId);
+        Assert.Null(pub.ProcessoId);
+        Assert.Empty(ctx.Andamentos);
+    }
+
+    [Theory]
+    [InlineData("ADVOGADO(A): LUCIANO HUTTEN CORREA (OAB RS054731) DESPACHO", 0)]
+    [InlineData("ADVOGADA: ANA ADVOGADA (OAB SP054731) DESPACHO", 1)]
+    [InlineData("Intimem-se as partes.", 1)]
+    public async Task WebhookOab_DescartaPublicacaoDoMesmoNumeroEmOutraUf(string texto, int publicacoes)
+    {
+        var (ctx, _) = await SeedOabAsync();
+
+        await Processor(ctx).ProcessarAsync(PayloadOab(texto));
+
+        Assert.Equal(publicacoes, await ctx.Publicacoes.CountAsync());
+    }
+
+    [Fact]
+    public async Task WebhookOab_OabInativa_Ignora()
+    {
+        var (ctx, _) = await SeedOabAsync(ativa: false);
+
+        await Processor(ctx).ProcessarAsync(PayloadOab("Intimem-se as partes."));
+
+        Assert.Equal(0, await ctx.Publicacoes.CountAsync());
+    }
+
     [Fact]
     public async Task WebhookV2_RepetidoOuJaImportadoPeloPolling_NaoDuplica()
     {

@@ -336,20 +336,30 @@ public class EscavadorHttpClient : IEscavadorService
     }
 
     /// <summary>
-    /// As mesmas formas da OAB que o monitoramento procura (máx. 3 aceitas por ele), para a busca
-    /// retroativa achar o que o monitoramento acharia.
+    /// Termo principal do monitoramento: número + UF. O número sozinho casava OAB de qualquer estado
+    /// (e números de processo, CEP...), trazendo publicações de outros advogados.
+    /// </summary>
+    internal static string TermoMonitoramentoOab(string numero, string uf) =>
+        $"{numero}/{(uf ?? "").ToUpperInvariant()}";
+
+    /// <summary>
+    /// Outras formas da OAB nos diários (máx. 3 aceitas pelo monitoramento). "SP123456" é a do PJe;
+    /// alguns tribunais completam o número com zeros ("RS054731").
     /// </summary>
     internal static string[] VariacoesOab(string numero, string uf)
     {
         var ufUpper = (uf ?? "").ToUpperInvariant();
-        return [$"{numero}/{ufUpper}", $"OAB/{ufUpper} {numero}", $"OAB {numero}/{ufUpper}"];
+        var comZeros = numero.PadLeft(6, '0');
+        var terceira = comZeros != numero ? $"{ufUpper}{comZeros}" : $"OAB {numero}/{ufUpper}";
+        return [$"OAB/{ufUpper} {numero}", $"{ufUpper}{numero}", terceira];
     }
 
     /// <summary>("123/SP" OR "OAB/SP 123" OR ...) AND "Nome" — o nome faz o papel do termo auxiliar do monitoramento.</summary>
     internal static string TermoBuscaOab(string numero, string uf, string? nomeAdvogado)
     {
         static string Aspas(string t) => "\"" + t.Replace("\"", "") + "\"";
-        var oab = "(" + string.Join(" OR ", VariacoesOab(numero, uf).Select(Aspas)) + ")";
+        var formas = VariacoesOab(numero, uf).Prepend(TermoMonitoramentoOab(numero, uf));
+        var oab = "(" + string.Join(" OR ", formas.Select(Aspas)) + ")";
         return string.IsNullOrWhiteSpace(nomeAdvogado) ? oab : $"{oab} AND {Aspas(nomeAdvogado.Trim())}";
     }
 
@@ -494,7 +504,7 @@ public class EscavadorHttpClient : IEscavadorService
             {
                 tipo = "termo",
                 monitorar_em_todos_diarios = true,
-                termo = numero,
+                termo = TermoMonitoramentoOab(numero, ufUpper),
                 variacoes,
                 termos_auxiliares = termosAuxiliares.ToArray()
             };
@@ -512,7 +522,7 @@ public class EscavadorHttpClient : IEscavadorService
                 if ((int)resp.StatusCode == 422 && respJson.Contains("monitora este termo", StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogInformation("[Escavador] Monitoramento OAB {Uf}/{Numero} já existe remotamente, buscando ID...", ufUpper, numero);
-                    return await BuscarMonitoramentoExistentePorTermoAsync(numero, ct);
+                    return await BuscarMonitoramentoExistentePorTermoAsync(TermoMonitoramentoOab(numero, ufUpper), ct);
                 }
                 _logger.LogWarning("[Escavador] Falha ao criar monitoramento OAB {Uf}/{Numero}: {S} — {Body}",
                     ufUpper, numero, resp.StatusCode, respJson);

@@ -433,6 +433,8 @@ using (var scope = app.Services.CreateScope())
 
     var limpas = await LimpezaHtmlPublicacoes.ExecutarAsync(db);
     if (limpas > 0) app.Logger.LogInformation("HTML removido de {Total} publicação(ões)/andamento(s)", limpas);
+    var movimentacoes = await AndamentoDePublicacao.CriarFaltantesAsync(db);
+    if (movimentacoes > 0) app.Logger.LogInformation("{Total} movimentação(ões) criada(s) a partir de publicações", movimentacoes);
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     foreach (var role in new[] { "Admin", "Advogado", "Colaborador", "Cliente", "SuperAdmin" })

@@ -24,6 +24,7 @@ public class EscavadorHttpClientTests
         private readonly string _responseBody;
 
         public Uri? LastRequestUri { get; private set; }
+        public string? LastRequestBody { get; private set; }
 
         public FakeHandler(string responseBody, HttpStatusCode statusCode = HttpStatusCode.OK)
         {
@@ -34,6 +35,7 @@ public class EscavadorHttpClientTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             LastRequestUri = request.RequestUri;
+            LastRequestBody = request.Content?.ReadAsStringAsync(ct).GetAwaiter().GetResult();
             return Task.FromResult(new HttpResponseMessage(_statusCode)
             {
                 Content = new StringContent(_responseBody, Encoding.UTF8, "application/json")
@@ -151,6 +153,27 @@ public class EscavadorHttpClientTests
     """;
 
     [Fact]
+    public async Task CriarMonitoramentoOab_TermoLevaAUf()
+    {
+        // O número sozinho como termo casava a mesma OAB de qualquer estado.
+        var (client, handler) = CreateClient("""{"monitoramento":{"id":77,"status":"ATIVO"}}""");
+
+        var mon = await client.CriarMonitoramentoOabAsync("sp", "54731", "Ana Advogada");
+
+        Assert.Equal(77, mon!.Id);
+        using var body = System.Text.Json.JsonDocument.Parse(handler.LastRequestBody!);
+        Assert.Equal("54731/SP", body.RootElement.GetProperty("termo").GetString());
+        Assert.Equal(["OAB/SP 54731", "SP54731", "SP054731"],
+            body.RootElement.GetProperty("variacoes").EnumerateArray().Select(v => v.GetString()));
+    }
+
+    [Theory]
+    [InlineData("357386", "SP", new[] { "OAB/SP 357386", "SP357386", "OAB 357386/SP" })]
+    [InlineData("54731", "rs", new[] { "OAB/RS 54731", "RS54731", "RS054731" })]
+    public void VariacoesOab_IncluiFormaDoPje(string numero, string uf, string[] esperado) =>
+        Assert.Equal(esperado, EscavadorHttpClient.VariacoesOab(numero, uf));
+
+    [Fact]
     public async Task BuscarPublicacoesPorOab_MontaBuscaEmDiariosEFiltraOPeriodo()
     {
         var (client, handler) = CreateClient(BuscaJson);
@@ -163,7 +186,7 @@ public class EscavadorHttpClientTests
         Assert.Contains("qo=d", query);
         Assert.Contains("qs=d", query);
         Assert.Contains("utilizar_operadores_logicos=1", query);
-        Assert.Contains("q=(\"123456/SP\" OR \"OAB/SP 123456\" OR \"OAB 123456/SP\") AND \"Ana Advogada\"", query);
+        Assert.Contains("q=(\"123456/SP\" OR \"OAB/SP 123456\" OR \"SP123456\" OR \"OAB 123456/SP\") AND \"Ana Advogada\"", query);
 
         // 30/09 fica fora do período; o item "Pessoa" não é trecho de diário.
         Assert.Equal(["busca-501", "busca-502"], r.Data.Select(x => x.Uuid));

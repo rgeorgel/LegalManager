@@ -95,6 +95,25 @@ Operacional (não implementado, recomendado):
 
 ---
 
+### Termo do monitoramento por OAB
+
+O termo é `"{numero}/{UF}"` (ex.: `"357386/SP"`), com as variações `"OAB/SP 357386"`, `"SP357386"`
+(forma do PJe) e, quando o número tem menos de 6 dígitos, a forma com zeros à esquerda (`"RS054731"`).
+Até nov/2026 o termo era o número sozinho, que casava a mesma OAB de outros estados (ex.: `54731`
+trazia `RS054731` e `PE54731`). Monitoramentos criados antes continuam com o termo antigo até a OAB
+ser editada ou ressincronizada; enquanto isso, `FiltroPublicacaoOab` descarta no webhook (e na busca
+de 30 dias) a publicação que mostra o número ao lado de outra UF e não traz a UF certa nem o nome do
+advogado. OAB inativa não recebe publicação.
+
+### Publicação da OAB vira movimentação do processo
+
+Publicação que chega pela OAB (webhook ou busca de 30 dias) com CNJ de um processo **do mesmo
+escritório** é vinculada a ele e gera um `Andamento` (`AndamentoDePublicacao`: data da publicação,
+texto como descrição, tipo mapeado) e atualiza `UltimoAndamentoEm` — é o que aparece em "Últimas
+movimentações". O processo é procurado só no escritório dono da OAB (o mesmo CNJ em outro escritório,
+p.ex. a parte contrária, não recebe), e a publicação da OAB não cancela/reativa o monitoramento pago
+do processo. As gravadas antes disso são completadas ao subir a API (`CriarFaltantesAsync`, idempotente).
+
 ### Histórico de 30 dias por OAB (implementado)
 
 O monitoramento por termo só traz publicações novas. Para cobrir o período anterior,

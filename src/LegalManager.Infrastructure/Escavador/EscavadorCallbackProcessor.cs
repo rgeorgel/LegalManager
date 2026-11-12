@@ -52,27 +52,39 @@ public class EscavadorCallbackProcessor
         if (string.IsNullOrWhiteSpace(uuid) || conteudo == null)
             return; // sem chave não dá pra dedupar; ack silencioso
 
-        // 2. Encontrar processo (CNJ) E/OU TenantOab (MonitoramentoId)
-        var processo = !string.IsNullOrWhiteSpace(numeroCNJ)
-            ? await EncontrarProcessoAsync(monitoramentoId, numeroCNJ)
-            : null;
+        // 2. Encontrar TenantOab (MonitoramentoId) e/ou processo (CNJ). No fluxo OAB o processo é
+        // só o do escritório dono da OAB — o mesmo CNJ pode estar cadastrado em outro escritório
+        // (a parte contrária), que não deve receber a publicação desta OAB.
         var oab = monitoramentoId.HasValue
             ? await EncontrarTenantOabAsync(monitoramentoId.Value)
             : null;
+        var processo = string.IsNullOrWhiteSpace(numeroCNJ) ? null
+            : oab != null ? await _context.Processos.FirstOrDefaultAsync(p => p.TenantId == oab.TenantId && p.NumeroCNJ == numeroCNJ)
+            : await EncontrarProcessoAsync(monitoramentoId, numeroCNJ);
+        var viaOab = oab != null;
 
         // Se nem processo nem OAB, ignora (ack silencioso)
         if (processo == null && oab == null) return;
 
         // 3. Plan-gate: movimentação de processo monitorado entra em qualquer plano (o limite de
         // monitorados por plano já controla o custo); o resto (fluxo OAB) é recurso Pro.
-        var tenantId = processo?.TenantId ?? oab!.TenantId;
+        var tenantId = oab?.TenantId ?? processo!.TenantId;
         var plano = await GetTenantPlanoAsync(tenantId);
         var planoCaptura = PlanoRestricoes.PermiteCapturacaoPublicacoes(plano);
-        if (processo is not { Monitorado: true } && !planoCaptura)
+        if ((viaOab || processo is not { Monitorado: true }) && !planoCaptura)
             return;
 
-        // 4. Estratégias 4 e 5 (cancelar/upgrade/reativar monitoramento) — só se há Processo
-        if (processo != null)
+        // Fluxo OAB: o monitoramento antigo (número sem UF) trazia o mesmo número de outro estado.
+        if (processo == null && oab != null)
+        {
+            var texto = TextoHtml.ParaTexto(conteudo.Snippet) + " " + TextoHtml.ParaTexto(conteudo.ConteudoHtml);
+            if (FiltroPublicacaoOab.EhDeOutraOab(texto, oab.Numero, oab.Uf, oab.Nome))
+                return;
+        }
+
+        // 4. Estratégias 4 e 5 (cancelar/upgrade/reativar monitoramento) — só para o callback do
+        // monitoramento do próprio processo; a publicação que veio pela OAB não mexe nele (custo).
+        if (processo != null && !viaOab)
         {
             if (payload.Tipo == "processo_arquivado")
             {
@@ -102,15 +114,14 @@ public class EscavadorCallbackProcessor
                 return;
         }
 
-        // 6. Criar Publicacao
+        // 6. Criar Publicacao (vinculada ao processo do escritório quando há; senão, só à OAB)
         var agora = DateTime.UtcNow;
         var publicacao = processo != null
             ? _mapper.Montar(processo, conteudo, agora)
-            // Fluxo OAB: criar Publicacao sem Processo vinculado
             : MontarPublicacaoOab(oab!, numeroCNJ, conteudo, agora);
         _context.Publicacoes.Add(publicacao);
 
-        // 7. Criar Andamento (compat UI legado) — só se há Processo
+        // 7. Criar Andamento — a publicação vira movimentação do processo (inclusive a que veio pela OAB)
         var dataAndamento = conteudo.Data ?? agora;
         Andamento? andamento = null;
         if (processo != null)
@@ -128,9 +139,8 @@ public class EscavadorCallbackProcessor
             };
             _context.Andamentos.Add(andamento);
 
-            processo.UltimoMonitoramento = agora;
-            if (dataAndamento > (processo.UltimoAndamentoEm ?? DateTime.MinValue))
-                processo.UltimoAndamentoEm = dataAndamento;
+            if (!viaOab) processo.UltimoMonitoramento = agora;
+            AndamentoDePublicacao.AtualizarUltimoAndamento(processo, dataAndamento);
         }
 
         // 8. Notificação: andamento de processo vai ao responsável pelo mesmo aviso do DataJud (link
@@ -311,7 +321,7 @@ public class EscavadorCallbackProcessor
     private async Task<TenantOab?> EncontrarTenantOabAsync(long monitoramentoId)
     {
         return await _context.TenantOabs
-            .FirstOrDefaultAsync(o => o.EscavadorMonitoramentoId == monitoramentoId);
+            .FirstOrDefaultAsync(o => o.Ativo && o.EscavadorMonitoramentoId == monitoramentoId);
     }
 
     private static TipoAndamento MapearTipo(string? tipo, string? conteudo)

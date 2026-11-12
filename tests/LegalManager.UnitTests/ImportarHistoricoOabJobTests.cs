@@ -97,6 +97,15 @@ public class ImportarHistoricoOabJobTests
         Assert.Null(pubs[1].ProcessoId);
         Assert.Empty(_db.Notificacoes);
 
+        // A publicação do processo do escritório também vira movimentação dele.
+        var andamento = await _db.Andamentos.SingleAsync();
+        Assert.Equal(processoId, andamento.ProcessoId);
+        Assert.Equal(new DateTime(2026, 11, 10), andamento.Data);
+        Assert.Equal(pubs[0].Conteudo, andamento.Descricao);
+        Assert.Equal(TipoAndamento.Intimacao, andamento.Tipo);
+        Assert.Equal(FonteAndamento.Automatico, andamento.Fonte);
+        Assert.Equal(new DateTime(2026, 11, 10), (await _db.Processos.SingleAsync()).UltimoAndamentoEm);
+
         Assert.NotNull((await _db.TenantOabs.SingleAsync(o => o.Id == oab.Id)).HistoricoImportadoEm);
     }
 
