@@ -962,6 +962,22 @@ function atualizarTipoPrazo() {
 }
 document.getElementById('eTipo').addEventListener('change', atualizarTipoPrazo);
 
+// Mudar o início leva o fim junto (mantém a duração), como no Google Agenda — senão trocar só
+// a data do início deixa o fim no dia antigo e o salvamento recusa.
+{
+  const eIni = document.getElementById('eDataHora');
+  const eFim = document.getElementById('eDataHoraFim');
+  let iniAnterior = null;
+  eIni.addEventListener('focus', () => { iniAnterior = dataParede(eIni.value); });
+  eIni.addEventListener('change', () => {
+    const ini = dataParede(eIni.value);
+    const fim = dataParede(eFim.value);
+    if (ini && fim && iniAnterior) eFim.value = isoLocal(new Date(fim.getTime() + (ini - iniAnterior))).slice(0, 16);
+    else if (ini && fim && fim < ini) eFim.value = isoLocal(addMin(ini, 60)).slice(0, 16);
+    iniAnterior = ini;
+  });
+}
+
 const modalAberto = () => document.getElementById('modalEvento').style.display !== 'none';
 function closeModal() {
   document.getElementById('modalEvento').style.display = 'none';
@@ -997,10 +1013,12 @@ document.getElementById('formEvento').addEventListener('submit', async e => {
     responsavelId: document.getElementById('eResponsavel').value || null,
     processoId: editingId ? editingProcessoId : null,
   };
-  if (dto.dataHoraFim && dto.dataHoraFim < dto.dataHora) { showErr(errEl, 'O fim precisa ser depois do início.'); return; }
+  const prazo = !editingId && dto.tipo === 'Prazo';
+  // Prazo esconde fim e local; o valor que ficou no campo oculto não pode barrar o salvamento.
+  if (!prazo && dto.dataHoraFim && dto.dataHoraFim < dto.dataHora) { showErr(errEl, 'O fim precisa ser depois do início.'); return; }
 
   try {
-    if (!editingId && dto.tipo === 'Prazo') {
+    if (prazo) {
       await apiFetch('/tarefas', { method: 'POST', body: JSON.stringify({
         titulo, tipo: 'Prazo', prioridade: 'Media', prazo: dataHora,
         descricao: dto.observacoes, responsavelId: dto.responsavelId,
