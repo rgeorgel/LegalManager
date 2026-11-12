@@ -25,32 +25,33 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
             .Where(h => h.TenantId == tenantContext.TenantId && h.UsuarioId == tenantContext.UserId)
             .OrderByDescending(h => h.CriadoEm)
             .Take(15)
-            .Select(h => new
-            {
-                h.Id,
-                ts = LegalManager.Infrastructure.BrasiliaTime.DeUtc(h.CriadoEm).ToString("dd/MM/yyyy HH:mm", LegalManager.Infrastructure.BrasiliaTime.PtBr),
-                h.Cliente,
-                h.Mode,
-                h.Area,
-                h.Tipo,
-                h.ItemOAB,
-                h.ValorCausa,
-                h.HonorarioBase,
-                h.HonorarioAjustado,
-                h.TotalCorrigido,
-                h.Multiplicador,
-                h.TaxaCorrecao,
-                h.FormaPagamento,
-                h.Complexidade,
-                h.Risco,
-                h.Urgencia,
-                h.Capacidade,
-                h.Exito,
-                h.StateJson
-            })
             .ToListAsync(ct);
 
-        return Ok(items);
+        // A data é formatada em memória: ToString(..., CultureInfo) dentro da consulta faz o EF
+        // recusar a projeção no Postgres (500), e a lista do histórico voltava vazia.
+        return Ok(items.Select(h => new
+        {
+            h.Id,
+            ts = LegalManager.Infrastructure.BrasiliaTime.DeUtc(h.CriadoEm).ToString("dd/MM/yyyy HH:mm", LegalManager.Infrastructure.BrasiliaTime.PtBr),
+            h.Cliente,
+            h.Mode,
+            h.Area,
+            h.Tipo,
+            h.ItemOAB,
+            h.ValorCausa,
+            h.HonorarioBase,
+            h.HonorarioAjustado,
+            h.TotalCorrigido,
+            h.Multiplicador,
+            h.TaxaCorrecao,
+            h.FormaPagamento,
+            h.Complexidade,
+            h.Risco,
+            h.Urgencia,
+            h.Capacidade,
+            h.Exito,
+            h.StateJson
+        }));
     }
 
     [HttpPost("historico")]
