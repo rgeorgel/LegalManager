@@ -173,6 +173,7 @@
 
     const tenantId = new URLSearchParams(location.search).get('id');
     let tenant = null;
+    const resultadosHistorico = {}; // id da OAB → texto do último "Buscar agora" (sobrevive ao redesenho)
 
     initTenantAcoes({
       onAlterado: () => { carregarTenant(); recarregarTimeline(); },
@@ -361,6 +362,11 @@
             ${o.syncError ? `<span class="badge badge-red" title="${esc(o.syncError)}" style="cursor:help">⚠ erro</span>` : ''}
           </div>
           <div class="lateral-info">${esc(o.nome)}</div>
+          <div class="lateral-info">Histórico 30 dias: ${o.historicoImportadoEm ? `buscado em ${fmtDateTime(o.historicoImportadoEm)}` : 'pendente'}
+            <button type="button" class="btn btn-sm" data-historico-oab="${esc(o.id)}" style="margin-left:6px;padding:1px 8px;font-size:11px"
+              title="Busca agora no Escavador as publicações dos 30 dias anteriores ao cadastro (consulta paga; repetir não duplica)">Buscar agora</button>
+          </div>
+          <div class="lateral-info" data-historico-resultado="${esc(o.id)}">${esc(resultadosHistorico[o.id] ?? '')}</div>
         </div>`).join('')}</div>` : '';
       const importadasHtml = importadas.length ? `<div class="lateral-lista">${importadas.map(o => `
         <div class="lateral-item">
@@ -374,6 +380,27 @@
         ${oabs.length ? `<div class="lateral-sub" style="margin-top:0">Monitoradas</div>${monitoradasHtml}` : ''}
         ${importadas.length ? `<div class="lateral-sub"${oabs.length ? '' : ' style="margin-top:0"'}>Usadas na importação</div>${importadasHtml}` : ''}`;
     }
+
+    document.getElementById('lateralOabs').addEventListener('click', async e => {
+      const botao = e.target.closest('[data-historico-oab]');
+      if (!botao) return;
+      const id = botao.dataset.historicoOab;
+      if (!confirm('Buscar no Escavador as publicações dos 30 dias anteriores ao cadastro desta OAB? A consulta é paga.')) return;
+      const alvo = document.querySelector(`[data-historico-resultado="${id}"]`);
+      botao.disabled = true;
+      alvo.textContent = 'Buscando…';
+      try {
+        const r = await saFetch(`/superadmin/oabs/${id}/importar-historico`, { method: 'POST' });
+        const dia = iso => iso.slice(0, 10).split('-').reverse().join('/');
+        resultadosHistorico[id] = `${dia(r.de)} a ${dia(r.ate)}: ${r.paginas} página(s), ${r.encontradas} encontrada(s), ${r.novas} nova(s).`;
+        alvo.textContent = resultadosHistorico[id];
+        carregarTenant();
+      } catch (err) {
+        alvo.textContent = `Erro: ${err.message ?? err}`;
+        alvo.style.color = '#b91c1c';
+        botao.disabled = false;
+      }
+    });
 
     // ── Timeline ──
     const CATEGORIAS = {

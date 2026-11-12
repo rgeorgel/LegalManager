@@ -448,7 +448,7 @@ public class SuperAdminController(
             .Select(o => new TenantOabResumoDto(
                 o.Id, o.Uf, o.Numero, o.Nome, o.Ativo,
                 o.EscavadorMonitoramentoId != null,
-                o.SyncError, o.UltimoSyncEm))
+                o.SyncError, o.UltimoSyncEm, o.HistoricoImportadoEm))
             .ToListAsync(ct);
 
         var oabsImportadas = await db.Users
@@ -575,6 +575,36 @@ public class SuperAdminController(
             null, new { Acao = "ReprocessarSituacaoNaFonte", execucaoId, jobId },
             HttpContext.GetClientIpAddress()), ct);
         return Accepted(new { execucaoId, jobId });
+    }
+
+    /// <summary>
+    /// Busca na hora as publicações dos 30 dias anteriores ao cadastro da OAB (o mesmo do
+    /// ImportarHistoricoOabJob, sem Hangfire). Consulta paga ao Escavador; repetir não duplica.
+    /// </summary>
+    [HttpPost("oabs/{id:guid}/importar-historico")]
+    public async Task<IActionResult> ImportarHistoricoOab(
+        Guid id, [FromServices] ImportarHistoricoOabJob job, CancellationToken ct)
+    {
+        if (SuperAdminId() is not { } superAdminId) return Forbid();
+        var tenantId = await db.TenantOabs.Where(o => o.Id == id).Select(o => (Guid?)o.TenantId).FirstOrDefaultAsync(ct);
+        if (tenantId == null) return NotFound();
+
+        ResultadoHistoricoOab? resultado;
+        try
+        {
+            resultado = await job.ImportarOabAsync(id, ct);
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { message = $"Falha no Escavador: {ex.Message}" });
+        }
+        if (resultado == null) return NotFound();
+
+        await audit.LogAsync(new AuditLogEntry(
+            tenantId.Value, superAdminId, AuditActions.Update, "TenantOab", id.ToString(),
+            null, new { Acao = "ImportarHistoricoOab", resultado.Paginas, resultado.Encontradas, resultado.Novas },
+            HttpContext.GetClientIpAddress()), ct);
+        return Ok(resultado);
     }
 
     [HttpPut("tenants/{id:guid}/plano")]

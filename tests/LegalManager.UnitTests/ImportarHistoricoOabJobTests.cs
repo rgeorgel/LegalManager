@@ -1,9 +1,13 @@
+using System.Security.Claims;
+using LegalManager.API.Controllers;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
 using LegalManager.Infrastructure.Jobs;
 using LegalManager.Infrastructure.Persistence;
 using LegalManager.UnitTests.TestHelpers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -176,5 +180,74 @@ public class ImportarHistoricoOabJobTests
         await Job().ExecutarAsync(CancellationToken.None);
 
         Assert.Equal(ImportarHistoricoOabJob.MaxPaginas, await _db.Publicacoes.CountAsync());
+    }
+
+    // ── Execução manual (superadmin) ──────────────────────────────────────────────────────
+
+    private SuperAdminController Controller(Mock<IAuditService> audit)
+    {
+        var controller = new SuperAdminController(_db, audit.Object, null!, Mock.Of<ITenantExportService>(),
+            Mock.Of<ITenantImportService>(), Mock.Of<ITenantDeletionService>());
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())], "test"))
+            }
+        };
+        return controller;
+    }
+
+    [Fact]
+    public async Task ImportarOab_RodaMesmoJaImportadaESemDuplicar()
+    {
+        var oab = await SeedAsync(PlanoTipo.Plus);
+        Paginas(Pagina(false, Trecho(1, new DateTime(2026, 11, 10)), Trecho(2, new DateTime(2026, 11, 1))));
+
+        var r1 = await Job().ImportarOabAsync(oab.Id, CancellationToken.None);
+        var r2 = await Job().ImportarOabAsync(oab.Id, CancellationToken.None);
+
+        Assert.Equal(new ResultadoHistoricoOab(new DateTime(2026, 10, 13), new DateTime(2026, 11, 12), 1, 2, 2), r1);
+        Assert.Equal(0, r2!.Novas);
+        Assert.Equal(2, await _db.Publicacoes.CountAsync());
+        Assert.Null(await Job().ImportarOabAsync(Guid.NewGuid(), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Endpoint_ImportaEAudita()
+    {
+        var oab = await SeedAsync();
+        Paginas(Pagina(false, Trecho(1, new DateTime(2026, 11, 10))));
+        var audit = new Mock<IAuditService>();
+
+        var resposta = await Controller(audit).ImportarHistoricoOab(oab.Id, Job(), CancellationToken.None);
+
+        var r = Assert.IsType<ResultadoHistoricoOab>(Assert.IsType<OkObjectResult>(resposta).Value);
+        Assert.Equal(1, r.Novas);
+        audit.Verify(a => a.LogAsync(It.Is<AuditLogEntry>(e => e.TenantId == _tenantId && e.EntidadeId == oab.Id.ToString()),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Endpoint_OabInexistente_NotFound()
+    {
+        await SeedAsync();
+        var resposta = await Controller(new Mock<IAuditService>()).ImportarHistoricoOab(Guid.NewGuid(), Job(), CancellationToken.None);
+        Assert.IsType<NotFoundResult>(resposta);
+    }
+
+    [Fact]
+    public async Task Endpoint_FalhaNoEscavador_502ComMensagem()
+    {
+        var oab = await SeedAsync();
+        _escavador.Setup(e => e.BuscarPublicacoesPorOabAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(),
+                It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Escavador respondeu 402"));
+
+        var resposta = await Controller(new Mock<IAuditService>()).ImportarHistoricoOab(oab.Id, Job(), CancellationToken.None);
+
+        var erro = Assert.IsType<ObjectResult>(resposta);
+        Assert.Equal(StatusCodes.Status502BadGateway, erro.StatusCode);
+        Assert.Null((await _db.TenantOabs.SingleAsync()).HistoricoImportadoEm);
     }
 }

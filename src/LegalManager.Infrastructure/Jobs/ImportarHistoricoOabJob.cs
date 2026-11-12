@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Jobs;
 
+/// <summary>Resultado da busca retroativa de uma OAB (período consultado, páginas pagas e o que entrou).</summary>
+public record ResultadoHistoricoOab(DateTime De, DateTime Ate, int Paginas, int Encontradas, int Novas);
+
 /// <summary>
 /// Busca retroativa de publicações por OAB: o monitoramento do Escavador só traz o que sai depois do
 /// cadastro, então cada OAB ativa de um escritório Pro+ ganha, uma única vez, as publicações dos
@@ -50,9 +53,7 @@ public class ImportarHistoricoOabJob(
         {
             try
             {
-                var novas = await ImportarAsync(oab, ct);
-                logger.LogInformation("[HistoricoOab] OAB {Uf}/{Numero} (tenant {TenantId}): {N} publicação(ões) importada(s)",
-                    oab.Uf, oab.Numero, oab.TenantId, novas);
+                await ImportarAsync(oab, ct);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -63,14 +64,27 @@ public class ImportarHistoricoOabJob(
         }
     }
 
-    private async Task<int> ImportarAsync(TenantOab oab, CancellationToken ct)
+    /// <summary>
+    /// Roda a busca de uma OAB na hora (superadmin — o servidor de teste não tem Hangfire, e serve
+    /// de suporte quando o histórico não veio). Ignora plano e "já importada": repetir não duplica
+    /// (as chaves já gravadas são puladas), mas paga a consulta de novo. Erro do Escavador propaga.
+    /// </summary>
+    public async Task<ResultadoHistoricoOab?> ImportarOabAsync(Guid oabId, CancellationToken ct)
+    {
+        var oab = await db.TenantOabs.FirstOrDefaultAsync(o => o.Id == oabId, ct);
+        return oab == null ? null : await ImportarAsync(oab, ct);
+    }
+
+    private async Task<ResultadoHistoricoOab> ImportarAsync(TenantOab oab, CancellationToken ct)
     {
         var ate = oab.CriadoEm.Date;
         var de = ate.AddDays(-DiasRetroativos);
 
         var trechos = new List<EscavadorPublicacaoDto>();
+        var paginas = 0;
         for (var pagina = 1; pagina <= MaxPaginas; pagina++)
         {
+            paginas = pagina;
             var p = pagina;
             var resultado = await consultaLog.RegistrarAsync(
                 "Escavador", "BuscaPublicacoesPorOab", "OABs Monitoradas — Histórico de 30 dias",
@@ -140,6 +154,8 @@ public class ImportarHistoricoOabJob(
 
         oab.HistoricoImportadoEm = agora;
         await db.SaveChangesAsync(ct);
-        return novas;
+        logger.LogInformation("[HistoricoOab] OAB {Uf}/{Numero} (tenant {TenantId}): {Paginas} página(s), {Encontradas} trecho(s), {Novas} nova(s)",
+            oab.Uf, oab.Numero, oab.TenantId, paginas, trechos.Count, novas);
+        return new ResultadoHistoricoOab(de, ate, paginas, trechos.Count, novas);
     }
 }

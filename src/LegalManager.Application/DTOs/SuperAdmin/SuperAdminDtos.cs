@@ -101,7 +101,8 @@ public record TenantOabResumoDto(
     bool Ativo,
     bool Sincronizada,
     string? SyncError,
-    DateTime? UltimoSyncEm
+    DateTime? UltimoSyncEm,
+    DateTime? HistoricoImportadoEm = null
 );
 
 public record TenantUserDto(
