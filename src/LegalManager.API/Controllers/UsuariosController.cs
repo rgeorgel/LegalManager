@@ -88,6 +88,21 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Modo de cor do usuário ("claro" ou "escuro"); null volta a seguir o tema do escritório.</summary>
+    [HttpPut("me/modo-cor")]
+    public async Task<IActionResult> SalvarModoCor([FromBody] ModoCorDto dto, CancellationToken ct)
+    {
+        if (dto.Modo is not (null or "claro" or "escuro"))
+            return BadRequest(new { message = "Modo deve ser \"claro\", \"escuro\" ou nulo." });
+
+        var usuario = await _context.Users.FirstOrDefaultAsync(u => u.Id == _tenantContext.UserId, ct);
+        if (usuario == null) return NotFound();
+
+        usuario.ModoCor = dto.Modo;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
     {
@@ -113,3 +128,5 @@ public class UsuariosController : ControllerBase
 public record AlterarPerfilDto(string Perfil);
 
 public record MenuLayoutDto(string? Layout);
+
+public record ModoCorDto(string? Modo);

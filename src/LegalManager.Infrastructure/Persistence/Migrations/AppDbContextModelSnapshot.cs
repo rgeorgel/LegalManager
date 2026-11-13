@@ -3890,6 +3890,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("MenuLayout")
                         .HasColumnType("text");
 
+                    b.Property<string>("ModoCor")
+                        .HasColumnType("text");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)

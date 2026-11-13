@@ -1,3 +1,5 @@
+import { darkCss, paletaModoEscuro } from './tema-escuro.js';
+
 const THEME_STORAGE_KEY = 'tenant_theme';
 const DEFAULT_LOGO = '/images/causify-logo-navbar-clara.png';
 const DARK_LOGO = '/images/causify-logo-transparente.png';
@@ -57,6 +59,54 @@ function textoSobrePrimaria(primary) {
   return contrasteBranco < 2 ? '#141414' : '#fff';
 }
 
+function contraste(hexA, hexB) {
+  const a = luminancia(hexToRgb(hexA));
+  const b = luminancia(hexToRgb(hexB));
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+// Clareia (fundo escuro) ou escurece (fundo claro) a cor aos poucos, mantendo o matiz, até ela
+// ter contraste de texto (4.5:1) com o fundo — a primária do escritório vira link e botão no
+// modo oposto ao do tema dele.
+function ajustarContraste(hex, fundo, alvo = 4.5) {
+  const destino = luminancia(hexToRgb(fundo)) < 0.5 ? '#ffffff' : '#000000';
+  for (let w = 0; w <= 1; w += 0.05) {
+    const cor = mix(hex, destino, w);
+    if (contraste(cor, fundo) >= alvo) return cor;
+  }
+  return destino;
+}
+
+const FUNDO_ESCURO = '#0f172a';
+const SUPERFICIE_ESCURA = '#1e293b';
+const PRIMARIA_PADRAO = '#1a56db';
+
+// Modo escuro do usuário sobre um tema claro do escritório: mantém logo, layout, destaque e o
+// matiz da primária, mas troca o CSS do tema pela base escura (o mesmo visual do preset Escuro).
+function versaoEscura(theme) {
+  const primaria = ajustarContraste(sanitizeHex(theme.primaryColor) || PRIMARIA_PADRAO, FUNDO_ESCURO);
+  const sidebar = sanitizeHex(theme.sidebarColor);
+  return {
+    ...theme,
+    primaryColor: primaria,
+    sidebarColor: sidebar && luminancia(hexToRgb(sidebar)) < 0.2 ? sidebar : FUNDO_ESCURO,
+    customCss: darkCss(paletaModoEscuro({
+      primaryLight: mix(primaria, SUPERFICIE_ESCURA, 0.8),
+      onPrimary: textoSobrePrimaria(primaria),
+    })),
+  };
+}
+
+// Modo claro do usuário sobre um tema escuro do escritório: volta ao visual claro padrão
+// (sem o CSS do tema), com a primária escurecida o bastante para ler sobre branco.
+function versaoClara(theme) {
+  return {
+    ...theme,
+    primaryColor: ajustarContraste(sanitizeHex(theme.primaryColor) || PRIMARIA_PADRAO, '#ffffff'),
+    customCss: '',
+  };
+}
+
 function shadeForPrimary(primary) {
   return {
     dark: mix(primary, '#000000', 0.18),
@@ -88,9 +138,31 @@ export function sanitizeHex(value) {
   return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim()) ? value.trim() : null;
 }
 
-export function applyTenantTheme(theme) {
-  if (!theme) return;
+/** O tema aplicado agora é escuro (fundo da página com luminância < 50%)? */
+export function temaEscuroAtivo() {
+  return isDarkThemeActive();
+}
+
+/**
+ * Aplica o tema do escritório. `modo` ("claro" | "escuro", do botão do header — ver
+ * js/modo-cor.js) é a preferência do usuário: se o tema do escritório for do outro modo, ele é
+ * convertido (versaoEscura / versaoClara) só nesta tela; o tema salvo no tenant não muda.
+ * Sem `modo` (editor de tema, portal do cliente), aplica o tema como está.
+ */
+export function applyTenantTheme(theme, { modo } = {}) {
+  if (!theme && !modo) return;
+  const base = theme || {};
+  aplicarTema(base);
+  if (!modo) return;
+  const escuro = isDarkThemeActive();
+  if (modo === 'escuro' && !escuro) aplicarTema(versaoEscura(base));
+  else if (modo === 'claro' && escuro) aplicarTema(versaoClara(base));
+}
+
+function aplicarTema(theme) {
   const r = document.documentElement.style;
+  // Reaplicar (o botão de modo troca o tema sem recarregar) não pode herdar cores da vez anterior.
+  VARS_TEMA.forEach(v => r.removeProperty(v));
 
   const primary = sanitizeHex(theme.primaryColor);
   const sidebar = sanitizeHex(theme.sidebarColor);
@@ -153,10 +225,12 @@ export function applyTenantTheme(theme) {
   });
 }
 
+const VARS_TEMA = ['--color-primary', '--color-primary-dark', '--color-primary-light', '--color-on-primary',
+  '--color-sidebar', '--color-nav', '--color-sidebar-text', '--color-sidebar-active', '--color-accent'];
+
 export function resetTenantTheme() {
   const r = document.documentElement.style;
-  ['--color-primary', '--color-primary-dark', '--color-primary-light', '--color-on-primary', '--color-sidebar', '--color-sidebar-text', '--color-sidebar-active', '--color-accent']
-    .forEach(v => r.removeProperty(v));
+  VARS_TEMA.forEach(v => r.removeProperty(v));
   // Restaura a logo padrão apropriada para o tema que ficou aplicado.
   // Depois de limpar customCss o bg volta ao default (claro), então
   // isDarkThemeActive() resolve para false e usamos DEFAULT_LOGO.

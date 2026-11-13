@@ -37,6 +37,10 @@ public class Usuario : IdentityUser<Guid>
     // topo, fixo ao rolar). Null = lateral. Escolhido em Configurações → Aparência.
     public string? MenuLayout { get; set; }
 
+    // Modo de cor escolhido pelo usuário no botão do header: "claro" | "escuro". Null = segue o
+    // tema do escritório. Vale só para este usuário — o tema (cores, CSS) continua do tenant.
+    public string? ModoCor { get; set; }
+
     // Última vez que o usuário abriu o painel de novidades (UTC). Novidades publicadas depois
     // disso contam como não lidas; null = nunca abriu (conta a partir de CriadoEm).
     public DateTime? NovidadesVistasEm { get; set; }

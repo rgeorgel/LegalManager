@@ -87,6 +87,21 @@ export function setSession(data, { lembrar } = {}) {
   });
 }
 
+/**
+ * Atualiza campos do usuário da sessão (ex.: uma preferência recém-salva na API) — na aba atual
+ * e na cópia do "Lembrar de mim", para uma aba nova não voltar com o valor antigo.
+ */
+export function atualizarUsuarioSessao(campos) {
+  try {
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    if (user) sessionStorage.setItem('user', JSON.stringify({ ...user, ...campos }));
+    const lembrada = lerSessaoLembrada();
+    if (lembrada?.usuario && lembrada.usuario.id === user?.id) {
+      localStorage.setItem(SESSAO_LEMBRADA, JSON.stringify({ ...lembrada, usuario: { ...lembrada.usuario, ...campos } }));
+    }
+  } catch { /* storage bloqueado */ }
+}
+
 export function clearSession() {
   sessionStorage.removeItem('access_token');
   sessionStorage.removeItem('refresh_token');

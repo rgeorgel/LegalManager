@@ -47,7 +47,9 @@ public record UsuarioInfoDto(
     // Id do mascote do assistente (ver wwwroot/js/mascotes.js); null = padrão.
     string? AssistenteMascote = null,
     // "lateral" | "superior" | null (padrão = lateral). Lido por wwwroot/js/layout.js.
-    string? MenuLayout = null
+    string? MenuLayout = null,
+    // "claro" | "escuro" | null (segue o tema do escritório). Lido por wwwroot/js/modo-cor.js.
+    string? ModoCor = null
 );
 
 public record RefreshTokenDto([Required] string RefreshToken);

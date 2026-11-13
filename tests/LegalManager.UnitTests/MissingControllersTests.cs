@@ -216,6 +216,51 @@ public class UsuariosControllerTests
 
         Assert.IsType<NotFoundResult>(await controller.SalvarMenuLayout(new MenuLayoutDto("superior"), CancellationToken.None));
     }
+
+    [Theory]
+    [InlineData("claro")]
+    [InlineData("escuro")]
+    [InlineData(null)]
+    public async Task SalvarModoCor_Valido_Persiste(string? modo)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Me", Email = "me@me.com", UserName = "me@me.com", Ativo = true, CriadoEm = DateTime.UtcNow, ModoCor = "claro" });
+        await ctx.SaveChangesAsync();
+
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(tenantId, userId).Object);
+
+        Assert.IsType<NoContentResult>(await controller.SalvarModoCor(new ModoCorDto(modo), CancellationToken.None));
+        Assert.Equal(modo, (await ctx.Users.FindAsync(userId))!.ModoCor);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("Escuro")]
+    [InlineData("dark")]
+    public async Task SalvarModoCor_Invalido_RetornaBadRequest(string modo)
+    {
+        using var ctx = CreateContext();
+        var tenantId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        ctx.Users.Add(new Usuario { Id = userId, TenantId = tenantId, Nome = "Me", Email = "me@me.com", UserName = "me@me.com", Ativo = true, CriadoEm = DateTime.UtcNow });
+        await ctx.SaveChangesAsync();
+
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(tenantId, userId).Object);
+
+        Assert.IsType<BadRequestObjectResult>(await controller.SalvarModoCor(new ModoCorDto(modo), CancellationToken.None));
+        Assert.Null((await ctx.Users.FindAsync(userId))!.ModoCor);
+    }
+
+    [Fact]
+    public async Task SalvarModoCor_UsuarioInexistente_RetornaNotFound()
+    {
+        using var ctx = CreateContext();
+        var controller = new UsuariosController(CreateUserManagerMock().Object, ctx, CreateTenantMock(Guid.NewGuid(), Guid.NewGuid()).Object);
+
+        Assert.IsType<NotFoundResult>(await controller.SalvarModoCor(new ModoCorDto("escuro"), CancellationToken.None));
+    }
 }
 
 // ─── TarefasController ────────────────────────────────────────────────────────

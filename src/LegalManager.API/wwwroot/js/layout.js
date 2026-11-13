@@ -8,6 +8,7 @@ import { initImportacaoBar } from './importacao-bar.js';
 import { injectNovidadesButton } from './novidades.js';
 import { injectAssistente } from './assistente.js';
 import { injectSuporteButton } from './suporte.js';
+import { getModoCor, injectModoCorToggle } from './modo-cor.js';
 import {
   getMenuLayout, setMenuLayout, montarMenuSuperior, removerMenuSuperior, agendarConviteMenuSuperior,
   montarMenuConta, atualizarMenuConta,
@@ -107,7 +108,8 @@ export function initLayout() {
   const menuSuperior = getMenuLayout() === 'superior';
   if (menuSuperior) document.body.classList.add('menu-superior');
 
-  applyTenantTheme(getStoredTheme() || user?.tema);
+  // Modo claro/escuro é do usuário (botão do header); o tema em si é do escritório.
+  applyTenantTheme(getStoredTheme() || user?.tema, { modo: getModoCor() });
 
   document.querySelector('.header-user-name').textContent = user?.nome ?? '';
   document.querySelector('.header-tenant').textContent = user?.nomeEscritorio ?? '';
@@ -127,6 +129,7 @@ export function initLayout() {
   });
   injectBottomNav();
   setupMobileMenu();
+  injectModoCorToggle();
   injectNotificationBell();
   injectNovidadesButton();
   // Chat de suporte (Crisp) abre pelo header; o balão flutuante fica escondido.
