@@ -174,7 +174,12 @@ function cardPublicacao(p) {
       ? `<a href="/pages/processo-detalhe.html?id=${encodeURIComponent(p.processoId)}">${esc(p.numeroCNJ)}</a>`
       : esc(p.numeroCNJ))
     : '';
-  const longo = (p.conteudo?.length ?? 0) > 300;
+  const conteudo = (p.conteudo ?? '').trim();
+  const snippet = (p.snippet ?? '').trim();
+  // A busca de histórico e alguns callbacks gravam o mesmo trecho nos dois campos: mostra uma vez só.
+  const mostrarSnippet = snippet && snippet !== conteudo && !conteudo.includes(snippet);
+  // Trecho recortado pelo Escavador ("...texto..."): o texto inteiro só existe no diário.
+  const ehTrecho = /^(\.\.\.|…)/.test(conteudo) || /(\.\.\.|…)$/.test(conteudo);
   return cardEntidade({
     titulo: TIPO_LABEL[p.tipo] ?? p.tipo,
     estado: p.urgente ? 'danger' : p.status === 'Nova' ? 'warn' : p.status === 'Arquivada' ? 'muted' : '',
@@ -193,9 +198,13 @@ function cardPublicacao(p) {
     corpoHtml: `
       ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}
       ${renderTriagem(p)}
-      ${p.snippet ? `<div class="pub-snippet">${esc(p.snippet)}</div>` : ''}
-      <div class="pub-conteudo" id="conteudo-${esc(p.id)}">${esc(p.conteudo)}</div>
-      ${longo ? `<button type="button" class="pub-ver-mais" data-action="expandir" data-id="${esc(p.id)}" aria-expanded="false">Ver mais</button>` : ''}`,
+      ${mostrarSnippet ? `<div class="pub-snippet">${esc(snippet)}</div>` : ''}
+      <div class="pub-conteudo" id="conteudo-${esc(p.id)}">${esc(conteudo)}</div>
+      <div class="pub-rodape-texto">
+        <button type="button" class="pub-ver-mais" data-action="expandir" data-id="${esc(p.id)}" aria-expanded="false" hidden>Ver mais</button>
+        ${ehTrecho ? `<span class="pub-trecho-aviso">Trecho do diário oficial${p.linkEscavador
+          ? ` — <a href="${esc(p.linkEscavador)}" target="_blank" rel="noopener">ver no diário ↗</a>` : ''}</span>` : ''}
+      </div>`,
   });
 }
 
@@ -242,7 +251,23 @@ function render() {
   }
   sem.style.display = 'none';
   list.innerHTML = pubs.map(cardPublicacao).join('');
+  ajustarVerMais(list);
 }
+
+// "Ver mais" só quando o texto passa da altura do card (depende da largura, não do nº de caracteres).
+function ajustarVerMais(raiz) {
+  raiz.querySelectorAll('.pub-ver-mais').forEach(botao => {
+    const el = document.getElementById(`conteudo-${botao.dataset.id}`);
+    if (!el || el.classList.contains('expanded')) return;
+    botao.hidden = el.scrollHeight <= el.clientHeight + 1;
+  });
+}
+
+let timerResize;
+window.addEventListener('resize', () => {
+  clearTimeout(timerResize);
+  timerResize = setTimeout(() => ajustarVerMais(document.getElementById('listaPubs')), 150);
+});
 
 document.getElementById('btnFiltrar').addEventListener('click', load);
 document.getElementById('btnMarcarTodasLidas').addEventListener('click', async () => {

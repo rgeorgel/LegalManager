@@ -183,7 +183,8 @@ public class EscavadorCallbackProcessor
             NumeroCNJ = numeroCNJ,
             Diario = PublicacaoMapper.Cortar(conteudo.Diario ?? conteudo.DiarioSigla, 100) ?? "Diário Oficial",
             DataPublicacao = conteudo.Data ?? agora,
-            Conteudo = TextoHtml.ParaTexto(conteudo.Snippet) ?? TextoHtml.ParaTexto(conteudo.ConteudoHtml) ?? "",
+            // Texto completo primeiro (como no PublicacaoMapper); o snippet é só o recorte.
+            Conteudo = TextoHtml.ParaTexto(conteudo.ConteudoHtml) ?? TextoHtml.ParaTexto(conteudo.Snippet) ?? "",
             Tipo = InferirTipoPublicacao(conteudo.Tipo, conteudo.ConteudoHtml),
             Status = StatusPublicacao.Nova,
             Urgente = false,

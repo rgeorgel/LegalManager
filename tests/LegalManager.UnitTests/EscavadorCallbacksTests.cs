@@ -187,6 +187,20 @@ public class EscavadorCallbacksTests
     }
 
     [Fact]
+    public async Task WebhookOab_SemProcesso_GuardaTextoCompletoEOResumoNoSnippet()
+    {
+        var (ctx, _) = await SeedOabAsync();
+        var payload = PayloadOab("Intimação — resumo");
+        payload.Conteudo!.Texto = "<p>Intimem-se as partes do despacho de fls. 10, no prazo de 15 dias.</p>";
+
+        await Processor(ctx).ProcessarAsync(payload);
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal("Intimem-se as partes do despacho de fls. 10, no prazo de 15 dias.", pub.Conteudo);
+        Assert.Equal("Intimação — resumo", pub.Snippet);
+    }
+
+    [Fact]
     public async Task WebhookOab_OabInativa_Ignora()
     {
         var (ctx, _) = await SeedOabAsync(ativa: false);
