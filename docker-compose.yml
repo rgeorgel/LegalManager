@@ -32,6 +32,15 @@ services:
     restart: unless-stopped
     ports:
       - "${API_PORT:-6600}:8080"
+    # Liveness (/health/live): só o processo, sem o banco — uma queda do Postgres não deixa o
+    # container unhealthy nem tira o site do ar no Traefik. O /health (com banco) fica para
+    # monitoramento externo. O curl vem da imagem base (Dockerfile.base).
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s # migrations e ajustes de dados rodam antes do Kestrel atender
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       # DB_CONNECTION_STRING definida → banco externo (ex.: Neon); suba com `up -d --no-deps api`
