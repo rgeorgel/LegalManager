@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
+using LegalManager.API.Configuration;
 using LegalManager.API.Middleware;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
@@ -154,6 +155,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
     options.DefaultPolicy = LegalManager.API.Controllers.ParceiroPortalController.PolicyPadrao());
 builder.Services.AddHttpContextAccessor();
+builder.Services.AdicionarHealthChecks();
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<AuthService>();
@@ -455,6 +457,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSerilogRequestLogging(opts =>
 {
+    opts.GetLevel = HealthChecksApi.NivelDoLog;
     opts.EnrichDiagnosticContext = (diag, http) =>
     {
         if (http.User?.Identity?.IsAuthenticated == true)
@@ -592,6 +595,7 @@ else
     RegistrarJobsRecorrentes(builder.Configuration);
 
 app.MapControllers();
+app.MapearHealthChecks();
 // Links de redefinição enviados antes da correção apontavam para /reset-password (sem .html),
 // que caía no fallback e abria a home.
 app.MapGet("/reset-password", (HttpContext ctx) =>
