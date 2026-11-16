@@ -7,6 +7,7 @@ import { initLayout } from './layout.js';
 import { apiFetch, getUser } from './api.js';
 import { esc, dataParede, isoLocal, abrirNovoPelaUrl } from './utils.js';
 import { CORES_TAREFA, SEM_COR, corValida } from './cores-tarefa.js';
+import { abrirSincronizacao, calendarioAberto, podeSincronizar } from './agenda-calendario.js';
 
 initLayout();
 
@@ -1083,6 +1084,7 @@ document.getElementById('a2Filtros').addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
+  if (calendarioAberto()) return;
   if (e.key === 'Escape') { if (!pop.hidden) fecharPopover(); else if (modalAberto()) closeModal(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey || modalAberto()) return;
   if (e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
@@ -1098,6 +1100,19 @@ document.addEventListener('keydown', e => {
 
 // Compromisso criado/remarcado pelo chat do assistente de IA: recarrega o período exibido.
 window.addEventListener('assistente:alteracao', e => { if (e.detail?.entidade === 'evento') carregar(); });
+
+// "No meu calendário": link .ics para Google/Outlook/Apple (também por ?sincronizar=1, do menu da conta).
+if (podeSincronizar()) {
+  const btnSync = document.getElementById('btnSincronizar');
+  btnSync.hidden = false;
+  btnSync.addEventListener('click', abrirSincronizacao);
+  if (_params.get('sincronizar') === '1') {
+    const url = new URL(location.href);
+    url.searchParams.delete('sincronizar');
+    history.replaceState(null, '', url);
+    abrirSincronizacao();
+  }
+}
 
 carregar();
 abrirNovoPelaUrl('btnNovoEvento');

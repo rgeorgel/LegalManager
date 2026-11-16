@@ -218,6 +218,7 @@ export function montarMenuConta({ usuario, aoTrocarLayout }) {
         </div>
         <div class="topnav-conta-erro" role="alert" hidden></div>
       </div>
+      ${usuario?.perfil !== 'Cliente' ? `<a class="topnav-conta-link" href="/pages/agenda.html?sincronizar=1">${icone('calendario')}Agenda no meu calendário</a>` : ''}
       <a class="topnav-conta-link" href="/pages/configuracoes.html">${icone('ajustes')}Configurações</a>
       <button type="button" class="topnav-conta-link" data-acao="sair">${icone('sair')}Sair</button>
     </div>`;

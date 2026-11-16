@@ -123,3 +123,6 @@ public enum StatusImportacao { Pendente, Buscando, Importando, Concluida, Erro }
 public enum StatusResumoProcesso { Gerando, Concluido, Erro }
 
 public enum StatusItemImportacao { Pendente, Importado, JaCadastrado, NaoEncontrado, Erro }
+
+/// <summary>O que o feed iCal da agenda publica: só os itens do usuário ou os do escritório todo (Admin).</summary>
+public enum EscopoFeedAgenda { Meus = 0, Escritorio = 1 }

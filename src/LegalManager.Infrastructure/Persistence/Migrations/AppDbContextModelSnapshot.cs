@@ -1464,6 +1464,50 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Faturamentos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.FeedAgenda", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Escopo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("OcultarClientes")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UltimoAcessoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("FeedsAgenda", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Feriado", b =>
                 {
                     b.Property<int>("Id")
@@ -4504,6 +4548,25 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.FeedAgenda", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.Feriado", b =>

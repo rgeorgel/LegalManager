@@ -72,6 +72,28 @@
     .a2-nav button:hover { background:color-mix(in srgb, var(--color-text) 6%, var(--color-surface)); }
     .a2-nav .seta { font-size:18px; line-height:1; color:var(--color-text-muted) !important; }
     .a2-novo { border-radius:999px; padding-left:16px; padding-right:18px; }
+    .a2-sync { display:inline-flex; align-items:center; gap:6px; border-radius:999px; }
+    .a2-sync[hidden] { display:none; }
+
+    /* ── Modal "Agenda no seu calendário" (js/agenda-calendario.js) ── */
+    .cal-modal { max-width:560px; }
+    .cal-modal p { margin:0 0 12px; line-height:1.5; }
+    .cal-muted { color:var(--color-text-muted); font-size:13px; }
+    .cal-grupo { border:none; padding:0; margin:0 0 12px; }
+    .cal-radio, .cal-check { display:flex; gap:10px; align-items:flex-start; padding:6px 0; cursor:pointer; font-size:14px; line-height:1.4; }
+    .cal-radio input, .cal-check input { margin-top:3px; flex:none; }
+    .cal-check small { display:block; color:var(--color-text-muted); font-size:12px; }
+    .cal-sucesso { border:1px solid var(--color-border); border-radius:10px; padding:14px; margin-bottom:14px;
+      background:color-mix(in srgb, var(--color-primary) 6%, var(--color-surface)); }
+    .cal-link { display:flex; gap:8px; margin-bottom:10px; }
+    .cal-link input { flex:1; min-width:0; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; }
+    .cal-apps { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; }
+    .cal-apps .btn { justify-content:center; text-align:center; }
+    .cal-status { display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; font-size:14px; line-height:1.5; }
+    .cal-ponto { width:10px; height:10px; border-radius:50%; background:var(--color-success); margin-top:6px; flex:none; }
+    .cal-notas { margin:12px 0; padding-left:18px; font-size:12px; color:var(--color-text-muted); line-height:1.6; }
+    .cal-acoes { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .cal-perigo { color:var(--color-danger) !important; margin-right:auto; }
 
     /* ── Legenda / filtros ────────────────────────────────── */
     .a2-filtros { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
@@ -246,6 +268,8 @@
       .a2-top { align-items:stretch; }
       .a2-acoes { width:100%; justify-content:space-between; }
       .a2-seg button { padding:6px 9px; font-size:12px; }
+      .a2-sync span { display:none; }
+      .cal-apps { grid-template-columns:minmax(0, 1fr); }
       .a2-grade-head, .a2-corpo { grid-template-columns:42px repeat(var(--n), minmax(0,1fr)); }
       .a2-horas span { right:4px; font-size:10px; }
       .a2-dia { min-height:76px; padding:3px; }
@@ -297,6 +321,10 @@
           <button type="button" id="a2Hoje" title="Hoje (T)">Hoje</button>
           <button type="button" class="seta" id="a2Prox" title="Próximo (→)" aria-label="Próximo">›</button>
         </div>
+        <button type="button" class="btn btn-secondary a2-sync" id="btnSincronizar" title="Ver a agenda no Google Agenda, Outlook ou iPhone" hidden>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg>
+          <span>No meu calendário</span>
+        </button>
         <button class="btn btn-primary a2-novo" id="btnNovoEvento" title="Novo (N)">+ Novo</button>
       </div>
     </div>

@@ -29,6 +29,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
 using Serilog;
+using Serilog.Events;
 using Serilog.Sinks.OpenTelemetry;
 using Stripe;
 
@@ -44,6 +45,7 @@ if (builder.Environment.IsDevelopment())
 var loggerConfig = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
+    .Enrich.With(new FeedAgendaApi.MascaraLog())
     .WriteTo.Console();
 
 // Exporta logs estruturados para o Pydantic Logfire via OTLP/HTTP.
@@ -94,7 +96,16 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource(Telemetry.Stripe.Name);
         tracing.AddSource(Telemetry.Hangfire.Name);
         tracing.AddSource(Telemetry.Tribunais.Name);
-        tracing.AddAspNetCoreInstrumentation(o => o.RecordException = true);
+        tracing.AddAspNetCoreInstrumentation(o =>
+        {
+            o.RecordException = true;
+            // O token do feed iCal da agenda vai no caminho: não pode ir para o tracing.
+            o.EnrichWithHttpRequest = (activity, request) =>
+            {
+                if (request.Path.StartsWithSegments("/api/agenda/feed"))
+                    activity.SetTag("url.path", FeedAgendaApi.MascararCaminho(request.Path.Value));
+            };
+        });
         tracing.AddHttpClientInstrumentation();
         tracing.AddEntityFrameworkCoreInstrumentation();
 
@@ -163,6 +174,7 @@ builder.Services.AddScoped<MfaService>();
 builder.Services.AddScoped<ParceiroService>();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
+builder.Services.AddScoped<LegalManager.Infrastructure.Agenda.FeedAgendaService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
 builder.Services.AddScoped<IImportadorProcessosOab, ImportadorProcessosOab>();
@@ -402,6 +414,17 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 10,
                 QueueLimit = 0
             }));
+    // Feed iCal da agenda (anônimo, token no caminho): os apps de calendário buscam de hora em
+    // hora; o limite por IP só contém varredura de tokens.
+    options.AddPolicy(FeedAgendaApi.PoliticaRateLimit, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetClientIpAddress() ?? "desconhecido",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 30,
+                QueueLimit = 0
+            }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -458,6 +481,14 @@ using (var scope = app.Services.CreateScope())
 app.UseSerilogRequestLogging(opts =>
 {
     opts.GetLevel = HealthChecksApi.NivelDoLog;
+    // Mesmo formato do padrão, mas com o token do feed iCal da agenda mascarado no caminho.
+    opts.GetMessageTemplateProperties = (http, caminho, elapsed, status) =>
+    [
+        new LogEventProperty("RequestMethod", new ScalarValue(http.Request.Method)),
+        new LogEventProperty("RequestPath", new ScalarValue(FeedAgendaApi.MascararCaminho(caminho))),
+        new LogEventProperty("StatusCode", new ScalarValue(status)),
+        new LogEventProperty("Elapsed", new ScalarValue(elapsed)),
+    ];
     opts.EnrichDiagnosticContext = (diag, http) =>
     {
         if (http.User?.Identity?.IsAuthenticated == true)
