@@ -62,6 +62,15 @@ public class AssinaturaDigitalService(
 
     private string? ContratosUrl => config[ContratosHttpClient.ConfigBaseUrl]?.TrimEnd('/') is { Length: > 0 } u ? u : null;
 
+    /// <summary>Origem do Causify (App:FrontendUrl): o site que precisa estar cadastrado no embed do Contratos.</summary>
+    public string? OrigemCausify => Origem(config["App:FrontendUrl"]);
+
+    /// <summary>"https://app.x.com.br/algo" → "https://app.x.com.br" (com a porta, se houver).</summary>
+    public static string? Origem(string? url) =>
+        Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var u) && (u.Scheme == Uri.UriSchemeHttps || u.Scheme == Uri.UriSchemeHttp)
+            ? u.GetLeftPart(UriPartial.Authority)
+            : null;
+
     public string WebhookUrl(IntegracaoAssinatura i) =>
         $"{(config["App:FrontendUrl"] ?? "").TrimEnd('/')}{RotaWebhook}{i.Id}";
 
@@ -97,7 +106,7 @@ public class AssinaturaDigitalService(
 
         return new IntegracaoAssinaturaDto(true, Disponivel, true, integ.OrganizacaoNome, integ.PlanoNome,
             integ.ApiKeyFinal, integ.WebhookSecretCifrado != null, WebhookUrl(integ), integ.ConectadoEm,
-            integ.UltimoWebhookEm, uso, aviso, ContratosUrl);
+            integ.UltimoWebhookEm, uso, aviso, ContratosUrl, OrigemCausify);
     }
 
     public async Task<IntegracaoAssinatura> ConectarAsync(Guid tenantId, Guid usuarioId, ConectarAssinaturaDto dto, CancellationToken ct = default)
@@ -205,6 +214,76 @@ public class AssinaturaDigitalService(
                 papeis.ElementAtOrDefault(0)?.Role ?? "Contratante", papeis.ElementAtOrDefault(0)?.Action ?? "sign", 1),
             advogado,
         ];
+    }
+
+    // ── Embed de templates ────────────────────────────────────────────────────────────
+
+    private const int DuracaoSessaoEmbedMinutos = 60;
+
+    /// <summary>
+    /// O que cada perfil pode fazer no editor de templates do Contratos: Admin edita, publica e arquiva;
+    /// Advogado edita e publica; Colaborador só edita (rascunhos, que alguém publica depois).
+    /// </summary>
+    public static List<string> PermissoesEmbed(PerfilUsuario perfil) => perfil switch
+    {
+        PerfilUsuario.Admin => ["edit", "publish", "archive"],
+        PerfilUsuario.Advogado => ["edit", "publish"],
+        PerfilUsuario.Colaborador => ["edit"],
+        _ => [],
+    };
+
+    /// <summary>
+    /// Cria a sessão do editor de templates para abrir num iframe. A chave de API fica no servidor;
+    /// o navegador recebe só a URL (abre uma vez, até 10 minutos).
+    /// </summary>
+    public async Task<SessaoEmbedDto> CriarSessaoEmbedAsync(Guid tenantId, Guid usuarioId, string? templateId, CancellationToken ct = default)
+    {
+        var chave = await ChaveAsync(tenantId, ct);
+        templateId = string.IsNullOrWhiteSpace(templateId) ? null : templateId.Trim();
+        if (templateId != null && !Guid.TryParse(templateId, out _))
+            throw new AssinaturaDigitalException("Template inválido.");
+        var usuario = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == usuarioId && u.TenantId == tenantId, ct)
+            ?? throw new AssinaturaDigitalException("Usuário não encontrado.", 404);
+        var origemCausify = OrigemCausify
+            ?? throw new AssinaturaDigitalException("O endereço do Causify (App:FrontendUrl) não está configurado neste servidor.", 503);
+
+        var permissoes = PermissoesEmbed(usuario.Perfil);
+        ContratosSessaoEmbed sessao;
+        try
+        {
+            sessao = await api.CriarSessaoEmbedAsync(chave, new ContratosNovaSessaoEmbed(
+                permissoes, new ContratosUsuarioEmbed(usuario.Id.ToString(), Cortar(usuario.Nome, 120)),
+                origemCausify, DuracaoSessaoEmbedMinutos, templateId), ct);
+        }
+        catch (ContratosApiException e) when (e.Codigo?.StartsWith("embed_", StringComparison.Ordinal) == true || e.Status is 400 or 422)
+        {
+            // O motivo mais comum: o site do Causify não está cadastrado no embed do Contratos
+            // (409 embed_origin_required quando a conta não tem nenhum site cadastrado).
+            var erro = Traduzir(e);
+            throw new AssinaturaDigitalException(
+                $"{erro.Message} Confira se {origemCausify} está cadastrado no Contratos em Integrações → Embed de templates.", erro.Status);
+        }
+        catch (ContratosApiException e)
+        {
+            throw Traduzir(e);
+        }
+
+        // A URL precisa ser do próprio Contratos configurado: é ela que vai para o iframe.
+        var origemSessao = Origem(sessao.Url);
+        if (origemSessao == null || !string.Equals(origemSessao, Origem(ContratosUrl), StringComparison.OrdinalIgnoreCase))
+            throw new AssinaturaDigitalException("O Contratos devolveu um endereço de editor inesperado.", 502);
+
+        return new SessaoEmbedDto(sessao.Id, sessao.Url, origemSessao, sessao.Permissions ?? permissoes, sessao.ExpiresAt?.UtcDateTime);
+    }
+
+    /// <summary>Encerra a sessão do editor (a pessoa fechou a tela). Sessão já vencida ou inexistente: nada a fazer.</summary>
+    public async Task EncerrarSessaoEmbedAsync(Guid tenantId, string sessaoId, CancellationToken ct = default)
+    {
+        if (!Guid.TryParse(sessaoId, out _)) throw new AssinaturaDigitalException("Sessão inválida.");
+        var chave = await ChaveAsync(tenantId, ct);
+        try { await api.EncerrarSessaoEmbedAsync(chave, sessaoId, ct); }
+        catch (ContratosApiException e) when (e.Status == 404) { }
+        catch (ContratosApiException e) { throw Traduzir(e); }
     }
 
     // ── Envio e ações ─────────────────────────────────────────────────────────────────

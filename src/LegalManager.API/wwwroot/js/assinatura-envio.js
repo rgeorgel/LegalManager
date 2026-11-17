@@ -6,6 +6,7 @@
 import { apiFetch } from './api.js';
 import { esc } from './utils.js';
 import { notify } from './honorarios.js';
+import { abrirEditorTemplates } from './contratos-embed.js';
 
 const API = '/assinatura-digital';
 
@@ -192,6 +193,8 @@ function montarModal() {
     else if (a === 'rem-sig') { e.target.closest('.asg-sig')?.remove(); }
     else if (a === 'rascunho') enviar(false);
     else if (a === 'enviar') enviar(true);
+    else if (a === 'editar-tpl') editarTemplates(overlay.querySelector('#asgTemplate')?.value || null);
+    else if (a === 'novo-tpl') editarTemplates(null);
   });
   overlay.addEventListener('change', e => {
     if (e.target.id === 'asgTemplate') carregarTemplate(e.target.value);
@@ -230,6 +233,11 @@ async function abrirEnvio() {
     return;
   }
 
+  await carregarModelos();
+}
+
+/** Lista os templates publicados e monta o seletor; `selecionar` escolhe um (ex.: o que acabou de ser publicado). */
+async function carregarModelos(selecionar) {
   corpo('<p class="asg-aviso">Carregando os templates do Contratos…</p>');
   let modelos;
   try {
@@ -238,22 +246,46 @@ async function abrirEnvio() {
     corpo(`<div class="alert alert-error">${esc(err?.message || 'Não foi possível listar os templates.')}</div>`);
     return;
   }
+  const botoesEditor = `
+    <div class="asg-tpl-acoes">
+      ${modelos.length ? '<button type="button" class="asg-link" data-asg-modal="editar-tpl">Editar template</button>' : ''}
+      <button type="button" class="asg-link" data-asg-modal="novo-tpl">+ Novo template</button>
+    </div>`;
   if (!modelos.length) {
-    corpo(`<p class="asg-aviso">Nenhum template publicado no Contratos. Crie e publique um template lá
-      (com as variáveis do contrato de honorários) e volte aqui.</p>
-      ${integracao.contratosUrl ? `<p><a class="btn btn-secondary" target="_blank" rel="noopener" href="${esc(integracao.contratosUrl)}/templates.html">Abrir o Contratos</a></p>` : ''}`);
+    corpo(`<p class="asg-aviso">Nenhum template publicado no Contratos ainda. Crie um modelo de contrato com as variáveis
+      (cliente, valor, processo…) e publique — ele aparece aqui na hora.</p>
+      <p><button type="button" class="btn btn-primary" data-asg-modal="novo-tpl">Criar template</button></p>`);
     return;
   }
+  const escolhido = modelos.some(m => m.id === selecionar) ? selecionar : modelos.length === 1 ? modelos[0].id : '';
   corpo(`
     <div class="form-group" style="margin:0">
-      <label class="form-label" for="asgTemplate">Template do Contratos</label>
+      <div class="asg-tpl-rotulo">
+        <label class="form-label" for="asgTemplate" style="margin:0">Template do Contratos</label>
+        ${botoesEditor}
+      </div>
       <select id="asgTemplate" class="form-control">
         ${modelos.length > 1 ? '<option value="">Escolha…</option>' : ''}
-        ${modelos.map(m => `<option value="${esc(m.id)}">${esc(m.nome)} (v${m.versao})</option>`).join('')}
+        ${modelos.map(m => `<option value="${esc(m.id)}" ${m.id === escolhido ? 'selected' : ''}>${esc(m.nome)} (v${m.versao})</option>`).join('')}
       </select>
     </div>
     <div id="asgForm"></div>`);
-  if (modelos.length === 1) carregarTemplate(modelos[0].id);
+  if (escolhido) carregarTemplate(escolhido);
+}
+
+/**
+ * Abre o editor de templates do Contratos por cima do modal. Ao fechar, se algo foi publicado ou
+ * arquivado, recarrega a lista (escolhendo o template mexido) e repreenche o formulário.
+ */
+function editarTemplates(templateId) {
+  let ultimo = templateId;
+  abrirEditorTemplates({
+    templateId,
+    aoMudar: (_tipo, tpl) => { if (tpl?.id) ultimo = tpl.id; },
+    aoFechar: (houveMudanca) => {
+      if (houveMudanca && overlay?.classList.contains('open')) carregarModelos(ultimo);
+    },
+  });
 }
 
 async function carregarTemplate(templateId) {

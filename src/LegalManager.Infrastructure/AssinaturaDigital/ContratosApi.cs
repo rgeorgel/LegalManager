@@ -69,6 +69,13 @@ public sealed record ContratosSignatario(
     string? DeclineReason,
     string? SignLink = null);
 
+/// <summary>Sessão do embed de templates (POST /embed/sessions). Permissões: edit, publish, archive; [] = só leitura.</summary>
+public sealed record ContratosNovaSessaoEmbed(
+    List<string> Permissions, ContratosUsuarioEmbed User, string? ParentOrigin, int ExpiresInMinutes, string? TemplateId);
+public sealed record ContratosUsuarioEmbed(string Id, string Name);
+public sealed record ContratosSessaoEmbed(
+    string Id, string Url, List<string>? Permissions, string? ParentOrigin, DateTimeOffset? LaunchExpiresAt, DateTimeOffset? ExpiresAt);
+
 /// <summary>Erro da API (Problem Details). <see cref="Mensagem"/> é o title, em português, para mostrar ao usuário.</summary>
 public sealed class ContratosApiException(
     int status, string? codigo, string mensagem,
@@ -94,6 +101,8 @@ public interface IContratosApi
     Task<ContratosContrato> CancelarAsync(string apiKey, string contratoId, CancellationToken ct = default);
     Task ReenviarLinkAsync(string apiKey, string contratoId, string signatarioId, CancellationToken ct = default);
     Task<byte[]> BaixarAssinadoAsync(string apiKey, string contratoId, CancellationToken ct = default);
+    Task<ContratosSessaoEmbed> CriarSessaoEmbedAsync(string apiKey, ContratosNovaSessaoEmbed sessao, CancellationToken ct = default);
+    Task EncerrarSessaoEmbedAsync(string apiKey, string sessaoId, CancellationToken ct = default);
 }
 
 /// <summary>Cliente HTTP da API pública do Contratos. A chave vai por chamada: cada escritório tem a sua.</summary>
@@ -142,6 +151,15 @@ public sealed class ContratosHttpClient(HttpClient http) : IContratosApi
         return await resp.Content.ReadAsByteArrayAsync(ct);
     }
 
+    public Task<ContratosSessaoEmbed> CriarSessaoEmbedAsync(string apiKey, ContratosNovaSessaoEmbed sessao, CancellationToken ct = default) =>
+        EnviarJsonAsync<ContratosSessaoEmbed>(HttpMethod.Post, "embed/sessions", apiKey, sessao, null, ct);
+
+    public async Task EncerrarSessaoEmbedAsync(string apiKey, string sessaoId, CancellationToken ct = default)
+    {
+        using var resp = await SendAsync(HttpMethod.Delete, $"embed/sessions/{Uri.EscapeDataString(sessaoId)}", apiKey, null, null, ct);
+        await GarantirSucessoAsync(resp, ct);
+    }
+
     /// <summary>O Contratos devolve "whats_app" (enum WhatsApp em snake_case), mas documenta e aceita "whatsapp".</summary>
     public static string NormalizarCanal(string? canal) => canal switch
     {
@@ -165,21 +183,39 @@ public sealed class ContratosHttpClient(HttpClient http) : IContratosApi
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod metodo, string caminho, string apiKey, object? corpo, string? idempotencyKey, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(metodo, caminho);
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        if (idempotencyKey != null) req.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
-        if (corpo != null) req.Content = JsonContent.Create(corpo, corpo.GetType(), options: Json);
-        else if (metodo == HttpMethod.Post) req.Content = JsonContent.Create(new { }, options: Json);
-        try
+        for (var tentativa = 1; ; tentativa++)
         {
-            return await http.SendAsync(req, ct);
+            using var req = new HttpRequestMessage(metodo, caminho);
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            if (idempotencyKey != null) req.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
+            if (corpo != null) req.Content = JsonContent.Create(corpo, corpo.GetType(), options: Json);
+            else if (metodo == HttpMethod.Post) req.Content = JsonContent.Create(new { }, options: Json);
+            try
+            {
+                return await http.SendAsync(req, ct);
+            }
+            catch (HttpRequestException e) when (tentativa == 1 && ConexaoCaiu(e) && !ct.IsCancellationRequested)
+            {
+                // Conexão do pool que o servidor já tinha fechado (keep-alive vencido): nada chegou de
+                // volta, então tenta de novo uma vez numa conexão nova.
+            }
+            catch (Exception e) when (e is HttpRequestException || (e is TaskCanceledException && !ct.IsCancellationRequested))
+            {
+                throw new ContratosApiException(503, "unavailable",
+                    "Não foi possível falar com o Contratos agora. Tente de novo em instantes.");
+            }
         }
-        catch (Exception e) when (e is HttpRequestException || (e is TaskCanceledException && !ct.IsCancellationRequested))
-        {
-            throw new ContratosApiException(503, "unavailable",
-                "Não foi possível falar com o Contratos agora. Tente de novo em instantes.");
-        }
+    }
+
+    /// <summary>A conexão foi derrubada pelo outro lado (reset/fechada) — típico de keep-alive ocioso.</summary>
+    internal static bool ConexaoCaiu(Exception e)
+    {
+        for (var x = e.InnerException; x != null; x = x.InnerException)
+            if (x is System.Net.Sockets.SocketException { SocketErrorCode: System.Net.Sockets.SocketError.ConnectionReset or System.Net.Sockets.SocketError.ConnectionAborted or System.Net.Sockets.SocketError.Shutdown }
+                || (x is IOException && x.InnerException == null))
+                return true;
+        return false;
     }
 
     private static async Task GarantirSucessoAsync(HttpResponseMessage resp, CancellationToken ct)

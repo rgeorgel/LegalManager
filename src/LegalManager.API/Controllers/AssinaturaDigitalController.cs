@@ -141,6 +141,24 @@ public class AssinaturaDigitalController(
             return Ok(new { message = "Link reenviado." });
         });
 
+    /// <summary>Abre o editor de templates do Contratos (embed): cria a sessão e devolve a URL do iframe.</summary>
+    [HttpPost("embed/sessoes")]
+    [Authorize]
+    public Task<ActionResult<SessaoEmbedDto>> CriarSessaoEmbed([FromBody] CriarSessaoEmbedDto? dto, CancellationToken ct) =>
+        Executar<SessaoEmbedDto>(async () => EhCliente
+            ? Proibido(MensagemCliente)
+            : Ok(await service.CriarSessaoEmbedAsync(tenantContext.TenantId, tenantContext.UserId, dto?.TemplateId, ct)));
+
+    [HttpDelete("embed/sessoes/{id}")]
+    [Authorize]
+    public Task<ActionResult<object>> EncerrarSessaoEmbed(string id, CancellationToken ct) =>
+        Executar<object>(async () =>
+        {
+            if (EhCliente) return Proibido(MensagemCliente);
+            await service.EncerrarSessaoEmbedAsync(tenantContext.TenantId, id, ct);
+            return NoContent();
+        });
+
     /// <summary>Eventos do Contratos. Anônimo: a autenticidade vem do HMAC com o segredo do escritório.</summary>
     [HttpPost("webhook/{integracaoId:guid}")]
     [AllowAnonymous]

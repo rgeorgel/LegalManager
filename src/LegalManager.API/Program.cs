@@ -353,7 +353,9 @@ builder.Services.AddHttpClient<LegalManager.Infrastructure.AssinaturaDigital.ICo
     if (!string.IsNullOrWhiteSpace(baseUrl))
         c.BaseAddress = new Uri(baseUrl.TrimEnd('/') + LegalManager.Infrastructure.AssinaturaDigital.ContratosHttpClient.Caminho);
     c.Timeout = TimeSpan.FromSeconds(60);
-});
+})
+// O Contratos (atrás do Cloudflare) fecha conexões ociosas: descarta antes de reaproveitar uma já fechada.
+.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { PooledConnectionIdleTimeout = TimeSpan.FromSeconds(15) });
 
 builder.Services.AddHttpClient("BCB", c =>
 {
@@ -536,6 +538,10 @@ app.UseSerilogRequestLogging(opts =>
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
+// Origem do Contratos (assinatura eletrônica): o editor de templates abre num iframe.
+var origemContratos = LegalManager.Infrastructure.AssinaturaDigital.AssinaturaDigitalService.Origem(
+    builder.Configuration[LegalManager.Infrastructure.AssinaturaDigital.ContratosHttpClient.ConfigBaseUrl]);
+
 app.Use(async (ctx, next) =>
 {
     ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
@@ -550,7 +556,8 @@ app.Use(async (ctx, next) =>
         "font-src 'self' data: https://client.crisp.chat; " +
         "connect-src 'self' https: wss:; " +
         "frame-ancestors 'none'; " +
-        "frame-src 'self' blob: https://www.facebook.com https://accounts.google.com" + (adsterra.Origem is { } origemAnuncios ? " " + origemAnuncios : "") + "; " +
+        "frame-src 'self' blob: https://www.facebook.com https://accounts.google.com" + (adsterra.Origem is { } origemAnuncios ? " " + origemAnuncios : "") +
+            (origemContratos is { } oc ? " " + oc : "") + "; " + // editor de templates do Contratos (embed)
         "base-uri 'self'; " +
         "object-src 'none';";
     await next();

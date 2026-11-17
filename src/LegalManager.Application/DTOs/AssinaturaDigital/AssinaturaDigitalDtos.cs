@@ -16,7 +16,8 @@ public record IntegracaoAssinaturaDto(
     DateTime? UltimoWebhookEm = null,
     UsoContratosDto? Uso = null,
     string? AvisoUso = null,
-    string? ContratosUrl = null);
+    string? ContratosUrl = null,
+    string? OrigemEmbed = null);
 
 public record UsoContratosDto(int Usados, int? Limite, int Creditos, int EnviosDisponiveis, bool PagamentoPendente);
 
@@ -119,3 +120,11 @@ public record AssinaturaPortalDto(
     string? Canal,
     string? LinkAssinatura,
     bool TemPdf);
+
+public record CriarSessaoEmbedDto(string? TemplateId = null);
+
+/// <summary>
+/// Sessão do editor de templates do Contratos para abrir num iframe. <see cref="Url"/> abre uma vez só
+/// (até 10 minutos); <see cref="Origem"/> é a origem que o navegador deve conferir nos postMessage.
+/// </summary>
+public record SessaoEmbedDto(string Id, string Url, string Origem, IReadOnlyList<string> Permissoes, DateTime? ExpiraEm);

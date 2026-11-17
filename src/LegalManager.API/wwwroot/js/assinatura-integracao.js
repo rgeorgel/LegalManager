@@ -4,6 +4,7 @@
 import { apiFetch } from './api.js';
 import { esc } from './utils.js';
 import { notify } from './honorarios.js';
+import { abrirEditorTemplates } from './contratos-embed.js';
 
 const API = '/assinatura-digital/integracao';
 let raiz = null;
@@ -53,8 +54,15 @@ function render() {
     html += `
       <div class="asg-int-status" style="margin-top:12px">
         <span class="asg-ponto ${e.conectado ? 'ok' : ''}" aria-hidden="true"></span>
-        ${e.conectado ? 'Conectado. Use “Enviar para assinatura” no contrato de honorários.' : 'Não conectado. Peça a um administrador do escritório para conectar.'}
-      </div></div>`;
+        ${e.conectado ? 'Conectado. Use “Enviar para assinatura” no contrato de honorários, no contato ou no processo.' : 'Não conectado. Peça a um administrador do escritório para conectar.'}
+      </div>
+      ${e.conectado ? `
+        <div class="asg-int-bloco">
+          <div class="config-section-title" style="font-size:14px">Templates de contrato</div>
+          <p class="asg-aviso">Monte e ajuste os modelos de contrato usados na assinatura, sem sair do Causify.</p>
+          <button type="button" class="btn btn-secondary" data-acao="templates">Abrir editor de templates</button>
+        </div>` : ''}
+    </div>`;
     raiz.innerHTML = html;
     return;
   }
@@ -128,6 +136,24 @@ function render() {
             : 'Webhook ainda não configurado.'}
       </div>
     </div>
+
+    <div class="asg-int-bloco">
+      <div class="config-section-title" style="font-size:14px">Templates de contrato</div>
+      <p class="asg-aviso">O editor de templates do Contratos abre aqui dentro: variáveis, pré-visualização e versões.
+        O que for publicado já aparece em “Enviar para assinatura”. Administradores editam, publicam e arquivam;
+        advogados editam e publicam; colaboradores só editam rascunhos.</p>
+      ${e.origemEmbed ? `
+        <ol class="asg-int-passos">
+          <li>No Contratos, em <strong>Integrações → Embed de templates</strong>, cadastre este site (uma vez só):</li>
+        </ol>
+        <div class="asg-int-linha">
+          <input type="text" class="form-control" id="asgOrigemEmbed" readonly value="${esc(e.origemEmbed)}" aria-label="Site do Causify para o embed">
+          <button type="button" class="btn btn-secondary" data-acao="copiar-origem">Copiar</button>
+        </div>` : ''}
+      <div class="asg-int-linha" style="margin-top:12px">
+        <button type="button" class="btn btn-primary" data-acao="templates">Abrir editor de templates</button>
+      </div>
+    </div>
   </div>`;
   raiz.innerHTML = html;
 }
@@ -165,8 +191,9 @@ async function aoClicar(ev) {
   if (!acao) return;
   if (acao === 'trocar') { trocandoChave = true; render(); raiz.querySelector('input[name="apiKey"]')?.focus(); }
   else if (acao === 'cancelar-troca') { trocandoChave = false; render(); }
-  else if (acao === 'copiar') {
-    const input = raiz.querySelector('#asgWebhookUrl');
+  else if (acao === 'templates') abrirEditorTemplates();
+  else if (acao === 'copiar' || acao === 'copiar-origem') {
+    const input = raiz.querySelector(acao === 'copiar' ? '#asgWebhookUrl' : '#asgOrigemEmbed');
     try { await navigator.clipboard.writeText(input.value); } catch { input.select(); document.execCommand('copy'); }
     notify('Endereço copiado.');
   } else if (acao === 'desconectar') {

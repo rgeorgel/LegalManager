@@ -390,6 +390,35 @@ public class ContratosHttpClientTests
     }
 
     [Fact]
+    public async Task SessaoEmbed_CriaEEncerra()
+    {
+        Responder(HttpStatusCode.Created, """{"id":"e1","url":"https://contratos.test/embed/templates?session=e1#token=cel_x","permissions":["edit"],"parentOrigin":"https://app.test","launchExpiresAt":"2026-11-17T14:10:00+00:00","expiresAt":"2026-11-17T15:00:00+00:00"}""");
+        Responder(HttpStatusCode.NoContent, "");
+        var c = Cliente();
+        var s = await c.CriarSessaoEmbedAsync("k", new ContratosNovaSessaoEmbed(["edit"], new ContratosUsuarioEmbed("u1", "Ana"), "https://app.test", 60, null));
+        await c.EncerrarSessaoEmbedAsync("k", "e1");
+
+        Assert.Equal(("e1", "https://contratos.test/embed/templates?session=e1#token=cel_x"), (s.Id, s.Url));
+        Assert.Equal("POST /api/public/v1/embed/sessions", $"{_h.Recebidas[0].Req.Method} {_h.Recebidas[0].Req.RequestUri!.AbsolutePath}");
+        using var doc = JsonDocument.Parse(_h.Recebidas[0].Corpo!);
+        Assert.Equal("edit", doc.RootElement.GetProperty("permissions")[0].GetString());
+        Assert.Equal("Ana", doc.RootElement.GetProperty("user").GetProperty("name").GetString());
+        Assert.Equal(60, doc.RootElement.GetProperty("expiresInMinutes").GetInt32());
+        Assert.False(doc.RootElement.TryGetProperty("templateId", out _));
+        Assert.Equal("DELETE /api/public/v1/embed/sessions/e1", $"{_h.Recebidas[1].Req.Method} {_h.Recebidas[1].Req.RequestUri!.AbsolutePath}");
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_ListaVaziaDePermissoesVaiComoSoLeitura()
+    {
+        Responder(HttpStatusCode.Created, """{"id":"e1","url":"https://contratos.test/embed/templates"}""");
+        await Cliente().CriarSessaoEmbedAsync("k", new ContratosNovaSessaoEmbed([], new ContratosUsuarioEmbed("u1", "Ana"), null, 60, "t1"));
+        using var doc = JsonDocument.Parse(_h.Recebidas[0].Corpo!);
+        Assert.Equal(0, doc.RootElement.GetProperty("permissions").GetArrayLength());
+        Assert.Equal("t1", doc.RootElement.GetProperty("templateId").GetString());
+    }
+
+    [Fact]
     public async Task ProblemDetails_ViraExcecaoComCodigoErrosEContrato()
     {
         Responder(HttpStatusCode.Conflict,
@@ -423,6 +452,41 @@ public class ContratosHttpClientTests
         var e = await Assert.ThrowsAsync<ContratosApiException>(() => Cliente().ObterContaAsync("k"));
         Assert.Equal(503, e.Status);
         Assert.Equal("unavailable", e.Codigo);
+    }
+
+    private static HttpRequestException Reset() =>
+        new("reset", new IOException("Unable to read data", new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.ConnectionReset)));
+
+    [Fact]
+    public async Task ConexaoDerrubada_TentaDeNovoUmaVezComRequisicaoNova()
+    {
+        _h.Respostas.Enqueue(() => throw Reset());
+        Responder(HttpStatusCode.Created, """{"id":"e1","url":"https://contratos.test/embed/templates"}""");
+        var s = await Cliente().CriarSessaoEmbedAsync("k", new ContratosNovaSessaoEmbed(["edit"], new ContratosUsuarioEmbed("u", "Ana"), null, 60, null));
+        Assert.Equal("e1", s.Id);
+        Assert.Equal(2, _h.Recebidas.Count);
+        Assert.NotSame(_h.Recebidas[0].Req, _h.Recebidas[1].Req);
+        Assert.Equal(_h.Recebidas[0].Corpo, _h.Recebidas[1].Corpo);
+    }
+
+    [Fact]
+    public async Task ConexaoDerrubadaDuasVezes_Vira503()
+    {
+        _h.Respostas.Enqueue(() => throw Reset());
+        _h.Respostas.Enqueue(() => throw Reset());
+        var e = await Assert.ThrowsAsync<ContratosApiException>(() => Cliente().ObterContaAsync("k"));
+        Assert.Equal(503, e.Status);
+        Assert.Equal(2, _h.Recebidas.Count);
+    }
+
+    [Fact]
+    public void ConexaoCaiu_SoParaResetOuFechamento()
+    {
+        Assert.True(ContratosHttpClient.ConexaoCaiu(Reset()));
+        Assert.True(ContratosHttpClient.ConexaoCaiu(new HttpRequestException("x", new IOException("fechada"))));
+        Assert.False(ContratosHttpClient.ConexaoCaiu(new HttpRequestException("dns")));
+        Assert.False(ContratosHttpClient.ConexaoCaiu(new HttpRequestException("x",
+            new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.HostNotFound))));
     }
 
     [Fact]

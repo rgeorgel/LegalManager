@@ -68,12 +68,12 @@ public class AssinaturaDigitalServiceTests
         return u;
     }
 
-    private AssinaturaDigitalService Service(string? baseUrl = "https://contratos.test") =>
+    private AssinaturaDigitalService Service(string? baseUrl = "https://contratos.test", string? frontendUrl = "https://app.causify.test/") =>
         new(_db, _api.Object, _cifra, _storage.Object, _jobs.Object,
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 [ContratosHttpClient.ConfigBaseUrl] = baseUrl,
-                ["App:FrontendUrl"] = "https://app.causify.test/",
+                ["App:FrontendUrl"] = frontendUrl,
             }).Build(),
             NullLogger<AssinaturaDigitalService>.Instance);
 
@@ -1189,5 +1189,146 @@ public class AssinaturaDigitalServiceTests
         _db.Documentos.Remove(doc);
         await _db.SaveChangesAsync();
         Assert.IsType<NotFoundResult>(await Portal(_cliente.Id).Pdf(sol.Id, CancellationToken.None));
+    }
+
+    // ── Embed de templates ────────────────────────────────────────────────────────────
+
+    private static ContratosSessaoEmbed SessaoEmbed(string url = "https://contratos.test/embed/templates?session=s1#token=cel_x") =>
+        new("0193a2b0-5555-7000-8000-00000000e001", url, null, "https://app.causify.test", T0.AddMinutes(10), T0.AddHours(1));
+
+    [Theory]
+    [InlineData(PerfilUsuario.Admin, "edit,publish,archive")]
+    [InlineData(PerfilUsuario.Advogado, "edit,publish")]
+    [InlineData(PerfilUsuario.Colaborador, "edit")]
+    [InlineData(PerfilUsuario.Cliente, "")]
+    public void PermissoesEmbed_PorPerfil(PerfilUsuario perfil, string esperado) =>
+        Assert.Equal(esperado, string.Join(",", AssinaturaDigitalService.PermissoesEmbed(perfil)));
+
+    [Theory]
+    [InlineData("https://app.causify.com.br/", "https://app.causify.com.br")]
+    [InlineData("http://localhost:5123/pages/x.html", "http://localhost:5123")]
+    [InlineData("https://contratos.test/embed/templates?session=1#token=x", "https://contratos.test")]
+    [InlineData("ftp://x.com", null)]
+    [InlineData("não é url", null)]
+    [InlineData(null, null)]
+    public void Origem(string? url, string? esperado) => Assert.Equal(esperado, AssinaturaDigitalService.Origem(url));
+
+    [Fact]
+    public async Task SessaoEmbed_AdminAbreComTodasAsPermissoesEOrigemDoCausify()
+    {
+        Conectar();
+        ContratosNovaSessaoEmbed? enviado = null;
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContratosNovaSessaoEmbed, CancellationToken>((_, s, _) => enviado = s)
+            .ReturnsAsync(SessaoEmbed());
+
+        var dto = Valor(await Controller().CriarSessaoEmbed(new CriarSessaoEmbedDto(), CancellationToken.None));
+
+        Assert.Equal(["edit", "publish", "archive"], enviado!.Permissions);
+        Assert.Equal((_admin.Id.ToString(), "Ana Admin"), (enviado.User.Id, enviado.User.Name));
+        Assert.Equal("https://app.causify.test", enviado.ParentOrigin);
+        Assert.Equal(60, enviado.ExpiresInMinutes);
+        Assert.Null(enviado.TemplateId);
+        Assert.Equal("https://contratos.test", dto.Origem);
+        Assert.Equal(["edit", "publish", "archive"], dto.Permissoes);
+        Assert.StartsWith("https://contratos.test/embed/templates", dto.Url);
+        Assert.Equal(T0.AddHours(1).UtcDateTime, dto.ExpiraEm);
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_AdvogadoAbreNoTemplateEscolhido()
+    {
+        Conectar();
+        ContratosNovaSessaoEmbed? enviado = null;
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContratosNovaSessaoEmbed, CancellationToken>((_, s, _) => enviado = s)
+            .ReturnsAsync(SessaoEmbed() with { Permissions = ["edit", "publish"] });
+        var tpl = Guid.NewGuid().ToString();
+        var dto = Valor(await Controller(_advogado).CriarSessaoEmbed(new CriarSessaoEmbedDto($" {tpl} "), CancellationToken.None));
+        Assert.Equal(tpl, enviado!.TemplateId);
+        Assert.Equal(["edit", "publish"], enviado.Permissions);
+        Assert.Equal(["edit", "publish"], dto.Permissoes);
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_RecusasDoCausify()
+    {
+        Assert.Equal(403, Status(await Controller(papel: "Cliente").CriarSessaoEmbed(null, CancellationToken.None)));
+        Assert.Equal(409, Status(await Controller().CriarSessaoEmbed(null, CancellationToken.None)));
+        Conectar();
+        var r = await Controller().CriarSessaoEmbed(new CriarSessaoEmbedDto("nao-e-guid"), CancellationToken.None);
+        Assert.Equal(400, Status(r));
+        r = await Controller(service: Service(frontendUrl: null)).CriarSessaoEmbed(null, CancellationToken.None);
+        Assert.Equal(503, Status(r));
+        _api.Verify(a => a.CriarSessaoEmbedAsync(It.IsAny<string>(), It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_SiteNaoCadastradoExplicaOQueFazer()
+    {
+        Conectar();
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(400, "validation", "O site não está cadastrado no embed."));
+        var r = await Controller().CriarSessaoEmbed(null, CancellationToken.None);
+        Assert.Equal(400, Status(r));
+        var msg = Mensagem(r.Result);
+        Assert.Contains("O site não está cadastrado no embed.", msg);
+        Assert.Contains("https://app.causify.test está cadastrado", msg);
+
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, "embed_origin_required", "Cadastre o endereço do seu sistema em Integrações › Embed."));
+        r = await Controller().CriarSessaoEmbed(null, CancellationToken.None);
+        Assert.Equal(409, Status(r));
+        Assert.Contains("https://app.causify.test está cadastrado", Mensagem(r.Result));
+
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(403, "api_not_in_plan", "O plano atual da conta não inclui a API."));
+        r = await Controller().CriarSessaoEmbed(null, CancellationToken.None);
+        Assert.Equal(409, Status(r));
+        Assert.DoesNotContain("Embed de templates", Mensagem(r.Result));
+
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(500, null, "Erro"));
+        Assert.Equal(502, Status(await Controller().CriarSessaoEmbed(null, CancellationToken.None)));
+    }
+
+    [Theory]
+    [InlineData("https://outro-site.test/embed/templates#token=x")]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("/embed/templates")]
+    public async Task SessaoEmbed_RecusaUrlForaDoContratos(string url)
+    {
+        Conectar();
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SessaoEmbed(url));
+        Assert.Equal(502, Status(await Controller().CriarSessaoEmbed(null, CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task EncerrarSessaoEmbed()
+    {
+        Conectar();
+        const string id = "0193a2b0-5555-7000-8000-00000000e001";
+        Assert.IsType<NoContentResult>((await Controller(_advogado).EncerrarSessaoEmbed(id, CancellationToken.None)).Result);
+        _api.Verify(a => a.EncerrarSessaoEmbedAsync(Chave, id, It.IsAny<CancellationToken>()), Times.Once);
+
+        _api.Setup(a => a.EncerrarSessaoEmbedAsync(Chave, id, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(404, "not_found", "Sessão não encontrada."));
+        Assert.IsType<NoContentResult>((await Controller(_advogado).EncerrarSessaoEmbed(id, CancellationToken.None)).Result);
+
+        _api.Setup(a => a.EncerrarSessaoEmbedAsync(Chave, id, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(500, null, "Erro"));
+        Assert.Equal(502, Status(await Controller(_advogado).EncerrarSessaoEmbed(id, CancellationToken.None)));
+
+        Assert.Equal(400, Status(await Controller(_advogado).EncerrarSessaoEmbed("../account", CancellationToken.None)));
+        Assert.Equal(403, Status(await Controller(papel: "Cliente").EncerrarSessaoEmbed(id, CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task Integracao_AdminVeOSiteParaCadastrarNoEmbed()
+    {
+        Conectar();
+        _api.Setup(a => a.ObterContaAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync(Conta());
+        Assert.Equal("https://app.causify.test", Valor(await Controller().Integracao(CancellationToken.None)).OrigemEmbed);
     }
 }
