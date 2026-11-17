@@ -1,5 +1,10 @@
 # API pública do Contratos (v1): webhooks, sites do embed e listagem por alteração
 
+> **Entregue pelo Contratos em 17/11/2026** (veja "Mudanças" na documentação). O formato publicado
+> é o deste pedido. Ainda acrescentou `include=signers` na listagem, que o Causify usa para não
+> abrir cada contrato. O item da listagem traz `sendError` como booleano: quando vem `true`, o
+> Causify abre o contrato para ler o motivo.
+
 Pedido do Causify para a fase 3 da integração. Hoje quem conecta o Causify ao Contratos faz três
 passos de copiar e colar: cola a chave no Causify, cadastra o webhook no Contratos e traz o segredo
 de volta, e cadastra o site do Causify no embed de templates. A API pública só aceita chave de API,

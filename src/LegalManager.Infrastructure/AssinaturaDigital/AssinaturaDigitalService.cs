@@ -952,53 +952,49 @@ public class AssinaturaDigitalService(
         await db.SaveChangesAsync(ct);
     }
 
+    private const int MaxPaginasConferencia = 10;
+    private static readonly TimeSpan FolgaConferencia = TimeSpan.FromMinutes(5);
+
     /// <summary>
-    /// Backstop do webhook: confere no Contratos as solicitações em aberto (e as concluídas sem PDF),
-    /// no máximo uma vez por hora cada, e apaga os ids de evento com mais de 30 dias.
+    /// Backstop do webhook, a cada 2h. Por escritório com envios em aberto (ou concluídos sem PDF):
+    /// uma listagem do que mudou no Contratos desde a última rodada (GET /contracts?updatedFrom,
+    /// com os signatários) — em vez de uma chamada por contrato. Se o Contratos não aceitar a
+    /// listagem, cai no modo antigo (um GET por contrato, no máximo uma vez por hora cada).
+    /// Também apaga os ids de evento com mais de 30 dias.
     /// </summary>
     public async Task<int> ConferirPendentesAsync(CancellationToken ct = default)
     {
         var agora = DateTime.UtcNow;
         var desde = agora - JanelaConferencia;
         var limite = agora - IntervaloConferencia;
-        var pendentes = await db.SolicitacoesAssinatura
+        var tenants = await db.SolicitacoesAssinatura
             .Where(s => s.CriadoEm >= desde
                 && (EmAberto.Contains(s.Status) || (s.Status == StatusSolicitacaoAssinatura.Concluida && s.DocumentoAssinadoId == null))
                 && (s.ConferidoEm == null || s.ConferidoEm < limite)
                 && db.IntegracoesAssinatura.Any(i => i.TenantId == s.TenantId))
-            .OrderBy(s => s.ConferidoEm ?? DateTime.MinValue)
-            .Take(MaxConferencias)
+            .Select(s => s.TenantId)
+            .Distinct()
             .ToListAsync(ct);
 
         var conferidas = 0;
-        foreach (var grupo in pendentes.GroupBy(s => s.TenantId))
+        foreach (var tenantId in tenants)
         {
-            var integ = await IntegracaoAsync(grupo.Key, ct);
+            var integ = await IntegracaoAsync(tenantId, ct);
             if (integ == null) continue;
             var chave = cifra.Decifrar(integ.ApiKeyCifrada);
-            foreach (var sol in grupo)
+            try
             {
-                try
-                {
-                    var contrato = await api.ObterContratoAsync(chave, sol.ContratoExternoId, ct);
-                    AplicarComMudancas(sol, contrato, null);
-                    sol.ConferidoEm = agora;
-                    await db.SaveChangesAsync(ct);
-                    conferidas++;
-                    if (sol.Status == StatusSolicitacaoAssinatura.Concluida && sol.DocumentoAssinadoId == null && contrato.HasSignedDocument)
-                        await BaixarAssinadoAsync(sol.Id, ct);
-                }
-                catch (ContratosApiException e) when (e.Status is 401 or 402 or 403 or 429)
-                {
-                    logger.LogWarning("Conferência de assinaturas interrompida no tenant {TenantId}: {Status} {Codigo}", grupo.Key, e.Status, e.Codigo);
-                    break;
-                }
-                catch (ContratosApiException e)
-                {
-                    logger.LogWarning("Falha ao conferir o contrato {Contrato}: {Status} {Codigo}", sol.ContratoExternoId, e.Status, e.Codigo);
-                    sol.ConferidoEm = agora;
-                    await db.SaveChangesAsync(ct);
-                }
+                conferidas += await ConferirPorListagemAsync(integ, chave, agora, ct);
+            }
+            catch (ContratosApiException e) when (e.Status == 400 || RotaInexistente(e))
+            {
+                // Contratos sem updatedFrom/sort=updated_asc: confere um a um.
+                logger.LogInformation("Contratos sem listagem por alteração (tenant {TenantId}): {Status} {Codigo}; conferindo um a um", tenantId, e.Status, e.Codigo);
+                conferidas += await ConferirUmAUmAsync(tenantId, chave, agora, ct);
+            }
+            catch (ContratosApiException e)
+            {
+                logger.LogWarning("Conferência de assinaturas interrompida no tenant {TenantId}: {Status} {Codigo}", tenantId, e.Status, e.Codigo);
             }
         }
 
@@ -1010,6 +1006,117 @@ public class AssinaturaDigitalService(
         {
             db.EventosAssinaturaRecebidos.RemoveRange(antigos);
             await db.SaveChangesAsync(ct);
+        }
+        return conferidas;
+    }
+
+    /// <summary>Envios que a conferência acompanha: em aberto ou concluídos sem o PDF, dos últimos 120 dias.</summary>
+    private IQueryable<SolicitacaoAssinatura> Acompanhadas(Guid tenantId, DateTime agora)
+    {
+        var desde = agora - JanelaConferencia;
+        return db.SolicitacoesAssinatura.Where(s => s.TenantId == tenantId && s.CriadoEm >= desde
+            && (EmAberto.Contains(s.Status) || (s.Status == StatusSolicitacaoAssinatura.Concluida && s.DocumentoAssinadoId == null)));
+    }
+
+    /// <summary>
+    /// Lê o que mudou no Contratos desde <see cref="IntegracaoAssinatura.ConferidoAte"/> (menos uma
+    /// folga) e aplica nos envios acompanhados. Até 10 páginas de 100 por rodada; o que sobrar fica
+    /// para a próxima, que continua do maior updatedAt visto (a ordem é crescente).
+    /// </summary>
+    private async Task<int> ConferirPorListagemAsync(IntegracaoAssinatura integ, string chave, DateTime agora, CancellationToken ct)
+    {
+        var acompanhadas = (await Acompanhadas(integ.TenantId, agora).ToListAsync(ct))
+            .GroupBy(s => s.ContratoExternoId)
+            .ToDictionary(g => g.Key, g => g.First());
+        if (acompanhadas.Count == 0) return 0;
+
+        var inicio = integ.ConferidoAte ?? acompanhadas.Values.Min(s => s.CriadoEm);
+        var desde = new DateTimeOffset(DateTime.SpecifyKind(inicio, DateTimeKind.Utc)) - FolgaConferencia;
+        DateTime? maisNovo = integ.ConferidoAte;
+        var conferidas = 0;
+        var baixar = new List<Guid>();
+
+        for (var pagina = 1; pagina <= MaxPaginasConferencia; pagina++)
+        {
+            var p = await api.ListarAlteradosAsync(chave, desde, pagina, ct);
+            foreach (var item in p.Items ?? [])
+            {
+                if (item.UpdatedAt is { } u && (maisNovo == null || u.UtcDateTime > maisNovo)) maisNovo = u.UtcDateTime;
+                if (!acompanhadas.TryGetValue(item.Id, out var sol)) continue;
+
+                // A listagem diz só que houve falha de envio; o motivo vem no contrato completo.
+                var contrato = item.SendError || item.Signers == null
+                    ? await api.ObterContratoAsync(chave, item.Id, ct)
+                    : ParaContrato(item);
+                AplicarComMudancas(sol, contrato, null);
+                conferidas++;
+                if (sol.Status == StatusSolicitacaoAssinatura.Concluida && sol.DocumentoAssinadoId == null && contrato.HasSignedDocument)
+                    baixar.Add(sol.Id);
+            }
+            if (!p.HasMore) break;
+        }
+
+        // Concluídos cujo PDF ainda não veio (o download anterior falhou): tenta de novo, no máximo 1x/hora.
+        baixar.AddRange(acompanhadas.Values
+            .Where(s => s.Status == StatusSolicitacaoAssinatura.Concluida && s.DocumentoAssinadoId == null
+                && (s.ConferidoEm == null || s.ConferidoEm < agora - IntervaloConferencia))
+            .Select(s => s.Id));
+
+        foreach (var sol in acompanhadas.Values) sol.ConferidoEm = agora;
+        // Sem nada novo, a próxima rodada começa de onde esta começou (nunca volta para trás).
+        integ.ConferidoAte = maisNovo ?? inicio;
+        await db.SaveChangesAsync(ct);
+
+        foreach (var id in baixar.Distinct())
+        {
+            try { await BaixarAssinadoAsync(id, ct); }
+            catch (Exception e) when (e is ContratosApiException or InvalidOperationException)
+            {
+                logger.LogWarning(e, "Falha ao baixar o PDF assinado da solicitação {Solicitacao}", id);
+            }
+        }
+        return conferidas;
+    }
+
+    internal static ContratosContrato ParaContrato(ContratosContratoItem i) => new(
+        i.Id, i.Number, i.Title, i.Status, i.ExternalReference,
+        string.IsNullOrWhiteSpace(i.TemplateName) ? null : new ContratosTemplateRef("", i.TemplateName, 0),
+        i.Signers ?? [], i.HasSignedDocument, null, i.ExpiresAt, i.CreatedAt, i.UpdatedAt, i.SentAt, i.CompletedAt, null);
+
+    /// <summary>Modo antigo: um GET por contrato acompanhado, no máximo uma vez por hora cada.</summary>
+    private async Task<int> ConferirUmAUmAsync(Guid tenantId, string chave, DateTime agora, CancellationToken ct)
+    {
+        var limite = agora - IntervaloConferencia;
+        var pendentes = await Acompanhadas(tenantId, agora)
+            .Where(s => s.ConferidoEm == null || s.ConferidoEm < limite)
+            .OrderBy(s => s.ConferidoEm ?? DateTime.MinValue)
+            .Take(MaxConferencias)
+            .ToListAsync(ct);
+
+        var conferidas = 0;
+        foreach (var sol in pendentes)
+        {
+            try
+            {
+                var contrato = await api.ObterContratoAsync(chave, sol.ContratoExternoId, ct);
+                AplicarComMudancas(sol, contrato, null);
+                sol.ConferidoEm = agora;
+                await db.SaveChangesAsync(ct);
+                conferidas++;
+                if (sol.Status == StatusSolicitacaoAssinatura.Concluida && sol.DocumentoAssinadoId == null && contrato.HasSignedDocument)
+                    await BaixarAssinadoAsync(sol.Id, ct);
+            }
+            catch (ContratosApiException e) when (e.Status is 401 or 402 or 403 or 429)
+            {
+                logger.LogWarning("Conferência de assinaturas interrompida no tenant {TenantId}: {Status} {Codigo}", tenantId, e.Status, e.Codigo);
+                break;
+            }
+            catch (ContratosApiException e)
+            {
+                logger.LogWarning("Falha ao conferir o contrato {Contrato}: {Status} {Codigo}", sol.ContratoExternoId, e.Status, e.Codigo);
+                sol.ConferidoEm = agora;
+                await db.SaveChangesAsync(ct);
+            }
         }
         return conferidas;
     }

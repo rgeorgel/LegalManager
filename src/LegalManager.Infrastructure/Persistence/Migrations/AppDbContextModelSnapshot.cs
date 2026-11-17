@@ -2021,6 +2021,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ConectadoPorId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ConferidoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("EmbedOrigem")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");

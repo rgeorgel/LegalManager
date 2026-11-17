@@ -53,6 +53,28 @@ public sealed record ContratosContrato(
 
 public sealed record ContratosTemplateRef(string Id, string Name, int Version);
 
+/// <summary>
+/// Item de GET /contracts (sort=updated_asc, include=signers). SendError aqui é só "houve falha":
+/// o texto vem em GET /contracts/{id}.
+/// </summary>
+public sealed record ContratosContratoItem(
+    string Id,
+    int Number,
+    string Title,
+    string Status,
+    string? ExternalReference,
+    string? TemplateName,
+    bool SendError,
+    bool HasSignedDocument,
+    DateTimeOffset? ExpiresAt,
+    DateTimeOffset? CreatedAt,
+    DateTimeOffset? UpdatedAt,
+    DateTimeOffset? SentAt,
+    DateTimeOffset? CompletedAt,
+    List<ContratosSignatario>? Signers);
+
+public sealed record ContratosPagina<T>(List<T> Items, int Page, int PageSize, int Total, bool HasMore);
+
 public sealed record ContratosSignatario(
     string Id,
     string Name,
@@ -116,6 +138,8 @@ public interface IContratosApi
     Task<byte[]> BaixarAssinadoAsync(string apiKey, string contratoId, CancellationToken ct = default);
     Task<ContratosSessaoEmbed> CriarSessaoEmbedAsync(string apiKey, ContratosNovaSessaoEmbed sessao, CancellationToken ct = default);
     Task EncerrarSessaoEmbedAsync(string apiKey, string sessaoId, CancellationToken ct = default);
+    /// <summary>Contratos alterados desde <paramref name="desde"/>, do mais antigo ao mais novo, com os signatários.</summary>
+    Task<ContratosPagina<ContratosContratoItem>> ListarAlteradosAsync(string apiKey, DateTimeOffset desde, int pagina, CancellationToken ct = default);
     Task<IReadOnlyList<ContratosWebhook>> ListarWebhooksAsync(string apiKey, CancellationToken ct = default);
     Task<ContratosWebhookCriado> CriarWebhookAsync(string apiKey, ContratosNovoWebhook webhook, CancellationToken ct = default);
     Task ExcluirWebhookAsync(string apiKey, string webhookId, CancellationToken ct = default);
@@ -177,6 +201,22 @@ public sealed class ContratosHttpClient(HttpClient http) : IContratosApi
     {
         using var resp = await SendAsync(HttpMethod.Delete, $"embed/sessions/{Uri.EscapeDataString(sessaoId)}", apiKey, null, null, ct);
         await GarantirSucessoAsync(resp, ct);
+    }
+
+    public const int TamanhoPaginaAlterados = 100;
+
+    public async Task<ContratosPagina<ContratosContratoItem>> ListarAlteradosAsync(string apiKey, DateTimeOffset desde, int pagina, CancellationToken ct = default)
+    {
+        var qs = $"updatedFrom={Uri.EscapeDataString(desde.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture))}"
+            + $"&sort=updated_asc&include=signers&pageSize={TamanhoPaginaAlterados}&page={pagina}";
+        var p = await EnviarJsonAsync<ContratosPagina<ContratosContratoItem>>(HttpMethod.Get, $"contracts?{qs}", apiKey, null, null, ct);
+        return p with
+        {
+            Items = (p.Items ?? []).Select(i => i with
+            {
+                Signers = i.Signers?.Select(g => g with { DeliveryMethod = NormalizarCanal(g.DeliveryMethod) }).ToList(),
+            }).ToList(),
+        };
     }
 
     public async Task<IReadOnlyList<ContratosWebhook>> ListarWebhooksAsync(string apiKey, CancellationToken ct = default) =>

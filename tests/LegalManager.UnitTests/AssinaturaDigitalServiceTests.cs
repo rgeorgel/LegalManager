@@ -801,7 +801,7 @@ public class AssinaturaDigitalServiceTests
     }
 
     [Fact]
-    public async Task ConferirPendentes_AtualizaOsAbertosBaixaPdfEApagaEventosAntigos()
+    public async Task ConferirPendentes_SemListagem_UmAUm_AtualizaOsAbertosBaixaPdfEApagaEventosAntigos()
     {
         Conectar();
         var aberta = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
@@ -815,6 +815,7 @@ public class AssinaturaDigitalServiceTests
             new EventoAssinaturaRecebido { Id = "novo", TenantId = _tenant.Id, Tipo = "x", RecebidoEm = DateTime.UtcNow });
         await _db.SaveChangesAsync();
 
+        ContratosSemListagemPorAlteracao(400, "validation");
         _api.Setup(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Ext("completed", T0.AddMinutes(5), Sig("s1", "Maria", "signed")));
         _api.Setup(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>())).ReturnsAsync("%PDF-1.7"u8.ToArray());
@@ -832,13 +833,14 @@ public class AssinaturaDigitalServiceTests
     }
 
     [Fact]
-    public async Task ConferirPendentes_ChaveRevogadaParaOEscritorioEErroAvulsoSegue()
+    public async Task ConferirPendentes_SemListagem_ChaveRevogadaParaOEscritorioEErroAvulsoSegue()
     {
         Conectar();
         var a = Solicitacao();
         var b = Solicitacao();
         b.ContratoExternoId = "ext-2";
         await _db.SaveChangesAsync();
+        ContratosSemListagemPorAlteracao(404, "route_not_found");
         _api.Setup(x => x.ObterContratoAsync(Chave, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ContratosApiException(401, "unauthorized", "Chave revogada"));
         Assert.Equal(0, await Service().ConferirPendentesAsync());
@@ -848,6 +850,106 @@ public class AssinaturaDigitalServiceTests
             .ThrowsAsync(new ContratosApiException(404, "not_found", "Contrato não encontrado."));
         Assert.Equal(0, await Service().ConferirPendentesAsync());
         Assert.All(await _db.SolicitacoesAssinatura.ToListAsync(), s => Assert.NotNull(s.ConferidoEm));
+    }
+
+    private void ContratosSemListagemPorAlteracao(int status, string codigo) =>
+        _api.Setup(x => x.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(status, codigo, "Parâmetro desconhecido."));
+
+    private static ContratosContratoItem Item(string id, string status, DateTimeOffset atualizado, bool falha = false, bool pdf = false,
+        params ContratosSignatario[] sigs) =>
+        new(id, 7, "NDA: Maria Cliente", status, "ref", "NDA", falha, pdf, null, T0.AddHours(-2), atualizado, T0.AddHours(-1),
+            status == "completed" ? atualizado : null, sigs.ToList());
+
+    private static ContratosPagina<ContratosContratoItem> Pagina(bool temMais, params ContratosContratoItem[] itens) =>
+        new(itens.ToList(), 1, 100, itens.Length, temMais);
+
+    [Fact]
+    public async Task ConferirPendentes_PorListagem_UmaChamadaSoParaOQueMudou()
+    {
+        var integ = Conectar();
+        var aberta = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        var falhou = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        falhou.ContratoExternoId = "ext-2";
+        var parada = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        parada.ContratoExternoId = "ext-3";
+        await _db.SaveChangesAsync();
+        DateTimeOffset? desde = null;
+        _api.Setup(a => a.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), 1, It.IsAny<CancellationToken>()))
+            .Callback<string, DateTimeOffset, int, CancellationToken>((_, d, _, _) => desde = d)
+            .ReturnsAsync(Pagina(false,
+                Item("de-fora", "sent", T0.AddMinutes(1)),
+                Item("ext-1", "completed", T0.AddMinutes(5), pdf: true, sigs: Sig("s1", "Maria", "signed")),
+                Item("ext-2", "sent", T0.AddMinutes(9), falha: true, sigs: Sig("s1", "Maria", "pending"))));
+        _api.Setup(a => a.ObterContratoAsync(Chave, "ext-2", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext("sent", T0.AddMinutes(9), Sig("s1", "Maria", "pending")) with { Id = "ext-2", SendError = "Telefone inválido" });
+        _api.Setup(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>())).ReturnsAsync("%PDF-1.7"u8.ToArray());
+        _storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("ok");
+
+        Assert.Equal(2, await Service().ConferirPendentesAsync());
+
+        // Primeira rodada: desde o envio mais antigo acompanhado, com folga de 5 minutos.
+        var maisAntigo = (await _db.SolicitacoesAssinatura.MinAsync(s => s.CriadoEm));
+        Assert.Equal(maisAntigo.AddMinutes(-5), desde!.Value.UtcDateTime, TimeSpan.FromSeconds(1));
+        var a1 = await _db.SolicitacoesAssinatura.SingleAsync(s => s.Id == aberta.Id);
+        Assert.Equal(StatusSolicitacaoAssinatura.Concluida, a1.Status);
+        Assert.NotNull(a1.DocumentoAssinadoId);
+        Assert.Equal("Telefone inválido", (await _db.SolicitacoesAssinatura.SingleAsync(s => s.Id == falhou.Id)).Erro);
+        Assert.All(await _db.SolicitacoesAssinatura.ToListAsync(), s => Assert.NotNull(s.ConferidoEm));
+        Assert.Equal(T0.AddMinutes(9).UtcDateTime, (await _db.IntegracoesAssinatura.SingleAsync()).ConferidoAte);
+        _api.Verify(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()), Times.Never);
+        _api.Verify(a => a.ObterContratoAsync(Chave, "ext-3", It.IsAny<CancellationToken>()), Times.Never);
+        _api.Verify(a => a.ObterContratoAsync(Chave, "de-fora", It.IsAny<CancellationToken>()), Times.Never);
+
+        // Próxima rodada (2h depois): continua do maior updatedAt visto, com a mesma folga.
+        foreach (var sol in await _db.SolicitacoesAssinatura.ToListAsync()) sol.ConferidoEm = DateTime.UtcNow.AddHours(-2);
+        await _db.SaveChangesAsync();
+        _api.Setup(a => a.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), 1, It.IsAny<CancellationToken>()))
+            .Callback<string, DateTimeOffset, int, CancellationToken>((_, d, _, _) => desde = d)
+            .ReturnsAsync(Pagina(false));
+        Assert.Equal(0, await Service().ConferirPendentesAsync());
+        Assert.Equal(T0.AddMinutes(4), desde);
+        Assert.Equal(T0.AddMinutes(9).UtcDateTime, (await _db.IntegracoesAssinatura.SingleAsync()).ConferidoAte);
+    }
+
+    [Fact]
+    public async Task ConferirPendentes_PorListagem_PaginaAteOFimOuDezPaginas()
+    {
+        Conectar();
+        Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        _api.Setup(a => a.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, DateTimeOffset _, int p, CancellationToken _) =>
+                Pagina(temMais: true, Item($"outro-{p}", "sent", T0.AddMinutes(p))));
+
+        await Service().ConferirPendentesAsync();
+
+        _api.Verify(a => a.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(10));
+        Assert.Equal(T0.AddMinutes(10).UtcDateTime, (await _db.IntegracoesAssinatura.SingleAsync()).ConferidoAte);
+    }
+
+    [Fact]
+    public async Task ConferirPendentes_PorListagem_ChaveRevogadaNaoCaiNoUmAUm()
+    {
+        Conectar();
+        Solicitacao();
+        _api.Setup(a => a.ListarAlteradosAsync(Chave, It.IsAny<DateTimeOffset>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(401, "unauthorized", "Chave revogada"));
+
+        Assert.Equal(0, await Service().ConferirPendentesAsync());
+
+        _api.Verify(a => a.ObterContratoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Null((await _db.SolicitacoesAssinatura.SingleAsync()).ConferidoEm);
+    }
+
+    [Fact]
+    public void ParaContrato_UsaOsSignatariosDaListagem()
+    {
+        var c = AssinaturaDigitalService.ParaContrato(Item("ext-1", "partially_signed", T0, sigs: [Sig("s1", "Maria", "signed"), Sig("s2", "Bia", "pending")]));
+        var sol = new SolicitacaoAssinatura { Titulo = "x", TemplateNome = "antigo" };
+        Assert.True(AssinaturaDigitalService.Aplicar(sol, c));
+        Assert.Equal(StatusSolicitacaoAssinatura.ParcialmenteAssinada, sol.Status);
+        Assert.Equal("NDA", sol.TemplateNome);
+        Assert.Equal(2, AssinaturaDigitalService.LerSignatarios(sol.SignatariosJson).Count);
     }
 
     [Fact]

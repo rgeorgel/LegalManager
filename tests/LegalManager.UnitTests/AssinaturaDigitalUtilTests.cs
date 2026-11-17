@@ -432,6 +432,25 @@ public class ContratosHttpClientTests
     }
 
     [Fact]
+    public async Task ListarAlterados_PedeOrdenadoComSignatariosENormalizaOCanal()
+    {
+        Responder(HttpStatusCode.OK, """
+            {"items":[{"id":"c1","number":5,"title":"NDA","status":"sent","templateName":"NDA","signersTotal":1,"signersSigned":0,
+              "sendError":false,"hasSignedDocument":false,"expiresAt":null,"createdAt":"2026-11-16T09:00:00+00:00",
+              "updatedAt":"2026-11-17T10:00:00+00:00","signers":[{"id":"s1","name":"Bia","deliveryMethod":"whats_app","status":"pending"}]}],
+             "page":2,"pageSize":100,"total":101,"hasMore":false}
+            """);
+
+        var p = await Cliente().ListarAlteradosAsync("k", new DateTimeOffset(2026, 11, 17, 7, 30, 0, TimeSpan.FromHours(-3)), 2);
+
+        Assert.Equal("/api/public/v1/contracts", _h.Recebidas[0].Req.RequestUri!.AbsolutePath);
+        Assert.Equal("?updatedFrom=2026-11-17T10%3A30%3A00Z&sort=updated_asc&include=signers&pageSize=100&page=2",
+            _h.Recebidas[0].Req.RequestUri!.Query);
+        var item = p.Items.Single();
+        Assert.Equal(("c1", false, "whatsapp"), (item.Id, p.HasMore, item.Signers!.Single().DeliveryMethod));
+    }
+
+    [Fact]
     public async Task OrigensEmbed_ListaECadastra()
     {
         Responder(HttpStatusCode.OK, """[{"id":"o1","origin":"https://crm.x.com","createdAt":"2026-11-17T10:00:00+00:00"}]""");

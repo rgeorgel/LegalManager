@@ -22,6 +22,11 @@ public class IntegracaoAssinatura
     public string? WebhookExternoId { get; set; }
     /// <summary>Site do Causify que o Causify cadastrou sozinho no embed de templates do Contratos.</summary>
     public string? EmbedOrigem { get; set; }
+    /// <summary>
+    /// Até onde a conferência periódica já leu (maior updatedAt visto em GET /contracts?updatedFrom).
+    /// A próxima rodada começa daqui, com uma folga.
+    /// </summary>
+    public DateTime? ConferidoAte { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario? ConectadoPor { get; set; }
