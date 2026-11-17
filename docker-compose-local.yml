@@ -90,6 +90,8 @@ services:
       Escavador__BaseUrl: ${ESCAVADOR_BASE_URL:-https://api.escavador.com}
       Escavador__ApiToken: ${ESCAVADOR_API_TOKEN:-}
       Escavador__CallbackSecret: ${ESCAVADOR_CALLBACK_SECRET:-}
+      AssinaturaDigital__BaseUrl: ${ASSINATURA_BASE_URL:-}
+      AssinaturaDigital__ChaveCifragem: ${ASSINATURA_CHAVE_CIFRAGEM:-}
       SuperAdmin__Email: ${SUPERADMIN_EMAIL:-superadmin@causify.internal}
       SuperAdmin__Password: ${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD is required}
       Logfire__Enabled: ${LOGFIRE_ENABLED:-false}

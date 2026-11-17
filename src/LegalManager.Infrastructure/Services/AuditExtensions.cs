@@ -116,4 +116,6 @@ public static class AuditEntities
     public const string Atendimento = "Atendimento";
     public const string RegistroTempo = "RegistroTempo";
     public const string FeedAgenda = "FeedAgenda";
+    public const string IntegracaoAssinatura = "IntegracaoAssinatura";
+    public const string SolicitacaoAssinatura = "SolicitacaoAssinatura";
 }

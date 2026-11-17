@@ -37,6 +37,10 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<RecorrenciaTarefa> RecorrenciasTarefa => Set<RecorrenciaTarefa>();
     public DbSet<Evento> Eventos => Set<Evento>();
     public DbSet<FeedAgenda> FeedsAgenda => Set<FeedAgenda>();
+    public DbSet<IntegracaoAssinatura> IntegracoesAssinatura => Set<IntegracaoAssinatura>();
+    public DbSet<SolicitacaoAssinatura> SolicitacoesAssinatura => Set<SolicitacaoAssinatura>();
+    public DbSet<MapeamentoModeloAssinatura> MapeamentosModeloAssinatura => Set<MapeamentoModeloAssinatura>();
+    public DbSet<EventoAssinaturaRecebido> EventosAssinaturaRecebidos => Set<EventoAssinaturaRecebido>();
     public DbSet<Notificacao> Notificacoes => Set<Notificacao>();
     public DbSet<Publicacao> Publicacoes => Set<Publicacao>();
     public DbSet<TenantOab> TenantOabs => Set<TenantOab>();

@@ -19,6 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Detalhes do Contrato de Honorários</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/assinatura-digital.css">
   <style>
     .hp-kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
     .hp-card { background:#fff; border:1px solid var(--color-border); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
@@ -80,6 +81,7 @@
           <a class="btn btn-secondary" href="/pages/honorarios-contratos.html">← Voltar</a>
           <a class="btn btn-primary" id="btnEditar" href="#">✏️ Editar</a>
           <button class="btn btn-secondary" id="btnExtrato">📑 Extrato PDF</button>
+          <button class="btn btn-secondary" id="btnAssinatura" hidden>✍️ Enviar para assinatura</button>
           <button class="btn btn-danger" id="btnExcluir">🗑 Excluir</button>
         </div>
       </div>
@@ -91,6 +93,8 @@
       <div id="cabecalho"></div>
 
       <div class="hp-kpi" id="kpiTotais"></div>
+
+      <div id="assinaturas" hidden></div>
 
       <div class="hp-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -164,6 +168,7 @@
       STATUS_CONTRATO_LABELS, STATUS_PARCELA_LABELS, mapForma
     } from '/js/honorarios.js';
     import { contatoPerfilUrl } from '/js/contato-nav.js';
+    import { iniciarAssinaturas } from '/js/assinatura-envio.js';
     initLayout();
 
     let contrato = null;
@@ -181,6 +186,12 @@
       document.getElementById('btnEditar').href = `/pages/honorarios-contrato-novo.html?id=${id}`;
       document.getElementById('btnExtrato').addEventListener('click', () => abrirExtratoPdf(id));
       document.getElementById('btnExcluir').addEventListener('click', confirmarExcluir);
+      iniciarAssinaturas({
+        contratoId: id,
+        botao: document.getElementById('btnAssinatura'),
+        container: document.getElementById('assinaturas'),
+        aoMudar: () => renderHistorico(),
+      });
 
       // Listeners dos MODAIS — anexados UMA ÚNICA VEZ (estavam dentro de renderStatus
       // e acumulavam a cada carregar(), causando POSTs duplicados).

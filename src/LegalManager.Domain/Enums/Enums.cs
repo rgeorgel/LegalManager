@@ -49,7 +49,7 @@ public enum FrequenciaRecorrencia { Diaria, Semanal, Mensal }
 
 public enum TipoEvento { Audiencia, Reuniao, Pericia, Prazo, Despacho, Outro }
 
-public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada, DocumentoCliente }
+public enum TipoNotificacao { PrazoTarefa, PrazoEvento, TrialExpirando, Geral, NovoAndamento, TarefaAtrasada, DocumentoCliente, AssinaturaContrato }
 
 public enum TipoPublicacao { Prazo, Audiencia, Decisao, Despacho, Intimacao, Outro }
 
@@ -85,7 +85,7 @@ public enum StatusContratoHonorario { Ativo = 1, Suspenso = 2, Quitado = 3, Inad
 
 public enum StatusParcelaHonorario { Pendente = 1, Pago = 2, Vencido = 3, Cancelado = 4 }
 
-public enum EventoContratoHonorario { Criado = 1, Alterado = 2, ParcelaPaga = 3, ParcelaCancelada = 4, Suspenso = 5, Reativado = 6, Distratado = 7, Renegociado = 8 }
+public enum EventoContratoHonorario { Criado = 1, Alterado = 2, ParcelaPaga = 3, ParcelaCancelada = 4, Suspenso = 5, Reativado = 6, Distratado = 7, Renegociado = 8, Assinatura = 9 }
 
 // Pesquisa de interesse/satisfação (perguntas cadastradas pelo super admin, mostradas
 // aos usuários no login e no menu flutuante enquanto não respondidas).
@@ -126,3 +126,15 @@ public enum StatusItemImportacao { Pendente, Importado, JaCadastrado, NaoEncontr
 
 /// <summary>O que o feed iCal da agenda publica: só os itens do usuário ou os do escritório todo (Admin).</summary>
 public enum EscopoFeedAgenda { Meus = 0, Escritorio = 1 }
+
+/// <summary>Andamento de um contrato enviado para assinatura eletrônica (espelha o status do Contratos).</summary>
+public enum StatusSolicitacaoAssinatura
+{
+    Rascunho = 0,
+    Enviada = 1,
+    ParcialmenteAssinada = 2,
+    Concluida = 3,
+    Recusada = 4,
+    Expirada = 5,
+    Cancelada = 6,
+}

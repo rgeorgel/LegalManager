@@ -175,6 +175,8 @@ builder.Services.AddScoped<ParceiroService>();
 builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<LegalManager.Infrastructure.Agenda.FeedAgendaService>();
+builder.Services.AddSingleton<LegalManager.Infrastructure.AssinaturaDigital.CifraSegredos>();
+builder.Services.AddScoped<LegalManager.Infrastructure.AssinaturaDigital.AssinaturaDigitalService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
 builder.Services.AddScoped<IImportadorProcessosOab, ImportadorProcessosOab>();
@@ -343,6 +345,16 @@ builder.Services.AddScoped<IStripeService>(sp =>
     return new StripeService(stripeClient, sp.GetRequiredService<ILogger<StripeService>>());
 });
 
+// Assinatura eletrônica: API pública do Contratos. Cada escritório usa a própria chave (por chamada).
+builder.Services.AddHttpClient<LegalManager.Infrastructure.AssinaturaDigital.IContratosApi,
+    LegalManager.Infrastructure.AssinaturaDigital.ContratosHttpClient>(c =>
+{
+    var baseUrl = builder.Configuration[LegalManager.Infrastructure.AssinaturaDigital.ContratosHttpClient.ConfigBaseUrl];
+    if (!string.IsNullOrWhiteSpace(baseUrl))
+        c.BaseAddress = new Uri(baseUrl.TrimEnd('/') + LegalManager.Infrastructure.AssinaturaDigital.ContratosHttpClient.Caminho);
+    c.Timeout = TimeSpan.FromSeconds(60);
+});
+
 builder.Services.AddHttpClient("BCB", c =>
 {
     c.BaseAddress = new Uri("https://api.bcb.gov.br/");
@@ -423,6 +435,17 @@ builder.Services.AddRateLimiter(options =>
             {
                 Window = TimeSpan.FromMinutes(1),
                 PermitLimit = 30,
+                QueueLimit = 0
+            }));
+    // Webhook do Contratos (anônimo, conferido por HMAC): o limite só contém abuso; o Contratos
+    // reenvia o que receber 429.
+    options.AddPolicy(LegalManager.API.Controllers.AssinaturaDigitalController.PoliticaRateLimitWebhook, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetClientIpAddress() ?? "desconhecido",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 300,
                 QueueLimit = 0
             }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -755,6 +778,13 @@ static void RegistrarJobsRecorrentes(IConfiguration config)
             job => job.ExecutarAsync(),
             oabCron);
     }
+
+    // Assinatura eletrônica: o webhook do Contratos é o canal principal; a cada 2 h confere os
+    // contratos em aberto (e baixa PDFs assinados que ficaram para trás).
+    RecurringJob.AddOrUpdate<LegalManager.Infrastructure.AssinaturaDigital.AssinaturaDigitalService>(
+        "assinatura-digital-conferencia",
+        s => s.ConferirPendentesAsync(CancellationToken.None),
+        "15 */2 * * *");
 
     RecurringJob.AddOrUpdate<EscavadorTierManagementJob>(
         "escavador-tier-semanal",

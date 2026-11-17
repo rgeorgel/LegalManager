@@ -1412,6 +1412,32 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("Eventos");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.EventoAssinaturaRecebido", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("RecebidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecebidoEm");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("EventosAssinaturaRecebidos", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Faturamento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1973,6 +1999,57 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("IndicesCorrecaoMonetaria");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.IntegracaoAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApiKeyCifrada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ApiKeyFinal")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("ConectadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConectadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OrganizacaoNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PlanoNome")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UltimoWebhookEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WebhookSecretCifrado")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConectadoPorId");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("IntegracoesAssinatura", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.InteracaoAssistente", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2116,6 +2193,35 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "Status");
 
                     b.ToTable("LancamentosFinanceiros", (string)null);
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.MapeamentoModeloAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FontesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TemplateId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "TemplateId")
+                        .IsUnique();
+
+                    b.ToTable("MapeamentosModeloAssinatura", (string)null);
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.ModeloDocumento", b =>
@@ -3383,6 +3489,110 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("SalariosMinimos", (string)null);
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoExternoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ConcluidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ConferidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ContatoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContratoExternoId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ContratoHonorarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CriadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DocumentoAssinadoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EnviadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Erro")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MotivoRecusa")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("NumeroExterno")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ProcessoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SignatariosJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("TemplateId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("TemplateNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContatoId");
+
+                    b.HasIndex("ContratoHonorarioId");
+
+                    b.HasIndex("CriadoPorId");
+
+                    b.HasIndex("DocumentoAssinadoId");
+
+                    b.HasIndex("ProcessoId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId", "ContratoExternoId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "ContratoHonorarioId");
+
+                    b.ToTable("SolicitacoesAssinatura", (string)null);
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4539,6 +4749,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.EventoAssinaturaRecebido", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.Faturamento", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
@@ -4640,6 +4861,24 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.IntegracaoAssinatura", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "ConectadoPor")
+                        .WithMany()
+                        .HasForeignKey("ConectadoPorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConectadoPor");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.LancamentoFinanceiro", b =>
                 {
                     b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
@@ -4673,6 +4912,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("ParcelaHonorario");
 
                     b.Navigation("Processo");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.MapeamentoModeloAssinatura", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Tenant");
                 });
@@ -4963,6 +5213,52 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("GeradoPor");
 
                     b.Navigation("Processo");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoAssinatura", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Contato", "Contato")
+                        .WithMany()
+                        .HasForeignKey("ContatoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.ContratoHonorario", "ContratoHonorario")
+                        .WithMany()
+                        .HasForeignKey("ContratoHonorarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Usuario", "CriadoPor")
+                        .WithMany()
+                        .HasForeignKey("CriadoPorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Documento", "DocumentoAssinado")
+                        .WithMany()
+                        .HasForeignKey("DocumentoAssinadoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Processo", "Processo")
+                        .WithMany()
+                        .HasForeignKey("ProcessoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Contato");
+
+                    b.Navigation("ContratoHonorario");
+
+                    b.Navigation("CriadoPor");
+
+                    b.Navigation("DocumentoAssinado");
+
+                    b.Navigation("Processo");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>
