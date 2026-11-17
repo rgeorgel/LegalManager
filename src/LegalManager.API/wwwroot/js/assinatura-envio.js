@@ -203,8 +203,14 @@ function montarModal() {
     if (e.target.id === 'asgTemplate') carregarTemplate(e.target.value);
     else if (e.target.matches('.asg-fonte')) {
       const input = overlay.querySelector(`.asg-valor[data-chave="${CSS.escape(e.target.dataset.chave)}"]`);
-      if (input && e.target.value) input.value = preparado?.valoresFontes?.[e.target.value] ?? '';
+      if (input && e.target.value) {
+        input.value = preparado?.valoresFontes?.[e.target.value] ?? '';
+        if (input.value.trim()) desmarcar(input);
+      }
     } else if (e.target.matches('.asg-canal')) atualizarCanal(e.target.closest('.asg-sig'));
+  });
+  overlay.addEventListener('input', e => {
+    if (e.target.classList?.contains('asg-invalido') && e.target.value.trim()) desmarcar(e.target);
   });
   overlay.addEventListener('keydown', e => {
     e.stopPropagation();
@@ -405,13 +411,61 @@ function erro(msg) {
   if (msg) el.scrollIntoView({ block: 'nearest' });
 }
 
+/** Pinta o campo de vermelho e, nas variáveis, escreve o motivo logo abaixo. */
+function marcar(campo, msg) {
+  campo.classList.add('asg-invalido');
+  campo.setAttribute('aria-invalid', 'true');
+  campo.title = msg;
+  const linha = campo.closest('.asg-var');
+  if (linha && !linha.querySelector('.asg-campo-erro')) {
+    linha.insertAdjacentHTML('beforeend', `<div class="asg-campo-erro" role="alert">${esc(msg)}</div>`);
+  }
+}
+
+function desmarcar(campo) {
+  campo.classList.remove('asg-invalido');
+  campo.removeAttribute('aria-invalid');
+  campo.removeAttribute('title');
+  campo.closest('.asg-var')?.querySelector('.asg-campo-erro')?.remove();
+  if (!overlay.querySelector('.asg-invalido')) erro('');
+}
+
+function limparMarcas() {
+  overlay.querySelectorAll('.asg-invalido').forEach(desmarcar);
+}
+
 function coletar() {
+  limparMarcas();
   const variaveis = {};
   const fontes = {};
   overlay.querySelectorAll('.asg-valor').forEach(i => { variaveis[i.dataset.chave] = i.value.trim(); });
   overlay.querySelectorAll('.asg-fonte').forEach(s => { fontes[s.dataset.chave] = s.value || null; });
-  const faltando = preparado.variaveis.filter(v => v.obrigatoria && !variaveis[v.chave]).map(v => v.rotulo);
-  if (faltando.length) throw new Error(`Preencha: ${faltando.join(', ')}.`);
+
+  // Tudo que falta de uma vez: marca cada campo e junta os nomes na caixa do rodapé.
+  const faltando = [];
+  const invalidos = [];
+  preparado.variaveis.filter(v => v.obrigatoria && !variaveis[v.chave]).forEach(v => {
+    const campo = overlay.querySelector(`.asg-valor[data-chave="${CSS.escape(v.chave)}"]`);
+    if (campo) { marcar(campo, 'Obrigatório'); invalidos.push(campo); }
+    faltando.push(v.rotulo);
+  });
+  overlay.querySelectorAll('.asg-sig').forEach((l, i) => {
+    const nome = l.querySelector('.asg-sig-nome');
+    const quem = nome.value.trim() || `${i + 1}º signatário`;
+    if (!nome.value.trim()) { marcar(nome, 'Informe o nome'); invalidos.push(nome); faltando.push(`nome do ${i + 1}º signatário`); }
+    if (l.querySelector('.asg-canal').value === 'email') {
+      const email = l.querySelector('.asg-sig-email');
+      if (!email.value.trim()) { marcar(email, 'Informe o e-mail'); invalidos.push(email); faltando.push(`e-mail de ${quem}`); }
+    } else {
+      const tel = l.querySelector('.asg-sig-tel');
+      if (tel.value.replace(/\D/g, '').length < 10) { marcar(tel, 'Celular com DDD'); invalidos.push(tel); faltando.push(`celular com DDD de ${quem}`); }
+    }
+  });
+  if (faltando.length) {
+    invalidos[0]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    invalidos[0]?.focus({ preventScroll: true });
+    throw new Error(`Preencha: ${faltando.join(', ')}.`);
+  }
 
   const signatarios = [...overlay.querySelectorAll('.asg-sig')].map((l, i) => {
     const canal = l.querySelector('.asg-canal').value;
