@@ -1331,4 +1331,37 @@ public class AssinaturaDigitalServiceTests
         _api.Setup(a => a.ObterContaAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync(Conta());
         Assert.Equal("https://app.causify.test", Valor(await Controller().Integracao(CancellationToken.None)).OrigemEmbed);
     }
+
+    // ── Ajustes do Contratos (17/11/2026): signLink e already_final ───────────────────
+
+    [Fact]
+    public async Task Escritorio_NaoRecebeOLinkDeAssinatura()
+    {
+        var sol = Solicitacao();
+        AssinaturaDigitalService.Aplicar(sol, Ext("sent", T0.AddMinutes(1), Sig("s1", "Maria", "pending") with { SignLink = "https://assina.test/maria" }));
+        await _db.SaveChangesAsync();
+        Assert.Equal("https://assina.test/maria", AssinaturaDigitalService.LerSignatarios(sol.SignatariosJson).Single().Link);
+
+        var lista = Valor(await Controller(_advogado).Solicitacoes(_contrato.Id, null, null, CancellationToken.None));
+        Assert.Null(lista.Single().Signatarios.Single().Link);
+        Assert.DoesNotContain("assina.test", JsonSerializer.Serialize(lista));
+    }
+
+    [Theory]
+    [InlineData("already_final", "cancelled", StatusSolicitacaoAssinatura.Cancelada, "finalizado ou cancelado")]
+    [InlineData("already_sent", "sent", StatusSolicitacaoAssinatura.Enviada, "já foi enviado")]
+    public async Task EnviarRascunho_MudouNoContratosTrazOEstadoAtual(string codigo, string statusExterno, StatusSolicitacaoAssinatura esperado, string trecho)
+    {
+        Conectar();
+        var sol = Solicitacao(StatusSolicitacaoAssinatura.Rascunho, sigs: [Sig("s1", "Maria", "pending")]);
+        _api.Setup(a => a.EnviarAsync(Chave, "ext-1", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, codigo, "Mensagem do Contratos"));
+        _api.Setup(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext(statusExterno, T0.AddMinutes(1), Sig("s1", "Maria", "pending")));
+
+        var r = await Controller(_advogado).Enviar(sol.Id, CancellationToken.None);
+        Assert.Equal(409, Status(r));
+        Assert.Contains(trecho, Mensagem(r.Result));
+        Assert.Equal(esperado, (await _db.SolicitacoesAssinatura.SingleAsync()).Status);
+    }
 }

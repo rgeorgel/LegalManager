@@ -406,6 +406,16 @@ public class AssinaturaDigitalService(
             throw new AssinaturaDigitalException("Este contrato já foi enviado.", 409);
         ContratosContrato contrato;
         try { contrato = await api.EnviarAsync(chave, sol.ContratoExternoId, $"causify-envio-{sol.Id}", ct); }
+        catch (ContratosApiException e) when (e.Codigo is "already_final" or "already_sent")
+        {
+            // Mudou no Contratos (enviado ou cancelado pela tela de lá): traz o estado atual.
+            contrato = await Chamar(() => api.ObterContratoAsync(chave, sol.ContratoExternoId, ct));
+            AplicarComMudancas(sol, contrato, null);
+            await db.SaveChangesAsync(ct);
+            throw new AssinaturaDigitalException(e.Codigo == "already_final"
+                ? "Este contrato já foi finalizado ou cancelado no Contratos e não pode mais ser enviado."
+                : "Este contrato já foi enviado pelo Contratos.", 409);
+        }
         catch (ContratosApiException e) { throw Traduzir(e); }
         sol.Erro = null;
         AplicarComMudancas(sol, contrato, usuarioId);
@@ -482,9 +492,13 @@ public class AssinaturaDigitalService(
         return ParaDto(sol, criador);
     }
 
+    /// <summary>
+    /// Visão do escritório. Sem o signLink: ele abre a assinatura em nome do signatário, e o Contratos
+    /// pede para mostrá-lo só à própria pessoa (o portal do cliente usa o link do cliente).
+    /// </summary>
     public static SolicitacaoAssinaturaDto ParaDto(SolicitacaoAssinatura s, string? criador)
     {
-        var signatarios = LerSignatarios(s.SignatariosJson);
+        var signatarios = LerSignatarios(s.SignatariosJson).Select(x => x with { Link = null }).ToList();
         return new SolicitacaoAssinaturaDto(s.Id, s.ContratoHonorarioId, s.ContratoExternoId, s.NumeroExterno, s.Titulo,
             s.TemplateNome, s.Status, signatarios, signatarios.Count(x => x.Status == "signed"), s.Erro, s.MotivoRecusa,
             s.DocumentoAssinadoId, criador, s.CriadoEm, s.EnviadaEm, s.ConcluidaEm, s.ExpiraEm);
