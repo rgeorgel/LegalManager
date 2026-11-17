@@ -50,6 +50,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Causify — Perfil do Contato</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/assinatura-digital.css">
   <style>
     .voltar-link { font-size:13px; color:var(--color-text-muted); text-decoration:none; }
     .voltar-link:hover { color:var(--color-text); }
@@ -110,6 +111,7 @@
         <a class="btn btn-secondary" id="btnNovoProcesso" href="/pages/processos.html?novo=1">⚖️ Novo processo</a>
         <button class="btn btn-secondary" id="btnAgendarRetorno">📅 Agendar retorno</button>
         <button class="btn btn-secondary" id="btnPortal" style="display:none">🔑 Portal do cliente</button>
+        <button class="btn btn-secondary" id="btnAssinatura" hidden>✍️ Enviar para assinatura</button>
         <button class="btn btn-primary" id="btnEditar">✏️ Editar</button>
       </div>
     </div>
@@ -168,6 +170,8 @@
               </div>
             </div>
           </div>
+
+          <div id="assinaturas" style="margin-top:20px" hidden></div>
 
           <div class="card" id="cardHonorarios" style="margin-top:20px;display:none">
             <div class="card-body">
@@ -249,6 +253,7 @@
   import { setupVoltarButton, contatoPerfilUrl } from '/js/contato-nav.js';
   import { createContatoPicker } from '/js/contato-picker.js';
   import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
+  import { iniciarAssinaturas } from '/js/assinatura-envio.js';
 
   initLayout();
 
@@ -266,6 +271,11 @@
     document.getElementById('btnNovoProcesso').href =
       `/pages/processos.html?novo=1&contatoId=${encodeURIComponent(contatoId)}`;
     carregar();
+    iniciarAssinaturas({
+      origem: { contatoId },
+      botao: document.getElementById('btnAssinatura'),
+      container: document.getElementById('assinaturas'),
+    });
     // Contato atualizado ou atendimento registrado pelo chat do assistente de IA.
     window.addEventListener('assistente:alteracao', (e) => {
       if (e.detail?.entidade === 'contato') carregar();

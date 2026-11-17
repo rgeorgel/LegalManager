@@ -50,8 +50,9 @@ public record EnvioPreparadoDto(
     IReadOnlyList<FonteAssinaturaDto> Fontes,
     IReadOnlyDictionary<string, string?> ValoresFontes);
 
+/// <summary>De onde sai o envio: um contrato de honorários, um contato ou um processo (um dos três).</summary>
 public record CriarSolicitacaoAssinaturaDto(
-    Guid ContratoHonorarioId,
+    Guid? ContratoHonorarioId,
     string TemplateId,
     string? Titulo,
     Dictionary<string, string?> Variaveis,
@@ -60,7 +61,9 @@ public record CriarSolicitacaoAssinaturaDto(
     bool EmOrdem = false,
     DateOnly? Prazo = null,
     string? Mensagem = null,
-    bool Enviar = true);
+    bool Enviar = true,
+    Guid? ContatoId = null,
+    Guid? ProcessoId = null);
 
 /// <summary>Snapshot de um signatário, como veio do Contratos (também é o formato guardado em JSON).</summary>
 public record SignatarioAssinaturaDto(
@@ -74,7 +77,8 @@ public record SignatarioAssinaturaDto(
     DateTime? VistoEm,
     DateTime? AssinadoEm,
     DateTime? RecusadoEm,
-    string? MotivoRecusa);
+    string? MotivoRecusa,
+    string? Link = null);
 
 public record SolicitacaoAssinaturaDto(
     Guid Id,
@@ -94,3 +98,24 @@ public record SolicitacaoAssinaturaDto(
     DateTime? EnviadaEm,
     DateTime? ConcluidaEm,
     DateTime? ExpiraEm);
+
+/// <summary>Selo de assinatura nos cards da lista de contratos de honorários (último envio não cancelado).</summary>
+public record ResumoAssinaturaDto(StatusSolicitacaoAssinatura Status, int Assinados, int Total);
+
+/// <summary>
+/// O que o cliente vê no portal: sem e-mail/telefone dos outros signatários. <see cref="MinhaSituacao"/> e
+/// <see cref="LinkAssinatura"/> vêm do signatário que corresponde ao contato (e-mail ou celular).
+/// </summary>
+public record AssinaturaPortalDto(
+    Guid Id,
+    string Titulo,
+    StatusSolicitacaoAssinatura Status,
+    int Assinados,
+    int Total,
+    DateTime? EnviadaEm,
+    DateTime? ConcluidaEm,
+    DateTime? ExpiraEm,
+    string? MinhaSituacao,
+    string? Canal,
+    string? LinkAssinatura,
+    bool TemPdf);

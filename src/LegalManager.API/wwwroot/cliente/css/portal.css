@@ -895,3 +895,13 @@ a.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); t
   .pu-painel, .pu-dentro, .pu-btn-abrir, .pu-chip span { transition: none; }
   .doc-item.doc-novo { animation: none; }
 }
+
+/* ── Contratos para assinar (assinatura eletrônica) ─── */
+.pa-card { margin-bottom: 20px; }
+.pa-item { padding: 14px 20px; border-top: 1px solid var(--color-border); }
+.pa-item:first-child { border-top: none; }
+.pa-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.pa-titulo { font-weight: 600; font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.pa-meta { font-size: 13px; color: var(--color-text-muted); margin-top: 4px; }
+.pa-acao { margin-top: 10px; }
+.pa-dica { font-size: 13px; color: var(--color-text-muted); }

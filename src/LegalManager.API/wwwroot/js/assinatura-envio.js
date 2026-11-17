@@ -1,4 +1,5 @@
-// Assinatura eletrônica pelo Contratos, no detalhe do contrato de honorários: cartão com os envios
+// Assinatura eletrônica pelo Contratos, no detalhe do contrato de honorários, do contato e do
+// processo (a "origem" do envio): cartão com os envios
 // (status de cada signatário, atualizar, enviar rascunho, cancelar, reenviar link, abrir o PDF
 // assinado) e o modal de envio — escolhe o template do Contratos, as variáveis vêm preenchidas com
 // os dados do contrato (fonte trocável por variável, lembrada por template) e os signatários sugeridos.
@@ -28,16 +29,24 @@ const CANAIS = { email: 'E-mail', whatsapp: 'WhatsApp', sms: 'SMS' };
 const ACOES = { sign: 'Assina', sign_as_witness: 'Testemunha', approve: 'Aprova', recognize: 'Reconhece' };
 const EM_ABERTO = ['Rascunho', 'Enviada', 'ParcialmenteAssinada'];
 
-let ctx = null; // { contratoId, container, botao, aoMudar }
+let ctx = null; // { origem: { contratoHonorarioId | contatoId | processoId }, container, botao, aoMudar }
 let integracao = null;
 let solicitacoes = [];
 let overlay = null;
 let preparado = null;
 let enviando = false;
 
-/** Liga o botão "Enviar para assinatura" e o cartão. Some tudo se a integração não existe no servidor. */
-export async function iniciarAssinaturas({ contratoId, container, botao, aoMudar }) {
-  ctx = { contratoId, container, botao, aoMudar };
+/** Parâmetros da origem para a URL: contratoHonorarioId=…, contatoId=… ou processoId=…. */
+function qsOrigem() {
+  return Object.entries(ctx.origem).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+}
+
+/**
+ * Liga o botão "Enviar para assinatura" e o cartão. Some tudo se a integração não existe no servidor.
+ * origem: { contratoHonorarioId } | { contatoId } | { processoId } — `contratoId` vale como contratoHonorarioId.
+ */
+export async function iniciarAssinaturas({ origem, contratoId, container, botao, aoMudar }) {
+  ctx = { origem: origem || { contratoHonorarioId: contratoId }, container, botao, aoMudar };
   try {
     integracao = await apiFetch(`${API}/integracao`);
   } catch {
@@ -52,7 +61,7 @@ export async function iniciarAssinaturas({ contratoId, container, botao, aoMudar
 
 async function recarregar() {
   try {
-    solicitacoes = await apiFetch(`${API}/solicitacoes?contratoHonorarioId=${encodeURIComponent(ctx.contratoId)}`) || [];
+    solicitacoes = await apiFetch(`${API}/solicitacoes?${qsOrigem()}`) || [];
   } catch {
     solicitacoes = [];
   }
@@ -252,9 +261,9 @@ async function carregarTemplate(templateId) {
   preparado = null;
   rodape('<button type="button" class="btn btn-secondary" data-asg-modal="fechar">Cancelar</button>');
   if (!templateId) { alvo.innerHTML = ''; return; }
-  alvo.innerHTML = '<p class="asg-aviso">Preenchendo com os dados do contrato…</p>';
+  alvo.innerHTML = '<p class="asg-aviso">Preenchendo com os dados do Causify…</p>';
   try {
-    preparado = await apiFetch(`${API}/preparar?contratoHonorarioId=${encodeURIComponent(ctx.contratoId)}&templateId=${encodeURIComponent(templateId)}`);
+    preparado = await apiFetch(`${API}/preparar?${qsOrigem()}&templateId=${encodeURIComponent(templateId)}`);
   } catch (err) {
     alvo.innerHTML = `<div class="alert alert-error">${esc(err?.message || 'Não foi possível abrir o template.')}</div>`;
     return;
@@ -385,7 +394,7 @@ function coletar() {
   if (!signatarios.length) throw new Error('Inclua pelo menos um signatário.');
 
   return {
-    contratoHonorarioId: ctx.contratoId,
+    ...ctx.origem,
     templateId: preparado.templateId,
     titulo: overlay.querySelector('#asgTitulo2').value.trim() || null,
     variaveis,

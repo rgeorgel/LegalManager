@@ -196,6 +196,7 @@
   <script type="module">
     import { initLayout } from '/js/layout.js';
     import { cardEntidade, ativarCardsClicaveis, ICONES } from '/js/cards.js';
+    import { apiFetch } from '/js/api.js';
     import {
       brl, fmtDate, escapeHtml, notify, pick,
       listarContratos, getDashboard,
@@ -225,6 +226,8 @@
       if (VALID_VIEW.has(v)) currentView = v;
     } catch {}
     let ultimosItens = [];
+    // Último envio para assinatura (Contratos) de cada contrato da página: id → { status, assinados, total }.
+    let assinaturas = {};
 
     const fmtStatus = (s) => STATUS_CONTRATO_LABELS[s] ?? { cls: 'badge-muted', label: s };
 
@@ -403,8 +406,37 @@
         return;
       }
       ultimosItens = items;
+      assinaturas = {};
       renderItens();
       renderPaginacao(total);
+      carregarAssinaturas(items);
+    }
+
+    /** Selo de assinatura: busca depois da lista, para não atrasar a primeira pintura. */
+    async function carregarAssinaturas(items) {
+      const ids = items.map(c => c.id ?? c.Id);
+      try {
+        const r = await apiFetch(`/assinatura-digital/resumo?${ids.map(id => `contratoHonorarioIds=${encodeURIComponent(id)}`).join('&')}`);
+        if (items !== ultimosItens || !r || !Object.keys(r).length) return;
+        assinaturas = r;
+        renderItens();
+      } catch { /* sem integração ou sem permissão: lista sem selo */ }
+    }
+
+    function seloAssinatura(id) {
+      const r = assinaturas[id];
+      if (!r) return '';
+      const sel = {
+        Rascunho: ['badge-muted', 'Rascunho', 'Assinatura: rascunho no Contratos, ainda não enviado'],
+        Enviada: ['badge-warn', `${r.assinados}/${r.total}`, `Assinatura: ${r.assinados} de ${r.total} assinaram`],
+        ParcialmenteAssinada: ['badge-warn', `${r.assinados}/${r.total}`, `Assinatura: ${r.assinados} de ${r.total} assinaram`],
+        Concluida: ['badge-ok', 'Assinado', 'Assinatura: assinado por todos'],
+        Recusada: ['badge-err', 'Recusado', 'Assinatura: um signatário recusou'],
+        Expirada: ['badge-err', 'Expirado', 'Assinatura: o prazo para assinar acabou'],
+      }[r.status];
+      if (!sel) return '';
+      // Selo curto e sem encolher: quem encolhe na faixa é o número do processo.
+      return `<span class="badge-sm ${sel[0]}" title="${escapeHtml(sel[2])}" aria-label="${escapeHtml(sel[2])}">✍ ${escapeHtml(sel[1])}</span>`;
     }
 
     function renderItens() {
@@ -466,6 +498,7 @@
                 <a href="${detalheUrl(id)}" title="Abrir contrato">${escapeHtml(c.nomeContato ?? c.NomeContato)}</a>
                 <span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>
                 <span class="badge-sm ${info.cls}">${info.label}</span>
+                ${seloAssinatura(id)}
               </div>
               ${objeto ? `<div class="ct-row-obj">${escapeHtml(objeto.slice(0, 140))}</div>` : ''}
             </div>
@@ -520,6 +553,7 @@
         statusHtml: `<span class="badge-sm ${info.cls}">${info.label}</span>`,
         tagsHtml: [
           `<span class="badge-sm badge-muted">${escapeHtml(c.numeroContrato ?? c.NumeroContrato)}</span>`,
+          seloAssinatura(id),
           proc ? `<span class="badge-sm badge-proc ent-encolhe" title="Processo ${escapeHtml(proc)}">⚖ ${escapeHtml(proc)}</span>` : '',
         ],
         descricao: c.objeto ?? c.Objeto ?? '',

@@ -187,6 +187,7 @@ export async function aceitarConvitePortal(token, senha) {
 export const portalApi = {
   getMe: () => clienteApiFetch('/me'),
   getMeusProcessos: () => clienteApiFetch('/meus-processos'),
+  getMinhasAssinaturas: () => clienteApiFetch('/minhas-assinaturas'),
   getProcesso: (id) => clienteApiFetch(`/meus-processos/${id}`),
   getAndamentos: (id) => clienteApiFetch(`/meus-processos/${id}/andamentos`),
   getResumos: (id) => clienteApiFetch(`/meus-processos/${id}/resumos`),

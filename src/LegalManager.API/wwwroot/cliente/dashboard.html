@@ -56,6 +56,8 @@
       </a>
     </div>
 
+    <div id="assinaturasPortal" hidden></div>
+
     <div class="card">
       <div class="card-header">
         <span class="card-title">Processos recentes</span>
@@ -70,12 +72,14 @@
   <script type="module">
     import { initLayout, icone, processoCardHtml } from '/cliente/js/clienteLayout.js';
     import { portalApi } from '/cliente/js/clienteApi.js';
+    import { montarAssinaturasPortal } from '/cliente/js/clienteAssinaturas.js';
 
     loadDashboard();
 
     async function loadDashboard() {
       const user = initLayout('dashboard');
       if (!user) return; // initLayout já mandou para o login (voltando a esta página depois)
+      montarAssinaturasPortal(document.getElementById('assinaturasPortal'));
 
       document.querySelectorAll('[data-icone]').forEach(el => { el.innerHTML = icone(el.dataset.icone); });
       const hora = new Date().getHours();

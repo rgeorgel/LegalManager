@@ -66,7 +66,8 @@ public sealed record ContratosSignatario(
     DateTimeOffset? ViewedAt,
     DateTimeOffset? SignedAt,
     DateTimeOffset? DeclinedAt,
-    string? DeclineReason);
+    string? DeclineReason,
+    string? SignLink = null);
 
 /// <summary>Erro da API (Problem Details). <see cref="Mensagem"/> é o title, em português, para mostrar ao usuário.</summary>
 public sealed class ContratosApiException(

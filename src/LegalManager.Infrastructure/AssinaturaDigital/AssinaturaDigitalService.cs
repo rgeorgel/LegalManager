@@ -19,6 +19,19 @@ public sealed class AssinaturaDigitalException(string mensagem, int status = 400
 
 public enum ResultadoWebhook { Processado, Ignorado, Repetido, IntegracaoInexistente, AssinaturaInvalida, CorpoInvalido }
 
+/// <summary>De onde sai o envio: contrato de honorários, contato ou processo — exatamente um.</summary>
+public sealed record OrigemAssinatura(Guid? ContratoHonorarioId = null, Guid? ContatoId = null, Guid? ProcessoId = null)
+{
+    public static OrigemAssinatura DoContrato(Guid id) => new(ContratoHonorarioId: id);
+
+    public void Validar()
+    {
+        var informadas = new[] { ContratoHonorarioId, ContatoId, ProcessoId }.Count(x => x is { } g && g != Guid.Empty);
+        if (informadas != 1)
+            throw new AssinaturaDigitalException("Informe o contrato de honorários, o contato ou o processo do envio.");
+    }
+}
+
 /// <summary>
 /// Assinatura eletrônica pelo Contratos: conexão por chave de API do escritório, envio de contrato a
 /// partir de um template preenchido com os dados do contrato de honorários, acompanhamento por webhook
@@ -153,10 +166,10 @@ public class AssinaturaDigitalService(
         return lista.Select(t => new ModeloAssinaturaDto(t.Id, t.Name, t.Description, t.Version, t.VariableCount)).ToList();
     }
 
-    public async Task<EnvioPreparadoDto> PrepararAsync(Guid tenantId, Guid usuarioId, Guid contratoHonorarioId, string templateId, CancellationToken ct = default)
+    public async Task<EnvioPreparadoDto> PrepararAsync(Guid tenantId, Guid usuarioId, OrigemAssinatura origem, string templateId, CancellationToken ct = default)
     {
         var chave = await ChaveAsync(tenantId, ct);
-        var ctx = await ContextoAsync(tenantId, usuarioId, contratoHonorarioId, ct);
+        var ctx = await ContextoAsync(tenantId, usuarioId, origem, ct);
         var tpl = await Chamar(() => api.ObterTemplateAsync(chave, templateId, ct));
 
         var salvas = await FontesSalvasAsync(tenantId, templateId, ct);
@@ -164,27 +177,33 @@ public class AssinaturaDigitalService(
         var variaveis = tpl.Variables.Select(v =>
         {
             var fonte = salvas.TryGetValue(v.Key, out var s) && FontesAssinatura.Existe(s) ? s : sugeridas.GetValueOrDefault(v.Key);
+            if (fonte != null && !FontesAssinatura.Disponivel(fonte, ctx)) fonte = null;
             return new VariavelPreparadaDto(v.Key, v.Label, v.Type, v.Required, fonte,
                 fonte != null ? FontesAssinatura.Valor(fonte, ctx) : null);
         }).ToList();
 
-        return new EnvioPreparadoDto(tpl.Id, tpl.Name, tpl.Version, Cortar($"{tpl.Name}: {ctx.Cliente.Nome}", 200),
-            variaveis, SignatariosSugeridos(ctx, tpl.SuggestedSigners), FontesAssinatura.Catalogo,
-            FontesAssinatura.Catalogo.ToDictionary(f => f.Chave, f => FontesAssinatura.Valor(f.Chave, ctx)));
+        var fontes = FontesAssinatura.Catalogo.Where(f => FontesAssinatura.Disponivel(f.Chave, ctx)).ToList();
+        var assunto = ctx.Cliente?.Nome ?? ctx.Processo?.NumeroCNJ;
+        return new EnvioPreparadoDto(tpl.Id, tpl.Name, tpl.Version,
+            Cortar(string.IsNullOrWhiteSpace(assunto) ? tpl.Name : $"{tpl.Name}: {assunto}", 200),
+            variaveis, SignatariosSugeridos(ctx, tpl.SuggestedSigners), fontes,
+            fontes.ToDictionary(f => f.Chave, f => FontesAssinatura.Valor(f.Chave, ctx)));
     }
 
     internal static List<SignatarioEnvioDto> SignatariosSugeridos(ContextoAssinatura ctx, List<ContratosSignatarioSugerido>? sugeridos)
     {
         var papeis = (sugeridos ?? []).OrderBy(s => s.Order ?? int.MaxValue).ToList();
-        var cliente = ctx.Cliente;
+        var advogado = new SignatarioEnvioDto(ctx.Advogado.Nome, "email", ctx.Advogado.Email, null, null,
+            papeis.ElementAtOrDefault(1)?.Role ?? "Contratado", papeis.ElementAtOrDefault(1)?.Action ?? "sign", 2);
+        if (ctx.Cliente is not { } cliente) return [advogado with { Ordem = 1 }];
+
         var telefone = FontesAssinatura.TelefoneInternacional(cliente.Telefone);
         var canal = !string.IsNullOrWhiteSpace(cliente.Email) ? "email" : telefone != null ? "whatsapp" : "email";
         return
         [
             new(cliente.Nome, canal, cliente.Email, telefone, FontesAssinatura.CpfDoSignatario(cliente),
                 papeis.ElementAtOrDefault(0)?.Role ?? "Contratante", papeis.ElementAtOrDefault(0)?.Action ?? "sign", 1),
-            new(ctx.Advogado.Nome, "email", ctx.Advogado.Email, null, null,
-                papeis.ElementAtOrDefault(1)?.Role ?? "Contratado", papeis.ElementAtOrDefault(1)?.Action ?? "sign", 2),
+            advogado,
         ];
     }
 
@@ -193,7 +212,7 @@ public class AssinaturaDigitalService(
     public async Task<SolicitacaoAssinatura> CriarAsync(Guid tenantId, Guid usuarioId, CriarSolicitacaoAssinaturaDto dto, CancellationToken ct = default)
     {
         var chave = await ChaveAsync(tenantId, ct);
-        var ctx = await ContextoAsync(tenantId, usuarioId, dto.ContratoHonorarioId, ct);
+        var ctx = await ContextoAsync(tenantId, usuarioId, new OrigemAssinatura(dto.ContratoHonorarioId, dto.ContatoId, dto.ProcessoId), ct);
         if (string.IsNullOrWhiteSpace(dto.TemplateId)) throw new AssinaturaDigitalException("Escolha o template.");
         var signatarios = ValidarSignatarios(dto.Signatarios);
         if (dto.Prazo is { } p && p < DateOnly.FromDateTime(ctx.Hoje))
@@ -232,8 +251,8 @@ public class AssinaturaDigitalService(
         {
             Id = id,
             TenantId = tenantId,
-            ContratoHonorarioId = ctx.Contrato.Id,
-            ContatoId = ctx.Cliente.Id,
+            ContratoHonorarioId = ctx.Contrato?.Id,
+            ContatoId = ctx.Cliente?.Id,
             ProcessoId = ctx.Processo?.Id,
             ContratoExternoId = contrato.Id,
             TemplateId = dto.TemplateId.Trim(),
@@ -341,14 +360,40 @@ public class AssinaturaDigitalService(
         catch (ContratosApiException e) { throw Traduzir(e); }
     }
 
-    public async Task<List<SolicitacaoAssinaturaDto>> ListarAsync(Guid tenantId, Guid contratoHonorarioId, CancellationToken ct = default)
+    /// <summary>Envios da origem: do contrato; do contato (inclui os dos contratos e processos dele); do processo.</summary>
+    public async Task<List<SolicitacaoAssinaturaDto>> ListarAsync(Guid tenantId, OrigemAssinatura origem, CancellationToken ct = default)
     {
-        var lista = await db.SolicitacoesAssinatura.AsNoTracking()
-            .Where(s => s.TenantId == tenantId && s.ContratoHonorarioId == contratoHonorarioId)
+        origem.Validar();
+        var q = db.SolicitacoesAssinatura.AsNoTracking().Where(s => s.TenantId == tenantId);
+        q = origem.ContratoHonorarioId is { } c ? q.Where(s => s.ContratoHonorarioId == c)
+            : origem.ContatoId is { } k ? q.Where(s => s.ContatoId == k)
+            : q.Where(s => s.ProcessoId == origem.ProcessoId);
+        var lista = await q
             .OrderByDescending(s => s.CriadoEm)
             .Select(s => new { S = s, Criador = s.CriadoPor != null ? s.CriadoPor.Nome : null })
             .ToListAsync(ct);
         return lista.Select(x => ParaDto(x.S, x.Criador)).ToList();
+    }
+
+    /// <summary>Último envio não cancelado de cada contrato de honorários (selo nos cards da lista).</summary>
+    public async Task<Dictionary<Guid, ResumoAssinaturaDto>> ResumoPorContratoAsync(Guid tenantId, IReadOnlyCollection<Guid> contratoIds, CancellationToken ct = default)
+    {
+        if (contratoIds.Count == 0) return [];
+        if (contratoIds.Count > 200) throw new AssinaturaDigitalException("Peça o resumo de no máximo 200 contratos por vez.");
+        var ids = contratoIds.Distinct().ToList();
+        var lista = await db.SolicitacoesAssinatura.AsNoTracking()
+            .Where(s => s.TenantId == tenantId && s.ContratoHonorarioId != null && ids.Contains(s.ContratoHonorarioId.Value)
+                && s.Status != StatusSolicitacaoAssinatura.Cancelada)
+            .Select(s => new { s.ContratoHonorarioId, s.Status, s.SignatariosJson, s.CriadoEm })
+            .ToListAsync(ct);
+        return lista
+            .GroupBy(s => s.ContratoHonorarioId!.Value)
+            .ToDictionary(g => g.Key, g =>
+            {
+                var ultimo = g.OrderByDescending(s => s.CriadoEm).First();
+                var sigs = LerSignatarios(ultimo.SignatariosJson);
+                return new ResumoAssinaturaDto(ultimo.Status, sigs.Count(x => x.Status == "signed"), sigs.Count);
+            });
     }
 
     public async Task<SolicitacaoAssinaturaDto> DtoAsync(SolicitacaoAssinatura sol, CancellationToken ct = default)
@@ -364,6 +409,61 @@ public class AssinaturaDigitalService(
         return new SolicitacaoAssinaturaDto(s.Id, s.ContratoHonorarioId, s.ContratoExternoId, s.NumeroExterno, s.Titulo,
             s.TemplateNome, s.Status, signatarios, signatarios.Count(x => x.Status == "signed"), s.Erro, s.MotivoRecusa,
             s.DocumentoAssinadoId, criador, s.CriadoEm, s.EnviadaEm, s.ConcluidaEm, s.ExpiraEm);
+    }
+
+    // ── Portal do cliente ─────────────────────────────────────────────────────────────
+
+    /// <summary>Envios do cliente no portal: em andamento e encerrados no último ano (rascunhos e cancelados ficam de fora).</summary>
+    public async Task<List<AssinaturaPortalDto>> DoClienteAsync(Guid tenantId, Guid contatoId, CancellationToken ct = default)
+    {
+        var contato = await db.Contatos.AsNoTracking().FirstOrDefaultAsync(c => c.Id == contatoId && c.TenantId == tenantId, ct);
+        if (contato == null) return [];
+        var desde = DateTime.UtcNow.AddDays(-365);
+        var lista = await db.SolicitacoesAssinatura.AsNoTracking()
+            .Where(s => s.TenantId == tenantId && s.ContatoId == contatoId && s.CriadoEm >= desde
+                && s.Status != StatusSolicitacaoAssinatura.Rascunho && s.Status != StatusSolicitacaoAssinatura.Cancelada)
+            .OrderByDescending(s => s.CriadoEm)
+            .Take(50)
+            .ToListAsync(ct);
+        return lista.Select(s => ParaPortal(s, contato)).ToList();
+    }
+
+    internal static AssinaturaPortalDto ParaPortal(SolicitacaoAssinatura s, Contato contato)
+    {
+        var sigs = LerSignatarios(s.SignatariosJson);
+        var eu = SignatarioDoContato(sigs, contato);
+        var aberto = s.Status is StatusSolicitacaoAssinatura.Enviada or StatusSolicitacaoAssinatura.ParcialmenteAssinada;
+        var link = aberto && eu is { Status: "pending" or "viewed" } ? eu.Link : null;
+        return new AssinaturaPortalDto(s.Id, s.Titulo, s.Status, sigs.Count(x => x.Status == "signed"), sigs.Count,
+            s.EnviadaEm, s.ConcluidaEm, s.ExpiraEm, eu?.Status, eu?.Canal, link, s.DocumentoAssinadoId != null);
+    }
+
+    /// <summary>Qual signatário é o contato: pelo e-mail, depois pelo celular, por fim pelo nome.</summary>
+    internal static SignatarioAssinaturaDto? SignatarioDoContato(List<SignatarioAssinaturaDto> sigs, Contato contato)
+    {
+        static string Digitos(string? t) => new((t ?? "").Where(char.IsDigit).ToArray());
+        var email = contato.Email?.Trim();
+        if (!string.IsNullOrEmpty(email)
+            && sigs.FirstOrDefault(s => string.Equals(s.Email?.Trim(), email, StringComparison.OrdinalIgnoreCase)) is { } porEmail)
+            return porEmail;
+        var tel = Digitos(contato.Telefone);
+        if (tel.Length >= 10 && sigs.FirstOrDefault(s => Digitos(s.Telefone) is { Length: >= 10 } d && d.EndsWith(tel[^10..])) is { } porTelefone)
+            return porTelefone;
+        var nome = contato.Nome.Trim();
+        return sigs.FirstOrDefault(s => string.Equals(s.Nome.Trim(), nome, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>O PDF assinado de um envio do cliente, para baixar pelo portal.</summary>
+    public async Task<(Stream Conteudo, string Nome)?> PdfDoClienteAsync(Guid tenantId, Guid contatoId, Guid solicitacaoId, CancellationToken ct = default)
+    {
+        var docId = await db.SolicitacoesAssinatura.AsNoTracking()
+            .Where(s => s.Id == solicitacaoId && s.TenantId == tenantId && s.ContatoId == contatoId)
+            .Select(s => s.DocumentoAssinadoId)
+            .FirstOrDefaultAsync(ct);
+        if (docId == null) return null;
+        var doc = await db.Documentos.AsNoTracking().FirstOrDefaultAsync(d => d.Id == docId && d.TenantId == tenantId, ct);
+        if (doc == null) return null;
+        return (await storage.DownloadAsync(doc.ObjectKey, ct), doc.Nome);
     }
 
     // ── Webhook ───────────────────────────────────────────────────────────────────────
@@ -455,8 +555,11 @@ public class AssinaturaDigitalService(
             throw new InvalidOperationException($"O Contratos não devolveu um PDF para o contrato {sol.ContratoExternoId}.");
 
         var agora = DateTime.UtcNow;
-        var pasta = sol.ContratoHonorarioId?.ToString() ?? "assinaturas";
-        var objectKey = $"{sol.TenantId}/contratos/{pasta}/{agora:yyyyMMddHHmmss}_contrato_{sol.NumeroExterno}_assinado.pdf";
+        var pasta = sol.ContratoHonorarioId is { } cid ? $"contratos/{cid}"
+            : sol.ProcessoId is { } pid ? $"processos/{pid}"
+            : sol.ContatoId is { } kid ? $"clientes/{kid}"
+            : "documentos";
+        var objectKey = $"{sol.TenantId}/{pasta}/{agora:yyyyMMddHHmmss}_contrato_{sol.NumeroExterno}_assinado.pdf";
         using (var stream = new MemoryStream(pdf))
             await storage.UploadAsync(stream, objectKey, "application/pdf", ct);
 
@@ -578,7 +681,8 @@ public class AssinaturaDigitalService(
         sol.SignatariosJson = JsonSerializer.Serialize(
             (c.Signers ?? []).Select(s => new SignatarioAssinaturaDto(s.Id, s.Name, s.Email, s.Phone,
                 ContratosHttpClient.NormalizarCanal(s.DeliveryMethod), s.Role, s.Status, s.ViewedAt?.UtcDateTime,
-                s.SignedAt?.UtcDateTime, s.DeclinedAt?.UtcDateTime, s.DeclineReason)).ToList(),
+                s.SignedAt?.UtcDateTime, s.DeclinedAt?.UtcDateTime, s.DeclineReason,
+                string.IsNullOrWhiteSpace(s.SignLink) ? null : s.SignLink)).ToList(),
             ContratosHttpClient.Json);
         if (!string.IsNullOrWhiteSpace(c.SendError)) sol.Erro = Cortar(c.SendError, 1000);
         else if (sol.Status != StatusSolicitacaoAssinatura.Rascunho) sol.Erro = null;
@@ -602,9 +706,7 @@ public class AssinaturaDigitalService(
         var depois = LerSignatarios(sol.SignatariosJson);
         var total = depois.Count;
         var assinados = depois.Count(s => s.Status == "signed");
-        var url = sol.ContratoHonorarioId != null
-            ? $"/pages/honorarios-contrato-detalhe.html?id={sol.ContratoHonorarioId}"
-            : "/pages/documentos.html";
+        var url = UrlDaOrigem(sol);
 
         foreach (var s in depois)
         {
@@ -652,6 +754,12 @@ public class AssinaturaDigitalService(
         if (!string.IsNullOrWhiteSpace(sol.Erro) && sol.Erro != erroAntes && sol.Status != StatusSolicitacaoAssinatura.Rascunho)
             Notificar(sol, "Falha ao enviar o contrato para assinatura", $"{sol.Titulo}: {sol.Erro}", url);
     }
+
+    internal static string UrlDaOrigem(SolicitacaoAssinatura sol) =>
+        sol.ContratoHonorarioId != null ? $"/pages/honorarios-contrato-detalhe.html?id={sol.ContratoHonorarioId}"
+        : sol.ProcessoId != null ? $"/pages/processo-detalhe.html?id={sol.ProcessoId}"
+        : sol.ContatoId != null ? $"/pages/contato-detalhe.html?id={sol.ContatoId}"
+        : "/pages/documentos.html";
 
     private void AgendarDownloadSePronto(SolicitacaoAssinatura sol, bool pdfPronto)
     {
@@ -714,18 +822,45 @@ public class AssinaturaDigitalService(
         return (sol, await ChaveAsync(tenantId, ct));
     }
 
-    private async Task<ContextoAssinatura> ContextoAsync(Guid tenantId, Guid usuarioId, Guid contratoHonorarioId, CancellationToken ct)
+    private async Task<ContextoAssinatura> ContextoAsync(Guid tenantId, Guid usuarioId, OrigemAssinatura origem, CancellationToken ct)
     {
-        var contrato = await db.ContratosHonorarios
-            .Include(c => c.Contato)
-            .Include(c => c.Processo)
-            .FirstOrDefaultAsync(c => c.Id == contratoHonorarioId && c.TenantId == tenantId, ct)
-            ?? throw new AssinaturaDigitalException("Contrato de honorários não encontrado.", 404);
+        origem.Validar();
+        ContratoHonorario? contrato = null;
+        Contato? cliente = null;
+        Processo? processo = null;
+
+        if (origem.ContratoHonorarioId is { } contratoId)
+        {
+            contrato = await db.ContratosHonorarios
+                .Include(c => c.Contato)
+                .Include(c => c.Processo)
+                .FirstOrDefaultAsync(c => c.Id == contratoId && c.TenantId == tenantId, ct)
+                ?? throw new AssinaturaDigitalException("Contrato de honorários não encontrado.", 404);
+            cliente = contrato.Contato;
+            processo = contrato.Processo;
+        }
+        else if (origem.ContatoId is { } contatoId)
+        {
+            cliente = await db.Contatos.FirstOrDefaultAsync(c => c.Id == contatoId && c.TenantId == tenantId, ct)
+                ?? throw new AssinaturaDigitalException("Contato não encontrado.", 404);
+        }
+        else
+        {
+            processo = await db.Processos.FirstOrDefaultAsync(p => p.Id == origem.ProcessoId && p.TenantId == tenantId, ct)
+                ?? throw new AssinaturaDigitalException("Processo não encontrado.", 404);
+            // O cliente do processo: a parte cadastrada como cliente; senão, a primeira parte.
+            var partes = await db.ProcessoPartes
+                .Where(pp => pp.ProcessoId == processo.Id && pp.Contato.TenantId == tenantId)
+                .Select(pp => pp.Contato)
+                .ToListAsync(ct);
+            cliente = partes.FirstOrDefault(c => c.TipoContato == TipoContato.Cliente) ?? partes.FirstOrDefault();
+        }
+
         var tenant = await db.Tenants.FirstAsync(t => t.Id == tenantId, ct);
         var usuario = await db.Users.FirstOrDefaultAsync(u => u.Id == usuarioId && u.TenantId == tenantId, ct)
             ?? throw new AssinaturaDigitalException("Usuário não encontrado.", 404);
         var hoje = FusoHorario.HojeParede(FusoHorario.Resolver(tenant.FusoHorario));
-        return new ContextoAssinatura(contrato.Contato, contrato, contrato.Processo, tenant, usuario, hoje);
+        return new ContextoAssinatura(cliente, contrato, processo, tenant, usuario, hoje);
     }
 
     private async Task<Dictionary<string, string>> FontesSalvasAsync(Guid tenantId, string templateId, CancellationToken ct)

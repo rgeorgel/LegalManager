@@ -69,18 +69,28 @@ public class AssinaturaDigitalController(
 
     [HttpGet("preparar")]
     [Authorize]
-    public Task<ActionResult<EnvioPreparadoDto>> Preparar([FromQuery] Guid contratoHonorarioId, [FromQuery] string templateId, CancellationToken ct) =>
+    public Task<ActionResult<EnvioPreparadoDto>> Preparar([FromQuery] string templateId, [FromQuery] Guid? contratoHonorarioId,
+        [FromQuery] Guid? contatoId, [FromQuery] Guid? processoId, CancellationToken ct) =>
         Executar<EnvioPreparadoDto>(async () => EhCliente
             ? Proibido(MensagemCliente)
-            : Ok(await service.PrepararAsync(tenantContext.TenantId, tenantContext.UserId, contratoHonorarioId, templateId, ct)));
+            : Ok(await service.PrepararAsync(tenantContext.TenantId, tenantContext.UserId,
+                new OrigemAssinatura(contratoHonorarioId, contatoId, processoId), templateId, ct)));
 
     [HttpGet("solicitacoes")]
     [Authorize]
-    public async Task<ActionResult<List<SolicitacaoAssinaturaDto>>> Solicitacoes([FromQuery] Guid contratoHonorarioId, CancellationToken ct)
-    {
-        if (EhCliente) return Proibido(MensagemCliente);
-        return Ok(await service.ListarAsync(tenantContext.TenantId, contratoHonorarioId, ct));
-    }
+    public Task<ActionResult<List<SolicitacaoAssinaturaDto>>> Solicitacoes([FromQuery] Guid? contratoHonorarioId,
+        [FromQuery] Guid? contatoId, [FromQuery] Guid? processoId, CancellationToken ct) =>
+        Executar<List<SolicitacaoAssinaturaDto>>(async () => EhCliente
+            ? Proibido(MensagemCliente)
+            : Ok(await service.ListarAsync(tenantContext.TenantId, new OrigemAssinatura(contratoHonorarioId, contatoId, processoId), ct)));
+
+    /// <summary>Selo da lista de contratos de honorários: ?contratoHonorarioIds=a&amp;contratoHonorarioIds=b.</summary>
+    [HttpGet("resumo")]
+    [Authorize]
+    public Task<ActionResult<Dictionary<Guid, ResumoAssinaturaDto>>> Resumo([FromQuery] Guid[] contratoHonorarioIds, CancellationToken ct) =>
+        Executar<Dictionary<Guid, ResumoAssinaturaDto>>(async () => EhCliente
+            ? Proibido(MensagemCliente)
+            : Ok(await service.ResumoPorContratoAsync(tenantContext.TenantId, contratoHonorarioIds, ct)));
 
     [HttpPost("solicitacoes")]
     [Authorize]

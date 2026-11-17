@@ -324,7 +324,7 @@ public class AssinaturaDigitalServiceTests
     {
         Conectar();
         TemplateNda();
-        var p = Valor(await Controller(_advogado).Preparar(_contrato.Id, "tpl-1", CancellationToken.None));
+        var p = Valor(await Controller(_advogado).Preparar("tpl-1", _contrato.Id, null, null, CancellationToken.None));
 
         Assert.Equal("NDA: Maria Cliente", p.Titulo);
         var v = p.Variaveis.ToDictionary(x => x.Chave);
@@ -357,7 +357,7 @@ public class AssinaturaDigitalServiceTests
             FontesJson = """{"parte2.nome":"advogado.nome","foro.cidade":"inexistente"}""",
         });
         await _db.SaveChangesAsync();
-        var v = Valor(await Controller(_advogado).Preparar(_contrato.Id, "tpl-1", CancellationToken.None)).Variaveis.ToDictionary(x => x.Chave);
+        var v = Valor(await Controller(_advogado).Preparar("tpl-1", _contrato.Id, null, null, CancellationToken.None)).Variaveis.ToDictionary(x => x.Chave);
         Assert.Equal(("advogado.nome", "Bruno Advogado"), (v["parte2.nome"].Fonte, v["parte2.nome"].Valor));
         Assert.Equal("cliente.cidade", v["foro.cidade"].Fonte);
     }
@@ -367,7 +367,7 @@ public class AssinaturaDigitalServiceTests
     {
         Conectar();
         TemplateNda();
-        var r = await Controller(_advogado).Preparar(Guid.NewGuid(), "tpl-1", CancellationToken.None);
+        var r = await Controller(_advogado).Preparar("tpl-1", Guid.NewGuid(), null, null, CancellationToken.None);
         Assert.Equal(404, Status(r));
     }
 
@@ -517,11 +517,11 @@ public class AssinaturaDigitalServiceTests
     public async Task Listar_TrazAsDoContratoComONomeDeQuemEnviou()
     {
         Solicitacao(sigs: [Sig("s1", "Maria", "signed"), Sig("s2", "Bruno", "pending")]);
-        var lista = Valor(await Controller(_advogado).Solicitacoes(_contrato.Id, CancellationToken.None));
+        var lista = Valor(await Controller(_advogado).Solicitacoes(_contrato.Id, null, null, CancellationToken.None));
         var s = lista.Single();
         Assert.Equal(("Bruno Advogado", 1, 2), (s.CriadoPor, s.Assinados, s.Signatarios.Count));
-        Assert.Empty(Valor(await Controller(_advogado).Solicitacoes(Guid.NewGuid(), CancellationToken.None)));
-        Assert.Equal(403, Status(await Controller(papel: "Cliente").Solicitacoes(_contrato.Id, CancellationToken.None)));
+        Assert.Empty(Valor(await Controller(_advogado).Solicitacoes(Guid.NewGuid(), null, null, CancellationToken.None)));
+        Assert.Equal(403, Status(await Controller(papel: "Cliente").Solicitacoes(_contrato.Id, null, null, CancellationToken.None)));
     }
 
     [Fact]
@@ -905,4 +905,289 @@ public class AssinaturaDigitalServiceTests
     [InlineData(503, 502)]
     public void Traduzir_StatusParaOUsuario(int api, int esperado) =>
         Assert.Equal(esperado, AssinaturaDigitalService.Traduzir(new ContratosApiException(api, null, "m")).Status);
+
+    // ── Fase 2: origem contato/processo, resumo e portal ──────────────────────────────
+
+    private Processo NovoProcesso(params (Contato contato, TipoParteProcesso tipo)[] partes)
+    {
+        var p = new Processo { Id = Guid.NewGuid(), TenantId = _tenant.Id, NumeroCNJ = "0000001-02.2026.8.26.0100", Vara = "2ª Vara" };
+        _db.Processos.Add(p);
+        foreach (var (c, tipo) in partes)
+            _db.ProcessoPartes.Add(new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = p.Id, ContatoId = c.Id, TipoParte = tipo });
+        _db.SaveChanges();
+        return p;
+    }
+
+    private Contato NovoContato(string nome, TipoContato tipo, string? email = null, string? telefone = null)
+    {
+        var c = new Contato { Id = Guid.NewGuid(), TenantId = _tenant.Id, Nome = nome, TipoContato = tipo, Email = email, Telefone = telefone, CriadoEm = DateTime.UtcNow };
+        _db.Contatos.Add(c);
+        _db.SaveChanges();
+        return c;
+    }
+
+    [Fact]
+    public async Task Preparar_PeloContato_SemFontesDeContratoNemProcesso()
+    {
+        Conectar();
+        TemplateNda();
+        var p = Valor(await Controller(_advogado).Preparar("tpl-1", null, _cliente.Id, null, CancellationToken.None));
+        Assert.Equal("NDA: Maria Cliente", p.Titulo);
+        Assert.DoesNotContain(p.Fontes, f => f.Chave.StartsWith("contrato.") || f.Chave.StartsWith("processo."));
+        Assert.False(p.ValoresFontes.ContainsKey("contrato.valorTotal"));
+        var v = p.Variaveis.ToDictionary(x => x.Chave);
+        Assert.Equal("Maria Cliente", v["parte1.nome"].Valor);
+        Assert.Null(v["multa.valor"].Fonte);
+        Assert.Null(v["finalidade"].Fonte);
+        Assert.Equal(2, p.Signatarios.Count);
+    }
+
+    [Fact]
+    public async Task Preparar_PeloProcesso_UsaAParteClienteEOProcesso()
+    {
+        Conectar();
+        TemplateNda();
+        var reu = NovoContato("Empresa Ré", TipoContato.ParteContraria);
+        var processo = NovoProcesso((reu, TipoParteProcesso.Reu), (_cliente, TipoParteProcesso.Autor));
+        var p = Valor(await Controller(_advogado).Preparar("tpl-1", null, null, processo.Id, CancellationToken.None));
+        Assert.Equal("Maria Cliente", p.Signatarios[0].Nome);
+        Assert.Equal("0000001-02.2026.8.26.0100", p.ValoresFontes["processo.numero"]);
+        Assert.Contains(p.Fontes, f => f.Chave == "processo.vara");
+    }
+
+    [Fact]
+    public async Task Preparar_ProcessoSemPartes_SoOAdvogadoAssinaETituloComCnj()
+    {
+        Conectar();
+        TemplateNda();
+        var processo = NovoProcesso();
+        var p = Valor(await Controller(_advogado).Preparar("tpl-1", null, null, processo.Id, CancellationToken.None));
+        Assert.Equal("NDA: 0000001-02.2026.8.26.0100", p.Titulo);
+        var unico = Assert.Single(p.Signatarios);
+        Assert.Equal(("Bruno Advogado", 1), (unico.Nome, unico.Ordem));
+        Assert.Null(p.Variaveis.Single(v => v.Chave == "parte1.nome").Fonte);
+        Assert.DoesNotContain(p.Fontes, f => f.Chave.StartsWith("cliente."));
+    }
+
+    [Fact]
+    public async Task Preparar_ProcessoSemParteClienteUsaAPrimeiraParte()
+    {
+        Conectar();
+        TemplateNda();
+        var outro = NovoContato("Testemunha X", TipoContato.Testemunha);
+        var processo = NovoProcesso((outro, TipoParteProcesso.Interessado));
+        var p = Valor(await Controller(_advogado).Preparar("tpl-1", null, null, processo.Id, CancellationToken.None));
+        Assert.Equal("Testemunha X", p.Signatarios[0].Nome);
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(true, false, true)]
+    public async Task Origem_PrecisaDeExatamenteUma(bool contrato, bool contato, bool processo)
+    {
+        Conectar();
+        TemplateNda();
+        var r = await Controller(_advogado).Preparar("tpl-1", contrato ? _contrato.Id : null, contato ? _cliente.Id : null,
+            processo ? Guid.NewGuid() : null, CancellationToken.None);
+        Assert.Equal(400, Status(r));
+        Assert.Equal(400, Status(await Controller(_advogado).Solicitacoes(contrato ? _contrato.Id : null, contato ? _cliente.Id : null,
+            processo ? Guid.NewGuid() : null, CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task Preparar_ContatoOuProcessoDeOutroEscritorioEh404()
+    {
+        Conectar();
+        TemplateNda();
+        Assert.Equal(404, Status(await Controller(_advogado).Preparar("tpl-1", null, Guid.NewGuid(), null, CancellationToken.None)));
+        Assert.Equal(404, Status(await Controller(_advogado).Preparar("tpl-1", null, null, Guid.NewGuid(), CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task Criar_PeloProcesso_LigaProcessoEClienteSemHistoricoDeContrato()
+    {
+        Conectar();
+        var processo = NovoProcesso((_cliente, TipoParteProcesso.Autor));
+        _api.Setup(a => a.CriarContratoAsync(Chave, It.IsAny<ContratosNovoContrato>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext("sent", T0, Sig("s1", "Maria Cliente", "pending")));
+        var pedido = Pedido() with { ContratoHonorarioId = null, ProcessoId = processo.Id };
+        var dto = Valor(await Controller(_advogado).Criar(pedido, CancellationToken.None));
+
+        var sol = await _db.SolicitacoesAssinatura.SingleAsync();
+        Assert.Equal((null, _cliente.Id, processo.Id), (sol.ContratoHonorarioId, sol.ContatoId, sol.ProcessoId));
+        Assert.Null(dto.ContratoHonorarioId);
+        Assert.False(await _db.HistoricosContratoHonorario.AnyAsync());
+        Assert.Equal($"/pages/processo-detalhe.html?id={processo.Id}", AssinaturaDigitalService.UrlDaOrigem(sol));
+
+        var lista = Valor(await Controller(_advogado).Solicitacoes(null, null, processo.Id, CancellationToken.None));
+        Assert.Single(lista);
+        Assert.Single(Valor(await Controller(_advogado).Solicitacoes(null, _cliente.Id, null, CancellationToken.None)));
+    }
+
+    [Fact]
+    public void UrlDaOrigem_PorPrioridade()
+    {
+        var id = Guid.NewGuid();
+        Assert.Equal($"/pages/honorarios-contrato-detalhe.html?id={id}", AssinaturaDigitalService.UrlDaOrigem(new SolicitacaoAssinatura { ContratoHonorarioId = id, ProcessoId = Guid.NewGuid() }));
+        Assert.Equal($"/pages/contato-detalhe.html?id={id}", AssinaturaDigitalService.UrlDaOrigem(new SolicitacaoAssinatura { ContatoId = id }));
+        Assert.Equal("/pages/documentos.html", AssinaturaDigitalService.UrlDaOrigem(new SolicitacaoAssinatura()));
+    }
+
+    [Fact]
+    public async Task BaixarAssinado_SemContratoGuardaNaPastaDoProcessoOuDoCliente()
+    {
+        Conectar();
+        var processo = NovoProcesso();
+        var porProcesso = Solicitacao(StatusSolicitacaoAssinatura.Concluida);
+        porProcesso.ContratoHonorarioId = null;
+        porProcesso.ProcessoId = processo.Id;
+        var porContato = Solicitacao(StatusSolicitacaoAssinatura.Concluida);
+        porContato.ContratoHonorarioId = null;
+        porContato.ContratoExternoId = "ext-2";
+        await _db.SaveChangesAsync();
+        _api.Setup(a => a.BaixarAssinadoAsync(Chave, It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("%PDF-1.4"u8.ToArray());
+        var chaves = new List<string>();
+        _storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<Stream, string, string, CancellationToken>((_, k, _, _) => chaves.Add(k)).ReturnsAsync("ok");
+
+        await Service().BaixarAssinadoAsync(porProcesso.Id);
+        await Service().BaixarAssinadoAsync(porContato.Id);
+
+        Assert.StartsWith($"{_tenant.Id}/processos/{processo.Id}/", chaves[0]);
+        Assert.StartsWith($"{_tenant.Id}/clientes/{_cliente.Id}/", chaves[1]);
+    }
+
+    [Fact]
+    public async Task Resumo_UltimoEnvioNaoCanceladoDeCadaContrato()
+    {
+        var antigo = Solicitacao(StatusSolicitacaoAssinatura.Expirada, sigs: [Sig("s1", "Maria", "pending")]);
+        antigo.CriadoEm = DateTime.UtcNow.AddDays(-5);
+        var atual = Solicitacao(StatusSolicitacaoAssinatura.ParcialmenteAssinada, sigs: [Sig("s1", "Maria", "signed"), Sig("s2", "Bruno", "pending")]);
+        atual.ContratoExternoId = "ext-2";
+        atual.CriadoEm = DateTime.UtcNow.AddDays(-1);
+        var cancelado = Solicitacao(StatusSolicitacaoAssinatura.Cancelada);
+        cancelado.ContratoExternoId = "ext-3";
+        var outroContrato = new ContratoHonorario { Id = Guid.NewGuid(), TenantId = _tenant.Id, ContatoId = _cliente.Id, NumeroContrato = "HON-2" };
+        _db.ContratosHonorarios.Add(outroContrato);
+        await _db.SaveChangesAsync();
+
+        var r = Valor(await Controller(_advogado).Resumo([_contrato.Id, outroContrato.Id, _contrato.Id], CancellationToken.None));
+        var resumo = Assert.Single(r).Value;
+        Assert.Equal(new ResumoAssinaturaDto(StatusSolicitacaoAssinatura.ParcialmenteAssinada, 1, 2), resumo);
+
+        Assert.Empty(Valor(await Controller(_advogado).Resumo([], CancellationToken.None)));
+        Assert.Equal(400, Status(await Controller(_advogado).Resumo(Enumerable.Range(0, 201).Select(_ => Guid.NewGuid()).ToArray(), CancellationToken.None)));
+        Assert.Equal(403, Status(await Controller(papel: "Cliente").Resumo([_contrato.Id], CancellationToken.None)));
+    }
+
+    [Fact]
+    public void Aplicar_GuardaOLinkDeAssinatura()
+    {
+        var sol = new SolicitacaoAssinatura { Titulo = "x" };
+        AssinaturaDigitalService.Aplicar(sol, Ext("sent", T0, Sig("s1", "Maria", "pending") with { SignLink = "https://assina.test/abc" }, Sig("s2", "Bruno", "pending") with { SignLink = " " }));
+        var sigs = AssinaturaDigitalService.LerSignatarios(sol.SignatariosJson);
+        Assert.Equal("https://assina.test/abc", sigs[0].Link);
+        Assert.Null(sigs[1].Link);
+    }
+
+    // ── Portal do cliente ─────────────────────────────────────────────────────────────
+
+    private PortalClienteAssinaturasController Portal(Guid contatoId, Guid? tenantId = null) => new(Service())
+    {
+        ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+                [
+                    new System.Security.Claims.Claim("contatoId", contatoId.ToString()),
+                    new System.Security.Claims.Claim("tenantId", (tenantId ?? _tenant.Id).ToString()),
+                ], "teste")),
+            },
+        },
+    };
+
+    private static ContratosSignatario SigCom(string id, string nome, string status, string? email = null, string? tel = null, string? link = null) =>
+        new(id, nome, email, tel, tel != null ? "whatsapp" : "email", "Parte", "sign", 1, status, null,
+            status == "signed" ? T0 : null, null, null, link);
+
+    private SolicitacaoAssinatura SolicitacaoComSnapshot(StatusSolicitacaoAssinatura status, string externo, params ContratosSignatario[] sigs)
+    {
+        var s = Solicitacao(status);
+        s.ContratoExternoId = externo;
+        s.AtualizadoExternoEm = null;
+        AssinaturaDigitalService.Aplicar(s, Ext(status switch
+        {
+            StatusSolicitacaoAssinatura.Concluida => "completed",
+            StatusSolicitacaoAssinatura.Rascunho => "draft",
+            StatusSolicitacaoAssinatura.Cancelada => "cancelled",
+            StatusSolicitacaoAssinatura.Expirada => "expired",
+            _ => "sent",
+        }, T0, sigs) with { Id = externo, Title = $"Contrato {externo}" });
+        _db.SaveChanges();
+        return s;
+    }
+
+    [Fact]
+    public async Task Portal_MostraOsEnviosDoClienteComOLinkDele()
+    {
+        SolicitacaoComSnapshot(StatusSolicitacaoAssinatura.Enviada, "a",
+            SigCom("s1", "Outro", "pending", "outro@x.com", link: "https://assina.test/outro"),
+            SigCom("s2", "Maria", "viewed", "MARIA@cliente.com ", link: "https://assina.test/maria"));
+        SolicitacaoComSnapshot(StatusSolicitacaoAssinatura.Rascunho, "b", SigCom("s1", "Maria", "pending", "maria@cliente.com"));
+        SolicitacaoComSnapshot(StatusSolicitacaoAssinatura.Cancelada, "c", SigCom("s1", "Maria", "pending", "maria@cliente.com"));
+        var concluido = SolicitacaoComSnapshot(StatusSolicitacaoAssinatura.Concluida, "d",
+            SigCom("s1", "Maria", "signed", "maria@cliente.com", link: "https://assina.test/velho"));
+        concluido.DocumentoAssinadoId = Guid.NewGuid();
+        await _db.SaveChangesAsync();
+
+        var lista = Valor(await Portal(_cliente.Id).Listar(CancellationToken.None));
+        Assert.Equal(2, lista.Count);
+        var aberto = lista.Single(a => a.Titulo == "Contrato a");
+        Assert.Equal(("viewed", "email", "https://assina.test/maria", false, 0, 2),
+            (aberto.MinhaSituacao, aberto.Canal, aberto.LinkAssinatura, aberto.TemPdf, aberto.Assinados, aberto.Total));
+        var assinado = lista.Single(a => a.Titulo == "Contrato d");
+        Assert.Equal(("signed", null, true), (assinado.MinhaSituacao, assinado.LinkAssinatura, assinado.TemPdf));
+
+        Assert.Empty(Valor(await Portal(Guid.NewGuid()).Listar(CancellationToken.None)));
+        Assert.Empty(Valor(await Portal(_cliente.Id, Guid.NewGuid()).Listar(CancellationToken.None)));
+    }
+
+    [Fact]
+    public void SignatarioDoContato_PorEmailCelularOuNome()
+    {
+        var sigs = new List<SignatarioAssinaturaDto>
+        {
+            new("1", "Fulano", "f@x.com", null, "email", null, "pending", null, null, null, null),
+            new("2", "Beltrano", null, "+55 11 98765-4321", "whatsapp", null, "pending", null, null, null, null),
+            new("3", " maria cliente ", null, null, "email", null, "pending", null, null, null, null),
+        };
+        Assert.Equal("1", AssinaturaDigitalService.SignatarioDoContato(sigs, new Contato { Nome = "X", Email = "F@X.com" })!.Id);
+        Assert.Equal("2", AssinaturaDigitalService.SignatarioDoContato(sigs, new Contato { Nome = "X", Telefone = "(11) 98765-4321" })!.Id);
+        Assert.Equal("3", AssinaturaDigitalService.SignatarioDoContato(sigs, new Contato { Nome = "Maria Cliente", Email = "outro@x.com" })!.Id);
+        Assert.Null(AssinaturaDigitalService.SignatarioDoContato(sigs, new Contato { Nome = "Ninguém", Telefone = "123" }));
+    }
+
+    [Fact]
+    public async Task Portal_PdfSoDoProprioCliente()
+    {
+        var doc = new Documento { Id = Guid.NewGuid(), TenantId = _tenant.Id, Nome = "NDA (assinado).pdf", ObjectKey = "k/nda.pdf", ContentType = "application/pdf" };
+        _db.Documentos.Add(doc);
+        var sol = Solicitacao(StatusSolicitacaoAssinatura.Concluida);
+        sol.DocumentoAssinadoId = doc.Id;
+        var semPdf = Solicitacao(StatusSolicitacaoAssinatura.Concluida);
+        semPdf.ContratoExternoId = "ext-2";
+        await _db.SaveChangesAsync();
+        _storage.Setup(s => s.DownloadAsync("k/nda.pdf", It.IsAny<CancellationToken>())).ReturnsAsync(new MemoryStream("%PDF"u8.ToArray()));
+
+        var r = Assert.IsType<FileStreamResult>(await Portal(_cliente.Id).Pdf(sol.Id, CancellationToken.None));
+        Assert.Equal(("application/pdf", "NDA (assinado).pdf"), (r.ContentType, r.FileDownloadName));
+        Assert.IsType<NotFoundResult>(await Portal(Guid.NewGuid()).Pdf(sol.Id, CancellationToken.None));
+        Assert.IsType<NotFoundResult>(await Portal(_cliente.Id).Pdf(semPdf.Id, CancellationToken.None));
+
+        _db.Documentos.Remove(doc);
+        await _db.SaveChangesAsync();
+        Assert.IsType<NotFoundResult>(await Portal(_cliente.Id).Pdf(sol.Id, CancellationToken.None));
+    }
 }

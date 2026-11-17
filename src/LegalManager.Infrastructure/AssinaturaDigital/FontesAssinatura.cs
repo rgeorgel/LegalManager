@@ -7,8 +7,9 @@ using LegalManager.Domain.Enums;
 namespace LegalManager.Infrastructure.AssinaturaDigital;
 
 /// <summary>Dados do Causify disponíveis para preencher as variáveis de um template do Contratos.</summary>
+/// <remarks>Cliente e contrato podem faltar: envio a partir de um processo sem cliente ou de um contato sem contrato.</remarks>
 public sealed record ContextoAssinatura(
-    Contato Cliente, ContratoHonorario Contrato, Processo? Processo, Tenant Escritorio, Usuario Advogado, DateTime Hoje);
+    Contato? Cliente, ContratoHonorario? Contrato, Processo? Processo, Tenant Escritorio, Usuario Advogado, DateTime Hoje);
 
 /// <summary>
 /// Catálogo das fontes ("cliente.nome", "contrato.valorTotal"…), os valores no formato que a API do
@@ -54,12 +55,12 @@ public static class FontesAssinatura
 
     public static string? Valor(string fonte, ContextoAssinatura c) => fonte switch
     {
-        "cliente.nome" => c.Cliente.Nome,
-        "cliente.cpfCnpj" => c.Cliente.CpfCnpj,
-        "cliente.endereco" => EnderecoCompleto(c.Cliente),
-        "cliente.cidade" => c.Cliente.Cidade,
-        "cliente.email" => c.Cliente.Email,
-        "cliente.telefone" => c.Cliente.Telefone,
+        "cliente.nome" => c.Cliente?.Nome,
+        "cliente.cpfCnpj" => c.Cliente?.CpfCnpj,
+        "cliente.endereco" => c.Cliente is { } cli ? EnderecoCompleto(cli) : null,
+        "cliente.cidade" => c.Cliente?.Cidade,
+        "cliente.email" => c.Cliente?.Email,
+        "cliente.telefone" => c.Cliente?.Telefone,
         "escritorio.nome" => c.Escritorio.Nome,
         "escritorio.cnpj" => c.Escritorio.Cnpj,
         "escritorio.endereco" => c.Escritorio.Endereco,
@@ -67,25 +68,34 @@ public static class FontesAssinatura
         "escritorio.telefone" => c.Escritorio.Telefone,
         "advogado.nome" => c.Advogado.Nome,
         "advogado.email" => c.Advogado.Email,
-        "contrato.numero" => c.Contrato.NumeroContrato,
-        "contrato.objeto" => c.Contrato.Objeto,
-        "contrato.valorTotal" => Dinheiro(c.Contrato.ValorTotal),
-        "contrato.valorEntrada" => c.Contrato.ValorEntrada is { } e ? Dinheiro(e) : null,
-        "contrato.numeroParcelas" => c.Contrato.NumeroParcelas?.ToString(Inv),
-        "contrato.formaPagamento" => c.Contrato.FormaPagamento switch
+        "contrato.numero" => c.Contrato?.NumeroContrato,
+        "contrato.objeto" => c.Contrato?.Objeto,
+        "contrato.valorTotal" => c.Contrato is { } ct ? Dinheiro(ct.ValorTotal) : null,
+        "contrato.valorEntrada" => c.Contrato?.ValorEntrada is { } e ? Dinheiro(e) : null,
+        "contrato.numeroParcelas" => c.Contrato?.NumeroParcelas?.ToString(Inv),
+        "contrato.formaPagamento" => c.Contrato?.FormaPagamento switch
         {
             FormaPagamentoContrato.AVista => "À vista",
             FormaPagamentoContrato.Parcelado => "Parcelado",
             FormaPagamentoContrato.EntradaParcelado => "Entrada + parcelas",
             _ => null,
         },
-        "contrato.dataInicio" => Data(c.Contrato.DataInicio),
-        "contrato.dataPrimeiraParcela" => c.Contrato.DataPrimeiraParcela is { } d ? Data(d) : null,
+        "contrato.dataInicio" => c.Contrato is { } ci ? Data(ci.DataInicio) : null,
+        "contrato.dataPrimeiraParcela" => c.Contrato?.DataPrimeiraParcela is { } d ? Data(d) : null,
         "processo.numero" => c.Processo?.NumeroCNJ,
         "processo.vara" => c.Processo?.Vara,
         "processo.comarca" => c.Processo?.Comarca,
         "hoje" => Data(c.Hoje),
         _ => null,
+    };
+
+    /// <summary>A fonte faz sentido neste envio? (Sem contrato de honorários, as fontes "contrato.*" somem; idem cliente e processo.)</summary>
+    public static bool Disponivel(string fonte, ContextoAssinatura c) => fonte.Split('.')[0] switch
+    {
+        "cliente" => c.Cliente != null,
+        "contrato" => c.Contrato != null,
+        "processo" => c.Processo != null,
+        _ => Existe(fonte),
     };
 
     public static string Dinheiro(decimal v) => v.ToString("0.00", Inv);
