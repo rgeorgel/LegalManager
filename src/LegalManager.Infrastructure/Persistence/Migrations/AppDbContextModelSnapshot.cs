@@ -3827,6 +3827,12 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("PrimaryColor")
                         .HasColumnType("text");
 
+                    b.PrimitiveCollection<List<string>>("RecursosLiberados")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasDefaultValueSql("'{}'::text[]");
+
                     b.Property<string>("SidebarColor")
                         .HasColumnType("text");
 

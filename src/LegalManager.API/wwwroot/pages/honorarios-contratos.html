@@ -197,6 +197,7 @@
     import { initLayout } from '/js/layout.js';
     import { cardEntidade, ativarCardsClicaveis, ICONES } from '/js/cards.js';
     import { apiFetch } from '/js/api.js';
+    import { recursoLiberado, RECURSOS } from '/js/recursos.js';
     import {
       brl, fmtDate, escapeHtml, notify, pick,
       listarContratos, getDashboard,
@@ -415,6 +416,7 @@
     /** Selo de assinatura: busca depois da lista, para não atrasar a primeira pintura. */
     async function carregarAssinaturas(items) {
       const ids = items.map(c => c.id ?? c.Id);
+      if (!ids.length || !await recursoLiberado(RECURSOS.assinaturaDigital)) return;
       try {
         const r = await apiFetch(`/assinatura-digital/resumo?${ids.map(id => `contratoHonorarioIds=${encodeURIComponent(id)}`).join('&')}`);
         if (items !== ultimosItens || !r || !Object.keys(r).length) return;

@@ -188,6 +188,7 @@ export const portalApi = {
   getMe: () => clienteApiFetch('/me'),
   getMeusProcessos: () => clienteApiFetch('/meus-processos'),
   getMinhasAssinaturas: () => clienteApiFetch('/minhas-assinaturas'),
+  getRecursos: () => clienteApiFetch('/recursos'),
   getProcesso: (id) => clienteApiFetch(`/meus-processos/${id}`),
   getAndamentos: (id) => clienteApiFetch(`/meus-processos/${id}/andamentos`),
   getResumos: (id) => clienteApiFetch(`/meus-processos/${id}/resumos`),

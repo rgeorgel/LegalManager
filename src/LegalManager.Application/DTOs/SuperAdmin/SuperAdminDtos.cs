@@ -87,8 +87,14 @@ public record TenantDetailDto(
     string? VoucherUtilizado,
     string? CodigoDesconto,
     DateTime? DescontoPromocionalUsadoEm,
-    List<OabImportadaResumoDto> OabsImportadas
+    List<OabImportadaResumoDto> OabsImportadas,
+    List<RecursoEmTesteDto>? RecursosEmTeste = null
 );
+
+/// <summary>Recurso em teste (RecursosEmTeste) e se está liberado para o escritório.</summary>
+public record RecursoEmTesteDto(string Chave, string Nome, string Descricao, bool Liberado);
+
+public record AlterarRecursoEmTesteDto(bool Liberado);
 
 /// <summary>OAB usada na importação de processos do onboarding (gravada no usuário, não em TenantOabs).</summary>
 public record OabImportadaResumoDto(string Uf, string Numero, string NomeUsuario, int TotalProcessos, int ProcessosAtivos);

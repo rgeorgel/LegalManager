@@ -84,6 +84,7 @@ public static class TimelineAcoes
     public const string LogoRemovido = "logo-removido";
     public const string FusoAlterado = "fuso-alterado";
     public const string MonitoramentoAlternado = "monitoramento-alternado";
+    public const string RecursoEmTesteAlterado = "recurso-em-teste-alterado";
 
     public const string EntidadeAssinatura = "Assinatura";
 }

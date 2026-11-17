@@ -127,7 +127,7 @@
       <button class="tab-btn" data-tab="usuarios">🔑 Usuários</button>
       <button class="tab-btn" data-tab="feriados">📅 Feriados</button>
       <button class="tab-btn" data-tab="importacoes">📥 Importações OAB</button>
-      <button class="tab-btn" data-tab="integracoes">🔗 Integrações</button>
+      <button class="tab-btn" data-tab="integracoes" id="tabBtnIntegracoes" hidden>🔗 Integrações</button>
     </div>
 
     <!-- ===== TAB: CONFIGURAÇÕES ===== -->
@@ -546,6 +546,7 @@ import { esc } from '/js/utils.js';
   import { mascaraCpfCnpj } from '/js/mascaras.js';
   import { montarMfa } from '/js/mfa-config.js';
   import { montarIntegracoes } from '/js/assinatura-integracao.js';
+  import { recursoLiberado, RECURSOS } from '/js/recursos.js';
 
   initLayout();
   montarMfa(document.getElementById('mfaSecao'), apiFetch);
@@ -618,7 +619,12 @@ import { esc } from '/js/utils.js';
   if (initialTab === 'usuarios') switchTab('usuarios');
   if (initialTab === 'feriados') switchTab('feriados');
   if (initialTab === 'importacoes') switchTab('importacoes');
-  if (initialTab === 'integracoes') switchTab('integracoes');
+  // Integrações (assinatura pelo Contratos) é recurso em teste: só aparece nos escritórios liberados.
+  recursoLiberado(RECURSOS.assinaturaDigital).then(liberado => {
+    if (!liberado) return;
+    document.getElementById('tabBtnIntegracoes').hidden = false;
+    if (initialTab === 'integracoes') switchTab('integracoes');
+  });
 
   // ============================================================
   // CONFIGURAÇÕES

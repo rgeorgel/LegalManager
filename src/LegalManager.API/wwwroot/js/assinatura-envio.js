@@ -4,6 +4,7 @@
 // assinado) e o modal de envio — escolhe o template do Contratos, as variáveis vêm preenchidas com
 // os dados do contrato (fonte trocável por variável, lembrada por template) e os signatários sugeridos.
 import { apiFetch } from './api.js';
+import { recursoLiberado, RECURSOS } from './recursos.js';
 import { esc } from './utils.js';
 import { notify } from './honorarios.js';
 import { abrirEditorTemplates } from './contratos-embed.js';
@@ -43,11 +44,13 @@ function qsOrigem() {
 }
 
 /**
- * Liga o botão "Enviar para assinatura" e o cartão. Some tudo se a integração não existe no servidor.
+ * Liga o botão "Enviar para assinatura" e o cartão. Some tudo se o escritório não tem o recurso
+ * liberado (em teste) ou se a integração não existe no servidor.
  * origem: { contratoHonorarioId } | { contatoId } | { processoId } — `contratoId` vale como contratoHonorarioId.
  */
 export async function iniciarAssinaturas({ origem, contratoId, container, botao, aoMudar }) {
   ctx = { origem: origem || { contratoHonorarioId: contratoId }, container, botao, aoMudar };
+  if (!await recursoLiberado(RECURSOS.assinaturaDigital)) return;
   try {
     integracao = await apiFetch(`${API}/integracao`);
   } catch {

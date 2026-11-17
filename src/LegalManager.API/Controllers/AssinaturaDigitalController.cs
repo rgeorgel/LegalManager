@@ -4,6 +4,8 @@ using LegalManager.Domain.Enums;
 using LegalManager.Domain.Interfaces;
 using LegalManager.Infrastructure.AssinaturaDigital;
 using LegalManager.Infrastructure.Services;
+using LegalManager.API.Filters;
+using LegalManager.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,6 +18,7 @@ namespace LegalManager.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/assinatura-digital")]
+[ExigeRecurso(RecursosEmTeste.AssinaturaDigital)]
 public class AssinaturaDigitalController(
     AssinaturaDigitalService service,
     ITenantContext tenantContext,

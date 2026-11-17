@@ -61,6 +61,10 @@ public class Tenant
     public Usuario? TrialConcedidoPor { get; set; }
     public bool TrialGratisBoasVindasVisualizado { get; set; } = false;
 
+    // Recursos em teste liberados pelo super admin (chaves de RecursosEmTeste). Fora da
+    // exportação/importação do escritório: é configuração da plataforma.
+    public List<string> RecursosLiberados { get; set; } = [];
+
     public ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     public ICollection<Contato> Contatos { get; set; } = new List<Contato>();
 }

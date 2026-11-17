@@ -507,7 +507,10 @@ public class SuperAdminController(
             tenant.VoucherUtilizado,
             tenant.CodigoDesconto,
             tenant.DescontoPromocionalUsadoEm,
-            oabsImportadas
+            oabsImportadas,
+            RecursosEmTeste.Catalogo
+                .Select(r => new RecursoEmTesteDto(r.Chave, r.Nome, r.Descricao, RecursosEmTeste.Liberado(tenant, r.Chave)))
+                .ToList()
         );
 
         return Ok(dto);
@@ -622,6 +625,32 @@ public class SuperAdminController(
         await audit.LogAsync(new AuditLogEntry(
             tenant.Id, SuperAdminId(), TimelineAcoes.PlanoAlterado, "Tenant", tenant.Id.ToString(),
             anterior, new { Plano = plano.ToString(), dto.PeriodoBilling },
+            HttpContext.GetClientIpAddress()), ct);
+        await db.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
+
+    /// <summary>Libera ou retira um recurso em teste (RecursosEmTeste) do escritório. Vale na próxima página que ele abrir.</summary>
+    [HttpPut("tenants/{id:guid}/recursos/{chave}")]
+    public async Task<IActionResult> AlterarRecursoEmTeste(Guid id, string chave, [FromBody] AlterarRecursoEmTesteDto dto, CancellationToken ct)
+    {
+        var recurso = RecursosEmTeste.Catalogo.FirstOrDefault(r => r.Chave == chave);
+        if (recurso == null) return BadRequest(new { message = "Recurso desconhecido." });
+
+        var tenant = await db.Tenants.FindAsync([id], ct);
+        if (tenant == null || tenant.Id == SystemTenantId) return NotFound();
+
+        var antes = RecursosEmTeste.Liberado(tenant, chave);
+        if (antes == dto.Liberado) return NoContent();
+
+        // Lista nova (não Add/Remove): o EF detecta a troca da coleção primitiva com segurança.
+        tenant.RecursosLiberados = dto.Liberado
+            ? [.. tenant.RecursosLiberados, chave]
+            : tenant.RecursosLiberados.Where(c => c != chave).ToList();
+        await audit.LogAsync(new AuditLogEntry(
+            tenant.Id, SuperAdminId(), TimelineAcoes.RecursoEmTesteAlterado, "Tenant", tenant.Id.ToString(),
+            new { Recurso = chave, recurso.Nome, Liberado = antes }, new { Recurso = chave, recurso.Nome, dto.Liberado },
             HttpContext.GetClientIpAddress()), ct);
         await db.SaveChangesAsync(ct);
 

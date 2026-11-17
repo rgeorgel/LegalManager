@@ -15,6 +15,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.Telefone).HasMaxLength(30);
         builder.Property(t => t.Email).HasMaxLength(200);
         builder.Property(t => t.TimbradoComplemento).HasMaxLength(300);
+        builder.Property(t => t.RecursosLiberados).HasDefaultValueSql("'{}'::text[]");
         builder.HasIndex(t => t.Cnpj).IsUnique().HasFilter("\"Cnpj\" IS NOT NULL");
 
         builder.HasOne(t => t.TrialConcedidoPor)

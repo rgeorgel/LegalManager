@@ -44,6 +44,8 @@
     .lateral-nome { flex: 1; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lateral-info { color: var(--color-text-muted); font-size: 11px; margin-top: 2px; overflow-wrap: anywhere; }
     .lateral-acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .recurso-teste { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+    .recurso-teste input { margin-top: 2px; flex-shrink: 0; }
     @media (max-width: 1100px) {
       .tl-layout { grid-template-columns: 1fr; }
       .tl-lateral { order: -1; }
@@ -150,6 +152,10 @@
                 <h2 class="lateral-titulo">OABs<span class="tab-count" id="countOabs"></span></h2>
                 <div id="lateralOabs"></div>
               </div>
+              <div>
+                <h2 class="lateral-titulo">Recursos em teste</h2>
+                <div id="lateralRecursos"></div>
+              </div>
             </aside>
           </div>
         </section>
@@ -210,6 +216,7 @@
         document.getElementById('tab-resumo').innerHTML = resumoHtml(t, trialInfo);
         document.getElementById('lateralUsuarios').innerHTML = usuariosHtml(t);
         document.getElementById('lateralOabs').innerHTML = oabsHtml(t);
+        document.getElementById('lateralRecursos').innerHTML = recursosTesteHtml(t);
         document.getElementById('countUsuarios').textContent = t.usuarios.length;
         document.getElementById('countOabs').textContent = (t.oabs ?? []).length + (t.oabsImportadas ?? []).length;
         document.getElementById('carregando').style.display = 'none';
@@ -329,6 +336,40 @@
           ${recursosDetalhado(t)}
         </div>`;
     }
+
+    // Recursos em teste (RecursosEmTeste no backend): liberados só para os escritórios marcados aqui.
+    function recursosTesteHtml(t) {
+      const lista = t.recursosEmTeste ?? [];
+      if (!lista.length) return '<div class="tl-vazio">Nenhum recurso em teste.</div>';
+      return `<div class="lateral-lista">${lista.map(r => `
+        <div class="lateral-item">
+          <label class="recurso-teste">
+            <input type="checkbox" data-recurso="${esc(r.chave)}" ${r.liberado ? 'checked' : ''}>
+            <span style="min-width:0">
+              <span class="lateral-nome" style="display:block">${esc(r.nome)}</span>
+              <span class="lateral-info" style="display:block">${esc(r.descricao)}</span>
+            </span>
+          </label>
+        </div>`).join('')}</div>`;
+    }
+
+    document.getElementById('lateralRecursos').addEventListener('change', async e => {
+      const caixa = e.target.closest('input[data-recurso]');
+      if (!caixa) return;
+      caixa.disabled = true;
+      try {
+        await saFetch(`/superadmin/tenants/${tenantId}/recursos/${encodeURIComponent(caixa.dataset.recurso)}`, {
+          method: 'PUT',
+          body: JSON.stringify({ liberado: caixa.checked }),
+        });
+        recarregarTimeline();
+      } catch (err) {
+        caixa.checked = !caixa.checked;
+        alert('Erro: ' + err.message);
+      } finally {
+        caixa.disabled = false;
+      }
+    });
 
     function usuariosHtml(t) {
       if (!t.usuarios.length) return '<div class="tl-vazio">Sem usuários.</div>';

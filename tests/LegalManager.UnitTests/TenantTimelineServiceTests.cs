@@ -157,6 +157,30 @@ public class TenantTimelineServiceTests
     }
 
     [Fact]
+    public async Task Timeline_MostraRecursoEmTesteLiberadoERetirado()
+    {
+        using var db = CreateContext();
+        var t0 = new DateTime(2026, 9, 1, 15, 0, 0, DateTimeKind.Utc);
+        var (tenant, _) = Seed(db, t0);
+        var liberou = AuditExtensions.NovoAuditLog(tenant.Id, null, TimelineAcoes.RecursoEmTesteAlterado, "Tenant", tenant.Id.ToString(),
+            new { Recurso = "assinatura-digital", Nome = "Assinatura eletrônica", Liberado = false },
+            new { Recurso = "assinatura-digital", Nome = "Assinatura eletrônica", Liberado = true });
+        liberou.CriadoEm = t0.AddDays(1);
+        var retirou = AuditExtensions.NovoAuditLog(tenant.Id, null, TimelineAcoes.RecursoEmTesteAlterado, "Tenant", tenant.Id.ToString(),
+            new { Recurso = "assinatura-digital", Nome = "Assinatura eletrônica", Liberado = true },
+            new { Recurso = "assinatura-digital", Nome = "Assinatura eletrônica", Liberado = false });
+        retirou.CriadoEm = t0.AddDays(2);
+        db.AuditLogs.AddRange(liberou, retirou);
+        await db.SaveChangesAsync();
+
+        var pagina = await new TenantTimelineService(db).ObterAsync(tenant.Id, null, ["superadmin"], CancellationToken.None);
+
+        Assert.Equal(
+            ["Recurso em teste retirado pelo superadmin: Assinatura eletrônica", "Recurso em teste liberado pelo superadmin: Assinatura eletrônica"],
+            pagina!.Eventos.Select(e => e.Titulo));
+    }
+
+    [Fact]
     public async Task Timeline_OcultaEntrarComoDoSuperAdminPorPadrao()
     {
         using var db = CreateContext();

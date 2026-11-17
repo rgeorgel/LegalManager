@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using LegalManager.Application.DTOs.AssinaturaDigital;
 using LegalManager.Infrastructure.AssinaturaDigital;
+using LegalManager.API.Filters;
+using LegalManager.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +14,7 @@ namespace LegalManager.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/portal/minhas-assinaturas")]
+[ExigeRecurso(RecursosEmTeste.AssinaturaDigital)]
 [Authorize(Roles = "Cliente")]
 public class PortalClienteAssinaturasController(AssinaturaDigitalService service) : ControllerBase
 {

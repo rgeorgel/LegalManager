@@ -75,6 +75,9 @@ async function baixarPdf(botao) {
 export async function montarAssinaturasPortal(container) {
   let lista;
   try {
+    // Recurso em teste: só nos escritórios liberados pelo super admin.
+    const recursos = await portalApi.getRecursos();
+    if (!recursos?.includes('assinatura-digital')) return;
     lista = await portalApi.getMinhasAssinaturas();
   } catch {
     return;

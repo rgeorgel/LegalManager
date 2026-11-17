@@ -35,7 +35,7 @@ public sealed class TenantTimelineService(AppDbContext db)
          TimelineAcoes.AssinaturaEncerrada, TimelineAcoes.PlanoExpirado];
     private static readonly string[] AcoesSuperAdmin =
         [TimelineAcoes.PlanoAlterado, TimelineAcoes.StatusAlterado, TimelineAcoes.TrialPlusConcedido,
-         "EXPORT", "IMPORT"];
+         TimelineAcoes.RecursoEmTesteAlterado, "EXPORT", "IMPORT"];
     // "Entrar como" do superadmin: só aparece quando pedido (incluirAcessosSuperAdmin), para
     // não misturar o suporte com o uso real do escritório.
     private static readonly string[] AcoesSuperAdminComAcessos = [.. AcoesSuperAdmin, AuditActions.ImpersonationStart];
@@ -343,6 +343,9 @@ public sealed class TenantTimelineService(AppDbContext db)
                 TimelineAcoes.TrialPlusConcedido => (Novo("Estendido") == "true"
                     ? $"Trial estendido em {Novo("Dias")} dias pelo superadmin"
                     : $"Trial Plus de {Novo("Dias")} dias concedido", LerCampo(a.DadosNovos, "Motivo")),
+                TimelineAcoes.RecursoEmTesteAlterado => (Novo("Liberado") == "true"
+                    ? $"Recurso em teste liberado pelo superadmin: {Novo("Nome")}"
+                    : $"Recurso em teste retirado pelo superadmin: {Novo("Nome")}", null),
                 "EXPORT" => ("Dados exportados pelo superadmin", null),
                 "IMPORT" => ("Dados importados pelo superadmin", null),
                 AuditActions.ImpersonationStart => ($"Superadmin entrou como {Novo("UsuarioAlvo")}", null),
