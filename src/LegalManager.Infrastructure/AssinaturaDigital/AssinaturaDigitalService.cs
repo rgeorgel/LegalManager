@@ -106,10 +106,17 @@ public class AssinaturaDigitalService(
 
         return new IntegracaoAssinaturaDto(true, Disponivel, true, integ.OrganizacaoNome, integ.PlanoNome,
             integ.ApiKeyFinal, integ.WebhookSecretCifrado != null, WebhookUrl(integ), integ.ConectadoEm,
-            integ.UltimoWebhookEm, uso, aviso, ContratosUrl, OrigemCausify);
+            integ.UltimoWebhookEm, uso, aviso, ContratosUrl, OrigemCausify,
+            WebhookAutomatico: integ.WebhookExternoId != null && integ.WebhookSecretCifrado != null,
+            EmbedAutomatico: integ.EmbedOrigem != null && string.Equals(integ.EmbedOrigem, OrigemCausify, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<IntegracaoAssinatura> ConectarAsync(Guid tenantId, Guid usuarioId, ConectarAssinaturaDto dto, CancellationToken ct = default)
+    /// <summary>
+    /// Conecta (ou troca a chave). Com chave nova, tenta também cadastrar sozinho o webhook e o site
+    /// do embed no Contratos (<see cref="ConfigurarAutomaticoAsync"/>); falhas aí não impedem a conexão.
+    /// </summary>
+    public async Task<(IntegracaoAssinatura Integracao, ConfiguracaoAutomaticaDto? Configuracao)> ConectarAsync(
+        Guid tenantId, Guid usuarioId, ConectarAssinaturaDto dto, CancellationToken ct = default)
     {
         if (!Disponivel)
             throw new AssinaturaDigitalException("A integração com o Contratos ainda não está disponível neste servidor.", 503);
@@ -133,6 +140,12 @@ public class AssinaturaDigitalService(
                 integ = new IntegracaoAssinatura { Id = Guid.NewGuid(), TenantId = tenantId };
                 db.IntegracoesAssinatura.Add(integ);
             }
+            else if (integ.WebhookExternoId != null)
+            {
+                // Troca de chave (talvez de outra conta): o webhook que o Causify cadastrou com a chave
+                // antiga sai, para não ficarem dois avisando o mesmo endereço.
+                await ExcluirWebhookCadastradoAsync(integ, cifra.Decifrar(integ.ApiKeyCifrada), ct);
+            }
             integ.ApiKeyCifrada = cifra.Cifrar(chave);
             integ.ApiKeyFinal = chave[^4..];
             integ.OrganizacaoNome = Cortar(conta.Organization.Name, 200);
@@ -151,16 +164,155 @@ public class AssinaturaDigitalService(
             if (!segredo.StartsWith("whsec_", StringComparison.Ordinal) || segredo.Length is < 12 or > 200 || segredo.Any(char.IsWhiteSpace))
                 throw new AssinaturaDigitalException("O segredo do webhook começa com whsec_. Ele aparece no Contratos ao cadastrar o webhook.");
             integ.WebhookSecretCifrado = cifra.Cifrar(segredo);
+            integ.WebhookExternoId = null; // segredo colado à mão: o webhook é o que o Admin cadastrou
         }
 
+        ConfiguracaoAutomaticaDto? configuracao = null;
+        if (!string.IsNullOrEmpty(chave) && string.IsNullOrEmpty(segredo))
+            configuracao = await ConfigurarComChaveAsync(integ, chave, ct);
+
         await db.SaveChangesAsync(ct);
-        return integ;
+        return (integ, configuracao);
+    }
+
+    /// <summary>
+    /// "Conectar sem copiar URL e segredo": cadastra no Contratos o webhook deste escritório (guardando
+    /// o segredo) e o site do Causify no embed de templates. Enquanto o Contratos não tiver essas rotas
+    /// na API pública (404), o resultado é "manual" e a tela mostra os passos de copiar e colar.
+    /// </summary>
+    public async Task<ConfiguracaoAutomaticaDto> ConfigurarAutomaticoAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var integ = await IntegracaoAsync(tenantId, ct)
+            ?? throw new AssinaturaDigitalException("Conecte o Contratos primeiro.", 409);
+        var resultado = await ConfigurarComChaveAsync(integ, cifra.Decifrar(integ.ApiKeyCifrada), ct);
+        await db.SaveChangesAsync(ct);
+        return resultado;
+    }
+
+    public const string ConfigConfigurado = "configurado";
+    public const string ConfigManual = "manual";
+    public const string ConfigIndisponivel = "indisponivel";
+    public const string ConfigErro = "erro";
+
+    private async Task<ConfiguracaoAutomaticaDto> ConfigurarComChaveAsync(IntegracaoAssinatura integ, string chave, CancellationToken ct)
+    {
+        var avisos = new List<string>();
+        var webhook = await ConfigurarWebhookAsync(integ, chave, avisos, ct);
+        var embed = await ConfigurarEmbedAsync(integ, chave, avisos, ct);
+        return new ConfiguracaoAutomaticaDto(webhook, embed, avisos);
+    }
+
+    /// <summary>O Contratos só entrega webhooks em https (e não alcança um Causify local).</summary>
+    internal static bool EnderecoPublico(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && !u.IsLoopback;
+
+    private async Task<string> ConfigurarWebhookAsync(IntegracaoAssinatura integ, string chave, List<string> avisos, CancellationToken ct)
+    {
+        var url = WebhookUrl(integ);
+        if (!EnderecoPublico(url))
+        {
+            avisos.Add("O webhook não foi cadastrado: o endereço do Causify neste servidor não é https público.");
+            return ConfigIndisponivel;
+        }
+        try
+        {
+            // O segredo só aparece no cadastro: um webhook antigo para o mesmo endereço sai e entra um novo.
+            foreach (var antigo in (await api.ListarWebhooksAsync(chave, ct) ?? []).Where(w => string.Equals(w.Url, url, StringComparison.OrdinalIgnoreCase)))
+                await api.ExcluirWebhookAsync(chave, antigo.Id, ct);
+            var criado = await api.CriarWebhookAsync(chave, new ContratosNovoWebhook(url, "Causify (assinatura eletrônica)", null), ct);
+            if (criado is null || string.IsNullOrWhiteSpace(criado.Secret) || string.IsNullOrWhiteSpace(criado.Webhook?.Id))
+                throw new ContratosApiException(502, "invalid_response", "O Contratos não devolveu o segredo do webhook.");
+            integ.WebhookSecretCifrado = cifra.Cifrar(criado.Secret);
+            integ.WebhookExternoId = Cortar(criado.Webhook.Id, 100);
+            return ConfigConfigurado;
+        }
+        catch (ContratosApiException e) when (RotaInexistente(e))
+        {
+            return ConfigManual;
+        }
+        catch (ContratosApiException e)
+        {
+            logger.LogWarning("Falha ao cadastrar o webhook no Contratos (tenant {TenantId}): {Status} {Codigo}", integ.TenantId, e.Status, e.Codigo);
+            avisos.Add($"Webhook: {e.Mensagem}");
+            return ConfigErro;
+        }
+    }
+
+    private async Task<string> ConfigurarEmbedAsync(IntegracaoAssinatura integ, string chave, List<string> avisos, CancellationToken ct)
+    {
+        var origem = OrigemCausify;
+        if (origem == null || !EnderecoPublico(origem))
+        {
+            avisos.Add("O site do Causify não foi liberado no embed: o endereço deste servidor não é https público.");
+            return ConfigIndisponivel;
+        }
+        try
+        {
+            await CadastrarOrigemEmbedAsync(chave, origem, ct);
+            integ.EmbedOrigem = origem;
+            return ConfigConfigurado;
+        }
+        catch (ContratosApiException e) when (RotaInexistente(e))
+        {
+            return ConfigManual;
+        }
+        catch (ContratosApiException e)
+        {
+            logger.LogWarning("Falha ao liberar o site no embed do Contratos (tenant {TenantId}): {Status} {Codigo}", integ.TenantId, e.Status, e.Codigo);
+            avisos.Add($"Embed de templates: {e.Mensagem}");
+            return ConfigErro;
+        }
+    }
+
+    /// <summary>Cadastra o site, se ainda não estiver na lista (o POST também é idempotente no Contratos).</summary>
+    private async Task CadastrarOrigemEmbedAsync(string chave, string origem, CancellationToken ct)
+    {
+        var origens = await api.ListarOrigensEmbedAsync(chave, ct) ?? [];
+        if (!origens.Any(o => string.Equals(o.Origin?.TrimEnd('/'), origem, StringComparison.OrdinalIgnoreCase)))
+            await api.CadastrarOrigemEmbedAsync(chave, origem, ct);
+    }
+
+    /// <summary>
+    /// A rota não existe nesta versão do Contratos: a API pública responde 404 route_not_found
+    /// (ou 404 sem corpo, atrás de um proxy).
+    /// </summary>
+    internal static bool RotaInexistente(ContratosApiException e) =>
+        e.Status == 404 && (e.Codigo is null or "route_not_found" or "not_found");
+
+    /// <summary>Manda o evento webhook.test para o webhook cadastrado pelo Causify.</summary>
+    public async Task TestarWebhookAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var integ = await IntegracaoAsync(tenantId, ct)
+            ?? throw new AssinaturaDigitalException("Conecte o Contratos primeiro.", 409);
+        if (integ.WebhookExternoId == null)
+            throw new AssinaturaDigitalException("O webhook foi cadastrado à mão: use “Enviar teste” na tela do Contratos.", 409);
+        try { await api.TestarWebhookAsync(cifra.Decifrar(integ.ApiKeyCifrada), integ.WebhookExternoId, ct); }
+        catch (ContratosApiException e) when (e.Status == 404)
+        {
+            integ.WebhookExternoId = null;
+            await db.SaveChangesAsync(ct);
+            throw new AssinaturaDigitalException("O webhook não existe mais no Contratos. Use “Configurar automaticamente” de novo.", 409);
+        }
+        catch (ContratosApiException e) { throw Traduzir(e); }
+    }
+
+    /// <summary>Melhor esforço: apaga o webhook que o Causify cadastrou (já apagado ou chave revogada: segue).</summary>
+    private async Task ExcluirWebhookCadastradoAsync(IntegracaoAssinatura integ, string chave, CancellationToken ct)
+    {
+        if (integ.WebhookExternoId == null) return;
+        try { await api.ExcluirWebhookAsync(chave, integ.WebhookExternoId, ct); }
+        catch (ContratosApiException e)
+        {
+            logger.LogInformation("Webhook {Webhook} não foi apagado no Contratos: {Status} {Codigo}", integ.WebhookExternoId, e.Status, e.Codigo);
+        }
+        integ.WebhookExternoId = null;
     }
 
     public async Task<bool> DesconectarAsync(Guid tenantId, CancellationToken ct = default)
     {
         var integ = await IntegracaoAsync(tenantId, ct);
         if (integ == null) return false;
+        await ExcluirWebhookCadastradoAsync(integ, cifra.Decifrar(integ.ApiKeyCifrada), ct);
         db.IntegracoesAssinatura.Remove(integ);
         await db.SaveChangesAsync(ct);
         return true;
@@ -248,12 +400,26 @@ public class AssinaturaDigitalService(
             ?? throw new AssinaturaDigitalException("O endereço do Causify (App:FrontendUrl) não está configurado neste servidor.", 503);
 
         var permissoes = PermissoesEmbed(usuario.Perfil);
+        var pedido = new ContratosNovaSessaoEmbed(
+            permissoes, new ContratosUsuarioEmbed(usuario.Id.ToString(), Cortar(usuario.Nome, 120)),
+            origemCausify, DuracaoSessaoEmbedMinutos, templateId);
         ContratosSessaoEmbed sessao;
         try
         {
-            sessao = await api.CriarSessaoEmbedAsync(chave, new ContratosNovaSessaoEmbed(
-                permissoes, new ContratosUsuarioEmbed(usuario.Id.ToString(), Cortar(usuario.Nome, 120)),
-                origemCausify, DuracaoSessaoEmbedMinutos, templateId), ct);
+            ContratosSessaoEmbed? criada = null;
+            ContratosApiException? recusa = null;
+            try { criada = await api.CriarSessaoEmbedAsync(chave, pedido, ct); }
+            catch (ContratosApiException e) when (e.Codigo?.StartsWith("embed_origin", StringComparison.Ordinal) == true)
+            {
+                recusa = e;
+            }
+            if (recusa != null)
+            {
+                // O site do Causify não estava liberado: o Causify libera sozinho e tenta de novo.
+                if (!await LiberarOrigemEmbedAsync(tenantId, chave, origemCausify, ct)) throw recusa;
+                criada = await api.CriarSessaoEmbedAsync(chave, pedido, ct);
+            }
+            sessao = criada!;
         }
         catch (ContratosApiException e) when (e.Codigo?.StartsWith("embed_", StringComparison.Ordinal) == true || e.Status is 400 or 422)
         {
@@ -274,6 +440,27 @@ public class AssinaturaDigitalService(
             throw new AssinaturaDigitalException("O Contratos devolveu um endereço de editor inesperado.", 502);
 
         return new SessaoEmbedDto(sessao.Id, sessao.Url, origemSessao, sessao.Permissions ?? permissoes, sessao.ExpiresAt?.UtcDateTime);
+    }
+
+    /// <summary>Libera o site do Causify no embed do Contratos; false se não der (rota inexistente, endereço local...).</summary>
+    private async Task<bool> LiberarOrigemEmbedAsync(Guid tenantId, string chave, string origem, CancellationToken ct)
+    {
+        if (!EnderecoPublico(origem)) return false;
+        try
+        {
+            await CadastrarOrigemEmbedAsync(chave, origem, ct);
+        }
+        catch (ContratosApiException e)
+        {
+            logger.LogInformation("Não foi possível liberar {Origem} no embed do Contratos: {Status} {Codigo}", origem, e.Status, e.Codigo);
+            return false;
+        }
+        if (await IntegracaoAsync(tenantId, ct) is { } integ)
+        {
+            integ.EmbedOrigem = origem;
+            await db.SaveChangesAsync(ct);
+        }
+        return true;
     }
 
     /// <summary>Encerra a sessão do editor (a pessoa fechou a tela). Sessão já vencida ou inexistente: nada a fazer.</summary>
@@ -462,6 +649,87 @@ public class AssinaturaDigitalService(
             .Select(s => new { S = s, Criador = s.CriadoPor != null ? s.CriadoPor.Nome : null })
             .ToListAsync(ct);
         return lista.Select(x => ParaDto(x.S, x.Criador)).ToList();
+    }
+
+    // ── Painel "Assinaturas" ──────────────────────────────────────────────────────────
+
+    public const int TamanhoPaginaPainel = 50;
+    private static readonly TimeSpan JanelaAtencao = TimeSpan.FromDays(60);
+    public static readonly IReadOnlyList<string> SituacoesPainel = ["pendentes", "rascunhos", "atencao", "concluidas", "todas"];
+
+    private IQueryable<SolicitacaoAssinatura> FiltrarSituacao(IQueryable<SolicitacaoAssinatura> q, string situacao, DateTime agora)
+    {
+        var desde = agora - JanelaAtencao;
+        return situacao switch
+        {
+            "pendentes" => q.Where(s => s.Status == StatusSolicitacaoAssinatura.Enviada || s.Status == StatusSolicitacaoAssinatura.ParcialmenteAssinada),
+            "rascunhos" => q.Where(s => s.Status == StatusSolicitacaoAssinatura.Rascunho),
+            "atencao" => q.Where(s => (s.Status == StatusSolicitacaoAssinatura.Recusada || s.Status == StatusSolicitacaoAssinatura.Expirada
+                    || (s.Erro != null && s.Status != StatusSolicitacaoAssinatura.Cancelada && s.Status != StatusSolicitacaoAssinatura.Concluida))
+                && (s.AtualizadoExternoEm ?? s.CriadoEm) >= desde),
+            "concluidas" => q.Where(s => s.Status == StatusSolicitacaoAssinatura.Concluida),
+            _ => q,
+        };
+    }
+
+    /// <summary>Todos os envios do escritório, por situação, com a origem (contrato, processo ou contato) e quem falta assinar.</summary>
+    public async Task<PainelAssinaturasDto> PainelAsync(Guid tenantId, string? situacao, string? busca, int pagina, CancellationToken ct = default)
+    {
+        situacao = SituacoesPainel.Contains(situacao ?? "") ? situacao! : "pendentes";
+        pagina = Math.Max(1, pagina);
+        var agora = DateTime.UtcNow;
+        var baseQ = db.SolicitacoesAssinatura.AsNoTracking().Where(s => s.TenantId == tenantId);
+
+        var termo = busca?.Trim().ToLowerInvariant();
+        if (!string.IsNullOrEmpty(termo))
+        {
+            if (termo.Length > 100) termo = termo[..100];
+            baseQ = baseQ.Where(s => s.Titulo.ToLower().Contains(termo)
+                || s.SignatariosJson.ToLower().Contains(termo)
+                || (s.Contato != null && s.Contato.Nome.ToLower().Contains(termo))
+                || (s.ContratoHonorario != null && (s.ContratoHonorario.NumeroContrato.ToLower().Contains(termo) || s.ContratoHonorario.Contato.Nome.ToLower().Contains(termo)))
+                || (s.Processo != null && s.Processo.NumeroCNJ.Contains(termo)));
+        }
+
+        var contagens = new Dictionary<string, int>();
+        foreach (var sit in SituacoesPainel)
+            contagens[sit] = await FiltrarSituacao(baseQ, sit, agora).CountAsync(ct);
+
+        var q = FiltrarSituacao(baseQ, situacao, agora);
+        // Pendentes: o que vence primeiro, depois o que espera há mais tempo. Demais: os mais novos.
+        q = situacao == "pendentes"
+            ? q.OrderBy(s => s.ExpiraEm == null).ThenBy(s => s.ExpiraEm).ThenBy(s => s.EnviadaEm)
+            : q.OrderByDescending(s => s.AtualizadoExternoEm ?? s.CriadoEm);
+
+        var linhas = await q
+            .Skip((pagina - 1) * TamanhoPaginaPainel)
+            .Take(TamanhoPaginaPainel + 1)
+            .Select(s => new
+            {
+                S = s,
+                Criador = s.CriadoPor != null ? s.CriadoPor.Nome : null,
+                ContatoNome = s.Contato != null ? s.Contato.Nome : null,
+                ContratoNumero = s.ContratoHonorario != null ? s.ContratoHonorario.NumeroContrato : null,
+                ContratoCliente = s.ContratoHonorario != null ? s.ContratoHonorario.Contato.Nome : null,
+                ProcessoCnj = s.Processo != null ? s.Processo.NumeroCNJ : null,
+            })
+            .ToListAsync(ct);
+
+        var itens = linhas.Take(TamanhoPaginaPainel).Select(x =>
+        {
+            var dto = ParaDto(x.S, x.Criador);
+            var (origem, titulo) = x.S.ContratoHonorarioId != null ? ("contrato", x.ContratoNumero is { Length: > 0 } n ? $"Contrato {n}" : "Contrato de honorários")
+                : x.S.ProcessoId != null ? ("processo", x.ProcessoCnj)
+                : x.S.ContatoId != null ? ("contato", x.ContatoNome)
+                : ("contato", null);
+            var aguardando = dto.Signatarios
+                .Where(g => g.Status is not ("signed" or "declined"))
+                .Select(g => g.Nome)
+                .ToList();
+            return new ItemPainelAssinaturaDto(dto, origem, titulo, x.ContatoNome ?? x.ContratoCliente, UrlDaOrigem(x.S), aguardando);
+        }).ToList();
+
+        return new PainelAssinaturasDto(contagens, itens, contagens[situacao], linhas.Count > TamanhoPaginaPainel);
     }
 
     /// <summary>Último envio não cancelado de cada contrato de honorários (selo nos cards da lista).</summary>

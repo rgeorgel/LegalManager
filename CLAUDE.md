@@ -99,11 +99,12 @@ descrição), gravada em `Tenant.RecursosLiberados` pelo super admin (lateral de
 `superadmin/tenant-detalhe.html`, `PUT /api/superadmin/tenants/{id}/recursos/{chave}`, auditado na
 timeline). API: `[ExigeRecurso(RecursosEmTeste.X)]` no controller responde 404 aos não liberados
 (ações `[AllowAnonymous]`, como webhooks, passam). Frontend: `recursoLiberado(RECURSOS.x)` de
-`/js/recursos.js` (`GET /api/recursos`; no portal, `portalApi.getRecursos()`) antes de mostrar
-botões, abas ou de chamar a API. Para abrir a todos: `RecursosEmTeste.Liberado` passa a responder
+`/js/recursos.js` (`GET /api/recursos`, guardado 2 min na sessão; no portal, `portalApi.getRecursos()`)
+antes de mostrar botões, abas ou de chamar a API. Item de menu: `recurso: 'chave'` no `NAV_GROUPS`
+de `js/layout.js`. Para abrir a todos: `RecursosEmTeste.Liberado` passa a responder
 true para a chave; depois tire o filtro, as checagens e a chave do catálogo.
-Hoje: `assinatura-digital` (aba Integrações, botão Assinatura, selo da lista de honorários e o
-cartão do portal do cliente).
+Hoje: `assinatura-digital` (aba Integrações, botão Assinatura, página Assinaturas no menu, selo da
+lista de honorários e o cartão do portal do cliente).
 
 ## Backend
 

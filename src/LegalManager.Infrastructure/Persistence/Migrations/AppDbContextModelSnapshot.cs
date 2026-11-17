@@ -2021,6 +2021,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ConectadoPorId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("EmbedOrigem")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("OrganizacaoNome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -2035,6 +2039,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime?>("UltimoWebhookEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WebhookExternoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("WebhookSecretCifrado")
                         .HasMaxLength(500)

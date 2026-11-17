@@ -76,6 +76,19 @@ public sealed record ContratosUsuarioEmbed(string Id, string Name);
 public sealed record ContratosSessaoEmbed(
     string Id, string Url, List<string>? Permissions, string? ParentOrigin, DateTimeOffset? LaunchExpiresAt, DateTimeOffset? ExpiresAt);
 
+/// <summary>
+/// Webhook cadastrado pela API (GET/POST /webhooks — pedido ao Contratos em docs/features/contratos-fase3-api.md).
+/// Events nulo ou vazio = todos os eventos.
+/// </summary>
+public sealed record ContratosWebhook(
+    string Id, string Url, string? Description, List<string>? Events, bool Enabled,
+    DateTimeOffset? LastSuccessAt = null, DateTimeOffset? LastFailureAt = null, int FailureStreak = 0);
+public sealed record ContratosNovoWebhook(string Url, string? Description, List<string>? Events);
+/// <summary>Resposta do cadastro: o segredo (whsec_…) só vem aqui.</summary>
+public sealed record ContratosWebhookCriado(ContratosWebhook Webhook, string Secret);
+/// <summary>Site autorizado a abrir o embed de templates (GET/POST /embed/origins).</summary>
+public sealed record ContratosOrigemEmbed(string Id, string Origin);
+
 /// <summary>Erro da API (Problem Details). <see cref="Mensagem"/> é o title, em português, para mostrar ao usuário.</summary>
 public sealed class ContratosApiException(
     int status, string? codigo, string mensagem,
@@ -103,6 +116,12 @@ public interface IContratosApi
     Task<byte[]> BaixarAssinadoAsync(string apiKey, string contratoId, CancellationToken ct = default);
     Task<ContratosSessaoEmbed> CriarSessaoEmbedAsync(string apiKey, ContratosNovaSessaoEmbed sessao, CancellationToken ct = default);
     Task EncerrarSessaoEmbedAsync(string apiKey, string sessaoId, CancellationToken ct = default);
+    Task<IReadOnlyList<ContratosWebhook>> ListarWebhooksAsync(string apiKey, CancellationToken ct = default);
+    Task<ContratosWebhookCriado> CriarWebhookAsync(string apiKey, ContratosNovoWebhook webhook, CancellationToken ct = default);
+    Task ExcluirWebhookAsync(string apiKey, string webhookId, CancellationToken ct = default);
+    Task TestarWebhookAsync(string apiKey, string webhookId, CancellationToken ct = default);
+    Task<IReadOnlyList<ContratosOrigemEmbed>> ListarOrigensEmbedAsync(string apiKey, CancellationToken ct = default);
+    Task<ContratosOrigemEmbed> CadastrarOrigemEmbedAsync(string apiKey, string origem, CancellationToken ct = default);
 }
 
 /// <summary>Cliente HTTP da API pública do Contratos. A chave vai por chamada: cada escritório tem a sua.</summary>
@@ -159,6 +178,30 @@ public sealed class ContratosHttpClient(HttpClient http) : IContratosApi
         using var resp = await SendAsync(HttpMethod.Delete, $"embed/sessions/{Uri.EscapeDataString(sessaoId)}", apiKey, null, null, ct);
         await GarantirSucessoAsync(resp, ct);
     }
+
+    public async Task<IReadOnlyList<ContratosWebhook>> ListarWebhooksAsync(string apiKey, CancellationToken ct = default) =>
+        await EnviarJsonAsync<List<ContratosWebhook>>(HttpMethod.Get, "webhooks", apiKey, null, null, ct);
+
+    public Task<ContratosWebhookCriado> CriarWebhookAsync(string apiKey, ContratosNovoWebhook webhook, CancellationToken ct = default) =>
+        EnviarJsonAsync<ContratosWebhookCriado>(HttpMethod.Post, "webhooks", apiKey, webhook, null, ct);
+
+    public async Task ExcluirWebhookAsync(string apiKey, string webhookId, CancellationToken ct = default)
+    {
+        using var resp = await SendAsync(HttpMethod.Delete, $"webhooks/{Uri.EscapeDataString(webhookId)}", apiKey, null, null, ct);
+        await GarantirSucessoAsync(resp, ct);
+    }
+
+    public async Task TestarWebhookAsync(string apiKey, string webhookId, CancellationToken ct = default)
+    {
+        using var resp = await SendAsync(HttpMethod.Post, $"webhooks/{Uri.EscapeDataString(webhookId)}/test", apiKey, null, null, ct);
+        await GarantirSucessoAsync(resp, ct);
+    }
+
+    public async Task<IReadOnlyList<ContratosOrigemEmbed>> ListarOrigensEmbedAsync(string apiKey, CancellationToken ct = default) =>
+        await EnviarJsonAsync<List<ContratosOrigemEmbed>>(HttpMethod.Get, "embed/origins", apiKey, null, null, ct);
+
+    public Task<ContratosOrigemEmbed> CadastrarOrigemEmbedAsync(string apiKey, string origem, CancellationToken ct = default) =>
+        EnviarJsonAsync<ContratosOrigemEmbed>(HttpMethod.Post, "embed/origins", apiKey, new { origin = origem }, null, ct);
 
     /// <summary>O Contratos devolve "whats_app" (enum WhatsApp em snake_case), mas documenta e aceita "whatsapp".</summary>
     public static string NormalizarCanal(string? canal) => canal switch

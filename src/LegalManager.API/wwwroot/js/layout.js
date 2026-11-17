@@ -16,6 +16,18 @@ import {
 import { trackEvent } from './analytics.js';
 
 import { esc } from './utils.js';
+import { recursosEmCache, recursosLiberados } from './recursos.js';
+
+// Recursos em teste liberados (itens com `recurso` só aparecem com a chave aqui).
+let recursosMenu = [];
+
+/** Grupos do menu sem os itens de recursos em teste que o escritório não tem. */
+function gruposVisiveis() {
+  return NAV_GROUPS
+    .map(g => ({ ...g, items: g.items.filter(i => !i.recurso || recursosMenu.includes(i.recurso)) }))
+    .filter(g => g.items.length);
+}
+
 const NAV_GROUPS = [
   {
     label: 'Visão Geral',
@@ -46,6 +58,8 @@ const NAV_GROUPS = [
     items: [
       { href: '/pages/financeiro.html',                 label: '💰 Financeiro', plus: true },
       { href: '/pages/honorarios-contratos.html',       label: '💼 Honorários Contratos', plus: true },
+      // recurso: só aparece no escritório liberado pelo super admin (js/recursos.js)
+      { href: '/pages/assinaturas.html',                label: '✍️ Assinaturas', recurso: 'assinatura-digital' },
     ],
   },
   {
@@ -116,8 +130,16 @@ export function initLayout() {
 
   document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
 
+  recursosMenu = recursosEmCache();
   injectSidebarNav();
   if (menuSuperior) injectMenuSuperior();
+  // Confere os recursos em teste no servidor e redesenha o menu se mudou algo.
+  recursosLiberados().then(lista => {
+    if (lista.join() === recursosMenu.join()) return;
+    recursosMenu = lista;
+    injectSidebarNav();
+    if (document.body.classList.contains('menu-superior')) injectMenuSuperior();
+  });
   // Iniciais com o menu da conta (nos dois layouts; só aparece no desktop).
   montarMenuConta({ usuario: user, aoTrocarLayout: trocarMenuLayout });
   if (!menuSuperior) agendarConviteMenuSuperior({
@@ -231,7 +253,7 @@ function injectMenuSuperior() {
   montarMenuSuperior({
     atual: window.location.pathname,
     aoBloqueado: upgrade => showUpgradeToast(upgrade),
-    grupos: NAV_GROUPS.map(g => ({
+    grupos: gruposVisiveis().map(g => ({
       label: g.label,
       items: g.items.map(item => {
         const { locked, badgeText, upgradeTarget } = estadoBloqueio(item, plano);
@@ -274,7 +296,7 @@ function injectSidebarNav() {
     collapsedGroups = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
   } catch {}
 
-  navEl.innerHTML = NAV_GROUPS.map(group => {
+  navEl.innerHTML = gruposVisiveis().map(group => {
     const isCollapsed = collapsedGroups[group.label] === true;
     const groupId = 'grp-' + group.label.toLowerCase().replace(/\s+/g, '-');
 

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Assinaturas</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/assinatura-digital.css">
+  <style>
+    .asp-abas { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; border-bottom: 2px solid var(--color-border); margin-bottom: 14px; }
+    .asp-abas::-webkit-scrollbar { display: none; }
+    .asp-abas .tab-btn { display: inline-flex; align-items: center; gap: 6px; }
+    .asp-cont { font-size: 11px; font-weight: 600; min-width: 20px; padding: 1px 6px; border-radius: 100px;
+      background: var(--color-bg); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+    .tab-btn.active .asp-cont { color: var(--color-primary); border-color: currentColor; }
+    .asp-vazio { padding: 32px 12px; text-align: center; color: var(--color-text-muted); }
+    .asp-aviso { padding: 24px 0; color: var(--color-text-muted); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="header">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+      <div class="header-spacer"></div>
+      <div class="header-user">
+        <span class="header-user-name"></span>
+        <span style="color:var(--color-border)">|</span>
+        <span class="header-tenant"></span>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <nav class="sidebar"><ul class="sidebar-nav"></ul></nav>
+    <main class="main-content">
+      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <h1 class="page-title">✍️ Assinaturas</h1>
+        <a class="btn btn-secondary" href="/pages/configuracoes.html?tab=integracoes" id="lnkIntegracao" hidden>⚙ Integração com o Contratos</a>
+      </div>
+
+      <div id="indisponivel" class="asp-aviso" hidden>A assinatura eletrônica não está disponível para este escritório.</div>
+
+      <div id="conteudo" hidden>
+        <div class="asp-abas" role="tablist" id="abas"></div>
+        <div class="filter-bar">
+          <input type="text" id="filtroBusca" class="form-control" placeholder="Buscar por título, cliente, signatário, nº do contrato ou processo..." style="flex:1;min-width:200px" aria-label="Buscar">
+        </div>
+        <div id="lista"></div>
+        <div id="paginacao" style="display:flex;justify-content:center;gap:6px;margin-top:14px"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initLayout } from '/js/layout.js';
+    import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js';
+    import { apiFetch, getUser } from '/js/api.js';
+    import { esc } from '/js/utils.js';
+    import { notify } from '/js/honorarios.js';
+    import { recursoLiberado, RECURSOS } from '/js/recursos.js';
+    initLayout();
+
+    const API = '/assinatura-digital';
+    const ABAS = [
+      { chave: 'pendentes', rotulo: 'Aguardando assinatura', vazio: 'Nenhum contrato aguardando assinatura.' },
+      { chave: 'rascunhos', rotulo: 'Rascunhos', vazio: 'Nenhum rascunho esperando envio.' },
+      { chave: 'atencao', rotulo: 'Precisam de atenção', vazio: 'Nada recusado, expirado ou com falha de envio nos últimos 60 dias.' },
+      { chave: 'concluidas', rotulo: 'Assinados', vazio: 'Nenhum contrato assinado ainda.' },
+      { chave: 'todas', rotulo: 'Todos', vazio: 'Nenhum envio para assinatura ainda.' },
+    ];
+    const STATUS = {
+      Rascunho: { rotulo: 'Rascunho', cls: '', estado: 'info' },
+      Enviada: { rotulo: 'Aguardando', cls: 'warn', estado: 'warn' },
+      ParcialmenteAssinada: { rotulo: 'Assinado em parte', cls: 'warn', estado: 'warn' },
+      Concluida: { rotulo: 'Assinado', cls: 'ok', estado: 'ok' },
+      Recusada: { rotulo: 'Recusado', cls: 'danger', estado: 'danger' },
+      Expirada: { rotulo: 'Expirado', cls: 'danger', estado: 'danger' },
+      Cancelada: { rotulo: 'Cancelado', cls: '', estado: 'muted' },
+    };
+    const ORIGEM = { contrato: '💼', processo: '⚖', contato: '👤' };
+    const EM_ABERTO = ['Rascunho', 'Enviada', 'ParcialmenteAssinada'];
+    const DIA = 24 * 60 * 60 * 1000;
+
+    const params = new URLSearchParams(location.search);
+    const estado = {
+      situacao: ABAS.some(a => a.chave === params.get('situacao')) ? params.get('situacao') : 'pendentes',
+      busca: '',
+      pagina: 1,
+    };
+    let dados = null;
+    let ocupado = false;
+
+    const dataCurta = iso => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-BR');
+    };
+    const dataHora = iso => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    };
+    const diasAte = iso => (iso ? Math.ceil((new Date(iso).getTime() - Date.now()) / DIA) : null);
+
+    function renderAbas() {
+      const c = dados?.contagens || {};
+      document.getElementById('abas').innerHTML = ABAS.map(a => `
+        <button type="button" class="tab-btn${a.chave === estado.situacao ? ' active' : ''}" role="tab"
+          aria-selected="${a.chave === estado.situacao}" data-situacao="${a.chave}">
+          ${esc(a.rotulo)}<span class="asp-cont">${c[a.chave] ?? '…'}</span>
+        </button>`).join('');
+      // No celular as abas rolam de lado: a escolhida fica à vista.
+      document.querySelector('#abas .tab-btn.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    function prazoCampo(s) {
+      if (!s.expiraEm || !['Enviada', 'ParcialmenteAssinada'].includes(s.status)) return { rotulo: 'Prazo', valor: s.expiraEm ? dataCurta(s.expiraEm) : '' };
+      const dias = diasAte(s.expiraEm);
+      const quando = dias < 0 ? 'vencido' : dias === 0 ? 'vence hoje' : dias === 1 ? 'vence amanhã' : `em ${dias} dias`;
+      return { rotulo: 'Prazo', valor: `${dataCurta(s.expiraEm)} (${quando})`, perigo: dias <= 3 };
+    }
+
+    function descricao(item) {
+      const s = item.solicitacao;
+      if (s.erro && EM_ABERTO.includes(s.status)) return `Falha no envio: ${s.erro}`;
+      if (s.status === 'Recusada') return s.motivoRecusa ? `Recusado: ${s.motivoRecusa}` : 'Recusado por um signatário.';
+      if (s.status === 'Rascunho') return 'Rascunho no Contratos: ainda não foi enviado aos signatários.';
+      if (item.aguardando.length && ['Enviada', 'ParcialmenteAssinada'].includes(s.status)) return `Falta assinar: ${item.aguardando.join(', ')}`;
+      if (s.status === 'Concluida') return s.documentoAssinadoId ? 'PDF assinado salvo em Documentos.' : 'Todos assinaram. O PDF assinado chega em instantes.';
+      return '';
+    }
+
+    function renderCard(item) {
+      const s = item.solicitacao;
+      const st = STATUS[s.status] || { rotulo: s.status, cls: '', estado: 'muted' };
+      const total = s.signatarios.length;
+      const prazo = prazoCampo(s);
+      const vencendo = prazo.perigo === true;
+      const comErro = !!s.erro && EM_ABERTO.includes(s.status);
+      return cardEntidade({
+        href: item.url,
+        titulo: s.titulo,
+        estado: comErro || vencendo ? 'danger' : st.estado,
+        dados: { id: s.id },
+        statusHtml: `<span class="asg-selo ${st.cls}">${esc(st.rotulo)}</span>`
+          + `<button type="button" class="ent-card-menu" data-menu="${esc(s.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações para ${esc(s.titulo)}">⋮</button>`,
+        tagsHtml: [
+          s.numero ? `<span class="asg-selo" title="Número no Contratos">nº ${esc(s.numero)}</span>` : '',
+          item.origemTitulo ? `<span class="asg-selo ent-encolhe" title="${esc(item.origemTitulo)}">${ORIGEM[item.origem] || ''} ${esc(item.origemTitulo)}</span>` : '',
+        ],
+        descricao: descricao(item),
+        campos: [
+          { rotulo: 'Cliente', valor: item.clienteNome || '' },
+          { rotulo: s.enviadaEm ? 'Enviado em' : 'Criado em', valor: dataHora(s.enviadaEm || s.criadoEm) },
+          prazo,
+          { rotulo: 'Por', valor: s.criadoPor || '' },
+        ],
+        meta: total ? {
+          principal: `${s.assinados} de ${total} assinaram`,
+          secundarioHtml: esc(s.templateNome || ''),
+          progresso: total ? (s.assinados / total) * 100 : 0,
+        } : undefined,
+      });
+    }
+
+    function renderLista() {
+      const el = document.getElementById('lista');
+      const itens = dados?.itens || [];
+      if (!itens.length) {
+        const aba = ABAS.find(a => a.chave === estado.situacao);
+        el.innerHTML = `<div class="asp-vazio">${esc(estado.busca ? 'Nada encontrado com essa busca.' : aba.vazio)}</div>`;
+      } else {
+        el.innerHTML = `<div class="ent-grid">${itens.map(renderCard).join('')}</div>`;
+      }
+      const pg = document.getElementById('paginacao');
+      const temAnterior = estado.pagina > 1;
+      pg.innerHTML = temAnterior || dados?.temMais ? `
+        <button class="btn btn-secondary btn-sm" id="pgPrev" ${temAnterior ? '' : 'disabled'}>‹</button>
+        <span style="padding:8px 12px;color:var(--color-text-muted);font-size:13px">Página ${estado.pagina}</span>
+        <button class="btn btn-secondary btn-sm" id="pgNext" ${dados?.temMais ? '' : 'disabled'}>›</button>` : '';
+    }
+
+    async function carregar() {
+      const qs = new URLSearchParams({ situacao: estado.situacao, pagina: String(estado.pagina) });
+      if (estado.busca) qs.set('busca', estado.busca);
+      document.getElementById('lista').setAttribute('aria-busy', 'true');
+      try {
+        dados = await apiFetch(`${API}/painel?${qs}`);
+      } catch (err) {
+        dados = null;
+        document.getElementById('lista').innerHTML = `<div class="alert alert-error">${esc(err?.message || 'Não foi possível carregar as assinaturas.')}</div>`;
+        return;
+      } finally {
+        document.getElementById('lista').removeAttribute('aria-busy');
+      }
+      renderAbas();
+      renderLista();
+    }
+
+    function trocarSituacao(situacao) {
+      if (situacao === estado.situacao) return;
+      estado.situacao = situacao;
+      estado.pagina = 1;
+      const url = new URL(location.href);
+      url.searchParams.set('situacao', situacao);
+      history.replaceState(null, '', url);
+      renderAbas();
+      carregar();
+    }
+
+    async function acao(id, caminho, sucesso, corpo) {
+      if (ocupado) return;
+      ocupado = true;
+      try {
+        await apiFetch(`${API}/solicitacoes/${id}/${caminho}`, { method: 'POST', body: corpo });
+        notify(sucesso);
+        await carregar();
+      } catch (err) {
+        notify(err?.message || 'Não foi possível concluir a ação.', 'error');
+      } finally {
+        ocupado = false;
+      }
+    }
+
+    function abrirMenu(botao) {
+      const item = dados?.itens.find(i => i.solicitacao.id === botao.dataset.menu);
+      if (!item) return;
+      const s = item.solicitacao;
+      const aberto = EM_ABERTO.includes(s.status);
+      const pendentes = ['Enviada', 'ParcialmenteAssinada'].includes(s.status)
+        ? s.signatarios.filter(g => !['signed', 'declined'].includes(g.status))
+        : [];
+      abrirMenuCard(botao, [
+        { icone: '↻', rotulo: 'Atualizar do Contratos', acao: () => acao(s.id, 'atualizar', 'Assinatura atualizada.') },
+        s.status === 'Rascunho' && { icone: '➤', rotulo: 'Enviar para assinatura', acao: () => acao(s.id, 'enviar', 'Enviado para assinatura.') },
+        ...pendentes.map(g => ({
+          icone: '✉', rotulo: `Reenviar link para ${g.nome}`,
+          acao: () => acao(s.id, `signatarios/${encodeURIComponent(g.id)}/reenviar`, `Link reenviado para ${g.nome}.`),
+        })),
+        s.documentoAssinadoId && { icone: '📄', rotulo: 'Ver PDF assinado', acao: () => { location.href = `/pages/documentos.html?doc=${encodeURIComponent(s.documentoAssinadoId)}`; } },
+        aberto && {
+          icone: '✕', rotulo: 'Cancelar envio', perigo: true,
+          acao: () => {
+            if (!confirm(`Cancelar "${s.titulo}"? Os links de assinatura deixam de funcionar.`)) return;
+            acao(s.id, 'cancelar', 'Envio cancelado.');
+          },
+        },
+      ]);
+    }
+
+    async function iniciar() {
+      if (!await recursoLiberado(RECURSOS.assinaturaDigital)) {
+        document.getElementById('indisponivel').hidden = false;
+        return;
+      }
+      document.getElementById('conteudo').hidden = false;
+      document.getElementById('lnkIntegracao').hidden = getUser()?.perfil !== 'Admin';
+
+      const lista = document.getElementById('lista');
+      ativarCardsClicaveis(lista);
+      lista.addEventListener('click', e => {
+        const botao = e.target.closest('[data-menu]');
+        if (botao) abrirMenu(botao);
+      });
+      document.getElementById('abas').addEventListener('click', e => {
+        const b = e.target.closest('[data-situacao]');
+        if (b) trocarSituacao(b.dataset.situacao);
+      });
+      document.getElementById('paginacao').addEventListener('click', e => {
+        if (e.target.id === 'pgPrev' && estado.pagina > 1) { estado.pagina--; carregar(); }
+        if (e.target.id === 'pgNext' && dados?.temMais) { estado.pagina++; carregar(); }
+      });
+      let timer;
+      document.getElementById('filtroBusca').addEventListener('input', e => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          estado.busca = e.target.value.trim();
+          estado.pagina = 1;
+          carregar();
+        }, 300);
+      });
+
+      renderAbas();
+      await carregar();
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>

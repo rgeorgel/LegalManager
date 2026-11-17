@@ -20,6 +20,8 @@ public class IntegracaoAssinaturaConfiguration : IEntityTypeConfiguration<Integr
         builder.Property(i => i.WebhookSecretCifrado).HasMaxLength(500);
         builder.Property(i => i.OrganizacaoNome).HasMaxLength(200).IsRequired();
         builder.Property(i => i.PlanoNome).HasMaxLength(100);
+        builder.Property(i => i.WebhookExternoId).HasMaxLength(100);
+        builder.Property(i => i.EmbedOrigem).HasMaxLength(200);
 
         builder.HasOne(i => i.Tenant).WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(i => i.ConectadoPor).WithMany().HasForeignKey(i => i.ConectadoPorId).OnDelete(DeleteBehavior.SetNull);

@@ -18,6 +18,10 @@ public class IntegracaoAssinatura
     public Guid? ConectadoPorId { get; set; }
     public DateTime ConectadoEm { get; set; }
     public DateTime? UltimoWebhookEm { get; set; }
+    /// <summary>Id do webhook que o Causify cadastrou sozinho no Contratos (null = cadastrado à mão, ou nenhum).</summary>
+    public string? WebhookExternoId { get; set; }
+    /// <summary>Site do Causify que o Causify cadastrou sozinho no embed de templates do Contratos.</summary>
+    public string? EmbedOrigem { get; set; }
 
     public Tenant Tenant { get; set; } = null!;
     public Usuario? ConectadoPor { get; set; }

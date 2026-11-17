@@ -1364,4 +1364,339 @@ public class AssinaturaDigitalServiceTests
         Assert.Contains(trecho, Mensagem(r.Result));
         Assert.Equal(esperado, (await _db.SolicitacoesAssinatura.SingleAsync()).Status);
     }
+
+    // ── Fase 3: conectar sem copiar URL e segredo ─────────────────────────────────────
+
+    private const string WebhookId = "wh-1";
+    private const string SegredoAuto = "whsec_SegredoAutomatico456";
+
+    private void ContratosComRotasDeConfiguracao(List<ContratosWebhook>? existentes = null, List<ContratosOrigemEmbed>? origens = null)
+    {
+        _api.Setup(a => a.ObterContaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Conta());
+        _api.Setup(a => a.ListarWebhooksAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(existentes ?? []);
+        _api.Setup(a => a.CriarWebhookAsync(It.IsAny<string>(), It.IsAny<ContratosNovoWebhook>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, ContratosNovoWebhook w, CancellationToken _) =>
+                new ContratosWebhookCriado(new ContratosWebhook(WebhookId, w.Url, w.Description, null, true), SegredoAuto));
+        _api.Setup(a => a.ListarOrigensEmbedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(origens ?? []);
+        _api.Setup(a => a.CadastrarOrigemEmbedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string _, string o, CancellationToken _) => new ContratosOrigemEmbed("or-1", o));
+    }
+
+    [Fact]
+    public async Task Conectar_CadastraWebhookEOrigemSozinho()
+    {
+        ContratosComRotasDeConfiguracao();
+
+        var dto = Valor(await Controller().Conectar(new ConectarAssinaturaDto(Chave, null), CancellationToken.None));
+
+        var integ = await _db.IntegracoesAssinatura.SingleAsync();
+        Assert.Equal(SegredoAuto, _cifra.Decifrar(integ.WebhookSecretCifrado!));
+        Assert.Equal(WebhookId, integ.WebhookExternoId);
+        Assert.Equal("https://app.causify.test", integ.EmbedOrigem);
+        Assert.Equal(new[] { "configurado", "configurado" }, new[] { dto.Configuracao!.Webhook, dto.Configuracao.Embed });
+        Assert.Empty(dto.Configuracao.Avisos);
+        Assert.True(dto.WebhookAutomatico);
+        Assert.True(dto.EmbedAutomatico);
+        _api.Verify(a => a.CriarWebhookAsync(Chave, It.Is<ContratosNovoWebhook>(w =>
+            w.Url == $"https://app.causify.test/api/assinatura-digital/webhook/{integ.Id}" && w.Events == null), It.IsAny<CancellationToken>()));
+        _api.Verify(a => a.CadastrarOrigemEmbedAsync(Chave, "https://app.causify.test", It.IsAny<CancellationToken>()));
+    }
+
+    [Fact]
+    public async Task Configurar_TrocaWebhookAntigoDoMesmoEndereco_ENaoRecadastraOrigemExistente()
+    {
+        var integ = Conectar(comSegredo: false);
+        var url = $"https://app.causify.test/api/assinatura-digital/webhook/{integ.Id}";
+        ContratosComRotasDeConfiguracao(
+            [new ContratosWebhook("wh-velho", url, null, null, true), new ContratosWebhook("wh-outro", "https://crm.x.com/hook", null, null, true)],
+            [new ContratosOrigemEmbed("or-0", "https://APP.causify.test/")]);
+
+        var dto = Valor(await Controller().ConfigurarAutomatico(CancellationToken.None));
+
+        Assert.Equal("configurado", dto.Configuracao!.Webhook);
+        _api.Verify(a => a.ExcluirWebhookAsync(Chave, "wh-velho", It.IsAny<CancellationToken>()), Times.Once);
+        _api.Verify(a => a.ExcluirWebhookAsync(Chave, "wh-outro", It.IsAny<CancellationToken>()), Times.Never);
+        _api.Verify(a => a.CadastrarOrigemEmbedAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Equal("https://app.causify.test", (await _db.IntegracoesAssinatura.SingleAsync()).EmbedOrigem);
+    }
+
+    [Fact]
+    public async Task Conectar_ContratosSemAsRotas_FicaManualEConectaMesmoAssim()
+    {
+        _api.Setup(a => a.ObterContaAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync(Conta());
+        _api.Setup(a => a.ListarWebhooksAsync(Chave, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(404, "route_not_found", "Rota inexistente na API pública. Confira a documentação."));
+        _api.Setup(a => a.ListarOrigensEmbedAsync(Chave, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(404, "not_found", "Não encontrado."));
+
+        var dto = Valor(await Controller().Conectar(new ConectarAssinaturaDto(Chave, null), CancellationToken.None));
+
+        Assert.True(dto.Conectado);
+        Assert.Equal(new[] { "manual", "manual" }, new[] { dto.Configuracao!.Webhook, dto.Configuracao.Embed });
+        Assert.Empty(dto.Configuracao.Avisos);
+        Assert.False(dto.WebhookAutomatico);
+        Assert.Null((await _db.IntegracoesAssinatura.SingleAsync()).WebhookSecretCifrado);
+    }
+
+    [Fact]
+    public async Task Conectar_FalhaNoContratos_ViraAvisoSemDerrubarAConexao()
+    {
+        _api.Setup(a => a.ObterContaAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync(Conta());
+        _api.Setup(a => a.ListarWebhooksAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _api.Setup(a => a.CriarWebhookAsync(Chave, It.IsAny<ContratosNovoWebhook>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, "too_many_endpoints", "Sua conta já tem 10 webhooks."));
+        _api.Setup(a => a.ListarOrigensEmbedAsync(Chave, It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _api.Setup(a => a.CadastrarOrigemEmbedAsync(Chave, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, "too_many_origins", "Sua conta já tem 10 sites."));
+
+        var dto = Valor(await Controller().Conectar(new ConectarAssinaturaDto(Chave, null), CancellationToken.None));
+
+        Assert.True(dto.Conectado);
+        Assert.Equal(new[] { "erro", "erro" }, new[] { dto.Configuracao!.Webhook, dto.Configuracao.Embed });
+        Assert.Equal(["Webhook: Sua conta já tem 10 webhooks.", "Embed de templates: Sua conta já tem 10 sites."], dto.Configuracao.Avisos);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:5123")]
+    [InlineData("https://localhost:5123")]
+    [InlineData(null)]
+    public async Task Conectar_EnderecoLocal_NaoTentaCadastrar(string? frontend)
+    {
+        ContratosComRotasDeConfiguracao();
+
+        var dto = Valor(await Controller(service: Service(frontendUrl: frontend)).Conectar(new ConectarAssinaturaDto(Chave, null), CancellationToken.None));
+
+        Assert.Equal(new[] { "indisponivel", "indisponivel" }, new[] { dto.Configuracao!.Webhook, dto.Configuracao.Embed });
+        Assert.Equal(2, dto.Configuracao.Avisos.Count);
+        _api.Verify(a => a.ListarWebhooksAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _api.Verify(a => a.ListarOrigensEmbedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SegredoColadoAMao_NaoConfiguraSozinho_EEsqueceOWebhookAutomatico()
+    {
+        var integ = Conectar(comSegredo: false);
+        integ.WebhookExternoId = WebhookId;
+        await _db.SaveChangesAsync();
+        ContratosComRotasDeConfiguracao();
+
+        var dto = Valor(await Controller().Conectar(new ConectarAssinaturaDto(null, Segredo), CancellationToken.None));
+
+        Assert.Null(dto.Configuracao);
+        Assert.False(dto.WebhookAutomatico);
+        Assert.Null((await _db.IntegracoesAssinatura.SingleAsync()).WebhookExternoId);
+        _api.Verify(a => a.CriarWebhookAsync(It.IsAny<string>(), It.IsAny<ContratosNovoWebhook>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task TrocarChave_ApagaOWebhookDaChaveAntiga()
+    {
+        var integ = Conectar(comSegredo: false);
+        integ.WebhookExternoId = "wh-antigo";
+        await _db.SaveChangesAsync();
+        ContratosComRotasDeConfiguracao();
+        const string nova = "ctr_ChaveNovaDeOutraConta789";
+
+        Valor(await Controller().Conectar(new ConectarAssinaturaDto(nova, null), CancellationToken.None));
+
+        _api.Verify(a => a.ExcluirWebhookAsync(Chave, "wh-antigo", It.IsAny<CancellationToken>()), Times.Once);
+        _api.Verify(a => a.CriarWebhookAsync(nova, It.IsAny<ContratosNovoWebhook>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal(WebhookId, (await _db.IntegracoesAssinatura.SingleAsync()).WebhookExternoId);
+    }
+
+    [Fact]
+    public async Task Desconectar_ApagaOWebhookCadastrado_MesmoSeOContratosFalhar()
+    {
+        var integ = Conectar();
+        integ.WebhookExternoId = WebhookId;
+        await _db.SaveChangesAsync();
+        _api.Setup(a => a.ExcluirWebhookAsync(Chave, WebhookId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(401, null, "Chave revogada."));
+
+        Assert.IsType<NoContentResult>(await Controller().Desconectar(CancellationToken.None));
+
+        _api.Verify(a => a.ExcluirWebhookAsync(Chave, WebhookId, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.False(await _db.IntegracoesAssinatura.AnyAsync());
+    }
+
+    [Fact]
+    public async Task ConfigurarETestar_SoAdmin_EConectado()
+    {
+        Assert.Equal(403, Status(await Controller(_advogado).ConfigurarAutomatico(CancellationToken.None)));
+        Assert.Equal(403, Status(await Controller(_advogado).TestarWebhook(CancellationToken.None)));
+        Assert.Equal(409, Status(await Controller().ConfigurarAutomatico(CancellationToken.None)));
+        Assert.Equal(409, Status(await Controller().TestarWebhook(CancellationToken.None)));
+    }
+
+    [Fact]
+    public async Task TestarWebhook_MandaOTeste_OuAvisaQueSumiu()
+    {
+        var integ = Conectar();
+        var r = await Controller().TestarWebhook(CancellationToken.None);
+        Assert.Equal(409, Status(r)); // cadastrado à mão
+        Assert.Contains("na tela do Contratos", Mensagem(r.Result));
+
+        integ.WebhookExternoId = WebhookId;
+        await _db.SaveChangesAsync();
+        Assert.Equal(200, Status(await Controller().TestarWebhook(CancellationToken.None)));
+        _api.Verify(a => a.TestarWebhookAsync(Chave, WebhookId, It.IsAny<CancellationToken>()), Times.Once);
+
+        _api.Setup(a => a.TestarWebhookAsync(Chave, WebhookId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(404, "not_found", "Não encontrado."));
+        r = await Controller().TestarWebhook(CancellationToken.None);
+        Assert.Equal(409, Status(r));
+        Assert.Contains("não existe mais", Mensagem(r.Result));
+        Assert.Null((await _db.IntegracoesAssinatura.SingleAsync()).WebhookExternoId);
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_SiteNaoLiberado_LiberaSozinhoETentaDeNovo()
+    {
+        Conectar();
+        ContratosComRotasDeConfiguracao();
+        _api.SetupSequence(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, "embed_origin_required", "Cadastre o endereço do seu sistema."))
+            .ReturnsAsync(SessaoEmbed());
+
+        var dto = Valor(await Controller().CriarSessaoEmbed(null, CancellationToken.None));
+
+        Assert.StartsWith("https://contratos.test/embed/templates", dto.Url);
+        _api.Verify(a => a.CadastrarOrigemEmbedAsync(Chave, "https://app.causify.test", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("https://app.causify.test", (await _db.IntegracoesAssinatura.SingleAsync()).EmbedOrigem);
+    }
+
+    [Fact]
+    public async Task SessaoEmbed_SiteNaoLiberado_ContratosSemARota_MostraOPassoManual()
+    {
+        Conectar();
+        _api.Setup(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(409, "embed_origin_required", "Cadastre o endereço do seu sistema."));
+        _api.Setup(a => a.ListarOrigensEmbedAsync(Chave, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(404, null, "HTTP 404"));
+
+        var r = await Controller().CriarSessaoEmbed(null, CancellationToken.None);
+
+        Assert.Equal(409, Status(r));
+        Assert.Contains("https://app.causify.test está cadastrado", Mensagem(r.Result));
+        _api.Verify(a => a.CriarSessaoEmbedAsync(Chave, It.IsAny<ContratosNovaSessaoEmbed>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(404, null, true)]
+    [InlineData(404, "route_not_found", true)]
+    [InlineData(404, "not_found", true)]
+    [InlineData(404, "contract_not_found", false)]
+    [InlineData(403, null, false)]
+    public void RotaInexistente(int status, string? codigo, bool esperado) =>
+        Assert.Equal(esperado, AssinaturaDigitalService.RotaInexistente(new ContratosApiException(status, codigo, "x")));
+
+    // ── Fase 3: painel "Assinaturas" ──────────────────────────────────────────────────
+
+    private SolicitacaoAssinatura NoPainel(StatusSolicitacaoAssinatura status, string titulo, Action<SolicitacaoAssinatura>? ajuste = null,
+        params ContratosSignatario[] sigs)
+    {
+        var s = Solicitacao(status, null, sigs.Length > 0 ? sigs : [Sig("s1", "Maria Cliente", "pending"), Sig("s2", "Bruno Advogado", "signed")]);
+        s.Titulo = titulo;
+        ajuste?.Invoke(s);
+        _db.SaveChanges();
+        return s;
+    }
+
+    [Fact]
+    public async Task Painel_SeparaPorSituacao_EContaCadaAba()
+    {
+        var agora = DateTime.UtcNow;
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Pendente A");
+        NoPainel(StatusSolicitacaoAssinatura.ParcialmenteAssinada, "Pendente B");
+        NoPainel(StatusSolicitacaoAssinatura.Rascunho, "Rascunho");
+        NoPainel(StatusSolicitacaoAssinatura.Recusada, "Recusada recente", s => s.AtualizadoExternoEm = agora.AddDays(-5));
+        NoPainel(StatusSolicitacaoAssinatura.Expirada, "Expirada antiga", s => { s.AtualizadoExternoEm = agora.AddDays(-90); s.CriadoEm = agora.AddDays(-100); });
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Falhou o envio", s => { s.Erro = "Sem cota"; s.AtualizadoExternoEm = agora; });
+        NoPainel(StatusSolicitacaoAssinatura.Concluida, "Assinada");
+        NoPainel(StatusSolicitacaoAssinatura.Cancelada, "Cancelada", s => s.Erro = "falha antiga");
+
+        var p = Valor(await Controller().Painel("pendentes", null, 1, CancellationToken.None));
+
+        Assert.Equal(3, p.Contagens["pendentes"]);
+        Assert.Equal(1, p.Contagens["rascunhos"]);
+        Assert.Equal(2, p.Contagens["atencao"]);
+        Assert.Equal(1, p.Contagens["concluidas"]);
+        Assert.Equal(8, p.Contagens["todas"]);
+        Assert.Equal(3, p.Total);
+        Assert.False(p.TemMais);
+        Assert.Equal(["Falhou o envio", "Recusada recente"],
+            Valor(await Controller().Painel("atencao", null, 1, CancellationToken.None)).Itens.Select(i => i.Solicitacao.Titulo).Order());
+        // Situação desconhecida cai em "pendentes".
+        Assert.Equal(3, Valor(await Controller().Painel("qualquer", null, 1, CancellationToken.None)).Total);
+    }
+
+    [Fact]
+    public async Task Painel_PendentesPrimeiroOQueVence_ComOrigemEQuemFalta()
+    {
+        var agora = DateTime.UtcNow;
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Sem prazo", s => s.EnviadaEm = agora.AddDays(-10));
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Vence depois", s => s.ExpiraEm = agora.AddDays(10));
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Vence logo", s => s.ExpiraEm = agora.AddDays(1));
+
+        var p = Valor(await Controller().Painel("pendentes", null, 1, CancellationToken.None));
+
+        Assert.Equal(["Vence logo", "Vence depois", "Sem prazo"], p.Itens.Select(i => i.Solicitacao.Titulo));
+        var item = p.Itens[0];
+        Assert.Equal("contrato", item.Origem);
+        Assert.Equal("Contrato HON-1", item.OrigemTitulo);
+        Assert.Equal("Maria Cliente", item.ClienteNome);
+        Assert.Equal($"/pages/honorarios-contrato-detalhe.html?id={_contrato.Id}", item.Url);
+        Assert.Equal(["Maria Cliente"], item.Aguardando);
+        Assert.Null(item.Solicitacao.Signatarios[0].Link);
+    }
+
+    [Fact]
+    public async Task Painel_OrigemProcessoEContato_EBusca()
+    {
+        var processo = new Processo { Id = Guid.NewGuid(), TenantId = _tenant.Id, NumeroCNJ = "0001234-56.2026.8.26.0100", CriadoEm = DateTime.UtcNow };
+        _db.Processos.Add(processo);
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Procuração", s => { s.ContratoHonorarioId = null; s.ContatoId = null; s.ProcessoId = processo.Id; });
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Declaração", s => s.ContratoHonorarioId = null);
+        NoPainel(StatusSolicitacaoAssinatura.Enviada, "Honorários", null, Sig("s9", "Zuleide Testemunha", "pending"));
+
+        var todos = Valor(await Controller().Painel("pendentes", null, 1, CancellationToken.None)).Itens.ToDictionary(i => i.Solicitacao.Titulo);
+        Assert.Equal(("processo", "0001234-56.2026.8.26.0100", (string?)null), (todos["Procuração"].Origem, todos["Procuração"].OrigemTitulo, todos["Procuração"].ClienteNome));
+        Assert.StartsWith("/pages/processo-detalhe.html", todos["Procuração"].Url);
+        Assert.Equal(("contato", "Maria Cliente"), (todos["Declaração"].Origem, todos["Declaração"].OrigemTitulo));
+
+        Assert.Equal(["Procuração"], (await Busca("0001234")).Select(i => i.Solicitacao.Titulo));
+        Assert.Equal(["Honorários"], (await Busca("zuleide")).Select(i => i.Solicitacao.Titulo));
+        Assert.Equal(["Declaração"], (await Busca("DECLARA")).Select(i => i.Solicitacao.Titulo));
+        Assert.Equal(["Honorários"], (await Busca("hon-1")).Select(i => i.Solicitacao.Titulo));
+        Assert.Empty(await Busca("nada disso"));
+
+        async Task<List<ItemPainelAssinaturaDto>> Busca(string termo) =>
+            Valor(await Controller().Painel("todas", termo, 1, CancellationToken.None)).Itens;
+    }
+
+    [Fact]
+    public async Task Painel_Pagina50PorVez_ESoDoEscritorio()
+    {
+        for (var i = 0; i < AssinaturaDigitalService.TamanhoPaginaPainel + 2; i++)
+            NoPainel(StatusSolicitacaoAssinatura.Concluida, $"C{i}");
+        var outro = new Tenant { Id = Guid.NewGuid(), Nome = "Outro", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
+        _db.Tenants.Add(outro);
+        NoPainel(StatusSolicitacaoAssinatura.Concluida, "De outro escritório", s => s.TenantId = outro.Id);
+
+        var p1 = Valor(await Controller().Painel("concluidas", null, 1, CancellationToken.None));
+        var p2 = Valor(await Controller().Painel("concluidas", null, 2, CancellationToken.None));
+
+        Assert.Equal(AssinaturaDigitalService.TamanhoPaginaPainel + 2, p1.Total);
+        Assert.Equal(AssinaturaDigitalService.TamanhoPaginaPainel, p1.Itens.Count);
+        Assert.True(p1.TemMais);
+        Assert.Equal(2, p2.Itens.Count);
+        Assert.False(p2.TemMais);
+        Assert.DoesNotContain(p1.Itens.Concat(p2.Itens), i => i.Solicitacao.Titulo == "De outro escritório");
+    }
+
+    [Fact]
+    public async Task Painel_ClienteNaoVe()
+    {
+        Assert.Equal(403, Status(await Controller(papel: "Cliente").Painel(null, null, 1, CancellationToken.None)));
+    }
 }

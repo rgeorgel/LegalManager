@@ -45,11 +45,40 @@ public class AssinaturaDigitalController(
         Executar<IntegracaoAssinaturaDto>(async () =>
         {
             if (!EhAdmin) return Proibido(MensagemAdmin);
-            var integ = await service.ConectarAsync(tenantContext.TenantId, tenantContext.UserId, dto, ct);
+            var (integ, configuracao) = await service.ConectarAsync(tenantContext.TenantId, tenantContext.UserId, dto, ct);
             await audit.LogAsync(tenantContext.CreateEntry(AuditActions.Update, AuditEntities.IntegracaoAssinatura, integ.Id,
-                null, new { integ.OrganizacaoNome, ChaveNova = !string.IsNullOrWhiteSpace(dto.ApiKey), SegredoNovo = !string.IsNullOrWhiteSpace(dto.WebhookSecret) },
+                null, new
+                {
+                    integ.OrganizacaoNome, ChaveNova = !string.IsNullOrWhiteSpace(dto.ApiKey), SegredoNovo = !string.IsNullOrWhiteSpace(dto.WebhookSecret),
+                    Webhook = configuracao?.Webhook, Embed = configuracao?.Embed,
+                },
                 HttpContext.GetClientIpAddress()), ct);
-            return Ok(await service.ObterAsync(tenantContext.TenantId, true, ct));
+            return Ok(await service.ObterAsync(tenantContext.TenantId, true, ct) with { Configuracao = configuracao });
+        });
+
+    /// <summary>Cadastra no Contratos o webhook e o site do embed, sem copiar e colar (escritórios já conectados).</summary>
+    [HttpPost("integracao/configurar")]
+    [Authorize]
+    public Task<ActionResult<IntegracaoAssinaturaDto>> ConfigurarAutomatico(CancellationToken ct) =>
+        Executar<IntegracaoAssinaturaDto>(async () =>
+        {
+            if (!EhAdmin) return Proibido(MensagemAdmin);
+            var configuracao = await service.ConfigurarAutomaticoAsync(tenantContext.TenantId, ct);
+            var dto = await service.ObterAsync(tenantContext.TenantId, true, ct) with { Configuracao = configuracao };
+            var integ = await service.IntegracaoAsync(tenantContext.TenantId, ct);
+            await audit.LogAsync(tenantContext.CreateEntry(AuditActions.Update, AuditEntities.IntegracaoAssinatura, integ?.Id,
+                null, new { configuracao.Webhook, configuracao.Embed }, HttpContext.GetClientIpAddress()), ct);
+            return Ok(dto);
+        });
+
+    [HttpPost("integracao/webhook/testar")]
+    [Authorize]
+    public Task<ActionResult<object>> TestarWebhook(CancellationToken ct) =>
+        Executar<object>(async () =>
+        {
+            if (!EhAdmin) return Proibido(MensagemAdmin);
+            await service.TestarWebhookAsync(tenantContext.TenantId, ct);
+            return Ok(new { message = "Teste enviado. O aviso chega em alguns segundos." });
         });
 
     [HttpDelete("integracao")]
@@ -86,6 +115,15 @@ public class AssinaturaDigitalController(
         Executar<List<SolicitacaoAssinaturaDto>>(async () => EhCliente
             ? Proibido(MensagemCliente)
             : Ok(await service.ListarAsync(tenantContext.TenantId, new OrigemAssinatura(contratoHonorarioId, contatoId, processoId), ct)));
+
+    /// <summary>Painel "Assinaturas": envios do escritório por situação (pendentes, rascunhos, atencao, concluidas, todas).</summary>
+    [HttpGet("painel")]
+    [Authorize]
+    public Task<ActionResult<PainelAssinaturasDto>> Painel([FromQuery] string? situacao, [FromQuery] string? busca,
+        [FromQuery] int pagina = 1, CancellationToken ct = default) =>
+        Executar<PainelAssinaturasDto>(async () => EhCliente
+            ? Proibido(MensagemCliente)
+            : Ok(await service.PainelAsync(tenantContext.TenantId, situacao, busca, pagina, ct)));
 
     /// <summary>Selo da lista de contratos de honorários: ?contratoHonorarioIds=a&amp;contratoHonorarioIds=b.</summary>
     [HttpGet("resumo")]

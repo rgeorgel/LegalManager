@@ -17,7 +17,17 @@ public record IntegracaoAssinaturaDto(
     UsoContratosDto? Uso = null,
     string? AvisoUso = null,
     string? ContratosUrl = null,
-    string? OrigemEmbed = null);
+    string? OrigemEmbed = null,
+    bool WebhookAutomatico = false,
+    bool EmbedAutomatico = false,
+    ConfiguracaoAutomaticaDto? Configuracao = null);
+
+/// <summary>
+/// Resultado de "conectar sem copiar URL e segredo". Webhook e Embed: "configurado" (o Causify
+/// cadastrou no Contratos), "manual" (o Contratos ainda não aceita pela API: siga os passos),
+/// "indisponivel" (endereço do Causify sem https) ou "erro" (motivo em Avisos).
+/// </summary>
+public record ConfiguracaoAutomaticaDto(string Webhook, string Embed, List<string> Avisos);
 
 public record UsoContratosDto(int Usados, int? Limite, int Creditos, int EnviosDisponiveis, bool PagamentoPendente);
 
@@ -99,6 +109,26 @@ public record SolicitacaoAssinaturaDto(
     DateTime? EnviadaEm,
     DateTime? ConcluidaEm,
     DateTime? ExpiraEm);
+
+/// <summary>
+/// Painel "Assinaturas" do escritório. Situação: "pendentes" (enviadas, aguardando alguém),
+/// "rascunhos", "atencao" (recusadas, expiradas ou com falha de envio, últimos 60 dias),
+/// "concluidas" ou "todas". Contagens traz o total de cada situação, para as abas.
+/// </summary>
+public record PainelAssinaturasDto(
+    Dictionary<string, int> Contagens,
+    List<ItemPainelAssinaturaDto> Itens,
+    int Total,
+    bool TemMais);
+
+/// <summary>Origem: "contrato", "processo" ou "contato". Aguardando: quem ainda não assinou (na ordem).</summary>
+public record ItemPainelAssinaturaDto(
+    SolicitacaoAssinaturaDto Solicitacao,
+    string Origem,
+    string? OrigemTitulo,
+    string? ClienteNome,
+    string Url,
+    List<string> Aguardando);
 
 /// <summary>Selo de assinatura nos cards da lista de contratos de honorários (último envio não cancelado).</summary>
 public record ResumoAssinaturaDto(StatusSolicitacaoAssinatura Status, int Assinados, int Total);

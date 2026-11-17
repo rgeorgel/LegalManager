@@ -409,6 +409,55 @@ public class ContratosHttpClientTests
     }
 
     [Fact]
+    public async Task Webhooks_ListaCriaTestaEApaga()
+    {
+        Responder(HttpStatusCode.OK, """[{"id":"w1","url":"https://app.test/hook","description":null,"events":[],"enabled":true,"failureStreak":2}]""");
+        Responder(HttpStatusCode.Created, """{"webhook":{"id":"w2","url":"https://app.test/hook","description":"Causify","events":[],"enabled":true},"secret":"whsec_abc"}""");
+        Responder(HttpStatusCode.Accepted, "");
+        Responder(HttpStatusCode.NoContent, "");
+        var c = Cliente();
+
+        var lista = await c.ListarWebhooksAsync("k");
+        var criado = await c.CriarWebhookAsync("k", new ContratosNovoWebhook("https://app.test/hook", "Causify", null));
+        await c.TestarWebhookAsync("k", "w2");
+        await c.ExcluirWebhookAsync("k", "w1");
+
+        Assert.Equal(("w1", 2), (lista.Single().Id, lista.Single().FailureStreak));
+        Assert.Equal(("w2", "whsec_abc"), (criado.Webhook.Id, criado.Secret));
+        Assert.Equal(["GET /api/public/v1/webhooks", "POST /api/public/v1/webhooks", "POST /api/public/v1/webhooks/w2/test", "DELETE /api/public/v1/webhooks/w1"],
+            _h.Recebidas.Select(r => $"{r.Req.Method} {r.Req.RequestUri!.AbsolutePath}"));
+        using var doc = JsonDocument.Parse(_h.Recebidas[1].Corpo!);
+        Assert.Equal("https://app.test/hook", doc.RootElement.GetProperty("url").GetString());
+        Assert.False(doc.RootElement.TryGetProperty("events", out _)); // omitido = todos os eventos
+    }
+
+    [Fact]
+    public async Task OrigensEmbed_ListaECadastra()
+    {
+        Responder(HttpStatusCode.OK, """[{"id":"o1","origin":"https://crm.x.com","createdAt":"2026-11-17T10:00:00+00:00"}]""");
+        Responder(HttpStatusCode.Created, """{"id":"o2","origin":"https://app.test"}""");
+        var c = Cliente();
+
+        var lista = await c.ListarOrigensEmbedAsync("k");
+        var nova = await c.CadastrarOrigemEmbedAsync("k", "https://app.test");
+
+        Assert.Equal("https://crm.x.com", lista.Single().Origin);
+        Assert.Equal("o2", nova.Id);
+        Assert.Equal(["GET /api/public/v1/embed/origins", "POST /api/public/v1/embed/origins"],
+            _h.Recebidas.Select(r => $"{r.Req.Method} {r.Req.RequestUri!.AbsolutePath}"));
+        Assert.Equal("""{"origin":"https://app.test"}""", _h.Recebidas[1].Corpo);
+    }
+
+    [Fact]
+    public async Task RotaQueNaoExiste_Vira404SemCodigo()
+    {
+        Responder(HttpStatusCode.NotFound, "", "text/plain");
+        var e = await Assert.ThrowsAsync<ContratosApiException>(() => Cliente().ListarWebhooksAsync("k"));
+        Assert.Equal((404, (string?)null), (e.Status, e.Codigo));
+        Assert.True(AssinaturaDigitalService.RotaInexistente(e));
+    }
+
+    [Fact]
     public async Task SessaoEmbed_ListaVaziaDePermissoesVaiComoSoLeitura()
     {
         Responder(HttpStatusCode.Created, """{"id":"e1","url":"https://contratos.test/embed/templates"}""");

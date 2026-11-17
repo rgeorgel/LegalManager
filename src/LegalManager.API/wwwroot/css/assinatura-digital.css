@@ -90,3 +90,10 @@
   #ctrEmbed.modal-overlay { padding: 0; }
   .ctr-embed { height: 100dvh; max-width: none; border-radius: 0; }
 }
+
+/* Configuração automática no Contratos (webhook + embed) e os passos manuais recolhidos */
+.asg-int-resultado { border: 1px solid var(--color-border); background: var(--color-surface-2, var(--color-bg)); color: var(--color-text); }
+.asg-int-manual { margin-top: 10px; }
+.asg-int-manual > summary { cursor: pointer; font-size: 13px; color: var(--color-text-muted); padding: 4px 0; }
+.asg-int-manual > summary:hover { color: var(--color-text); }
+.asg-int-manual[open] > summary { margin-bottom: 4px; }
