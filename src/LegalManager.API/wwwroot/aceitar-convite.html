@@ -61,27 +61,45 @@
   <meta name="robots" content="noindex, follow">
   <title>Causify — Aceitar Convite</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preload" href="/fonts/dm-serif-display-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/login-feltro.css">
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-logo"><img src="/images/causify-logo-transparente.png" alt="Causify"></div>
-      <div class="auth-subtitle">Complete seu cadastro para aceitar o convite</div>
-      <div id="alert" class="alert" style="display:none"></div>
-      <form id="conviteForm">
-        <div class="form-group">
-          <label>Seu Nome *</label>
-          <input type="text" id="nome" class="form-control" required>
+  <main class="lf">
+    <div class="lf-quadro">
+      <div class="lf-cartao lf-c1" aria-hidden="true"><span class="lf-fita"></span><b>Prazos</b><strong>Em dias úteis</strong>Fins de semana e feriados já descontados.</div>
+      <div class="lf-cartao lf-c2" aria-hidden="true"><span class="lf-fita"></span><b>Agenda</b><strong>Audiências</strong>Compromissos do escritório em um só calendário.</div>
+      <div class="lf-cartao lf-c3" aria-hidden="true"><span class="lf-fita"></span><b>Publicações</b><strong>Prazo sugerido</strong>A IA lê as publicações e propõe prazo e audiência.</div>
+      <div class="lf-cartao lf-c4" aria-hidden="true"><span class="lf-fita"></span><b>Financeiro</b><strong>Honorários</strong>Recebimentos e despesas por processo.</div>
+
+      <div class="lf-papel">
+        <span class="lf-fita"></span><span class="lf-fita lf-canto"></span>
+        <a class="lf-logo" href="/index.html"><img src="/images/causify-logo-navbar-clara.svg" alt="Causify"></a>
+        <h1>Aceitar convite</h1>
+        <p class="lf-sub">Complete seu cadastro para entrar no escritório.</p>
+
+        <div id="alert" class="alert" style="display:none"></div>
+
+        <form id="conviteForm">
+          <div class="lf-campo">
+            <label for="nome">Seu nome</label>
+            <input type="text" id="nome" required autocomplete="name">
+          </div>
+          <div class="lf-campo">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" placeholder="Pelo menos 8 caracteres" required minlength="8" autocomplete="new-password">
+          </div>
+          <button type="submit" class="lf-botao" id="submitBtn">Criar conta</button>
+        </form>
+
+        <div class="lf-links">
+          <a href="/login.html">Já tem conta? Entrar</a>
         </div>
-        <div class="form-group">
-          <label>Senha *</label>
-          <input type="password" id="senha" class="form-control" required minlength="8" autocomplete="new-password">
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%" id="submitBtn">Criar conta</button>
-      </form>
+      </div>
     </div>
-  </div>
+  </main>
+
   <script type="module">
     import { aceitarConvite } from '/js/auth.js';
     const token = new URLSearchParams(window.location.search).get('token');
