@@ -52,6 +52,43 @@ public class AndamentoDePublicacaoTests
     }
 
     [Fact]
+    public async Task SemCnj_PreencheDoTextoEVincula_UmaVezSo()
+    {
+        var processo = Processo();
+        _db.Processos.Add(processo);
+        var semCnj = Pub("v2-mov-9", null, $"ATOrd {Cnj} AUTOR: FULANO INTIMAÇÃO", new DateTime(2026, 11, 18));
+        semCnj.NumeroCNJ = null;
+        var outroNumero = Pub("v2-mov-10", null, "Processo 0000001-11.2020.8.26.0100. Intimem-se.", new DateTime(2026, 11, 18));
+        outroNumero.NumeroCNJ = null;
+        var semNumeroNoTexto = Pub("v2-mov-11", null, "Intimem-se as partes.", new DateTime(2026, 11, 18));
+        semNumeroNoTexto.NumeroCNJ = null;
+        _db.Publicacoes.AddRange(semCnj, outroNumero, semNumeroNoTexto);
+        await _db.SaveChangesAsync();
+
+        Assert.Equal(1, await AndamentoDePublicacao.CriarFaltantesAsync(_db));
+
+        Assert.Equal(Cnj, semCnj.NumeroCNJ);
+        Assert.Equal(processo.Id, semCnj.ProcessoId);
+        Assert.Equal(processo.Id, (await _db.Andamentos.SingleAsync()).ProcessoId);
+        // Sem processo no escritório: ganha o número (o card mostra), sem vínculo.
+        Assert.Equal("0000001-11.2020.8.26.0100", outroNumero.NumeroCNJ);
+        Assert.Null(outroNumero.ProcessoId);
+        Assert.Null(semNumeroNoTexto.NumeroCNJ);
+
+        Assert.Equal(0, await AndamentoDePublicacao.CriarFaltantesAsync(_db));
+        Assert.Equal(1, await _db.Andamentos.CountAsync());
+    }
+
+    [Fact]
+    public void CnjNoTexto_AchaOsNumerosComMascaraSemRepetir()
+    {
+        Assert.Equal(["0010336-32.2026.5.15.0027", Cnj],
+            CnjNoTexto.Todos($"ATOrd 0010336-32.2026.5.15.0027 e {Cnj}; de novo 0010336-32.2026.5.15.0027"));
+        Assert.Null(CnjNoTexto.Primeiro("10010336-32.2026.5.15.0027 tem dígito a mais"));
+        Assert.Empty(CnjNoTexto.Todos(null));
+    }
+
+    [Fact]
     public async Task ProcessoDeOutroEscritorio_NaoVincula()
     {
         _db.Processos.Add(Processo(Guid.NewGuid()));

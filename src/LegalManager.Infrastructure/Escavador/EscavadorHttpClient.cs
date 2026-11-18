@@ -375,9 +375,6 @@ public class EscavadorHttpClient : IEscavadorService
         return DateTime.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.None, out d) ? d.Date : null;
     }
 
-    private static readonly System.Text.RegularExpressions.Regex CnjRegex =
-        new(@"\b\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}\b", System.Text.RegularExpressions.RegexOptions.Compiled);
-
     private static EscavadorPublicacaoDto MapTrecho(BuscaItem i, DateTime data)
     {
         var texto = TextoSemHtml(i.Texto);
@@ -387,7 +384,7 @@ public class EscavadorHttpClient : IEscavadorService
         return new EscavadorPublicacaoDto(
             Id: i.Id,
             Uuid: chave,
-            NumeroCnj: texto is null ? null : CnjRegex.Match(texto) is { Success: true } m ? m.Value : null,
+            NumeroCnj: Services.CnjNoTexto.Primeiro(texto),
             Data: data,
             Diario: i.DiarioNome ?? i.DiarioSigla,
             Snippet: texto,

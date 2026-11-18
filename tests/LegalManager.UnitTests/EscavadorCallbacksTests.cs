@@ -156,6 +156,63 @@ public class EscavadorCallbacksTests
         escavador.Verify(e => e.CriarMonitoramentoAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // Aviso do monitoramento de OAB no formato V2: o "monitoramento" é o da OAB e não traz "numero";
+    // o processo só aparece no texto (caso real: TRT-15, ATOrd citada pela intimação).
+    private static EscavadorCallbackWebhookPayload PayloadOabV2(string texto) => EscavadorCallbackProcessor.Desserializar($$"""
+        {
+          "event": "nova_movimentacao",
+          "monitoramento": { "id": 900 },
+          "movimentacao": { "id": 1792748095, "data": "2026-11-18", "tipo": "PUBLICACAO", "conteudo": {{System.Text.Json.JsonSerializer.Serialize(texto)}} }
+        }
+        """)!;
+
+    [Fact]
+    public async Task WebhookOabV2_SemNumeroNoAviso_AchaOProcessoPeloTexto()
+    {
+        var (ctx, oab) = await SeedOabAsync();
+        var processo = NovoProcesso(oab.TenantId);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await Processor(ctx).ProcessarAsync(PayloadOabV2(
+            $"PODER JUDICIÁRIO ATOrd {Cnj} AUTOR: FULANO RÉU: EMPRESA LTDA. INTIMAÇÃO Fica V. Sa. intimado"));
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(processo.Id, pub.ProcessoId);
+        Assert.Equal(Cnj, pub.NumeroCNJ);
+        Assert.Equal("v2-mov-1792748095", pub.UuidExterno);
+        Assert.Equal(processo.Id, (await ctx.Andamentos.SingleAsync()).ProcessoId);
+    }
+
+    [Fact]
+    public async Task WebhookOabV2_TextoComVariosNumeros_PrefereOProcessoDoEscritorio()
+    {
+        var (ctx, oab) = await SeedOabAsync();
+        var processo = NovoProcesso(oab.TenantId);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await Processor(ctx).ProcessarAsync(PayloadOabV2(
+            $"Processo 0000001-11.2020.8.26.0100 apensado ao {Cnj}. Intimem-se."));
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(processo.Id, pub.ProcessoId);
+        Assert.Equal(Cnj, pub.NumeroCNJ);
+    }
+
+    [Fact]
+    public async Task WebhookOabV2_ProcessoForaDoEscritorio_GuardaONumeroDoTexto()
+    {
+        var (ctx, _) = await SeedOabAsync();
+
+        await Processor(ctx).ProcessarAsync(PayloadOabV2($"ATOrd {Cnj} INTIMAÇÃO"));
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Null(pub.ProcessoId);
+        Assert.Equal(Cnj, pub.NumeroCNJ);
+        Assert.Empty(ctx.Andamentos);
+    }
+
     [Fact]
     public async Task WebhookOab_MesmoCnjEmOutroEscritorio_FicaComODonoDaOab()
     {

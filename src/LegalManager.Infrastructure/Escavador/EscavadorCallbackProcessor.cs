@@ -58,6 +58,10 @@ public class EscavadorCallbackProcessor
         var oab = monitoramentoId.HasValue
             ? await EncontrarTenantOabAsync(monitoramentoId.Value)
             : null;
+        // O aviso do monitoramento de OAB não traz o processo em campo próprio: o número só está
+        // no texto. Prefere o CNJ que o escritório tem cadastrado (o texto pode citar outros).
+        if (oab != null && string.IsNullOrWhiteSpace(numeroCNJ))
+            numeroCNJ = await CnjDoTextoAsync(oab.TenantId, conteudo);
         var processo = string.IsNullOrWhiteSpace(numeroCNJ) ? null
             : oab != null ? await _context.Processos.FirstOrDefaultAsync(p => p.TenantId == oab.TenantId && p.NumeroCNJ == numeroCNJ)
             : await EncontrarProcessoAsync(monitoramentoId, numeroCNJ);
@@ -317,6 +321,17 @@ public class EscavadorCallbackProcessor
             if (por != null) return por;
         }
         return await _context.Processos.FirstOrDefaultAsync(p => p.NumeroCNJ == numeroCNJ);
+    }
+
+    private async Task<string?> CnjDoTextoAsync(Guid tenantId, EscavadorMovimentacaoDto conteudo)
+    {
+        var cnjs = CnjNoTexto.Todos(TextoHtml.ParaTexto(conteudo.ConteudoHtml) + " " + TextoHtml.ParaTexto(conteudo.Snippet));
+        if (cnjs.Count <= 1) return cnjs.FirstOrDefault();
+        var doEscritorio = await _context.Processos
+            .Where(p => p.TenantId == tenantId && cnjs.Contains(p.NumeroCNJ))
+            .Select(p => p.NumeroCNJ)
+            .ToListAsync();
+        return cnjs.FirstOrDefault(doEscritorio.Contains) ?? cnjs[0];
     }
 
     private async Task<TenantOab?> EncontrarTenantOabAsync(long monitoramentoId)

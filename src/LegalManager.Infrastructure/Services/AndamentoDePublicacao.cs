@@ -53,6 +53,8 @@ public static class AndamentoDePublicacao
     /// </summary>
     public static async Task<int> CriarFaltantesAsync(AppDbContext db, CancellationToken ct = default)
     {
+        await PreencherCnjDoTextoAsync(db, ct);
+
         var candidatas = await db.Publicacoes
             .Where(p => p.FonteCaptura == FonteCaptura.Escavador && p.Conteudo != ""
                         && ((p.ProcessoId == null && p.NumeroCNJ != null
@@ -87,5 +89,39 @@ public static class AndamentoDePublicacao
 
         await db.SaveChangesAsync(ct);
         return criadas;
+    }
+
+    /// <summary>
+    /// O webhook da OAB gravava sem CNJ as publicações cujo aviso não traz o processo em campo
+    /// próprio, embora o número esteja no texto. Preenche o CNJ a partir do texto — preferindo o de
+    /// um processo do escritório —, e <see cref="CriarFaltantesAsync"/> faz o vínculo e a movimentação.
+    /// Idempotente: a que ganha CNJ sai do filtro; a sem número no texto fica como está.
+    /// </summary>
+    internal static async Task<int> PreencherCnjDoTextoAsync(AppDbContext db, CancellationToken ct = default)
+    {
+        var semCnj = await db.Publicacoes
+            .Where(p => p.FonteCaptura == FonteCaptura.Escavador && p.ProcessoId == null && p.NumeroCNJ == null
+                        && EF.Functions.Like(p.Conteudo, "%-__.____._.__.____%"))
+            .ToListAsync(ct);
+        var achadas = semCnj
+            .Select(p => (Pub: p, Cnjs: CnjNoTexto.Todos(p.Conteudo + " " + p.Snippet)))
+            .Where(x => x.Cnjs.Count > 0)
+            .ToList();
+        if (achadas.Count == 0) return 0;
+
+        var tenants = achadas.Select(x => x.Pub.TenantId).Distinct().ToList();
+        var cnjs = achadas.SelectMany(x => x.Cnjs).Distinct().ToList();
+        var doEscritorio = (await db.Processos
+                .Where(pr => tenants.Contains(pr.TenantId) && cnjs.Contains(pr.NumeroCNJ))
+                .Select(pr => new { pr.TenantId, pr.NumeroCNJ })
+                .ToListAsync(ct))
+            .Select(pr => (pr.TenantId, pr.NumeroCNJ))
+            .ToHashSet();
+
+        foreach (var (pub, cnjsDoTexto) in achadas)
+            pub.NumeroCNJ = cnjsDoTexto.FirstOrDefault(c => doEscritorio.Contains((pub.TenantId, c))) ?? cnjsDoTexto[0];
+
+        await db.SaveChangesAsync(ct);
+        return achadas.Count;
     }
 }
