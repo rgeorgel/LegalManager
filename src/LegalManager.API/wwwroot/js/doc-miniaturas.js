@@ -4,6 +4,8 @@
 // vez, e a miniatura (JPEG pequeno) fica no Cache Storage do navegador — a próxima visita não
 // baixa o documento de novo. Demais tipos (Word, planilha...) ficam com o ícone do tipo.
 
+import { esc } from '/js/utils.js';
+
 const LARGURA = 480;
 const LIMITE_BYTES = 25 * 1024 * 1024; // acima disso não vale baixar só para a capa
 const SIMULTANEOS = 2;
@@ -152,4 +154,32 @@ export function preencherCapa(capa, url) {
   img.onload = () => capa.classList.add('com-imagem');
   img.src = url;
   capa.prepend(img);
+}
+
+// ── Capa do card de documento (cardEntidade({ capaHtml })) ──────────────────────
+// Ícone/selo da extensão; com observarCapas(), a miniatura entra por cima quando fica pronta.
+// CSS em styles.css (.doc-capa, .fam-*).
+
+const FAMILIAS_EXT = { pdf: ['pdf'], word: ['doc', 'docx', 'odt', 'rtf', 'txt'], planilha: ['xls', 'xlsx', 'ods', 'csv'], imagem: ['png', 'jpg', 'jpeg', 'webp', 'gif'] };
+
+function extensaoArquivo(nome) {
+  const i = (nome || '').lastIndexOf('.');
+  return i > 0 ? nome.slice(i + 1).toLowerCase() : '';
+}
+
+/** Família do arquivo pela extensão: pdf | word | planilha | imagem | outro (classe fam-*). */
+export function familiaDoc(nome) {
+  const ext = extensaoArquivo(nome);
+  return Object.keys(FAMILIAS_EXT).find(f => FAMILIAS_EXT[f].includes(ext)) || 'outro';
+}
+
+/** Rótulo curto da extensão (PDF, DOCX...) mostrado na capa sem miniatura. */
+export function rotuloExt(nome) { return (extensaoArquivo(nome) || 'arq').slice(0, 4).toUpperCase(); }
+
+/** HTML da capa do card de um documento. */
+export function capaDocumento(d) {
+  const pronta = miniaturaPronta(d.id);
+  const img = pronta ? `<img src="${esc(pronta)}" alt="">` : '';
+  const observar = temMiniatura(d) ? ` data-capa-id="${esc(d.id)}"` : '';
+  return `<div class="doc-capa fam-${familiaDoc(d.nome)}${pronta ? ' com-imagem' : ''}"${observar}>${img}<span class="doc-capa-ext">${esc(rotuloExt(d.nome))}</span></div>`;
 }

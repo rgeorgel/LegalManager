@@ -7,7 +7,11 @@ public interface IDocumentoService
 {
     Task<DocumentoDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IEnumerable<DocumentoDto>> GetByProcessoAsync(Guid processoId, CancellationToken ct = default);
-    Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, CancellationToken ct = default);
+    /// <summary>
+    /// Documentos do cadastro do contato. Com <paramref name="incluirProcessos"/>, também os dos
+    /// processos em que ele é parte (perfil do contato, aba Documentos).
+    /// </summary>
+    Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, bool incluirProcessos = false, CancellationToken ct = default);
     // raiz = true: só documentos sem pasta (ignorado quando pastaId é informado).
     Task<IEnumerable<DocumentoDto>> GetAllAsync(Guid? pastaId = null, bool raiz = false, CancellationToken ct = default);
     Task<IEnumerable<DocumentoDto>> GetByPastaAsync(Guid pastaId, CancellationToken ct = default);

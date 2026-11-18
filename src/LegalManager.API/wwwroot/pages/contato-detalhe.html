@@ -79,6 +79,16 @@
     .badge-error { background:#fee2e2; color:#dc2626; }
     .badge-warn { background:#fef3c7; color:#b45309; }
     .badge-muted { background:#f1f3f8; color:#6b7a99; }
+    .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; border-radius:10px; font-size:11px; font-weight:600; padding:0 6px; margin-left:6px; background:var(--color-primary); color:var(--color-on-primary, #fff); }
+    .tab-badge[hidden] { display:none; }
+    .contato-abas { margin-bottom:20px; }
+    @media (max-width:768px) { .contato-abas { overflow-x:auto; scrollbar-width:none; } .contato-abas::-webkit-scrollbar { display:none; } .contato-abas .tab-btn { padding:10px 14px; } }
+    .aba-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .aba-topo-texto { color:var(--color-text-muted); font-size:13px; }
+    .docs-contato.ent-grid { grid-template-columns:repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
+    .docs-origem { width:auto; height:32px; padding:4px 28px 4px 10px; font-size:13px; }
+    .docs-origem[hidden] { display:none; }
+    .docs-contato.arrastando { outline:2px dashed var(--color-primary); outline-offset:6px; border-radius:var(--radius); }
   </style>
 <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="d8dabf67-657a-4b8c-b6c4-0bc60ab6c04a";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
 </head>
@@ -120,6 +130,17 @@
     <div id="perfilLoading" style="text-align:center;padding:48px;color:var(--color-text-muted)">Carregando...</div>
 
     <div id="perfilContent" style="display:none">
+      <div class="tab-nav contato-abas" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="geral" role="tab" aria-selected="true">Visão geral</button>
+        <button type="button" class="tab-btn" data-tab="assinaturas" role="tab" aria-selected="false" hidden>
+          Assinaturas<span class="tab-badge" id="tabCountAssinaturas" hidden></span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="documentos" role="tab" aria-selected="false">
+          Documentos<span class="tab-badge" id="tabCountDocumentos" hidden></span>
+        </button>
+      </div>
+
+      <div class="tab-content active" id="tab-geral" role="tabpanel">
       <div class="resumo-cards">
         <div class="resumo-card"><label>Processos ativos</label><div class="value" id="rProcessosAtivos"></div></div>
         <div class="resumo-card"><label>Saldo financeiro (pendente)</label><div class="value" id="rSaldoFinanceiro"></div></div>
@@ -171,8 +192,6 @@
             </div>
           </div>
 
-          <div id="assinaturas" style="margin-top:20px" hidden></div>
-
           <div class="card" id="cardHonorarios" style="margin-top:20px;display:none">
             <div class="card-body">
               <div class="card-title">Contratos de Honorários</div>
@@ -190,6 +209,37 @@
             <div id="perfilTimeline"></div>
           </div>
         </div>
+      </div>
+      </div>
+
+      <!-- Aba Assinaturas: só aparece com o recurso liberado e a integração configurada. -->
+      <div class="tab-content" id="tab-assinaturas" role="tabpanel">
+        <div class="aba-topo">
+          <div class="aba-topo-texto">Documentos enviados para este contato assinar.</div>
+          <button type="button" class="btn btn-primary btn-sm" id="btnAssinaturaAba">✍️ Enviar para assinatura</button>
+        </div>
+        <div id="assinaturas" hidden></div>
+        <div class="empty-state" id="assinaturasVazio" hidden>
+          <div class="empty-state-icon">✍️</div>
+          <div class="empty-state-text">Nenhum documento enviado para assinatura.</div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-documentos" role="tabpanel">
+        <div class="aba-topo">
+          <div class="aba-topo-texto">Arquivos do cadastro do contato e dos processos em que ele é parte.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="docsOrigem" class="form-control docs-origem" aria-label="Origem dos documentos" hidden>
+              <option value="">Todas as origens</option>
+              <option value="cadastro">Do cadastro</option>
+              <option value="processos">Dos processos</option>
+            </select>
+            <a class="btn btn-secondary btn-sm" href="/pages/documentos.html">Ir para Documentos</a>
+            <button type="button" class="btn btn-primary btn-sm" id="btnEnviarDocs">+ Enviar arquivos</button>
+            <input type="file" id="inputDocs" multiple hidden>
+          </div>
+        </div>
+        <div id="docsContato" class="ent-grid docs-contato"></div>
       </div>
     </div>
   </main>
@@ -254,6 +304,11 @@
   import { createContatoPicker } from '/js/contato-picker.js';
   import { listarContratos, brl, STATUS_CONTRATO_LABELS } from '/js/honorarios.js';
   import { iniciarAssinaturas } from '/js/assinatura-envio.js';
+  import { apiFetch, apiDownload } from '/js/api.js';
+  import { esc } from '/js/utils.js';
+  import { cardEntidade, ativarCardsClicaveis, abrirMenuCard, ICONES } from '/js/cards.js';
+  import { observarCapas, capaDocumento } from '/js/doc-miniaturas.js';
+  import { EXTENSOES_DOCUMENTO, TAMANHO_MAXIMO, extensao } from '/js/upload-fila.js';
 
   initLayout();
 
@@ -271,11 +326,6 @@
     document.getElementById('btnNovoProcesso').href =
       `/pages/processos.html?novo=1&contatoId=${encodeURIComponent(contatoId)}`;
     carregar();
-    iniciarAssinaturas({
-      origem: { contatoId },
-      botao: document.getElementById('btnAssinatura'),
-      container: document.getElementById('assinaturas'),
-    });
     // Contato atualizado ou atendimento registrado pelo chat do assistente de IA.
     window.addEventListener('assistente:alteracao', (e) => {
       if (e.detail?.entidade === 'contato') carregar();
@@ -460,6 +510,238 @@
     } catch {
       // Sem acesso (plano) ou erro pontual: mantém o card oculto sem travar o perfil.
     }
+  }
+
+  // ── Abas (Visão geral | Assinaturas | Documentos) ─────────────────────
+  // A aba aberta fica na URL (?tab=) — recarregar ou compartilhar o link volta para ela.
+  const abaBtn = nome => document.querySelector(`.contato-abas .tab-btn[data-tab="${nome}"]`);
+  const abaDaUrl = params.get('tab');
+
+  function trocarAba(nome) {
+    const btn = abaBtn(nome);
+    if (!btn || btn.hidden) nome = 'geral';
+    document.querySelectorAll('.contato-abas .tab-btn').forEach(b => {
+      const ativa = b.dataset.tab === nome;
+      b.classList.toggle('active', ativa);
+      b.setAttribute('aria-selected', String(ativa));
+    });
+    document.querySelectorAll('#perfilContent > .tab-content').forEach(el =>
+      el.classList.toggle('active', el.id === `tab-${nome}`));
+    const url = new URL(location.href);
+    if (nome === 'geral') url.searchParams.delete('tab'); else url.searchParams.set('tab', nome);
+    history.replaceState(null, '', url);
+    if (nome === 'documentos') observarCapasDocs();
+  }
+
+  document.querySelectorAll('.contato-abas .tab-btn').forEach(b =>
+    b.addEventListener('click', () => trocarAba(b.dataset.tab)));
+
+  function contador(id, n) {
+    const el = document.getElementById(id);
+    el.textContent = n;
+    el.hidden = !n;
+  }
+
+  // ── Aba Assinaturas ───────────────────────────────────────────────────
+  // O cartão é o mesmo do contrato e do processo (js/assinatura-envio.js). A aba só aparece
+  // quando o envio está disponível (recurso liberado e integração configurada).
+  async function iniciarAbaAssinaturas() {
+    const botao = document.getElementById('btnAssinatura');
+    const container = document.getElementById('assinaturas');
+    await iniciarAssinaturas({ origem: { contatoId }, botao, container });
+    if (botao.hidden) return;
+
+    const atualizar = () => {
+      const n = container.hidden ? 0 : container.querySelectorAll('.asg-item').length;
+      document.getElementById('assinaturasVazio').hidden = n > 0;
+      contador('tabCountAssinaturas', n);
+    };
+    new MutationObserver(atualizar).observe(container, { attributes: true, attributeFilter: ['hidden'], childList: true });
+    atualizar();
+
+    abaBtn('assinaturas').hidden = false;
+    // Enviar pelo botão do topo leva para a aba, onde o envio aparece ao terminar.
+    botao.addEventListener('click', () => trocarAba('assinaturas'));
+    document.getElementById('btnAssinaturaAba').addEventListener('click', () => botao.click());
+    if (abaDaUrl === 'assinaturas') trocarAba('assinaturas');
+  }
+
+  // ── Aba Documentos ────────────────────────────────────────────────────
+  // Arquivos do cadastro do contato (DocumentoDto.clienteId) e dos processos em que ele é parte
+  // (?incluirProcessos=true). O card abre o documento no painel da página Documentos
+  // (?doc=&pasta=), onde se edita nome, tipo e observações.
+  const TIPOS_DOC = { Peticao: 'Petição', Decisao: 'Decisão', Contrato: 'Contrato', Prova: 'Prova', Modelo: 'Modelo', Outro: 'Outro' };
+  const docsEl = document.getElementById('docsContato');
+  let documentos = [];
+
+  async function carregarDocumentos() {
+    try {
+      documentos = await apiFetch(`/documentos/cliente/${encodeURIComponent(contatoId)}?incluirProcessos=true`) || [];
+      renderDocumentos();
+    } catch (err) {
+      docsEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-text">${esc(err.message || 'Erro ao carregar documentos.')}</div></div>`;
+    }
+  }
+
+  function hrefDocumento(d) {
+    const q = new URLSearchParams({ doc: d.id });
+    if (d.pastaId) q.set('pasta', d.pastaId);
+    return `/pages/documentos.html?${q}`;
+  }
+
+  function cardDocumento(d) {
+    return cardEntidade({
+      href: hrefDocumento(d),
+      titulo: d.nome,
+      dados: { id: d.id },
+      capaHtml: capaDocumento(d),
+      statusHtml: `<button type="button" class="ent-card-menu" data-menu-doc="${esc(d.id)}" aria-haspopup="menu" aria-expanded="false" title="Mais ações" aria-label="Mais ações para ${esc(d.nome)}">⋮</button>`,
+      tagsHtml: [`<span class="badge badge-gray">${esc(TIPOS_DOC[d.tipo] || d.tipo)}</span>`],
+      descricao: d.observacoes || '',
+      campos: [
+        { rotulo: 'Processo', valorHtml: d.processoId ? `<a href="/pages/processo-detalhe.html?id=${esc(d.processoId)}">${esc(d.numeroProcesso || 'Processo')}</a>` : '', dica: d.numeroProcesso },
+        { rotulo: 'Pasta', valor: d.pastaNome || 'Raiz' },
+      ],
+      meta: { principal: d.tamanhoFormatado, secundarioHtml: esc(formatDateBr(d.criadoEm)) },
+      acoesHtml: `<button type="button" class="btn btn-secondary btn-sm" data-baixar="${esc(d.id)}" title="Baixar o arquivo">${ICONES.download} Baixar</button>`,
+    });
+  }
+
+  const docsOrigem = document.getElementById('docsOrigem');
+  const doCadastro = d => d.clienteId === contatoId;
+  docsOrigem.addEventListener('change', renderDocumentos);
+
+  function renderDocumentos() {
+    contador('tabCountDocumentos', documentos.length);
+    // O filtro de origem só aparece quando há documentos de processos.
+    docsOrigem.hidden = documentos.every(doCadastro);
+    if (docsOrigem.hidden) docsOrigem.value = '';
+    const visiveis = documentos.filter(d =>
+      !docsOrigem.value || (docsOrigem.value === 'cadastro') === doCadastro(d));
+    if (documentos.length && !visiveis.length) {
+      docsEl.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-text">Nenhum documento ${docsOrigem.value === 'cadastro' ? 'no cadastro' : 'nos processos'} deste contato.</div>
+        </div>`;
+      return;
+    }
+    if (!documentos.length) {
+      docsEl.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">📁</div>
+          <div class="empty-state-text">Nenhum documento deste contato.</div>
+          <div style="font-size:13px">Envie arquivos pelo botão acima ou arraste-os para cá.</div>
+        </div>`;
+      return;
+    }
+    docsEl.innerHTML = visiveis.map(cardDocumento).join('');
+    observarCapasDocs();
+  }
+
+  function observarCapasDocs() {
+    if (!document.getElementById('tab-documentos').classList.contains('active')) return;
+    observarCapas(docsEl, {
+      buscar: id => documentos.find(d => d.id === id),
+      obterBlob: async id => (await apiDownload(`/documentos/${id}/file`)).blob,
+    });
+  }
+
+  async function baixarDocumento(id) {
+    try {
+      const { url } = await apiFetch(`/documentos/${id}/download`);
+      const a = document.createElement('a');
+      a.href = url; a.download = ''; a.target = '_blank'; a.rel = 'noopener'; a.click();
+    } catch (err) { showAlert(err.message); }
+  }
+
+  async function excluirDocumento(id) {
+    const d = documentos.find(x => x.id === id);
+    if (!d || !confirm(`Excluir "${d.nome}"?\n\nO arquivo será apagado permanentemente e não poderá ser recuperado.`)) return;
+    try {
+      await apiFetch(`/documentos/${id}`, { method: 'DELETE' });
+      documentos = documentos.filter(x => x.id !== id);
+      renderDocumentos();
+      showAlert('Documento excluído.', 'success');
+    } catch (err) { showAlert(err.message); }
+  }
+
+  ativarCardsClicaveis(docsEl);
+  docsEl.addEventListener('click', e => {
+    const baixar = e.target.closest('[data-baixar]');
+    if (baixar) { baixarDocumento(baixar.dataset.baixar); return; }
+    const menu = e.target.closest('[data-menu-doc]');
+    if (!menu) return;
+    const id = menu.dataset.menuDoc;
+    const d = documentos.find(x => x.id === id);
+    abrirMenuCard(menu, [
+      { icone: '📂', rotulo: 'Abrir em Documentos', acao: () => { location.href = hrefDocumento(d); } },
+      { icone: ICONES.download, rotulo: 'Baixar', acao: () => baixarDocumento(id) },
+      { icone: '🗑️', rotulo: 'Excluir', perigo: true, acao: () => excluirDocumento(id) },
+    ]);
+  });
+
+  // Envio: vai para o cadastro do contato (clienteId), na raiz de Documentos.
+  const inputDocs = document.getElementById('inputDocs');
+  const btnEnviarDocs = document.getElementById('btnEnviarDocs');
+  inputDocs.accept = EXTENSOES_DOCUMENTO.map(e => `.${e}`).join(',');
+  btnEnviarDocs.addEventListener('click', () => inputDocs.click());
+  inputDocs.addEventListener('change', () => {
+    enviarDocumentos([...inputDocs.files]);
+    inputDocs.value = '';
+  });
+
+  async function enviarDocumentos(arquivos) {
+    if (!arquivos.length) return;
+    const recusados = arquivos.filter(f => !EXTENSOES_DOCUMENTO.includes(extensao(f.name)) || f.size > TAMANHO_MAXIMO);
+    const validos = arquivos.filter(f => !recusados.includes(f));
+    const textoBotao = btnEnviarDocs.textContent;
+    btnEnviarDocs.disabled = true;
+    const erros = recusados.map(f => `${f.name}: tipo não aceito ou maior que 100 MB`);
+    let enviados = 0;
+    for (const [i, f] of validos.entries()) {
+      btnEnviarDocs.textContent = validos.length > 1 ? `Enviando ${i + 1} de ${validos.length}…` : 'Enviando…';
+      const fd = new FormData();
+      fd.append('file', f);
+      fd.append('clienteId', contatoId);
+      try {
+        await apiFetch('/documentos/upload', { method: 'POST', body: fd });
+        enviados++;
+      } catch (err) {
+        erros.push(`${f.name}: ${err.message}`);
+      }
+    }
+    btnEnviarDocs.textContent = textoBotao;
+    btnEnviarDocs.disabled = false;
+    if (enviados) await carregarDocumentos();
+    const ok = enviados === 1 ? '1 documento enviado.' : `${enviados} documentos enviados.`;
+    if (erros.length) showAlert(`${enviados ? `${ok} ` : ''}Não foi possível enviar — ${erros.join(' · ')}`);
+    else showAlert(ok, 'success');
+  }
+
+  // Arrastar arquivos para a aba Documentos envia direto.
+  const abaDocs = document.getElementById('tab-documentos');
+  const temArquivos = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  abaDocs.addEventListener('dragover', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    docsEl.classList.add('arrastando');
+  });
+  abaDocs.addEventListener('dragleave', e => {
+    if (!abaDocs.contains(e.relatedTarget)) docsEl.classList.remove('arrastando');
+  });
+  abaDocs.addEventListener('drop', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    docsEl.classList.remove('arrastando');
+    if (!btnEnviarDocs.disabled) enviarDocumentos([...e.dataTransfer.files]);
+  });
+
+  // Depois das declarações acima (trocarAba usa docsEl/documentos). A aba Assinaturas só existe
+  // depois de iniciarAbaAssinaturas, que a abre por conta própria quando vem na URL.
+  if (contatoId) {
+    if (abaDaUrl && abaDaUrl !== 'assinaturas') trocarAba(abaDaUrl);
+    carregarDocumentos();
+    iniciarAbaAssinaturas();
   }
 
   window.removerVinculo = async (vinculoId) => {

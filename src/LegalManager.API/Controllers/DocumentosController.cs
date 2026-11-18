@@ -69,9 +69,10 @@ public class DocumentosController : ControllerBase
     }
 
     [HttpGet("cliente/{clienteId:guid}")]
-    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetByCliente(Guid clienteId, [FromQuery] Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<DocumentoDto>>> GetByCliente(Guid clienteId, [FromQuery] Guid? pastaId = null,
+        [FromQuery] bool incluirProcessos = false, CancellationToken ct = default)
     {
-        var result = await _service.GetByClienteAsync(clienteId, pastaId, ct);
+        var result = await _service.GetByClienteAsync(clienteId, pastaId, incluirProcessos, ct);
         return Ok(result);
     }
 

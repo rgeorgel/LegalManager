@@ -243,20 +243,6 @@
     .ent-card.doc-atual { border-color:var(--color-primary); box-shadow:0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent); }
     #docsContainer.ent-grid { grid-template-columns:repeat(auto-fill, minmax(min(250px, 100%), 1fr)); }
 
-    /* ── Capa (miniatura) do card ── */
-    .doc-capa { position:absolute; inset:0; display:grid; place-items:center; }
-    .doc-capa img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; opacity:0; transition:opacity .35s ease, transform .35s ease; }
-    .doc-capa.com-imagem img { opacity:1; }
-    .doc-capa.com-imagem .doc-capa-ext { opacity:0; }
-    .ent-card:hover .doc-capa.com-imagem img { transform:scale(1.03); }
-    .doc-capa-ext { font-size:13px; font-weight:700; letter-spacing:.04em; color:#fff; padding:8px 12px; border-radius:8px; background:var(--color-text-muted); transition:opacity .2s; }
-    .doc-capa.carregando::after { content:''; position:absolute; inset:0; background:linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--color-surface) 55%, transparent) 50%, transparent 70%); background-size:200% 100%; animation:dp-brilho 1.2s linear infinite; }
-    @keyframes dp-brilho { from { background-position:150% 0; } to { background-position:-50% 0; } }
-    .fam-pdf .doc-capa-ext, .fam-pdf .dp-sem-icone { background:#dc2626; }
-    .fam-word .doc-capa-ext, .fam-word .dp-sem-icone { background:#2563eb; }
-    .fam-planilha .doc-capa-ext, .fam-planilha .dp-sem-icone { background:#059669; }
-    .fam-imagem .doc-capa-ext, .fam-imagem .dp-sem-icone { background:#9333ea; }
-
     /* ── Painel do documento (entra pela direita; a lista continua visível) ── */
     :root { --dp-largura:min(560px, 40vw); --dp-direita:0px; }
     body.com-widgets-laterais { --dp-direita:var(--widgets-laterais-largura, 54px); }
@@ -910,7 +896,7 @@ import { cardEntidade, ativarCardsClicaveis, abrirMenuCard } from '/js/cards.js'
 import { createContatoPicker } from '/js/contato-picker.js';
 import { createProcessoPicker } from '/js/processo-picker.js';
 import { createUploadFila, formatarTamanho, extensao } from '/js/upload-fila.js';
-import { temMiniatura, miniaturaPronta, observarCapas } from '/js/doc-miniaturas.js';
+import { miniaturaPronta, observarCapas, capaDocumento, familiaDoc, rotuloExt } from '/js/doc-miniaturas.js';
 import {
   VARIAVEIS_SUGERIDAS, MODELOS_EXEMPLO, extrairVariaveis, contarVariaveis, aplicarVariaveis, previewHtml,
   rotuloVariavel, normalizarNomeVariavel, valoresDoProcesso, valoresAutomaticos, imprimirTexto, baixarWord, arquivoWord,
@@ -1706,21 +1692,6 @@ function obterBlob(id) {
     }
   }).catch(() => { blobsCache.delete(id); });
   return p;
-}
-
-const FAMILIAS_EXT = { pdf: ['pdf'], word: ['doc', 'docx', 'odt', 'rtf', 'txt'], planilha: ['xls', 'xlsx', 'ods', 'csv'], imagem: ['png', 'jpg', 'jpeg', 'webp', 'gif'] };
-function familiaDoc(nome) {
-  const ext = extensao(nome);
-  return Object.keys(FAMILIAS_EXT).find(f => FAMILIAS_EXT[f].includes(ext)) || 'outro';
-}
-function rotuloExt(nome) { return (extensao(nome) || 'arq').slice(0, 4).toUpperCase(); }
-
-// Capa do card: ícone do tipo; a miniatura entra por cima quando fica pronta.
-function capaDocumento(d) {
-  const pronta = miniaturaPronta(d.id);
-  const img = pronta ? `<img src="${esc(pronta)}" alt="">` : '';
-  const observar = temMiniatura(d) ? ` data-capa-id="${esc(d.id)}"` : '';
-  return `<div class="doc-capa fam-${familiaDoc(d.nome)}${pronta ? ' com-imagem' : ''}"${observar}>${img}<span class="doc-capa-ext">${esc(rotuloExt(d.nome))}</span></div>`;
 }
 
 // ============================================================

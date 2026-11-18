@@ -813,6 +813,19 @@ body.com-widgets-laterais .main-content {
 .ent-card-capa { position: relative; margin: -14px -14px 12px; height: 150px; overflow: hidden;
   border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0; border-bottom: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-text-muted) 8%, var(--color-surface)); }
+/* Capa de documento (capaDocumento() de js/doc-miniaturas.js): ícone do tipo; a miniatura entra por cima. */
+.doc-capa { position:absolute; inset:0; display:grid; place-items:center; }
+.doc-capa img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; opacity:0; transition:opacity .35s ease, transform .35s ease; }
+.doc-capa.com-imagem img { opacity:1; }
+.doc-capa.com-imagem .doc-capa-ext { opacity:0; }
+.ent-card:hover .doc-capa.com-imagem img { transform:scale(1.03); }
+.doc-capa-ext { font-size:13px; font-weight:700; letter-spacing:.04em; color:#fff; padding:8px 12px; border-radius:8px; background:var(--color-text-muted); transition:opacity .2s; }
+.doc-capa.carregando::after { content:''; position:absolute; inset:0; background:linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--color-surface) 55%, transparent) 50%, transparent 70%); background-size:200% 100%; animation:dp-brilho 1.2s linear infinite; }
+@keyframes dp-brilho { from { background-position:150% 0; } to { background-position:-50% 0; } }
+.fam-pdf .doc-capa-ext, .fam-pdf .dp-sem-icone { background:#dc2626; }
+.fam-word .doc-capa-ext, .fam-word .dp-sem-icone { background:#2563eb; }
+.fam-planilha .doc-capa-ext, .fam-planilha .dp-sem-icone { background:#059669; }
+.fam-imagem .doc-capa-ext, .fam-imagem .dp-sem-icone { background:#9333ea; }
 .ent-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .ent-card-titulo { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ent-card-titulo a { color: inherit; }

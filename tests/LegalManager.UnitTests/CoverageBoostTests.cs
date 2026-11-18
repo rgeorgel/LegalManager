@@ -303,7 +303,7 @@ public class DocumentosControllerAdditionalTests
     public async Task GetByCliente_ReturnsOk()
     {
         var svc = new Mock<IDocumentoService>();
-        svc.Setup(s => s.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetByClienteAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new List<DocumentoDto>());
         var ctrl = CreateController(svc);
 

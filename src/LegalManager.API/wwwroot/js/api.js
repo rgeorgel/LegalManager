@@ -244,8 +244,9 @@ function mensagemDeValidacao(errors) {
 export async function apiFetch(path, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const token = getToken();
+  // FormData (upload): o navegador põe o multipart/form-data com o boundary.
   const headers = {
-    'Content-Type': 'application/json',
+    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...(options.headers || {})
   };

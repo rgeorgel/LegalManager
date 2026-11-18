@@ -46,13 +46,16 @@ public class DocumentoService : IDocumentoService
         return documentos.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<DocumentoDto>> GetByClienteAsync(Guid clienteId, Guid? pastaId = null, bool incluirProcessos = false, CancellationToken ct = default)
     {
         var query = _context.Documentos
             .Include(d => d.Processo)
             .Include(d => d.Cliente)
             .Include(d => d.Pasta)
-            .Where(d => d.ClienteId == clienteId && d.TenantId == _tenantContext.TenantId);
+            .Where(d => d.TenantId == _tenantContext.TenantId)
+            .Where(d => d.ClienteId == clienteId
+                || (incluirProcessos && d.ProcessoId != null
+                    && _context.ProcessoPartes.Any(p => p.ProcessoId == d.ProcessoId && p.ContatoId == clienteId)));
 
         if (pastaId.HasValue)
             query = query.Where(d => d.PastaId == pastaId.Value);

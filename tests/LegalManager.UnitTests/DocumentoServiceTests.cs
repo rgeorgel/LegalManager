@@ -220,6 +220,85 @@ public class DocumentoServiceTests
     }
 
     [Fact]
+    public async Task GetByClienteAsync_SemIncluirProcessos_SoDocumentosDoCadastro()
+    {
+        var (ctx, tenant, usuario, cliente, _) = await SeedClienteComProcessosAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+
+        var result = (await service.GetByClienteAsync(cliente.Id)).Select(d => d.Nome).ToList();
+
+        Assert.Equal(new[] { "Do cadastro" }, result);
+    }
+
+    [Fact]
+    public async Task GetByClienteAsync_IncluirProcessos_TrazDocumentosDosProcessosEmQueEhParte()
+    {
+        var (ctx, tenant, usuario, cliente, processoDoCliente) = await SeedClienteComProcessosAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+
+        var result = (await service.GetByClienteAsync(cliente.Id, incluirProcessos: true)).ToList();
+
+        Assert.Equal(new[] { "Do cadastro", "Do processo do cliente" }, result.Select(d => d.Nome).OrderBy(n => n));
+        var doProcesso = result.Single(d => d.ProcessoId == processoDoCliente.Id);
+        Assert.Equal(processoDoCliente.NumeroCNJ, doProcesso.NumeroProcesso);
+    }
+
+    [Fact]
+    public async Task GetByClienteAsync_IncluirProcessos_IgnoraOutroEscritorio()
+    {
+        var (ctx, tenant, usuario, cliente, processoDoCliente) = await SeedClienteComProcessosAsync();
+        // Documento de outro escritório apontando para o mesmo processo (não deveria acontecer,
+        // mas o filtro de tenant precisa valer também para o ramo dos processos).
+        ctx.Documentos.Add(NovoDocumento(Guid.NewGuid(), usuario.Id, "De outro escritório", processoId: processoDoCliente.Id));
+        await ctx.SaveChangesAsync();
+        var service = new DocumentoService(ctx, CreateTenantContext(tenant.Id, usuario.Id), CreateMockStorageService());
+
+        var result = (await service.GetByClienteAsync(cliente.Id, incluirProcessos: true)).Select(d => d.Nome);
+
+        Assert.DoesNotContain("De outro escritório", result);
+    }
+
+    private static Documento NovoDocumento(Guid tenantId, Guid usuarioId, string nome, Guid? clienteId = null, Guid? processoId = null) => new()
+    {
+        Id = Guid.NewGuid(),
+        TenantId = tenantId,
+        ClienteId = clienteId,
+        ProcessoId = processoId,
+        Nome = nome,
+        ObjectKey = $"{tenantId}/{Guid.NewGuid()}.pdf",
+        ContentType = "application/pdf",
+        TamanhoBytes = 100,
+        Tipo = TipoDocumento.Outro,
+        CriadoEm = DateTime.UtcNow,
+        UploadedPorId = usuarioId
+    };
+
+    /// <summary>
+    /// Cliente com um documento no cadastro, parte em um processo (com documento) e um processo
+    /// alheio (com documento) em que ele não é parte.
+    /// </summary>
+    private async Task<(AppDbContext ctx, Tenant tenant, Usuario usuario, Contato cliente, Processo processoDoCliente)> SeedClienteComProcessosAsync()
+    {
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var cliente = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Cliente", TipoContato = TipoContato.Cliente };
+        var outro = new Contato { Id = Guid.NewGuid(), TenantId = tenant.Id, Nome = "Outro", TipoContato = TipoContato.Cliente };
+        var processoDoCliente = new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "1111111-11.2024.1.00.0000", CriadoEm = DateTime.UtcNow, AreaDireito = AreaDireito.Civil };
+        var processoAlheio = new Processo { Id = Guid.NewGuid(), TenantId = tenant.Id, NumeroCNJ = "2222222-22.2024.1.00.0000", CriadoEm = DateTime.UtcNow, AreaDireito = AreaDireito.Civil };
+        ctx.Contatos.AddRange(cliente, outro);
+        ctx.Processos.AddRange(processoDoCliente, processoAlheio);
+        ctx.ProcessoPartes.AddRange(
+            new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = processoDoCliente.Id, ContatoId = cliente.Id },
+            new ProcessoParte { Id = Guid.NewGuid(), ProcessoId = processoAlheio.Id, ContatoId = outro.Id });
+        ctx.Documentos.AddRange(
+            NovoDocumento(tenant.Id, usuario.Id, "Do cadastro", clienteId: cliente.Id),
+            NovoDocumento(tenant.Id, usuario.Id, "Do processo do cliente", processoId: processoDoCliente.Id),
+            NovoDocumento(tenant.Id, usuario.Id, "Do processo alheio", processoId: processoAlheio.Id),
+            NovoDocumento(tenant.Id, usuario.Id, "De outro contato", clienteId: outro.Id));
+        await ctx.SaveChangesAsync();
+        return (ctx, tenant, usuario, cliente, processoDoCliente);
+    }
+
+    [Fact]
     public async Task GetByProcessoAsync_ReturnsFilteredDocuments()
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();

@@ -77,7 +77,7 @@ card próprio na página. Referência: `pages/honorarios-contratos.html` (`rende
 - Clicável sem página nem URL (modelo de documento → modal "Usar"): `abrivel: true` + `abrir` em
   `ativarCardsClicaveis`; o card recebe foco e abre com Enter.
 - Capa no topo do card (miniatura, de borda a borda, altura fixa): `capaHtml`. Referência: Documentos
-  (`capaDocumento` + `observarCapas` de `js/doc-miniaturas.js`, que gera a 1ª página do PDF com o
+  (`capaDocumento` + `observarCapas` de `js/doc-miniaturas.js` — CSS `.doc-capa` em `styles.css` —, que gera a 1ª página do PDF com o
   pdf.js em `js/vendor/pdfjs` só quando o card aparece, e guarda a miniatura no Cache Storage).
 - Entidade sem detalhe (publicação): sem `href` — o card não é clicável. Conteúdo longo (texto,
   formulário da sugestão da IA) em `corpoHtml`; numa coluna, não em `.ent-grid`.
