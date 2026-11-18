@@ -166,6 +166,8 @@ async function aoClicarCartao(e) {
     if (acao !== 'atualizar') ctx.aoMudar?.();
   } catch (err) {
     notify(err?.message || 'Não foi possível concluir a ação.', 'error');
+    // O status pode ter mudado mesmo com falha ao salvar o PDF assinado.
+    if (acao === 'atualizar') await recarregar();
   } finally {
     b.disabled = false;
   }

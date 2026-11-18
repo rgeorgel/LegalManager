@@ -553,6 +553,66 @@ public class AssinaturaDigitalServiceTests
     }
 
     [Fact]
+    public async Task Atualizar_ConcluidoComPdfPronto_SalvaEmDocumentosNaHoraSemJob()
+    {
+        Conectar();
+        var sol = Solicitacao(sigs: [Sig("s1", "Maria", "signed"), Sig("s2", "Bruno", "pending")]);
+        _api.Setup(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext("completed", T0.AddMinutes(5), Sig("s1", "Maria", "signed"), Sig("s2", "Bruno", "signed")));
+        _api.Setup(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>())).ReturnsAsync("%PDF-1.7"u8.ToArray());
+        _storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), "application/pdf", It.IsAny<CancellationToken>())).ReturnsAsync("ok");
+
+        var dto = Valor(await Controller(_advogado).Atualizar(sol.Id, CancellationToken.None));
+
+        var doc = await _db.Documentos.SingleAsync();
+        Assert.Equal((StatusSolicitacaoAssinatura.Concluida, doc.Id), (dto.Status, dto.DocumentoAssinadoId));
+        _jobs.Verify(j => j.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Never);
+
+        // De novo: já salvo, não baixa outra vez.
+        await Controller(_advogado).Atualizar(sol.Id, CancellationToken.None);
+        _api.Verify(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Atualizar_ConcluidoSemPdfAindaNoContratos_NaoBaixa()
+    {
+        Conectar();
+        var sol = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        _api.Setup(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext("completed", T0.AddMinutes(5), Sig("s1", "Maria", "signed")) with { HasSignedDocument = false });
+
+        var dto = Valor(await Controller(_advogado).Atualizar(sol.Id, CancellationToken.None));
+
+        Assert.Equal((StatusSolicitacaoAssinatura.Concluida, (Guid?)null), (dto.Status, dto.DocumentoAssinadoId));
+        _api.Verify(a => a.BaixarAssinadoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Atualizar_FalhaAoSalvarPdf_MostraOMotivoEGuardaOStatus()
+    {
+        Conectar();
+        var sol = Solicitacao(sigs: [Sig("s1", "Maria", "pending")]);
+        _api.Setup(a => a.ObterContratoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Ext("completed", T0.AddMinutes(5), Sig("s1", "Maria", "signed")));
+        _api.Setup(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ContratosApiException(500, "provider_error", "Falha no provedor."));
+
+        var r = await Controller(_advogado).Atualizar(sol.Id, CancellationToken.None);
+        Assert.Equal(502, Status(r));
+        Assert.Contains("PDF não foi salvo em Documentos: Falha no provedor.", Mensagem(r.Result));
+
+        _api.Setup(a => a.BaixarAssinadoAsync(Chave, "ext-1", It.IsAny<CancellationToken>())).ReturnsAsync("%PDF-1.7"u8.ToArray());
+        _storage.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("disco cheio"));
+        r = await Controller(_advogado).Atualizar(sol.Id, CancellationToken.None);
+        Assert.Equal(502, Status(r));
+        Assert.Contains("Tente de novo em instantes", Mensagem(r.Result));
+
+        Assert.Equal(StatusSolicitacaoAssinatura.Concluida, (await _db.SolicitacoesAssinatura.SingleAsync()).Status);
+        Assert.False(await _db.Documentos.AnyAsync());
+    }
+
+    [Fact]
     public async Task EnviarRascunho_MandaComIdempotencyKey()
     {
         Conectar();

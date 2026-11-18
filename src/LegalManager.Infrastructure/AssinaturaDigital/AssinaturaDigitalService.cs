@@ -582,7 +582,26 @@ public class AssinaturaDigitalService(
         AplicarComMudancas(sol, contrato, null);
         sol.ConferidoEm = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
-        AgendarDownloadSePronto(sol, contrato.HasSignedDocument);
+        // Pedido de quem está na tela: o PDF assinado é salvo agora, sem passar pelos jobs (desligados no
+        // ambiente de teste), e o motivo de uma falha aparece para o usuário em vez de "chega em instantes".
+        if (sol.Status == StatusSolicitacaoAssinatura.Concluida && sol.DocumentoAssinadoId == null && contrato.HasSignedDocument)
+        {
+            const string prefixo = "O contrato está assinado, mas o PDF não foi salvo em Documentos";
+            try
+            {
+                await BaixarAssinadoAsync(sol.Id, ct);
+            }
+            catch (ContratosApiException e)
+            {
+                var t = Traduzir(e);
+                throw new AssinaturaDigitalException($"{prefixo}: {t.Message}", t.Status);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                logger.LogError(e, "Falha ao salvar o PDF assinado da solicitação {SolicitacaoId}", sol.Id);
+                throw new AssinaturaDigitalException($"{prefixo}. Tente de novo em instantes.", 502);
+            }
+        }
         return sol;
     }
 
