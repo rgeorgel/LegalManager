@@ -69,9 +69,9 @@ public class EscavadorCallbacksTests
         return (ctx, processo);
     }
 
-    private static EscavadorCallbackProcessor Processor(AppDbContext ctx, IEscavadorService? escavador = null) =>
+    private static EscavadorCallbackProcessor Processor(AppDbContext ctx, IEscavadorService? escavador = null, IEmailService? email = null) =>
         new(ctx, escavador ?? Mock.Of<IEscavadorService>(), new PublicacaoMapper(), FakeConsultaExternaLogService.Instance,
-            new NotificadorAndamentos(ctx, Mock.Of<IEmailService>(), NullLogger<NotificadorAndamentos>.Instance));
+            new NotificadorAndamentos(ctx, email ?? Mock.Of<IEmailService>(), NullLogger<NotificadorAndamentos>.Instance));
 
     [Fact]
     public async Task WebhookV2_NovaMovimentacao_CriaAndamentoEPublicacao()
@@ -106,9 +106,12 @@ public class EscavadorCallbacksTests
         Assert.DoesNotContain("<", publicacao.Snippet ?? "");
     }
 
-    private static async Task<(AppDbContext ctx, TenantOab oab)> SeedOabAsync(bool ativa = true)
+    private static async Task<(AppDbContext ctx, TenantOab oab)> SeedOabAsync(bool ativa = true) =>
+        await SeedOabAsync(Guid.NewGuid().ToString(), ativa);
+
+    private static async Task<(AppDbContext ctx, TenantOab oab)> SeedOabAsync(string nomeBanco, bool ativa = true)
     {
-        var ctx = CreateContext();
+        var ctx = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(nomeBanco).Options);
         var tenant = new Tenant { Id = Guid.NewGuid(), Nome = "Escritório", Plano = PlanoTipo.Pro, Status = StatusTenant.Ativo, CriadoEm = DateTime.UtcNow };
         var oab = new TenantOab
         {
@@ -211,6 +214,87 @@ public class EscavadorCallbacksTests
         Assert.Null(pub.ProcessoId);
         Assert.Equal(Cnj, pub.NumeroCNJ);
         Assert.Empty(ctx.Andamentos);
+    }
+
+    // Processo do escritório com responsável de verdade (e-mail), para os testes do aviso.
+    private static async Task<(AppDbContext ctx, Processo processo)> SeedOabComResponsavelAsync(string nomeBanco)
+    {
+        var (ctx, oab) = await SeedOabAsync(nomeBanco);
+        var adv = new Usuario
+        {
+            Id = Guid.NewGuid(), TenantId = oab.TenantId, Nome = "Ana Advogada", Email = "ana@adv.com", UserName = "ana@adv.com",
+            Perfil = PerfilUsuario.Advogado, Ativo = true, CriadoEm = DateTime.UtcNow
+        };
+        var processo = NovoProcesso(oab.TenantId);
+        processo.AdvogadoResponsavelId = adv.Id;
+        ctx.Users.Add(adv);
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+        return (ctx, processo);
+    }
+
+    private static EscavadorCallbackWebhookPayload IntimacaoDaParte(long id, string parte)
+    {
+        var payload = PayloadOabV2($"ATOrd {Cnj} INTIMAÇÃO Fica V. Sa. intimado da Decisão. Intimado(s) / Citado(s) - {parte}");
+        payload.Movimentacao!.Id = id;
+        return payload;
+    }
+
+    [Fact]
+    public async Task WebhookOab_IntimacoesDasPartesNoMesmoDia_UmAvisoSo()
+    {
+        // Caso real: o TRT publica a mesma decisão uma vez por parte intimada, em callbacks separados.
+        var (ctx, processo) = await SeedOabComResponsavelAsync(Guid.NewGuid().ToString());
+        var email = new Mock<IEmailService>();
+
+        await Processor(ctx, email: email.Object).ProcessarAsync(IntimacaoDaParte(1, "EMPRESA LTDA"));
+        await Processor(ctx, email: email.Object).ProcessarAsync(IntimacaoDaParte(2, "FULANO DE TAL"));
+
+        Assert.Equal(2, await ctx.Publicacoes.CountAsync(p => p.ProcessoId == processo.Id));
+        Assert.Equal(2, await ctx.Andamentos.CountAsync(a => a.ProcessoId == processo.Id));
+        Assert.Single(await ctx.Notificacoes.ToListAsync());
+        email.Verify(e => e.EnviarNovoAndamentoAsync("ana@adv.com", It.IsAny<string>(), Cnj, It.IsAny<string>(),
+            processo.Id, 1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task WebhookOab_EmailSaiDepoisDeGravar()
+    {
+        var banco = Guid.NewGuid().ToString();
+        var (ctx, _) = await SeedOabComResponsavelAsync(banco);
+        var publicacoesNoEnvio = -1;
+        var email = new Mock<IEmailService>();
+        email.Setup(e => e.EnviarNovoAndamentoAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Callback(() =>
+            {
+                using var outro = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(banco).Options);
+                publicacoesNoEnvio = outro.Publicacoes.Count();
+            })
+            .Returns(Task.CompletedTask);
+
+        await Processor(ctx, email: email.Object).ProcessarAsync(IntimacaoDaParte(1, "EMPRESA LTDA"));
+
+        Assert.Equal(1, publicacoesNoEnvio);
+    }
+
+    [Fact]
+    public async Task WebhookOab_AvisoDoDiaJaGravado_NaoMandaOutroEmail()
+    {
+        var (ctx, processo) = await SeedOabComResponsavelAsync(Guid.NewGuid().ToString());
+        ctx.Notificacoes.Add(new Notificacao
+        {
+            Id = Guid.NewGuid(), TenantId = processo.TenantId, UsuarioId = processo.AdvogadoResponsavelId!.Value,
+            Titulo = "Novo andamento", Mensagem = "", CriadaEm = DateTime.UtcNow,
+            ChaveDedup = EscavadorCallbackProcessor.ChaveAvisoDoDia(processo.Id, new DateTime(2026, 11, 18))
+        });
+        await ctx.SaveChangesAsync();
+        var email = new Mock<IEmailService>();
+
+        await Processor(ctx, email: email.Object).ProcessarAsync(IntimacaoDaParte(1, "EMPRESA LTDA"));
+
+        Assert.Equal(1, await ctx.Andamentos.CountAsync());
+        email.VerifyNoOtherCalls();
     }
 
     [Fact]

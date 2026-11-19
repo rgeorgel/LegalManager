@@ -77,6 +77,25 @@ public class NotificadorAndamentosTests
     }
 
     [Fact]
+    public async Task Preparar_NaoEnviaAteChamarEnviar_EChaveRepetidaNaoAvisa()
+    {
+        var (ctx, processo, _) = await SeedAsync();
+        var email = new Mock<IEmailService>();
+        var notificador = new NotificadorAndamentos(ctx, email.Object, NullLogger<NotificadorAndamentos>.Instance);
+
+        var aviso = await notificador.PrepararAsync(processo, [Andamento(processo, DateTime.UtcNow.Date, "Intimação")], DateTime.UtcNow, "chave-1");
+        email.VerifyNoOtherCalls();
+        await ctx.SaveChangesAsync();
+        await notificador.EnviarEmailAsync(aviso!);
+
+        Assert.Equal("chave-1", (await ctx.Notificacoes.SingleAsync()).ChaveDedup);
+        email.Verify(e => e.EnviarNovoAndamentoAsync("adv@npj.com", "Adv", Cnj, "Intimação", processo.Id, 1, It.IsAny<CancellationToken>()), Times.Once);
+
+        Assert.Null(await notificador.PrepararAsync(processo, [Andamento(processo, DateTime.UtcNow.Date, "Outra")], DateTime.UtcNow, "chave-1"));
+        Assert.Single(ctx.ChangeTracker.Entries<Notificacao>());
+    }
+
+    [Fact]
     public async Task PreferenciasDesligadas_NaoAvisa()
     {
         var (ctx, processo, adv) = await SeedAsync();

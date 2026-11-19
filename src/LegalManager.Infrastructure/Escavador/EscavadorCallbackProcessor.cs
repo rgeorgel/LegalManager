@@ -128,8 +128,16 @@ public class EscavadorCallbackProcessor
         // 7. Criar Andamento — a publicação vira movimentação do processo (inclusive a que veio pela OAB)
         var dataAndamento = conteudo.Data ?? agora;
         Andamento? andamento = null;
+        var outraNoDia = false;
         if (processo != null)
         {
+            // O diário publica uma intimação por parte (autor, réu...) do mesmo ato, e cada uma vem
+            // num callback: o aviso sai na primeira do dia; as outras só entram no processo.
+            var dia = dataAndamento.Date;
+            outraNoDia = await _context.Andamentos.AnyAsync(a =>
+                a.ProcessoId == processo.Id && a.Fonte == FonteAndamento.Automatico
+                && a.Data >= dia && a.Data < dia.AddDays(1));
+
             andamento = new Andamento
             {
                 Id = Guid.NewGuid(),
@@ -149,9 +157,12 @@ public class EscavadorCallbackProcessor
 
         // 8. Notificação: andamento de processo vai ao responsável pelo mesmo aviso do DataJud (link
         // para o processo, preferências, e-mail); sem responsável, ou no fluxo OAB, avisa o dono da OAB.
+        // O e-mail só sai depois de gravar: se o SaveChanges falha, o Escavador reenvia o callback.
+        EmailAndamento? email = null;
         if (processo?.AdvogadoResponsavelId != null)
         {
-            await _notificador.NotificarAsync(processo, [andamento!], agora);
+            if (!outraNoDia)
+                email = await _notificador.PrepararAsync(processo, [andamento!], agora, ChaveAvisoDoDia(processo.Id, dataAndamento));
         }
         else if (oab?.UserId is { } destinatarioId)
         {
@@ -171,7 +182,16 @@ public class EscavadorCallbackProcessor
         }
 
         await _context.SaveChangesAsync();
+        if (email != null) await _notificador.EnviarEmailAsync(email);
     }
+
+    /// <summary>
+    /// Um aviso por processo e data de publicação. A chave é única no banco: as intimações do mesmo
+    /// ato que chegam ao mesmo tempo não passam as duas — a segunda falha ao gravar e o Escavador a
+    /// reenvia, quando já há andamento no dia e ela entra sem aviso.
+    /// </summary>
+    internal static string ChaveAvisoDoDia(Guid processoId, DateTime data) =>
+        $"andamentos-dia:{processoId}:{data.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture)}";
 
     private static string DescricaoDe(EscavadorMovimentacaoDto conteudo) =>
         TextoHtml.ParaTexto(conteudo.Snippet) ?? TextoHtml.ParaTexto(conteudo.ConteudoHtml) ?? "Atualização via Escavador";
