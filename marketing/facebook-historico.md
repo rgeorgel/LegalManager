@@ -174,9 +174,10 @@ A Página tinha **5 seguidores** em 23/11/2026.
 > O Causify traz as publicações, conta o prazo e avisa a equipe antes do vencimento.
 > Teste grátis em causify.com.br
 
-## Rascunhos aguardando aprovação
+## Rascunhos
 
-Escritos em 23/11/2026. Ritmo sugerido: R4 + R5 em 24/11, R6 + R7 em 25/11.
+Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
+R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
 
 #### R4 — Contadores e Advogados — imagem: `marketing/posts/out/causify-post-honorarios-1200x1200.png`
 
@@ -249,7 +250,8 @@ Escritos em 23/11/2026. Ritmo sugerido: R4 + R5 em 24/11, R6 + R7 em 25/11.
   grupos estão pendentes de aprovação desde outubro. Depois, com novo OK: R1 no ADVOGADOS e R2 em
   Campinas, com imagem; os dois foram para aprovação dos admins.
   Com OK: entrada em **Advocacia**, **Contadores e Advogados**, **Advogados Iniciantes** e
-  **Advogados Previdenciários** (todas aceitas na hora). Nada postado neles ainda.
+  **Advogados Previdenciários** (todas aceitas na hora). Nada postado neles ainda. Rascunhos R4–R7
+  escritos e aprovados para 24–25/11.
 
 ## Como anexar imagem
 
