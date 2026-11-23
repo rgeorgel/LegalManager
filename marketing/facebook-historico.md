@@ -252,6 +252,10 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
   Com OK: entrada em **Advocacia**, **Contadores e Advogados**, **Advogados Iniciantes** e
   **Advogados Previdenciários** (todas aceitas na hora). Nada postado neles ainda. Rascunhos R4–R7
   escritos e aprovados para 24–25/11.
+  À noite, primeiro comentário no R3 (Advogados Do Brasil), de Alexandre Rodrigues: "Ecossistema
+  jurídico é top! Já calcula o prazo e resume." Indicação de um concorrente
+  (ecossistemajuridico.com, R$ 297/mês, foco em WhatsApp/Instagram + IA). Resposta sugerida ao
+  Ricardo; não respondido ainda.
 
 ## Como anexar imagem
 
@@ -275,5 +279,7 @@ O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para local
   texto diferente por grupo.
 - Posts com chamada nos grupos que proíbem promoção não foram removidos, mas é risco de
   banimento. Nesses grupos, manter só conteúdo útil.
+- Comentário citando concorrente: agradecer e devolver uma pergunta, sem atacar o outro sistema.
+  Cada resposta mantém o post vivo no grupo.
 - A maioria dos grupos com "advogado" no nome é de clientes pedindo consulta grátis: filtrar
   sempre pelo público.
