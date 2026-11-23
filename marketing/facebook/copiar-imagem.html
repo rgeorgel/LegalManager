@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8">
+<style>body{font:16px system-ui;padding:24px}button{font-size:20px;padding:16px 24px}img{max-width:600px;display:block;margin-top:16px}</style>
+<button id="b">Copiar imagem</button> <span id="s"></span>
+<img id="i">
+<script>
+const f = new URLSearchParams(location.search).get('f');
+document.getElementById('i').src = f;
+document.getElementById('b').onclick = async () => {
+  try {
+    const blob = await (await fetch(f)).blob();
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    document.getElementById('s').textContent = 'copiada (' + blob.size + ' bytes)';
+  } catch (e) { document.getElementById('s').textContent = 'erro: ' + e; }
+};
+</script>

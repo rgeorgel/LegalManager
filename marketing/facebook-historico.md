@@ -33,8 +33,8 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora. |
 | [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | **Proíbe** promoção/spam | membro | — | **Nada publicado**: 2 posts pendentes desde 04/10 e 27/10. Só conteúdo sem link. |
 | [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | — | **Nada publicado**: 2 posts pendentes (apresentação + vídeo de 27/10). Só conteúdo útil, sem chamada. |
-| [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | — | Entrada aceita na hora. Próximo: R1. |
-| [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | — | Entrada aceita na hora. Próximo: R2. |
+| [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R1 pendente de aprovação. |
+| [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
 
 ### Candidatos
 
@@ -63,6 +63,8 @@ Situação conferida em 23/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 23/11/2026 | Advogados Individuais… de Campinas | pendente | — | R2 + `marketing/ads/out/causify-ad-honorarios-1200x627.png` | Honorários para quem advoga sozinho; causify.com.br |
+| 23/11/2026 | ADVOGADOS | pendente | — | R1 + `marketing/ads/out/causify-ad-tarefas-1200x627.png` | Onde ficam os seus prazos? Publicações, tarefas, plano grátis; causify.com.br |
 | 23/11/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2724738787946122/) | R3, só texto | Pergunta: como vocês acompanham as intimações? Menção leve ao Causify, sem link |
 | 28/10/2026 12:52 | Advogados Do Brasil | pendente | — | Texto "Prazo perdido não volta" | dias úteis, responsável, aviso antes; "Teste grátis em causify.com.br" |
 | 27/10/2026 20:34 | ADVOGADOS CORRESPONDENTES BRASIL | pendente | — | Vídeo amarelo "Prazo perdido não volta" (visual brutalista) | — |
@@ -91,6 +93,36 @@ Levantado em 23/11/2026, do mais novo para o mais antigo (datas não anotadas na
 A Página tinha **5 seguidores** em 23/11/2026.
 
 ### Textos publicados na íntegra
+
+#### 23/11/2026 — ADVOGADOS (R1, imagem do kanban)
+
+> Pergunta honesta para quem tem escritório pequeno ou advoga sozinho: onde ficam os seus prazos
+> hoje?
+>
+> Para muita gente a resposta é "um pouco em cada lugar": planilha, agenda, e-mail do tribunal,
+> lembrete no celular.
+>
+> O Causify junta isso num lugar só:
+> • lê as publicações do Diário pela sua OAB e já sugere o prazo, em dias úteis e com os feriados
+>   do seu estado
+> • cada prazo vira uma tarefa com responsável e aviso antes do vencimento
+> • processos, clientes, documentos e honorários no mesmo sistema
+>
+> Tem plano gratuito, sem cartão. Se alguém quiser testar e contar o que achou, a gente responde
+> pessoalmente: causify.com.br
+
+#### 23/11/2026 — Advogados Individuais… de Campinas (R2, imagem de honorários)
+
+> Para quem advoga sozinho: quanto você tem a receber este mês, sem abrir planilha?
+>
+> No escritório pequeno, quem faz o processo também faz o financeiro, e é aí que a parcela
+> atrasada passa despercebida por semanas.
+>
+> No Causify, cada contrato de honorários fica com as parcelas cadastradas, o sistema mostra quem
+> atrasou e quanto falta para a meta do mês, e o extrato sai pronto para mandar ao cliente.
+>
+> Fizemos o Causify pensando justamente em quem é advogado e administrador ao mesmo tempo. Tem
+> plano gratuito: causify.com.br
 
 #### 23/11/2026 — Advogados Do Brasil (R3)
 
@@ -144,35 +176,7 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 ## Rascunhos aguardando aprovação
 
-#### R1 — ADVOGADOS (já membro; aprovado para postar) — imagem: `marketing/ads/out/causify-ad-tarefas-1200x627.png`
-
-> Pergunta honesta para quem tem escritório pequeno ou advoga sozinho: onde ficam os seus prazos
-> hoje?
->
-> Para muita gente a resposta é "um pouco em cada lugar": planilha, agenda, e-mail do tribunal,
-> lembrete no celular.
->
-> O Causify junta isso num lugar só:
-> • lê as publicações do Diário pela sua OAB e já sugere o prazo, em dias úteis e com os feriados
->   do seu estado
-> • cada prazo vira uma tarefa com responsável e aviso antes do vencimento
-> • processos, clientes, documentos e honorários no mesmo sistema
->
-> Tem plano gratuito, sem cartão. Se alguém quiser testar e contar o que achou, a gente responde
-> pessoalmente: causify.com.br
-
-#### R2 — Advogados Individuais e Pequenos Escritórios de Campinas (já membro) — imagem: `marketing/ads/out/causify-ad-honorarios-1200x627.png`
-
-> Para quem advoga sozinho: quanto você tem a receber este mês, sem abrir planilha?
->
-> No escritório pequeno, quem faz o processo também faz o financeiro, e é aí que a parcela
-> atrasada passa despercebida por semanas.
->
-> No Causify, cada contrato de honorários fica com as parcelas cadastradas, o sistema mostra quem
-> atrasou e quanto falta para a meta do mês, e o extrato sai pronto para mandar ao cliente.
->
-> Fizemos o Causify pensando justamente em quem é advogado e administrador ao mesmo tempo. Tem
-> plano gratuito: causify.com.br
+(nenhum)
 
 ## Log de atividades
 
@@ -182,13 +186,27 @@ A Página tinha **5 seguidores** em 23/11/2026.
   pesquisa de grupos novos (8 buscas); 3 rascunhos escritos. Com OK do Ricardo: entrada no
   **ADVOGADOS** e no **Advogados Individuais… de Campinas** (ambas aceitas na hora) e **R3 publicado**
   no Advogados Do Brasil (entrou direto, sem moderação). Descoberto que 6 dos 7 posts antigos em
-  grupos estão pendentes de aprovação desde outubro.
+  grupos estão pendentes de aprovação desde outubro. Depois, com novo OK: R1 no ADVOGADOS e R2 em
+  Campinas, com imagem; os dois foram para aprovação dos admins.
+
+## Como anexar imagem
+
+O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para localhost e leitura da
+área de transferência. O que funciona:
+
+1. `preview_start` com `marketing-imagens` (em `.claude/launch.json`: serve `marketing/` na porta 5190).
+2. Abrir `http://localhost:5190/facebook/copiar-imagem.html?f=../ads/out/<arquivo>.png` e clicar em
+   "Copiar imagem" (clique real; põe a imagem na área de transferência).
+3. No Facebook, digitar o texto do post e **pedir ao Ricardo para apertar ⌘V** no compositor
+   (o ⌘V simulado não cola). Conferir texto e imagem e então clicar em Post.
 
 ## Aprendizados
 
 - **Conferir "Your content" do grupo depois de postar**: post pendente aparece para a Página como se
   estivesse publicado (inclusive na busca do grupo). Em out/2026, 6 de 7 posts ficaram presos na
   moderação, todos com chamada/link ou vídeo promocional. A pergunta sem link (23/11) entrou na hora.
+- ADVOGADOS e o grupo de Campinas moderam tudo: o post vai para "Your content → Pending". Conferir
+  depois de alguns dias se foi aprovado ou recusado e anotar aqui.
 - Em out/2026 o mesmo texto e o mesmo vídeo foram para vários grupos no mesmo dia. Daqui em diante,
   texto diferente por grupo.
 - Posts com chamada nos grupos que proíbem promoção não foram removidos, mas é risco de
