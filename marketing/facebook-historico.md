@@ -35,16 +35,16 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | — | **Nada publicado**: 2 posts pendentes (apresentação + vídeo de 27/10). Só conteúdo útil, sem chamada. |
 | [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R1 pendente de aprovação. |
 | [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
+| [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente" | membro (23/11/2026) | — | Entrada aceita na hora. Pouco ativo. |
+| [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra | membro (23/11/2026) | — | Entrada aceita na hora. Bom para tema financeiro/honorários. |
+| [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. |
+| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | — | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. |
 
 ### Candidatos
 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
-| [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente" | sim | pesquisado | Prioridade 2. Pouco ativo. |
-| [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra | sim | pesquisado | Prioridade 2. Bom para tema financeiro/honorários. |
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
-| [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção | sim | pesquisado | Público misto (advogados + clientes). Só conteúdo sem chamada. |
-| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | sim | pesquisado | Só conteúdo de nicho (prazos INSS), sem chamada. |
 | [Marketing Jurídico](https://www.facebook.com/groups/mktjur) | 692 | 0 | Conteúdo + "um pouco" de divulgação | — | evitar | Morto (nenhum post no último mês). |
 | [MUNDO JURÍDICO](https://www.facebook.com/groups/474662109949437) | 28K | 14 | — | — | evitar | Grupo em espanhol. |
 | "Consulta grátis" / "Tire suas dúvidas" / "Online 24h" (vários) | — | — | — | — | evitar | Público é cliente, não advogado. |
@@ -188,6 +188,8 @@ A Página tinha **5 seguidores** em 23/11/2026.
   no Advogados Do Brasil (entrou direto, sem moderação). Descoberto que 6 dos 7 posts antigos em
   grupos estão pendentes de aprovação desde outubro. Depois, com novo OK: R1 no ADVOGADOS e R2 em
   Campinas, com imagem; os dois foram para aprovação dos admins.
+  Com OK: entrada em **Advocacia**, **Contadores e Advogados**, **Advogados Iniciantes** e
+  **Advogados Previdenciários** (todas aceitas na hora). Nada postado neles ainda.
 
 ## Como anexar imagem
 
