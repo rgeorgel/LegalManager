@@ -30,16 +30,16 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 
 | Grupo | Membros | Posts/mês | Divulgação | Situação | Último post nosso | Notas |
 |---|---|---|---|---|---|---|
-| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados | membro | 28/10/2026 | Melhor grupo atual. 3 posts nossos (04/10, 27/10, 28/10). |
-| [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | **Proíbe** promoção/spam | membro | 27/10/2026 | Já postamos 2× com chamada (não foram removidos). Daqui em diante, só conteúdo sem link. |
-| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | 27/10/2026 | Público ótimo (início de carreira). Só conteúdo útil, sem chamada. |
+| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora. |
+| [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | **Proíbe** promoção/spam | membro | — | **Nada publicado**: 2 posts pendentes desde 04/10 e 27/10. Só conteúdo sem link. |
+| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | — | **Nada publicado**: 2 posts pendentes (apresentação + vídeo de 27/10). Só conteúdo útil, sem chamada. |
+| [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | — | Entrada aceita na hora. Próximo: R1. |
+| [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | — | Entrada aceita na hora. Próximo: R2. |
 
 ### Candidatos
 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
-| [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | sim | pesquisado | **Prioridade 1.** Proíbe divulgar preço de correspondente; Código de Ética da OAB. |
-| [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | sim | pesquisado | **Prioridade 1.** Público exato (autônomos e escritórios pequenos). |
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente" | sim | pesquisado | Prioridade 2. Pouco ativo. |
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra | sim | pesquisado | Prioridade 2. Bom para tema financeiro/honorários. |
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
@@ -58,14 +58,19 @@ Buscas feitas em 23/11/2026: "advogados", "gestão escritório advocacia", "advo
 
 ### Em grupos
 
-| Data | Grupo | Link | Tema / mídia | Resumo |
-|---|---|---|---|---|
-| 04/10/2026 | Advogados Do Brasil | [post](https://www.facebook.com/groups/454930134927010/posts/2668522323567769/) | Apresentação + imagem "Prazo perdido não tem recurso" | "Colegas, posso pedir 2 minutos de vocês?" — lista de recursos, plano grátis, pede feedback, causify.com.br |
-| 04/10/2026 | ADVOGADOS CORRESPONDENTES BRASIL | — | Mesmo texto e imagem acima | Idem (mesmo texto em 2 grupos) |
-| 27/10/2026 19:49 | Advogados Do Brasil | — | Vídeo amarelo "Prazo perdido não volta" (visual brutalista) | — |
-| 27/10/2026 20:31 | ADVOGADOS INICIANTES - SP | [post](https://www.facebook.com/groups/388185064882823/posts/2950050268696277/) | Mesmo vídeo | — |
-| 27/10/2026 20:34 | ADVOGADOS CORRESPONDENTES BRASIL | — | Mesmo vídeo | — |
-| 28/10/2026 12:52 | Advogados Do Brasil | — | Texto "Prazo perdido não volta" | dias úteis, responsável, aviso antes; "Teste grátis em causify.com.br" |
+Situação conferida em 23/11/2026 em "Your content" de cada grupo (`/groups/<id>/my_pending_content`).
+**Pendente = só a Página vê**; quem não é admin não vê o post.
+
+| Data | Grupo | Situação | Link | Tema / mídia | Resumo |
+|---|---|---|---|---|---|
+| 23/11/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2724738787946122/) | R3, só texto | Pergunta: como vocês acompanham as intimações? Menção leve ao Causify, sem link |
+| 28/10/2026 12:52 | Advogados Do Brasil | pendente | — | Texto "Prazo perdido não volta" | dias úteis, responsável, aviso antes; "Teste grátis em causify.com.br" |
+| 27/10/2026 20:34 | ADVOGADOS CORRESPONDENTES BRASIL | pendente | — | Vídeo amarelo "Prazo perdido não volta" (visual brutalista) | — |
+| 27/10/2026 20:31 | ADVOGADOS INICIANTES - SP | pendente | [post](https://www.facebook.com/groups/388185064882823/posts/2950050268696277/) | Mesmo vídeo | — |
+| 27/10/2026 19:49 | Advogados Do Brasil | pendente | — | Mesmo vídeo | — |
+| ~04/10/2026 | ADVOGADOS INICIANTES - SP | pendente | — | Variante da apresentação abaixo (com "Alertas de prazos", link para lp-facebook.html e pergunta final) | — |
+| 04/10/2026 | ADVOGADOS CORRESPONDENTES BRASIL | pendente | — | Apresentação + imagem "Prazo perdido não tem recurso" | Mesmo texto do Advogados Do Brasil |
+| 04/10/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2668522323567769/) | Apresentação + imagem "Prazo perdido não tem recurso" | "Colegas, posso pedir 2 minutos de vocês?" — lista de recursos, plano grátis, pede feedback, causify.com.br |
 
 ### No feed da Página
 
@@ -86,6 +91,18 @@ Levantado em 23/11/2026, do mais novo para o mais antigo (datas não anotadas na
 A Página tinha **5 seguidores** em 23/11/2026.
 
 ### Textos publicados na íntegra
+
+#### 23/11/2026 — Advogados Do Brasil (R3)
+
+> Uma dúvida para os colegas: como vocês acompanham as intimações hoje?
+>
+> Diário oficial todo dia de manhã, push do tribunal, e-mail da OAB, algum serviço pago?
+>
+> Pergunto porque vejo muita gente perder a manhã só para descobrir o que chegou, antes de
+> conseguir decidir o que fazer com cada publicação.
+>
+> (No Causify a publicação chega lida, vinculada ao processo e com o prazo já calculado, mas
+> queria entender o que funciona para vocês antes de qualquer coisa.)
 
 #### 04/10/2026 — Advogados Do Brasil e ADVOGADOS CORRESPONDENTES BRASIL
 
@@ -127,7 +144,7 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 ## Rascunhos aguardando aprovação
 
-#### R1 — ADVOGADOS (pedir entrada; postar quando aprovarem) — imagem: `marketing/ads/out/causify-ad-tarefas-1200x627.png`
+#### R1 — ADVOGADOS (já membro; aprovado para postar) — imagem: `marketing/ads/out/causify-ad-tarefas-1200x627.png`
 
 > Pergunta honesta para quem tem escritório pequeno ou advoga sozinho: onde ficam os seus prazos
 > hoje?
@@ -144,7 +161,7 @@ A Página tinha **5 seguidores** em 23/11/2026.
 > Tem plano gratuito, sem cartão. Se alguém quiser testar e contar o que achou, a gente responde
 > pessoalmente: causify.com.br
 
-#### R2 — Advogados Individuais e Pequenos Escritórios de Campinas (pedir entrada) — imagem: `marketing/ads/out/causify-ad-honorarios-1200x627.png`
+#### R2 — Advogados Individuais e Pequenos Escritórios de Campinas (já membro) — imagem: `marketing/ads/out/causify-ad-honorarios-1200x627.png`
 
 > Para quem advoga sozinho: quanto você tem a receber este mês, sem abrir planilha?
 >
@@ -157,27 +174,21 @@ A Página tinha **5 seguidores** em 23/11/2026.
 > Fizemos o Causify pensando justamente em quem é advogado e administrador ao mesmo tempo. Tem
 > plano gratuito: causify.com.br
 
-#### R3 — Advogados Do Brasil (já membro; último post 28/10) — imagem nova sugerida: tela de Publicações
-
-> Uma dúvida para os colegas: como vocês acompanham as intimações hoje?
->
-> Diário oficial todo dia de manhã, push do tribunal, e-mail da OAB, algum serviço pago?
->
-> Pergunto porque vejo muita gente perder a manhã só para descobrir o que chegou, antes de
-> conseguir decidir o que fazer com cada publicação.
->
-> (No Causify a publicação chega lida, vinculada ao processo e com o prazo já calculado, mas
-> queria entender o que funciona para vocês antes de qualquer coisa.)
-
 ## Log de atividades
 
 - **Antes de 23/11/2026** — Página criada; 9 posts no feed (1 impulsionado); entrou em 3 grupos e
   postou neles em 04/10, 27/10 e 28/10.
 - **23/11/2026** — Login no navegador do app. Levantamento dos grupos e dos posts antigos;
-  pesquisa de grupos novos (8 buscas); 3 rascunhos escritos. Nada publicado.
+  pesquisa de grupos novos (8 buscas); 3 rascunhos escritos. Com OK do Ricardo: entrada no
+  **ADVOGADOS** e no **Advogados Individuais… de Campinas** (ambas aceitas na hora) e **R3 publicado**
+  no Advogados Do Brasil (entrou direto, sem moderação). Descoberto que 6 dos 7 posts antigos em
+  grupos estão pendentes de aprovação desde outubro.
 
 ## Aprendizados
 
+- **Conferir "Your content" do grupo depois de postar**: post pendente aparece para a Página como se
+  estivesse publicado (inclusive na busca do grupo). Em out/2026, 6 de 7 posts ficaram presos na
+  moderação, todos com chamada/link ou vídeo promocional. A pergunta sem link (23/11) entrou na hora.
 - Em out/2026 o mesmo texto e o mesmo vídeo foram para vários grupos no mesmo dia. Daqui em diante,
   texto diferente por grupo.
 - Posts com chamada nos grupos que proíbem promoção não foram removidos, mas é risco de
