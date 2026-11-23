@@ -176,7 +176,67 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 ## Rascunhos aguardando aprovação
 
-(nenhum)
+Escritos em 23/11/2026. Ritmo sugerido: R4 + R5 em 24/11, R6 + R7 em 25/11.
+
+#### R4 — Contadores e Advogados — imagem: `marketing/posts/out/causify-post-honorarios-1200x1200.png`
+
+> Pergunta para os advogados do grupo (e para os contadores que atendem escritórios):
+>
+> no fim do mês, vocês conseguem dizer quanto cada processo rendeu?
+>
+> Na maioria dos escritórios pequenos o honorário entra numa conta, a despesa do processo
+> (custas, diligência, cópia) sai de outra, e o resultado de cada caso nunca fica claro. Na hora de
+> fechar o mês com o contador, vira garimpo de extrato bancário.
+>
+> O que ajuda: lançar receita e despesa já vinculadas ao processo, e acompanhar as parcelas de
+> cada contrato de honorários num lugar só.
+>
+> É assim que funciona o financeiro do Causify, que fizemos para escritórios de advocacia. Tem
+> plano gratuito em causify.com.br. E fica a pergunta: como vocês organizam isso hoje?
+
+#### R5 — Advocacia (grupo permite divulgar Páginas, "moderadamente") — imagem: `marketing/ads/out/causify-ad-calculadora-1200x627.png`
+
+> Olá, colegas! Somos o Causify, um sistema de gestão feito para a advocacia brasileira, e
+> entramos no grupo para trocar experiência com quem está no dia a dia do escritório.
+>
+> Três coisas que costumam ajudar quem começa a usar:
+> • digitar a OAB e trazer os processos para dentro do sistema
+> • receber as publicações já com o prazo calculado em dias úteis, considerando os feriados
+> • calcular honorários pela tabela da OAB, com o cálculo guardado para mostrar ao cliente
+>
+> Tem plano gratuito, sem cartão: causify.com.br
+>
+> Se alguém testar, a crítica sincera vale mais que o elogio. É ela que define o que fazemos
+> a seguir.
+
+#### R6 — Advogados Iniciantes (proíbe autopromoção: sem nome do produto, sem link) — só texto
+
+> Para quem está montando o escritório agora: 5 coisas que vale organizar antes do 10º cliente
+> (depois fica muito mais difícil):
+>
+> 1. Um lugar só para os prazos, com o processo e quem é o responsável. Agenda de papel e
+>    lembrete no celular não conversam entre si.
+> 2. Contrato de honorários assinado antes de começar, com as parcelas anotadas e datas de
+>    vencimento.
+> 3. Uma pasta por cliente/processo, com procuração, documentos e versões das peças. Nada de
+>    "está no meu WhatsApp".
+> 4. Rotina diária de intimações: ver o que chegou logo cedo e decidir o que fazer com cada uma
+>    no mesmo dia.
+> 5. Um registro simples do que cada cliente já pagou e do que ainda deve.
+>
+> O que vocês acrescentariam nessa lista?
+
+#### R7 — Advogados Previdenciários (proíbe promoção: sem nome do produto, sem link) — só texto
+
+> Pergunta para os colegas do previdenciário: como vocês controlam os prazos quando o mesmo
+> cliente tem um requerimento ou recurso no INSS e uma ação judicial correndo ao mesmo tempo?
+>
+> O administrativo segue uma regra de contagem, o judicial segue outra, e as comunicações chegam
+> por canais diferentes (Meu INSS, e-mail, diário, sistema do tribunal). É fácil um ficar de
+> fora da agenda.
+>
+> Vocês usam planilha separada, uma agenda só, algum sistema? Quero entender o que tem
+> funcionado na prática.
 
 ## Log de atividades
 
