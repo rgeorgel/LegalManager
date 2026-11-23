@@ -10,6 +10,7 @@ import { injectDashboardSwitch } from '/js/dashboard-versao.js';
 import { esc, brl as brlOuTraco, dataParede, isoLocal } from '/js/utils.js';
 import { initDashboardLayout } from '/js/dashboard-layout.js';
 import { anunciosNoDashboard } from '/js/publicidade.js';
+import { montarCaixaBusca } from '/js/busca-global.js';
 
 if (!isLoggedIn()) {
   window.location.href = '/login.html';
@@ -17,6 +18,8 @@ if (!isLoggedIn()) {
 }
 
 initLayout();
+// Busca global embutida, abaixo da saudação (o atalho Ctrl/⌘ + K foca nela).
+montarCaixaBusca(document.getElementById('d2Busca'));
 initOnboardingModal();
 // Mesmo encadeamento do dashboard clássico: trial de boas-vindas → onboarding (importar por OAB)
 // → novidade em destaque. Um modal por vez.

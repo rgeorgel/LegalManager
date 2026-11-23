@@ -92,6 +92,16 @@ kanban seguem com marcação própria), Publicações e Documentos (arquivos em 
 lista de arquivos segue em linhas). Pendente: o menu ⋮ de Contatos ainda é próprio
 (trocar por `abrirMenuCard`).
 
+## Busca global (Ctrl/⌘ + K)
+
+`js/busca-global.js`: botão "Buscar…" no header e paleta em todas as telas (ligados por `initLayout`;
+atalhos Ctrl/⌘ + K e "/"), e a mesma busca embutida no dashboard (`montarCaixaBusca`, abaixo da
+saudação — lá o atalho foca a caixa). Páginas do menu e atalhos "Criar" são filtrados no frontend;
+o resto vem de `GET /api/busca?q=` (`BuscaController`): processos (CNJ com ou sem pontuação, partes),
+contatos (nome, CPF/CNPJ, e-mail, OAB), tarefas, eventos, documentos e contratos (só nos planos com
+honorários), poucos de cada, já com a URL do detalhe. Entidade nova com tela própria: inclua no controller.
+CSS `.busca-*` em `styles.css`.
+
 ## Recursos em teste (liberados por escritório)
 
 Recurso em teste com alguns escritórios: chave em `RecursosEmTeste` (Domain; catálogo com nome e
