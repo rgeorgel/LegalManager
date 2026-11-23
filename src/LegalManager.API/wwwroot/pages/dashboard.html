@@ -121,7 +121,8 @@
     .d2-empty { color: var(--color-text-muted); font-size: 13px; padding: 18px 0; text-align: center; }
 
     /* Saudação (barra do topo) */
-    .d2-greet { min-width: 0; }
+    .d2-greet { min-width: 0; flex: 1 1 420px; }
+    .d2-busca { margin-top: 14px; }
     .d2-greet .d2-date { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-primary); }
     .d2-greet h1 { font-size: 24px; font-weight: 800; line-height: 1.2; margin: 2px 0 0; }
     .d2-greet p { margin-top: 4px; font-size: 13px; color: var(--color-text-muted); }
@@ -411,6 +412,8 @@
             <div class="d2-date" id="d2Hoje">—</div>
             <h1 class="page-title" id="d2Saudacao">Olá!</h1>
             <p id="d2Resumo">Carregando o seu resumo do dia…</p>
+            <!-- Busca global (mesma da paleta Ctrl/⌘ + K) — montada por js/busca-global.js -->
+            <div class="d2-busca" id="d2Busca"></div>
           </div>
           <div class="d2-topbar-actions">
             <button class="d2-topbar-link" id="d2Personalizar" type="button" aria-pressed="false">⚙️ Personalizar</button>

@@ -1314,3 +1314,121 @@ body.com-widgets-laterais .main-content {
   .topnav-perfil.pulsando, .topnav-dica { animation: none; }
 }
 @media print { .topnav, .topnav-conta, .menu-convite { display: none !important; } }
+
+/* ── Busca global (Ctrl/⌘ + K) ──────────────────────────────────────────
+   js/busca-global.js: botão no cabeçalho, paleta (.busca-overlay) em todas as telas e caixa
+   embutida no dashboard (.busca-caixa, resultados numa lista suspensa). Mesmo item nas duas. */
+.busca-header-btn {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  height: 36px; padding: 0 8px 0 10px; min-width: 200px;
+  border: 1px solid var(--color-border); border-radius: 10px;
+  background: var(--color-bg); color: var(--color-text-muted);
+  font: inherit; font-size: 13px; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.busca-header-btn:hover { border-color: var(--color-primary); color: var(--color-text); }
+.busca-header-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.busca-header-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.busca-header-rotulo { flex: 1; text-align: left; }
+/* Com o menu no cabeçalho o espaço é curto: só a lupa. */
+body.menu-superior .busca-header-btn { min-width: 0; width: 36px; padding: 0; justify-content: center; border-radius: 999px; border-color: transparent; background: none; }
+body.menu-superior .busca-header-btn .busca-header-rotulo,
+body.menu-superior .busca-header-btn kbd { display: none; }
+body.menu-superior .busca-header-btn svg { width: 20px; height: 20px; }
+
+.busca-header-btn kbd, .busca-campo kbd, .busca-rodape kbd {
+  font: 600 11px/1 inherit; font-family: inherit;
+  padding: 3px 6px; border-radius: 6px;
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  color: var(--color-text-muted); white-space: nowrap;
+}
+
+.busca-overlay {
+  position: fixed; inset: 0; z-index: 1050;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 12vh 16px 16px;
+  background: rgba(15, 23, 42, .45);
+}
+.busca-overlay[hidden] { display: none; }
+.busca-paleta {
+  width: min(640px, 100%); max-height: 70vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--color-surface); color: var(--color-text);
+  border: 1px solid var(--color-border); border-radius: 14px;
+  box-shadow: 0 24px 60px -12px rgba(15, 23, 42, .45);
+}
+.busca-paleta .busca-campo { border: none; border-bottom: 1px solid var(--color-border); border-radius: 0; box-shadow: none; padding: 0 16px; height: 54px; }
+.busca-paleta .busca-campo input { font-size: 16px; }
+.busca-paleta .busca-lista { flex: 1; overflow-y: auto; }
+
+.busca-campo {
+  display: flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 10px 0 14px;
+  background: var(--color-surface); color: var(--color-text-muted);
+  border: 1px solid var(--color-border); border-radius: 12px;
+  box-shadow: var(--shadow); cursor: text;
+  transition: border-color .15s, box-shadow .15s;
+}
+.busca-campo:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+.busca-campo svg { width: 18px; height: 18px; flex-shrink: 0; }
+.busca-campo input {
+  flex: 1; min-width: 0; height: 100%; padding: 0;
+  border: none !important; outline: none; box-shadow: none !important; background: transparent;
+  color: var(--color-text); font: inherit; font-size: 14px;
+}
+.busca-campo input::-webkit-search-cancel-button { display: none; }
+.busca-campo:focus-within kbd { visibility: hidden; }
+
+.busca-lista { padding: 6px; }
+.busca-grupo + .busca-grupo { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--color-border); }
+.busca-grupo-titulo {
+  padding: 6px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--color-text-muted);
+}
+.busca-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  color: var(--color-text); text-decoration: none !important;
+}
+.busca-item.ativo { background: var(--color-primary-light); }
+.busca-item.inativo .busca-item-titulo { color: var(--color-text-muted); }
+.busca-item-icone { width: 22px; flex-shrink: 0; text-align: center; font-size: 16px; line-height: 1; }
+.busca-item-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.busca-item-titulo, .busca-item-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.busca-item-titulo { font-size: 14px; font-weight: 500; }
+.busca-item-sub { font-size: 12px; color: var(--color-text-muted); }
+.busca-item mark { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+.busca-item-selo {
+  flex-shrink: 0; padding: 1px 7px; border-radius: 999px;
+  background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 600; letter-spacing: .04em;
+}
+.busca-status { padding: 14px 10px; font-size: 13px; color: var(--color-text-muted); text-align: center; }
+.busca-status.erro { color: var(--color-danger); }
+.busca-rodape {
+  display: flex; gap: 16px; padding: 8px 14px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px; color: var(--color-text-muted);
+}
+.busca-rodape kbd { padding: 2px 5px; margin-right: 2px; }
+
+/* Caixa embutida (dashboard) */
+.busca-caixa { position: relative; max-width: 560px; }
+.busca-suspensa {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60;
+  max-height: min(60vh, 460px); overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border); border-radius: 12px;
+  box-shadow: 0 16px 40px -12px rgba(15, 23, 42, .35);
+}
+.busca-suspensa[hidden] { display: none; }
+
+@media (max-width: 768px) {
+  .busca-header-btn { min-width: 0; width: 36px; padding: 0; justify-content: center; border-color: transparent; background: none; border-radius: 999px; }
+  .busca-header-btn .busca-header-rotulo, .busca-header-btn kbd { display: none; }
+  .busca-header-btn svg { width: 20px; height: 20px; }
+  .busca-overlay { padding: 8px; }
+  .busca-paleta { max-height: calc(100vh - 16px); }
+  .busca-rodape, .busca-campo kbd { display: none; }
+  .busca-caixa { max-width: none; }
+}
+@media print { .busca-header-btn, .busca-overlay, .busca-caixa { display: none !important; } }

@@ -14,6 +14,7 @@ import {
   montarMenuConta, atualizarMenuConta,
 } from './menu-superior.js';
 import { trackEvent } from './analytics.js';
+import { initBuscaGlobal, atualizarPaginasBusca } from './busca-global.js';
 
 import { esc } from './utils.js';
 import { recursosEmCache, recursosLiberados } from './recursos.js';
@@ -133,12 +134,15 @@ export function initLayout() {
   recursosMenu = recursosEmCache();
   injectSidebarNav();
   if (menuSuperior) injectMenuSuperior();
+  // Busca global (Ctrl/⌘ + K): botão no header; as páginas do menu entram nos resultados.
+  initBuscaGlobal({ paginas: paginasBusca(), plano: getPlano(), aoBloqueado: plano => showUpgradeToast(plano) });
   // Confere os recursos em teste no servidor e redesenha o menu se mudou algo.
   recursosLiberados().then(lista => {
     if (lista.join() === recursosMenu.join()) return;
     recursosMenu = lista;
     injectSidebarNav();
     if (document.body.classList.contains('menu-superior')) injectMenuSuperior();
+    atualizarPaginasBusca(paginasBusca());
   });
   // Iniciais com o menu da conta (nos dois layouts; só aparece no desktop).
   montarMenuConta({ usuario: user, aoTrocarLayout: trocarMenuLayout });
@@ -246,6 +250,23 @@ function estadoBloqueio(item, plano) {
     badgeText: lockedPro ? 'PRO' : 'PLUS',
     upgradeTarget: lockedPro ? 'Pro' : 'Plus',
   };
+}
+
+/** Páginas do menu para a busca global ("⚖️ Processos" → ícone + título), com a regra de plano. */
+function paginasBusca() {
+  const plano = getPlano();
+  return gruposVisiveis().flatMap(g => g.items.map(item => {
+    const espaco = item.label.indexOf(' ');
+    const { locked, upgradeTarget } = estadoBloqueio(item, plano);
+    return {
+      titulo: item.label.slice(espaco + 1),
+      icone: item.label.slice(0, espaco),
+      url: item.href,
+      detalhe: g.label,
+      bloqueado: locked,
+      upgrade: upgradeTarget,
+    };
+  }));
 }
 
 function injectMenuSuperior() {
