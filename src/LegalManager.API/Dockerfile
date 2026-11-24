@@ -10,9 +10,10 @@ COPY ["src/LegalManager.Infrastructure/LegalManager.Infrastructure.csproj", "src
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet restore "src/LegalManager.API/LegalManager.API.csproj"
 COPY . .
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet build "src/LegalManager.API/LegalManager.API.csproj" -c Release -o /app/build
 
+# Só o publish: ele já compila. Um "dotnet build" antes compilava tudo duas vezes a cada deploy.
+# Sem --no-restore: a camada do restore pode vir do cache do Docker sem os pacotes no cache do NuGet
+# (são caches diferentes); o restore aqui é rápido quando os pacotes já estão lá.
 FROM build AS publish
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish "src/LegalManager.API/LegalManager.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
