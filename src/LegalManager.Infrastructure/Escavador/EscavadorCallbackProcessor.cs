@@ -58,8 +58,9 @@ public class EscavadorCallbackProcessor
         var oab = monitoramentoId.HasValue
             ? await EncontrarTenantOabAsync(monitoramentoId.Value)
             : null;
-        // O aviso do monitoramento de OAB não traz o processo em campo próprio: o número só está
-        // no texto. Prefere o CNJ que o escritório tem cadastrado (o texto pode citar outros).
+        // O aviso do monitoramento de OAB traz o processo em movimentacao.processo (lido em
+        // ExtrairDadosPayload); sem ele, o número só está no texto. Prefere o CNJ que o escritório
+        // tem cadastrado (o texto pode citar outros).
         if (oab != null && string.IsNullOrWhiteSpace(numeroCNJ))
             numeroCNJ = await CnjDoTextoAsync(oab.TenantId, conteudo);
         var processo = string.IsNullOrWhiteSpace(numeroCNJ) ? null
@@ -221,6 +222,8 @@ public class EscavadorCallbackProcessor
             OrigemEstado = PublicacaoMapper.Cortar(conteudo.OrigemEstado, 2),
             Snippet = PublicacaoMapper.Cortar(TextoHtml.ParaTexto(conteudo.Snippet), 1000),
             Tribunal = PublicacaoMapper.Cortar(conteudo.DiarioSigla, 50),
+            Secao = conteudo.Secao,
+            Pagina = conteudo.Pagina,
             CapturaEm = agora
         };
     }
@@ -245,9 +248,11 @@ public class EscavadorCallbackProcessor
         // V2 shape (monitoramento de processo, evento nova_movimentacao): payload.monitoramento +
         // payload.movimentacao. Chave = id da movimentação, a mesma do polling — a movimentação
         // que já entrou por lá não duplica.
+        // O diario_movimentacao_nova (monitoramento de OAB) vem no mesmo shape, com o monitoramento
+        // da OAB (sem "numero") e o processo dentro da movimentação.
         if (payload.Movimentacao != null)
         {
-            var cnj = payload.Monitoramento?.Numero;
+            var cnj = payload.Monitoramento?.Numero ?? payload.Movimentacao.NumeroDoProcesso;
             var mov = payload.Movimentacao.ParaDto(cnj);
             return (mov.Uuid, cnj, payload.Monitoramento?.Id, mov);
         }

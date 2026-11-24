@@ -216,6 +216,99 @@ public class EscavadorCallbacksTests
         Assert.Empty(ctx.Andamentos);
     }
 
+    // Callback real do monitoramento de OAB (diario_movimentacao_nova, encurtado): processo sigiloso —
+    // o texto não tem número; o processo só vem em movimentacao.processo.numero_novo.
+    private const string CnjSigiloso = "0002367-37.2026.8.26.0664";
+    private const string DiarioSigilosoJson = """
+    {
+      "event": "diario_movimentacao_nova",
+      "monitoramento": { "id": 900, "processo_id": null, "termo": "54731\/SP", "tipo": "TERMO" },
+      "movimentacao": {
+        "id": 1796884115,
+        "secao": "Foro de Votuporanga - 1ª Vara Cível",
+        "diario_oficial_id": 22254256,
+        "processo_id": 281518939,
+        "pagina": 15554,
+        "tipo": "Intimação",
+        "conteudo": "Processo Sigiloso. Para visualização do documento, consulte os autos digitais.",
+        "data": "2026-11-23T00:00:00.000000Z",
+        "estado": "São Paulo",
+        "link": "https:\/\/www.escavador.com\/processos-judiciais\/000xxxx-3720268260664-d1f9c3f820?ano=2026#movimentacao-1796884115",
+        "link_api": "https:\/\/api.escavador.com\/api\/v1\/movimentacoes\/1796884115",
+        "link_pdf": "https:\/\/www.escavador.com\/diarios\/22254256\/DJSP\/diario-de-justica-eletronico-nacional-(djen)\/2026-11-23\/pdf\/baixar?page=15554",
+        "link_pdf_api": "https:\/\/api.escavador.com\/api\/v1\/diarios\/22254256\/pdf\/pagina\/15554\/baixar",
+        "snippet": "Processo Sigiloso. Para visualização do documento, consulte os autos digitais.",
+        "processo": { "id": 281518939, "numero_antigo": null, "numero_novo": "0002367-37.2026.8.26.0664", "is_cnj": 1 },
+        "diario": {
+          "id": 22254256, "plugin": "DJSP",
+          "tipo": "Diário de Justiça Eletrônico Nacional (DJEN)",
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "origem": { "id": 37, "nome": "Diário de Justiça do Estado de São Paulo", "sigla": "DJSP", "estado": "SP" }
+        }
+      },
+      "uuid": "616c798284858d29716a142197d00032"
+    }
+    """;
+
+    [Fact]
+    public async Task WebhookOabDiario_ProcessoSigiloso_GuardaNumeroVaraDiarioELinks()
+    {
+        var (ctx, _) = await SeedOabAsync();
+
+        await Processor(ctx).ProcessarAsync(EscavadorCallbackProcessor.Desserializar(DiarioSigilosoJson)!);
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Null(pub.ProcessoId);
+        Assert.Equal(CnjSigiloso, pub.NumeroCNJ);
+        Assert.Equal("Foro de Votuporanga - 1ª Vara Cível", pub.Secao);
+        Assert.Equal("15554", pub.Pagina);
+        Assert.Equal("Diário de Justiça Eletrônico Nacional (DJEN)", pub.Diario);
+        Assert.Equal("DJSP", pub.DiarioSigla);
+        Assert.Equal("DJSP", pub.Tribunal);
+        Assert.Equal("SP", pub.OrigemEstado);
+        Assert.Equal(22254256, pub.DiarioId);
+        Assert.Equal(new DateTime(2026, 11, 23), pub.DataPublicacao.Date);
+        Assert.StartsWith("https://www.escavador.com/processos-judiciais/", pub.LinkEscavador);
+        Assert.Contains("page=15554", pub.LinkPdf);
+        Assert.Equal("v2-mov-1796884115", pub.UuidExterno);
+        Assert.Equal(pub.Conteudo, pub.Snippet); // o "snippet" do diário não é gravado à parte
+    }
+
+    [Fact]
+    public async Task WebhookOabDiario_ProcessoSigilosoDoEscritorio_VinculaECriaMovimentacao()
+    {
+        var (ctx, oab) = await SeedOabAsync();
+        var processo = NovoProcesso(oab.TenantId);
+        processo.NumeroCNJ = CnjSigiloso;
+        ctx.Processos.Add(processo);
+        await ctx.SaveChangesAsync();
+
+        await Processor(ctx).ProcessarAsync(EscavadorCallbackProcessor.Desserializar(DiarioSigilosoJson)!);
+
+        var pub = await ctx.Publicacoes.SingleAsync();
+        Assert.Equal(processo.Id, pub.ProcessoId);
+        Assert.Equal("Foro de Votuporanga - 1ª Vara Cível", pub.Secao);
+        Assert.Equal("15554", pub.Pagina);
+        Assert.Equal(processo.Id, (await ctx.Andamentos.SingleAsync()).ProcessoId);
+    }
+
+    [Fact]
+    public void MovimentacaoV2_SemCamposDoDiario_MantemOFormatoDoPolling()
+    {
+        var mov = System.Text.Json.JsonSerializer.Deserialize<EscavadorMovimentacaoV2>(
+            """{ "id": 7, "data": "2026-11-18", "tipo": "PUBLICACAO", "conteudo": "Texto", "fonte": { "nome": "Diário X", "sigla": "DJX" } }""")!;
+
+        var dto = mov.ParaDto(Cnj);
+
+        Assert.Equal(Cnj, dto.NumeroCnj);
+        Assert.Equal("Diário X", dto.Diario);
+        Assert.Equal("DJX", dto.DiarioSigla);
+        Assert.Null(dto.Secao);
+        Assert.Null(dto.Pagina);
+        Assert.Null(dto.LinkPdf);
+        Assert.Null(mov.NumeroDoProcesso);
+    }
+
     // Processo do escritório com responsável de verdade (e-mail), para os testes do aviso.
     private static async Task<(AppDbContext ctx, Processo processo)> SeedOabComResponsavelAsync(string nomeBanco)
     {

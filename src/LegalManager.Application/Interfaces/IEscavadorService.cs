@@ -61,7 +61,10 @@ public record EscavadorMovimentacaoDto(
     string? LinkPdf,
     string? LinkPdfApi,
     string? NumeroCnj,
-    string? JsonBruto
+    string? JsonBruto,
+    // Só no callback do diário (monitoramento de OAB): vara/órgão e página da publicação.
+    string? Secao = null,
+    string? Pagina = null
 );
 
 /// <summary>

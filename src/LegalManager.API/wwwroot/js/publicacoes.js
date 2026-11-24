@@ -193,7 +193,8 @@ function cardPublicacao(p) {
     campos: [
       { rotulo: 'Processo', valorHtml: processo, dica: p.numeroCNJ },
       { rotulo: 'Publicada em', valor: fmtDataParede(p.dataPublicacao) },
-      { rotulo: 'Diário', valor: [p.diario, p.tribunal].filter(Boolean).join(' — ') },
+      { rotulo: 'Vara', valor: p.secao ?? '' },
+      { rotulo: 'Diário', valor: [p.diario, p.tribunal].filter(Boolean).join(' — ') + (p.pagina ? `, p. ${p.pagina}` : '') },
     ],
     corpoHtml: `
       ${p.classificacaoIA ? `<div class="pub-ia-resumo">🤖 ${esc(p.classificacaoIA)}</div>` : ''}

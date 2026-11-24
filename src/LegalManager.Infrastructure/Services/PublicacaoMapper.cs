@@ -36,6 +36,8 @@ public class PublicacaoMapper
             // No V2 o "snippet" é a publicação inteira; o texto completo fica em Conteudo.
             Snippet = Cortar(TextoHtml.ParaTexto(mov.Snippet), 1000),
             Tribunal = Cortar(ExtrairTribunal(processo.NumeroCNJ, mov.DiarioSigla), 50),
+            Secao = mov.Secao,
+            Pagina = mov.Pagina,
             CapturaEm = agora
         };
     }

@@ -23,7 +23,10 @@ public record PublicacaoResponseDto(
     string? Tribunal = null,
     string? OrigemEstado = null,
     string? DiarioSigla = null,
-    TriagemPublicacaoDto? Triagem = null
+    TriagemPublicacaoDto? Triagem = null,
+    /// <summary>Vara/órgão que publicou (seção do diário) — no sigiloso, a única pista além do número.</summary>
+    string? Secao = null,
+    string? Pagina = null
 );
 
 /// <summary>Sugestão da IA para a publicação (ver TriagemPublicacao). Vencimento calculado pelo código.</summary>
