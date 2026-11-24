@@ -30,13 +30,13 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 
 | Grupo | Membros | Posts/mês | Divulgação | Situação | Último post nosso | Notas |
 |---|---|---|---|---|---|---|
-| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora. |
+| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora; 1 comentário (citou o Ecossistema Jurídico), respondido pela Página. |
 | [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | **Proíbe** promoção/spam | membro | — | **Nada publicado**: 2 posts pendentes desde 04/10 e 27/10. Só conteúdo sem link. |
 | [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | — | **Nada publicado**: 2 posts pendentes (apresentação + vídeo de 27/10). Só conteúdo útil, sem chamada. |
 | [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R1 pendente de aprovação. |
 | [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
-| [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente" | membro (23/11/2026) | — | Entrada aceita na hora. Pouco ativo. |
-| [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra | membro (23/11/2026) | — | Entrada aceita na hora. Bom para tema financeiro/honorários. |
+| [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
+| [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. |
 | [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | — | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. |
 
