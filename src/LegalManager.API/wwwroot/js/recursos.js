@@ -3,7 +3,10 @@
 // vale em até 2 minutos, sem novo login. A API barra quem não está liberado de qualquer forma.
 import { apiFetch, getUser } from './api.js';
 
-export const RECURSOS = Object.freeze({ assinaturaDigital: 'assinatura-digital' });
+export const RECURSOS = Object.freeze({
+  assinaturaDigital: 'assinatura-digital',
+  jurisprudenciaVerificada: 'jurisprudencia-verificada',
+});
 
 const VALIDADE_MS = 2 * 60 * 1000;
 let pedido = null;

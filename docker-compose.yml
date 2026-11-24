@@ -87,6 +87,8 @@ services:
       Assistente__ReasoningEffort: ${ASSISTENTE_REASONING_EFFORT:-}
       DataJud__BaseUrl: ${DATAJUD_BASE_URL:-https://api-publica.datajud.cnj.jus.br}
       DataJud__ApiKey: ${DATAJUD_API_KEY:-}
+      Jurisprudencia__ImportarStj: ${JURISPRUDENCIA_IMPORTAR_STJ:-false}
+      Jurisprudencia__MesesAcordaos: ${JURISPRUDENCIA_MESES_ACORDAOS:-12}
       Escavador__UseMock: ${ESCAVADOR_USE_MOCK:-false}
       Escavador__BaseUrl: ${ESCAVADOR_BASE_URL:-https://api.escavador.com}
       Escavador__ApiToken: ${ESCAVADOR_API_TOKEN:-}

@@ -54,6 +54,8 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
     public DbSet<CreditoAI> CreditosAI => Set<CreditoAI>();
     public DbSet<TraducaoAndamento> TraducoesAndamentos => Set<TraducaoAndamento>();
     public DbSet<PecaGerada> PecasGeradas => Set<PecaGerada>();
+    public DbSet<Precedente> Precedentes => Set<Precedente>();
+    public DbSet<FontePrecedentes> FontesPrecedentes => Set<FontePrecedentes>();
     public DbSet<Documento> Documentos => Set<Documento>();
     public DbSet<ModeloDocumento> ModelosDocumento => Set<ModeloDocumento>();
     public DbSet<Pasta> Pastas => Set<Pasta>();

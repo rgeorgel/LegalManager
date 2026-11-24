@@ -219,4 +219,132 @@ public class PecaJuridicaServiceTests
         Assert.Equal(10, page1.Count());
         Assert.Equal(5, page2.Count());
     }
+
+    // ── Jurisprudência verificada ────────────────────────────────────────────
+
+    private static Mock<ICreditoService> CreditoLiberado()
+    {
+        var mock = new Mock<ICreditoService>();
+        mock.Setup(c => c.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca, 1, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        mock.Setup(c => c.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca, 1, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        return mock;
+    }
+
+    private static PrecedenteDto PrecedenteExemplo() => new(
+        Guid.NewGuid(), "Acordao", "STJ", "REsp", "1234567", "REsp 1.234.567/STJ", "Nancy Andrighi", "Terceira Turma",
+        new DateTime(2026, 5, 12), "Busca e apreensão. Alienação fiduciária.", null, "https://processo.stj.jus.br/x");
+
+    [Fact]
+    public async Task GerarPecaAsync_SemRecurso_MarcaCitacoesComoNaoVerificadas()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        var ia = new Mock<IIAService>();
+        ia.Setup(i => i.GerarPecaJuridicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("Incide a Súmula 7/STJ e o REsp 1.234.567/SP.");
+        ia.Setup(i => i.BuscarJurisprudenciaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("Entendimentos.");
+        var jurisprudencia = new Mock<IJurisprudenciaService>(MockBehavior.Strict);
+        jurisprudencia.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string t, bool _, CancellationToken _) => new VerificacaoCitacoesDto(
+                [new CitacaoVerificadaDto(TipoCitacao.Sumula, "STJ", null, "7", "Súmula 7/STJ", 10, 22, StatusCitacao.NaoVerificada, "Confira.")],
+                0, 1, 0, "não habilitada"));
+
+        var service = new PecaJuridicaService(ctx, CreateTenantContext(tenantId), ia.Object, CreditoLiberado().Object, jurisprudencia.Object);
+        var result = await service.GerarPecaAsync(new GerarPecaDto(null, TipoPecaJuridica.Contestacao, "Ação de cobrança"), usuarioId);
+
+        Assert.Equal(StatusCitacao.NaoVerificada, Assert.Single(result.Verificacao!.Citacoes).Status);
+        Assert.Null(result.Precedentes);
+        Assert.Equal("Entendimentos.", result.JurisprudenciaCitada);
+        ia.Verify(i => i.GerarPecaComPrecedentesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        // Lida de novo do banco: a conferência ficou gravada.
+        var salva = await service.ObterPecaAsync(result.Id);
+        Assert.Equal("Súmula 7/STJ", Assert.Single(salva!.Verificacao!.Citacoes).Trecho);
+    }
+
+    [Fact]
+    public async Task GerarPecaAsync_ComRecurso_UsaPrecedentesDaBase()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        var tenant = await ctx.Tenants.FindAsync(tenantId);
+        tenant!.RecursosLiberados.Add(LegalManager.Domain.RecursosEmTeste.JurisprudenciaVerificada);
+        await ctx.SaveChangesAsync();
+
+        string? listaEnviada = null;
+        var ia = new Mock<IIAService>(MockBehavior.Strict);
+        ia.Setup(i => i.GerarPecaComPrecedentesAsync(It.IsAny<string>(), "Contestacao", It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback((string _, string _, string lista, CancellationToken _) => listaEnviada = lista)
+            .ReturnsAsync("Nos termos do REsp 1.234.567/STJ, Rel. Min. Nancy Andrighi.");
+        var precedente = PrecedenteExemplo();
+        var jurisprudencia = new Mock<IJurisprudenciaService>(MockBehavior.Strict);
+        jurisprudencia.Setup(j => j.BuscarPrecedentesAsync(It.Is<string>(s => s.Contains("busca e apreensão")), PecaJuridicaService.PrecedentesPorPeca, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([precedente]);
+        jurisprudencia.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerificacaoCitacoesDto(
+                [new CitacaoVerificadaDto(TipoCitacao.Acordao, "STJ", "REsp", "1234567", "REsp 1.234.567/STJ", 13, 31, StatusCitacao.Verificada, "Encontrado.", precedente)],
+                1, 0, 0, "Conferido na base oficial"));
+
+        var service = new PecaJuridicaService(ctx, CreateTenantContext(tenantId), ia.Object, CreditoLiberado().Object, jurisprudencia.Object);
+        var result = await service.GerarPecaAsync(new GerarPecaDto(null, TipoPecaJuridica.Contestacao, "Contestação em busca e apreensão de veículo"), usuarioId);
+
+        Assert.NotNull(listaEnviada);
+        Assert.Contains("[1] REsp 1.234.567/STJ — Terceira Turma, Rel. Min. Nancy Andrighi, julgado em 12/05/2026", listaEnviada);
+        Assert.Equal(precedente.Id, Assert.Single(result.Precedentes!).Id);
+        Assert.Equal(1, result.Verificacao!.Verificadas);
+        Assert.Null(result.JurisprudenciaCitada);
+    }
+
+    [Fact]
+    public async Task GerarPecaAsync_ComRecursoSemPrecedentesAchados_GeraSemLista()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        (await ctx.Tenants.FindAsync(tenantId))!.RecursosLiberados.Add(LegalManager.Domain.RecursosEmTeste.JurisprudenciaVerificada);
+        await ctx.SaveChangesAsync();
+        var ia = new Mock<IIAService>();
+        ia.Setup(i => i.GerarPecaJuridicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("Texto.");
+        ia.Setup(i => i.BuscarJurisprudenciaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("Entendimentos.");
+        var jurisprudencia = new Mock<IJurisprudenciaService>();
+        jurisprudencia.Setup(j => j.BuscarPrecedentesAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        jurisprudencia.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerificacaoCitacoesDto([], 0, 0, 0, ""));
+
+        var service = new PecaJuridicaService(ctx, CreateTenantContext(tenantId), ia.Object, CreditoLiberado().Object, jurisprudencia.Object);
+        var result = await service.GerarPecaAsync(new GerarPecaDto(null, TipoPecaJuridica.Pedido, "Pedido simples"), usuarioId);
+
+        Assert.Equal("Texto.", result.ConteudoGerado);
+        Assert.Null(result.Precedentes);
+    }
+
+    [Fact]
+    public async Task GerarPecaAsync_SemServicoDeJurisprudencia_AindaMarcaAsCitacoes()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        var ia = new Mock<IIAService>();
+        ia.Setup(i => i.GerarPecaJuridicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("Conforme o Tema 1.076/STJ.");
+        ia.Setup(i => i.BuscarJurisprudenciaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("");
+
+        var service = new PecaJuridicaService(ctx, CreateTenantContext(tenantId), ia.Object, CreditoLiberado().Object);
+        var result = await service.GerarPecaAsync(new GerarPecaDto(null, TipoPecaJuridica.Pedido, "Pedido"), usuarioId);
+
+        var c = Assert.Single(result.Verificacao!.Citacoes);
+        Assert.Equal(StatusCitacao.NaoVerificada, c.Status);
+        Assert.Equal("Tema 1.076/STJ", c.Trecho);
+    }
+
+    [Fact]
+    public async Task ObterPecaAsync_JsonInvalido_NaoQuebra()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        var id = Guid.NewGuid();
+        ctx.PecasGeradas.Add(new PecaGerada
+        {
+            Id = id, TenantId = tenantId, GeradoPorId = usuarioId, Tipo = TipoPecaJuridica.Pedido,
+            DescricaoSolicitacao = "x", ConteudoGerado = "y", CitacoesJson = "{quebrado", CriadoEm = DateTime.UtcNow,
+        });
+        await ctx.SaveChangesAsync();
+
+        var result = await new PecaJuridicaService(ctx, CreateTenantContext(tenantId), Mock.Of<IIAService>(), Mock.Of<ICreditoService>())
+            .ObterPecaAsync(id);
+
+        Assert.Null(result!.Verificacao);
+    }
 }

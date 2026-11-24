@@ -231,6 +231,13 @@ builder.Services.AddHttpClient<IIAService, IAService>(client =>
 builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
+// Jurisprudência verificada: conferência de citações e base oficial do STJ (docs/features/jurisprudencia-verificada.md).
+builder.Services.AddScoped<IJurisprudenciaService, LegalManager.Infrastructure.Jurisprudencia.JurisprudenciaService>();
+builder.Services.AddHttpClient<LegalManager.Infrastructure.Jurisprudencia.StjDadosAbertos>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Causify/1.0");
+});
 builder.Services.AddScoped<IResumoProcessoService, ResumoProcessoService>();
 builder.Services.AddHttpClient<LegalManager.Infrastructure.Assistente.IAssistenteLlmClient,
     LegalManager.Infrastructure.Assistente.AssistenteLlmClient>(client => client.Timeout = TimeSpan.FromSeconds(90));
@@ -495,6 +502,14 @@ using (var scope = app.Services.CreateScope())
 
     await SeedSuperAdminAsync(scope.ServiceProvider, builder.Configuration);
 
+    // Primeira carga da base de jurisprudência do STJ (só onde a importação está ligada).
+    if (LegalManager.Infrastructure.Jobs.JurisprudenciaStjJob.Habilitado(builder.Configuration)
+        && await LegalManager.Infrastructure.Jobs.JurisprudenciaStjJob.PrecisaCargaInicialAsync(db))
+    {
+        scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>()
+            .Enqueue<LegalManager.Infrastructure.Jobs.JurisprudenciaStjJob>(job => job.ExecutarAsync(CancellationToken.None));
+    }
+
     // Enfileira a carga do histórico dos índices e do salário mínimo se faltar alguma série
     if (await IndicesCorrecaoJob.PrecisaCargaHistoricaAsync(db))
     {
@@ -735,6 +750,15 @@ static void RegistrarJobsRecorrentes(IConfiguration config)
         "captura-dje",
         job => job.ExecutarAsync(CancellationToken.None),
         "0 9 * * *"); // daily at 09:00 UTC (06:00 Brasília) — após publicação dos diários
+
+    // Base de jurisprudência do STJ: temas e espelhos de acórdãos (o STJ publica os espelhos por mês).
+    if (LegalManager.Infrastructure.Jobs.JurisprudenciaStjJob.Habilitado(config))
+        RecurringJob.AddOrUpdate<LegalManager.Infrastructure.Jobs.JurisprudenciaStjJob>(
+            "jurisprudencia-stj",
+            job => job.ExecutarAsync(CancellationToken.None),
+            "0 7 * * 1"); // segundas às 07:00 UTC (04:00 Brasília)
+    else
+        RecurringJob.RemoveIfExists("jurisprudencia-stj");
 
     RecurringJob.AddOrUpdate<IndicesCorrecaoJob>(
         "indices-correcao-mensal",

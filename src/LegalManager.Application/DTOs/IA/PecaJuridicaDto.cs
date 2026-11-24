@@ -17,7 +17,11 @@ public record PecaGeradaResponseDto(
     string ConteudoGerado,
     string? JurisprudenciaCitada,
     string? TesesSugeridas,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    /// <summary>Citações do texto e a conferência de cada uma (sempre presente nas peças novas).</summary>
+    VerificacaoCitacoesDto? Verificacao = null,
+    /// <summary>Precedentes da base usados na geração com fonte (jurisprudência verificada).</summary>
+    IReadOnlyList<PrecedenteDto>? Precedentes = null
 );
 
 public record ListPecasGeradasDto(

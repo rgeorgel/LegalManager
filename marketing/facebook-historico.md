@@ -254,8 +254,10 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
   escritos e aprovados para 24–25/11.
   À noite, primeiro comentário no R3 (Advogados Do Brasil), de Alexandre Rodrigues: "Ecossistema
   jurídico é top! Já calcula o prazo e resume." Indicação de um concorrente
-  (ecossistemajuridico.com, R$ 297/mês, foco em WhatsApp/Instagram + IA). Resposta sugerida ao
-  Ricardo; não respondido ainda.
+  (ecossistemajuridico.com, R$ 297/mês, foco em WhatsApp/Instagram + IA). Com OK do Ricardo
+  (opção curta, escolhida entre 5), a Página respondeu: "Valeu, Alexandre! Prazo já calculado faz
+  muita diferença na rotina. No Causify seguimos a mesma ideia, com feriados e recesso na conta.
+  Tem plano gratuito, se quiser dar uma olhada. Abraço!" — publicada na hora.
 
 ## Como anexar imagem
 

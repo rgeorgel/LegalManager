@@ -114,7 +114,17 @@ antes de mostrar botões, abas ou de chamar a API. Item de menu: `recurso: 'chav
 de `js/layout.js`. Para abrir a todos: `RecursosEmTeste.Liberado` passa a responder
 true para a chave; depois tire o filtro, as checagens e a chave do catálogo.
 Hoje: `assinatura-digital` (aba Integrações, botão Assinatura, página Assinaturas no menu, selo da
-lista de honorários e o cartão do portal do cliente).
+lista de honorários e o cartão do portal do cliente) e `jurisprudencia-verificada` (conferência das
+citações na base do STJ, botão Verificar citações no processo, peças só com precedentes da base).
+
+## Jurisprudência nas peças de IA
+
+A IA nunca pode inventar julgado: os prompts de peça proíbem citar processo/súmula/tema/relator
+fora da lista entregue (`IAService.RegraSemJulgadosInventados` / `RegraSoPrecedentesDaLista`, com
+teste de contrato). Toda peça passa pelo `ExtratorCitacoes` e pelo `JurisprudenciaService` (status
+por citação). Base: tabela `Precedentes`, carregada pelo `JurisprudenciaStjJob` dos dados abertos
+do STJ (`Jurisprudencia:ImportarStj`). "Inexistente" só para lista completa (`FontePrecedentes.ListaCompleta`);
+fora da base é "não verificada". Detalhes: `docs/features/jurisprudencia-verificada.md`.
 
 ## Backend
 
