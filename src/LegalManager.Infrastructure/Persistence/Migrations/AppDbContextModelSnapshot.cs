@@ -1605,6 +1605,34 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.ToTable("feriados", (string)null);
                 });
 
+            modelBuilder.Entity("LegalManager.Domain.Entities.FontePrecedentes", b =>
+                {
+                    b.Property<string>("Chave")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ArquivosProcessadosJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ListaCompleta")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Total")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UltimoErro")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Chave");
+
+                    b.ToTable("FontesPrecedentes");
+                });
+
             modelBuilder.Entity("LegalManager.Domain.Entities.GrupoPergunta", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2599,6 +2627,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CitacoesJson")
+                        .HasColumnType("text");
+
                     b.Property<string>("ConteudoGerado")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2614,6 +2645,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("JurisprudenciaCitada")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PrecedentesUsadosJson")
                         .HasColumnType("text");
 
                     b.Property<Guid?>("ProcessoId")
@@ -2698,6 +2732,93 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("Ativa", "Publico");
 
                     b.ToTable("Perguntas");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.Precedente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Cancelado")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Classe")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClasseBase")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("DataJulgamento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataPublicacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExternoId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("ImportadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Numero")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("OrgaoJulgador")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Relator")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Situacao")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Tribunal")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("UrlFonte")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Texto")
+                        .HasAnnotation("Npgsql:TsVectorConfig", "portuguese");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Texto"), "GIN");
+
+                    b.HasIndex("Fonte", "ExternoId")
+                        .IsUnique();
+
+                    b.HasIndex("Tribunal", "Tipo", "ClasseBase", "Numero");
+
+                    b.ToTable("Precedentes");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.PrecoPlano", b =>

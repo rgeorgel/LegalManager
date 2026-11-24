@@ -24,6 +24,10 @@ public class PecaGerada
     public string ConteudoGerado { get; set; } = string.Empty;
     public string? JurisprudenciaCitada { get; set; }
     public string? TesesSugeridas { get; set; }
+    /// <summary>Citações encontradas no texto e o resultado da conferência (JSON de CitacaoVerificadaDto).</summary>
+    public string? CitacoesJson { get; set; }
+    /// <summary>Precedentes da base entregues à IA na geração com fonte (JSON de PrecedenteDto).</summary>
+    public string? PrecedentesUsadosJson { get; set; }
     public DateTime CriadoEm { get; set; }
 
     public Processo? Processo { get; set; }

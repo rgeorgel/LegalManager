@@ -10,6 +10,7 @@
 
 ### Plano de Implementação
 - [Plano geral do sistema](plano/implementation_plan.md)
+- [Ideias para implementar (backlog)](plano/ideias.md)
 
 ### Módulos
 | # | Módulo | Arquivo |

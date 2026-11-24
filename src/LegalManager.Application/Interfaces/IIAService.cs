@@ -6,6 +6,8 @@ public interface IIAService
 {
     Task<string> TraduzirTextoAsync(string texto, CancellationToken ct = default);
     Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default);
+    /// <summary>Peça que só pode citar os precedentes de <paramref name="listaPrecedentes"/> (base oficial).</summary>
+    Task<string> GerarPecaComPrecedentesAsync(string contexto, string tipoPeca, string listaPrecedentes, CancellationToken ct = default);
     Task<string> GerarModeloDocumentoAsync(string descricao, CancellationToken ct = default);
     /// <summary>
     /// Triagem de uma publicação: devolve o texto da IA (JSON com tipo, resumo, ato, prazo e

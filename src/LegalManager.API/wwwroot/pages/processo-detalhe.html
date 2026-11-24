@@ -204,6 +204,7 @@
         <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
         <button class="btn btn-secondary" id="btnResumoIA">🤖 Resumo IA</button>
         <button class="btn btn-secondary" id="btnGerarPeca">📄 Gerar Peça</button>
+        <button class="btn btn-secondary" id="btnVerificarCitacoes" hidden title="Conferir se os precedentes citados existem na base oficial">🔎 Verificar citações</button>
         <button class="btn btn-secondary" id="btnAssinatura" hidden>✍️ Enviar para assinatura</button>
         <button class="btn btn-secondary" id="btnPortalCliente" title="Liberar o acesso do cliente ao portal e compartilhar o link deste processo">🔑 Portal do cliente</button>
         <button class="btn btn-secondary" id="btnEditar">Editar</button>
@@ -685,7 +686,7 @@
     <div class="modal-body">
       <div style="margin-bottom:16px;padding:12px;background:#f0fdf4;border-radius:6px;border-left:4px solid #16a34a">
         <div style="font-size:13px;color:#166534">
-          <strong>Peça gerada por IA</strong> — Revise o conteúdo antes de usar. Este é um rascunho.
+          <strong>Peça gerada por IA</strong> — Rascunho. Confira leis e precedentes antes de protocolar.
         </div>
       </div>
       <div class="form-group">
@@ -694,11 +695,18 @@
       </div>
       <div class="form-group">
         <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Peça Jurídica</label>
+        <div id="pgCitacoes"></div>
         <div id="pgConteudo" style="background:#fff;border:1px solid var(--color-border);border-radius:6px;padding:20px;font-size:13px;line-height:1.7;white-space:pre-wrap;font-family:Georgia,serif;max-height:400px;overflow-y:auto"></div>
+      </div>
+      <div id="pgPrecedentesGroup" style="display:none;margin-top:16px">
+        <div class="form-group">
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Precedentes usados (base oficial)</label>
+          <div id="pgPrecedentes"></div>
+        </div>
       </div>
       <div id="pgJurisprudenciaGroup" style="display:none;margin-top:16px">
         <div class="form-group">
-          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Jurisprudência Citada</label>
+          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted)">Entendimentos sobre o tema</label>
           <div id="pgJurisprudencia" style="background:#f9fafb;border:1px solid var(--color-border);border-radius:6px;padding:14px;font-size:13px;line-height:1.6;color:#374151"></div>
         </div>
       </div>
@@ -1037,6 +1045,7 @@ import { contatoPerfilUrl } from '/js/contato-nav.js';
 import { iniciarAssinaturas } from '/js/assinatura-envio.js';
 import { getContato } from '/js/contatos.js';
 import { abrirPortalAcesso } from '/js/portal-acesso.js';
+import { textoComCitacoesHtml, resumoCitacoesHtml, precedentesHtml, iniciarVerificadorCitacoes } from '/js/citacoes.js';
 
 initLayout();
 
@@ -1715,6 +1724,7 @@ document.getElementById('andamentoSalvar').addEventListener('click', async () =>
 
 // Gerar Peça
 let creditosDisponiveis = 0;
+let pecaAtual = null; // última peça gerada (com a conferência das citações)
 
 async function loadCreditos() {
   try {
@@ -1777,7 +1787,12 @@ document.getElementById('gerarPecaGerar').addEventListener('click', async () => 
     const peca = await gerarPeca({ processoId, tipo, descricaoSolicitacao: descricao });
     document.getElementById('modalGerarPeca').classList.remove('open');
     document.getElementById('pgTipo').textContent = tipo.replace(/([A-Z])/g, ' $1').trim();
-    document.getElementById('pgConteudo').textContent = peca.conteudoGerado;
+    // Citações destacadas pela conferência (verde: verificada; âmbar: conferir; vermelho: não existe).
+    pecaAtual = peca;
+    document.getElementById('pgConteudo').innerHTML = textoComCitacoesHtml(peca.conteudoGerado, peca.verificacao);
+    document.getElementById('pgCitacoes').innerHTML = resumoCitacoesHtml(peca.verificacao);
+    document.getElementById('pgPrecedentes').innerHTML = precedentesHtml(peca.precedentes);
+    document.getElementById('pgPrecedentesGroup').style.display = peca.precedentes?.length ? '' : 'none';
     const jurisGroup = document.getElementById('pgJurisprudenciaGroup');
     const jurisEl = document.getElementById('pgJurisprudencia');
     if (peca.jurisprudenciaCitada) {
@@ -1800,6 +1815,8 @@ document.getElementById('gerarPecaGerar').addEventListener('click', async () => 
   el.addEventListener('click', () => document.getElementById('modalPecaGerada').classList.remove('open')));
 
 document.getElementById('pecaCopiar').addEventListener('click', () => {
+  if (pecaAtual?.verificacao?.inexistentes > 0
+      && !confirm('O texto cita precedente que não existe na base oficial. Copiar mesmo assim?')) return;
   const texto = document.getElementById('pgConteudo').textContent;
   navigator.clipboard.writeText(texto).then(() => {
     const btn = document.getElementById('pecaCopiar');
@@ -2917,6 +2934,8 @@ await loadCustomCatsFin();
 await loadProcesso();
 await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge(), loadTarefasPreview()]);
 carregarAndamentosIniciais();
+// Jurisprudência verificada (recurso em teste): botão "Verificar citações" no cabeçalho.
+iniciarVerificadorCitacoes({ botao: document.getElementById('btnVerificarCitacoes'), processoId });
 // Assinatura eletrônica (Contratos): o cliente do processo é a parte cadastrada como cliente.
 iniciarAssinaturas({
   origem: { processoId },

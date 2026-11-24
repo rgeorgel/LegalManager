@@ -211,6 +211,58 @@ public class IAServiceTests
         Assert.NotEmpty(result);
     }
 
+    // ── Jurisprudência verificada: regras dos prompts (contrato) ─────────────
+
+    /// <summary>Todo o texto enviado ao provedor (as strings do JSON, já sem escapes).</summary>
+    private static string TextoEnviado(MockHttpMessageHandler handler)
+    {
+        static IEnumerable<string> Strings(System.Text.Json.JsonElement e) => e.ValueKind switch
+        {
+            System.Text.Json.JsonValueKind.String => [e.GetString()!],
+            System.Text.Json.JsonValueKind.Object => e.EnumerateObject().SelectMany(p => Strings(p.Value)),
+            System.Text.Json.JsonValueKind.Array => e.EnumerateArray().SelectMany(Strings),
+            _ => [],
+        };
+        return string.Join("\n", handler.Corpos.SelectMany(c => Strings(System.Text.Json.JsonDocument.Parse(c).RootElement)));
+    }
+
+    [Fact]
+    public async Task GerarPecaJuridicaAsync_ProibeCitarJulgados()
+    {
+        var (svc, handler) = BuildAnthropicService("Contestação em português brasileiro.");
+
+        await svc.GerarPecaJuridicaAsync("Ação de cobrança", "Contestacao");
+
+        Assert.Contains(IAService.RegraSemJulgadosInventados, TextoEnviado(handler));
+        Assert.DoesNotContain("LISTA DE PRECEDENTES", TextoEnviado(handler));
+    }
+
+    [Fact]
+    public async Task GerarPecaComPrecedentesAsync_EnviaAListaESoPermiteCitarEla()
+    {
+        var (svc, handler) = BuildOpenAIService("Contestação em português brasileiro.");
+
+        await svc.GerarPecaComPrecedentesAsync("Ação de cobrança", "Contestacao", "[1] REsp 1.234.567/STJ — Terceira Turma\nEmenta.");
+
+        var enviado = TextoEnviado(handler);
+        Assert.Contains(IAService.RegraSoPrecedentesDaLista, enviado);
+        Assert.Contains("LISTA DE PRECEDENTES", enviado);
+        Assert.Contains("[1] REsp 1.234.567/STJ", enviado);
+        Assert.DoesNotContain(IAService.RegraSemJulgadosInventados, enviado);
+    }
+
+    [Fact]
+    public async Task BuscarJurisprudenciaAsync_PedeEntendimentosSemIdentificarJulgados()
+    {
+        var (svc, handler) = BuildAnthropicService("Entendimentos em português brasileiro.");
+
+        await svc.BuscarJurisprudenciaAsync("alienação fiduciária");
+
+        var enviado = TextoEnviado(handler);
+        Assert.Contains(IAService.RegraSemJulgadosInventados, enviado);
+        Assert.DoesNotContain("resumo de jurisprudência", enviado);
+    }
+
     // ── GerarModeloDocumentoAsync ────────────────────────────────────────────
 
     [Fact]

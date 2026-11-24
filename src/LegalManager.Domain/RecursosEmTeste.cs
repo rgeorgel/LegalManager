@@ -10,6 +10,7 @@ namespace LegalManager.Domain;
 public static class RecursosEmTeste
 {
     public const string AssinaturaDigital = "assinatura-digital";
+    public const string JurisprudenciaVerificada = "jurisprudencia-verificada";
 
     public sealed record Recurso(string Chave, string Nome, string Descricao);
 
@@ -17,6 +18,8 @@ public static class RecursosEmTeste
     [
         new(AssinaturaDigital, "Assinatura eletrônica",
             "Envio de contratos para assinatura pelo Contratos: aba Integrações, botão Assinatura e cartão no portal do cliente."),
+        new(JurisprudenciaVerificada, "Jurisprudência verificada",
+            "Conferência das citações das peças na base oficial do STJ, botão Verificar citações no processo e geração de peças só com precedentes encontrados na base."),
     ];
 
     public static bool Existe(string? chave) => chave != null && Catalogo.Any(r => r.Chave == chave);

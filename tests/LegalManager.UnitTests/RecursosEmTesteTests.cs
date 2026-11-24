@@ -241,8 +241,9 @@ public class RecursosEmTesteTests
 
         var dto = Assert.IsType<TenantDetailDto>(Assert.IsType<OkObjectResult>(await SuperAdmin(db, out _).GetTenant(t.Id, default)).Value);
 
-        var recurso = Assert.Single(dto.RecursosEmTeste!);
-        Assert.Equal(Assinatura, recurso.Chave);
-        Assert.True(recurso.Liberado);
+        // Todo o catálogo aparece; só o liberado vem marcado.
+        Assert.Equal(RecursosEmTeste.Catalogo.Select(r => r.Chave), dto.RecursosEmTeste!.Select(r => r.Chave));
+        Assert.True(Assert.Single(dto.RecursosEmTeste!, r => r.Chave == Assinatura).Liberado);
+        Assert.False(Assert.Single(dto.RecursosEmTeste!, r => r.Chave == RecursosEmTeste.JurisprudenciaVerificada).Liberado);
     }
 }

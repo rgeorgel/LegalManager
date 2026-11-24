@@ -57,11 +57,36 @@ public class IAService : IIAService
         return await GarantirPortuguesAsync(await EnviarPromptAsync(prompt, ct), inicio, ct);
     }
 
-    public async Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default)
+    /// <summary>
+    /// Regra contra precedente inventado (fase 0 da jurisprudência verificada — vale para todos).
+    /// Tribunais multam por citação inexistente; ver docs/features/jurisprudencia-verificada.md.
+    /// </summary>
+    public const string RegraSemJulgadosInventados =
+        "NUNCA cite números de processos, recursos, acórdãos, súmulas, temas, informativos nem nomes de relatores ou ministros. " +
+        "Fundamente com os dispositivos de lei (artigos) e explique o entendimento dos tribunais SEM identificar julgados.";
+
+    public const string RegraSoPrecedentesDaLista =
+        "Cite SOMENTE precedentes da LISTA DE PRECEDENTES abaixo, com a identificação exatamente como está na lista. " +
+        "NUNCA cite processo, recurso, súmula, tema ou relator que não esteja na lista. Se nenhum servir, não cite julgados.";
+
+    public Task<string> GerarPecaJuridicaAsync(string contexto, string tipoPeca, CancellationToken ct = default) =>
+        GerarPecaAsync(contexto, tipoPeca, RegraSemJulgadosInventados, listaPrecedentes: null, ct);
+
+    public Task<string> GerarPecaComPrecedentesAsync(string contexto, string tipoPeca, string listaPrecedentes, CancellationToken ct = default) =>
+        GerarPecaAsync(contexto, tipoPeca, RegraSoPrecedentesDaLista, listaPrecedentes, ct);
+
+    private async Task<string> GerarPecaAsync(string contexto, string tipoPeca, string regraJulgados, string? listaPrecedentes, CancellationToken ct)
     {
         using var activity = Telemetry.Ia.StartActivity(nameof(GerarPecaJuridicaAsync));
         activity?.SetTag("gen_ai.operation", "generation");
         activity?.SetTag("gen_ai.pecas.tipo", tipoPeca);
+        activity?.SetTag("gen_ai.pecas.com_precedentes", listaPrecedentes is not null);
+        var blocoPrecedentes = listaPrecedentes is null ? "" : $$$"""
+
+            LISTA DE PRECEDENTES (base oficial — use só se forem pertinentes ao caso):
+            {{{listaPrecedentes}}}
+
+            """;
         var prompt = $$$"""
             Você é um especialista em elaboração de peças jurídicas brasileiras.
 
@@ -71,12 +96,13 @@ public class IAService : IIAService
             3. NUNCA use Placeholders como [NOME], [VALOR], [DATA] ou qualquer outro
             4. Use APENAS palavras e termos jurídicos em português brasileiro
             5. Se precisar indicar onde inserir dados, use a descrição textual entre colchetes: [INSIRA O NOME DO RECLAMANTE AQUI]
+            6. {{{regraJulgados}}}
 
             Gere uma {{{tipoPeca}}} completa e bem estruturada, seguindo:
             - Modelos processuais brasileiros vigentes
             - Fundamentação legal adequada
             - Linguagem jurídica apropriada brasileira
-
+            {{{blocoPrecedentes}}}
             Contexto da situação:
             {{{contexto}}}
 
@@ -275,15 +301,18 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
     {
         using var activity = Telemetry.Ia.StartActivity(nameof(BuscarJurisprudenciaAsync));
         activity?.SetTag("gen_ai.operation", "jurisprudence_search");
+        // Sem fonte, a IA pode inventar julgados: pede só entendimentos, sem identificar decisões
+        // (fase 0 da jurisprudência verificada). Com o recurso liberado, a peça usa a base oficial.
         var prompt = $$$"""
-            Você é um assistente jurídico brasileiro. Forneça um resumo de jurisprudência relevante sobre o tema: {{{tema}}}
+            Você é um assistente jurídico brasileiro. Resuma os entendimentos dos tribunais sobre o tema: {{{tema}}}
 
             Inclua:
-            - Principio(s) jurídico(s) envolvido(s)
+            - Princípio(s) jurídico(s) envolvido(s)
             - Posicionamento majoritário (se aplicável)
             - Recursos ou mecanismos de impugnação comuns
 
-            Seja objetivo e cite fundamentos legais quando aplicável.
+            Seja objetivo e cite os dispositivos de lei (artigos) quando aplicável.
+            {{{RegraSemJulgadosInventados}}}
             Responda EXCLUSIVAMENTE em Português do Brasil.
             """;
 
