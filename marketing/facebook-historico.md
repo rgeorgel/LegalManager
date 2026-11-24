@@ -242,6 +242,41 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
 > Vocês usam planilha separada, uma agenda só, algum sistema? Quero entender o que tem
 > funcionado na prática.
 
+#### R8 — ADVOGADOS CORRESPONDENTES BRASIL — só texto (aguardando OK)
+
+Regra "nenhuma promoção" é a padrão do Facebook; na prática o feed de 24/11 tem anúncio publicado
+(Leggato, web designers, cursos, plano de saúde, corretor). Por isso, com chamada leve.
+
+> Pergunta para os correspondentes do grupo: como vocês controlam as diligências quando atendem
+> vários escritórios ao mesmo tempo?
+>
+> Cada contratante manda o pedido por um canal (WhatsApp, e-mail, plataforma), com prazo e valor
+> diferentes, e no fim do mês ainda é preciso conferir quem já pagou o quê.
+>
+> Uma forma de organizar: cada diligência vira uma tarefa com prazo e processo, e o valor entra no
+> financeiro do mesmo processo. A agenda e a cobrança saem do mesmo lugar.
+>
+> É assim que o Causify organiza tarefas e financeiro, com plano gratuito em causify.com.br. Mas
+> queria saber de vocês: o que usam hoje para não perder diligência nem pagamento?
+
+#### R9 — ADVOGADOS INICIANTES - SP (proíbe propaganda: sem nome do produto, sem link) — só texto (aguardando OK)
+
+Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o próprio conteúdo.
+
+> Recesso forense chegando: um lembrete para quem está começando a contar prazos.
+>
+> 1. De 20/12 a 20/01 os prazos ficam suspensos (art. 220 do CPC; no trabalho, art. 775-A da CLT).
+>    Eles não zeram: param e voltam a correr de onde pararam em 21/01.
+> 2. No DJe, a publicação se considera feita no primeiro dia útil seguinte à disponibilização, e o
+>    prazo começa no dia útil seguinte a ela.
+> 3. Só contam dias úteis (art. 219), excluindo o dia do começo e incluindo o do vencimento (art. 224).
+> 4. Feriado local não está na tabela nacional e, no recurso, precisa ser comprovado na
+>    interposição (art. 1.003, § 6º).
+> 5. Durante a suspensão não há audiências nem sessões de julgamento (art. 220, § 2º), mas o que é
+>    urgente continua tramitando.
+>
+> Alguém já foi pego por alguma dessas? Qual foi a pegadinha?
+
 ## Log de atividades
 
 - **Antes de 23/11/2026** — Página criada; 9 posts no feed (1 impulsionado); entrou em 3 grupos e
@@ -269,6 +304,11 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
   Com OK do Ricardo: **R4** no Contadores e Advogados e **R5** no Advocacia, os dois com imagem
   (⌘V do Ricardo) e os dois pendentes de aprovação. Visto no Advocacia e no Advogados Iniciantes:
   Vanderlei Lisboa divulgando um sistema chamado "LegalManager" ("Chega de malabarismos!").
+- **24/11/2026** — Ricardo pediu post no Correspondentes Brasil e no Iniciantes SP se outros
+  estivessem anunciando. Correspondentes: muitos anúncios publicados em nov (Leggato, web designers,
+  cursos, plano de saúde, corretor) → R8 com chamada leve. Iniciantes SP: regra proíbe propaganda e o
+  feed só tem advogados divulgando o próprio conteúdo → R9 só conteúdo útil. Os 2 posts antigos de
+  cada grupo seguem pendentes.
 
 ## Como anexar imagem
 
