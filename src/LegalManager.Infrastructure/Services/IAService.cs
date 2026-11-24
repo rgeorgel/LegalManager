@@ -297,6 +297,46 @@ public async Task<string> GerarModeloDocumentoAsync(string descricao, Cancellati
         return await GarantirPortuguesAsync(LimparETValidarResposta(resultado), inicio, ct, _orcamentoBackground);
     }
 
+    /// <summary>Limite das chamadas curtas da busca por significado: se passar, fica a busca por palavras.</summary>
+    public static readonly TimeSpan LimiteBuscaPorSignificado = TimeSpan.FromSeconds(20);
+
+    public async Task<string> ExpandirBuscaJurisprudenciaAsync(string caso, CancellationToken ct = default)
+    {
+        using var activity = Telemetry.Ia.StartActivity(nameof(ExpandirBuscaJurisprudenciaAsync));
+        activity?.SetTag("gen_ai.operation", "jurisprudence_query_expansion");
+        var prompt = $$$"""
+            Você ajuda a pesquisar jurisprudência brasileira (ementas do STJ). Para o caso abaixo, liste até 15
+            palavras ou expressões curtas que costumam aparecer nas ementas sobre o assunto: o vocabulário técnico
+            dos tribunais, sinônimos e os institutos jurídicos envolvidos (ex.: "carro" → veículo, automóvel,
+            alienação fiduciária, busca e apreensão).
+            Responda SÓ com os termos separados por vírgula, sem explicações e sem números de processos.
+
+            Caso:
+            {{{caso}}}
+            """;
+        return await EnviarPromptAsync(prompt, ct, limite: LimiteBuscaPorSignificado);
+    }
+
+    public async Task<string> EscolherPrecedentesAsync(string caso, string listaNumerada, int maximo, CancellationToken ct = default)
+    {
+        using var activity = Telemetry.Ia.StartActivity(nameof(EscolherPrecedentesAsync));
+        activity?.SetTag("gen_ai.operation", "jurisprudence_rerank");
+        var prompt = $$$"""
+            Você seleciona jurisprudência para uma peça jurídica brasileira. Abaixo estão o caso e uma lista
+            numerada de precedentes do STJ. Escolha até {{{maximo}}} itens da lista que sejam realmente pertinentes
+            ao caso (mesmo instituto jurídico e mesma questão), do mais relevante para o menos relevante.
+            Descarte os que só têm palavras em comum. Se nenhum servir, responda apenas: nenhum
+            Responda SÓ com os números escolhidos separados por vírgula (ex.: 4, 1, 9).
+
+            Caso:
+            {{{caso}}}
+
+            Lista:
+            {{{listaNumerada}}}
+            """;
+        return await EnviarPromptAsync(prompt, ct, limite: LimiteBuscaPorSignificado);
+    }
+
     public async Task<string> BuscarJurisprudenciaAsync(string tema, CancellationToken ct = default)
     {
         using var activity = Telemetry.Ia.StartActivity(nameof(BuscarJurisprudenciaAsync));

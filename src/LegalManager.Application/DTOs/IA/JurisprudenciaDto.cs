@@ -26,6 +26,8 @@ public enum StatusCitacao
     NaoEncontrada,
     /// <summary>Fora do que a base cobre — conferir na fonte.</summary>
     NaoVerificada,
+    /// <summary>Acórdão de tribunal local: o processo existe no DataJud, mas o teor não é conferido.</summary>
+    ProcessoEncontrado,
 }
 
 /// <summary>Uma citação encontrada no texto. <paramref name="Inicio"/>/<paramref name="Fim"/> são posições no texto.</summary>

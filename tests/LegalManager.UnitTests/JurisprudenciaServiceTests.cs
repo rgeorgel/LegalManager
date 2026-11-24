@@ -65,7 +65,7 @@ public class JurisprudenciaServiceTests
         const string texto = """
             Conforme o AgInt no AREsp 2.104.552/SP, Rel. Min. Nancy Andrighi; o REsp 1.811.334/MG,
             Rel. Min. Nancy Andrighi; o REsp 9.999.999/SP; o Tema 1.076/STJ; o Tema 56/STJ; o Tema 9.876/STJ;
-            a Súmula 7/STJ; o RE 1.010.606 (STF); e a Apelação 1004521-33.2023.8.26.0100.
+            a Súmula 7/STJ; o RE 1.010.606 (STF); e a Apelação 1004521-59.2023.8.26.0100.
             """;
 
         var r = await svc.VerificarTextoAsync(texto, consultarBase: true);
@@ -81,7 +81,7 @@ public class JurisprudenciaServiceTests
         Assert.Equal(StatusCitacao.Inexistente, Status(r, "9876").Status);
         Assert.Equal(StatusCitacao.NaoVerificada, Status(r, "7").Status);       // súmulas: ainda sem fonte
         Assert.Equal(StatusCitacao.NaoVerificada, Status(r, "1010606").Status); // STF: ainda sem fonte
-        Assert.Equal(StatusCitacao.NaoVerificada, Status(r, "10045213320238260100").Status);
+        Assert.Equal(StatusCitacao.NaoVerificada, Status(r, "10045215920238260100").Status); // CNJ válido, sem DataJud no teste
 
         Assert.Equal(2, r.Verificadas);
         Assert.Equal(1, r.Inexistentes);
@@ -113,6 +113,7 @@ public class JurisprudenciaServiceTests
 
         Assert.Equal(StatusCitacao.NaoVerificada, Assert.Single(r.Citacoes).Status);
         Assert.Contains("ainda está sendo carregada", r.Cobertura);
+        Assert.Contains("DataJud", r.Cobertura);
     }
 
     [Fact]

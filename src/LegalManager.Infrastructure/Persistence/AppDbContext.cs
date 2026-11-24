@@ -102,6 +102,10 @@ public class AppDbContext : IdentityDbContext<Usuario, IdentityRole<Guid>, Guid>
 
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
+        // tsvector só existe no Postgres; nos testes (EF InMemory) a busca de precedentes usa outro caminho.
+        if (!Database.IsNpgsql())
+            builder.Entity<Precedente>().Ignore(Configurations.PrecedenteConfiguration.ColunaTextoBusca);
+
         // Global query filters for multitenancy — applied in queries, not as model-level filters
         // to avoid EF warnings with required navigations (ContatoTag → Contato)
     }

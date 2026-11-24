@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using LegalManager.Domain;
 using LegalManager.Infrastructure.Jurisprudencia;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LegalManager.Infrastructure.Services;
 
@@ -19,19 +20,22 @@ public class PecaJuridicaService : IPecaJuridicaService
     private readonly IIAService _iaService;
     private readonly ICreditoService _creditoService;
     private readonly IJurisprudenciaService? _jurisprudencia;
+    private readonly ILogger<PecaJuridicaService>? _logger;
 
     public PecaJuridicaService(
         AppDbContext context,
         ITenantContext tenantContext,
         IIAService iaService,
         ICreditoService creditoService,
-        IJurisprudenciaService? jurisprudencia = null)
+        IJurisprudenciaService? jurisprudencia = null,
+        ILogger<PecaJuridicaService>? logger = null)
     {
         _context = context;
         _tenantContext = tenantContext;
         _iaService = iaService;
         _creditoService = creditoService;
         _jurisprudencia = jurisprudencia;
+        _logger = logger;
     }
 
     public async Task<PecaGeradaResponseDto> GerarPecaAsync(GerarPecaDto dto, Guid usuarioId, CancellationToken ct = default)
@@ -78,7 +82,17 @@ public class PecaJuridicaService : IPecaJuridicaService
         {
             var consulta = string.Join(' ', new[] { dto.DescricaoSolicitacao, processo?.TipoAcao, processo?.Classe, processo?.Assuntos }
                 .Where(s => !string.IsNullOrWhiteSpace(s)));
-            precedentes = await _jurisprudencia!.BuscarPrecedentesAsync(consulta, PrecedentesPorPeca, ct);
+            // Busca por significado: a IA amplia a busca e escolhe os pertinentes (ou nenhum).
+            try
+            {
+                precedentes = await _jurisprudencia!.BuscarPrecedentesPorSignificadoAsync(consulta, PrecedentesPorPeca, ct);
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                // A busca na base é um extra: se o banco demorar ou falhar, a peça sai sem precedentes
+                // (fluxo normal, com citações marcadas) em vez de o usuário ver o erro.
+                _logger?.LogWarning(ex, "Busca de precedentes falhou; gerando a peça sem precedentes da base.");
+            }
         }
 
         string conteudoGerado;

@@ -41,11 +41,11 @@ public class IAController : ControllerBase
             var result = await _traducaoService.TraduzirAndamentoAsync(dto, _tenantContext.UserId, ct);
             return Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException ex) when (!FalhaDeBanco(ex))
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException || FalhaDeBanco(ex))
         {
             return IAIndisponivel(ex);
         }
@@ -68,11 +68,11 @@ public class IAController : ControllerBase
             var result = await _pecaJuridicaService.GerarPecaAsync(dto, _tenantContext.UserId, ct);
             return Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException ex) when (!FalhaDeBanco(ex))
         {
             return BadRequest(new { message = ex.Message });
         }
-        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException)
+        catch (Exception ex) when (ex is TimeoutException or HttpRequestException or IAIndisponivelException || FalhaDeBanco(ex))
         {
             return IAIndisponivel(ex);
         }
@@ -115,9 +115,13 @@ public class IAController : ControllerBase
             var result = await _resumoService.SolicitarAsync(dto, _tenantContext.UserId, ct);
             return Accepted(result);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException ex) when (!FalhaDeBanco(ex))
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex) when (FalhaDeBanco(ex))
+        {
+            return IAIndisponivel(ex);
         }
     }
 
@@ -143,10 +147,19 @@ public class IAController : ControllerBase
     private ObjectResult IAIndisponivel(Exception ex) =>
         StatusCode(StatusCodes.Status503ServiceUnavailable, new
         {
-            message = ex is TimeoutException or IAIndisponivelException
-                ? ex.Message
-                : "O serviço de IA está indisponível no momento. Tente novamente em instantes."
+            message = FalhaDeBanco(ex)
+                ? "Não foi possível concluir agora: o banco de dados demorou a responder. Tente novamente em instantes."
+                : ex is TimeoutException or IAIndisponivelException
+                    ? ex.Message
+                    : "O serviço de IA está indisponível no momento. Tente novamente em instantes."
         });
+
+    /// <summary>
+    /// Falha passageira do banco (timeout, conexão). O Npgsql a embrulha numa InvalidOperationException
+    /// em inglês ("...likely due to a transient failure") que não pode chegar ao usuário como erro de validação.
+    /// </summary>
+    private static bool FalhaDeBanco(Exception ex) =>
+        ex is InvalidOperationException { InnerException: System.Data.Common.DbException or TimeoutException };
 
     [HttpPatch("resumo-processo/{id:guid}/visivel-cliente")]
     public async Task<ActionResult<ResumoProcessoResponseDto>> SetResumoVisivelCliente(
@@ -159,9 +172,13 @@ public class IAController : ControllerBase
             var result = await _resumoService.SetVisivelClienteAsync(id, dto.Visivel, ct);
             return Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException ex) when (!FalhaDeBanco(ex))
         {
             return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex) when (FalhaDeBanco(ex))
+        {
+            return IAIndisponivel(ex);
         }
     }
 }

@@ -232,7 +232,12 @@ builder.Services.AddScoped<ICreditoService, CreditoService>();
 builder.Services.AddScoped<ITraducaoService, TraducaoService>();
 builder.Services.AddScoped<IPecaJuridicaService, PecaJuridicaService>();
 // Jurisprudência verificada: conferência de citações e base oficial do STJ (docs/features/jurisprudencia-verificada.md).
-builder.Services.AddScoped<IJurisprudenciaService, LegalManager.Infrastructure.Jurisprudencia.JurisprudenciaService>();
+builder.Services.AddScoped<IJurisprudenciaService>(sp => new LegalManager.Infrastructure.Jurisprudencia.JurisprudenciaService(
+    sp.GetRequiredService<AppDbContext>(),
+    sp.GetRequiredService<ITenantContext>(),
+    sp.GetRequiredService<IStorageService>(),
+    new Lazy<IIAService>(() => sp.GetRequiredService<IIAService>()),
+    sp.GetService<ITribunalAdapter>()));
 builder.Services.AddHttpClient<LegalManager.Infrastructure.Jurisprudencia.StjDadosAbertos>(client =>
 {
     client.Timeout = TimeSpan.FromMinutes(5);
@@ -455,6 +460,16 @@ builder.Services.AddRateLimiter(options =>
             {
                 Window = TimeSpan.FromMinutes(1),
                 PermitLimit = 300,
+                QueueLimit = 0
+            }));
+    // Verificador de citações público (sem login, captação): por IP, contém abuso e consultas ao DataJud.
+    options.AddPolicy(LegalManager.API.Controllers.JurisprudenciaController.PoliticaRateLimitPublico, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.GetClientIpAddress() ?? "desconhecido",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromHours(1),
+                PermitLimit = LegalManager.API.Controllers.JurisprudenciaController.VerificacoesPublicasPorHora,
                 QueueLimit = 0
             }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
