@@ -105,7 +105,7 @@ public class DataJudAdapter : ITribunalAdapter
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("DataJud retornou {Status} para {NumCNJ}", response.StatusCode, numeroCNJ);
-                return ResultadoVazio();
+                return ResultadoVazio() with { Falhou = true };
             }
 
             var result = await response.Content.ReadFromJsonAsync<DataJudResponse>(
@@ -180,7 +180,7 @@ public class DataJudAdapter : ITribunalAdapter
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao consultar DataJud para {NumCNJ}", numeroCNJ);
-            return ResultadoVazio();
+            return ResultadoVazio() with { Falhou = true };
         }
     }
 

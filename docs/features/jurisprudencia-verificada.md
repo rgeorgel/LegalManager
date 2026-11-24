@@ -19,12 +19,24 @@ super admin (sem a opção do escritório da seção 7.2). Backlog: [docs/plano/
 | Telas | `js/citacoes.js`; modal "Peça gerada" e botão "Verificar citações" em `processo-detalhe.html`; CSS `.cit-*` |
 | Chave | `RecursosEmTeste.JurisprudenciaVerificada` (`jurisprudencia-verificada`), liberada no super admin |
 
+### Fase 3 (2026-11-24)
+
+| Parte | Onde |
+|---|---|
+| **TJs/TRFs/TRTs pelo número CNJ** (sem fornecedor pago — decisão de 2026-11-24) | `Cnj` (dígito verificador módulo 97: número errado = **Inexistente**, com certeza) + DataJud (`ITribunalAdapter`): processo existe → `ProcessoEncontrado` (âmbar: o teor do acórdão não é conferido); não achado → `NaoEncontrada`; falha da consulta (`TribunalConsultaResult.Falhou`) → `NaoVerificada`. Até 5 consultas por verificação (3 na página pública) |
+| **Busca por significado com a IA atual** (Claude não gera embeddings; sem pgvector) | `JurisprudenciaService.BuscarPrecedentesPorSignificadoAsync`: a IA amplia a busca (`IAService.ExpandirBuscaJurisprudenciaAsync`: sinônimos e vocabulário dos tribunais), o full-text traz até 30 candidatos e a IA escolhe e ordena os pertinentes ou responde "nenhum" (`EscolherPrecedentesAsync`). Cada chamada tem limite de 20 s; se a IA falhar, demorar ou não estiver configurada, fica a busca por palavras. A IA é carregada sob demanda (`Lazy<IIAService>`): a conferência de citações nunca depende dela |
+| **Página pública** `/verificador-de-citacoes.html` | Sem login, visual do blog, `js/verificador-publico.js` + `css/citacoes.css`; `POST /api/jurisprudencia/publico/verificar` (`[AllowAnonymous]`, até 20 mil caracteres, 20 verificações por hora por IP); no sitemap e no `llms.txt`; evento `verificador_citacoes_usado` no PostHog |
+
+Validado com Postgres e dados reais: exemplo da página (tema verificado, tema e CNJ inexistentes, súmula a conferir), DataJud sem chave local (mostra "não respondeu", não "não encontrado") e o limite (429 na 21ª verificação da hora). A busca por significado foi testada com a IA simulada (sem gastar créditos).
+
+**Pendente da fase 3:** fornecedor pago para o teor dos acórdãos de TJ (decidido deixar para depois); busca semântica na base inteira (embeddings + pgvector) se a reordenação pela IA não bastar.
+
 **Validado em Postgres real** (banco descartável): migration, importação real de 1 mês (2.378 temas +
 27.910 acórdãos, 73 MB, 11 fontes sem erro), busca full-text e o verificador na tela com citações reais e
 inventadas (verificada, divergente, não encontrada, cancelada, inexistente).
 
 **Ficou de fora / pendente:**
-- **Súmulas (STF, STJ, TST), STF e TST:** sem fonte aberta equivalente aos dados do STJ — aparecem como
+- **Súmulas (STF, STJ, TST), STF e TST** (TJs agora são conferidos pelo número CNJ e DataJud — fase 3): sem fonte aberta equivalente aos dados do STJ — aparecem como
   "não verificadas". A base já aceita súmulas (`TipoPrecedente.Sumula`); falta escolher a fonte oficial.
 - **Links do STJ:** `processo.stj.jus.br/processo/pesquisa/?num_registro=` e a página de temas repetitivos
   ficam atrás de um desafio anti-robô; não deu para conferir automaticamente — conferir no navegador.

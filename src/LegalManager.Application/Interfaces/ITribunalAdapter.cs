@@ -54,7 +54,9 @@ public record TribunalConsultaResult(
     DateTime? DataJulgamento = null,
     DateTime? DataPublicacao = null,
     DateTime? DataHoraUltimaAtualizacao = null,
-    IReadOnlyList<int>? AssuntosCodigos = null
+    IReadOnlyList<int>? AssuntosCodigos = null,
+    /// <summary>A consulta falhou (erro HTTP, chave inválida, rede): Encontrado=false não quer dizer "não existe".</summary>
+    bool Falhou = false
 );
 
 public interface ITribunalAdapter

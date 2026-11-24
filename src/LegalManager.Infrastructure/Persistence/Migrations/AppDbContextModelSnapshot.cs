@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
@@ -2791,6 +2792,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<NpgsqlTsVector>("TextoBusca")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasComputedColumnSql("to_tsvector('portuguese', \"Texto\")", true);
+
                     b.Property<string>("Tipo")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -2808,10 +2814,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Texto")
-                        .HasAnnotation("Npgsql:TsVectorConfig", "portuguese");
+                    b.HasIndex("TextoBusca");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Texto"), "GIN");
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("TextoBusca"), "GIN");
 
                     b.HasIndex("Fonte", "ExternoId")
                         .IsUnique();

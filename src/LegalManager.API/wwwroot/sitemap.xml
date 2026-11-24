@@ -43,6 +43,13 @@
 
   <!-- Blog -->
   <url>
+    <loc>https://causify.com.br/verificador-de-citacoes.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://causify.com.br/verificador-de-citacoes.html"/>
+  </url>
+  <url>
     <loc>https://causify.com.br/blog/index.html</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>weekly</changefreq>

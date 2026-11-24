@@ -263,6 +263,33 @@ public class IAServiceTests
         Assert.DoesNotContain("resumo de jurisprudência", enviado);
     }
 
+    [Fact]
+    public async Task ExpandirBuscaJurisprudenciaAsync_PedeTermosSemNumerosDeProcesso()
+    {
+        var (svc, handler) = BuildAnthropicService("veículo, alienação fiduciária");
+
+        var termos = await svc.ExpandirBuscaJurisprudenciaAsync("atrasou as parcelas do carro");
+
+        Assert.Equal("veículo, alienação fiduciária", termos);
+        var enviado = TextoEnviado(handler);
+        Assert.Contains("atrasou as parcelas do carro", enviado);
+        Assert.Contains("sem números de processos", enviado);
+    }
+
+    [Fact]
+    public async Task EscolherPrecedentesAsync_EnviaListaEPermiteResponderNenhum()
+    {
+        var (svc, handler) = BuildOpenAIService("2, 1");
+
+        var resposta = await svc.EscolherPrecedentesAsync("caso X", "1. REsp 1/STJ — a\n2. REsp 2/STJ — b", 3);
+
+        Assert.Equal("2, 1", resposta);
+        var enviado = TextoEnviado(handler);
+        Assert.Contains("Escolha até 3 itens", enviado);
+        Assert.Contains("2. REsp 2/STJ", enviado);
+        Assert.Contains("responda apenas: nenhum", enviado);
+    }
+
     // ── GerarModeloDocumentoAsync ────────────────────────────────────────────
 
     [Fact]

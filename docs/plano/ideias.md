@@ -8,7 +8,7 @@ Esforço: **P** pequeno · **M** médio · **G** grande.
 
 ---
 
-- [ ] **Jurisprudência verificada** — M/G · prioridade · *fases 0–2 feitas em 2026-11-23 (recurso em teste); faltam súmulas/STF/TST*
+- [ ] **Jurisprudência verificada** — M/G · prioridade · *fases 0–3 feitas em 2026-11-23/24 (recurso em teste + página pública); faltam súmulas/STF/TST*
   Hoje a jurisprudência do gerador de peças é escrita pela IA de memória
   (`IAService.BuscarJurisprudenciaAsync`), sem fonte — risco de precedente inventado, que tribunais já
   punem com multa (TJSC, TRT-18, TSE; o STJ admite multa por má-fé). A IA passa a citar só decisões

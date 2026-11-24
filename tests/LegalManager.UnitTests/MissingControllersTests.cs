@@ -1104,6 +1104,23 @@ public class IAControllerTests
     }
 
     [Fact]
+    public async Task GerarPeca_Retorna503SemMensagemDoBanco_QuandoFalhaPassageiraDoBanco()
+    {
+        // O Npgsql embrulha timeout/conexão numa InvalidOperationException em inglês: não é erro de validação.
+        var peca = CreatePecaMock();
+        peca.Setup(s => s.GerarPecaAsync(It.IsAny<GerarPecaDto>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(
+                "An exception has been raised that is likely due to a transient failure.", new TimeoutException()));
+        var controller = new IAController(CreateTraducaoMock().Object, peca.Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);
+
+        var result = await controller.GerarPeca(new GerarPecaDto(null, Domain.Entities.TipoPecaJuridica.PeticaoInicial, "..."), CancellationToken.None);
+
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(503, obj.StatusCode);
+        Assert.DoesNotContain("transient", System.Text.Json.JsonSerializer.Serialize(obj.Value));
+    }
+
+    [Fact]
     public async Task ListarPecasGeradas_ReturnsOk()
     {
         var controller = new IAController(CreateTraducaoMock().Object, CreatePecaMock().Object, CreateCreditoMock().Object, CreateTenantMock().Object, CreateResumoMock().Object);

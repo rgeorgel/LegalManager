@@ -124,7 +124,10 @@ fora da lista entregue (`IAService.RegraSemJulgadosInventados` / `RegraSoPrecede
 teste de contrato). Toda peça passa pelo `ExtratorCitacoes` e pelo `JurisprudenciaService` (status
 por citação). Base: tabela `Precedentes`, carregada pelo `JurisprudenciaStjJob` dos dados abertos
 do STJ (`Jurisprudencia:ImportarStj`). "Inexistente" só para lista completa (`FontePrecedentes.ListaCompleta`);
-fora da base é "não verificada". Detalhes: `docs/features/jurisprudencia-verificada.md`.
+fora da base é "não verificada". Acórdão de TJ: dígito do CNJ (`Cnj`) + DataJud. A conferência nunca
+depende da IA (`Lazy<IIAService>`); a busca por significado usa a IA atual e cai na busca por palavras se
+ela falhar. Página pública: `/verificador-de-citacoes.html` (endpoint `[AllowAnonymous]` com limite por IP).
+Detalhes: `docs/features/jurisprudencia-verificada.md`.
 
 ## Backend
 

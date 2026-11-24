@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using LegalManager.Application.DTOs.IA;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
@@ -10,9 +11,25 @@ using UglyToad.PdfPig;
 
 namespace LegalManager.Infrastructure.Jurisprudencia;
 
-public class JurisprudenciaService(AppDbContext context, ITenantContext tenantContext, IStorageService storage)
+public class JurisprudenciaService(
+    AppDbContext context,
+    ITenantContext tenantContext,
+    IStorageService storage,
+    // Lazy: a conferência de citações não pode depender da IA (sem IA:ApiKey o serviço de IA nem
+    // é criado); só a busca por significado a usa, e sem ela fica a busca por palavras.
+    Lazy<IIAService>? ia = null,
+    ITribunalAdapter? tribunais = null)
     : IJurisprudenciaService
 {
+    /// <summary>Consultas ao DataJud por verificação (cada uma leva ~1 s): escritório e página pública.</summary>
+    public const int ConsultasDataJudPorVerificacao = 5;
+    public const int ConsultasDataJudPublico = 3;
+    /// <summary>Candidatos da busca por palavras que a IA reordena por significado.</summary>
+    public const int CandidatosParaIA = 30;
+    private static readonly TimeSpan LimiteDataJud = TimeSpan.FromSeconds(10);
+    /// <summary>Limite (s) da busca full-text de precedentes no Postgres.</summary>
+    private const int TempoBuscaSegundos = 10;
+
     private const long TamanhoMaximoDocumento = 30 * 1024 * 1024;
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
 
@@ -27,17 +44,29 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
         "tipo", "vara", "comarca", "tribunal", "area",
     ];
 
-    public async Task<VerificacaoCitacoesDto> VerificarTextoAsync(string texto, bool consultarBase, CancellationToken ct = default)
+    public Task<VerificacaoCitacoesDto> VerificarTextoAsync(string texto, bool consultarBase, CancellationToken ct = default) =>
+        VerificarAsync(texto, consultarBase, ConsultasDataJudPorVerificacao, ct);
+
+    public Task<VerificacaoCitacoesDto> VerificarTextoPublicoAsync(string texto, CancellationToken ct = default) =>
+        VerificarAsync(texto, consultarBase: true, ConsultasDataJudPublico, ct);
+
+    private sealed class Sessao(int consultasDataJud)
+    {
+        public int ConsultasDataJud { get; set; } = consultasDataJud;
+    }
+
+    private async Task<VerificacaoCitacoesDto> VerificarAsync(string texto, bool consultarBase, int consultasDataJud, CancellationToken ct)
     {
         var citacoes = ExtratorCitacoes.Extrair(texto);
         var fontes = consultarBase
             ? await context.FontesPrecedentes.AsNoTracking().ToListAsync(ct)
             : [];
+        var sessao = new Sessao(consultasDataJud);
 
         var resultado = new List<CitacaoVerificadaDto>(citacoes.Count);
         foreach (var c in citacoes)
             resultado.Add(consultarBase
-                ? await ConferirAsync(c, fontes, ct)
+                ? await ConferirAsync(c, fontes, sessao, ct)
                 : Montar(c, StatusCitacao.NaoVerificada, "Não verificada — confira na fonte antes de usar."));
 
         return Resumir(resultado, consultarBase ? Cobertura(fontes) : "Conferência na base oficial não habilitada para o escritório.");
@@ -67,9 +96,58 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
         return await VerificarTextoAsync(texto, consultarBase: true, ct);
     }
 
-    public async Task<IReadOnlyList<PrecedenteDto>> BuscarPrecedentesAsync(string consulta, int limite, CancellationToken ct = default)
+    public Task<IReadOnlyList<PrecedenteDto>> BuscarPrecedentesAsync(string consulta, int limite, CancellationToken ct = default) =>
+        BuscarPorTermosAsync(TermosDeBusca(consulta), limite, ct);
+
+    /// <summary>
+    /// Busca por significado com a IA atual (sem embeddings): a IA amplia a busca com sinônimos e termos
+    /// jurídicos, o full-text traz até <see cref="CandidatosParaIA"/> candidatos e a IA escolhe e ordena os
+    /// pertinentes ao caso — ou nenhum. Se a IA falhar ou demorar, fica a ordem da busca por palavras.
+    /// </summary>
+    public async Task<IReadOnlyList<PrecedenteDto>> BuscarPrecedentesPorSignificadoAsync(string consulta, int limite, CancellationToken ct = default)
     {
-        var termos = TermosDeBusca(consulta);
+        var ia = ServicoDeIA();
+        if (ia is null || limite <= 0) return await BuscarPrecedentesAsync(consulta, limite, ct);
+
+        var expansao = "";
+        try { expansao = await ia.ExpandirBuscaJurisprudenciaAsync(consulta, ct); }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested) { /* segue só com as palavras do caso */ }
+
+        // Termos da IA primeiro: são os que trazem o vocabulário dos tribunais ("veículo" para "carro").
+        var termos = TermosDeBusca(expansao, 15).Concat(TermosDeBusca(consulta)).Distinct().Take(25).ToList();
+        var candidatos = await BuscarPorTermosAsync(termos, CandidatosParaIA, ct);
+        if (candidatos.Count <= 1) return candidatos.Take(limite).ToList();
+
+        try
+        {
+            var lista = string.Join("\n", candidatos.Select((p, i) =>
+                $"{i + 1}. {p.Identificacao} — {(p.Texto.Length > 400 ? p.Texto[..400] + "…" : p.Texto)}"));
+            var resposta = await ia.EscolherPrecedentesAsync(consulta, lista, limite, ct);
+            if (Regex.IsMatch(resposta, @"\bnenhum\b", RegexOptions.IgnoreCase) && !Regex.IsMatch(resposta, @"\d"))
+                return [];
+            var escolhidos = Regex.Matches(resposta, @"\d+")
+                .Select(m => int.TryParse(m.Value, out var n) ? n : 0)
+                .Where(n => n >= 1 && n <= candidatos.Count)
+                .Distinct()
+                .Take(limite)
+                .Select(n => candidatos[n - 1])
+                .ToList();
+            return escolhidos.Count > 0 ? escolhidos : candidatos.Take(limite).ToList();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            return candidatos.Take(limite).ToList();
+        }
+    }
+
+    private IIAService? ServicoDeIA()
+    {
+        try { return ia?.Value; }
+        catch (InvalidOperationException) { return null; } // IA não configurada no ambiente
+    }
+
+    private async Task<IReadOnlyList<PrecedenteDto>> BuscarPorTermosAsync(List<string> termos, int limite, CancellationToken ct)
+    {
         if (termos.Count == 0 || limite <= 0) return [];
 
         List<Precedente> achados;
@@ -77,25 +155,38 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
         {
             // OR entre os termos, ordenado pela relevância (ts_rank): mais termos em comum, mais acima.
             // Os termos só têm letras e dígitos (TermosDeBusca), então a sintaxe do tsquery é segura.
+            // "TextoBusca" é o tsvector gravado (PrecedenteConfiguration): o ts_rank lê pronto, sem refazer
+            // o to_tsvector de cada ementa. Tempo do comando curto: a busca é um extra da peça, não pode
+            // segurar a requisição (quem chama segue sem precedentes se ela falhar).
             var tsquery = string.Join(" | ", termos);
-            achados = await context.Precedentes
-                .FromSqlInterpolated($"""
-                    SELECT * FROM "Precedentes"
-                    WHERE NOT "Cancelado"
-                      AND to_tsvector('portuguese', "Texto") @@ to_tsquery('portuguese', {tsquery})
-                    ORDER BY ts_rank(to_tsvector('portuguese', "Texto"), to_tsquery('portuguese', {tsquery})) DESC,
-                             "DataJulgamento" DESC NULLS LAST
-                    LIMIT {limite}
-                    """)
-                .AsNoTracking()
-                .ToListAsync(ct);
+            var tempoAnterior = context.Database.GetCommandTimeout();
+            context.Database.SetCommandTimeout(TempoBuscaSegundos);
+            try
+            {
+                achados = await context.Precedentes
+                    .FromSqlInterpolated($"""
+                        SELECT * FROM "Precedentes"
+                        WHERE NOT "Cancelado"
+                          AND "TextoBusca" @@ to_tsquery('portuguese', {tsquery})
+                        ORDER BY ts_rank("TextoBusca", to_tsquery('portuguese', {tsquery})) DESC,
+                                 "DataJulgamento" DESC NULLS LAST
+                        LIMIT {limite}
+                        """)
+                    .AsNoTracking()
+                    .ToListAsync(ct);
+            }
+            finally
+            {
+                context.Database.SetCommandTimeout(tempoAnterior);
+            }
         }
         else
         {
             // Bancos sem full-text (testes com EF InMemory): conta os termos presentes.
             var candidatos = await context.Precedentes.AsNoTracking().Where(p => !p.Cancelado).Take(5000).ToListAsync(ct);
             achados = candidatos
-                .Select(p => (p, pontos: termos.Count(t => Normalizar(p.Texto).Contains(Normalizar(t)))))
+                .Select(p => (p, palavras: Palavras(p.Texto)))
+                .Select(x => (x.p, pontos: termos.Count(t => x.palavras.Contains(Normalizar(t)))))
                 .Where(x => x.pontos > 0)
                 .OrderByDescending(x => x.pontos).ThenByDescending(x => x.p.DataJulgamento)
                 .Take(limite)
@@ -108,7 +199,7 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
 
     // ── Conferência ─────────────────────────────────────────────────────────
 
-    private async Task<CitacaoVerificadaDto> ConferirAsync(CitacaoDto c, List<FontePrecedentes> fontes, CancellationToken ct)
+    private async Task<CitacaoVerificadaDto> ConferirAsync(CitacaoDto c, List<FontePrecedentes> fontes, Sessao sessao, CancellationToken ct)
     {
         switch (c.Tipo)
         {
@@ -150,9 +241,55 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
             case TipoCitacao.OrientacaoJurisprudencial:
                 return Montar(c, StatusCitacao.NaoVerificada, "Orientações jurisprudenciais do TST ainda não são conferidas — confira na fonte.");
 
+            case TipoCitacao.AcordaoTribunalLocal:
+                return await ConferirCnjAsync(c, sessao, ct);
+
             default:
-                return Montar(c, StatusCitacao.NaoVerificada, "Acórdãos de tribunais locais ainda não são conferidos — confira no site do tribunal.");
+                return Montar(c, StatusCitacao.NaoVerificada, "Confira na fonte antes de usar.");
         }
+    }
+
+    /// <summary>
+    /// Acórdão de TJ/TRF/TRT pelo número CNJ: o dígito verificador diz com certeza se o número existe;
+    /// o DataJud (CNJ, gratuito) diz se o processo existe e em que tribunal/classe — não o teor do acórdão.
+    /// </summary>
+    private async Task<CitacaoVerificadaDto> ConferirCnjAsync(CitacaoDto c, Sessao sessao, CancellationToken ct)
+    {
+        if (!Cnj.Valido(c.Numero))
+            return Montar(c, StatusCitacao.Inexistente,
+                "Número CNJ inválido: o dígito verificador não confere, então esse processo não existe.");
+
+        var tribunal = Cnj.Tribunal(c.Numero) ?? "tribunal";
+        if (tribunais is null || sessao.ConsultasDataJud <= 0)
+            return Montar(c, StatusCitacao.NaoVerificada,
+                $"Número CNJ válido ({tribunal}). Confira o acórdão no site do tribunal.");
+
+        sessao.ConsultasDataJud--;
+        TribunalConsultaResult r;
+        try
+        {
+            using var limite = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            limite.CancelAfter(LimiteDataJud);
+            r = await tribunais.ConsultarAsync(Cnj.Formatar(c.Numero), limite.Token);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            return Montar(c, StatusCitacao.NaoVerificada,
+                $"Número CNJ válido ({tribunal}), mas o DataJud não respondeu agora. Confira no site do tribunal.");
+        }
+
+        if (r.Falhou)
+            return Montar(c, StatusCitacao.NaoVerificada,
+                $"Número CNJ válido ({tribunal}), mas o DataJud não respondeu agora. Confira no site do tribunal.");
+
+        if (!r.Encontrado)
+            return Montar(c, StatusCitacao.NaoEncontrada,
+                $"Número CNJ válido ({tribunal}), mas não encontrado no DataJud. Processos sigilosos, muito recentes ou com a consulta fora do ar podem não aparecer — confira no site do tribunal.");
+
+        var dados = string.Join(", ", new[] { r.SiglaTribunal ?? tribunal, r.Classe, r.Vara ?? r.Comarca }
+            .Where(s => !string.IsNullOrWhiteSpace(s)));
+        return Montar(c, StatusCitacao.ProcessoEncontrado,
+            $"Processo encontrado no DataJud ({dados}). O teor do acórdão não é conferido — confira no site do tribunal.");
     }
 
     private async Task<CitacaoVerificadaDto> ConferirAcordaoAsync(CitacaoDto c, CancellationToken ct)
@@ -202,14 +339,15 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
         if (ListaCompleta(fontes, StjDadosAbertos.FonteTemas)) partes.Add("temas repetitivos do STJ (lista completa)");
         var espelhos = fontes.Where(f => f.Chave.StartsWith(StjDadosAbertos.PrefixoFonteEspelhos) && f.Total > 0).ToList();
         if (espelhos.Count > 0) partes.Add($"{espelhos.Sum(f => f.Total).ToString("N0", PtBr)} acórdãos do STJ");
-        if (partes.Count == 0) return "A base oficial ainda está sendo carregada — por enquanto nada é conferido.";
-        return $"Conferido na base oficial: {string.Join(" e ", partes)}. Súmulas, STF, TST e tribunais locais ainda não são conferidos.";
+        const string cnj = "Acórdãos de TJ, TRF e TRT: número CNJ (dígito verificador) e existência do processo no DataJud.";
+        if (partes.Count == 0) return $"A base oficial do STJ ainda está sendo carregada. {cnj}";
+        return $"Conferido na base oficial: {string.Join(" e ", partes)}. {cnj} Súmulas, STF e TST ainda não são conferidos.";
     }
 
     private static VerificacaoCitacoesDto Resumir(List<CitacaoVerificadaDto> citacoes, string cobertura) => new(
         citacoes,
         citacoes.Count(c => c.Status == StatusCitacao.Verificada),
-        citacoes.Count(c => c.Status is StatusCitacao.Divergente or StatusCitacao.Cancelada or StatusCitacao.NaoEncontrada or StatusCitacao.NaoVerificada),
+        citacoes.Count(c => c.Status is not (StatusCitacao.Verificada or StatusCitacao.Inexistente)),
         citacoes.Count(c => c.Status == StatusCitacao.Inexistente),
         cobertura);
 
@@ -250,17 +388,21 @@ public class JurisprudenciaService(AppDbContext context, ITenantContext tenantCo
 
     private static string Normalizar(string s) => ExtratorCitacoes.SemAcento(s).ToLowerInvariant();
 
+    /// <summary>Palavras inteiras do texto, sem acento ("mora" não casa com "moral").</summary>
+    private static HashSet<string> Palavras(string texto) =>
+        Regex.Split(Normalizar(texto), @"[^\p{L}\p{N}]+").Where(p => p.Length > 0).ToHashSet();
+
     /// <summary>
     /// Até 15 palavras relevantes (≥ 4 letras), em minúsculas e só com letras e dígitos. Mantém os
     /// acentos: o stemmer "portuguese" do Postgres reduz "contratação" e "contratacao" de formas diferentes.
     /// </summary>
-    public static List<string> TermosDeBusca(string texto) =>
-        texto.ToLower(PtBr)
+    public static List<string> TermosDeBusca(string texto, int maximo = 15) =>
+        (texto ?? "").ToLower(PtBr)
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             .Select(p => new string(p.Where(char.IsLetterOrDigit).ToArray()))
             .Where(p => p.Length >= 4 && !p.All(char.IsDigit) && !Irrelevantes.Contains(ExtratorCitacoes.SemAcento(p)))
             .Distinct()
-            .Take(15)
+            .Take(maximo)
             .ToList();
 
     private static string TextoDoPdf(byte[] bytes)

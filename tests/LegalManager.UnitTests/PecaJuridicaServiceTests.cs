@@ -103,6 +103,39 @@ public class PecaJuridicaServiceTests
     }
 
     [Fact]
+    public async Task GerarPecaAsync_GeraSemPrecedentes_QuandoBuscaNaBaseFalha()
+    {
+        var (ctx, tenantId, usuarioId) = await SeedAsync();
+        var tenant = await ctx.Tenants.FirstAsync(t => t.Id == tenantId);
+        tenant.RecursosLiberados = [LegalManager.Domain.RecursosEmTeste.JurisprudenciaVerificada];
+        await ctx.SaveChangesAsync();
+
+        var mockIa = new Mock<IIAService>();
+        mockIa.Setup(i => i.GerarPecaJuridicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("Manifestação gerada.");
+        mockIa.Setup(i => i.BuscarJurisprudenciaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("Entendimentos.");
+        var mockCredito = new Mock<ICreditoService>();
+        mockCredito.Setup(c => c.TemCreditoDisponivelAsync(TipoCreditoAI.GeracaoPeca, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        mockCredito.Setup(c => c.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        // Busca full-text que estoura o tempo do comando (como em produção, "prazo perdido... sentença").
+        var mockJuris = new Mock<IJurisprudenciaService>();
+        mockJuris.Setup(j => j.BuscarPrecedentesPorSignificadoAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(
+                "An exception has been raised that is likely due to a transient failure.", new TimeoutException()));
+        mockJuris.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VerificacaoCitacoesDto([], 0, 0, 0, ""));
+
+        var service = new PecaJuridicaService(ctx, CreateTenantContext(tenantId), mockIa.Object, mockCredito.Object, mockJuris.Object);
+        var result = await service.GerarPecaAsync(new GerarPecaDto(null, TipoPecaJuridica.Manifestacao, "prazo perdido, para cumprimento de sentenca"), usuarioId);
+
+        Assert.Equal("Manifestação gerada.", result.ConteudoGerado);
+        mockCredito.Verify(c => c.ConsumirCreditoAsync(TipoCreditoAI.GeracaoPeca, 1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ObterPecaAsync_DeveRetornarPeca_QuandoExistir()
     {
         var (ctx, tenantId, usuarioId) = await SeedAsync();
@@ -275,7 +308,7 @@ public class PecaJuridicaServiceTests
             .ReturnsAsync("Nos termos do REsp 1.234.567/STJ, Rel. Min. Nancy Andrighi.");
         var precedente = PrecedenteExemplo();
         var jurisprudencia = new Mock<IJurisprudenciaService>(MockBehavior.Strict);
-        jurisprudencia.Setup(j => j.BuscarPrecedentesAsync(It.Is<string>(s => s.Contains("busca e apreensão")), PecaJuridicaService.PrecedentesPorPeca, It.IsAny<CancellationToken>()))
+        jurisprudencia.Setup(j => j.BuscarPrecedentesPorSignificadoAsync(It.Is<string>(s => s.Contains("busca e apreensão")), PecaJuridicaService.PrecedentesPorPeca, It.IsAny<CancellationToken>()))
             .ReturnsAsync([precedente]);
         jurisprudencia.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new VerificacaoCitacoesDto(
@@ -302,7 +335,7 @@ public class PecaJuridicaServiceTests
         ia.Setup(i => i.GerarPecaJuridicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("Texto.");
         ia.Setup(i => i.BuscarJurisprudenciaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("Entendimentos.");
         var jurisprudencia = new Mock<IJurisprudenciaService>();
-        jurisprudencia.Setup(j => j.BuscarPrecedentesAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        jurisprudencia.Setup(j => j.BuscarPrecedentesPorSignificadoAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
         jurisprudencia.Setup(j => j.VerificarTextoAsync(It.IsAny<string>(), true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new VerificacaoCitacoesDto([], 0, 0, 0, ""));
 

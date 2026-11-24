@@ -1,6 +1,7 @@
 // Jurisprudência verificada: desenho das citações conferidas (peça gerada e verificador avulso) e o
 // modal "Verificar citações". Ver docs/features/jurisprudencia-verificada.md.
-// Status (backend StatusCitacao): Verificada (verde), Inexistente (vermelho), o resto âmbar —
+// Status (backend StatusCitacao): Verificada (verde), Inexistente (vermelho), o resto âmbar
+// (inclusive ProcessoEncontrado: o processo do TJ existe no DataJud, mas o acórdão não é conferido) —
 // âmbar quer dizer "não verificada/confira na fonte", nunca "falsa".
 import { apiFetch } from './api.js';
 import { esc, fmtDataParede } from './utils.js';
@@ -14,6 +15,7 @@ const ROTULO = {
   Inexistente: 'Não existe',
   NaoEncontrada: 'Não encontrada na base',
   NaoVerificada: 'Não verificada',
+  ProcessoEncontrado: 'Processo existe',
 };
 const ICONE = { Verificada: '✓', Inexistente: '✕' };
 

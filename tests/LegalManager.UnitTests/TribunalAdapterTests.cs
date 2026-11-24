@@ -63,6 +63,36 @@ public class TribunalAdapterTests
     }
 
     [Fact]
+    public async Task ConsultarAsync_ZeroHits_NaoMarcaFalha()
+    {
+        var adapter = CreateAdapter(new StatusHandler(HttpStatusCode.OK, @"{""hits"":{""total"":{""value"":0},""hits"":[]}}"));
+
+        var result = await adapter.ConsultarAsync("0000001-00.2024.8.26.0001");
+
+        Assert.False(result.Encontrado);
+        Assert.False(result.Falhou);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task ConsultarAsync_ErroHttp_MarcaFalha(HttpStatusCode status)
+    {
+        var adapter = CreateAdapter(new StatusHandler(status));
+
+        var result = await adapter.ConsultarAsync("0000001-00.2024.8.26.0001");
+
+        Assert.False(result.Encontrado);
+        Assert.True(result.Falhou);
+    }
+
+    private sealed class StatusHandler(HttpStatusCode status, string corpo = "") : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+            Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(corpo, System.Text.Encoding.UTF8, "application/json") });
+    }
+
+    [Fact]
     public async Task ConsultarPorTribunalAsync_DeveRetornarFalso_QuandoTribunalNaoSuportado()
     {
         var handler = new MockHttpMessageHandler(@"{""hits"":{""HitsData"":[],""Total"":{""Value"":0}}}");
