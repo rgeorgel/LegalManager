@@ -21,5 +21,7 @@ public class ParceiroConfiguration : IEntityTypeConfiguration<Parceiro>
         builder.Property(p => p.Observacoes).HasMaxLength(2000);
         builder.Property(p => p.TokenSenha).HasMaxLength(100);
         builder.HasIndex(p => p.TokenSenha);
+        // Indique e ganhe: um cadastro por usuário (nulos não colidem).
+        builder.HasIndex(p => p.UsuarioId).IsUnique();
     }
 }

@@ -23,6 +23,8 @@ public static class ComissoesParceiros
 
         var parceiro = await db.Parceiros.FirstOrDefaultAsync(p => p.Id == parceiroId, ct);
         if (parceiro is not { Ativo: true } || parceiro.PercentualComissao <= 0) return null;
+        // Indique e ganhe: o usuário não comissiona sobre o próprio escritório.
+        if (parceiro.TenantOrigemId == tenant.Id) return null;
 
         if (await db.ComissoesParceiros.AnyAsync(c => c.FaturamentoId == faturamento.Id, ct)) return null;
 

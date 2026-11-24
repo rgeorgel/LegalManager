@@ -1432,3 +1432,41 @@ body.menu-superior .busca-header-btn svg { width: 20px; height: 20px; }
   .busca-caixa { max-width: none; }
 }
 @media print { .busca-header-btn, .busca-overlay, .busca-caixa { display: none !important; } }
+
+/* ── Painel de indicações (js/painel-indicacoes.js) ────────────────────────
+   Portal do parceiro (parceiro/painel.html) e "Indique e ganhe" (pages/indicacoes.html). */
+.ind-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 18px 20px; }
+.ind-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+@media (max-width: 760px) { .ind-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ind-rotulo { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); font-weight: 600; }
+.ind-stat .ind-valor { font-size: 22px; font-weight: 700; margin-top: 4px; }
+.ind-stat.destaque { border-color: var(--color-primary); }
+.ind-stat.destaque .ind-valor { color: var(--color-primary); }
+.ind-stat .btn { max-width: 100%; white-space: normal; }
+.ind-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.ind-link-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.ind-link-card .ind-bloco { min-width: 0; }
+.ind-codigo { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; font-size: 18px; letter-spacing: .05em; text-transform: uppercase; }
+.ind-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all; }
+.ind-acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.ind-regras { flex-basis: 100%; font-size: 13px; color: var(--color-text-muted); }
+.ind-aviso { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--color-warning);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent); background: color-mix(in srgb, var(--color-warning) 8%, transparent); }
+.ind-tabela-card { padding: 0 0 4px; }
+.ind-tabela-card .tab-nav { padding: 0 12px; }
+.ind-tabela-card .tab-content { overflow-x: auto; }
+.ind-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ind-tabela th { text-align: left; padding: 10px 12px; background: var(--color-bg); border-bottom: 2px solid var(--color-border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+.ind-tabela td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+.ind-tabela tr:last-child td { border-bottom: none; }
+.ind-tabela .num { text-align: right; white-space: nowrap; }
+.ind-vazio { text-align: center; color: var(--color-text-muted); padding: 24px; font-size: 13px; }
+/* Convite antes de participar (só no Indique e ganhe) */
+.ind-convite { text-align: center; padding: 40px 24px; }
+.ind-convite h2 { margin: 0 0 8px; font-size: 22px; }
+.ind-convite p { color: var(--color-text-muted); max-width: 560px; margin: 0 auto 8px; font-size: 14px; }
+.ind-convite .ind-destaque { font-size: 40px; font-weight: 800; color: var(--color-primary); line-height: 1.1; margin: 12px 0 4px; }
+.ind-passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 24px auto; max-width: 760px; text-align: left; }
+@media (max-width: 760px) { .ind-passos { grid-template-columns: minmax(0, 1fr); } }
+.ind-passo { border: 1px solid var(--color-border); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--color-text-muted); }
+.ind-passo strong { display: block; color: var(--color-text); font-size: 14px; margin-bottom: 4px; }

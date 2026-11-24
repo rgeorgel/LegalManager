@@ -65,6 +65,7 @@ const SVG = {
   layoutLateral: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
   layoutTopo: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/>',
   sair: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+  presente: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C9.5 3 12 8 12 8s2.5-5 4.5-5a2.5 2.5 0 0 1 0 5"/>',
   fechar: '<path d="M18 6 6 18M6 6l12 12"/>',
   seta: '<path d="m6 9 6 6 6-6"/>',
 };
@@ -99,6 +100,7 @@ const DETALHES = {
   '/pages/tema.html':                  { icone: 'paleta',      desc: 'Cores e logo do escritório' },
   '/pages/assistente.html':            { icone: 'brilho',      desc: 'Mascote do assistente de IA' },
   '/pages/assinatura.html':            { icone: 'cartao',      desc: 'Plano e pagamentos' },
+  '/pages/indicacoes.html':            { icone: 'presente',    desc: 'Indique escritórios e receba comissão' },
 };
 
 // "⚖️ Processos" → "Processos" quando o item ganha ícone próprio (emoji é a 1ª "palavra").

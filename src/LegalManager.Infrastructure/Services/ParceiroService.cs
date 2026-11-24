@@ -1,8 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Globalization;
 using System.Text;
 using LegalManager.Application.DTOs.Parceiros;
+using LegalManager.Domain;
 using LegalManager.Application.Interfaces;
 using LegalManager.Domain.Entities;
 using LegalManager.Domain.Enums;
@@ -256,6 +258,92 @@ public class ParceiroService(
                 s.Id, s.ParceiroId, s.Parceiro.Nome, s.Valor, s.Status.ToString(), s.ChavePix, s.ObservacaoParceiro,
                 s.SolicitadaEm, s.ResolvidaEm, s.Resposta, s.Comissoes.Count))
             .ToListAsync(ct);
+    }
+
+    // ── Indique e ganhe (usuários dos escritórios) ──────────────────────────
+
+    /// <summary>Id do cadastro de indicação do usuário (ver ProgramaIndicacao), ou null se ainda não participa.</summary>
+    public Task<Guid?> ParceiroDoUsuarioAsync(Guid usuarioId, CancellationToken ct = default) =>
+        db.Parceiros.Where(p => p.UsuarioId == usuarioId).Select(p => (Guid?)p.Id).FirstOrDefaultAsync(ct);
+
+    public async Task<IndicacoesStatusDto> GetIndicacoesAsync(Guid usuarioId, CancellationToken ct = default)
+    {
+        var parceiro = await db.Parceiros.AsNoTracking().FirstOrDefaultAsync(p => p.UsuarioId == usuarioId, ct);
+        if (parceiro is null)
+            return new IndicacoesStatusDto(false, true, ProgramaIndicacao.PercentualComissao, ProgramaIndicacao.MesesComissao, null);
+
+        return new IndicacoesStatusDto(true, parceiro.Ativo, parceiro.PercentualComissao, parceiro.MesesComissao,
+            await GetResumoAsync(parceiro.Id, ct));
+    }
+
+    /// <summary>
+    /// Entra no programa: cria o cadastro de parceiro do usuário, com código próprio e as regras de
+    /// ProgramaIndicacao. Idempotente — quem já participa recebe o cadastro que tem.
+    /// </summary>
+    public async Task<IndicacoesStatusDto> ParticiparIndicacoesAsync(Guid usuarioId, CancellationToken ct = default)
+    {
+        if (await db.Parceiros.AnyAsync(p => p.UsuarioId == usuarioId, ct))
+            return await GetIndicacoesAsync(usuarioId, ct);
+
+        var usuario = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == usuarioId && u.Ativo, ct)
+            ?? throw new InvalidOperationException("Usuário não encontrado.");
+        var email = (usuario.Email ?? string.Empty).Trim().ToLowerInvariant();
+        if (email.Length == 0)
+            throw new InvalidOperationException("Cadastre um e-mail no seu perfil para participar.");
+        // Parceiro.Email é único: quem já é parceiro comercial acompanha tudo pelo portal do parceiro.
+        if (await db.Parceiros.AnyAsync(p => p.Email == email, ct))
+            throw new InvalidOperationException(
+                "Seu e-mail já participa do programa de parceiros do Causify. Acompanhe suas indicações pelo portal do parceiro.");
+
+        var parceiro = new Parceiro
+        {
+            Id = Guid.NewGuid(),
+            Nome = string.IsNullOrWhiteSpace(usuario.Nome) ? email : usuario.Nome.Trim(),
+            Email = email,
+            Codigo = await GerarCodigoAsync(usuario.Nome, ct),
+            PercentualComissao = ProgramaIndicacao.PercentualComissao,
+            MesesComissao = ProgramaIndicacao.MesesComissao,
+            UsuarioId = usuarioId,
+            TenantOrigemId = usuario.TenantId,
+            CriadoEm = DateTime.UtcNow,
+            CriadoPorId = usuarioId
+        };
+        db.Parceiros.Add(parceiro);
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Usuário {UsuarioId} entrou no Indique e ganhe (parceiro {ParceiroId})", usuarioId, parceiro.Id);
+
+        return await GetIndicacoesAsync(usuarioId, ct);
+    }
+
+    private const string AlfabetoCodigo = "abcdefghjkmnpqrstuvwxyz23456789";
+
+    // Primeiro nome sem acento + sufixo aleatório: "maria-k7p3". Cabe na validação do super admin
+    // (letras, números, hífen) e não revela o e-mail.
+    private async Task<string> GerarCodigoAsync(string? nome, CancellationToken ct)
+    {
+        var baseCodigo = Slug(nome);
+        for (var tentativa = 0; tentativa < 10; tentativa++)
+        {
+            var sufixo = new string(Enumerable.Range(0, 4)
+                .Select(_ => AlfabetoCodigo[RandomNumberGenerator.GetInt32(AlfabetoCodigo.Length)]).ToArray());
+            var codigo = $"{baseCodigo}-{sufixo}";
+            if (!await db.Parceiros.AnyAsync(p => p.Codigo == codigo, ct)) return codigo;
+        }
+        throw new InvalidOperationException("Não foi possível gerar seu código agora. Tente novamente.");
+    }
+
+    internal static string Slug(string? nome)
+    {
+        var primeiro = (nome ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+        var sb = new StringBuilder();
+        foreach (var c in primeiro.Normalize(NormalizationForm.FormD))
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark) continue;
+            var l = char.ToLowerInvariant(c);
+            if (l is >= 'a' and <= 'z' or >= '0' and <= '9') sb.Append(l);
+            if (sb.Length == 20) break;
+        }
+        return sb.Length >= 2 ? sb.ToString() : "causify";
     }
 
     // ── Solicitação de pagamento ─────────────────────────────────────────────

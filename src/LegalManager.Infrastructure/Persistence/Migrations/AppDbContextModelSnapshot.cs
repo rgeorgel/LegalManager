@@ -2480,6 +2480,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<Guid?>("TenantOrigemId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("TentativasLoginFalhas")
                         .HasColumnType("integer");
 
@@ -2493,6 +2496,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("UltimoAcessoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Codigo")
@@ -2502,6 +2508,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.HasIndex("TokenSenha");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
 
                     b.ToTable("Parceiros");
                 });

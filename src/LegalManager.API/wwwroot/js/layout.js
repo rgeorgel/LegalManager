@@ -85,6 +85,7 @@ const NAV_GROUPS = [
       { href: '/pages/tema.html',            label: '🎨 Tema', plus: true },
       { href: '/pages/assistente.html',      label: '🦊 Assistente' },
       { href: '/pages/assinatura.html',     label: '💳 Assinatura' },
+      { href: '/pages/indicacoes.html',     label: '🎁 Indique e ganhe' },
     ],
   },
 ];

@@ -26,6 +26,7 @@ const ADMIN_PAGES = [
   '/pages/tema.html',
   '/pages/assistente.html',
   '/pages/assinatura.html',
+  '/pages/indicacoes.html',
   '/pages/indicadores.html',
   '/pages/modelos.html',
   '/pages/debug-esaj.html',
