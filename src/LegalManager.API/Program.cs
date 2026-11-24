@@ -492,7 +492,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await MigracoesBaseline.RegistrarAsync(db.Database);
+    // Migrations podem reescrever tabelas grandes (ex.: coluna gerada em Precedentes): o limite padrão
+    // de 30 s por comando derrubava a subida. Só durante as migrations; depois volta ao padrão.
+    var tempoComandoPadrao = db.Database.GetCommandTimeout();
+    db.Database.SetCommandTimeout(TimeSpan.FromMinutes(10));
     await db.Database.MigrateAsync();
+    db.Database.SetCommandTimeout(tempoComandoPadrao);
 
     await db.Database.ExecuteSqlRawAsync("""
         UPDATE "Notificacoes"
