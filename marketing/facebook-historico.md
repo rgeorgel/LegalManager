@@ -258,6 +258,11 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
   (opção curta, escolhida entre 5), a Página respondeu: "Valeu, Alexandre! Prazo já calculado faz
   muita diferença na rotina. No Causify seguimos a mesma ideia, com feriados e recesso na conta.
   Tem plano gratuito, se quiser dar uma olhada. Abraço!" — publicada na hora.
+- **24/11/2026** — Verificação: R3 sem novos comentários (Alexandre não respondeu). R1 (ADVOGADOS)
+  e R2 (Campinas) seguem pendentes; os 6 posts antigos (Advogados Do Brasil, Correspondentes,
+  Iniciantes SP — 2 em cada) também. A admin Carla Glória marcou a Página no post de boas-vindas
+  aos novos membros do ADVOGADOS (/groups/1245881118761349/posts/30347995734789834/).
+  Boas-vindas também no Advogados Iniciantes e no Contadores e Advogados.
 
 ## Como anexar imagem
 
