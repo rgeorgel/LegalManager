@@ -57,7 +57,8 @@ public class PublicacaoService : IPublicacaoService
                         t.Status, t.Resumo, t.Ato, t.PrazoDias, t.TipoCalculo, t.PrazoTrecho, t.DataPublicacao,
                         t.Vencimento, t.MemoriaCalculo, t.AudienciaDataHora, t.AudienciaTrecho, t.TarefaId,
                         t.EventoId, t.Erro))
-                    .FirstOrDefault()))
+                    .FirstOrDefault(),
+                p.Secao, p.Pagina))
             .ToListAsync(ct);
     }
 
@@ -73,7 +74,8 @@ public class PublicacaoService : IPublicacaoService
             p.DataPublicacao, p.Conteudo, p.Tipo, p.Status, p.Urgente, p.ClassificacaoIA, p.CapturaEm,
             p.FonteCaptura, p.LinkEscavador, p.LinkPdf, p.Snippet,
             p.Tribunal, p.OrigemEstado, p.DiarioSigla,
-            triagem is null ? null : TriagemPublicacaoService.ParaDto(triagem));
+            triagem is null ? null : TriagemPublicacaoService.ParaDto(triagem),
+            p.Secao, p.Pagina);
     }
 
     public async Task MarcarLidaAsync(Guid id, CancellationToken ct = default)
