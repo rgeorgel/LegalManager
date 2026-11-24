@@ -24,7 +24,10 @@ public record ParceiroDto(
     decimal TotalComissoes,
     decimal Disponivel,
     decimal Solicitado,
-    decimal Pago
+    decimal Pago,
+    // Indique e ganhe: usuário de escritório que se cadastrou sozinho (ver ProgramaIndicacao).
+    Guid? UsuarioId = null,
+    string? EscritorioOrigem = null
 );
 
 public record SalvarParceiroDto(
@@ -127,6 +130,18 @@ public record ParceiroAuthResponseDto(string AccessToken, DateTime ExpiraEm, Par
 public record SolicitarPagamentoDto(
     [Required, MaxLength(200)] string ChavePix,
     [MaxLength(1000)] string? Observacao
+);
+
+// ── Indique e ganhe (usuários dos escritórios) ──────────────────────────────
+
+// Participando = já gerou o link. Ativo = false quando o super admin desativou o cadastro.
+// Percentual e meses: os do cadastro do usuário, ou os do programa antes de ele participar.
+public record IndicacoesStatusDto(
+    bool Participando,
+    bool Ativo,
+    decimal PercentualComissao,
+    int? MesesComissao,
+    ParceiroResumoDto? Resumo
 );
 
 // Resposta pública (cadastro): só o nome, para o visitante confirmar quem o indicou.

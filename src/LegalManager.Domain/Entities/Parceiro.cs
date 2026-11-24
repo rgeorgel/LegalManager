@@ -8,6 +8,10 @@ namespace LegalManager.Domain.Entities;
 //
 // O parceiro tem login próprio no portal do parceiro (/parceiro/), com JWT de role "Parceiro". Não
 // é um Usuario do Identity porque não pertence a nenhum tenant (mesmo modelo de AcessoCliente).
+//
+// Indique e ganhe (ver ProgramaIndicacao): um usuário de escritório também vira parceiro, criado
+// por ele mesmo em pages/indicacoes.html — UsuarioId preenchido. Mesmas regras de comissão e de
+// pagamento; ele acompanha tudo dentro do sistema e não precisa do login do portal.
 public class Parceiro : IBloqueioLogin
 {
     public Guid Id { get; set; }
@@ -41,6 +45,11 @@ public class Parceiro : IBloqueioLogin
     // Token de uso único do link de convite / redefinição de senha.
     public string? TokenSenha { get; set; }
     public DateTime? TokenSenhaExpiraEm { get; set; }
+
+    // Indique e ganhe: usuário dono deste cadastro e o escritório dele (o próprio escritório não
+    // comissiona). Sem FK, como em ComissaoParceiro: o histórico sobrevive à exclusão do usuário.
+    public Guid? UsuarioId { get; set; }
+    public Guid? TenantOrigemId { get; set; }
 
     public DateTime CriadoEm { get; set; }
     public Guid? CriadoPorId { get; set; }

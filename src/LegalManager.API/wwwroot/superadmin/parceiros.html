@@ -339,7 +339,8 @@
       }
       $('tableBody').innerHTML = parceiros.map(p => `
         <tr>
-          <td><strong>${esc(p.nome)}</strong><div class="sub">${esc(p.email)}</div></td>
+          <td><strong>${esc(p.nome)}</strong><div class="sub">${esc(p.email)}</div>
+            ${p.usuarioId ? `<div class="sub">🎁 Indique e ganhe${p.escritorioOrigem ? ` · usuário de ${esc(p.escritorioOrigem)}` : ''}</div>` : ''}</td>
           <td class="codigo">${esc(p.codigo)}</td>
           <td>${comissaoTexto(p)}</td>
           <td class="num">${p.escritorios}<div class="sub">${p.assinantes} ${p.assinantes === 1 ? 'assinante' : 'assinantes'}</div></td>
@@ -347,13 +348,13 @@
           <td class="num">${brl(p.pago)}</td>
           <td>
             ${p.ativo ? '<span class="badge badge-green">Ativo</span>' : '<span class="badge badge-gray">Inativo</span>'}
-            <div class="sub">${p.senhaDefinida ? `Último acesso: ${data(p.ultimoAcessoEm)}` : 'Senha não definida'}</div>
+            <div class="sub">${p.usuarioId ? 'Acompanha pelo sistema' : p.senhaDefinida ? `Último acesso: ${data(p.ultimoAcessoEm)}` : 'Senha não definida'}</div>
           </td>
           <td class="actions">
             <button class="action-btn" data-acao="link" data-id="${p.id}">Copiar link</button>
             <button class="action-btn" data-acao="detalhes" data-id="${p.id}">Detalhes</button>
             <button class="action-btn" data-acao="editar" data-id="${p.id}">Editar</button>
-            ${p.ativo ? `<button class="action-btn" data-acao="acesso" data-id="${p.id}">${p.senhaDefinida ? 'Nova senha' : 'Reenviar convite'}</button>` : ''}
+            ${p.ativo && !p.usuarioId ? `<button class="action-btn" data-acao="acesso" data-id="${p.id}">${p.senhaDefinida ? 'Nova senha' : 'Reenviar convite'}</button>` : ''}
             ${p.escritorios === 0 && p.totalComissoes === 0 ? `<button class="action-btn danger" data-acao="excluir" data-id="${p.id}">Excluir</button>` : ''}
           </td>
         </tr>`).join('');

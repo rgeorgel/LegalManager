@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- PostHog — only loads in non-local environments -->
+  <script>
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_sq68fvFrZLtEKRYjgvw8AMVLkAqHj9MM5Dre7YSzojoU', {
+        api_host: 'https://a.causify.com.br',
+        ui_host: 'https://us.posthog.com',
+        defaults: '2026-05-30',
+        person_profiles: 'identified_only',
+        capture_exceptions: true,
+      });
+    }
+  </script>
+  <meta charset="UTF-8">
+  <link rel='icon' type='image/svg+xml' href='/favicon.svg'>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Causify — Indique e ganhe</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .page-intro { color: var(--color-text-muted); font-size: 14px; margin: 0 0 20px 0; max-width: 720px; }
+    .ind-erro { color: var(--color-danger); font-size: 13px; margin-top: 12px; }
+    .ind-letras { font-size: 12px; color: var(--color-text-muted); margin-top: 20px; max-width: 720px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <header class="header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <div class="header-logo"><img src="/images/causify-logo-navbar-clara.png" alt="Causify"></div>
+    <div class="header-spacer"></div>
+    <div class="header-user">
+      <span class="header-user-name"></span>
+      <span style="color:var(--color-border)">|</span>
+      <span class="header-tenant"></span>
+      <button class="btn btn-secondary btn-sm" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+  <nav class="sidebar">
+    <ul class="sidebar-nav" id="sidebarNav"></ul>
+  </nav>
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Indique e ganhe</h1>
+    </div>
+    <p class="page-intro" id="intro">Indique o Causify para outros escritórios e receba comissão sobre as assinaturas deles.</p>
+    <!-- Antes de participar: convite. Depois: o mesmo painel do portal do parceiro (js/painel-indicacoes.js). -->
+    <div id="conteudo"><div class="ind-card ind-vazio">Carregando...</div></div>
+    <p class="ind-letras" id="letras" hidden>
+      Valem os escritórios que criarem a conta pelo seu link ou com o seu código, e só os pagamentos de assinatura
+      (compra de créditos de IA não conta). Seu próprio escritório não gera comissão. O pagamento é feito por Pix
+      depois da análise da equipe Causify.
+    </p>
+  </main>
+</div>
+
+<script type="module">
+  import { initLayout } from '/js/layout.js';
+  import { apiFetch } from '/js/api.js';
+  import { esc } from '/js/utils.js';
+  import { montarPainelIndicacoes, regraComissao, pct } from '/js/painel-indicacoes.js';
+
+  initLayout();
+
+  // Mesmos formatos da API do portal do parceiro (IndicacoesController → ParceiroService).
+  const api = {
+    me: async () => (await apiFetch('/indicacoes')).resumo,
+    escritorios: () => apiFetch('/indicacoes/escritorios'),
+    comissoes: () => apiFetch('/indicacoes/comissoes'),
+    solicitacoes: () => apiFetch('/indicacoes/solicitacoes'),
+    solicitarPagamento: (chavePix, observacao) =>
+      apiFetch('/indicacoes/solicitacoes', { method: 'POST', body: { chavePix, observacao } }),
+  };
+
+  const conteudo = document.getElementById('conteudo');
+  const letras = document.getElementById('letras');
+
+  function mostrarPainel(status) {
+    document.getElementById('intro').innerHTML =
+      'Compartilhe seu link com colegas e outros escritórios. Quando eles assinarem, a comissão aparece aqui.';
+    letras.hidden = false;
+    montarPainelIndicacoes(conteudo, {
+      api,
+      textoVazio: 'Ninguém se cadastrou com seu link ainda. Envie para colegas de outros escritórios!',
+      inativo: status.ativo ? null
+        : 'Seu link de indicação está desativado — novos cadastros e pagamentos não geram comissão. As comissões já geradas continuam disponíveis.',
+    });
+  }
+
+  function mostrarConvite(status) {
+    conteudo.innerHTML = `
+      <div class="ind-card ind-convite">
+        <h2>Ganhe com cada escritório que você indicar</h2>
+        <div class="ind-destaque">${pct(status.percentualComissao)}</div>
+        <p>${regraComissao(status.percentualComissao, status.mesesComissao)}</p>
+        <div class="ind-passos">
+          <div class="ind-passo"><strong>1. Gere seu link</strong>Ele é só seu e não expira.</div>
+          <div class="ind-passo"><strong>2. Compartilhe</strong>Mande para colegas por WhatsApp, e-mail ou redes sociais.</div>
+          <div class="ind-passo"><strong>3. Receba por Pix</strong>Quando eles assinarem, a comissão fica disponível para saque aqui.</div>
+        </div>
+        <button type="button" class="btn btn-primary" id="participarBtn">Gerar meu link de indicação</button>
+        <div class="ind-erro" id="participarErro" hidden></div>
+      </div>`;
+    letras.hidden = false;
+
+    document.getElementById('participarBtn').addEventListener('click', async e => {
+      const btn = e.currentTarget;
+      const erro = document.getElementById('participarErro');
+      btn.disabled = true;
+      erro.hidden = true;
+      try {
+        mostrarPainel(await apiFetch('/indicacoes/participar', { method: 'POST' }));
+      } catch (err) {
+        erro.textContent = err.message;
+        erro.hidden = false;
+        btn.disabled = false;
+      }
+    });
+  }
+
+  try {
+    const status = await apiFetch('/indicacoes');
+    if (status.participando) mostrarPainel(status);
+    else mostrarConvite(status);
+  } catch (e) {
+    conteudo.innerHTML = `<div class="ind-card ind-vazio">Erro ao carregar: ${esc(e.message)}</div>`;
+  }
+</script>
+</body>
+</html>

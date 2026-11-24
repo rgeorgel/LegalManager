@@ -253,11 +253,14 @@ public class SuperAdminParceirosController(AppDbContext db, ParceiroService serv
     {
         var totais = await ComissoesParceiros.CalcularTotaisAsync(db, p.Id, ct);
         var escritorios = await db.Tenants.AsNoTracking().Where(t => t.ParceiroId == p.Id).ToListAsync(ct);
+        var origem = p.TenantOrigemId is { } tid
+            ? await db.Tenants.Where(t => t.Id == tid).Select(t => t.Nome).FirstOrDefaultAsync(ct)
+            : null;
         return new ParceiroDto(
             p.Id, p.Nome, p.Email, p.Telefone, p.Documento, p.Codigo, p.PercentualComissao, p.MesesComissao,
             p.ChavePix, p.Observacoes, p.Ativo, p.SenhaHash != null, p.CriadoEm, p.UltimoAcessoEm,
             escritorios.Count, escritorios.Count(t => ComissoesParceiros.SituacaoEscritorio(t) == "Assinante"),
-            totais.Total, totais.Disponivel, totais.Solicitado, totais.Pago);
+            totais.Total, totais.Disponivel, totais.Solicitado, totais.Pago, p.UsuarioId, origem);
     }
 
     private static object Snapshot(Parceiro p) => new

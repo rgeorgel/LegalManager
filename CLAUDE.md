@@ -102,6 +102,15 @@ contatos (nome, CPF/CNPJ, e-mail, OAB), tarefas, eventos, documentos e contratos
 honorários), poucos de cada, já com a URL do detalhe. Entidade nova com tela própria: inclua no controller.
 CSS `.busca-*` em `styles.css`.
 
+## Indique e ganhe (indicação pelos usuários)
+
+`pages/indicacoes.html` (menu Sistema): o usuário gera o próprio link e recebe 25% de cada pagamento de
+assinatura dos escritórios indicados (`ProgramaIndicacao` no Domain). Por baixo é um `Parceiro` com
+`UsuarioId`/`TenantOrigemId` — mesmas regras de comissão (`ComissoesParceiros`; o próprio escritório não
+comissiona) e de saque (`ParceiroService`), via `IndicacoesController` (`/api/indicacoes`; bloqueado no acesso
+como suporte). O painel (link, totais, tabelas, modal de Pix) é o mesmo do portal do parceiro:
+`js/painel-indicacoes.js` + CSS `.ind-*`. O super admin paga e ajusta % pelo `superadmin/parceiros.html`.
+
 ## Recursos em teste (liberados por escritório)
 
 Recurso em teste com alguns escritórios: chave em `RecursosEmTeste` (Domain; catálogo com nome e
