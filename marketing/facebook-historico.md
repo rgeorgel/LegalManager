@@ -31,8 +31,8 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Situação | Último post nosso | Notas |
 |---|---|---|---|---|---|---|
 | [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora; 1 comentário (citou o Ecossistema Jurídico), respondido pela Página. |
-| [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | **Proíbe** promoção/spam | membro | — | **Nada publicado**: 2 posts pendentes desde 04/10 e 27/10. Só conteúdo sem link. |
-| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda | membro | — | **Nada publicado**: 2 posts pendentes (apresentação + vídeo de 27/10). Só conteúdo útil, sem chamada. |
+| [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | Regra padrão "nenhuma promoção", mas na prática aprovam anúncios (Leggato, web designers, cursos — nov/2026) | membro | 24/11/2026 | R8 (pergunta + chamada leve) **entrou na hora** em 24/11. Os 2 posts parados de out foram excluídos. |
+| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda (descrição do grupo); em nov só advogados divulgando o próprio conteúdo | membro | 24/11/2026 | R9 (conteúdo útil, sem produto) pendente. Os 2 posts parados de set/out foram excluídos. Só conteúdo útil, sem chamada. |
 | [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R1 pendente de aprovação. |
 | [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
@@ -63,17 +63,19 @@ Situação conferida em 24/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 24/11/2026 | ADVOGADOS INICIANTES - SP | pendente | — | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
+| 24/11/2026 | ADVOGADOS CORRESPONDENTES BRASIL | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/advogadosbr/posts/29493273763689682/) | R8, só texto | Como controlar diligências de vários escritórios; Causify + plano grátis; causify.com.br |
 | 24/11/2026 | Advocacia | pendente (admins revisam novos participantes) | — | R5 + `marketing/ads/out/causify-ad-calculadora-1200x627.png` | Apresentação: OAB, publicações com prazo, honorários pela tabela; plano grátis; causify.com.br |
 | 24/11/2026 | Contadores e Advogados | pendente | — | R4 + `marketing/posts/out/causify-post-honorarios-1200x1200.png` | Quanto cada processo rendeu? Financeiro por processo; plano grátis; causify.com.br |
 | 23/11/2026 | Advogados Individuais… de Campinas | pendente | — | R2 + `marketing/ads/out/causify-ad-honorarios-1200x627.png` | Honorários para quem advoga sozinho; causify.com.br |
 | 23/11/2026 | ADVOGADOS | pendente | — | R1 + `marketing/ads/out/causify-ad-tarefas-1200x627.png` | Onde ficam os seus prazos? Publicações, tarefas, plano grátis; causify.com.br |
 | 23/11/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2724738787946122/) | R3, só texto | Pergunta: como vocês acompanham as intimações? Menção leve ao Causify, sem link |
 | 28/10/2026 12:52 | Advogados Do Brasil | pendente | — | Texto "Prazo perdido não volta" | dias úteis, responsável, aviso antes; "Teste grátis em causify.com.br" |
-| 27/10/2026 20:34 | ADVOGADOS CORRESPONDENTES BRASIL | pendente | — | Vídeo amarelo "Prazo perdido não volta" (visual brutalista) | — |
-| 27/10/2026 20:31 | ADVOGADOS INICIANTES - SP | pendente | [post](https://www.facebook.com/groups/388185064882823/posts/2950050268696277/) | Mesmo vídeo | — |
+| 27/10/2026 20:34 | ADVOGADOS CORRESPONDENTES BRASIL | **excluído em 24/11** (pendente desde out) | — | Vídeo amarelo "Prazo perdido não volta" (visual brutalista) | — |
+| 27/10/2026 20:31 | ADVOGADOS INICIANTES - SP | **excluído em 24/11** (pendente desde out) | [post](https://www.facebook.com/groups/388185064882823/posts/2950050268696277/) | Mesmo vídeo | — |
 | 27/10/2026 19:49 | Advogados Do Brasil | pendente | — | Mesmo vídeo | — |
-| ~04/10/2026 | ADVOGADOS INICIANTES - SP | pendente | — | Variante da apresentação abaixo (com "Alertas de prazos", link para lp-facebook.html e pergunta final) | — |
-| 04/10/2026 | ADVOGADOS CORRESPONDENTES BRASIL | pendente | — | Apresentação + imagem "Prazo perdido não tem recurso" | Mesmo texto do Advogados Do Brasil |
+| ~04/10/2026 (29/09) | ADVOGADOS INICIANTES - SP | **excluído em 24/11** (pendente desde set) | — | Variante da apresentação abaixo (com "Alertas de prazos", link para lp-facebook.html e pergunta final) | — |
+| 04/10/2026 | ADVOGADOS CORRESPONDENTES BRASIL | **excluído em 24/11** (pendente desde out) | — | Apresentação + imagem "Prazo perdido não tem recurso" | Mesmo texto do Advogados Do Brasil |
 | 04/10/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2668522323567769/) | Apresentação + imagem "Prazo perdido não tem recurso" | "Colegas, posso pedir 2 minutos de vocês?" — lista de recursos, plano grátis, pede feedback, causify.com.br |
 
 ### No feed da Página
@@ -242,7 +244,7 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
 > Vocês usam planilha separada, uma agenda só, algum sistema? Quero entender o que tem
 > funcionado na prática.
 
-#### R8 — ADVOGADOS CORRESPONDENTES BRASIL — só texto (aguardando OK)
+#### R8 — ADVOGADOS CORRESPONDENTES BRASIL — só texto — aprovado e **publicado em 24/11/2026**
 
 Regra "nenhuma promoção" é a padrão do Facebook; na prática o feed de 24/11 tem anúncio publicado
 (Leggato, web designers, cursos, plano de saúde, corretor). Por isso, com chamada leve.
@@ -259,7 +261,7 @@ Regra "nenhuma promoção" é a padrão do Facebook; na prática o feed de 24/11
 > É assim que o Causify organiza tarefas e financeiro, com plano gratuito em causify.com.br. Mas
 > queria saber de vocês: o que usam hoje para não perder diligência nem pagamento?
 
-#### R9 — ADVOGADOS INICIANTES - SP (proíbe propaganda: sem nome do produto, sem link) — só texto (aguardando OK)
+#### R9 — ADVOGADOS INICIANTES - SP (proíbe propaganda: sem nome do produto, sem link) — só texto — aprovado e **enviado em 24/11/2026** (pendente)
 
 Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o próprio conteúdo.
 
@@ -308,7 +310,9 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   estivessem anunciando. Correspondentes: muitos anúncios publicados em nov (Leggato, web designers,
   cursos, plano de saúde, corretor) → R8 com chamada leve. Iniciantes SP: regra proíbe propaganda e o
   feed só tem advogados divulgando o próprio conteúdo → R9 só conteúdo útil. Os 2 posts antigos de
-  cada grupo seguem pendentes.
+  cada grupo seguem pendentes. Com OK do Ricardo: excluídos os 4 posts parados (2 em cada grupo),
+  **R8 publicado** no Correspondentes (entrou direto) e **R9 enviado** ao Iniciantes SP (pendente).
+  Total do dia: 4 grupos (R4, R5, R8, R9), acima do limite de 2–3, a pedido do Ricardo.
 
 ## Como anexar imagem
 
@@ -328,6 +332,9 @@ O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para local
 - **Conferir "Your content" do grupo depois de postar**: post pendente aparece para a Página como se
   estivesse publicado (inclusive na busca do grupo). Em out/2026, 6 de 7 posts ficaram presos na
   moderação, todos com chamada/link ou vídeo promocional. A pergunta sem link (23/11) entrou na hora.
+- No Correspondentes, os posts de out (imagem/vídeo promocional, mesmo material em vários grupos)
+  ficaram presos 2 meses; a pergunta só com texto e link (R8) entrou na hora. Texto próprio e
+  pergunta ao grupo passam melhor que peça publicitária.
 - ADVOGADOS e o grupo de Campinas moderam tudo: o post vai para "Your content → Pending". Conferir
   depois de alguns dias se foi aprovado ou recusado e anotar aqui.
 - Em out/2026 o mesmo texto e o mesmo vídeo foram para vários grupos no mesmo dia. Daqui em diante,
