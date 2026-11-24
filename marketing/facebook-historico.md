@@ -58,11 +58,13 @@ Buscas feitas em 23/11/2026: "advogados", "gestão escritório advocacia", "advo
 
 ### Em grupos
 
-Situação conferida em 23/11/2026 em "Your content" de cada grupo (`/groups/<id>/my_pending_content`).
+Situação conferida em 24/11/2026 em "Your content" de cada grupo (`/groups/<id>/my_pending_content`).
 **Pendente = só a Página vê**; quem não é admin não vê o post.
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 24/11/2026 | Advocacia | pendente (admins revisam novos participantes) | — | R5 + `marketing/ads/out/causify-ad-calculadora-1200x627.png` | Apresentação: OAB, publicações com prazo, honorários pela tabela; plano grátis; causify.com.br |
+| 24/11/2026 | Contadores e Advogados | pendente | — | R4 + `marketing/posts/out/causify-post-honorarios-1200x1200.png` | Quanto cada processo rendeu? Financeiro por processo; plano grátis; causify.com.br |
 | 23/11/2026 | Advogados Individuais… de Campinas | pendente | — | R2 + `marketing/ads/out/causify-ad-honorarios-1200x627.png` | Honorários para quem advoga sozinho; causify.com.br |
 | 23/11/2026 | ADVOGADOS | pendente | — | R1 + `marketing/ads/out/causify-ad-tarefas-1200x627.png` | Onde ficam os seus prazos? Publicações, tarefas, plano grátis; causify.com.br |
 | 23/11/2026 | Advogados Do Brasil | publicado | [post](https://www.facebook.com/groups/454930134927010/posts/2724738787946122/) | R3, só texto | Pergunta: como vocês acompanham as intimações? Menção leve ao Causify, sem link |
@@ -178,6 +180,7 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
+**R4 e R5 enviados em 24/11/2026** (os dois foram para a moderação); faltam R6 e R7.
 
 #### R4 — Contadores e Advogados — imagem: `marketing/posts/out/causify-post-honorarios-1200x1200.png`
 
@@ -263,6 +266,9 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
   Iniciantes SP — 2 em cada) também. A admin Carla Glória marcou a Página no post de boas-vindas
   aos novos membros do ADVOGADOS (/groups/1245881118761349/posts/30347995734789834/).
   Boas-vindas também no Advogados Iniciantes e no Contadores e Advogados.
+  Com OK do Ricardo: **R4** no Contadores e Advogados e **R5** no Advocacia, os dois com imagem
+  (⌘V do Ricardo) e os dois pendentes de aprovação. Visto no Advocacia e no Advogados Iniciantes:
+  Vanderlei Lisboa divulgando um sistema chamado "LegalManager" ("Chega de malabarismos!").
 
 ## Como anexar imagem
 
@@ -271,7 +277,9 @@ O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para local
 
 1. `preview_start` com `marketing-imagens` (em `.claude/launch.json`: serve `marketing/` na porta 5190).
 2. Abrir `http://localhost:5190/facebook/copiar-imagem.html?f=../ads/out/<arquivo>.png` e clicar em
-   "Copiar imagem" (clique real; põe a imagem na área de transferência).
+   "Copiar imagem" (clique real; põe a imagem na área de transferência). **A aba do ajudante precisa
+   estar em primeiro plano** (`tabs_select`) na hora do clique; em segundo plano dá "Write permission
+   denied".
 3. No Facebook, digitar o texto do post e **pedir ao Ricardo para apertar ⌘V** no compositor
    (o ⌘V simulado não cola). Conferir texto e imagem e então clicar em Post.
 
