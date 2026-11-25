@@ -45,6 +45,10 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
+| [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; não tira dúvidas | sim (Páginas postam lá, ex.: Licita Urgente) | pesquisado (25/11/2026) | Não confundir com o ADVOGADOS em que já somos membros. Feed cheio de anúncio fora do tema (imóveis, licitações). Candidato para o R6. |
+| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | provável | pesquisado (25/11/2026) | Tema = gestão de escritório. Feed só visível para membros. |
+| [JAM Jovem Advocacia Mineira](https://www.facebook.com/groups/jovensadvogadosmineiros) | 6,1K | 0 | Propaganda só com autorização | — | evitar | Morto (nenhum post no último mês). |
+| [OAB - Ordem dos Advogados do Brasil](https://www.facebook.com/groups/150483285142) | 32,6K | 9 | Proíbe propaganda; expulsa | — | evitar | Pouco ativo. |
 | [Marketing Jurídico](https://www.facebook.com/groups/mktjur) | 692 | 0 | Conteúdo + "um pouco" de divulgação | — | evitar | Morto (nenhum post no último mês). |
 | [MUNDO JURÍDICO](https://www.facebook.com/groups/474662109949437) | 28K | 14 | — | — | evitar | Grupo em espanhol. |
 | "Consulta grátis" / "Tire suas dúvidas" / "Online 24h" (vários) | — | — | — | — | evitar | Público é cliente, não advogado. |
@@ -53,6 +57,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 Buscas feitas em 23/11/2026: "advogados", "gestão escritório advocacia", "advocacia digital",
 "jovens advogados", "marketing jurídico", "advogados empreendedores", "advogado autônomo",
 "prática jurídica advogados".
+Em 25/11/2026 (para o R6): "advogados recém formados", "jovem advocacia", "advocacia empreendedora".
 
 ## Posts
 
