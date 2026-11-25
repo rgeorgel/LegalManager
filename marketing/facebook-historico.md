@@ -37,6 +37,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
+| [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; admins revisam o 1º post de quem entra | membro (25/11/2026) | 25/11/2026 | Não confundir com o ADVOGADOS (1245881118761349). Entrada aceita na hora. Feed cheio de anúncio fora do tema. R6 pendente (revisão de novo participante). |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
 | [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**. |
 
@@ -45,7 +46,6 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
-| [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; não tira dúvidas | sim (Páginas postam lá, ex.: Licita Urgente) | pesquisado (25/11/2026) | Não confundir com o ADVOGADOS em que já somos membros. Feed cheio de anúncio fora do tema (imóveis, licitações). Candidato para o R6. |
 | [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | provável | pesquisado (25/11/2026) | Tema = gestão de escritório. Feed só visível para membros. |
 | [JAM Jovem Advocacia Mineira](https://www.facebook.com/groups/jovensadvogadosmineiros) | 6,1K | 0 | Propaganda só com autorização | — | evitar | Morto (nenhum post no último mês). |
 | [OAB - Ordem dos Advogados do Brasil](https://www.facebook.com/groups/150483285142) | 32,6K | 9 | Proíbe propaganda; expulsa | — | evitar | Pouco ativo. |
@@ -68,6 +68,7 @@ Situação conferida em 25/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 25/11/2026 | ADVOGADOS (ADVOGADOSSEMPRE) | pendente (admins revisam novos participantes) | — | R6, só texto | 5 coisas para organizar antes do 10º cliente; sem produto nem link |
 | 25/11/2026 | Advogados Previdenciários | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/169079283105150/posts/29746214794964874/) | R7, só texto | Prazos INSS administrativo × judicial do mesmo cliente; pergunta ao grupo, sem produto nem link |
 | 24/11/2026 | ADVOGADOS INICIANTES - SP | **publicado** (aprovado em 25/11) | [post](https://www.facebook.com/groups/388185064882823/posts/2985866275114676/) | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
 | 24/11/2026 | ADVOGADOS CORRESPONDENTES BRASIL | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/advogadosbr/posts/29493273763689682/) | R8, só texto | Como controlar diligências de vários escritórios; Causify + plano grátis; causify.com.br |
@@ -189,7 +190,7 @@ A Página tinha **5 seguidores** em 23/11/2026.
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
 **R4 e R5 enviados em 24/11/2026** (os dois foram para a moderação). **R7 publicado em 25/11/2026.**
-**R6 não publicado**: o Advogados Iniciantes não deixa a Página postar (ver Grupos). Falta decidir outro grupo ou postar pelo perfil.
+R6 não pôde ir para o Advogados Iniciantes (o grupo não deixa a Página postar); com OK do Ricardo, **enviado ao ADVOGADOS (ADVOGADOSSEMPRE) em 25/11/2026** (pendente).
 
 #### R4 — Contadores e Advogados — imagem: `marketing/posts/out/causify-post-honorarios-1200x1200.png`
 
@@ -222,7 +223,7 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
 > Se alguém testar, a crítica sincera vale mais que o elogio. É ela que define o que fazemos
 > a seguir.
 
-#### R6 — Advogados Iniciantes (proíbe autopromoção: sem nome do produto, sem link) — só texto
+#### R6 — ~~Advogados Iniciantes~~ → ADVOGADOS (ADVOGADOSSEMPRE) — sem nome do produto, sem link — só texto — **enviado em 25/11/2026** (pendente)
 
 > Para quem está montando o escritório agora: 5 coisas que vale organizar antes do 10º cliente
 > (depois fica muito mais difícil):
@@ -326,6 +327,9 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   **R7 publicado** no Advogados Previdenciários (entrou na hora). **R6 não publicado**: no Advogados
   Iniciantes a Página não tem caixa de post e todos os posts mostram "Commenting has been turned off"
   — o grupo restringe a participação de Páginas (a tela de boas-vindas e as regras apareceram normalmente).
+  Busca de outro grupo para o R6 (3 buscas; candidatos anotados). Com OK do Ricardo: entrada no
+  **ADVOGADOS (ADVOGADOSSEMPRE)** (aceita na hora) e **R6 enviado** lá — pendente, admins revisam o 1º
+  post de novos participantes. Total do dia: 2 grupos (R7, R6).
 
 ## Como anexar imagem
 
