@@ -30,15 +30,15 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 
 | Grupo | Membros | Posts/mês | Divulgação | Situação | Último post nosso | Notas |
 |---|---|---|---|---|---|---|
-| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10. A pergunta de 23/11 entrou na hora; 1 comentário (citou o Ecossistema Jurídico), respondido pela Página. |
+| [Advogados Do Brasil](https://www.facebook.com/groups/454930134927010) | 11,7K | 121 | Sem regra contra; grupo exclusivo para advogados; posts moderados | membro | 23/11/2026 | 2 publicados (04/10, 23/11); 2 **pendentes** desde 27–28/10 (ainda em 25/11). A pergunta de 23/11 entrou na hora; 1 comentário (citou o Ecossistema Jurídico), respondido pela Página. |
 | [ADVOGADOS CORRESPONDENTES BRASIL](https://www.facebook.com/groups/advogadosbr) | 19,9K | 410 | Regra padrão "nenhuma promoção", mas na prática aprovam anúncios (Leggato, web designers, cursos — nov/2026) | membro | 24/11/2026 | R8 (pergunta + chamada leve) **entrou na hora** em 24/11. Os 2 posts parados de out foram excluídos. |
-| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda (descrição do grupo); em nov só advogados divulgando o próprio conteúdo | membro | 24/11/2026 | R9 (conteúdo útil, sem produto) pendente. Os 2 posts parados de set/out foram excluídos. Só conteúdo útil, sem chamada. |
+| [ADVOGADOS INICIANTES - SP](https://www.facebook.com/groups/388185064882823) | 9,1K | 178 | **Proíbe** propaganda (descrição do grupo); em nov só advogados divulgando o próprio conteúdo | membro | 24/11/2026 | R9 (conteúdo útil, sem produto) **aprovado em 25/11**. Os 2 posts parados de set/out foram excluídos. Só conteúdo útil, sem chamada. |
 | [ADVOGADOS](https://www.facebook.com/groups/1245881118761349) | 29,4K | 220 | **Permite** divulgar produtos e serviços de apoio ao advogado; máx. 1 post/dia; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R1 pendente de aprovação. |
 | [Advogados Individuais e Pequenos Escritórios de Campinas e Região](https://www.facebook.com/groups/advogadosindividuais) | 4,2K | 55 | Sem regra contra; posts moderados | membro (23/11/2026) | 23/11/2026 | Entrada aceita na hora. R2 pendente de aprovação. |
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
-| [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. |
-| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | — | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. |
+| [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
+| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**. |
 
 ### Candidatos
 
@@ -58,12 +58,13 @@ Buscas feitas em 23/11/2026: "advogados", "gestão escritório advocacia", "advo
 
 ### Em grupos
 
-Situação conferida em 24/11/2026 em "Your content" de cada grupo (`/groups/<id>/my_pending_content`).
+Situação conferida em 25/11/2026 em "Your content" de cada grupo (`/groups/<id>/my_pending_content`).
 **Pendente = só a Página vê**; quem não é admin não vê o post.
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
-| 24/11/2026 | ADVOGADOS INICIANTES - SP | pendente | — | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
+| 25/11/2026 | Advogados Previdenciários | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/169079283105150/posts/29746214794964874/) | R7, só texto | Prazos INSS administrativo × judicial do mesmo cliente; pergunta ao grupo, sem produto nem link |
+| 24/11/2026 | ADVOGADOS INICIANTES - SP | **publicado** (aprovado em 25/11) | [post](https://www.facebook.com/groups/388185064882823/posts/2985866275114676/) | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
 | 24/11/2026 | ADVOGADOS CORRESPONDENTES BRASIL | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/advogadosbr/posts/29493273763689682/) | R8, só texto | Como controlar diligências de vários escritórios; Causify + plano grátis; causify.com.br |
 | 24/11/2026 | Advocacia | pendente (admins revisam novos participantes) | — | R5 + `marketing/ads/out/causify-ad-calculadora-1200x627.png` | Apresentação: OAB, publicações com prazo, honorários pela tabela; plano grátis; causify.com.br |
 | 24/11/2026 | Contadores e Advogados | pendente | — | R4 + `marketing/posts/out/causify-post-honorarios-1200x1200.png` | Quanto cada processo rendeu? Financeiro por processo; plano grátis; causify.com.br |
@@ -182,7 +183,8 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
-**R4 e R5 enviados em 24/11/2026** (os dois foram para a moderação); faltam R6 e R7.
+**R4 e R5 enviados em 24/11/2026** (os dois foram para a moderação). **R7 publicado em 25/11/2026.**
+**R6 não publicado**: o Advogados Iniciantes não deixa a Página postar (ver Grupos). Falta decidir outro grupo ou postar pelo perfil.
 
 #### R4 — Contadores e Advogados — imagem: `marketing/posts/out/causify-post-honorarios-1200x1200.png`
 
@@ -232,7 +234,7 @@ R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 
 >
 > O que vocês acrescentariam nessa lista?
 
-#### R7 — Advogados Previdenciários (proíbe promoção: sem nome do produto, sem link) — só texto
+#### R7 — Advogados Previdenciários (proíbe promoção: sem nome do produto, sem link) — só texto — **publicado em 25/11/2026**
 
 > Pergunta para os colegas do previdenciário: como vocês controlam os prazos quando o mesmo
 > cliente tem um requerimento ou recurso no INSS e uma ação judicial correndo ao mesmo tempo?
@@ -261,7 +263,7 @@ Regra "nenhuma promoção" é a padrão do Facebook; na prática o feed de 24/11
 > É assim que o Causify organiza tarefas e financeiro, com plano gratuito em causify.com.br. Mas
 > queria saber de vocês: o que usam hoje para não perder diligência nem pagamento?
 
-#### R9 — ADVOGADOS INICIANTES - SP (proíbe propaganda: sem nome do produto, sem link) — só texto — aprovado e **enviado em 24/11/2026** (pendente)
+#### R9 — ADVOGADOS INICIANTES - SP (proíbe propaganda: sem nome do produto, sem link) — só texto — aprovado, enviado em 24/11/2026 e **aprovado pelos admins em 25/11**
 
 Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o próprio conteúdo.
 
@@ -313,6 +315,12 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   cada grupo seguem pendentes. Com OK do Ricardo: excluídos os 4 posts parados (2 em cada grupo),
   **R8 publicado** no Correspondentes (entrou direto) e **R9 enviado** ao Iniciantes SP (pendente).
   Total do dia: 4 grupos (R4, R5, R8, R9), acima do limite de 2–3, a pedido do Ricardo.
+- **25/11/2026** — Verificação: **R9 aprovado** no Iniciantes SP (sem comentários ainda). R8 sem
+  comentários. R3 sem novos comentários. Seguem pendentes: R1 (ADVOGADOS), R2 (Campinas), R4
+  (Contadores), R5 (Advocacia, revisão de novo participante) e os 2 antigos do Advogados Do Brasil.
+  **R7 publicado** no Advogados Previdenciários (entrou na hora). **R6 não publicado**: no Advogados
+  Iniciantes a Página não tem caixa de post e todos os posts mostram "Commenting has been turned off"
+  — o grupo restringe a participação de Páginas (a tela de boas-vindas e as regras apareceram normalmente).
 
 ## Como anexar imagem
 
@@ -335,6 +343,11 @@ O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para local
 - No Correspondentes, os posts de out (imagem/vídeo promocional, mesmo material em vários grupos)
   ficaram presos 2 meses; a pergunta só com texto e link (R8) entrou na hora. Texto próprio e
   pergunta ao grupo passam melhor que peça publicitária.
+- **Grupo pode aceitar a Página como membro e mesmo assim não deixá-la postar nem comentar**
+  (Advogados Iniciantes, 25/11). Antes de escrever um rascunho para um grupo novo, conferir se
+  a caixa "Write something" aparece para a Página.
+- Perguntas ao grupo, só texto, entram na hora mesmo em grupo moderado que proíbe promoção
+  (R3, R7, R8); conteúdo útil (R9) levou 1 dia.
 - ADVOGADOS e o grupo de Campinas moderam tudo: o post vai para "Your content → Pending". Conferir
   depois de alguns dias se foi aprovado ou recusado e anotar aqui.
 - Em out/2026 o mesmo texto e o mesmo vídeo foram para vários grupos no mesmo dia. Daqui em diante,
