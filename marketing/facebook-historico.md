@@ -340,7 +340,8 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   seguem pendentes.
 - **26/11/2026** — Verificação: a Thaís **curtiu** a resposta da Página e respondeu marcando a Causify:
   "sempre lanço na agenda e na planilha porque se um falhar, tem o outro pra garantir que não vou perder
-  prazo." (sem resposta nossa ainda). R3, R8 e R9 sem comentários novos. Filas sem mudança: R1, R2, R4,
+  prazo." Com OK do Ricardo (opção A de 2, encerrar sem nova pergunta), a Página respondeu: "Faz todo
+  sentido, Thaís. Com prazo, redundância é seguro. Obrigado por compartilhar como você organiza!" R3, R8 e R9 sem comentários novos. Filas sem mudança: R1, R2, R4,
   R5, R6 e os 2 antigos do Advogados Do Brasil seguem pendentes (R1 e R2 há 3 dias).
 
 ## Como anexar imagem
