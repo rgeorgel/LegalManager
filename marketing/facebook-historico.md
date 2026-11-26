@@ -287,6 +287,34 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
 >
 > Alguém já foi pego por alguma dessas? Qual foi a pegadinha?
 
+#### P1 — feed da Página — só texto — rascunho de 26/11/2026 (aguarda OK)
+
+Preços conferidos no site em 26/11 (Plus R$ 20, Pro R$ 50, Max R$ 125; novos R$ 35, 70, 140 a partir de 01/12).
+
+> Até domingo (30/11), os planos pagos do Causify seguem com o preço atual: Plus R$ 20, Pro R$ 50 e
+> Max R$ 125 por mês.
+>
+> A partir de 1º de dezembro, novas assinaturas passam a custar R$ 35, R$ 70 e R$ 140. Quem assinar
+> até domingo mantém o valor de hoje.
+>
+> O plano Free continua gratuito, sem cartão e sem prazo para acabar.
+>
+> causify.com.br
+
+#### R10 — Escritórios de Advocacia (privado, sem regras publicadas; ainda não somos membros) — só texto — rascunho de 26/11/2026 (aguarda OK)
+
+Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que entrou na hora.
+
+> Pergunta para quem tem escritório com mais de uma pessoa: como vocês dividem as tarefas e
+> acompanham quem está fazendo o quê?
+>
+> Quadro na parede, planilha compartilhada, grupo de WhatsApp, algum sistema? Pergunto porque é
+> comum o prazo estar anotado, mas ninguém saber ao certo de quem é a responsabilidade, e cada um
+> achar que o outro já fez.
+>
+> (No Causify cada tarefa tem responsável e prazo e aparece num quadro para a equipe, mas queria
+> saber o que funciona na prática para vocês.)
+
 ## Log de atividades
 
 - **Antes de 23/11/2026** — Página criada; 9 posts no feed (1 impulsionado); entrou em 3 grupos e
@@ -343,6 +371,9 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   prazo." Com OK do Ricardo (opção A de 2, encerrar sem nova pergunta), a Página respondeu: "Faz todo
   sentido, Thaís. Com prazo, redundância é seguro. Obrigado por compartilhar como você organiza!" R3, R8 e R9 sem comentários novos. Filas sem mudança: R1, R2, R4,
   R5, R6 e os 2 antigos do Advogados Do Brasil seguem pendentes (R1 e R2 há 3 dias).
+  À tarde (14h58): nada novo — a Thaís não respondeu de novo; filas iguais. Nenhum grupo atual pode
+  receber post antes de 07/12 (regra das 2 semanas; o Advogados Iniciantes bloqueia a Página). Rascunhos
+  P1 (feed da Página, preço atual até 30/11) e R10 (entrar no Escritórios de Advocacia) escritos.
 
 ## Como anexar imagem
 
