@@ -39,7 +39,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
 | [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; admins revisam o 1º post de quem entra | membro (25/11/2026) | 25/11/2026 | Não confundir com o ADVOGADOS (1245881118761349). Entrada aceita na hora. Feed cheio de anúncio fora do tema. R6 pendente (revisão de novo participante). |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
-| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha). |
+| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha), respondido pela Página com pergunta. |
 
 ### Candidatos
 
@@ -331,7 +331,11 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   **ADVOGADOS (ADVOGADOSSEMPRE)** (aceita na hora) e **R6 enviado** lá — pendente, admins revisam o 1º
   post de novos participantes. Total do dia: 2 grupos (R7, R6).
   Verificação às 20h46: **1º comentário no R7**, de Thaís Teixeira: "Eu uso o Google agenda pra tudo e
-  uma planilha também e coloco na frente de qual procedimento é o prazo." (ainda sem resposta). R3, R8 e
+  uma planilha também e coloco na frente de qual procedimento é o prazo." Com OK do Ricardo (opção A de 3;
+  sem citar o produto nem desconto, porque o grupo proíbe promoção e ela não pediu solução), a Página
+  respondeu: "Obrigado, Thaís! Anotar o procedimento na frente do prazo é uma boa sacada, evita confundir
+  a contagem do INSS com a do judicial. Você lança tudo duas vezes (agenda e planilha) ou cada uma tem uma
+  função?" — publicada às ~21h. R3, R8 e
   R9 sem comentários novos. Filas sem mudança: R1, R2, R4, R5, R6 e os 2 antigos do Advogados Do Brasil
   seguem pendentes.
 
@@ -369,5 +373,8 @@ O navegador do app não anexa arquivos, e o Facebook bloqueia `fetch` para local
   banimento. Nesses grupos, manter só conteúdo útil.
 - Comentário citando concorrente: agradecer e devolver uma pergunta, sem atacar o outro sistema.
   Cada resposta mantém o post vivo no grupo.
+- Comentário contando como a pessoa trabalha hoje: responder com pergunta, sem produto nem desconto.
+  Falar do Causify só se perguntarem ("vocês usam o quê?"), sem link em grupo que proíbe promoção.
+  Desconto nunca em comentário público; nada de mensagem privada sem a pessoa puxar o assunto.
 - A maioria dos grupos com "advogado" no nome é de clientes pedindo consulta grátis: filtrar
   sempre pelo público.
