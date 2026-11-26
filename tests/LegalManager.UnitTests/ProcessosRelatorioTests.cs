@@ -160,6 +160,15 @@ public class ProcessosRelatorioTests
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(ProcessosRelatorioPdfRenderer.Renderizar(Relatorio())[..4]));
     }
 
+    [Fact]
+    public void Pdf_EmbuteSourceSans3()
+    {
+        var pdf = ProcessosRelatorioPdfRenderer.Renderizar(Relatorio(Item()));
+        var texto = Encoding.Latin1.GetString(pdf);
+        Assert.Contains("SourceSans3-Regular", texto);
+        Assert.DoesNotContain("Segoe", texto);
+    }
+
     private static ProcessosController Controller(Mock<IProcessoService> service, PlanoTipo plano) =>
         new(service.Object, Mock.Of<IMonitoramentoService>(), Mock.Of<IAuditService>(),
             TenantContext(Guid.NewGuid(), Guid.NewGuid(), plano), null!, null!, Mock.Of<IContatoResolverService>());

@@ -27,7 +27,7 @@ public static class ProcessosRelatorioPdfRenderer
             {
                 page.Size(PageSizes.A4.Landscape());
                 page.Margin(30);
-                page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Segoe UI"));
+                page.DefaultTextStyle(x => x.FontSize(8).FontFamily(PdfFontes.Familia()));
 
                 page.Header().Element(c => Cabecalho(c, d, logoBytes));
                 page.Content().Element(c => Conteudo(c, d));

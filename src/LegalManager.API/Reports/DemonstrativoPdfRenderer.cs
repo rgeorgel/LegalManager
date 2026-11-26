@@ -46,7 +46,7 @@ public static class DemonstrativoPdfRenderer
             {
                 page.Size(PageSizes.A4.Landscape());
                 page.Margin(30);
-                page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Segoe UI"));
+                page.DefaultTextStyle(x => x.FontSize(8).FontFamily(PdfFontes.Familia()));
 
                 page.Header().Column(col =>
                 {

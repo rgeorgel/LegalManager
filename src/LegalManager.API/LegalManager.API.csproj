@@ -25,6 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Fontes dos PDFs (QuestPDF), registradas por Reports/PdfFontes.cs. -->
+    <EmbeddedResource Include="Fonts\*.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\LegalManager.Application\LegalManager.Application.csproj" />
     <ProjectReference Include="..\LegalManager.Infrastructure\LegalManager.Infrastructure.csproj" />
   </ItemGroup>

@@ -56,6 +56,16 @@ public class ExtratoHonorarioPdfTests
         AssertPdf(ExtratoHonorarioPdfRenderer.Renderizar(Dados(1045.5m) with { CorPrimaria = "#7c3aed", CorDestaque = "#0ea5e9" }));
     }
 
+    [Fact]
+    public void Renderiza_ComFonteSourceSans3Embutida()
+    {
+        // A fonte vem do assembly (não do servidor): o PDF tem que embutir a Source Sans 3, regular e negrito.
+        var pdf = Encoding.Latin1.GetString(ExtratoHonorarioPdfRenderer.Renderizar(Dados(1045.5m)));
+        Assert.Contains("SourceSans3-Regular", pdf);
+        Assert.Contains("SourceSans3-Bold", pdf);
+        Assert.DoesNotContain("Segoe", pdf);
+    }
+
     [Theory]
     [InlineData("#7c3aed", "#7c3aed")]
     [InlineData(" #ABC ", "#AABBCC")]

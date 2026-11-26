@@ -35,14 +35,14 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 page.Size(PageSizes.A4);
                 page.Margin(50);
-                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Segoe UI"));
+                page.DefaultTextStyle(x => x.FontSize(9).FontFamily(PdfFontes.Familia()));
 
                 page.Header().Element(c => Cabecalho(c, d, logoBytes));
                 page.Content().Element(c => Conteudo(c, d));
                 page.Footer().AlignCenter().PaddingTop(20).Text(t =>
                 {
-                    t.Span($"Emitido em {d.EmitidoEm.ToString("dd/MM/yyyy HH:mm", PtBr)} · Causify — Gestão de Honorários · ").FontColor(CorMuted).FontSize(8);
-                    t.Span(d.NomeEscritorio).FontColor(CorMuted).FontSize(8);
+                    t.Span($"Emitido em {d.EmitidoEm.ToString("dd/MM/yyyy HH:mm", PtBr)} · Causify — Gestão de Honorários · ").FontColor(CorMuted).FontSize(7.5f);
+                    t.Span(d.NomeEscritorio).FontColor(CorMuted).FontSize(7.5f);
                 });
             });
         });
@@ -65,16 +65,16 @@ public static class ExtratoHonorarioPdfRenderer
                 });
                 row.RelativeItem().AlignRight().Column(c =>
                 {
-                    c.Item().Text(d.NomeEscritorio).Bold().FontSize(14).FontColor(Primaria(d));
+                    c.Item().Text(d.NomeEscritorio).Bold().FontSize(13).FontColor(Primaria(d));
                     if (!string.IsNullOrEmpty(d.Advogado) || !string.IsNullOrEmpty(d.Oab))
-                        c.Item().Text($"{d.Advogado}{(string.IsNullOrEmpty(d.Oab) ? "" : " — " + d.Oab)}").FontSize(9).FontColor(CorMuted);
-                    if (!string.IsNullOrEmpty(d.Endereco)) c.Item().Text(d.Endereco).FontSize(9).FontColor(CorMuted);
+                        c.Item().Text($"{d.Advogado}{(string.IsNullOrEmpty(d.Oab) ? "" : " — " + d.Oab)}").FontSize(8.5f).FontColor(CorMuted);
+                    if (!string.IsNullOrEmpty(d.Endereco)) c.Item().Text(d.Endereco).FontSize(8.5f).FontColor(CorMuted);
                     if (!string.IsNullOrEmpty(d.Telefone) || !string.IsNullOrEmpty(d.Email))
-                        c.Item().Text($"{(string.IsNullOrEmpty(d.Telefone) ? "" : "Tel: " + d.Telefone)}{(string.IsNullOrEmpty(d.Email) ? "" : (!string.IsNullOrEmpty(d.Telefone) ? " · " : "") + d.Email)}").FontSize(9).FontColor(CorMuted);
+                        c.Item().Text($"{(string.IsNullOrEmpty(d.Telefone) ? "" : "Tel: " + d.Telefone)}{(string.IsNullOrEmpty(d.Email) ? "" : (!string.IsNullOrEmpty(d.Telefone) ? " · " : "") + d.Email)}").FontSize(8.5f).FontColor(CorMuted);
                 });
             });
             col.Item().PaddingTop(4).BorderBottom(3).BorderColor(Destaque(d));
-            col.Item().PaddingTop(10).AlignCenter().Text("EXTRATO DE HONORÁRIOS").Bold().FontSize(14).FontColor(Primaria(d));
+            col.Item().PaddingTop(10).AlignCenter().Text("EXTRATO DE HONORÁRIOS").Bold().FontSize(13).FontColor(Primaria(d));
         });
     }
 
@@ -82,7 +82,7 @@ public static class ExtratoHonorarioPdfRenderer
     {
         container.PaddingVertical(20).Column(col =>
         {
-            col.Item().Text("DADOS DO CLIENTE").FontSize(8).Bold().FontColor(CorMuted);
+            col.Item().Text("DADOS DO CLIENTE").FontSize(7.5f).Bold().FontColor(CorMuted);
             col.Item().PaddingTop(4).Grid(g =>
             {
                 g.Columns(2);
@@ -90,7 +90,7 @@ public static class ExtratoHonorarioPdfRenderer
                 g.Item().Text($"CPF/CNPJ: {d.CpfCnpj ?? "—"}");
             });
 
-            col.Item().PaddingTop(14).Text("DADOS DO CONTRATO").FontSize(8).Bold().FontColor(CorMuted);
+            col.Item().PaddingTop(14).Text("DADOS DO CONTRATO").FontSize(7.5f).Bold().FontColor(CorMuted);
             col.Item().PaddingTop(4).Grid(g =>
             {
                 g.Columns(2);
@@ -110,14 +110,14 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 col.Item().PaddingTop(12).Background("#FFF5F5").Border(1).BorderColor("#FECACA").Padding(8).Column(cw =>
                 {
-                    cw.Item().Text(SemEncargos(d) ? "⚠ VALORES EM ATRASO" : "⚠ ENCARGOS DE ATRASO").FontSize(8).Bold().FontColor("#DC2626");
+                    cw.Item().Text(SemEncargos(d) ? "⚠ VALORES EM ATRASO" : "⚠ ENCARGOS DE ATRASO").FontSize(7.5f).Bold().FontColor("#DC2626");
                     cw.Item().PaddingTop(2).Text(SemEncargos(d)
                         ? $"Sem multa ou juros, conforme contrato de honorários. Total em atraso: {FormatBRL(d.TotalEmAtraso)}"
                         : $"Sobre os valores em atraso incidem multa de {d.PercentualMulta.ToString("P0", PtBr)} (incidência única) e juros de mora de {d.PercentualJurosMensal.ToString("P1", PtBr)} ao mês pro rata die, conforme contrato de honorários. Total atualizado: {FormatBRL(d.TotalEmAtraso)}");
                 });
             }
 
-            col.Item().PaddingTop(14).Text("DEMONSTRATIVO DE PARCELAS").FontSize(8).Bold().FontColor(CorMuted);
+            col.Item().PaddingTop(14).Text("DEMONSTRATIVO DE PARCELAS").FontSize(7.5f).Bold().FontColor(CorMuted);
             col.Item().PaddingTop(4).Table(tab =>
             {
                 tab.ColumnsDefinition(cols =>
@@ -133,13 +133,13 @@ public static class ExtratoHonorarioPdfRenderer
                 });
                 tab.Header(h =>
                 {
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Parc.").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Vencimento").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Valor").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Juros/Multa").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Status").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Pago em").FontColor("#fff").FontSize(8).Bold();
-                    h.Cell().Background(Primaria(d)).Padding(5).Text("Total").FontColor("#fff").FontSize(8).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Parc.").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Vencimento").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Valor").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Juros/Multa").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Status").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Pago em").FontColor("#fff").FontSize(7.5f).Bold();
+                    h.Cell().Background(Primaria(d)).Padding(5).Text("Total").FontColor("#fff").FontSize(7.5f).Bold();
                 });
                 foreach (var r in d.Parcelas)
                 {
@@ -150,13 +150,13 @@ public static class ExtratoHonorarioPdfRenderer
                         "Em Atraso" => "#DC2626",
                         _ => "#B45309"
                     };
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Label).FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy", PtBr)).FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.Valor)).FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.JurosMulta.HasValue ? FormatBRL(r.JurosMulta.Value) : "—").FontColor(r.JurosMulta.HasValue ? "#DC2626" : "#999").FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Status).FontColor(statusColor).FontSize(9).Bold();
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy", PtBr) ?? "—").FontSize(9);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.ValorAtualizado)).FontSize(9).Bold();
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Label).FontSize(8.5f);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy", PtBr)).FontSize(8.5f);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.Valor)).FontSize(8.5f);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.JurosMulta.HasValue ? FormatBRL(r.JurosMulta.Value) : "—").FontColor(r.JurosMulta.HasValue ? "#DC2626" : "#999").FontSize(8.5f);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Status).FontColor(statusColor).FontSize(8.5f).Bold();
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy", PtBr) ?? "—").FontSize(8.5f);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.ValorAtualizado)).FontSize(8.5f).Bold();
                 }
             });
 
@@ -164,18 +164,18 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 r.RelativeItem().Column(cc =>
                 {
-                    cc.Item().Text("TOTAL PAGO").FontSize(8).Bold().FontColor(CorMuted);
-                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalPago)).FontSize(15).Bold().FontColor("#059669");
+                    cc.Item().Text("TOTAL PAGO").FontSize(7.5f).Bold().FontColor(CorMuted);
+                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalPago)).FontSize(13).Bold().FontColor("#059669");
                 });
                 r.RelativeItem().Column(cc =>
                 {
-                    cc.Item().Text("PENDENTE").FontSize(8).Bold().FontColor(CorMuted);
-                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalPendente)).FontSize(15).Bold().FontColor("#B45309");
+                    cc.Item().Text("PENDENTE").FontSize(7.5f).Bold().FontColor(CorMuted);
+                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalPendente)).FontSize(13).Bold().FontColor("#B45309");
                 });
                 r.RelativeItem().Column(cc =>
                 {
-                    cc.Item().Text("EM ATRASO (c/ encargos)").FontSize(8).Bold().FontColor(CorMuted);
-                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalEmAtraso)).FontSize(15).Bold().FontColor("#DC2626");
+                    cc.Item().Text("EM ATRASO (c/ encargos)").FontSize(7.5f).Bold().FontColor(CorMuted);
+                    cc.Item().PaddingTop(3).Text(FormatBRL(d.TotalEmAtraso)).FontSize(13).Bold().FontColor("#DC2626");
                 });
             });
         });
