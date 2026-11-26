@@ -411,6 +411,43 @@ public class HonorariosControllerTests
     }
 
     [Fact]
+    public async Task GerarPropostaPdf_UmServicoNoPiorCaso_CabeEmUmaPagina()
+    {
+        // Proposta de um serviço com todos os trechos opcionais (percentual, êxito, 3 parcelas com
+        // correção) e nomes longos: precisa caber numa página — vale conferir ao mexer na fonte.
+        var (ctx, tenant, usuario) = await SeedTenantAsync();
+        var controller = new HonorariosController(ctx, CreateTenantContext(tenant.Id, usuario.Id));
+
+        var dto = new PropostaPdfDto
+        {
+            Cliente = "Maria Aparecida dos Santos Albuquerque de Oliveira",
+            ModeLabel = "extrajudicial / consultivo",
+            Area = "Direito Previdenciário",
+            Tipo = "Requerimento administrativo de aposentadoria especial com conversão de tempo",
+            ItemOAB = "36.12",
+            ValorCausa = 350000m,
+            ValorFormatado = "R$ 123.456,78",
+            ValorExtenso = "cento e vinte e três mil, quatrocentos e cinquenta e seis reais e setenta e oito centavos",
+            HasPerc = true,
+            PercFormatado = "20,00%",
+            ValorCausaFormatado = "R$ 350.000,00",
+            MinFormatado = "R$ 6.256,51",
+            ExisteExito = true,
+            ExitoValor = 87500m,
+            ExitoPctFormatado = "25,00%",
+            ExitoValorFormatado = "R$ 87.500,00",
+            FormaPagamentoTexto = "Os honorários, no valor total de R$ 123.456,78 (total corrigido: R$ 130.987,65), serão pagos em 3 (três) parcelas, nos termos do art. 22, §3º, da Lei nº 8.906/1994: (i) R$ 43.662,55 no ato da outorga da procuração; (ii) R$ 43.662,55 até a prolação da sentença de primeiro grau; (iii) R$ 43.662,55 ao final, com a entrega do resultado. As parcelas serão atualizadas pelo índice de 1,00% ao mês a partir do vencimento.",
+            DataProposta = "26/11/2026"
+        };
+
+        var result = Assert.IsType<FileContentResult>(controller.GerarPropostaPdf(dto, Env(), default));
+
+        var paginas = System.Text.RegularExpressions.Regex.Matches(
+            System.Text.Encoding.Latin1.GetString(result.FileContents), @"/Type\s*/Page\b(?!s)").Count;
+        Assert.Equal(1, paginas);
+    }
+
+    [Fact]
     public async Task GerarPropostaPdf_DeveGerarPdf_QuandoIsMultiplosComItens()
     {
         var (ctx, tenant, usuario) = await SeedTenantAsync();

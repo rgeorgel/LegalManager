@@ -201,7 +201,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(50);
-                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily(LegalManager.API.Reports.PdfFontes.Familia()));
+                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily(LegalManager.API.Reports.PdfFontes.Familia()));
 
                     page.Header().Element(c => Container(c, nomeEscritorio, logoBytes, dto.Cliente ?? "[NOME DO CLIENTE]", dto.DataProposta, corNavy, corGold));
                     page.Content().Element(c => ContainerContent(c, dto, corNavy, corGold));
@@ -256,7 +256,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
     {
         container.PaddingTop(20).Column(col =>
         {
-            col.Item().Text("QUALIFICAÇÃO E OBJETO").FontSize(7.5f).Bold().FontColor("#888780");
+            col.Item().Text("QUALIFICAÇÃO E OBJETO").FontSize(8.5f).Bold().FontColor("#888780");
 
             if (dto.IsMultiplos && dto.Itens != null && dto.Itens.Count > 0)
             {
@@ -276,23 +276,23 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
 
                     tab.Header(header =>
                     {
-                        header.Cell().Background(corNavy).Padding(5).Text("#").FontColor("#fff").FontSize(8).Bold();
-                        header.Cell().Background(corNavy).Padding(5).Text("Serviço").FontColor("#fff").FontSize(8).Bold();
-                        header.Cell().Background(corNavy).Padding(5).Text("Natureza / Área").FontColor("#fff").FontSize(8).Bold();
-                        header.Cell().Background(corNavy).Padding(5).AlignRight().Text("Honorário").FontColor("#fff").FontSize(8).Bold();
+                        header.Cell().Background(corNavy).Padding(5).Text("#").FontColor("#fff").FontSize(9).Bold();
+                        header.Cell().Background(corNavy).Padding(5).Text("Serviço").FontColor("#fff").FontSize(9).Bold();
+                        header.Cell().Background(corNavy).Padding(5).Text("Natureza / Área").FontColor("#fff").FontSize(9).Bold();
+                        header.Cell().Background(corNavy).Padding(5).AlignRight().Text("Honorário").FontColor("#fff").FontSize(9).Bold();
                     });
 
                     foreach (var item in dto.Itens)
                     {
-                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Numero.ToString()).FontSize(9);
-                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Tipo).FontSize(9);
-                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text($"{item.ModeLabel} · {item.Area}").FontSize(8.5f).FontColor("#5f5e5a");
-                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).AlignRight().Text(item.ValorFormatado).FontSize(9).Bold();
+                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Numero.ToString()).FontSize(10);
+                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text(item.Tipo).FontSize(10);
+                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).Text($"{item.ModeLabel} · {item.Area}").FontSize(9.5f).FontColor("#5f5e5a");
+                        tab.Cell().BorderBottom(1).BorderColor("#ddd").Padding(5).AlignRight().Text(item.ValorFormatado).FontSize(10).Bold();
                     }
 
                     // O total ocupa a linha inteira (antes caía nas duas primeiras colunas e "Total" quebrava no "#").
-                    tab.Cell().ColumnSpan(3).Background("#f4f3ef").Padding(5).Text("Total").FontSize(9).Bold();
-                    tab.Cell().Background("#f4f3ef").Padding(5).AlignRight().Text(dto.ValorFormatado).FontSize(9).Bold();
+                    tab.Cell().ColumnSpan(3).Background("#f4f3ef").Padding(5).Text("Total").FontSize(10).Bold();
+                    tab.Cell().Background("#f4f3ef").Padding(5).AlignRight().Text(dto.ValorFormatado).FontSize(10).Bold();
                 });
             }
             else
@@ -311,7 +311,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                 });
             }
 
-            col.Item().PaddingTop(12).Text("HONORÁRIOS CONTRATUAIS").FontSize(7.5f).Bold().FontColor("#888780");
+            col.Item().PaddingTop(12).Text("HONORÁRIOS CONTRATUAIS").FontSize(8.5f).Bold().FontColor("#888780");
             col.Item().PaddingTop(4).Text(
                 "Os honorários advocatícios ora propostos foram calculados com base na Tabela de Honorários Advocatícios da OAB/SP 2026, aprovada nos termos do art. 22 da Lei nº 8.906/1994 (Estatuto da OAB) e do art. 48 do Código de Ética e Disciplina da OAB, e ajustados em conformidade com os critérios do item 17 da referida Tabela, considerando a complexidade da causa, o trabalho e o tempo necessários, o lugar da prestação dos serviços e demais fatores de equidade e moderação pertinentes ao caso concreto."
             );
@@ -346,7 +346,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
 
             if (dto.ExisteExito && dto.ExitoValor > 0)
             {
-                col.Item().PaddingTop(12).Text("HONORÁRIOS DE ÊXITO").FontSize(7.5f).Bold().FontColor("#888780");
+                col.Item().PaddingTop(12).Text("HONORÁRIOS DE ÊXITO").FontSize(8.5f).Bold().FontColor("#888780");
                 col.Item().PaddingTop(4).Text(x =>
                 {
                     x.Span("Em caso de êxito na demanda, serão devidos honorários contingenciais adicionais no percentual de ");
@@ -357,10 +357,10 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                 });
             }
 
-            col.Item().PaddingTop(12).Text("FORMA E CONDIÇÕES DE PAGAMENTO").FontSize(7.5f).Bold().FontColor("#888780");
+            col.Item().PaddingTop(12).Text("FORMA E CONDIÇÕES DE PAGAMENTO").FontSize(8.5f).Bold().FontColor("#888780");
             col.Item().PaddingTop(4).Text(dto.FormaPagamentoTexto ?? "A definir.");
 
-            col.Item().PaddingTop(12).Text("DISPOSIÇÕES GERAIS").FontSize(7.5f).Bold().FontColor("#888780");
+            col.Item().PaddingTop(12).Text("DISPOSIÇÕES GERAIS").FontSize(8.5f).Bold().FontColor("#888780");
             col.Item().PaddingTop(4).Text(
                 "Os honorários ora pactuados compreendem exclusivamente o patrocínio das causas em primeiro grau de jurisdição, sendo devidos independentemente do resultado das demandas (art. 8º, Tabela OAB/SP 2026). A interposição de recursos, sustentação oral e atuação em instâncias superiores constituem atos próprios e serão objeto de contratação específica (item 7, Tabela OAB/SP 2026)."
             );
@@ -371,7 +371,7 @@ public class HonorariosController(AppDbContext db, ITenantContext tenantContext)
                 "Em caso de revogação do mandato sem culpa do advogado, os honorários serão devidos em sua totalidade (item 10, Tabela OAB/SP 2026)."
             );
 
-            col.Item().PaddingTop(12).Text("ACEITE").FontSize(7.5f).Bold().FontColor("#888780");
+            col.Item().PaddingTop(12).Text("ACEITE").FontSize(8.5f).Bold().FontColor("#888780");
             col.Item().PaddingTop(4).Text(x =>
             {
                 x.Span("A presente proposta tem validade de ");
