@@ -46,7 +46,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
-| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | provável | pesquisado (25/11/2026) | Tema = gestão de escritório. Feed só visível para membros. |
+| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | sim | **pedido enviado (26/11/2026)** | Tema = gestão de escritório. Feed só visível para membros. |
 | [JAM Jovem Advocacia Mineira](https://www.facebook.com/groups/jovensadvogadosmineiros) | 6,1K | 0 | Propaganda só com autorização | — | evitar | Morto (nenhum post no último mês). |
 | [OAB - Ordem dos Advogados do Brasil](https://www.facebook.com/groups/150483285142) | 32,6K | 9 | Proíbe propaganda; expulsa | — | evitar | Pouco ativo. |
 | [Marketing Jurídico](https://www.facebook.com/groups/mktjur) | 692 | 0 | Conteúdo + "um pouco" de divulgação | — | evitar | Morto (nenhum post no último mês). |
@@ -91,6 +91,7 @@ Levantado em 23/11/2026, do mais novo para o mais antigo (datas não anotadas na
 
 | Tema | Mídia | Visualizações |
 |---|---|---|
+| 26/11/2026 — P1: preço atual até 30/11 (Plus 20, Pro 50, Max 125; depois 35, 70, 140); Free continua | — | — |
 | "Às 6h a intimação já foi lida…" (publicações com prazo calculado) | — | 8 |
 | "De quem é essa tarefa?" (kanban) | — | 26 |
 | "Prazo perdido não volta" (CPC art. 223) → causify.com.br/lp-facebook.html | — | 20 |
@@ -287,7 +288,7 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
 >
 > Alguém já foi pego por alguma dessas? Qual foi a pegadinha?
 
-#### P1 — feed da Página — só texto — rascunho de 26/11/2026 (aguarda OK)
+#### P1 — feed da Página — só texto — aprovado e **publicado em 26/11/2026** (público, sem impulsionar)
 
 Preços conferidos no site em 26/11 (Plus R$ 20, Pro R$ 50, Max R$ 125; novos R$ 35, 70, 140 a partir de 01/12).
 
@@ -301,7 +302,7 @@ Preços conferidos no site em 26/11 (Plus R$ 20, Pro R$ 50, Max R$ 125; novos R$
 >
 > causify.com.br
 
-#### R10 — Escritórios de Advocacia (privado, sem regras publicadas; ainda não somos membros) — só texto — rascunho de 26/11/2026 (aguarda OK)
+#### R10 — Escritórios de Advocacia (privado, sem regras publicadas) — só texto — aprovado em 26/11/2026; **aguarda a entrada no grupo ser aceita**
 
 Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que entrou na hora.
 
@@ -374,6 +375,9 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
   À tarde (14h58): nada novo — a Thaís não respondeu de novo; filas iguais. Nenhum grupo atual pode
   receber post antes de 07/12 (regra das 2 semanas; o Advogados Iniciantes bloqueia a Página). Rascunhos
   P1 (feed da Página, preço atual até 30/11) e R10 (entrar no Escritórios de Advocacia) escritos.
+  Com OK do Ricardo: **P1 publicado** no feed da Página (público, sem impulsionar). Pedido de entrada
+  no **Escritórios de Advocacia** enviado — o grupo é privado e a entrada ficou pendente (diferente dos
+  outros, aceitos na hora). R10 fica para quando a entrada for aceita; ler as regras antes de postar.
 
 ## Como anexar imagem
 
