@@ -39,7 +39,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
 | [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; admins revisam o 1º post de quem entra | membro (25/11/2026) | 25/11/2026 | Não confundir com o ADVOGADOS (1245881118761349). Entrada aceita na hora. Feed cheio de anúncio fora do tema. R6 pendente (revisão de novo participante). |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
-| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha), respondido pela Página com pergunta. |
+| [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha), respondido pela Página com pergunta; ela curtiu e respondeu (redundância agenda + planilha). |
 
 ### Candidatos
 
@@ -338,6 +338,10 @@ Em 24/11 não havia anúncio de produto no feed, só advogados divulgando o pró
   função?" — publicada às ~21h. R3, R8 e
   R9 sem comentários novos. Filas sem mudança: R1, R2, R4, R5, R6 e os 2 antigos do Advogados Do Brasil
   seguem pendentes.
+- **26/11/2026** — Verificação: a Thaís **curtiu** a resposta da Página e respondeu marcando a Causify:
+  "sempre lanço na agenda e na planilha porque se um falhar, tem o outro pra garantir que não vou perder
+  prazo." (sem resposta nossa ainda). R3, R8 e R9 sem comentários novos. Filas sem mudança: R1, R2, R4,
+  R5, R6 e os 2 antigos do Advogados Do Brasil seguem pendentes (R1 e R2 há 3 dias).
 
 ## Como anexar imagem
 
