@@ -35,7 +35,7 @@ public static class ExtratoHonorarioPdfRenderer
             {
                 page.Size(PageSizes.A4);
                 page.Margin(50);
-                page.DefaultTextStyle(x => x.FontSize(9).FontFamily(PdfFontes.Familia()));
+                page.DefaultTextStyle(x => x.FontSize(10).FontFamily(PdfFontes.Familia()));
 
                 page.Header().Element(c => Cabecalho(c, d, logoBytes));
                 page.Content().Element(c => Conteudo(c, d));
@@ -67,10 +67,10 @@ public static class ExtratoHonorarioPdfRenderer
                 {
                     c.Item().Text(d.NomeEscritorio).Bold().FontSize(13).FontColor(Primaria(d));
                     if (!string.IsNullOrEmpty(d.Advogado) || !string.IsNullOrEmpty(d.Oab))
-                        c.Item().Text($"{d.Advogado}{(string.IsNullOrEmpty(d.Oab) ? "" : " — " + d.Oab)}").FontSize(8.5f).FontColor(CorMuted);
-                    if (!string.IsNullOrEmpty(d.Endereco)) c.Item().Text(d.Endereco).FontSize(8.5f).FontColor(CorMuted);
+                        c.Item().Text($"{d.Advogado}{(string.IsNullOrEmpty(d.Oab) ? "" : " — " + d.Oab)}").FontSize(9).FontColor(CorMuted);
+                    if (!string.IsNullOrEmpty(d.Endereco)) c.Item().Text(d.Endereco).FontSize(9).FontColor(CorMuted);
                     if (!string.IsNullOrEmpty(d.Telefone) || !string.IsNullOrEmpty(d.Email))
-                        c.Item().Text($"{(string.IsNullOrEmpty(d.Telefone) ? "" : "Tel: " + d.Telefone)}{(string.IsNullOrEmpty(d.Email) ? "" : (!string.IsNullOrEmpty(d.Telefone) ? " · " : "") + d.Email)}").FontSize(8.5f).FontColor(CorMuted);
+                        c.Item().Text($"{(string.IsNullOrEmpty(d.Telefone) ? "" : "Tel: " + d.Telefone)}{(string.IsNullOrEmpty(d.Email) ? "" : (!string.IsNullOrEmpty(d.Telefone) ? " · " : "") + d.Email)}").FontSize(9).FontColor(CorMuted);
                 });
             });
             col.Item().PaddingTop(4).BorderBottom(3).BorderColor(Destaque(d));
@@ -150,13 +150,13 @@ public static class ExtratoHonorarioPdfRenderer
                         "Em Atraso" => "#DC2626",
                         _ => "#B45309"
                     };
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Label).FontSize(8.5f);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy", PtBr)).FontSize(8.5f);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.Valor)).FontSize(8.5f);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.JurosMulta.HasValue ? FormatBRL(r.JurosMulta.Value) : "—").FontColor(r.JurosMulta.HasValue ? "#DC2626" : "#999").FontSize(8.5f);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Status).FontColor(statusColor).FontSize(8.5f).Bold();
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy", PtBr) ?? "—").FontSize(8.5f);
-                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.ValorAtualizado)).FontSize(8.5f).Bold();
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Label).FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Vencimento.ToString("dd/MM/yyyy", PtBr)).FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.Valor)).FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.JurosMulta.HasValue ? FormatBRL(r.JurosMulta.Value) : "—").FontColor(r.JurosMulta.HasValue ? "#DC2626" : "#999").FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.Status).FontColor(statusColor).FontSize(9).Bold();
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(r.PagoEm?.ToString("dd/MM/yyyy", PtBr) ?? "—").FontSize(9);
+                    tab.Cell().BorderBottom(1).BorderColor("#EEE").Padding(5).Text(FormatBRL(r.ValorAtualizado)).FontSize(9).Bold();
                 }
             });
 
