@@ -448,6 +448,10 @@ public class HonorariosControllerTests
 
         var fileResult = Assert.IsType<FileContentResult>(result);
         Assert.NotEmpty(fileResult.FileContents);
+        // Fonte embutida pelo assembly, independente do servidor.
+        var pdf = System.Text.Encoding.Latin1.GetString(fileResult.FileContents);
+        Assert.Contains("SourceSans3-Regular", pdf);
+        Assert.Contains("SourceSans3-Bold", pdf);
     }
 
     [Fact]
