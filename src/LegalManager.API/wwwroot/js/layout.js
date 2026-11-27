@@ -5,7 +5,7 @@ import { injectTarefasWidget } from './tarefas-widget.js';
 import { injectTourWidget, resumeTourIfActive } from './tour.js';
 import { injectPerguntasWidget } from './perguntas-widget.js';
 import { initImportacaoBar } from './importacao-bar.js';
-import { injectNovidadesButton } from './novidades.js';
+import { injectNovidadesButton, agendarDestaqueNovidade } from './novidades.js';
 import { injectAssistente } from './assistente.js';
 import { injectSuporteButton } from './suporte.js';
 import { getModoCor, injectModoCorToggle } from './modo-cor.js';
@@ -110,7 +110,12 @@ export function isPlanoPlus() {
   return getPlano() === 'Plus';
 }
 
-export function initLayout() {
+/**
+ * Monta o layout comum do portal admin.
+ * @param {{ destaqueNovidade?: boolean }} [opcoes] destaqueNovidade: false nos dashboards, que
+ *   mostram a novidade em destaque no fim da própria fila de modais (trial → onboarding → destaque).
+ */
+export function initLayout({ destaqueNovidade = true } = {}) {
   if (!isLoggedIn()) {
     const back = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = `/login.html?redirect=${back}`;
@@ -159,6 +164,8 @@ export function initLayout() {
   injectModoCorToggle();
   injectNotificationBell();
   injectNovidadesButton();
+  // Novidade em destaque: uma vez, na primeira tela em que o usuário entrar.
+  if (destaqueNovidade) agendarDestaqueNovidade();
   // Chat de suporte (Crisp) abre pelo header; o balão flutuante fica escondido.
   injectSuporteButton();
   injectImpersonationBanner();

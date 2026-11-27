@@ -1048,5 +1048,11 @@
   })();
 </script>
 
+<!-- Link de parceiro (?parceiro=CODIGO) apontando para a home: guarda o código por 30 dias para o
+     cadastro feito depois, em register.html (ver getCodigoParceiro em js/utm.js). -->
+<script type="module">
+  import { getCodigoParceiro } from '/js/utm.js';
+  getCodigoParceiro();
+</script>
 </body>
 </html>

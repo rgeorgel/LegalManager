@@ -5,7 +5,7 @@
 //
 // Novidades com TourId ganham o botão "Me mostra", que abre um tour curto da
 // funcionalidade (tours `oculto` em tours-config.js). As marcadas como destaque também
-// aparecem uma vez num modal no dashboard (mostrarDestaqueNovidade).
+// aparecem uma vez num modal, em qualquer tela (mostrarDestaqueNovidade / agendarDestaqueNovidade).
 import { apiFetch } from './api.js';
 import { trackEvent } from './analytics.js';
 import { renderMarkdown } from './markdown.js';
@@ -195,10 +195,38 @@ function fecharPainel() {
 
 // ── Modal da novidade em destaque ─────────────────────────────────────────
 
+// Nas outras telas o modal entra pelo initLayout. "Sem destaque pendente" fica guardado na
+// sessão por um tempo, para não consultar a API a cada navegação.
+const DESTAQUE_CHECADO_KEY = 'novidade_destaque_checado';
+const DESTAQUE_CACHE_MS = 10 * 60 * 1000;
+
+function telaOcupada() {
+  try { if (sessionStorage.getItem('tour_active')) return true; } catch { /* sem storage */ }
+  return !!document.querySelector('.modal-overlay.open, #novidadesOverlay:not([hidden]), .tour-overlay, #menuConvite');
+}
+
+/**
+ * Agenda o modal da novidade em destaque em qualquer tela do portal admin (chamado por
+ * initLayout; os dashboards chamam mostrarDestaqueNovidade no fim da própria fila de modais).
+ * Espera a página assentar e, se houver outro modal ou tour aberto, tenta de novo algumas vezes.
+ */
+export function agendarDestaqueNovidade({ espera = 1500, tentativas = 5 } = {}) {
+  try {
+    const checado = Number(sessionStorage.getItem(DESTAQUE_CHECADO_KEY));
+    if (checado && Date.now() - checado < DESTAQUE_CACHE_MS) return;
+  } catch { /* storage bloqueado: segue */ }
+  let restantes = tentativas;
+  const tentar = () => {
+    if (telaOcupada()) { if (--restantes > 0) setTimeout(tentar, 5000); return; }
+    mostrarDestaqueNovidade();
+  };
+  setTimeout(tentar, espera);
+}
+
 /**
  * Mostra, uma vez, a novidade em destaque que o usuário ainda não viu (GET /novidades/destaque).
- * Chamado pelo dashboard no fim da fila de modais de entrada (trial → onboarding → este),
- * para não empilhar com eles. Não aparece com um tour em andamento.
+ * Os dashboards chamam no fim da fila de modais de entrada (trial → onboarding → este), para não
+ * empilhar com eles; as demais telas, via agendarDestaqueNovidade. Não aparece com um tour em andamento.
  */
 export async function mostrarDestaqueNovidade() {
   try {
@@ -210,7 +238,12 @@ export async function mostrarDestaqueNovidade() {
   try {
     n = await apiFetch('/novidades/destaque');
   } catch { return; }
-  if (!n?.id) return;
+  if (!n?.id) {
+    try { sessionStorage.setItem(DESTAQUE_CHECADO_KEY, String(Date.now())); } catch { /* sem storage */ }
+    return;
+  }
+  // A consulta é assíncrona: se outro modal abriu nesse meio-tempo, fica para a próxima tela.
+  if (document.getElementById('novidadeDestaqueOverlay') || telaOcupada()) return;
 
   if (!document.getElementById('novidadesStyles')) {
     const s = document.createElement('style');
@@ -255,6 +288,7 @@ export async function mostrarDestaqueNovidade() {
     overlay.remove();
     document.removeEventListener('keydown', onKey);
     trackEvent('novidade_destaque_fechado', { novidade_id: n.id, acao });
+    try { sessionStorage.setItem(DESTAQUE_CHECADO_KEY, String(Date.now())); } catch { /* sem storage */ }
     return apiFetch('/novidades/destaque/visto', { method: 'POST' }).catch(() => {});
   };
   const onKey = e => { if (e.key === 'Escape') fechar('esc'); };
