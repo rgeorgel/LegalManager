@@ -63,12 +63,13 @@ public class BuscaController(AppDbContext context, ITenantContext tenantContext)
                 (p.Classe != null && p.Classe.ToLower().Contains(busca)) ||
                 (p.Vara != null && p.Vara.ToLower().Contains(busca)) ||
                 (p.Comarca != null && p.Comarca.ToLower().Contains(busca)) ||
+                (p.Orgao != null && p.Orgao.ToLower().Contains(busca)) ||
                 p.Partes.Any(pt => pt.Contato.Nome.ToLower().Contains(busca)))
             .OrderBy(p => p.Status).ThenByDescending(p => p.CriadoEm)
             .Take(n)
             .Select(p => new
             {
-                p.Id, p.NumeroCNJ, p.Status, p.TipoAcao, p.Classe, p.Vara, p.Comarca,
+                p.Id, p.NumeroCNJ, p.Status, p.TipoAcao, p.Classe, p.Vara, p.Comarca, p.Orgao,
                 Partes = p.Partes.OrderBy(pt => pt.Contato.Nome).Select(pt => pt.Contato.Nome).Take(2).ToList(),
             })
             .ToListAsync(ct);
@@ -76,7 +77,7 @@ public class BuscaController(AppDbContext context, ITenantContext tenantContext)
         return lista.Select(p => new BuscaGlobalItemDto(
             "processo", p.Id, p.NumeroCNJ,
             Juntar(p.Partes.Count > 0 ? string.Join(" × ", p.Partes) : null,
-                   p.TipoAcao ?? p.Classe, p.Vara ?? p.Comarca,
+                   p.TipoAcao ?? p.Classe, p.Orgao ?? p.Vara ?? p.Comarca,
                    p.Status == StatusProcesso.Ativo ? null : p.Status.ToString()),
             $"/pages/processo-detalhe.html?id={p.Id}",
             Inativo: p.Status is StatusProcesso.Arquivado or StatusProcesso.Encerrado));

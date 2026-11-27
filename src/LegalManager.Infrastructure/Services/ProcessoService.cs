@@ -29,7 +29,14 @@ public class ProcessoService : IProcessoService
 
     public async Task<ProcessoResponseDto> CreateAsync(CreateProcessoDto dto, CancellationToken ct = default)
     {
-        await GarantirCnjDisponivelAsync(dto.NumeroCNJ, null, ct);
+        ValidarNumero(dto.NumeroCNJ, dto.Tipo);
+        ValidarMonitoravel(dto.Monitorado, dto.Tipo);
+        await GarantirCnjDisponivelAsync(dto.NumeroCNJ.Trim(), null, ct);
+        if (dto.Inss != null && dto.Tipo != TipoProcesso.Administrativo)
+            throw new InvalidOperationException("Os dados do INSS são de processo administrativo.");
+        if (dto.ProcessoOrigemId is { } origemId && !await _context.Processos.AnyAsync(
+                p => p.Id == origemId && p.TenantId == _tenantContext.TenantId, ct))
+            throw new InvalidOperationException("Processo de origem não encontrado.");
 
         if (dto.Monitorado)
         {
@@ -45,7 +52,10 @@ public class ProcessoService : IProcessoService
         {
             Id = Guid.NewGuid(),
             TenantId = _tenantContext.TenantId,
-            NumeroCNJ = dto.NumeroCNJ,
+            NumeroCNJ = dto.NumeroCNJ.Trim(),
+            Tipo = dto.Tipo,
+            Orgao = dto.Tipo == TipoProcesso.Judicial ? null : Limpar(dto.Orgao),
+            ProcessoOrigemId = dto.ProcessoOrigemId,
             Tribunal = dto.Tribunal,
             Vara = dto.Vara,
             Comarca = dto.Comarca,
@@ -65,7 +75,7 @@ public class ProcessoService : IProcessoService
             Grau = dto.Grau,
             Sistema = dto.Sistema,
             Formato = dto.Formato,
-            NivelSigilo = dto.NivelSigilo,
+            NivelSigilo = dto.SegredoJustica ? Math.Max(dto.NivelSigilo ?? 0, 1) : dto.NivelSigilo,
             UltimaAtualizacaoDataJud = dto.UltimaAtualizacaoDataJud
         };
 
@@ -94,6 +104,12 @@ public class ProcessoService : IProcessoService
         if (dto.Andamentos != null && dto.Andamentos.Count > 0)
             processo.UltimoAndamentoEm = dto.Andamentos.Max(a => a.Data);
 
+        if (dto.Inss != null)
+        {
+            processo.RequerimentoInss = new RequerimentoInss { ProcessoId = processo.Id, TenantId = processo.TenantId, AtualizadoEm = DateTime.UtcNow };
+            RequerimentoInssService.Aplicar(processo.RequerimentoInss, dto.Inss);
+        }
+
         _context.Processos.Add(processo);
         await _context.SaveChangesAsync(ct);
 
@@ -106,10 +122,30 @@ public class ProcessoService : IProcessoService
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct)
             ?? throw new KeyNotFoundException("Processo não encontrado.");
 
-        if (processo.NumeroCNJ != dto.NumeroCNJ)
-            await GarantirCnjDisponivelAsync(dto.NumeroCNJ, id, ct);
+        var tipo = dto.Tipo ?? processo.Tipo;
+        ValidarNumero(dto.NumeroCNJ, tipo);
+        ValidarMonitoravel(dto.Monitorado == true, tipo);
 
-        processo.NumeroCNJ = dto.NumeroCNJ;
+        var numero = dto.NumeroCNJ.Trim();
+        if (processo.NumeroCNJ != numero)
+            await GarantirCnjDisponivelAsync(numero, id, ct);
+
+        processo.NumeroCNJ = numero;
+        if (dto.Tipo is { } novoTipo)
+        {
+            processo.Tipo = novoTipo;
+            processo.Orgao = novoTipo == TipoProcesso.Judicial ? null : Limpar(dto.Orgao);
+            // No judicial a data de ajuizamento vem do tribunal (DataJud), não do formulário.
+            if (novoTipo != TipoProcesso.Judicial) processo.DataAjuizamento = dto.DataAjuizamento;
+            // Deixou de ser judicial: não há o que consultar no tribunal.
+            if (novoTipo != TipoProcesso.Judicial && processo.Monitorado)
+            {
+                await CancelarMonitoramentoEscavadorAsync(processo);
+                processo.Monitorado = false;
+            }
+        }
+        if (dto.SegredoJustica is { } segredo)
+            processo.NivelSigilo = segredo ? Math.Max(processo.NivelSigilo ?? 0, 1) : 0;
         processo.Tribunal = dto.Tribunal;
         processo.Vara = dto.Vara;
         processo.Comarca = dto.Comarca;
@@ -195,6 +231,24 @@ public class ProcessoService : IProcessoService
         return await LoadResponseAsync(id, ct) ?? throw new InvalidOperationException();
     }
 
+    private static void ValidarNumero(string? numero, TipoProcesso tipo)
+    {
+        if (!string.IsNullOrWhiteSpace(numero)) return;
+        throw new InvalidOperationException(tipo == TipoProcesso.Judicial
+            ? "Informe o número CNJ do processo."
+            : "Informe o número do protocolo no órgão.");
+    }
+
+    // Só o judicial tem número CNJ para consultar no DataJud/Escavador.
+    private static void ValidarMonitoravel(bool monitorado, TipoProcesso tipo)
+    {
+        if (monitorado && tipo != TipoProcesso.Judicial)
+            throw new InvalidOperationException(
+                "Só processos judiciais podem ser monitorados: processos administrativos e extrajudiciais não têm consulta automática.");
+    }
+
+    private static string? Limpar(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
+
     /// <summary>
     /// Lança <see cref="ProcessoDuplicadoException"/> se outro processo do escritório já usa o CNJ —
     /// inclusive arquivado ou encerrado, que some da lista padrão e confunde quem tenta recadastrar.
@@ -235,6 +289,7 @@ public class ProcessoService : IProcessoService
             query = query.Where(p =>
                 p.NumeroCNJ.Contains(busca) ||
                 (p.Tribunal != null && p.Tribunal.ToLower().Contains(busca)) ||
+                (p.Orgao != null && p.Orgao.ToLower().Contains(busca)) ||
                 (p.Comarca != null && p.Comarca.ToLower().Contains(busca)) ||
                 (p.TipoAcao != null && p.TipoAcao.ToLower().Contains(busca)) ||
                 p.Partes.Any(pt => pt.Contato.Nome.ToLower().Contains(busca)));
@@ -275,7 +330,8 @@ public class ProcessoService : IProcessoService
             {
                 p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
                 p.Status, p.ValorCausa, p.CriadoEm, p.UltimoAndamentoEm, p.AndamentosPendentes,
-                p.Monitorado, p.Grau,
+                p.Monitorado, p.Grau, p.Tipo, p.Orgao, p.NivelSigilo, p.TipoAcao,
+                SituacaoInss = p.RequerimentoInss != null ? p.RequerimentoInss.Situacao : (SituacaoRequerimentoInss?)null,
                 NomeAdvogado = p.AdvogadoResponsavel != null ? p.AdvogadoResponsavel.Nome : null,
                 NomeCliente = p.Partes
                     .Where(pt => pt.TipoParte == TipoParteProcesso.Autor)
@@ -290,7 +346,7 @@ public class ProcessoService : IProcessoService
             items.Select(p => new ProcessoListItemDto(
                 p.Id, p.NumeroCNJ, p.Tribunal, p.Vara, p.Comarca, p.AreaDireito, p.Fase,
                 p.Status, p.ValorCausa, p.NomeAdvogado, p.NomeCliente, p.CriadoEm, p.TotalAndamentos, p.UltimoAndamentoEm,
-                p.AndamentosPendentes, p.Favorito, p.Monitorado, p.Grau)),
+                p.AndamentosPendentes, p.Favorito, p.Monitorado, p.Grau, p.Tipo, p.Orgao, p.NivelSigilo, p.TipoAcao, p.SituacaoInss)),
             total, filtro.Page, filtro.PageSize,
             (int)Math.Ceiling((double)total / filtro.PageSize));
     }
@@ -476,7 +532,8 @@ public class ProcessoService : IProcessoService
     {
         var tenantId = _tenantContext.TenantId;
         var query = _context.Processos.AsNoTracking()
-            .Where(p => p.TenantId == tenantId && p.Status == StatusProcesso.Ativo);
+            // Situação "na fonte" = no tribunal: não se aplica a administrativos/extrajudiciais.
+            .Where(p => p.TenantId == tenantId && p.Status == StatusProcesso.Ativo && p.Tipo == TipoProcesso.Judicial);
         if (processoIds != null) query = query.Where(p => processoIds.Contains(p.Id));
         var processos = await query
             .Select(p => new { p.Id, p.NumeroCNJ, Tribunal = p.SiglaTribunal ?? p.Tribunal, p.Grau })
@@ -716,9 +773,17 @@ public class ProcessoService : IProcessoService
         var p = await _context.Processos
             .Include(p => p.AdvogadoResponsavel)
             .Include(p => p.Partes).ThenInclude(pt => pt.Contato)
+            .Include(p => p.ProcessoOrigem)
+            .Include(p => p.RequerimentoInss)
             .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == _tenantContext.TenantId, ct);
 
         if (p == null) return null;
+
+        var derivados = await _context.Processos.AsNoTracking()
+            .Where(d => d.ProcessoOrigemId == id && d.TenantId == _tenantContext.TenantId)
+            .OrderBy(d => d.CriadoEm)
+            .Select(d => new ProcessoVinculadoDto(d.Id, d.NumeroCNJ, d.Tipo, d.Orgao))
+            .ToListAsync(ct);
 
         var totalAndamentos = await _context.Andamentos.CountAsync(a => a.ProcessoId == id, ct);
         var favorito = await _context.ProcessosFavoritos.AnyAsync(
@@ -740,7 +805,12 @@ public class ProcessoService : IProcessoService
             p.SiglaTribunal, p.Segmento, p.DataDistribuicao,
             p.UltimoAndamentoEm,
             p.AndamentosPendentes,
-            favorito);
+            favorito,
+            p.Tipo,
+            p.Orgao,
+            p.ProcessoOrigem is { } o ? new ProcessoVinculadoDto(o.Id, o.NumeroCNJ, o.Tipo, o.Orgao) : null,
+            derivados,
+            p.RequerimentoInss?.Situacao);
     }
 
     public async Task DefinirFavoritoAsync(Guid processoId, bool favorito, CancellationToken ct = default)

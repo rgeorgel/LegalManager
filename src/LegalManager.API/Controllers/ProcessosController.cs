@@ -299,7 +299,15 @@ public class ProcessosController : ControllerBase
     [HttpPost("{id:guid}/monitoramento/alternar")]
     public async Task<IActionResult> AlternarMonitoramento(Guid id, CancellationToken ct)
     {
-        var ativo = await _monitoramento.AlternarMonitoramentoAsync(id, ct);
+        bool ativo;
+        try
+        {
+            ativo = await _monitoramento.AlternarMonitoramentoAsync(id, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = "monitoramento_error", message = ex.Message });
+        }
         await _audit.LogAsync(_tenantContext.CreateEntry(
             TimelineAcoes.MonitoramentoAlternado, AuditEntities.Processo, id, null, new { Monitorado = ativo },
             HttpContext.GetClientIpAddress()), ct);
@@ -314,6 +322,8 @@ public class ProcessosController : ControllerBase
     {
         var processo = await _service.GetByIdAsync(id, ct);
         if (processo == null) return NotFound("Processo não encontrado.");
+        if (processo.Tipo != TipoProcesso.Judicial)
+            return BadRequest(new { message = "Processos administrativos e extrajudiciais não têm consulta no tribunal: registre os andamentos manualmente." });
 
         // Consulta manual já cobre a carga inicial de um processo importado sem andamentos.
         if (processo.AndamentosPendentes) await ReservarCargaInicialAsync(id, ct);

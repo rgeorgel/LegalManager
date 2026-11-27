@@ -410,6 +410,7 @@
       ['Telefone', c.telefone || '—'],
       ['CPF/CNPJ', c.cpfCnpj || '—'],
       ['OAB', c.oab || '—'],
+      ...(c.nit ? [['NIT / PIS', esc(c.nit)]] : []),
       ['Endereço', c.endereco || '—'],
       ['Cidade/UF', [c.cidade, c.estado].filter(Boolean).join(' / ') || '—'],
       ['CEP', c.cep || '—'],

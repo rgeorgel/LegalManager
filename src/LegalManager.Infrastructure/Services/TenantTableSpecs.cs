@@ -52,6 +52,7 @@ internal static class TenantTableSpecs
 
         new("Processos",                typeof(Processo),                     TenantFilterKind.TenantId),
         new("ProcessoPartes",           typeof(ProcessoParte),                TenantFilterKind.ProcessoIdInTenant),
+        new("RequerimentosInss",        typeof(RequerimentoInss),             TenantFilterKind.TenantId),
         new("Andamentos",               typeof(Andamento),                    TenantFilterKind.TenantId),
         new("TraducoesAndamentos",      typeof(TraducaoAndamento),            TenantFilterKind.TenantId),
 

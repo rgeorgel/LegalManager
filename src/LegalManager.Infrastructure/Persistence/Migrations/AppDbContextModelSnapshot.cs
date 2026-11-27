@@ -966,6 +966,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<string>("Nit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -3031,6 +3035,13 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Property<string>("Observacoes")
                         .HasColumnType("text");
 
+                    b.Property<string>("Orgao")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid?>("ProcessoOrigemId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Relator")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -3059,6 +3070,9 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TipoAcao")
                         .HasMaxLength(200)
@@ -3097,6 +3111,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("EscavadorMonitoramentoId")
                         .HasFilter("\"EscavadorMonitoramentoId\" IS NOT NULL");
+
+                    b.HasIndex("ProcessoOrigemId");
 
                     b.HasIndex("TenantId", "NumeroCNJ")
                         .IsUnique();
@@ -3514,6 +3530,64 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "UsuarioId");
 
                     b.ToTable("RegistrosTempo", (string)null);
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.RequerimentoInss", b =>
+                {
+                    b.Property<Guid>("ProcessoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataCiencia")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("Dcb")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("Dib")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Especie")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("InstanciaRecurso")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NumeroBeneficio")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("NumeroRecurso")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("PericiaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PericiaLocal")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal?>("Rmi")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Unidade")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("ProcessoId");
+
+                    b.HasIndex("TenantId", "Situacao");
+
+                    b.ToTable("RequerimentosInss", (string)null);
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.RespostaPergunta", b =>
@@ -5190,6 +5264,11 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .HasForeignKey("AdvogadoResponsavelId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("LegalManager.Domain.Entities.Processo", "ProcessoOrigem")
+                        .WithMany("ProcessosDerivados")
+                        .HasForeignKey("ProcessoOrigemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("LegalManager.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
@@ -5197,6 +5276,8 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("AdvogadoResponsavel");
+
+                    b.Navigation("ProcessoOrigem");
 
                     b.Navigation("Tenant");
                 });
@@ -5346,6 +5427,17 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("LegalManager.Domain.Entities.RequerimentoInss", b =>
+                {
+                    b.HasOne("LegalManager.Domain.Entities.Processo", "Processo")
+                        .WithOne("RequerimentoInss")
+                        .HasForeignKey("LegalManager.Domain.Entities.RequerimentoInss", "ProcessoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Processo");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.ResumoProcesso", b =>
@@ -5668,6 +5760,10 @@ namespace LegalManager.Infrastructure.Persistence.Migrations
                     b.Navigation("Favoritos");
 
                     b.Navigation("Partes");
+
+                    b.Navigation("ProcessosDerivados");
+
+                    b.Navigation("RequerimentoInss");
                 });
 
             modelBuilder.Entity("LegalManager.Domain.Entities.SolicitacaoPagamentoParceiro", b =>

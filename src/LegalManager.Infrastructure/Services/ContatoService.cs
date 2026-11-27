@@ -39,6 +39,7 @@ public class ContatoService : IContatoService
             Estado = dto.Estado,
             Cep = dto.Cep,
             DataNascimento = dto.DataNascimento,
+            Nit = string.IsNullOrWhiteSpace(dto.Nit) ? null : dto.Nit.Trim(),
             Observacoes = dto.Observacoes,
             NotificacaoHabilitada = dto.NotificacaoHabilitada,
             ImportadoAutomaticamente = dto.ImportadoAutomaticamente,
@@ -72,6 +73,7 @@ public class ContatoService : IContatoService
         contato.Estado = dto.Estado;
         contato.Cep = dto.Cep;
         contato.DataNascimento = dto.DataNascimento;
+        if (dto.Nit != null) contato.Nit = string.IsNullOrWhiteSpace(dto.Nit) ? null : dto.Nit.Trim();
         contato.Observacoes = dto.Observacoes;
         contato.NotificacaoHabilitada = dto.NotificacaoHabilitada;
         contato.AtualizadoEm = DateTime.UtcNow;
@@ -555,7 +557,7 @@ public async Task<ContatoResponseDto?> GetByIdAsync(Guid id, CancellationToken c
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Oab, c.Email,
         c.Telefone, c.Endereco, c.Cidade, c.Estado, c.Cep, c.DataNascimento,
         c.Observacoes, c.NotificacaoHabilitada, c.Ativo,
-        c.Tags.Select(t => t.Tag).ToList(), c.CriadoEm, c.ImportadoAutomaticamente);
+        c.Tags.Select(t => t.Tag).ToList(), c.CriadoEm, c.ImportadoAutomaticamente, c.Nit);
 
     private static ContatoListItemDto MapToListItem(Contato c) => new(
         c.Id, c.Tipo, c.TipoContato, c.Nome, c.CpfCnpj, c.Email, c.Telefone,

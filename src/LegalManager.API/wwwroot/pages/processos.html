@@ -63,6 +63,18 @@
     .search-btn:hover { background:color-mix(in srgb, var(--color-text) 10%, var(--color-surface)); }
     .search-btn:disabled { opacity:.5; cursor:not-allowed; }
     .parte-row .parte-datajud-hint { font-size:11px; color:#6b7280; margin-top:2px; }
+    /* Tipo do processo: judicial (CNJ, tribunal, busca, monitoramento) × administrativo/extrajudicial (órgão e protocolo). */
+    .pm-tipo { display:inline-flex; border:1px solid var(--color-border); border-radius:var(--radius); overflow:hidden; }
+    .pm-tipo label { margin:0; padding:7px 14px; cursor:pointer; font-size:13px; color:var(--color-text-muted); background:var(--color-surface); border-left:1px solid var(--color-border); }
+    .pm-tipo label:first-child { border-left:0; }
+    .pm-tipo input { position:absolute; opacity:0; pointer-events:none; }
+    .pm-tipo label:has(input:checked) { background:var(--color-primary); color:#fff; }
+    .pm-tipo label:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:-2px; }
+    .pm-dica { font-size:12px; color:var(--color-text-muted); margin:-6px 0 12px; }
+    .pm-check { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--color-text); cursor:pointer; margin:0; }
+    .pm-check input { width:16px; height:16px; }
+    #processoForm.pm-nao-judicial .so-judicial { display:none !important; }
+    #processoForm:not(.pm-nao-judicial) .so-nao-judicial { display:none !important; }
     .cnj-row { display:flex; gap:8px; align-items:center; }
     .cnj-row .cnj-input-wrap { flex:1; }
     .cnj-row-labels { display:flex; gap:8px; align-items:baseline; margin-bottom:6px; }
@@ -434,25 +446,73 @@
       <form id="processoForm">
         <div class="ctx-secao">Identificação</div>
         <div class="form-group">
+          <div class="pm-tipo" role="radiogroup" aria-label="Tipo do processo">
+            <label><input type="radio" name="fTipo" value="Judicial" checked> Judicial</label>
+            <label title="INSS, PROCON, Receita Federal, prefeitura…"><input type="radio" name="fTipo" value="Administrativo"> Administrativo</label>
+            <label title="Cartório, câmara de mediação…"><input type="radio" name="fTipo" value="Extrajudicial"> Extrajudicial</label>
+          </div>
+        </div>
+        <div class="form-group">
           <div class="cnj-row-labels">
-            <label>Número CNJ *</label>
-            <label>Tribunal</label>
+            <label for="fNumeroCNJ" id="lblNumero">Número CNJ *</label>
+            <label class="so-judicial">Tribunal</label>
           </div>
           <div class="cnj-row">
             <div class="cnj-input-wrap">
               <div class="input-with-search">
                 <input type="text" id="fNumeroCNJ" class="form-control" placeholder="0000000-00.0000.0.00.0000" required>
-                <div class="searchable-select-wrap tribunal-embed">
+                <div class="searchable-select-wrap tribunal-embed so-judicial">
                   <input type="text" id="fTribunal" placeholder="Ex: TJSP" autocomplete="off" value="TJSP">
                   <ul class="searchable-select-list" id="tribunalList"></ul>
                 </div>
-                <button type="button" class="search-btn" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
-                <span id="buscaProcessoPlusBadge" style="display:none;flex-shrink:0;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;white-space:nowrap" title="Disponível a partir do plano Plus">PLUS</span>
+                <button type="button" class="search-btn so-judicial" id="btnBuscarProcesso" title="Buscar dados do processo">🔍</button>
+                <span id="buscaProcessoPlusBadge" class="so-judicial" style="display:none;flex-shrink:0;background:#f59e0b;color:#0f172a;font-size:10px;font-weight:600;padding:1px 6px;border-radius:100px;letter-spacing:.04em;white-space:nowrap" title="Disponível a partir do plano Plus">PLUS</span>
               </div>
             </div>
           </div>
+          <label class="pm-check so-judicial" style="margin-top:8px">
+            <input type="checkbox" id="fSegredo"> Segredo de justiça
+            <span class="field-tip" tabindex="0">?<span class="field-tip-popup">Processos em segredo de justiça não aparecem na consulta pública dos tribunais: preencha os dados à mão. Eles não são monitorados, mas as publicações pela OAB continuam chegando.</span></span>
+          </label>
         </div>
-        <div class="form-row">
+        <div class="form-row so-nao-judicial">
+          <div class="form-group">
+            <label for="fOrgao">Órgão</label>
+            <input type="text" id="fOrgao" class="form-control" list="orgaosSugeridos" maxlength="150" placeholder="INSS, PROCON, cartório…">
+            <datalist id="orgaosSugeridos">
+              <option value="INSS"></option>
+              <option value="CRPS (recurso do INSS)"></option>
+              <option value="PROCON"></option>
+              <option value="Receita Federal"></option>
+              <option value="CARF"></option>
+              <option value="Prefeitura"></option>
+              <option value="Secretaria da Fazenda"></option>
+              <option value="Detran"></option>
+              <option value="Cartório de Notas"></option>
+              <option value="Cartório de Registro de Imóveis"></option>
+              <option value="Tribunal de Contas"></option>
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label for="fDataProtocolo" id="lblDataProtocolo">Data do protocolo</label>
+            <input type="date" id="fDataProtocolo" class="form-control">
+          </div>
+        </div>
+        <!-- Requerimento no INSS: só no cadastro; o resto (NB, ciência, perícia, DCB) fica no cartão do processo. -->
+        <div id="inssCadastro" class="so-nao-judicial" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fInssEspecie">Espécie do benefício</label>
+              <select id="fInssEspecie" class="form-control"><option value="">Selecionar…</option></select>
+            </div>
+            <div class="form-group">
+              <label for="fInssSituacao">Situação</label>
+              <select id="fInssSituacao" class="form-control"></select>
+            </div>
+          </div>
+          <p class="pm-dica">NB, data da ciência, perícia e DCB ficam no cartão “Requerimento no INSS” do processo, que sugere os prazos.</p>
+        </div>
+        <div class="form-row so-judicial">
           <div class="form-group">
             <label>Vara</label>
             <input type="text" id="fVara" class="form-control" placeholder="1ª Vara Cível">
@@ -497,11 +557,11 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tipo de Ação</label>
+            <label for="fTipoAcao" id="lblTipoAcao">Tipo de Ação</label>
             <input type="text" id="fTipoAcao" class="form-control" placeholder="Ação de Cobrança, Rescisão...">
           </div>
           <div class="form-group">
-            <label>Valor da Causa (R$)</label>
+            <label for="fValorCausa" id="lblValorCausa">Valor da Causa (R$)</label>
             <input type="number" id="fValorCausa" class="form-control" placeholder="0,00" min="0" step="0.01">
           </div>
         </div>
@@ -523,7 +583,7 @@
               <option value="">Selecionar...</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="monitorGroup">
             <label>Monitorar Andamentos <span class="field-tip" tabindex="0">?<span class="field-tip-popup">Quando ativo, a Causify consulta automaticamente novos andamentos no DataJud:<br><br>• <strong>Processos ativos recentes</strong>: verificados diariamente às 03h (horário de Brasília)<br>• <strong>Sem andamento há +180 dias</strong>: verificados semanalmente<br>• <strong>Status encerrado ou arquivado</strong>: não são verificados, mesmo se marcados<br><br>Ao detectar novos andamentos, o advogado responsável é notificado por e-mail e no sistema.</span></span></label>
             <select id="fMonitorado" class="form-control">
               <option value="false">Não</option>
@@ -546,6 +606,7 @@
       <aside class="ctx-painel" id="pmPainel">
         <!-- Cadastro: leitura do número CNJ e resultado da busca no tribunal -->
         <div class="ctx-painel" id="pmPainelCadastro">
+          <div class="ctx-card" id="pmOrigemInfo" style="display:none"></div>
           <div class="ctx-card ctx-destaque ctx-neutro" id="pmCnjInfo"></div>
           <div class="ctx-card" id="processPreview"></div>
           <div class="ctx-card" id="partesFoundPreview" style="display:none">
@@ -676,7 +737,94 @@ import { initOnboardingModal, openOnboardingModal, openReadOnlyModal, startDots,
 
 initLayout();
 
-document.getElementById('fNumeroCNJ').addEventListener('input', (e) => mascaraCnj(e.target));
+// Tipo do processo. Só o judicial tem número CNJ (máscara, leitura do número, busca no tribunal e
+// monitoramento); administrativo/extrajudicial guardam o protocolo do órgão no mesmo campo.
+// Data pura (protocolo) volta da API como meia-noite UTC: o dia é o do UTC, não o do fuso local.
+const isoDataPura = s => { const d = s ? new Date(s) : null; return d && !isNaN(d) ? d.toISOString().slice(0, 10) : ''; };
+// Requerimento no INSS (processo administrativo).
+const SITUACAO_INSS = { EmAnalise: 'Em análise', EmExigencia: 'Em exigência', Concedido: 'Concedido',
+  Indeferido: 'Indeferido', EmRecurso: 'Em recurso (CRPS)', Cancelado: 'Cancelado' };
+const COR_SITUACAO_INSS = { EmExigencia: 'badge-red', Indeferido: 'badge-red', Concedido: 'badge-green' };
+const ehOrgaoInss = orgao => /\b(inss|crps)\b/i.test(orgao || '');
+document.getElementById('fInssSituacao').innerHTML = Object.entries(SITUACAO_INSS)
+  .map(([v, r]) => `<option value="${v}">${r}</option>`).join('');
+let especiesInss = null;
+async function carregarEspeciesInss() {
+  if (especiesInss) return;
+  try {
+    especiesInss = await apiFetch('/inss/especies');
+    document.getElementById('fInssEspecie').insertAdjacentHTML('beforeend',
+      especiesInss.map(e => `<option value="${e.codigo}">B${e.codigo} — ${esc(e.nome)}</option>`).join(''));
+  } catch { especiesInss = null; }
+}
+// Cartão INSS do cadastro: administrativo com órgão INSS/CRPS. Na edição, os dados ficam no processo.
+function aplicarInssCadastro() {
+  const mostra = !editingId && tipoAtual() === 'Administrativo' && ehOrgaoInss(document.getElementById('fOrgao').value);
+  document.getElementById('inssCadastro').style.display = mostra ? '' : 'none';
+  document.getElementById('lblDataProtocolo').textContent =
+    tipoAtual() === 'Administrativo' && ehOrgaoInss(document.getElementById('fOrgao').value) ? 'DER (data do protocolo)' : 'Data do protocolo';
+  if (mostra) carregarEspeciesInss();
+}
+document.getElementById('fOrgao').addEventListener('input', aplicarInssCadastro);
+
+// "Ajuizar ação" (detalhe de um processo administrativo → ?ajuizar=<id>): o processo novo nasce
+// judicial, com as partes, a área e um resumo do administrativo, e fica ligado a ele.
+let ajuizarOrigem = null;
+function renderOrigemInfo() {
+  const card = document.getElementById('pmOrigemInfo');
+  if (!ajuizarOrigem || editingId) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  card.innerHTML = `<div class="ctx-card-titulo">Ação a partir do processo</div>
+    <div><a href="/pages/processo-detalhe.html?id=${encodeURIComponent(ajuizarOrigem.id)}" target="_blank" rel="noopener">${esc(ajuizarOrigem.numeroCNJ)}</a>${ajuizarOrigem.orgao ? ` · ${esc(ajuizarOrigem.orgao)}` : ''}</div>
+    <div class="ctx-vazio" style="margin-top:6px">As partes vieram do processo administrativo. Informe o número CNJ depois da distribuição.</div>`;
+}
+
+const ROTULO_TIPO = { Administrativo: 'Administrativo', Extrajudicial: 'Extrajudicial' };
+const tipoAtual = () => document.querySelector('input[name="fTipo"]:checked')?.value || 'Judicial';
+const ehJudicial = () => tipoAtual() === 'Judicial';
+
+function aplicarTipo({ trocouTipo = false } = {}) {
+  const judicial = ehJudicial();
+  document.getElementById('processoForm').classList.toggle('pm-nao-judicial', !judicial);
+  const numero = document.getElementById('fNumeroCNJ');
+  document.getElementById('lblNumero').textContent = judicial ? 'Número CNJ *' : 'Número do protocolo *';
+  numero.placeholder = judicial ? '0000000-00.0000.0.00.0000' : 'Número do requerimento ou protocolo no órgão';
+  document.getElementById('lblTipoAcao').textContent = judicial ? 'Tipo de Ação' : 'Assunto';
+  document.getElementById('fTipoAcao').placeholder = judicial ? 'Ação de Cobrança, Rescisão...' : 'Aposentadoria por idade, BPC, reclamação…';
+  document.getElementById('lblValorCausa').textContent = judicial ? 'Valor da Causa (R$)' : 'Valor (R$)';
+  // Fase: os não judiciais começam em "Outro" (as demais fases são do processo judicial).
+  const fase = document.getElementById('fFase');
+  if (trocouTipo && !editingId) {
+    if (!judicial && fase.value === 'Conhecimento') fase.value = 'Outro';
+    else if (judicial && fase.value === 'Outro') fase.value = 'Conhecimento';
+  }
+  if (trocouTipo && judicial) mascaraCnj(numero);
+  aplicarMonitoravel();
+  aplicarInssCadastro();
+  renderCnjInfo();
+  if (!editingId) {
+    if (judicial) renderBuscaDica();
+    else {
+      lastSearchResult = null;
+      renderPartesFoundPreview(null);
+      document.getElementById('processPreview').style.display = 'none';
+    }
+  }
+  renderBadgesModal();
+}
+
+// Monitoramento só para judicial público: sem CNJ ou em segredo, a consulta nunca encontra.
+function aplicarMonitoravel() {
+  const monitoravel = ehJudicial() && !document.getElementById('fSegredo').checked;
+  document.getElementById('monitorGroup').style.display = monitoravel ? '' : 'none';
+  if (!monitoravel) document.getElementById('fMonitorado').value = 'false';
+}
+
+document.querySelectorAll('input[name="fTipo"]').forEach(r =>
+  r.addEventListener('change', () => aplicarTipo({ trocouTipo: true })));
+document.getElementById('fSegredo').addEventListener('change', () => { aplicarMonitoravel(); renderBadgesModal(); });
+
+document.getElementById('fNumeroCNJ').addEventListener('input', (e) => { if (ehJudicial()) mascaraCnj(e.target); });
 
 // Busca automática (DataJud/Escavador) é funcionalidade paga — disponível a partir do
 // plano Plus. No Free, o botão fica visualmente marcado com o badge "PLUS" e o clique (ou
@@ -871,8 +1019,8 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
     } else {
       preview.className = 'ctx-card ctx-destaque ctx-proximo';
       preview.innerHTML = `<div class="ctx-card-titulo">Busca no tribunal</div>
-        <div class="ctx-destaque-rel">Processo não encontrado no CNJ</div>
-        <div class="ctx-destaque-data">Preencha os dados manualmente.</div>`;
+        <div class="ctx-destaque-rel">Não encontrado na consulta pública</div>
+        <div class="ctx-destaque-data">Preencha os dados à mão e salve normalmente. Processos em segredo de justiça não aparecem na consulta: marque “Segredo de justiça”.</div>`;
     }
   } catch (err) {
     preview.className = 'ctx-card ctx-destaque ctx-atrasado';
@@ -886,6 +1034,7 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
 
 function renderBuscaDica() {
   const preview = document.getElementById('processPreview');
+  preview.style.display = '';
   preview.className = 'ctx-card';
   preview.innerHTML = `<div class="ctx-card-titulo">Busca no tribunal</div>
     <div>Digite o número e clique em 🔍 (ou Enter) para trazer vara, classe, partes e andamentos.</div>
@@ -914,6 +1063,14 @@ function lerCnj(valor) {
 
 function renderCnjInfo() {
   const card = document.getElementById('pmCnjInfo');
+  if (!ehJudicial()) {
+    card.className = 'ctx-card ctx-destaque ctx-neutro';
+    card.innerHTML = `<div class="ctx-card-titulo">Processo ${ROTULO_TIPO[tipoAtual()].toLowerCase()}</div>
+      <div class="ctx-destaque-rel">Sem número CNJ</div>
+      <div class="ctx-destaque-data">Use o número do requerimento ou protocolo no órgão (no INSS, o protocolo do Meu INSS).</div>
+      <div class="ctx-destaque-extra"><div>Não há consulta automática: registre os andamentos e prazos à mão. Tarefas, documentos, honorários e portal do cliente funcionam como no judicial.</div></div>`;
+    return;
+  }
   const cnj = lerCnj(document.getElementById('fNumeroCNJ').value);
   if (cnj.digitos !== 20) {
     card.className = 'ctx-card ctx-destaque ctx-neutro';
@@ -940,7 +1097,7 @@ document.getElementById('fNumeroCNJ').addEventListener('input', renderCnjInfo);
 document.getElementById('fNumeroCNJ').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
-    document.getElementById('btnBuscarProcesso').click();
+    if (ehJudicial()) document.getElementById('btnBuscarProcesso').click();
   }
 });
 
@@ -1039,7 +1196,7 @@ function renderTable(items) {
 
     return `<div class="processo-card${p.favorito ? ' favorito' : ''}" data-id="${p.id}" onclick="window.location.href='/pages/processo-detalhe.html?id=${p.id}'">
       <div class="card-header">
-        <div class="card-cnj"><a href="/pages/processo-detalhe.html?id=${p.id}" onclick="event.stopPropagation()">${p.numeroCNJ}</a></div>
+        <div class="card-cnj"><a href="/pages/processo-detalhe.html?id=${p.id}" onclick="event.stopPropagation()">${esc(p.numeroCNJ)}</a></div>
         <div class="card-status">
           ${favBtn(p.favorito)}
           <span class="badge status-${statusCls}">${p.status}</span>
@@ -1047,14 +1204,16 @@ function renderTable(items) {
       </div>
       <div class="card-badges">
         <span class="badge badge-blue">${area}</span>
+        ${tipoBadge(p)}
         ${p.grau ? `<span class="badge badge-gray">${p.grau}</span>` : ''}
         ${monitoramento}
       </div>
       <div class="card-body">
       <div class="card-divider"></div>
       <div class="card-info">
-        ${infoRow('tribunal', 'Tribunal', p.tribunal)}
-        ${infoRow('vara', 'Vara', p.vara)}
+        ${p.tipo && p.tipo !== 'Judicial'
+          ? infoRow('tribunal', 'Órgão', p.orgao) + infoRow('vara', 'Assunto', p.tipoAcao)
+          : infoRow('tribunal', 'Tribunal', p.tribunal) + infoRow('vara', 'Vara', p.vara)}
         ${infoRow('parte', 'Parte', p.nomeCliente)}
         ${infoRow('valor', 'Valor', valor)}
         ${infoRow('responsavel', 'Responsável', p.nomeAdvogadoResponsavel)}
@@ -1079,6 +1238,15 @@ function renderTable(items) {
   intercalarAnuncios(grid, { seletor: '.processo-card', cada: 4 }); // só no plano Free
 }
 
+// Selo do tipo (só os não judiciais) e do segredo de justiça.
+function tipoBadge(p) {
+  return [
+    p.tipo && p.tipo !== 'Judicial' ? `<span class="badge badge-gray">${esc(ROTULO_TIPO[p.tipo] || p.tipo)}</span>` : '',
+    p.nivelSigilo > 0 ? '<span class="badge badge-gray" title="Segredo de justiça">🔒 Sigilo</span>' : '',
+    p.situacaoInss ? `<span class="badge ${COR_SITUACAO_INSS[p.situacaoInss] || 'badge-gray'} ent-encolhe" title="Situação no INSS">${esc(SITUACAO_INSS[p.situacaoInss] || p.situacaoInss)}</span>` : '',
+  ].join('');
+}
+
 // Visão em blocos: card de entidade do sistema (js/cards.js). Editar e Encerrar ficam no
 // detalhe do processo; no card, só a estrela de favorito.
 const ESTADO_PROCESSO = { Ativo: 'ok', Suspenso: 'warn', Arquivado: 'muted', Encerrado: 'muted' };
@@ -1096,13 +1264,15 @@ function cardProcesso(p) {
     statusHtml: `${favBtn(p.favorito)}<span class="badge status-${statusCls}">${esc(p.status)}</span>`,
     tagsHtml: [
       `<span class="badge badge-blue">${esc(areaLabel(p.areaDireito) || '—')}</span>`,
+      tipoBadge(p),
       p.grau ? `<span class="badge badge-gray">${esc(p.grau)}</span>` : '',
       p.monitorado ? '<span class="monitoring-badge">🔄 Monitorado</span>' : '',
     ],
     campos: [
       { rotulo: 'Parte', valor: p.nomeCliente },
-      { rotulo: 'Tribunal', valor: p.tribunal },
-      { rotulo: 'Vara', valor: p.vara },
+      ...(p.tipo && p.tipo !== 'Judicial'
+        ? [{ rotulo: 'Órgão', valor: p.orgao }, { rotulo: 'Assunto', valor: p.tipoAcao }]
+        : [{ rotulo: 'Tribunal', valor: p.tribunal }, { rotulo: 'Vara', valor: p.vara }]),
       { rotulo: 'Responsável', valor: p.nomeAdvogadoResponsavel },
     ],
     meta: {
@@ -1274,6 +1444,7 @@ function renderBadgesModal() {
   document.getElementById('modalBadges').innerHTML = `
     ${statusBadge(document.getElementById('fStatus').value)}
     <span class="badge badge-blue">${esc(areaLabel(document.getElementById('fAreaDireito').value))}</span>
+    ${tipoBadge({ tipo: tipoAtual(), nivelSigilo: ehJudicial() && document.getElementById('fSegredo').checked ? 1 : 0 })}
     ${editingProcesso.grau ? `<span class="badge badge-gray">${esc(editingProcesso.grau)}</span>` : ''}
     ${monitorado ? '<span class="monitoring-badge">🔄 Monitorado</span>' : ''}`;
 }
@@ -1322,10 +1493,12 @@ function cardSituacao(p) {
     else { tom = 'ctx-ok'; rel = `Movimentado ${tempoDesde(ultimo)}`; }
     sub = `Último andamento em ${fmtData(ultimo)}`;
   }
-  const ajuizamento = dataParede(p.dataAjuizamento || p.dataDistribuicao);
+  const judicial = !p.tipo || p.tipo === 'Judicial';
+  const ajuizamento = judicial ? dataParede(p.dataAjuizamento || p.dataDistribuicao) : dataParede(isoDataPura(p.dataAjuizamento));
   const extras = [
-    ajuizamento ? `Ajuizado em ${fmtData(ajuizamento)} (${tempoDesde(ajuizamento)})` : '',
-    p.monitorado
+    ajuizamento ? `${judicial ? 'Ajuizado' : 'Protocolado'} em ${fmtData(ajuizamento)} (${tempoDesde(ajuizamento)})` : '',
+    !judicial ? 'Sem consulta automática: andamentos registrados à mão'
+    : p.monitorado
       ? `🔄 Monitorado${p.ultimaAtualizacaoDataJud ? ` · consultado em ${fmtCarimbo(p.ultimaAtualizacaoDataJud)}` : ''}`
       : 'Monitoramento desligado',
     p.decisao ? `Decisão: ${esc(p.decisao)}` : '',
@@ -1340,6 +1513,7 @@ function cardSituacao(p) {
 }
 
 function cardTribunal(p) {
+  if (p.tipo && p.tipo !== 'Judicial') return '';
   const linha = (rotulo, valor) => valor ? `<div class="ctx-linha"><span>${rotulo}</span><span>${esc(valor)}</span></div>` : '';
   const tribunal = [p.siglaTribunal || p.tribunal, p.grau].filter(Boolean).join(' · ');
   const linhas = [
@@ -1491,6 +1665,11 @@ function addParteRow(contato = null, tipoParte = 'Autor', parteDataJud = null) {
 document.getElementById('btnAddParte').addEventListener('click', () => addParteRow());
 
 function fillForm(p) {
+  const tipo = p.tipo || 'Judicial';
+  document.querySelectorAll('input[name="fTipo"]').forEach(r => { r.checked = r.value === tipo; });
+  document.getElementById('fOrgao').value = p.orgao || '';
+  document.getElementById('fDataProtocolo').value = tipo !== 'Judicial' ? isoDataPura(p.dataAjuizamento) : '';
+  document.getElementById('fSegredo').checked = p.nivelSigilo > 0;
   document.getElementById('fNumeroCNJ').value = p.numeroCNJ;
   document.getElementById('fTribunal').value = p.tribunal || '';
   document.getElementById('fVara').value = p.vara || '';
@@ -1505,6 +1684,9 @@ function fillForm(p) {
   document.getElementById('fObservacoes').value = p.observacoes || '';
   document.getElementById('partesContainer').innerHTML = '';
   (p.partes || []).forEach(pt => addParteRow({ id: pt.contatoId, label: pt.nomeContato }, pt.tipoParte));
+  aplicarTipo();
+  // aplicarTipo zera o monitoramento quando não cabe; num processo que cabe, vale o gravado.
+  if (document.getElementById('monitorGroup').style.display !== 'none') document.getElementById('fMonitorado').value = String(p.monitorado);
 }
 
 function readForm() {
@@ -1547,9 +1729,13 @@ function readForm() {
       }
     : {};
 
+  const judicial = ehJudicial();
   return {
-    numeroCNJ: document.getElementById('fNumeroCNJ').value,
-    tribunal: document.getElementById('fTribunal').value || null,
+    numeroCNJ: document.getElementById('fNumeroCNJ').value.trim(),
+    tipo: tipoAtual(),
+    orgao: judicial ? null : (document.getElementById('fOrgao').value.trim() || null),
+    segredoJustica: judicial && document.getElementById('fSegredo').checked,
+    tribunal: judicial ? (document.getElementById('fTribunal').value || null) : null,
     vara: document.getElementById('fVara').value || null,
     comarca: document.getElementById('fComarca').value || null,
     areaDireito: document.getElementById('fAreaDireito').value,
@@ -1564,6 +1750,15 @@ function readForm() {
     partesDataJud,
     andamentos,
     ...dataJudData,
+    // Não judicial: a data do protocolo vai em dataAjuizamento.
+    ...(judicial ? {} : { dataAjuizamento: document.getElementById('fDataProtocolo').value || null }),
+    ...(!editingId && document.getElementById('inssCadastro').style.display !== 'none' ? {
+      inss: {
+        especie: document.getElementById('fInssEspecie').value ? Number(document.getElementById('fInssEspecie').value) : null,
+        situacao: document.getElementById('fInssSituacao').value,
+      },
+    } : {}),
+    ...(!editingId && ajuizarOrigem ? { processoOrigemId: ajuizarOrigem.id } : {}),
     ...(editingId ? { decisao: editingProcesso?.decisao ?? null, resultado: editingProcesso?.resultado ?? null } : {})
   };
 }
@@ -1580,9 +1775,11 @@ function resetModal() {
   document.getElementById('fMonitorado').value = 'false';
   document.getElementById('partesContainer').innerHTML = '';
   document.getElementById('modalAlert').style.display = 'none';
-  renderBuscaDica();
-  renderCnjInfo();
+  document.querySelector('input[name="fTipo"][value="Judicial"]').checked = true;
+  ajuizarOrigem = null;
+  renderOrigemInfo();
   renderPartesFoundPreview(null);
+  aplicarTipo();
 }
 
 document.getElementById('btnNovo').addEventListener('click', () => { resetModal(); modal.classList.add('open'); });
@@ -1763,7 +1960,46 @@ window.addEventListener('importacao:concluida', () => loadProcessos());
 // Atalho "criar novo" (ex.: dashboard → ?novo=1). Com &contatoId= (botão "Novo processo" da
 // ficha do contato), o contato já entra como parte (Autor) do processo novo.
 const contatoIdNovo = new URLSearchParams(location.search).get('contatoId');
+const ajuizarId = new URLSearchParams(location.search).get('ajuizar');
+if (ajuizarId) {
+  const url = new URL(location.href);
+  url.searchParams.delete('ajuizar');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  abrirAjuizamento(ajuizarId);
+}
 abrirNovoPelaUrl('btnNovo');
+
+async function abrirAjuizamento(origemId) {
+  const { getProcesso } = await import('/js/processos.js');
+  let origem, inss = null;
+  try {
+    origem = await getProcesso(origemId);
+    inss = await apiFetch(`/processos/${encodeURIComponent(origemId)}/inss`).catch(() => null);
+  } catch (err) { showAlert(err.message); return; }
+  resetModal();
+  ajuizarOrigem = origem;
+  document.getElementById('fAreaDireito').value = origem.areaDireito;
+  document.getElementById('fTipoAcao').value = inss?.especie && especieNome(inss)
+    ? `Concessão de ${especieNome(inss)}` : (origem.tipoAcao || '');
+  document.getElementById('fAdvogado').value = origem.advogadoResponsavelId || '';
+  const der = origem.dataAjuizamento ? isoDataPura(origem.dataAjuizamento).split('-').reverse().join('/') : null;
+  document.getElementById('fObservacoes').value = [
+    `Processo administrativo ${origem.numeroCNJ}${origem.orgao ? ` (${origem.orgao})` : ''}.`,
+    der ? `${ehOrgaoInss(origem.orgao) ? 'DER' : 'Protocolo'} em ${der}.` : '',
+    inss?.situacao === 'Indeferido' ? 'Requerimento indeferido.' : '',
+    inss?.numeroBeneficio ? `NB ${inss.numeroBeneficio}.` : '',
+  ].filter(Boolean).join(' ');
+  (origem.partes || []).forEach(pt => addParteRow({ id: pt.contatoId, label: pt.nomeContato }, pt.tipoParte));
+  renderOrigemInfo();
+  modal.classList.add('open');
+}
+// "B41 — Aposentadoria por idade" → "aposentadoria por idade" (para "Concessão de …").
+function especieNome(inss) {
+  const nome = (inss.especieNome || '').split(' — ')[1];
+  if (!nome) return '';
+  // Sigla (BPC/LOAS) fica como está.
+  return nome[1] && nome[1] === nome[1].toUpperCase() ? nome : nome.charAt(0).toLowerCase() + nome.slice(1);
+}
 if (contatoIdNovo) {
   const url = new URL(location.href);
   url.searchParams.delete('contatoId');

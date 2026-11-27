@@ -15,7 +15,10 @@ qualquer ação nova** (para não repetir grupo nem texto) e **atualize logo dep
 - Respeitar a regra de divulgação de cada grupo (dia da semana, tópico fixo, proibido etc.).
   Grupo que proíbe divulgação: no máximo conteúdo útil **sem chamada nem link**, ou nada.
 - Preferir conteúdo útil (prazos, publicações, honorários, gestão) a anúncio direto.
-- Imagens: `marketing/posts/out/*-1200x1200.png` (quote cards) e screenshots do sistema
+- **Por enquanto, só texto nos grupos** (decisão do Ricardo em 27/11/2026): pergunta ao grupo ou
+  conteúdo útil, como R3, R7, R8, R9 e R10, que entraram na hora ou em 1 dia. Os posts com imagem
+  (R1, R2, R4, R5) e os vídeos de out/2026 ficaram presos na moderação.
+- Imagens (quando voltarem a ser usadas): `marketing/posts/out/*-1200x1200.png` (quote cards) e screenshots do sistema
   (`marketing/ads/`). Imagens novas geradas para o Facebook ficam em `marketing/facebook/`.
   Screenshot só de escritório **de demonstração**, nunca com dado de cliente real.
 - Público-alvo: **advogados e escritórios**. Grupos onde a maioria é cliente pedindo consulta
@@ -38,6 +41,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
 | [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; admins revisam o 1º post de quem entra | membro (25/11/2026) | 25/11/2026 | Não confundir com o ADVOGADOS (1245881118761349). Entrada aceita na hora. Feed cheio de anúncio fora do tema. R6 pendente (revisão de novo participante). |
+| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; **sem regras publicadas**; Páginas anunciam no feed (Ofertas Tech, "Doutor resolve tudo") | membro (aceito em 26/11/2026; pedido ficou pendente algumas horas) | 27/11/2026 | Tema = gestão de escritório. R10 **entrou na hora**. |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
 | [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha), respondido pela Página com pergunta; ela curtiu e respondeu (redundância agenda + planilha). |
 
@@ -46,7 +50,6 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
-| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | sim | **pedido enviado (26/11/2026)** | Tema = gestão de escritório. Feed só visível para membros. |
 | [JAM Jovem Advocacia Mineira](https://www.facebook.com/groups/jovensadvogadosmineiros) | 6,1K | 0 | Propaganda só com autorização | — | evitar | Morto (nenhum post no último mês). |
 | [OAB - Ordem dos Advogados do Brasil](https://www.facebook.com/groups/150483285142) | 32,6K | 9 | Proíbe propaganda; expulsa | — | evitar | Pouco ativo. |
 | [Marketing Jurídico](https://www.facebook.com/groups/mktjur) | 692 | 0 | Conteúdo + "um pouco" de divulgação | — | evitar | Morto (nenhum post no último mês). |
@@ -68,6 +71,9 @@ Situação conferida em 25/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 27/11/2026 | Advogados Individuais… de Campinas | pendente (com o R2) | — | R12, só texto | Horas gastas por caso × honorário fixo; timer no plano gratuito (entre parênteses), sem link |
+| 27/11/2026 | ADVOGADOS | pendente (com o R1) | — | R11, só texto | Feriado municipal na contagem de prazo; calculadora a partir do Plus, plano gratuito; causify.com.br |
+| 27/11/2026 | Escritórios de Advocacia | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/218996334778379/posts/29944295011821785/) | R10, só texto | Como dividir tarefas e saber de quem é cada uma; menção leve ao Causify entre parênteses, sem link |
 | 25/11/2026 | ADVOGADOS (ADVOGADOSSEMPRE) | pendente (admins revisam novos participantes) | — | R6, só texto | 5 coisas para organizar antes do 10º cliente; sem produto nem link |
 | 25/11/2026 | Advogados Previdenciários | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/169079283105150/posts/29746214794964874/) | R7, só texto | Prazos INSS administrativo × judicial do mesmo cliente; pergunta ao grupo, sem produto nem link |
 | 24/11/2026 | ADVOGADOS INICIANTES - SP | **publicado** (aprovado em 25/11) | [post](https://www.facebook.com/groups/388185064882823/posts/2985866275114676/) | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
@@ -188,6 +194,11 @@ A Página tinha **5 seguidores** em 23/11/2026.
 
 ## Rascunhos
 
+**Agenda:** a partir de **07/12/2026** os grupos com post de 23–25/11 podem receber post de novo.
+Em 27/11 o Ricardo preferiu não esperar: R11 (ADVOGADOS) e R12 (Campinas), só texto, enviados junto com
+R1 e R2, que continuam pendentes. Em 07/12: se R1/R2 seguirem pendentes, excluir (o texto já foi). Novos
+posts: **só texto** (ver Regras da casa).
+
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
 **R4 e R5 enviados em 24/11/2026** (os dois foram para a moderação). **R7 publicado em 25/11/2026.**
@@ -302,7 +313,7 @@ Preços conferidos no site em 26/11 (Plus R$ 20, Pro R$ 50, Max R$ 125; novos R$
 >
 > causify.com.br
 
-#### R10 — Escritórios de Advocacia (privado, sem regras publicadas) — só texto — aprovado em 26/11/2026; **aguarda a entrada no grupo ser aceita**
+#### R10 — Escritórios de Advocacia (privado, sem regras publicadas) — só texto — aprovado em 26/11/2026 e **publicado em 27/11/2026** (entrou na hora)
 
 Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que entrou na hora.
 
@@ -315,6 +326,40 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
 >
 > (No Causify cada tarefa tem responsável e prazo e aparece num quadro para a equipe, mas queria
 > saber o que funciona na prática para vocês.)
+
+#### R11 — ADVOGADOS (1245881118761349; permite divulgar produtos de apoio ao advogado; máx. 1 post/dia) — só texto — aprovado e **enviado em 27/11/2026** (pendente)
+
+Vai junto com o R1, ainda pendente (decisão do Ricardo: não esperar 07/12). Recursos conferidos: a
+calculadora de prazos é do Plus para cima; feriado municipal é cadastrado pelo escritório.
+
+> Pergunta para os colegas: como vocês conferem feriado municipal e ponto facultativo do fórum na
+> hora de contar prazo?
+>
+> O CPC conta só dias úteis, mas o que é dia útil muda de comarca para comarca, e nem todo tribunal
+> publica o calendário no mesmo lugar. É o tipo de detalhe que faz um prazo vencer um dia antes do
+> que a gente imaginava.
+>
+> No Causify a calculadora de prazos (a partir do plano Plus) já considera os feriados nacionais e
+> estaduais, o recesso de fim de ano e os feriados municipais que o escritório cadastrar. Tem plano
+> gratuito para conhecer o sistema em causify.com.br.
+>
+> Mas queria saber de vocês: confiam no calendário do tribunal, numa planilha própria ou em alguma
+> ferramenta?
+
+#### R12 — Advogados Individuais… de Campinas (sem regra contra; moderado) — só texto — aprovado e **enviado em 27/11/2026** (pendente)
+
+Vai junto com o R2, ainda pendente. Timesheet/timer está no plano Free (conferido no site).
+
+> Para quem advoga sozinho ou em escritório pequeno: vocês sabem quantas horas cada caso consumiu?
+>
+> Na hora de fechar honorário fixo a gente estima, mas quase nunca confere depois. Quando confere,
+> descobre que aquele caso "simples" levou o triplo do tempo, e o próximo orçamento sai igual.
+>
+> Uma forma simples de corrigir: registrar o tempo por processo, nem que seja com um cronômetro e uma
+> anotação no fim do dia. (No Causify o timer por processo está até no plano gratuito, mas a ideia
+> vale para qualquer método.)
+>
+> Vocês controlam o tempo gasto ou cobram só pela tabela da OAB?
 
 ## Log de atividades
 
@@ -378,6 +423,15 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
   Com OK do Ricardo: **P1 publicado** no feed da Página (público, sem impulsionar). Pedido de entrada
   no **Escritórios de Advocacia** enviado — o grupo é privado e a entrada ficou pendente (diferente dos
   outros, aceitos na hora). R10 fica para quando a entrada for aceita; ler as regras antes de postar.
+- **27/11/2026** — Verificação: entrada no **Escritórios de Advocacia** aceita (notificação de 26/11 à noite).
+  Grupo sem regras publicadas; Páginas anunciando no feed. **R10 publicado** como aprovado (entrou na hora).
+  P1 no feed da Página: 1 reação, sem comentários. R3, R7, R8 e R9 sem comentários novos (a Thaís não
+  voltou). Filas sem mudança: R1, R2 (4 dias), R4, R5, R6 e os 2 antigos do Advogados Do Brasil.
+  Decisão do Ricardo: **esperar R1 e R2 até 07/12**; se seguirem pendentes, excluir e mandar no lugar
+  uma pergunta só com texto em cada grupo (ADVOGADOS e Campinas). Daqui em diante, **só texto** nos grupos.
+  Logo depois o Ricardo mudou de ideia: mandar o texto **agora**, sem esperar R1/R2 (exceção à regra das
+  2 semanas, a pedido dele). Com OK: **R11** no ADVOGADOS e **R12** em Campinas, os dois pendentes na
+  moderação (cada grupo agora tem 2 posts nossos na fila). Total do dia: 3 grupos (R10, R11, R12).
 
 ## Como anexar imagem
 

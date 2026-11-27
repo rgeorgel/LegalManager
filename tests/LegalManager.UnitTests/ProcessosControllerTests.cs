@@ -564,4 +564,35 @@ private static ProcessoResponseDto CreateProcessoResponseDto(Guid id) =>
         contatoResolver.Verify(r => r.ResolverPartesDataJudAsync(It.IsAny<IReadOnlyList<TribunalParte>>(), It.IsAny<CancellationToken>()), Times.Never);
         service.Verify(s => s.AdicionarParteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Fact]
+    public async Task AlternarMonitoramento_ProcessoNaoMonitoravel_RetornaBadRequest()
+    {
+        var monitoramento = CreateMonitoramentoServiceMock();
+        monitoramento.Setup(m => m.AlternarMonitoramentoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Só processos judiciais podem ser monitorados."));
+        var controller = new ProcessosController(CreateProcessoServiceMock().Object, monitoramento.Object,
+            CreateAuditServiceMock().Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        var result = await controller.AlternarMonitoramento(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ExecutarMonitoramento_ProcessoAdministrativo_RetornaBadRequestSemConsultar()
+    {
+        var processoId = Guid.NewGuid();
+        var service = CreateProcessoServiceMock();
+        service.Setup(s => s.GetByIdAsync(processoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateProcessoResponseDto(processoId) with { Tipo = TipoProcesso.Administrativo, Orgao = "INSS" });
+        var monitoramento = CreateMonitoramentoServiceMock();
+        var controller = new ProcessosController(service.Object, monitoramento.Object,
+            CreateAuditServiceMock().Object, CreateTenantContextMock().Object, null!, null!, Mock.Of<IContatoResolverService>());
+
+        var result = await controller.ExecutarMonitoramento(processoId, CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        monitoramento.Verify(m => m.MonitorarProcessoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }
