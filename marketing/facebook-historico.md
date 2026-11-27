@@ -71,6 +71,8 @@ Situação conferida em 25/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 27/11/2026 | Advogados Individuais… de Campinas | pendente (com o R2) | — | R12, só texto | Horas gastas por caso × honorário fixo; timer no plano gratuito (entre parênteses), sem link |
+| 27/11/2026 | ADVOGADOS | pendente (com o R1) | — | R11, só texto | Feriado municipal na contagem de prazo; calculadora a partir do Plus, plano gratuito; causify.com.br |
 | 27/11/2026 | Escritórios de Advocacia | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/218996334778379/posts/29944295011821785/) | R10, só texto | Como dividir tarefas e saber de quem é cada uma; menção leve ao Causify entre parênteses, sem link |
 | 25/11/2026 | ADVOGADOS (ADVOGADOSSEMPRE) | pendente (admins revisam novos participantes) | — | R6, só texto | 5 coisas para organizar antes do 10º cliente; sem produto nem link |
 | 25/11/2026 | Advogados Previdenciários | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/169079283105150/posts/29746214794964874/) | R7, só texto | Prazos INSS administrativo × judicial do mesmo cliente; pergunta ao grupo, sem produto nem link |
@@ -193,8 +195,9 @@ A Página tinha **5 seguidores** em 23/11/2026.
 ## Rascunhos
 
 **Agenda:** a partir de **07/12/2026** os grupos com post de 23–25/11 podem receber post de novo.
-Nesse dia: conferir R1 (ADVOGADOS) e R2 (Campinas); se seguirem pendentes, excluir e mandar uma pergunta
-só com texto em cada um. Novos posts: **só texto** (ver Regras da casa).
+Em 27/11 o Ricardo preferiu não esperar: R11 (ADVOGADOS) e R12 (Campinas), só texto, enviados junto com
+R1 e R2, que continuam pendentes. Em 07/12: se R1/R2 seguirem pendentes, excluir (o texto já foi). Novos
+posts: **só texto** (ver Regras da casa).
 
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
@@ -324,7 +327,7 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
 > (No Causify cada tarefa tem responsável e prazo e aparece num quadro para a equipe, mas queria
 > saber o que funciona na prática para vocês.)
 
-#### R11 — ADVOGADOS (1245881118761349; permite divulgar produtos de apoio ao advogado; máx. 1 post/dia) — só texto — rascunho de 27/11/2026 (aguarda OK)
+#### R11 — ADVOGADOS (1245881118761349; permite divulgar produtos de apoio ao advogado; máx. 1 post/dia) — só texto — aprovado e **enviado em 27/11/2026** (pendente)
 
 Vai junto com o R1, ainda pendente (decisão do Ricardo: não esperar 07/12). Recursos conferidos: a
 calculadora de prazos é do Plus para cima; feriado municipal é cadastrado pelo escritório.
@@ -343,7 +346,7 @@ calculadora de prazos é do Plus para cima; feriado municipal é cadastrado pelo
 > Mas queria saber de vocês: confiam no calendário do tribunal, numa planilha própria ou em alguma
 > ferramenta?
 
-#### R12 — Advogados Individuais… de Campinas (sem regra contra; moderado) — só texto — rascunho de 27/11/2026 (aguarda OK)
+#### R12 — Advogados Individuais… de Campinas (sem regra contra; moderado) — só texto — aprovado e **enviado em 27/11/2026** (pendente)
 
 Vai junto com o R2, ainda pendente. Timesheet/timer está no plano Free (conferido no site).
 
@@ -426,6 +429,9 @@ Vai junto com o R2, ainda pendente. Timesheet/timer está no plano Free (conferi
   voltou). Filas sem mudança: R1, R2 (4 dias), R4, R5, R6 e os 2 antigos do Advogados Do Brasil.
   Decisão do Ricardo: **esperar R1 e R2 até 07/12**; se seguirem pendentes, excluir e mandar no lugar
   uma pergunta só com texto em cada grupo (ADVOGADOS e Campinas). Daqui em diante, **só texto** nos grupos.
+  Logo depois o Ricardo mudou de ideia: mandar o texto **agora**, sem esperar R1/R2 (exceção à regra das
+  2 semanas, a pedido dele). Com OK: **R11** no ADVOGADOS e **R12** em Campinas, os dois pendentes na
+  moderação (cada grupo agora tem 2 posts nossos na fila). Total do dia: 3 grupos (R10, R11, R12).
 
 ## Como anexar imagem
 
