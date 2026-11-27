@@ -38,6 +38,7 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | [Advocacia](https://www.facebook.com/groups/brasil.advocacia) | 10,3K | 19 | Propaganda proibida, **exceto Páginas**, livros e eventos jurídicos, "moderadamente"; admins revisam o 1º post de quem entra | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Pouco ativo. R5 pendente de aprovação. |
 | [Contadores e Advogados](https://www.facebook.com/groups/contadoresadvogados) | 6,6K | 62 | Sem regra contra; posts moderados | membro (23/11/2026) | 24/11/2026 | Entrada aceita na hora. Bom para tema financeiro/honorários. R4 pendente de aprovação. |
 | [ADVOGADOS (ADVOGADOSSEMPRE)](https://www.facebook.com/groups/ADVOGADOSSEMPRE) | 33,8K | 347 | Exclusivo para operadores do Direito; **permite propaganda ligada ao exercício da advocacia**; admins revisam o 1º post de quem entra | membro (25/11/2026) | 25/11/2026 | Não confundir com o ADVOGADOS (1245881118761349). Entrada aceita na hora. Feed cheio de anúncio fora do tema. R6 pendente (revisão de novo participante). |
+| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; **sem regras publicadas**; Páginas anunciam no feed (Ofertas Tech, "Doutor resolve tudo") | membro (aceito em 26/11/2026; pedido ficou pendente algumas horas) | 27/11/2026 | Tema = gestão de escritório. R10 **entrou na hora**. |
 | [Advogados Iniciantes](https://www.facebook.com/groups/820555598066702) | 21,4K | 282 | **Proíbe** autopromoção (mas havia post promocional da TiargaCred no topo em 23/11) | membro (23/11/2026) | — | Entrada aceita na hora. Público misto (advogados + clientes). Só conteúdo sem chamada. **Em 25/11 a Página não consegue postar nem comentar** (sem caixa "Write something"; "Commenting has been turned off" em todos os posts) — o grupo restringe Páginas. R6 não publicado. |
 | [Advogados Previdenciários](https://www.facebook.com/groups/169079283105150) | 17,5K | 151 | **Proíbe** promoção | membro (23/11/2026) | 25/11/2026 | Entrada aceita na hora. Só conteúdo de nicho (prazos INSS), sem chamada. R7 **entrou na hora**; 1 comentário (Thaís Teixeira, Google Agenda + planilha), respondido pela Página com pergunta; ela curtiu e respondeu (redundância agenda + planilha). |
 
@@ -46,7 +47,6 @@ Números de 23/11/2026. "Aceita Página?": o botão "Join group" aparece logado 
 | Grupo | Membros | Posts/mês | Divulgação | Aceita Página? | Situação | Notas |
 |---|---|---|---|---|---|---|
 | [Advocacia Correspondente, Advogados e Parceiros](https://www.facebook.com/groups/110041575797864) | 8,2K | 385 | Sem regras | sim | pesquisado | Prioridade 3. Feed tomado por ofertas de correspondente. |
-| [Escritórios de Advocacia](https://www.facebook.com/groups/218996334778379) | 11,6K | 54 | Privado; sem regras publicadas; "There are Pages in this group" | sim | **pedido enviado (26/11/2026)** | Tema = gestão de escritório. Feed só visível para membros. |
 | [JAM Jovem Advocacia Mineira](https://www.facebook.com/groups/jovensadvogadosmineiros) | 6,1K | 0 | Propaganda só com autorização | — | evitar | Morto (nenhum post no último mês). |
 | [OAB - Ordem dos Advogados do Brasil](https://www.facebook.com/groups/150483285142) | 32,6K | 9 | Proíbe propaganda; expulsa | — | evitar | Pouco ativo. |
 | [Marketing Jurídico](https://www.facebook.com/groups/mktjur) | 692 | 0 | Conteúdo + "um pouco" de divulgação | — | evitar | Morto (nenhum post no último mês). |
@@ -68,6 +68,7 @@ Situação conferida em 25/11/2026 em "Your content" de cada grupo (`/groups/<id
 
 | Data | Grupo | Situação | Link | Tema / mídia | Resumo |
 |---|---|---|---|---|---|
+| 27/11/2026 | Escritórios de Advocacia | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/218996334778379/posts/29944295011821785/) | R10, só texto | Como dividir tarefas e saber de quem é cada uma; menção leve ao Causify entre parênteses, sem link |
 | 25/11/2026 | ADVOGADOS (ADVOGADOSSEMPRE) | pendente (admins revisam novos participantes) | — | R6, só texto | 5 coisas para organizar antes do 10º cliente; sem produto nem link |
 | 25/11/2026 | Advogados Previdenciários | **publicado** (entrou na hora) | [post](https://www.facebook.com/groups/169079283105150/posts/29746214794964874/) | R7, só texto | Prazos INSS administrativo × judicial do mesmo cliente; pergunta ao grupo, sem produto nem link |
 | 24/11/2026 | ADVOGADOS INICIANTES - SP | **publicado** (aprovado em 25/11) | [post](https://www.facebook.com/groups/388185064882823/posts/2985866275114676/) | R9, só texto | Recesso forense e contagem de prazos (5 itens); sem produto nem link |
@@ -302,7 +303,7 @@ Preços conferidos no site em 26/11 (Plus R$ 20, Pro R$ 50, Max R$ 125; novos R$
 >
 > causify.com.br
 
-#### R10 — Escritórios de Advocacia (privado, sem regras publicadas) — só texto — aprovado em 26/11/2026; **aguarda a entrada no grupo ser aceita**
+#### R10 — Escritórios de Advocacia (privado, sem regras publicadas) — só texto — aprovado em 26/11/2026 e **publicado em 27/11/2026** (entrou na hora)
 
 Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que entrou na hora.
 
@@ -378,6 +379,10 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
   Com OK do Ricardo: **P1 publicado** no feed da Página (público, sem impulsionar). Pedido de entrada
   no **Escritórios de Advocacia** enviado — o grupo é privado e a entrada ficou pendente (diferente dos
   outros, aceitos na hora). R10 fica para quando a entrada for aceita; ler as regras antes de postar.
+- **27/11/2026** — Verificação: entrada no **Escritórios de Advocacia** aceita (notificação de 26/11 à noite).
+  Grupo sem regras publicadas; Páginas anunciando no feed. **R10 publicado** como aprovado (entrou na hora).
+  P1 no feed da Página: 1 reação, sem comentários. R3, R7, R8 e R9 sem comentários novos (a Thaís não
+  voltou). Filas sem mudança: R1, R2 (4 dias), R4, R5, R6 e os 2 antigos do Advogados Do Brasil.
 
 ## Como anexar imagem
 
