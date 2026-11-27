@@ -15,7 +15,10 @@ qualquer ação nova** (para não repetir grupo nem texto) e **atualize logo dep
 - Respeitar a regra de divulgação de cada grupo (dia da semana, tópico fixo, proibido etc.).
   Grupo que proíbe divulgação: no máximo conteúdo útil **sem chamada nem link**, ou nada.
 - Preferir conteúdo útil (prazos, publicações, honorários, gestão) a anúncio direto.
-- Imagens: `marketing/posts/out/*-1200x1200.png` (quote cards) e screenshots do sistema
+- **Por enquanto, só texto nos grupos** (decisão do Ricardo em 27/11/2026): pergunta ao grupo ou
+  conteúdo útil, como R3, R7, R8, R9 e R10, que entraram na hora ou em 1 dia. Os posts com imagem
+  (R1, R2, R4, R5) e os vídeos de out/2026 ficaram presos na moderação.
+- Imagens (quando voltarem a ser usadas): `marketing/posts/out/*-1200x1200.png` (quote cards) e screenshots do sistema
   (`marketing/ads/`). Imagens novas geradas para o Facebook ficam em `marketing/facebook/`.
   Screenshot só de escritório **de demonstração**, nunca com dado de cliente real.
 - Público-alvo: **advogados e escritórios**. Grupos onde a maioria é cliente pedindo consulta
@@ -188,6 +191,10 @@ A Página tinha **5 seguidores** em 23/11/2026.
 > Teste grátis em causify.com.br
 
 ## Rascunhos
+
+**Agenda:** a partir de **07/12/2026** os grupos com post de 23–25/11 podem receber post de novo.
+Nesse dia: conferir R1 (ADVOGADOS) e R2 (Campinas); se seguirem pendentes, excluir e mandar uma pergunta
+só com texto em cada um. Novos posts: **só texto** (ver Regras da casa).
 
 Escritos e **aprovados pelo Ricardo em 23/11/2026**. Publicar: **R4 + R5 em 24/11**, **R6 + R7 em 25/11**.
 R4 e R5 têm imagem (precisam do ⌘V do Ricardo; ver "Como anexar imagem"); R6 e R7 são só texto.
@@ -383,6 +390,8 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
   Grupo sem regras publicadas; Páginas anunciando no feed. **R10 publicado** como aprovado (entrou na hora).
   P1 no feed da Página: 1 reação, sem comentários. R3, R7, R8 e R9 sem comentários novos (a Thaís não
   voltou). Filas sem mudança: R1, R2 (4 dias), R4, R5, R6 e os 2 antigos do Advogados Do Brasil.
+  Decisão do Ricardo: **esperar R1 e R2 até 07/12**; se seguirem pendentes, excluir e mandar no lugar
+  uma pergunta só com texto em cada grupo (ADVOGADOS e Campinas). Daqui em diante, **só texto** nos grupos.
 
 ## Como anexar imagem
 
