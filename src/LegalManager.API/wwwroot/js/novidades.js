@@ -195,11 +195,6 @@ function fecharPainel() {
 
 // ── Modal da novidade em destaque ─────────────────────────────────────────
 
-// Nas outras telas o modal entra pelo initLayout. "Sem destaque pendente" fica guardado na
-// sessão por um tempo, para não consultar a API a cada navegação.
-const DESTAQUE_CHECADO_KEY = 'novidade_destaque_checado';
-const DESTAQUE_CACHE_MS = 10 * 60 * 1000;
-
 function telaOcupada() {
   try { if (sessionStorage.getItem('tour_active')) return true; } catch { /* sem storage */ }
   return !!document.querySelector('.modal-overlay.open, #novidadesOverlay:not([hidden]), .tour-overlay, #menuConvite');
@@ -211,10 +206,6 @@ function telaOcupada() {
  * Espera a página assentar e, se houver outro modal ou tour aberto, tenta de novo algumas vezes.
  */
 export function agendarDestaqueNovidade({ espera = 1500, tentativas = 5 } = {}) {
-  try {
-    const checado = Number(sessionStorage.getItem(DESTAQUE_CHECADO_KEY));
-    if (checado && Date.now() - checado < DESTAQUE_CACHE_MS) return;
-  } catch { /* storage bloqueado: segue */ }
   let restantes = tentativas;
   const tentar = () => {
     if (telaOcupada()) { if (--restantes > 0) setTimeout(tentar, 5000); return; }
@@ -238,10 +229,7 @@ export async function mostrarDestaqueNovidade() {
   try {
     n = await apiFetch('/novidades/destaque');
   } catch { return; }
-  if (!n?.id) {
-    try { sessionStorage.setItem(DESTAQUE_CHECADO_KEY, String(Date.now())); } catch { /* sem storage */ }
-    return;
-  }
+  if (!n?.id) return;
   // A consulta é assíncrona: se outro modal abriu nesse meio-tempo, fica para a próxima tela.
   if (document.getElementById('novidadeDestaqueOverlay') || telaOcupada()) return;
 
@@ -288,7 +276,6 @@ export async function mostrarDestaqueNovidade() {
     overlay.remove();
     document.removeEventListener('keydown', onKey);
     trackEvent('novidade_destaque_fechado', { novidade_id: n.id, acao });
-    try { sessionStorage.setItem(DESTAQUE_CHECADO_KEY, String(Date.now())); } catch { /* sem storage */ }
     return apiFetch('/novidades/destaque/visto', { method: 'POST' }).catch(() => {});
   };
   const onKey = e => { if (e.key === 'Escape') fechar('esc'); };
