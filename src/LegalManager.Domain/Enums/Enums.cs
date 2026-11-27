@@ -27,6 +27,17 @@ public enum AreaDireito
     Ambiental, Imobiliario, Outro
 }
 
+// Judicial: tem número CNJ e pode ser consultado/monitorado nos tribunais. Administrativo
+// (INSS, PROCON, Receita...) e Extrajudicial (cartório...) guardam no NumeroCNJ o protocolo do
+// órgão e nunca vão ao DataJud/Escavador.
+public enum TipoProcesso { Judicial = 0, Administrativo = 1, Extrajudicial = 2 }
+
+// Requerimento no INSS (processo administrativo).
+public enum SituacaoRequerimentoInss { EmAnalise = 0, EmExigencia = 1, Concedido = 2, Indeferido = 3, EmRecurso = 4, Cancelado = 5 }
+
+// Recurso ao CRPS: Junta de Recursos (ordinário) e Câmara de Julgamento (especial).
+public enum InstanciaRecursoInss { JuntaRecursos = 0, CamaraJulgamento = 1 }
+
 public enum TipoParteProcesso { Autor, Reu, Interessado, Terceiro }
 
 public enum TipoVinculoContato { Socio, Conjuge, Familiar, RepresentanteLegal, Indicacao, Outro }

@@ -6,7 +6,12 @@ public class Processo
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
+    // Número do processo: o CNJ quando Tipo == Judicial; nos demais, o protocolo/número no órgão
+    // (requerimento do INSS, PROCON, cartório...). Só o judicial vai a DataJud/Escavador.
     public string NumeroCNJ { get; set; } = string.Empty;
+    public TipoProcesso Tipo { get; set; } = TipoProcesso.Judicial;
+    // Órgão do processo não judicial (INSS, PROCON, Receita Federal, cartório...).
+    public string? Orgao { get; set; }
     public string? Tribunal { get; set; }
     public string? Vara { get; set; }
     public string? Comarca { get; set; }
@@ -36,6 +41,8 @@ public class Processo
     public string? Segmento { get; set; }
     public string? Sistema { get; set; }
     public string? Formato { get; set; }
+    // DataJud: 0 = público. Também marcado à mão ("Segredo de justiça") — o processo não aparece
+    // na consulta pública, então não é monitorado.
     public int? NivelSigilo { get; set; }
     public DateTime? UltimaAtualizacaoDataJud { get; set; }
     public string? Ementa { get; set; }
@@ -62,7 +69,16 @@ public class Processo
     // "Consultar" a uma vez a cada 24h por processo.
     public DateTime? UltimaConsultaEscavadorEm { get; set; }
 
+    public bool Judicial => Tipo == TipoProcesso.Judicial;
+    public bool SegredoJustica => NivelSigilo > 0;
+
+    // Ação judicial ajuizada a partir de um processo administrativo (ex.: requerimento indeferido no INSS).
+    public Guid? ProcessoOrigemId { get; set; }
+
     public Tenant Tenant { get; set; } = null!;
+    public Processo? ProcessoOrigem { get; set; }
+    public ICollection<Processo> ProcessosDerivados { get; set; } = new List<Processo>();
+    public RequerimentoInss? RequerimentoInss { get; set; }
     public Usuario? AdvogadoResponsavel { get; set; }
     public ICollection<ProcessoParte> Partes { get; set; } = new List<ProcessoParte>();
     public ICollection<Andamento> Andamentos { get; set; } = new List<Andamento>();

@@ -189,4 +189,26 @@ public class MonitoramentoServiceTests
 
         Assert.Equal(0, result); // No new andamentos since DataJud returns empty
     }
+
+    [Fact]
+    public async Task AlternarMonitoramentoAsync_ProcessoAdministrativo_NaoLiga()
+    {
+        var (ctx, tenantId, _) = await SeedAsync();
+        var processoId = Guid.NewGuid();
+        ctx.Processos.Add(new Processo
+        {
+            Id = processoId, TenantId = tenantId, NumeroCNJ = "1234567890",
+            Tipo = TipoProcesso.Administrativo, Orgao = "INSS",
+            AreaDireito = AreaDireito.Previdenciario, Fase = FaseProcessual.Outro,
+            Status = StatusProcesso.Ativo, CriadoEm = DateTime.UtcNow
+        });
+        await ctx.SaveChangesAsync();
+
+        var dataJud = new DataJudAdapter(Mock.Of<HttpClient>(), Mock.Of<ILogger<DataJudAdapter>>());
+        var service = new MonitoramentoService(ctx, dataJud, CreateTenantContext(tenantId),
+            Notificador(ctx), Mock.Of<ILogger<MonitoramentoService>>());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.AlternarMonitoramentoAsync(processoId));
+        Assert.False((await ctx.Processos.FindAsync(processoId))!.Monitorado);
+    }
 }

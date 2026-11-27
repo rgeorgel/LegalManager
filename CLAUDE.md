@@ -36,6 +36,27 @@ Escritório; padrão Brasília, `BrasiliaTime.AgoraParede`) — nunca `DateTime.
 `/js/utils.js` (não `new Date()`). Carimbos gerados no servidor (`CriadoEm` etc.) são UTC reais.
 Texto para pessoas: `BrasiliaTime.PtBr`; formatos de máquina (URL, hash): `CultureInfo.InvariantCulture`.
 
+## Processos não judiciais e segredo de justiça
+
+`Processo.Tipo` (`TipoProcesso`): Judicial | Administrativo (INSS, PROCON, Receita...) | Extrajudicial
+(cartório...). Nos não judiciais, `NumeroCNJ` guarda o **protocolo no órgão** (mesma coluna e índice
+único, para tarefas, documentos, honorários, busca e portal seguirem funcionando), `Orgao` o órgão e
+`DataAjuizamento` a data do protocolo (meia-noite UTC — na tela, leia o dia em UTC). Não judicial
+**nunca** é monitorado nem consultado (DataJud/Escavador): o `ProcessoService`, o `MonitoramentoService`
+e o `monitoramento/executar` recusam, e os jobs filtram por `Monitorado`. Código novo que mande o número
+a um tribunal precisa checar `Tipo == Judicial`. "Segredo de justiça" no cadastro grava `NivelSigilo = 1`
+e esconde o monitoramento na tela (a consulta pública não acha o processo). `UpdateProcessoDto.Tipo` /
+`SegredoJustica` nulos = manter.
+
+**INSS** (administrativo com órgão INSS/CRPS): `RequerimentoInss` (1:1, tabela `RequerimentosInss`; espécies em
+`EspeciesBeneficioInss`), editado no cartão do detalhe (`js/processo-inss.js`, `/api/processos/{id}/inss`).
+DER = `Processo.DataAjuizamento`. `PrazosInss` **sugere** prazos (exigência e recurso ao CRPS: 30 dias corridos
+da ciência, vencimento em dia útil — Lei 9.784, art. 66; prorrogação na véspera da DCB; perícia como evento) e
+só cria tarefa/evento quando o advogado confirma (`POST .../inss/sugestoes/{chave}`); a sugestão some quando já
+existe tarefa com o mesmo título e dia. Datas lidas do banco passam por `PrazosInss.Parede` (o Npgsql legado
+devolve Local no fuso do servidor). "Ajuizar ação" (`processos.html?ajuizar=<id>`) cria o judicial com
+`ProcessoOrigemId`; o detalhe mostra origem e derivados. NIT/PIS fica no `Contato.Nit`.
+
 ## Padrão de card (visão em blocos das listagens)
 
 Todo card de listagem usa o componente compartilhado: CSS `.ent-*` em `wwwroot/css/styles.css` e

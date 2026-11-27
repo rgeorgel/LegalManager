@@ -179,6 +179,7 @@ builder.Services.AddSingleton<LegalManager.Infrastructure.AssinaturaDigital.Cifr
 builder.Services.AddScoped<LegalManager.Infrastructure.AssinaturaDigital.AssinaturaDigitalService>();
 builder.Services.AddScoped<IContatoResolverService, ContatoResolverService>();
 builder.Services.AddScoped<IProcessoService, ProcessoService>();
+builder.Services.AddScoped<IRequerimentoInssService, RequerimentoInssService>();
 builder.Services.AddScoped<IImportadorProcessosOab, ImportadorProcessosOab>();
 builder.Services.AddScoped<ITarefaService, TarefaService>();
 builder.Services.AddScoped<IEventoService, EventoService>();

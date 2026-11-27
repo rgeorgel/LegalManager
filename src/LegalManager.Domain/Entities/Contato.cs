@@ -18,6 +18,8 @@ public class Contato
     public string? Estado { get; set; }
     public string? Cep { get; set; }
     public DateTime? DataNascimento { get; set; }
+    // NIT/PIS/PASEP do segurado (previdenciário).
+    public string? Nit { get; set; }
     public string? Observacoes { get; set; }
     public bool NotificacaoHabilitada { get; set; }
     public bool IAHabilitada { get; set; }

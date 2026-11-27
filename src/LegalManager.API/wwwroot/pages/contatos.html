@@ -389,9 +389,15 @@
               <input type="date" id="fDataNascimento" class="form-control">
             </div>
           </div>
-          <div class="form-group">
-            <label>OAB</label>
-            <input type="text" id="fOab" class="form-control" placeholder="SP 123456">
+          <div class="form-row">
+            <div class="form-group">
+              <label>OAB</label>
+              <input type="text" id="fOab" class="form-control" placeholder="SP 123456">
+            </div>
+            <div class="form-group">
+              <label for="fNit">NIT / PIS</label>
+              <input type="text" id="fNit" class="form-control" maxlength="20" inputmode="numeric" placeholder="Segurado do INSS">
+            </div>
           </div>
 
           <div class="ctx-secao">Contato</div>
@@ -1400,6 +1406,7 @@ import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
       document.getElementById('fEstado').value = c.estado || '';
       document.getElementById('fCep').value = c.cep || '';
       document.getElementById('fDataNascimento').value = c.dataNascimento?.split('T')[0] || '';
+      document.getElementById('fNit').value = c.nit || '';
       document.getElementById('fTags').value = (c.tags || []).join(', ');
       document.getElementById('fObservacoes').value = c.observacoes || '';
       document.getElementById('fNotificacao').checked = c.notificacaoHabilitada;
@@ -1419,6 +1426,8 @@ import { abrirNovoPelaUrl, esc, dataParede, brl } from '/js/utils.js';
         estado: document.getElementById('fEstado').value || null,
         cep: document.getElementById('fCep').value || null,
         dataNascimento: document.getElementById('fDataNascimento').value || null,
+        // "" apaga; o backend só ignora quando o campo não vem.
+        nit: document.getElementById('fNit').value.trim(),
         tags: document.getElementById('fTags').value.split(',').map(t => t.trim()).filter(Boolean),
         observacoes: document.getElementById('fObservacoes').value || null,
         notificacaoHabilitada: document.getElementById('fNotificacao').checked

@@ -54,6 +54,23 @@
   <link rel="stylesheet" href="/css/assinatura-digital.css">
   <link rel="stylesheet" href="/css/upload-fila.css">
   <style>
+    /* Processo administrativo/extrajudicial: sem tribunal, sem consulta automática. */
+    body.proc-nao-judicial .so-judicial { display:none !important; }
+    body:not(.proc-nao-judicial) .so-nao-judicial { display:none !important; }
+    /* Requerimento no INSS (js/processo-inss.js) e vínculo administrativo ↔ ação judicial. */
+    .inss-vazio { color:var(--color-text-muted); font-size:13px; margin:0; }
+    .inss-grid { margin-bottom:12px; }
+    .inss-sugestoes { border-top:1px solid var(--color-border); padding-top:12px; display:flex; flex-direction:column; gap:10px; }
+    .inss-sugestoes-titulo { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
+    .inss-sugestao { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; font-size:14px; }
+    .inss-sugestao .btn { flex-shrink:0; }
+    .inss-memoria { font-size:12px; color:var(--color-text-muted); margin-top:2px; line-height:1.5; }
+    .inss-hint { font-size:11px; color:var(--color-text-muted); margin-top:4px; }
+    .vinculos { margin:-8px 0 16px; font-size:13px; display:flex; flex-direction:column; gap:4px; }
+    .vinculos a { font-family:var(--font-mono, monospace); }
+    @media(max-width:768px){ .inss-sugestao{flex-direction:column;} }
+    .pm-check { display:inline-flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; margin:0; }
+    .pm-check input { width:16px; height:16px; }
     .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:24px; }
     .info-item label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); display:block; margin-bottom:4px; }
     .info-item span { font-size:14px; }
@@ -202,11 +219,12 @@
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
+        <button class="btn btn-secondary so-judicial" id="btnMonitorar" title="Consultar DataJud agora">🔄 Consultar</button>
         <button class="btn btn-secondary" id="btnResumoIA">🤖 Resumo IA</button>
         <button class="btn btn-secondary" id="btnGerarPeca">📄 Gerar Peça</button>
         <button class="btn btn-secondary" id="btnVerificarCitacoes" hidden title="Conferir se os precedentes citados existem na base oficial">🔎 Verificar citações</button>
         <button class="btn btn-secondary" id="btnAssinatura" hidden>✍️ Enviar para assinatura</button>
+        <button class="btn btn-secondary so-nao-judicial" id="btnAjuizar" title="Cadastrar a ação judicial a partir deste processo (partes e dados já preenchidos)">⚖️ Ajuizar ação</button>
         <button class="btn btn-secondary" id="btnPortalCliente" title="Liberar o acesso do cliente ao portal e compartilhar o link deste processo">🔑 Portal do cliente</button>
         <button class="btn btn-secondary" id="btnEditar">Editar</button>
         <button class="btn btn-danger" id="btnEncerrar" style="display:none">Encerrar</button>
@@ -221,6 +239,8 @@
       <span id="badgeArea" class="badge badge-blue"></span>
       <span id="badgeFase" class="badge badge-gray"></span>
       <span id="badgeMonitorado" class="badge" style="display:none"></span>
+      <span id="badgeTipo" class="badge badge-gray" style="display:none"></span>
+      <span id="badgeSigilo" class="badge badge-gray" style="display:none" title="Segredo de justiça">🔒 Segredo de justiça</span>
     </div>
 
     <!-- Tabs -->
@@ -249,24 +269,26 @@
             <div class="card-body">
               <div class="card-title">Informações do Processo</div>
               <div class="info-grid" id="infoGrid">
-                <div class="info-item"><label>Tribunal</label><span id="infoTribunal">—</span></div>
-                <div class="info-item"><label>Sigla</label><span id="infoSiglaTribunal">—</span></div>
-                <div class="info-item"><label>Vara</label><span id="infoVara">—</span></div>
-                <div class="info-item"><label>Comarca</label><span id="infoComarca">—</span></div>
-                <div class="info-item"><label>Classe</label><span id="infoClasse">—</span></div>
-                <div class="info-item"><label>Código Classe</label><span id="infoCodigoClasse">—</span></div>
-                <div class="info-item"><label>Assuntos</label><span id="infoAssuntos">—</span></div>
-                <div class="info-item"><label>Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
-                <div class="info-item"><label>Data Distribuição</label><span id="infoDataDistribuicao">—</span></div>
-                <div class="info-item"><label>Grau</label><span id="infoGrau">—</span></div>
-                <div class="info-item"><label>Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
-                <div class="info-item"><label>Valor da Causa</label><span id="infoValor">—</span></div>
+                <div class="info-item so-nao-judicial"><label>Órgão</label><span id="infoOrgao">—</span></div>
+                <div class="info-item so-judicial"><label>Tribunal</label><span id="infoTribunal">—</span></div>
+                <div class="info-item so-judicial"><label>Sigla</label><span id="infoSiglaTribunal">—</span></div>
+                <div class="info-item so-judicial"><label>Vara</label><span id="infoVara">—</span></div>
+                <div class="info-item so-judicial"><label>Comarca</label><span id="infoComarca">—</span></div>
+                <div class="info-item so-judicial"><label>Classe</label><span id="infoClasse">—</span></div>
+                <div class="info-item so-judicial"><label>Código Classe</label><span id="infoCodigoClasse">—</span></div>
+                <div class="info-item so-judicial"><label>Assuntos</label><span id="infoAssuntos">—</span></div>
+                <div class="info-item"><label id="lblInfoDataAjuizamento">Data Ajuizamento</label><span id="infoDataAjuizamento">—</span></div>
+                <div class="info-item so-judicial"><label>Data Distribuição</label><span id="infoDataDistribuicao">—</span></div>
+                <div class="info-item so-judicial"><label>Grau</label><span id="infoGrau">—</span></div>
+                <div class="info-item"><label id="lblInfoTipoAcao">Tipo de Ação</label><span id="infoTipoAcao">—</span></div>
+                <div class="info-item"><label id="lblInfoValor">Valor da Causa</label><span id="infoValor">—</span></div>
                 <div class="info-item"><label>Advogado Responsável</label><span id="infoAdvogado">—</span></div>
                 <div class="info-item"><label>Cadastrado em</label><span id="infoCriadoEm">—</span></div>
                 <div class="info-item" id="infoEncerradoGroup" style="display:none">
                   <label>Encerrado em</label><span id="infoEncerradoEm">—</span>
                 </div>
               </div>
+              <div class="vinculos" id="infoVinculos" hidden></div>
               <div id="infoExtraCollapsible" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
                 <div class="info-grid">
                   <div class="info-item"><label>Instância</label><span id="infoInstancia">—</span></div>
@@ -305,6 +327,9 @@
               <button id="toggleInfoExtraBtn" style="background:none;border:none;color:var(--color-primary);cursor:pointer;font-size:13px;padding:8px 0 0;display:none" onclick="toggleInfoExtra()">Mostrar mais ↓</button>
             </div>
           </div>
+
+          <!-- Requerimento no INSS (processo administrativo) -->
+          <div id="cartaoInss" style="margin-bottom:20px" hidden></div>
 
           <!-- Últimos andamentos (preview) -->
           <div class="card">
@@ -480,10 +505,23 @@
       <div id="editarAlert" class="alert alert-error" style="display:none"></div>
       <form id="editarForm">
         <div class="form-group">
-          <label>Número CNJ *</label>
+          <label for="eCNJ" id="lblECNJ">Número CNJ *</label>
           <input type="text" id="eCNJ" class="form-control" required>
+          <label class="pm-check so-judicial" style="margin-top:8px">
+            <input type="checkbox" id="eSegredo"> Segredo de justiça (não aparece na consulta pública; não é monitorado)
+          </label>
         </div>
-        <div class="form-row">
+        <div class="form-row so-nao-judicial">
+          <div class="form-group">
+            <label for="eOrgao">Órgão</label>
+            <input type="text" id="eOrgao" class="form-control" maxlength="150" placeholder="INSS, PROCON, cartório…">
+          </div>
+          <div class="form-group">
+            <label for="eDataProtocolo">Data do protocolo</label>
+            <input type="date" id="eDataProtocolo" class="form-control">
+          </div>
+        </div>
+        <div class="form-row so-judicial">
           <div class="form-group">
             <label>Tribunal</label>
             <input type="text" id="eTribunal" class="form-control">
@@ -512,7 +550,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Tipo de Ação</label>
+            <label for="eTipoAcao" id="lblETipoAcao">Tipo de Ação</label>
             <input type="text" id="eTipoAcao" class="form-control">
           </div>
           <div class="form-group">
@@ -534,7 +572,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Valor da Causa (R$)</label>
+            <label for="eValorCausa" id="lblEValorCausa">Valor da Causa (R$)</label>
             <input type="number" id="eValorCausa" class="form-control" min="0" step="0.01">
           </div>
         </div>
@@ -545,7 +583,7 @@
               <option value="">Selecionar...</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="eMonitorGroup">
             <label>Monitorar Andamentos <span class="field-tip" tabindex="0">?<span class="field-tip-popup">Quando ativo, a Causify consulta automaticamente novos andamentos no DataJud:<br><br>• <strong>Processos ativos recentes</strong>: verificados diariamente às 03h (horário de Brasília)<br>• <strong>Sem andamento há +180 dias</strong>: verificados semanalmente<br>• <strong>Status encerrado ou arquivado</strong>: não são verificados, mesmo se marcados<br><br>Ao detectar novos andamentos, o advogado responsável é notificado por e-mail e no sistema.</span></span></label>
             <select id="eMonitorado" class="form-control">
               <option value="false">Não</option>
@@ -1046,6 +1084,7 @@ import { contatoPerfilUrl } from '/js/contato-nav.js';
 import { iniciarAssinaturas } from '/js/assinatura-envio.js';
 import { getContato } from '/js/contatos.js';
 import { abrirPortalAcesso } from '/js/portal-acesso.js';
+import { montarCartaoInss } from '/js/processo-inss.js';
 import { textoComCitacoesHtml, resumoCitacoesHtml, precedentesHtml, iniciarVerificadorCitacoes } from '/js/citacoes.js';
 
 initLayout();
@@ -1106,6 +1145,20 @@ function fmtDataAndamento(s) {
   if (d.getUTCHours() || d.getUTCMinutes() || d.getUTCSeconds() || d.getUTCMilliseconds()) return d.toLocaleDateString('pt-BR');
   return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
+// Data pura (protocolo) volta da API como meia-noite UTC: o dia é o do UTC, não o do fuso local.
+function isoDataPura(s) { const d = s ? new Date(s) : null; return d && !isNaN(d) ? d.toISOString().slice(0, 10) : ''; }
+// Ação judicial ajuizada a partir de um administrativo (e o caminho de volta).
+function renderVinculos() {
+  const el = document.getElementById('infoVinculos');
+  const link = v => `<a href="/pages/processo-detalhe.html?id=${encodeURIComponent(v.id)}">${esc(v.numero)}</a>${v.orgao ? ` · ${esc(v.orgao)}` : ''}`;
+  const linhas = [
+    processo.origem ? `<div>Ajuizado a partir de ${link(processo.origem)}</div>` : '',
+    ...(processo.derivados || []).map(d => `<div>${d.tipo === 'Judicial' ? 'Ação judicial' : 'Processo'}: ${link(d)}</div>`),
+  ].filter(Boolean);
+  el.innerHTML = linhas.join('');
+  el.hidden = !linhas.length;
+}
+
 function fmtDateTime(s) { if (!s) return '—'; const d = new Date(s); return !isNaN(d) ? d.toLocaleString('pt-BR') : '—'; }
 function fmtMoney(v) { return v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'; }
 
@@ -1156,6 +1209,18 @@ function renderProcesso() {
     badgeMon.style.display = 'none';
   }
 
+  const judicial = !processo.tipo || processo.tipo === 'Judicial';
+  document.body.classList.toggle('proc-nao-judicial', !judicial);
+  const badgeTipo = document.getElementById('badgeTipo');
+  badgeTipo.textContent = processo.tipo;
+  badgeTipo.style.display = judicial ? 'none' : '';
+  document.getElementById('badgeSigilo').style.display = processo.nivelSigilo > 0 ? '' : 'none';
+  document.getElementById('infoOrgao').textContent = processo.orgao || '—';
+  renderVinculos();
+  document.getElementById('lblInfoDataAjuizamento').textContent = judicial ? 'Data Ajuizamento' : 'Data do protocolo';
+  document.getElementById('lblInfoTipoAcao').textContent = judicial ? 'Tipo de Ação' : 'Assunto';
+  document.getElementById('lblInfoValor').textContent = judicial ? 'Valor da Causa' : 'Valor';
+
   document.getElementById('infoTribunal').textContent = processo.tribunal || '—';
   document.getElementById('infoSiglaTribunal').textContent = processo.siglaTribunal || '—';
   document.getElementById('infoVara').textContent = processo.vara || '—';
@@ -1163,7 +1228,7 @@ function renderProcesso() {
   document.getElementById('infoClasse').textContent = processo.classe || '—';
   document.getElementById('infoCodigoClasse').textContent = processo.codigoClasse || '—';
   document.getElementById('infoAssuntos').textContent = processo.assuntos || '—';
-  document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDate(processo.dataAjuizamento) : '—';
+  document.getElementById('infoDataAjuizamento').textContent = processo.dataAjuizamento ? fmtDataAndamento(processo.dataAjuizamento) : '—';
   document.getElementById('infoDataDistribuicao').textContent = processo.dataDistribuicao ? fmtDate(processo.dataDistribuicao) : '—';
   document.getElementById('infoGrau').textContent = processo.grau || '—';
   document.getElementById('infoTipoAcao').textContent = processo.tipoAcao || '—';
@@ -1625,8 +1690,25 @@ document.getElementById('btnEditar').addEventListener('click', () => {
   document.getElementById('eAdvogado').value = processo.advogadoResponsavelId || '';
   document.getElementById('eMonitorado').value = String(processo.monitorado);
   document.getElementById('eObservacoes').value = processo.observacoes || '';
+  const judicial = !processo.tipo || processo.tipo === 'Judicial';
+  document.getElementById('lblECNJ').textContent = judicial ? 'Número CNJ *' : 'Número do protocolo *';
+  document.getElementById('lblETipoAcao').textContent = judicial ? 'Tipo de Ação' : 'Assunto';
+  document.getElementById('lblEValorCausa').textContent = judicial ? 'Valor da Causa (R$)' : 'Valor (R$)';
+  document.getElementById('eOrgao').value = processo.orgao || '';
+  document.getElementById('eDataProtocolo').value = !judicial ? isoDataPura(processo.dataAjuizamento) : '';
+  document.getElementById('eSegredo').checked = processo.nivelSigilo > 0;
+  aplicarMonitoravelEdicao();
   document.getElementById('modalEditar').classList.add('open');
 });
+
+// Monitoramento só para judicial público: sem CNJ ou em segredo, a consulta nunca encontra.
+function aplicarMonitoravelEdicao() {
+  const judicial = !processo.tipo || processo.tipo === 'Judicial';
+  const monitoravel = judicial && !document.getElementById('eSegredo').checked;
+  document.getElementById('eMonitorGroup').style.display = monitoravel ? '' : 'none';
+  if (!monitoravel) document.getElementById('eMonitorado').value = 'false';
+}
+document.getElementById('eSegredo').addEventListener('change', aplicarMonitoravelEdicao);
 
 [document.getElementById('editarClose'), document.getElementById('editarCancelar')].forEach(el =>
   el.addEventListener('click', () => document.getElementById('modalEditar').classList.remove('open')));
@@ -1637,9 +1719,13 @@ document.getElementById('editarSalvar').addEventListener('click', async () => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   alertEl.style.display = 'none';
   try {
+    const judicial = !processo.tipo || processo.tipo === 'Judicial';
     await updateProcesso(processoId, {
-      numeroCNJ: document.getElementById('eCNJ').value,
-      tribunal: document.getElementById('eTribunal').value || null,
+      numeroCNJ: document.getElementById('eCNJ').value.trim(),
+      tipo: processo.tipo || 'Judicial',
+      orgao: judicial ? null : (document.getElementById('eOrgao').value.trim() || null),
+      dataAjuizamento: judicial ? null : (document.getElementById('eDataProtocolo').value || null),
+      segredoJustica: judicial && document.getElementById('eSegredo').checked,
       vara: document.getElementById('eVara').value || null,
       comarca: document.getElementById('eComarca').value || null,
       areaDireito: document.getElementById('eAreaDireito').value,
@@ -2934,6 +3020,15 @@ await loadAdvogados();
 await loadCustomCatsFin();
 await loadProcesso();
 await Promise.all([loadAndamentosPreview(), loadDocumentosBadge(), loadFinanceiroBadge(), loadTarefasPreview()]);
+if (processo) {
+  montarCartaoInss(document.getElementById('cartaoInss'), {
+    processo, avisar: showAlert,
+    onCriado: () => { loadTarefasPreview(); loadTarefasTab(); },
+  });
+}
+document.getElementById('btnAjuizar').addEventListener('click', () => {
+  window.location.href = `/pages/processos.html?ajuizar=${encodeURIComponent(processoId)}`;
+});
 carregarAndamentosIniciais();
 // Jurisprudência verificada (recurso em teste): botão "Verificar citações" no cabeçalho.
 iniciarVerificadorCitacoes({ botao: document.getElementById('btnVerificarCitacoes'), processoId });

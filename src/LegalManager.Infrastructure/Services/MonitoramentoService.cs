@@ -39,6 +39,10 @@ public class MonitoramentoService : IMonitoramentoService
             .FirstOrDefaultAsync(p => p.TenantId == _tenant.TenantId && p.Id == processoId, ct)
             ?? throw new KeyNotFoundException("Processo não encontrado.");
 
+        if (!processo.Monitorado && processo.Tipo != TipoProcesso.Judicial)
+            throw new InvalidOperationException(
+                "Só processos judiciais podem ser monitorados: processos administrativos e extrajudiciais não têm consulta automática.");
+
         processo.Monitorado = !processo.Monitorado;
         await _context.SaveChangesAsync(ct);
         return processo.Monitorado;

@@ -14,6 +14,7 @@ public class ContatoConfiguration : IEntityTypeConfiguration<Contato>
         builder.Property(c => c.Email).HasMaxLength(200);
         builder.Property(c => c.Telefone).HasMaxLength(20);
         builder.Property(c => c.Oab).HasMaxLength(20);
+        builder.Property(c => c.Nit).HasMaxLength(20);
         builder.Property(c => c.Cep).HasMaxLength(10);
 
         builder.HasOne(c => c.Tenant)

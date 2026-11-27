@@ -10,6 +10,9 @@ public class ProcessoConfiguration : IEntityTypeConfiguration<Processo>
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.NumeroCNJ).HasMaxLength(50).IsRequired();
+        builder.Property(p => p.Orgao).HasMaxLength(150);
+        builder.Ignore(p => p.Judicial);
+        builder.Ignore(p => p.SegredoJustica);
         builder.Property(p => p.Tribunal).HasMaxLength(100);
         builder.Property(p => p.Vara).HasMaxLength(200);
         builder.Property(p => p.Comarca).HasMaxLength(150);
@@ -50,10 +53,36 @@ public class ProcessoConfiguration : IEntityTypeConfiguration<Processo>
             .HasForeignKey(a => a.ProcessoId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(p => p.ProcessoOrigem)
+            .WithMany(p => p.ProcessosDerivados)
+            .HasForeignKey(p => p.ProcessoOrigemId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasOne(p => p.RequerimentoInss)
+            .WithOne(r => r.Processo)
+            .HasForeignKey<RequerimentoInss>(r => r.ProcessoId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasIndex(p => new { p.TenantId, p.NumeroCNJ }).IsUnique();
         builder.HasIndex(p => new { p.TenantId, p.Status });
         builder.HasIndex(p => p.EscavadorMonitoramentoId)
             .HasFilter("\"EscavadorMonitoramentoId\" IS NOT NULL");
+    }
+}
+
+public class RequerimentoInssConfiguration : IEntityTypeConfiguration<RequerimentoInss>
+{
+    public void Configure(EntityTypeBuilder<RequerimentoInss> builder)
+    {
+        builder.ToTable("RequerimentosInss");
+        builder.HasKey(r => r.ProcessoId);
+        builder.Property(r => r.NumeroBeneficio).HasMaxLength(20);
+        builder.Property(r => r.Unidade).HasMaxLength(150);
+        builder.Property(r => r.NumeroRecurso).HasMaxLength(50);
+        builder.Property(r => r.PericiaLocal).HasMaxLength(200);
+        builder.Property(r => r.Rmi).HasColumnType("decimal(18,2)");
+        builder.HasIndex(r => new { r.TenantId, r.Situacao });
     }
 }
 

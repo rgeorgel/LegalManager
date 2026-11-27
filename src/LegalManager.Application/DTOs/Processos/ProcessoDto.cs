@@ -38,7 +38,17 @@ public record CreateProcessoDto(
     // manual, ainda não resolvidas em Contato. Resolvidas apenas aqui, no Salvar — nunca na
     // busca/preview — para não criar Contatos órfãos de buscas canceladas (ver
     // docs/features/busca-processo-cadastro-manual.md, Fase 1, item 3).
-    List<TribunalParte>? PartesDataJud = null
+    List<TribunalParte>? PartesDataJud = null,
+    // Não judicial (INSS, PROCON, cartório...): NumeroCNJ guarda o protocolo no órgão e o
+    // processo nunca é monitorado. DataAjuizamento = data do protocolo.
+    TipoProcesso Tipo = TipoProcesso.Judicial,
+    [MaxLength(150)] string? Orgao = null,
+    // Marcado à mão no cadastro: grava NivelSigilo 1 (o DataJud não mostra o processo).
+    bool SegredoJustica = false,
+    // Só no administrativo: dados do requerimento no INSS.
+    RequerimentoInssDto? Inss = null,
+    // "Ajuizar ação" a partir de um processo administrativo do escritório.
+    Guid? ProcessoOrigemId = null
 );
 
 public record ProcessoParteDto(
@@ -61,7 +71,14 @@ public record UpdateProcessoDto(
     string? Observacoes,
     string? Decisao,
     string? Resultado,
-    List<ProcessoParteDto>? Partes
+    List<ProcessoParteDto>? Partes,
+    // null = mantém (telas que não editam o tipo). Informado, também grava Orgao e
+    // DataAjuizamento (data do protocolo) dos não judiciais.
+    TipoProcesso? Tipo = null,
+    [MaxLength(150)] string? Orgao = null,
+    DateTime? DataAjuizamento = null,
+    // null = mantém.
+    bool? SegredoJustica = null
 );
 
 public record ProcessoResponseDto(
@@ -110,7 +127,13 @@ public record ProcessoResponseDto(
     // Importado sem andamentos: a tela do processo dispara a carga inicial (uma vez).
     bool AndamentosPendentes = false,
     // Favorito do usuário logado (não do escritório).
-    bool Favorito = false
+    bool Favorito = false,
+    TipoProcesso Tipo = TipoProcesso.Judicial,
+    string? Orgao = null,
+    // Ação ajuizada a partir de um processo administrativo (e o caminho inverso).
+    ProcessoVinculadoDto? Origem = null,
+    IReadOnlyList<ProcessoVinculadoDto>? Derivados = null,
+    SituacaoRequerimentoInss? SituacaoInss = null
 );
 
 public record ProcessoParteResponseDto(
@@ -140,7 +163,12 @@ public record ProcessoListItemDto(
     // Favorito do usuário logado — favoritos vêm primeiro na listagem.
     bool Favorito = false,
     bool Monitorado = false,
-    string? Grau = null
+    string? Grau = null,
+    TipoProcesso Tipo = TipoProcesso.Judicial,
+    string? Orgao = null,
+    int? NivelSigilo = null,
+    string? TipoAcao = null,
+    SituacaoRequerimentoInss? SituacaoInss = null
 );
 
 public record ProcessoFiltroDto(

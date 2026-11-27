@@ -19,7 +19,8 @@ public record CreateContatoDto(
     string? Observacoes,
     bool NotificacaoHabilitada,
     List<string>? Tags,
-    bool ImportadoAutomaticamente = false
+    bool ImportadoAutomaticamente = false,
+    [MaxLength(20)] string? Nit = null
 );
 
 public record UpdateContatoDto(
@@ -37,7 +38,9 @@ public record UpdateContatoDto(
     DateTime? DataNascimento,
     string? Observacoes,
     bool NotificacaoHabilitada,
-    List<string>? Tags
+    List<string>? Tags,
+    // null = mantém (quem não edita o campo); "" apaga.
+    [MaxLength(20)] string? Nit = null
 );
 
 public record ContatoResponseDto(
@@ -59,7 +62,8 @@ public record ContatoResponseDto(
     bool Ativo,
     List<string> Tags,
     DateTime CriadoEm,
-    bool ImportadoAutomaticamente = false
+    bool ImportadoAutomaticamente = false,
+    string? Nit = null
 );
 
 public record ContatoListItemDto(
