@@ -324,6 +324,40 @@ Mesmo formato do R3 (pergunta + menção leve entre parênteses, sem link), que 
 > (No Causify cada tarefa tem responsável e prazo e aparece num quadro para a equipe, mas queria
 > saber o que funciona na prática para vocês.)
 
+#### R11 — ADVOGADOS (1245881118761349; permite divulgar produtos de apoio ao advogado; máx. 1 post/dia) — só texto — rascunho de 27/11/2026 (aguarda OK)
+
+Vai junto com o R1, ainda pendente (decisão do Ricardo: não esperar 07/12). Recursos conferidos: a
+calculadora de prazos é do Plus para cima; feriado municipal é cadastrado pelo escritório.
+
+> Pergunta para os colegas: como vocês conferem feriado municipal e ponto facultativo do fórum na
+> hora de contar prazo?
+>
+> O CPC conta só dias úteis, mas o que é dia útil muda de comarca para comarca, e nem todo tribunal
+> publica o calendário no mesmo lugar. É o tipo de detalhe que faz um prazo vencer um dia antes do
+> que a gente imaginava.
+>
+> No Causify a calculadora de prazos (a partir do plano Plus) já considera os feriados nacionais e
+> estaduais, o recesso de fim de ano e os feriados municipais que o escritório cadastrar. Tem plano
+> gratuito para conhecer o sistema em causify.com.br.
+>
+> Mas queria saber de vocês: confiam no calendário do tribunal, numa planilha própria ou em alguma
+> ferramenta?
+
+#### R12 — Advogados Individuais… de Campinas (sem regra contra; moderado) — só texto — rascunho de 27/11/2026 (aguarda OK)
+
+Vai junto com o R2, ainda pendente. Timesheet/timer está no plano Free (conferido no site).
+
+> Para quem advoga sozinho ou em escritório pequeno: vocês sabem quantas horas cada caso consumiu?
+>
+> Na hora de fechar honorário fixo a gente estima, mas quase nunca confere depois. Quando confere,
+> descobre que aquele caso "simples" levou o triplo do tempo, e o próximo orçamento sai igual.
+>
+> Uma forma simples de corrigir: registrar o tempo por processo, nem que seja com um cronômetro e uma
+> anotação no fim do dia. (No Causify o timer por processo está até no plano gratuito, mas a ideia
+> vale para qualquer método.)
+>
+> Vocês controlam o tempo gasto ou cobram só pela tabela da OAB?
+
 ## Log de atividades
 
 - **Antes de 23/11/2026** — Página criada; 9 posts no feed (1 impulsionado); entrou em 3 grupos e
