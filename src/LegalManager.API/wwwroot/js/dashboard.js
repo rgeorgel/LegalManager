@@ -17,7 +17,7 @@ if (!isLoggedIn()) {
   throw new Error('not authenticated');
 }
 
-initLayout();
+initLayout({ destaqueNovidade: false });
 // Busca global embutida, abaixo da saudação (o atalho Ctrl/⌘ + K foca nela).
 montarCaixaBusca(document.getElementById('d2Busca'));
 initOnboardingModal();

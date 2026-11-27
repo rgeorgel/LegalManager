@@ -408,7 +408,7 @@ import { esc, dataParede } from '/js/utils.js';
       throw new Error('not authenticated');
     }
 
-    initLayout();
+    initLayout({ destaqueNovidade: false });
     injectDashboardSwitch(document.getElementById('dashVersao'), 'classico');
     initOnboardingModal();
     // Encadeado: trial de boas-vindas → onboarding (importar por OAB). O tour
